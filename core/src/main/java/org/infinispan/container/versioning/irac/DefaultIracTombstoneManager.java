@@ -32,6 +32,7 @@ import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.irac.DefaultIracManager;
 import org.infinispan.xsite.irac.IracExecutor;
 import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.IracXSiteBackup;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
@@ -49,19 +50,14 @@ import org.infinispan.xsite.status.TakeOfflineManager;
 @Scope(Scopes.NAMED_CACHE)
 public class DefaultIracTombstoneManager implements IracTombstoneManager {
 
-   @Inject
-   DistributionManager distributionManager;
-   @Inject
-   RpcManager rpcManager;
-   @Inject
-   CommandsFactory commandsFactory;
-   @Inject
-   TakeOfflineManager takeOfflineManager;
-   @Inject
-   ComponentRef<IracManager> iracManager;
+   @Inject DistributionManager distributionManager;
+   @Inject RpcManager rpcManager;
+   @Inject CommandsFactory commandsFactory;
+   @Inject TakeOfflineManager takeOfflineManager;
+   @Inject ComponentRef<IracManager> iracManager;
    private final Map<Object, TombstoneData> tombstoneMap;
    private final IracExecutor iracExecutor;
-   final Collection<XSiteBackup> asyncBackups;
+   final Collection<IracXSiteBackup> asyncBackups;
 
    public DefaultIracTombstoneManager(Configuration configuration) {
       this.iracExecutor = new IracExecutor(this::performCleanup);

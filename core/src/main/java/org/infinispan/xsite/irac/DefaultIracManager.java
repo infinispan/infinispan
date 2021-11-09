@@ -97,7 +97,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    @Inject IracTombstoneManager iracTombstoneManager;
 
    private final Map<Object, State> updatedKeys;
-   private final Collection<XSiteBackup> asyncBackups;
+   private final Collection<IracXSiteBackup> asyncBackups;
    private final IracExecutor iracExecutor;
    private volatile boolean hasClear;
 
@@ -114,9 +114,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       setStatisticsEnabled(config.statistics().enabled());
    }
 
-   public static Collection<XSiteBackup> asyncBackups(Configuration config) {
+   public static Collection<IracXSiteBackup> asyncBackups(Configuration config) {
       return config.sites().asyncBackupsStream()
-            .map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) //convert to sync
+            .map(IracXSiteBackup::fromBackupConfiguration) //convert to sync
             .collect(Collectors.toList());
    }
 
@@ -444,12 +444,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private IracResponseCollector sendCommandToAllBackups(XSiteReplicateCommand<Void> command) {
       assert Objects.nonNull(command);
-      IracResponseCollector collector = new IracResponseCollector();
-      for (XSiteBackup backup : asyncBackups) {
+      IracResponseCollector collector = new IracResponseCollector(commandsFactory.getCacheName());
+      for (IracXSiteBackup backup : asyncBackups) {
          if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
             continue; // backup is offline
          }
-         collector.dependsOn(sendToRemoteSite(backup, command));
+         collector.dependsOn(backup, sendToRemoteSite(backup, command));
       }
       return collector.freeze();
    }

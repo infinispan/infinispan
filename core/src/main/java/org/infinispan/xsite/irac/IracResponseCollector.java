@@ -2,7 +2,6 @@ package org.infinispan.xsite.irac;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -19,10 +18,9 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 12
  */
-public class IracResponseCollector extends CompletableFuture<IracResponseCollector.Result> implements BiConsumer<Void, Throwable> {
+public class IracResponseCollector extends CompletableFuture<IracResponseCollector.Result> {
 
    private static final Log log = LogFactory.getLog(IracResponseCollector.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    @GuardedBy("this")
    private Result result = Result.OK;
@@ -30,12 +28,17 @@ public class IracResponseCollector extends CompletableFuture<IracResponseCollect
    private int missing;
    @GuardedBy("this")
    private boolean frozen = false;
+   private final String cacheName;
 
-   public void dependsOn(CompletionStage<Void> request) {
+   public IracResponseCollector(String cacheName) {
+      this.cacheName = cacheName;
+   }
+
+   public void dependsOn(IracXSiteBackup backup, CompletionStage<Void> request) {
       synchronized (this) {
          missing++;
       }
-      request.whenComplete(this);
+      request.whenComplete((unused, throwable) -> onResponse(backup, throwable));
    }
 
    public IracResponseCollector freeze() {
@@ -45,7 +48,7 @@ public class IracResponseCollector extends CompletableFuture<IracResponseCollect
          if (missing == 0) {
             completeResult = result;
          }
-         if (trace) {
+         if (log.isTraceEnabled()) {
             log.tracef("Freeze collector. result=%s, missing=%s", result, missing);
          }
       }
@@ -53,8 +56,8 @@ public class IracResponseCollector extends CompletableFuture<IracResponseCollect
       return this;
    }
 
-   @Override
-   public void accept(Void aVoid, Throwable throwable) {
+   private void onResponse(IracXSiteBackup backup, Throwable throwable) {
+      final boolean trace = log.isTraceEnabled();
       Result completeResult = null;
       synchronized (this) {
          Result old = result;
@@ -65,6 +68,11 @@ public class IracResponseCollector extends CompletableFuture<IracResponseCollect
             } else {
                //don't overwrite communication errors
                result = result == Result.OK ? Result.REMOTE_EXCEPTION : result;
+            }
+            if (backup.logExceptions()) {
+               log.warnXsiteBackupFailed(cacheName, backup.getSiteName(), throwable);
+            } else if (trace) {
+               log.tracef(throwable, "Encountered issues while backing up data for cache %s to site %s", cacheName, backup.getSiteName());
             }
          }
          if (--missing == 0 && frozen) {
@@ -82,7 +90,7 @@ public class IracResponseCollector extends CompletableFuture<IracResponseCollect
       if (result == null) {
          return;
       }
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.tracef("All response received: %s", result);
       }
       complete(result);
