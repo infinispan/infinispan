@@ -76,6 +76,7 @@
             <include name="bsd-3-clause.txt"/>
             <include name="cc0-1.0.txt"/>
             <include name="cddl-1.1-gpl-1-1.txt"/>
+            <include name="cddl-gplv2-classpath.txt"/>
             <include name="common development and distribution license 1.1.txt"/>
             <include name="dual license consisting of the cddl v1.1 and gpl v2 - cddl+gpl-1.1"/>
             <include name="eclipse public license 2.0.txt"/>
