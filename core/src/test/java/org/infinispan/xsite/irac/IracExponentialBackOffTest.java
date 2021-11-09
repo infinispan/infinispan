@@ -10,7 +10,6 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -31,6 +30,7 @@ import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.UnreachableException;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -66,6 +66,14 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
+   @AfterMethod(alwaysRun = true)
+   public void resetStateAfterTest() {
+      backOff.release();
+      eventually(iracManager::isEmpty);
+      backOff.cleanupEvents();
+      backOff.assertNoEvents();
+   }
+
    private static ConfigurationBuilder createCacheConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -88,9 +96,6 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
    }
 
    public void testNoBackoffOnOtherException(Method method) throws InterruptedException {
-      backOff.drainPermits();
-      backOff.cleanupEvents();
-      backOff.assertNoEvents();
       transport.throwableSupplier = CacheException::new;
 
       final String key = TestingUtil.k(method);
@@ -109,9 +114,6 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
    }
 
    private void doTest(Method method, Supplier<Throwable> throwableSupplier) throws InterruptedException {
-      backOff.drainPermits();
-      backOff.cleanupEvents();
-      backOff.assertNoEvents();
       transport.throwableSupplier = throwableSupplier;
 
       final String key = TestingUtil.k(method);
@@ -137,33 +139,29 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
    private static class ControlledExponentialBackOff implements ExponentialBackOff {
 
       private final BlockingDeque<Event> backOffEvents;
-      private final Semaphore semaphore;
       private volatile CompletableFuture<Void> backOff = new CompletableFuture<>();
 
       private ControlledExponentialBackOff() {
          backOffEvents = new LinkedBlockingDeque<>();
-         semaphore = new Semaphore(0);
       }
 
       @Override
       public void reset() {
+         log.tracef("RESET");
          backOffEvents.add(Event.RESET);
       }
 
       @Override
       public CompletionStage<Void> asyncBackOff() {
+         log.tracef("BACK_OFF");
+         CompletionStage<Void> stage = backOff;
+         // add to the event after getting the completable future
          backOffEvents.add(Event.BACK_OFF);
-         return backOff;
+         return stage;
       }
 
       void release() {
-         semaphore.release(1);
-         backOff.complete(null);
-         this.backOff = new CompletableFuture<>();
-      }
-
-      void drainPermits() {
-         semaphore.drainPermits();
+         log.tracef("RELEASE");
          backOff.complete(null);
          this.backOff = new CompletableFuture<>();
       }
