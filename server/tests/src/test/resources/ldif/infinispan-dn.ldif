@@ -1,4 +1,0 @@
-dn: ou=People,dc=infinispan,dc=org
-objectclass: top
-objectclass: organizationalUnit
-ou: People

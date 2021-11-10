@@ -1,3 +1,13 @@
+dn: ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: People
+
+dn: ou=Roles,dc=infinispan,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: Roles
+
 dn: uid=admin,ou=People,dc=infinispan,dc=org
 objectclass: top
 objectclass: uidObject
@@ -78,11 +88,6 @@ uid: writer
 cn: ISPN Writer
 sn: writer
 userPassword: writerPassword
-
-dn: ou=Roles,dc=infinispan,dc=org
-objectclass: top
-objectclass: organizationalUnit
-ou: Roles
 
 dn: cn=admin,ou=Roles,dc=infinispan,dc=org
 objectClass: top
