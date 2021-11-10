@@ -45,15 +45,13 @@ public class ApacheLdapServer extends AbstractLdapServer {
    }
 
    @CreateLdapServer(transports = {@CreateTransport(protocol = "LDAP", port = LDAP_PORT, address = LDAP_HOST)})
-   public void createLdap(String keystoreFile, String[] initLDIFs) throws Exception {
+   public void createLdap(String keystoreFile, String initLDIF) throws Exception {
 
       final SchemaManager schemaManager = directoryService.getSchemaManager();
 
-      for (String initLDIF : initLDIFs) {
-         try (InputStream is = getClass().getClassLoader().getResourceAsStream(initLDIF)) {
-            for (LdifEntry ldifEntry : new LdifReader(is)) {
-               directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
-            }
+      try (InputStream is = getClass().getClassLoader().getResourceAsStream(initLDIF)) {
+         for (LdifEntry ldifEntry : new LdifReader(is)) {
+            directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
          }
       }
 
@@ -95,9 +93,9 @@ public class ApacheLdapServer extends AbstractLdapServer {
    }
 
    @Override
-   public void start(String keystoreFile, String[] initLDIFs) throws Exception {
+   public void start(String keystoreFile, String initLDIF) throws Exception {
       createDs();
-      createLdap(keystoreFile, initLDIFs);
+      createLdap(keystoreFile, initLDIF);
       ldapServer.start();
    }
 
