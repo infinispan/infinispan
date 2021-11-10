@@ -1,17 +1,10 @@
 package org.infinispan.server.test.core;
 
-import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_ATTRIBUTE_TO;
-import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_FILTER_DN;
-import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_PRINCIPAL;
-import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_SEARCH_DN;
-import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_URL;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.security.auth.kerberos.KerberosPrincipal;
 
@@ -33,18 +26,23 @@ import org.infinispan.server.test.core.ldap.RemoteLdapServer;
  **/
 public class LdapServerListener implements InfinispanServerListener {
    public static final String LDAP_SERVER = System.getProperty(TestSystemPropertyNames.LDAP_SERVER, "apache");
-   public static final String[] DEFAULT_LDIF = new String[]{"ldif/infinispan-dn.ldif", "ldif/infinispan.ldif"};
+   private static final String DEFAULT_LDIF = "ldif/infinispan.ldif";
+   private static final String KERBEROS_LDIF = "ldif/infinispan-kerberos.ldif";
 
-   private final String[] initLDIFs;
+   private final String initLDIF;
    private AbstractLdapServer ldapServer;
    private boolean withKdc;
 
    public LdapServerListener() {
-      this(DEFAULT_LDIF, false);
+      this(false);
    }
 
-   public LdapServerListener(String[] initLDIFs, boolean withKdc) {
-      this.initLDIFs = initLDIFs;
+   public LdapServerListener(boolean withKdc) {
+      if (withKdc) {
+         initLDIF = KERBEROS_LDIF;
+      } else {
+         initLDIF = DEFAULT_LDIF;
+      }
       this.withKdc = withKdc;
       if ("apache".equals(LDAP_SERVER)) {
          ldapServer = new ApacheLdapServer();
@@ -57,18 +55,12 @@ public class LdapServerListener implements InfinispanServerListener {
 
    @Override
    public void before(InfinispanServerDriver driver) {
-      Properties properties = driver.getConfiguration().properties();
-      properties.setProperty(TEST_LDAP_URL, System.getProperty(TEST_LDAP_URL));
-      properties.setProperty(TEST_LDAP_PRINCIPAL, System.getProperty(TEST_LDAP_PRINCIPAL));
-      properties.setProperty(TEST_LDAP_SEARCH_DN, System.getProperty(TEST_LDAP_SEARCH_DN));
-      properties.setProperty(TEST_LDAP_ATTRIBUTE_TO, System.getProperty(TEST_LDAP_ATTRIBUTE_TO));
-      properties.setProperty(TEST_LDAP_FILTER_DN, System.getProperty(TEST_LDAP_FILTER_DN));
       Exceptions.unchecked(() -> {
          if (withKdc) {
             generateKeyTab(new File(driver.getConfDir(), "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
             generateKeyTab(new File(driver.getConfDir(), "http.keytab"), "HTTP/localhost@INFINISPAN.ORG", "httpPassword");
          }
-         ldapServer.start(driver.getCertificateFile("server").getAbsolutePath(), this.initLDIFs);
+         ldapServer.start(driver.getCertificateFile("server").getAbsolutePath(), this.initLDIF);
          if (withKdc) {
             ldapServer.startKdc();
          }
