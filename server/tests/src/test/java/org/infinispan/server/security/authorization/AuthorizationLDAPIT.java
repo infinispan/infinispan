@@ -13,7 +13,6 @@ import org.junit.experimental.categories.Category;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-
 @Category(Security.class)
 public class AuthorizationLDAPIT extends AbstractAuthorization {
    @ClassRule

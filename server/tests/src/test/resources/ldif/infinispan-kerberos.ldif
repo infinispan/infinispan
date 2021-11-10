@@ -1,3 +1,13 @@
+dn: ou=People,dc=infinispan,dc=org
+objectClass: organizationalUnit
+objectClass: top
+ou: People
+
+dn: ou=Roles,dc=infinispan,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: Roles
+
 dn: uid=krbtgt,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
@@ -205,11 +215,6 @@ uid: jgroups/node1/clustered2
 userPassword: node1password
 krb5PrincipalName: jgroups/node1/clustered2@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
-
-dn: ou=Roles,dc=infinispan,dc=org
-objectclass: top
-objectclass: organizationalUnit
-ou: Roles
 
 dn: cn=admin,ou=Roles,dc=infinispan,dc=org
 objectClass: top
