@@ -23,15 +23,6 @@
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
       <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
       <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
-
-      <!-- ldap -->
-      <org.infinispan.test.ldap.url>ldap://${org.infinispan.test.host.address}:10389</org.infinispan.test.ldap.url>
-      <org.infinispan.test.ldap.host.user></org.infinispan.test.ldap.host.user>
-      <org.infinispan.test.ldap.host.password></org.infinispan.test.ldap.host.password>
-      <org.infinispan.test.ldap.principal>uid=admin,ou=People,dc=infinispan,dc=org</org.infinispan.test.ldap.principal>
-      <org.infinispan.test.ldap.search-dn>dc=infinispan,dc=org</org.infinispan.test.ldap.search-dn>
-      <org.infinispan.test.ldap.identity-mapping.attribute.to>Roles</org.infinispan.test.ldap.identity-mapping.attribute.to>
-      <org.infinispan.test.ldap.filter-dn>ou=Roles,dc=infinispan,dc=org</org.infinispan.test.ldap.filter-dn>
    </properties>
 
    <dependencies>
@@ -164,15 +155,6 @@
                   <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
-
-                  <!-- ldap -->
-                  <org.infinispan.test.ldap.url>${org.infinispan.test.ldap.url}</org.infinispan.test.ldap.url>
-                  <org.infinispan.test.ldap.host.user>${org.infinispan.test.ldap.host.user}</org.infinispan.test.ldap.host.user>
-                  <org.infinispan.test.ldap.host.password>${org.infinispan.test.ldap.host.password}</org.infinispan.test.ldap.host.password>
-                  <org.infinispan.test.ldap.principal>${org.infinispan.test.ldap.principal}</org.infinispan.test.ldap.principal>
-                  <org.infinispan.test.ldap.search-dn>${org.infinispan.test.ldap.search-dn}</org.infinispan.test.ldap.search-dn>
-                  <org.infinispan.test.ldap.identity-mapping.attribute.to>${org.infinispan.test.ldap.identity-mapping.attribute.to}</org.infinispan.test.ldap.identity-mapping.attribute.to>
-                  <org.infinispan.test.ldap.filter-dn>${org.infinispan.test.ldap.filter-dn}</org.infinispan.test.ldap.filter-dn>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <testNGArtifactName>none:none</testNGArtifactName>

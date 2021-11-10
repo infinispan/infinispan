@@ -11,7 +11,7 @@ import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
  * @since 10.0
  */
 public class LdapUserPasswordMapperConfiguration extends ConfigurationElement<LdapUserPasswordMapperConfiguration> {
-   static final AttributeDefinition<String> FROM = AttributeDefinition.builder(Attribute.FROM, "userPassword", String.class).immutable().build();
+   static final AttributeDefinition<String> FROM = AttributeDefinition.builder(Attribute.FROM, null, String.class).immutable().build();
    static final AttributeDefinition<Boolean> VERIFIABLE = AttributeDefinition.builder(Attribute.VERIFIABLE, true, Boolean.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -22,11 +22,13 @@ public class LdapUserPasswordMapperConfiguration extends ConfigurationElement<Ld
    }
 
    void build(LdapSecurityRealmBuilder ldapRealmBuilder) {
-      LdapSecurityRealmBuilder.UserPasswordCredentialLoaderBuilder builder = ldapRealmBuilder.userPasswordCredentialLoader();
-      builder.setUserPasswordAttribute(attributes.attribute(FROM).get());
-      if (!attributes.attribute(VERIFIABLE).get()) {
-         builder.disableVerification();
+      if (attributes.attribute(FROM).get() != null) {
+         LdapSecurityRealmBuilder.UserPasswordCredentialLoaderBuilder builder = ldapRealmBuilder.userPasswordCredentialLoader();
+         builder.setUserPasswordAttribute(attributes.attribute(FROM).get());
+         if (!attributes.attribute(VERIFIABLE).get()) {
+            builder.disableVerification();
+         }
+         builder.build(); // side-effect: adds the credential loader to the ldap realm
       }
-      builder.build(); // side-effect: adds the credential loader to the ldap realm
    }
 }
