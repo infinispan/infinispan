@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -42,6 +43,7 @@ public class CustomStoreOperationsIT {
    @Test
    public void testDefineCustomStoreAndUtilize() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
       configurationBuilder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       configurationBuilder.persistence()
             .addStore(CustomStoreConfigurationBuilder.class)

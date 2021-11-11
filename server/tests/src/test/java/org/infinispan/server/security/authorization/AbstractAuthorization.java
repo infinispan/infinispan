@@ -516,6 +516,7 @@ public abstract class AbstractAuthorization {
       String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
       assertStatus(OK, getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().schemas().put(BANK_PROTO, schema));
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.indexing().enable().addIndexedEntity("sample_bank_account.User").statistics().enable();
       RestClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
             .withServerConfiguration(builder).create();

@@ -2,7 +2,6 @@ package org.infinispan.server.test.api;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,13 +26,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
-      if (testServer.isContainerRunWithDefaultServerConfig()) {
-         // Init with the admin user
-         // Client intelligence basic by default
-         builder.clientIntelligence(ClientIntelligence.BASIC);
-         // Configure admin user by default
-         builder.security().authentication().username(TestUser.ADMIN.getUser()).password(TestUser.ADMIN.getPassword());
-      }
+      applyDefaultConfiguration(builder);
       this.clientConfiguration = builder;
    }
 
@@ -44,7 +37,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @return the current {@link HotRodTestClientDriver} instance with the client configuration override
     */
    public HotRodTestClientDriver withClientConfiguration(ConfigurationBuilder clientConfiguration) {
-      this.clientConfiguration = clientConfiguration;
+      this.clientConfiguration = applyDefaultConfiguration(clientConfiguration);
       return this;
    }
 
@@ -119,5 +112,13 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    @Override
    public HotRodTestClientDriver self() {
       return this;
+   }
+
+   private ConfigurationBuilder applyDefaultConfiguration(ConfigurationBuilder builder) {
+      if (testServer.isContainerRunWithDefaultServerConfig()) {
+         // Configure admin user by default
+         builder.security().authentication().username(TestUser.ADMIN.getUser()).password(TestUser.ADMIN.getPassword());
+      }
+      return builder;
    }
 }
