@@ -3,6 +3,7 @@ package org.infinispan.reactive.publisher.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -859,7 +860,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       final AbstractSegmentAwarePublisher<I, R> publisher;
       final String requestId;
 
-      final AtomicReferenceArray<Set<K>> keysBySegment;
+      final AtomicReferenceArray<Collection<K>> keysBySegment;
       final IntSet segmentsToComplete;
       final Map<Object, IntSet> enqueuedSegmentNotifiers;
       // Only allow the first child publisher to use the context values
@@ -1041,7 +1042,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          if (keysBySegment != null) {
             for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
                int segment = iter.nextInt();
-               Set<K> keys = keysBySegment.get(segment);
+               Collection<K> keys = keysBySegment.get(segment);
                if (keys != null) {
                   if (excludedKeys == null) {
                      excludedKeys = new HashSet<>();
@@ -1128,9 +1129,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       @Override
       public void accept(I value, int segment) {
          if (keysBySegment != null) {
-            Set<K> keys = keysBySegment.get(segment);
+            Collection<K> keys = keysBySegment.get(segment);
             if (keys == null) {
-               keys = new HashSet<>();
+               // It really is a Set, but we trust response has unique keys. Also ArrayList uses up less memory per
+               // entry and resizes better than a Set and we don't know how many entries we may receive
+               keys = new ArrayList<>();
                keysBySegment.set(segment, keys);
             }
             K key;
