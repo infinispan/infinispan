@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
@@ -54,6 +55,7 @@ public class PooledConnectionOperations {
    private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder() {
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .fetchPersistentState(false)
             .ignoreModifications(false)

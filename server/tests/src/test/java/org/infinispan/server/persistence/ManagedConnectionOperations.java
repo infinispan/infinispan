@@ -12,6 +12,7 @@ import java.util.Properties;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.category.Persistence;
@@ -53,6 +54,7 @@ public class ManagedConnectionOperations {
 
    private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .table()
             .dropOnExit(true)
