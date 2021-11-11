@@ -64,7 +64,8 @@ public final class ExternalExternalizers {
    private static final class ForeignAdvancedExternalizer implements AdvancedExternalizer<Object> {
 
       final AdvancedExternalizer<Object> ext;
-      final int id;
+      // Avoids instantiating an Integer on every `getId` call
+      final Integer id;
 
       private ForeignAdvancedExternalizer(int id, AdvancedExternalizer<Object> ext) {
          this.id = id;
