@@ -83,7 +83,21 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @return {@link RemoteCache}, the cache
     */
    public <K, V> RemoteCache<K, V> create() {
-      RemoteCacheManager remoteCacheManager = createRemoteCacheManager();
+      return create(-1);
+   }
+
+   /**
+    * Create a cache adding in the initial server list the server address given by the index
+    * @param index the server index, -1 for all
+    * @return {@link RemoteCache}, the cache
+    */
+   public <K, V> RemoteCache<K, V> create(int index) {
+      RemoteCacheManager remoteCacheManager;
+      if (index >= 0) {
+         remoteCacheManager = createRemoteCacheManager(index);
+      } else {
+         remoteCacheManager = createRemoteCacheManager();
+      }
       String name = testClient.getMethodName(qualifier);
       if (serverConfiguration != null) {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
@@ -96,6 +110,10 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
 
    public RemoteCacheManager createRemoteCacheManager() {
       return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port));
+   }
+
+   public RemoteCacheManager createRemoteCacheManager(int index) {
+      return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port, index));
    }
 
    @Override
