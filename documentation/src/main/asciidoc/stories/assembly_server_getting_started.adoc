@@ -1,6 +1,7 @@
-[id='start_server']
-:context: quickstart
-= Getting Started with {brandname} Server
+[id='server-getting-started']
+:context: server-getting-started
+= Getting started with {brandname} Server
+
 Quickly set up {brandname} Server and learn the basics.
 
 //Community
