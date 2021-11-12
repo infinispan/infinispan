@@ -1,5 +1,5 @@
-[id='server_requirements']
-= {brandname} Server Requirements
+[id='server-requirements_{context}']
+= {brandname} Server requirements
 
 //Community
 ifdef::community[]

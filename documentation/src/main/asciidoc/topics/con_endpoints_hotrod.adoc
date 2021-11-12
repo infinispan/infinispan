@@ -1,3 +1,4 @@
+[id='endpoints-hot-rod_{context}']
 = Hot Rod
 Hot Rod is a binary TCP client-server protocol designed to provide faster data
 access and improved performance in comparison to text-based protocols.
@@ -20,10 +21,10 @@ join and leave, which enables dynamic load balancing and failover.
 In distributed cache modes, the consistent hashing algorithm also makes it
 possible to route Hot Rod client requests directly to primary owners.
 
-.Reference
-
 //Community
 ifdef::community[]
+[role="_additional-resources"]
+.Additional resources
 * link:../hotrod_java/hotrod_java.html[{brandname} Hot Rod Server]
 * link:http://www.infinispan.org/hotrod-clients[Hot Rod client implementations]
 endif::community[]

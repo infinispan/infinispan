@@ -1,6 +1,26 @@
-[id='single_port']
-= Single Port
-{brandname} Server exposes multiple protocols through a single TCP port, which is `11222` by default.
+[id='server-ports-protocols_{context}']
+= {brandname} Server ports and protocols
+
+{brandname} Server provides network endpoints that allow client access with different protocols.
+
+[%autowidth,cols="1,1,1",stripes=even]
+|===
+|Port |Protocol |Description
+
+|`11222`
+|TCP
+|Hot Rod and REST
+
+|`11221`
+|TCP
+|Memcached (disabled by default)
+
+|===
+
+[discrete]
+== Single port
+
+{brandname} Server exposes multiple protocols through a single TCP port, `11222`.
 Handling multiple protocols with a single port simplifies configuration and reduces management complexity when deploying {brandname} clusters.
 Using a single port also enhances security by minimizing the attack surface on the network.
 
@@ -21,4 +41,5 @@ Applications must use a TLS library that supports the ALPN extension.
 ====
 
 .Automatic Hot Rod detection
+
 Client requests that include Hot Rod headers automatically route to Hot Rod endpoints.

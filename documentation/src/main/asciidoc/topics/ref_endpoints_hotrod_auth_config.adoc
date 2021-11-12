@@ -1,16 +1,18 @@
-[id='hotrod_endpoint_auth_configuration-{context}']
-= Hot Rod Authentication Configuration
+[id='hot-rod-authentication_{context}']
+= Hot Rod authentication
 
 .Hot Rod connector with SCRAM, DIGEST, and PLAIN authentication
-
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/hotrod_connector_sasl.xml[]
 ----
 
 .Hot Rod connector with Kerberos authentication
-
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/hotrod_connector_sasl_kerberos.xml[]
 ----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} schema reference]

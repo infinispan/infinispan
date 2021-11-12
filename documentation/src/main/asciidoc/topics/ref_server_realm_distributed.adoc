@@ -1,7 +1,8 @@
-[id='distributed_realm-{context}']
-= Distributed Realm
-A distributed realm combines multiple realms as one: when authenticating a user, each realm will be tried in turn
-until one is found which can perform the authentication.
+[id='distributed-security-realms_{context}']
+= Distributed security realms
+
+Distributed realms combine multiple security realms.
+When authenticating users, {brandname} Server uses each security realm in turn until it finds one that can perform the authentication.
 
 .Distributed realm configuration
 

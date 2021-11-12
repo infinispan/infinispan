@@ -1,44 +1,34 @@
-[id='socket_bindings-{context}']
-= Socket Bindings
+[id='socket-bindings_{context}']
+= Socket bindings
+
 Socket bindings map endpoint connectors to server interfaces and ports.
 
-By default, {brandname} servers provide the following socket bindings:
-
-[source,xml]
+.Default socket bindings
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_network_socket_bindings.xml[]
 ----
 
-* `socket-bindings` declares the default interface and port offset.
-* `default` binds to hotrod and rest connectors to the default port `11222`.
-* `memcached` binds the memcached connector to port `11221`.
-+
-[NOTE]
-====
-The memcached endpoint is disabled by default.
-====
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Socket binding configuration attribute |Description
 
-To override the default interface for `socket-binding` declarations, specify the `interface` attribute.
+|`socket-bindings`
+|Declares the default interface and port offset.
 
-For example, you add an `interface` declaration named "private":
+|`default`
+|Binds to Hot Rod and REST connectors to the default port `11222`.
 
-[source,xml]
+|`memcached`
+|Binds the memcached connector to port `11221` and is disabled by default.
+|===
+
+[discrete]
+== Custom socket binding declarations
+
+The following example configuration adds an `interface` declaration named "private" and a `socket-binding` declaration that binds {brandname} Server to the private IP address:
+
+[source,xml,options="nowrap",subs=attributes+]
 ----
-<interfaces>
-  ...
-  <interface name="private">
-    <inet-address value="10.1.2.3"/>
-  </interface>
-</interfaces>
-----
-
-You can then specify `interface="private"` in a `socket-binding` declaration to
-bind to the private IP address, as follows:
-
-[source,xml]
-----
-<socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
-  ...
-  <socket-binding name="private_binding" interface="private" port="1234"/>
-</socket-bindings>
+include::xml/server_socket_binding_private.xml[]
 ----

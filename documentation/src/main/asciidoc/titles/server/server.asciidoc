@@ -20,9 +20,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :remote_caches:
 
 //Title
-= Deploying and Configuring {brandname} {infinispanversion} Servers
+= {brandname} {infinispanversion} Server Guide
 
-{brandname} server is a managed, distributed, and clusterable data grid that provides elastic scaling and high performance access to caches from multiple endpoints, such as Hot Rod and REST.
+{brandname} Server deployments offer distributed remote caches with elastic scalability and high performance access.
 
 //User stories
 include::stories.adoc[]

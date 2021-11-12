@@ -1,7 +1,10 @@
-[id='configuring_port_offsets-{context}']
-= Specifying Port Offsets
-Configure port offsets with {brandname} servers when running multiple instances
-on the same host. The default port offset is `0`.
+[id='specifying-port-offsets_{context}']
+= Specifying port offsets
+
+Configure port offsets for multiple {brandname} Server instances on the same host.
+The default port offset is `0`.
+
+.Procedure
 
 Use the `-o` switch with the {brandname} CLI or the
 `infinispan.socket.binding.port-offset` system property to set port offsets.

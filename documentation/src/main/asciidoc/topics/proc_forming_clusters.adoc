@@ -1,6 +1,6 @@
-[id='verify_cluster_discovery-{context}']
-= Verifying Cluster Views
-{brandname} nodes on the same network automatically discover each other and form clusters.
+[id='verifying-cluster-views_{context}']
+= Verifying cluster views
+{brandname} Server instances on the same network automatically discover each other and form clusters.
 
 Complete this procedure to observe cluster discovery with the `MPING` protocol in the default `TCP` stack with locally running {brandname} Server instances.
 If you want to adjust cluster transport for custom network requirements, see the documentation for setting up {brandname} clusters.
@@ -32,7 +32,6 @@ $ cp -r server server2
 include::cmd_examples/start_server2.adoc[]
 ----
 
-
 .Verification
 
 You can view cluster membership in the console at link:http://127.0.0.1:11222/console/cluster-membership[`127.0.0.1:11222/console/cluster-membership`].
@@ -48,8 +47,3 @@ ISPN000094: Received new cluster view for channel cluster:
 INFO  [org.infinispan.CLUSTER] (jgroups-11,<server_hostname>)
 ISPN100000: Node <server2_hostname> joined the cluster
 ----
-
-
-.Reference
-
-link:#setting_up_clusters[Setting Up {brandname} Clusters]

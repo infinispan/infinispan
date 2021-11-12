@@ -1,5 +1,5 @@
 [id='starting-servers_{context}']
-= Starting {brandname} Servers
+= Starting {brandname} Server
 
 //Community content
 ifdef::community[]
