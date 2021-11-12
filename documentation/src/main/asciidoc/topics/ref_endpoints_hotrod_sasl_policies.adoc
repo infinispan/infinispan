@@ -1,9 +1,9 @@
-[id='hotrod_endpoint_sasl_policies-{context}']
-= SASL Policies
-SASL policies let you control which authentication mechanisms Hot Rod
-connectors can use.
+[id='sasl-policies-hot-rod-authentication_{context}']
+= SASL policies for Hot Rod authentication
 
-[%header%autowidth]
+SASL policies control which authentication mechanisms Hot Rod connectors can use.
+
+[%autowidth,cols="1,1,1",stripes=even]
 |===
 | Policy | Description | Default value
 

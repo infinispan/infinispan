@@ -1,5 +1,6 @@
-[id='ldap-realms_{context}']
-= LDAP Realms
+[id='ldap-security-realms_{context}']
+= LDAP security realms
+
 LDAP realms connect to LDAP servers, such as OpenLDAP, Red Hat Directory
 Server, Apache Directory Server, or Microsoft Active Directory, to authenticate
 users and obtain membership information.

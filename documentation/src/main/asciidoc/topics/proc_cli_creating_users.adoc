@@ -1,5 +1,5 @@
 [id='creating-users_{context}']
-= Creating and Modifying Users
+= Creating and modifying {brandname} users
 Add {brandname} user credentials and assign permissions to control access to data.
 
 {brandname} server installations use a property realm to authenticate users for the Hot Rod and REST endpoints.
@@ -15,7 +15,7 @@ You create users and assign roles with the [command]`user` command in the {brand
 Run [command]`help user` from a CLI session to get complete command details.
 ====
 
-== Adding Credentials
+== Adding credentials
 
 You need an `admin` user for the {brandname} Console and full control over your {brandname} environment.
 For this reason you should create a user with `admin` permissions the first time you add credentials.
@@ -54,7 +54,7 @@ $ cat server/conf/groups.properties
 myuser=admin
 ----
 
-== Assigning Roles to Users
+== Assigning roles to users
 
 Assign roles to users so they have the correct permissions to access data and modify {brandname} resources.
 
@@ -82,7 +82,7 @@ $ bin/cli.sh
 ["deployer"]
 ----
 
-== Adding Users to Groups
+== Adding users to groups
 
 Groups let you change permissions for multiple users.
 You assign a role to a group and then add users to that group.

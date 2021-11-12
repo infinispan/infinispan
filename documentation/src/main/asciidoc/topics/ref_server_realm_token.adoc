@@ -1,5 +1,6 @@
-[id='token-realms_{context}']
-= Token Realms
+[id='token-security-realms_{context}']
+= Token security realms
+
 Token realms use external services to validate tokens and require providers
 that are compatible with RFC-7662 (OAuth2 Token Introspection), such as
 {keycloak}.
