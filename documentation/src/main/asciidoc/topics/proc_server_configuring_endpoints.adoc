@@ -1,0 +1,33 @@
+[id='configuring-multiple-endpoints_{context}']
+= Configuring multiple endpoints
+
+You can configure multiple {brandname} Server endpoints to bind to different sockets and use different security realms.
+
+.Prerequisites
+
+* Configure socket bindings for endpoints.
+* Configure security realms for endpoints.
+
+.Procedure
+
+. Open your {brandname} Server configuration for editing.
+. Wrap multiple `endpoint` configurations with the `endpoints` element.
+. Specify the socket binding for each endpoint with the `socket-binding` attribute.
+. Specify the security realm for each endpoint with the `security-realm` attribute.
+. If necessary disable administrative capabilities, such as {brandname} Console and Command Line Interface (CLI), for an endpoint with the `admin="false"` attribute.
+. Include `hotrod-connector` and `rest-connector` configurations for each endpoint.
+. Save and close your {brandname} Server configuration.
+
+[discrete]
+== Multiple endpoint configuration
+
+The following {brandname} Server configuration enables two endpoints on separate socket bindings with dedicated security realms:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/endpoints_connectors_multiple.xml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#server-interfaces[Network interfaces and socket bindings]
