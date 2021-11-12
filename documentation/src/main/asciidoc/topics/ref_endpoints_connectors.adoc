@@ -1,36 +1,35 @@
-= Endpoint Connectors
-You configure {brandname} server endpoints with connector declarations that
-specify socket bindings, authentication mechanisms, and encryption
-configuration.
+[id='endpoint-connectors_{context}']
+= Endpoint connectors
+Connectors configure {brandname} Server endpoints with socket bindings and security realms
 
-The default endpoint connector configuration is as follows:
-
+.Default endpoint connector
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/endpoints_connectors.xml[]
 ----
 
-* `endpoints` contains endpoint connector declarations and defines global
-configuration for endpoints such as default socket bindings, security realms,
-and whether clients must present valid TLS certificates.
-* `<hotrod-connector/>` declares a Hot Rod connector.
-* `<rest-connector/>` declares a REST connector.
-* `<memcached-connector socket-binding="memcached"/>` declares a Memcached
-connector that uses the memcached socket binding.
+The default endpoint connector implicitly configures Hot Rod and REST endpoints with a socket binding and security realm.
 
-Declaring an empty `<endpoints/>` element implicitly enables the Hot Rod and REST connectors.
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Endpoint configuration attribute |Description
 
-It is possible to have multiple `endpoints` bound to different sockets.
-These can use different security realms and offer different authentication and encryption configurations.
-The following configuration enables two endpoints on distinct socket bindings, each one with a dedicated security realm.
-Additionally, the `public` endpoint disables administrative features, such as the console and CLI.
+|`endpoints`
+|Wraps endpoint connector configuration.
 
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/endpoints_connectors_multiple.xml[]
-----
+|`endpoint`
+|Declares a {brandname} Server endpoint that configures Hot Rod and REST connectors.
 
-.Reference
+|`hotrod-connector`
+|Configures how clients connect to {brandname} Server over the Hot Rod protocol.
 
-link:{configdocroot}[urn:infinispan:server] schema provides all available
-endpoint configuration.
+|`rest-connector`
+|Configures how clients connect to {brandname} Server over the REST/HTTP protocol.
+
+|`memcached-connector`
+|Configures how clients connect to {brandname} Server over Memcached, which is disabled by default.
+|===
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} schema reference]
