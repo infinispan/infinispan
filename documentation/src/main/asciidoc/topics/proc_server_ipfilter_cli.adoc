@@ -1,10 +1,15 @@
 [id='user_tool-{context}']
-= Inspecting and Modifying {brandname} Server IP Filter Rules
-Server IP filter rules can be manipulated via the CLI.
+= Inspecting and modifying rules for filtering IP addresses
+
+Configure IP address filtering rules on {brandname} Server endpoints to accept or reject connections based on client address.
+
+.Prerequisites
+
+* Install {brandname} Command Line Interface (CLI).
 
 .Procedure
 
-. Open a terminal in `{server_home}`.
+. Create a CLI connection to {brandname} Server.
 . Inspect and modify the IP filter rules [command]`server connector ipfilter` command as required.
 .. List all IP filtering rules active on a connector across the cluster:
 +

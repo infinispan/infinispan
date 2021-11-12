@@ -1,4 +1,4 @@
-[id='changing_bind_address-{context}']
+[id='changing-bind-address_{context}']
 = Changing the bind address for {brandname} Server
 
 {brandname} Server binds to a network IP address to listen for inbound client connections on the Hot Rod and REST endpoints.

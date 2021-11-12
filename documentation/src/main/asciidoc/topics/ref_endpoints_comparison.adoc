@@ -1,4 +1,5 @@
-= Protocol Comparison
+[id='endpoint-protocol-comparison_{context}']
+= Comparison of endpoint protocols
 
 //Community includes Memcached
 ifdef::community[]

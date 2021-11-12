@@ -1,5 +1,6 @@
-[id='server_directory_structure']
-= {brandname} Server Filesystem
+[id='server-directory-structure_{context}']
+= {brandname} Server installation directory structure
+
 {brandname} Server uses the following folders on the host filesystem under `{server_home}`:
 
 [source,options="nowrap",subs=attributes+]
@@ -24,7 +25,7 @@ See the link:{runtime_readme}[{brandname} Server README] for descriptions of the
 endif::downstream[]
 ====
 
-== Server Root Directory
+== Server root directory
 
 Apart from resources in the `bin` and `docs` folders, the only folder under `{server_home}` that you should interact with is the server root directory, which is named `server` by default.
 
@@ -83,8 +84,8 @@ Contains extension `JAR` files for custom filters, custom event listeners, JDBC 
 Holds {brandname} Server log files.
 
 ifdef::downstream[]
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{runtime_readme}[{brandname} Server README]
 * link:https://access.redhat.com/solutions/5455731[What is stored in the <server>/data directory used by a RHDG server] (Red Hat Knowledgebase)
 endif::downstream[]

@@ -1,6 +1,7 @@
-[id='downloading_servers-{context}']
-= Downloading Server Distributions
-The {brandname} server distribution is an archive of Java libraries (`JAR` files), configuration files, and a `data` directory.
+[id='downloading-server-distributions_{context}']
+= Downloading {brandname} Server distributions
+
+The {brandname} Server distribution is an archive of Java libraries (`JAR` files) and configuration files.
 
 .Procedure
 //Community

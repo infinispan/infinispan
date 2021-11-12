@@ -1,7 +1,7 @@
-[id='configuring_firewalls-{context}']
-= Configuring Network Firewalls for Remote Connections
-Adjust any firewall rules to allow traffic between the server and external
-clients.
+[id='configuring-firewalls_{context}']
+= Configuring network firewalls for {brandname} traffic
+
+Adjust firewall rules to allow traffic between {brandname} Server and client applications.
 
 .Procedure
 

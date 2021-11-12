@@ -1,5 +1,5 @@
 [id='user-roles-permissions_{context}']
-= User Roles and Permissions
+= User roles and permissions
 {brandname} includes a default set of roles that grant users with permissions to access data and interact with {brandname} resources.
 
 `ClusterRoleMapper` is the default mechanism that {brandname} uses to associate security principals to authorization roles.
