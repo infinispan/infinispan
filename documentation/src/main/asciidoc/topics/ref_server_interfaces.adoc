@@ -1,5 +1,5 @@
 [id='network-interfaces_{context}']
-= Network Interfaces
+= Network interfaces
 
 {brandname} Server multiplexes endpoints to a single TCP/IP port and automatically detects protocols of inbound client requests.
 You can configure how {brandname} Server binds to network interfaces to listen for client requests.

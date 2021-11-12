@@ -1,6 +1,0 @@
-= {brandname} Endpoints
-{brandname} endpoints expose the `CacheManager` interface over different
-connector protocols so you can remotely access data and perform operations to
-manage and maintain {brandname} clusters.
-
-You can define multiple endpoint connectors on different socket bindings.

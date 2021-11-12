@@ -1,9 +1,10 @@
-[id='rest_endpoint_auth-{context}']
-= REST Endpoint Authentication Mechanisms
+[id='rest-authentication-mechanisms_{context}']
+= REST authentication mechanisms
 
 {brandname} supports the following authentications mechanisms with the REST
 connector:
 
+[%autowidth,cols="1,1,1",stripes=even]
 |===
 | Authentication mechanism | Description | Related details
 

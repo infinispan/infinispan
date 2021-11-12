@@ -1,10 +1,10 @@
-[id='installing_servers-{context}']
+[id='installing-servers_{context}']
 = Installing {brandname} Server
 Install the {brandname} Server distribution on a host system.
 
 .Prerequisites
 
-Download a {brandname} Server distribution archive.
+* Download a {brandname} Server distribution archive.
 
 .Procedure
 

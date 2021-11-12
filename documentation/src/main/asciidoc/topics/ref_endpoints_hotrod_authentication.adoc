@@ -1,9 +1,10 @@
-[id='hotrod_endpoint_auth-{context}']
-= Hot Rod Endpoint Authentication Mechanisms
+[id='hot-rod-authentication-mechanisms_{context}']
+= Hot Rod authentication mechanisms
 
 {brandname} supports the following SASL authentications mechanisms with the Hot
 Rod connector:
 
+[%autowidth,cols="1,1,1",stripes=even]
 |===
 | Authentication mechanism | Description | Related details
 
