@@ -1,9 +1,11 @@
-<endpoints socket-binding="default" security-realm="default">
-   <ip-filter>
+<endpoints>
+  <endpoint socket-binding="default" security-realm="default">
+    <ip-filter>
       <accept from="192.168.0.0/16"/>
       <accept from="10.0.0.0/8"/>
       <reject from="/0"/>
-   </ip-filter>
-   <hotrod-connector name="hotrod"/>
-   <rest-connector name="rest"/>
+    </ip-filter>
+    <hotrod-connector name="hotrod"/>
+    <rest-connector name="rest"/>
+  </endpoint>
 </endpoints>
