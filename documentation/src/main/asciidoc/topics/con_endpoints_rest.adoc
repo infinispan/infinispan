@@ -1,3 +1,4 @@
+[id='endpoints-rest_{context}']
 = REST
 {brandname} exposes a RESTful interface that allows HTTP clients to access
 data, monitor and maintain clusters, and perform administrative operations.
@@ -7,10 +8,10 @@ balancing and failover capabilities. However, HTTP load balancers maintain
 static cluster views and require manual updates when cluster topology changes
 occur.
 
-//Community only
-.Reference
-
+//Community
 ifdef::community[]
+[role="_additional-resources"]
+.Additional resources
 * link:../rest/rest.html[{brandname} REST Server]
 * link:http://www.jboss.org/mod_cluster[mod_cluster HTTP load balancer]
 endif::community[]

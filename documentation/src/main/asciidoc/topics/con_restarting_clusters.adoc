@@ -1,5 +1,6 @@
-[id='restarting_clusters-{context}']
-= Restarting {brandname} Clusters
+[id='cluster-restarts_{context}']
+= {brandname} cluster restarts
+
 When you bring {brandname} clusters back online after shutting them down, you should wait for the cluster to be available before adding or removing nodes or modifying cluster state.
 
 If you shutdown clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order. +

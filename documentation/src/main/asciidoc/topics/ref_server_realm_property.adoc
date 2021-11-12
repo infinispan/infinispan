@@ -1,5 +1,5 @@
-[id='property-realms_{context}']
-= Property Realms
+[id='property-security-realms_{context}']
+= Property security realms
 Property realms use property files to define users and groups.
 
 `users.properties` maps usernames to passwords in plain-text format. Passwords

@@ -1,5 +1,5 @@
-[id='server_endpoint_ipfilter-{context}']
-= {brandname} Server IP Filter Configuration
+[id='endpoint-ip-address-filters_{context}']
+= {brandname} Server endpoint IP address filters
 
 {brandname} endpoints and connectors can specify one or more IP filtering rules.
 These rules specify the type of action to take when a client which matches a supplied CIDR block connects.
@@ -22,23 +22,10 @@ or equivalently, its subnet mask `255.255.255.0`, which has 24 leading 1-bits.
 `2001:db8:0:ffff:ffff:ffff:ffff:ffff`.
 * `::1/128` represents the IPv6 loopback address. Its prefix length is 128 which is the number of bits in the address.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_ipfilter.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
-----
-include::json/server_ipfilter.json[]
-----
-
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
-----
-include::yaml/server_ipfilter.yaml[]
-----
-
-As a result of the preceding configuration, {brandname} servers accept connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
-{brandname} servers reject all other connections.
+As a result of the preceding configuration, {brandname} Server accepts connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
+{brandname} Server rejects all other connections.

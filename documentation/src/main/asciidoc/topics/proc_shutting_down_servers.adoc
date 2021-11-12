@@ -1,5 +1,6 @@
-[id='server_shutdown-{context}']
-= Shutting Down {brandname} Server
+[id='shutting-down-servers_{context}']
+= Shutting down {brandname} Server
+
 Stop individually running servers or bring down clusters gracefully.
 
 .Procedure

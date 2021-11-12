@@ -1,5 +1,6 @@
-[id='trust-store-realms_{context}']
-= Trust Store Realms
+[id='trust-store-security-realms_{context}']
+= Trust store security realms
+
 Trust store realms use certificates, or certificates chains, that verify {brandname} Server and client identities when they negotiate connections.
 
 Keystores:: Contain server certificates that provide a {brandname} Server identity to clients. If you configure a keystore with server certificates, {brandname} Server encrypts traffic using industry standard SSL/TLS protocols.

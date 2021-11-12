@@ -1,3 +1,4 @@
+[id='endpoints-memcached_{context}']
 = Memcached
 {brandname} provides an implementation of the Memcached text protocol for
 remote client access.
@@ -8,8 +9,6 @@ The Memcached endpoint is deprecated and planned for removal in a future
 release.
 ====
 
-//Community Only
-ifdef::community[]
 The {brandname} Memcached endpoint supports clustering with replicated and
 distributed cache modes.
 
@@ -17,11 +16,8 @@ There are some Memcached client implementations, such as the Cache::Memcached
 Perl client, that can offer load balancing and failover detection capabilities
 with static lists of {brandname} server addresses that require manual updates
 when cluster topology changes occur.
-endif::community[]
 
-//Community Only
-ifdef::community[]
-.Reference
+[role="_additional-resources"]
+.Additional resources
 * link:../memcached/memcached.html[{brandname} Memcached Server]
 * link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]
-endif::community[]

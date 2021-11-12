@@ -1,16 +1,18 @@
-[id='rest_endpoint_auth_configuration-{context}']
-= REST Authentication Configuration
+[id='rest-authentication_{context}']
+= REST authentication
 
 .REST connector with BASIC and DIGEST authentication
-
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/rest_connector_authentication.xml[]
 ----
 
 .REST connector with Kerberos authentication
-
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/rest_connector_authentication_spnego.xml[]
 ----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} schema reference]
