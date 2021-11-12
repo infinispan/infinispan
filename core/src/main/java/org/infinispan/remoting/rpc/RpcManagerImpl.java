@@ -416,6 +416,10 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    private void registerXSiteTime(XSiteBackup backup, long sentTimestamp, long durationNanos, Throwable ignored) {
+      if (durationNanos <= 0) {
+         // no network involved
+         return;
+      }
       xSiteMetricsCollector.recordRequestSent(backup.getSiteName(), durationNanos, TimeUnit.NANOSECONDS);
    }
 
