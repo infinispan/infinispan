@@ -1,9 +1,0 @@
-endpoints:
-  - socket-binding: default
-    security-realm: default
-    ip-filter:
-      accept:
-        - from: "192.168.0.0/16"
-        - from: "10.0.0.0/8"
-      reject:
-        - from: "/0"
