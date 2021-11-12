@@ -379,6 +379,10 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    private void registerXSiteTime(XSiteBackup backup, long sendDurationNanos, long durationNanos, Throwable ignored) {
+      if (durationNanos <= 0) {
+         // no network involved
+         return;
+      }
       long durationMillis = TimeUnit.NANOSECONDS.toMillis(durationNanos);
       xSiteReplicationTime.record(durationMillis);
    }

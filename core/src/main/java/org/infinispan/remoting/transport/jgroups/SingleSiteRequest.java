@@ -42,8 +42,8 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
          T result;
          synchronized (responseCollector) {
             if (isDone()) {
-               throw new IllegalStateException(
-                     "Duplicate response received for x-site request " + requestId + " from " + sender);
+               // CompletableFuture already completed. We can return immediately.
+               return;
             }
             result = responseCollector.addResponse(sender, response);
             if (result == null) {
