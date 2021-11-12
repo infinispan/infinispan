@@ -1,10 +1,6 @@
-<endpoints xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="urn:infinispan:server:{schemaversion}
-           https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
-           xmlns="urn:infinispan:server:{schemaversion}"
-           socket-binding="default"
-           security-realm="default">
-   <hotrod-connector>
+<endpoints>
+  <endpoint socket-binding="default" security-realm="default">
+    <hotrod-connector>
       <authentication>
          <!-- Specifies SASL mechanisms to use for authentication. -->
          <!-- Defines the name that the server declares to clients. -->
@@ -14,5 +10,7 @@
                server-name="infinispan"
                qop="auth"/>
       </authentication>
-   </hotrod-connector>
+    </hotrod-connector>
+    <rest-connector />
+  </endpoint>
 </endpoints>
