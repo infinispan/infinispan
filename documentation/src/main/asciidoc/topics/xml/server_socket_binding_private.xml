@@ -1,0 +1,13 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <interfaces>
+    <interface name="private">
+      <inet-address value="10.1.2.3"/>
+    </interface>
+  </interfaces>
+
+  <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+    <socket-binding name="private_binding"
+                    interface="private"
+                    port="1234"/>
+  </socket-bindings>
+</server>
