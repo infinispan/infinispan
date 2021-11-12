@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -85,6 +86,7 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
+import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -185,6 +187,7 @@ public class JGroupsTransport implements Transport {
          new ClusterView(ClusterView.INITIAL_VIEW_ID, Collections.emptyList(), null);
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
+   private final Set<String> unreachableSites;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -198,16 +201,17 @@ public class JGroupsTransport implements Transport {
     * @param channel created and running channel to use
     */
    public JGroupsTransport(JChannel channel) {
+      this();
       this.channel = channel;
       if (channel == null)
          throw new IllegalArgumentException("Cannot deal with a null channel!");
       if (channel.isConnected())
          throw new IllegalArgumentException("Channel passed in cannot already be connected!");
-      probeHandler = new ThreadPoolProbeHandler();
    }
 
    public JGroupsTransport() {
-      probeHandler = new ThreadPoolProbeHandler();
+      this.probeHandler = new ThreadPoolProbeHandler();
+      this.unreachableSites = ConcurrentHashMap.newKeySet();
    }
 
    @Override
@@ -345,6 +349,10 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+      if (unreachableSites.contains(backup.getSiteName())) {
+         // fail fast if we have thread handling a SITE_UNREACHABLE event.
+         return new SiteUnreachableXSiteResponse<>(backup, timeService);
+      }
       Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(backup.getSiteName()));
       long requestId = requests.newRequestId();
       logRequest(requestId, rpcCommand, recipient, "backup");
@@ -1283,11 +1291,20 @@ public class JGroupsTransport implements Transport {
    }
 
    private void siteUnreachable(String site) {
-      requests.forEach(request -> {
-         if (request instanceof SingleSiteRequest) {
-            ((SingleSiteRequest<?>) request).sitesUnreachable(site);
-         }
-      });
+      if (!unreachableSites.add(site)) {
+         // only one thread handling the events. The other threads can be "dropped".
+         return;
+      }
+      try {
+         requests.forEach(request -> {
+            if (request instanceof SingleSiteRequest) {
+               ((SingleSiteRequest<?>) request).sitesUnreachable(site);
+            }
+         });
+      } finally {
+         unreachableSites.remove(site);
+      }
+
    }
 
    /**
