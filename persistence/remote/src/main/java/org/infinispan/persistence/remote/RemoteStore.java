@@ -207,8 +207,12 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
-      return remoteCache.ping()
-            .handle((v, t) -> t == null && v.isSuccess());
+      if (remoteCache != null) {
+         return remoteCache.ping()
+               .handle((v, t) -> t == null && v.isSuccess());
+      } else {
+         return CompletableFutures.completedFalse();
+      }
    }
 
    @Override
@@ -377,7 +381,11 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Void> clear() {
-      return remoteCache.clearAsync();
+      if (remoteCache != null) {
+         return remoteCache.clearAsync();
+      } else {
+         return CompletableFutures.completedNull();
+      }
    }
 
    @Override
