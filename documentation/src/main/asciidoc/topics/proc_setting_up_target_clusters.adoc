@@ -35,11 +35,11 @@ include::json/remote_store_minimal.json[]
 [//containers/default]> migrate cluster connect -c myCache -f remote-store.json
 ----
 +
-* REST API: Use the `?action=connect-source` parameter with a POST request that includes the remote store configuration in the payload.
+* REST API: Invoke a POST request that includes the remote store configuration in the payload with the `rolling-upgrade/source-connection` method.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/myCache?action=connect-source
+POST /v2/caches/myCache/rolling-upgrade/source-connection
 ----
 +
 . Repeat the preceding step for each cache that you want to migrate.
