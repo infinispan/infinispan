@@ -629,21 +629,29 @@ public final class Util {
    }
 
    public static String hexDump(ByteBuffer buffer) {
-      int bufferLength = buffer.remaining();
-      int dumpLength = Math.min(bufferLength, HEX_DUMP_LIMIT);
-      byte[] data = new byte[dumpLength];
-      int pos = buffer.position();
-      buffer.get(data);
-      buffer.position(pos);
-      return hexDump(data, bufferLength);
+      return hexDump(buffer::get, buffer.position(), buffer.remaining());
    }
 
    public static String hexDump(byte[] buffer, int actualLength) {
-      StringBuilder sb = new StringBuilder(buffer.length * 2 + 30);
-      for (byte b : buffer) {
-         addHexByte(sb, b);
+      int dumpLength = Math.min(buffer.length, HEX_DUMP_LIMIT);
+      StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
+      for (int i = 0; i < dumpLength; ++i) {
+         addHexByte(sb, buffer[i]);
       }
-      if (buffer.length < actualLength) {
+      if (dumpLength < actualLength) {
+         sb.append("...");
+      }
+      sb.append(" (").append(actualLength).append(" bytes)");
+      return sb.toString();
+   }
+
+   public static String hexDump(ByteGetter byteGetter, int offset, int actualLength) {
+      int dumpLength = Math.min(actualLength, HEX_DUMP_LIMIT);
+      StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
+      for (int i = 0; i < dumpLength; ++i) {
+         addHexByte(sb, byteGetter.get(offset + i));
+      }
+      if (dumpLength < actualLength) {
          sb.append("...");
       }
       sb.append(" (").append(actualLength).append(" bytes)");
@@ -1055,5 +1063,12 @@ public final class Util {
       } else {
          t.addSuppressed(t1);
       }
+   }
+
+   /**
+    * Returns the byte at {@code index}.
+    */
+   public interface ByteGetter {
+      byte get(int index);
    }
 }
