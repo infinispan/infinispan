@@ -2,8 +2,7 @@
 :context: rolling-upgrades
 = Performing rolling upgrades for {brandname} Server clusters
 Perform rolling upgrades of your {brandname} clusters to change between
-versions without downtime or data loss.
-Rolling upgrades migrate your {brandname} Server instances as well as your data to the target version over Hot Rod.
+versions without downtime or data loss and migrate data over the Hot Rod protocol.
 
 include::{topics}/proc_setting_up_target_clusters.adoc[leveloffset=+1]
 include::{topics}/proc_synchronizing_data_target_clusters.adoc[leveloffset=+1]
