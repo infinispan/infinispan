@@ -112,12 +112,7 @@ public final class ByteBufUtil {
    }
 
    public static String limitedHexDump(ByteBuf buf) {
-      int bufferLength = buf.readableBytes();
-      int dumpLength = Math.min(bufferLength, Util.HEX_DUMP_LIMIT);
-      byte[] data = new byte[dumpLength];
-      int pos = buf.readerIndex();
-      buf.getBytes(pos, data, 0, dumpLength);
-      return Util.hexDump(data, bufferLength);
+      return Util.hexDump(buf::getByte, buf.readerIndex(), buf.readableBytes());
    }
 
    /**
