@@ -59,7 +59,6 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
@@ -145,7 +144,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -426,7 +424,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                // Need a wrapper per invocation since converter could modify the entry in it
                configureEvent(listener, e, key, value, metadata, pre, ctx, command, null, null);
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                     listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+                     listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
             }
             if (batchIdentifier != null) {
                return sendEvents(batchIdentifier, aggregateCompletionStage);
@@ -464,7 +462,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                // Need a wrapper per invocation since converter could modify the entry in it
                configureEvent(listener, e, key, value, metadata, pre, ctx, command, previousValue, previousMetadata);
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                     listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+                     listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
             }
             if (batchIdentifier != null) {
                return sendEvents(batchIdentifier, aggregateCompletionStage);
@@ -508,7 +506,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                   configureEvent(listener, e, key, null, previousMetadata, false, ctx, command, previousValue, previousMetadata);
                }
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                     listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+                     listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
             }
             if (batchIdentifier != null) {
                return sendEvents(batchIdentifier, aggregateCompletionStage);
@@ -576,12 +574,12 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    @Override
    public CompletionStage<Void> notifyCacheEntryVisited(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryVisitedListeners)) {
-         return resumeOnCPU(doNotifyVisited(key, value, pre, ctx), command);
+         return resumeOnCPU(doNotifyVisited(key, value, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
 
-   private CompletionStage<Void> doNotifyVisited(K key, V value, boolean pre, InvocationContext ctx) {
+   private CompletionStage<Void> doNotifyVisited(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_VISITED);
       boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
@@ -589,7 +587,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          // Need a wrapper per invocation since converter could modify the entry in it
          configureEvent(listener, e, key, value, pre, ctx);
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-               listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+               listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
@@ -647,7 +645,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             // Need a wrapper per invocation since converter could modify the entry in it
             configureEvent(listener, e, key, value, metadata, ctx);
             aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                  listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+                  listener.invoke(new EventWrapper<>(key, e, null), isLocalNodePrimaryOwner));
          }
          if (batchIdentifier != null) {
             return sendEvents(batchIdentifier, aggregateCompletionStage);
@@ -679,7 +677,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          // Need a wrapper per invocation since converter could modify the entry in it
          configureEvent(listener, e, key, value, metadata, pre, ctx, command, value, metadata);
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-               listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+               listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
       }
 
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
@@ -689,12 +687,12 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    public CompletionStage<Void> notifyCacheEntryLoaded(K key, V value, boolean pre,
                                       InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryLoadedListeners)) {
-         return resumeOnCPU(doNotifyLoaded(key, value, pre, ctx), command);
+         return resumeOnCPU(doNotifyLoaded(key, value, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
 
-   private CompletionStage<Void> doNotifyLoaded(K key, V value, boolean pre, InvocationContext ctx) {
+   private CompletionStage<Void> doNotifyLoaded(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_LOADED);
       boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
@@ -702,7 +700,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          // Need a wrapper per invocation since converter could modify the entry in it
          configureEvent(listener, e, key, value, pre, ctx);
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-               listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+               listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
@@ -710,12 +708,12 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    @Override
    public CompletionStage<Void> notifyCacheEntryActivated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryActivatedListeners)) {
-         return resumeOnCPU(doNotifyActivated(key, value, pre, ctx), command);
+         return resumeOnCPU(doNotifyActivated(key, value, pre, ctx, command), command);
       }
       return CompletableFutures.completedNull();
    }
 
-   private CompletionStage<Void> doNotifyActivated(K key, V value, boolean pre, InvocationContext ctx) {
+   private CompletionStage<Void> doNotifyActivated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_ACTIVATED);
       boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
@@ -723,7 +721,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          // Need a wrapper per invocation since converter could modify the entry in it
          configureEvent(listener, e, key, value, pre, ctx);
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-               listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+               listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
@@ -742,12 +740,12 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    public CompletionStage<Void> notifyCacheEntryPassivated(K key, V value, boolean pre, InvocationContext ctx,
          FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryPassivatedListeners)) {
-         return resumeOnCPU(doNotifyPassivated(key, value, pre), command);
+         return resumeOnCPU(doNotifyPassivated(key, value, pre, command), command);
       }
       return CompletableFutures.completedNull();
    }
 
-   private CompletionStage<Void> doNotifyPassivated(K key, V value, boolean pre) {
+   private CompletionStage<Void> doNotifyPassivated(K key, V value, boolean pre, FlagAffectedCommand command) {
       EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), CACHE_ENTRY_PASSIVATED);
       boolean isLocalNodePrimaryOwner = isLocalNodePrimaryOwner(key);
       AggregateCompletionStage aggregateCompletionStage = null;
@@ -759,7 +757,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          e.setKey(key);
          e.setValue(value);
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-               listener.invoke(new EventWrapper<>(key, e), isLocalNodePrimaryOwner));
+               listener.invoke(new EventWrapper<>(key, e, command), isLocalNodePrimaryOwner));
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
@@ -922,7 +920,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                      // We force invocation, since it means the owning node passed filters already and they
                      // already converted so don't run converter either
                      aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, true, false));
+                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event, null), false, true, false));
                      break;
                   }
                }
@@ -933,7 +931,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                      // We force invocation, since it means the owning node passed filters already and they
                      // already converted so don't run converter either
                      aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, true, false));
+                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event, null), false, true, false));
                      break;
                   }
                }
@@ -944,7 +942,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                      // We force invocation, since it means the owning node passed filters already and they
                      // already converted so don't run converter either
                      aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, true, false));
+                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event, null), false, true, false));
                      break;
                   }
                }
@@ -955,7 +953,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
                      // We force invocation, since it means the owning node passed filters already and they
                      // already converted so don't run converter either
                      aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event), false, true, false));
+                           listener.invokeNoChecks(new EventWrapper<>(event.getKey(), event, null), false, true, false));
                      break;
                   }
                }
@@ -1125,30 +1123,12 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             DeliveryGuarantee.EXACTLY_ONCE, config.clustering().stateTransfer().chunkSize(),
             intermediateOperations.isEmpty() ? PublisherTransformers.identity() : new CacheIntermediatePublisher(intermediateOperations));
 
-      Completable delayCompletable = Completable.defer(() -> Completable.fromCompletionStage(handler.delayProcessing()));
-
       currentStage = currentStage.thenCompose(ignore ->
             Flowable.fromPublisher(publisher.publisherWithSegments())
-                  .startWith(delayCompletable)
-                  .mapOptional(handler)
+                  .concatMap(handler)
                   .flatMapCompletable(ice -> Completable.fromCompletionStage(
                         raiseEventForInitialTransfer(generatedId, ice, l.clustered(), kc, kv)), false, 20)
-                  // Make sure there are no more delays for processing after we have retrieved all values
-                  .andThen(delayCompletable)
                   .toCompletionStage(null));
-
-      currentStage = currentStage.thenCompose(ignore -> {
-         if (log.isTraceEnabled()) {
-            log.tracef("Finding any created entries during listener registration for %s", generatedId);
-         }
-         Set<CacheEntry<K, V>> entries = handler.findCreatedEntries();
-
-         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         for (CacheEntry entry : entries) {
-            aggregateCompletionStage.dependsOn(raiseEventForInitialTransfer(generatedId, entry, l.clustered(), null, null));
-         }
-         return aggregateCompletionStage.freeze();
-      });
 
       currentStage = currentStage.thenCompose(ignore -> handler.transferComplete());
 
@@ -1257,10 +1237,10 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             if (preEvent != null) {
                // Non clustered notifications are done twice
                aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                     invocation.invokeNoChecks(new EventWrapper<>(null, preEvent), true, true, false));
+                     invocation.invokeNoChecks(new EventWrapper<>(null, preEvent, null), true, true, false));
             }
             aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage,
-                  invocation.invokeNoChecks(new EventWrapper<>(null, postEvent), true, true, false));
+                  invocation.invokeNoChecks(new EventWrapper<>(null, postEvent, null), true, true, false));
          }
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
@@ -1584,12 +1564,11 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             if (clustered) {
                QueueingSegmentListener handler = segmentHandler.get(identifier);
                if (handler == null) {
+                  int segments = config.clustering().hash().numSegments();
                   if (clusterListenerOnPrimaryOnly()) {
-                     LocalizedCacheTopology cacheTopology = clusteringDependentLogic.running().getCacheTopology();
-                     handler = new DistributedQueueingSegmentListener(entryFactory,
-                           cacheTopology.getCurrentCH().getNumSegments(), cacheTopology::getSegment);
+                     handler = new DistributedQueueingSegmentListener(entryFactory, segments, keyPartitioner);
                   } else {
-                     handler = new QueueingAllSegmentListener(entryFactory);
+                     handler = new QueueingAllSegmentListener(entryFactory, segments, keyPartitioner);
                   }
                   QueueingSegmentListener currentQueue = segmentHandler.putIfAbsent(identifier, handler);
                   if (currentQueue != null) {

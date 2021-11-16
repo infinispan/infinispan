@@ -1,17 +1,14 @@
 package org.infinispan.notifications.cachelistener;
 
 import java.lang.invoke.MethodHandles;
-import java.util.PrimitiveIterator;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.ToIntFunction;
 
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
@@ -21,6 +18,9 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * This handler is to be used with a clustered distributed cache.  This handler does special optimizations to
@@ -34,32 +34,31 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AtomicReferenceArray<Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>>> queues;
 
-   private final ToIntFunction<Object> intFunction;
    protected final InternalEntryFactory entryFactory;
 
-   private IntSet justCompletedSegments = null;
-
-   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, int numSegments, ToIntFunction<Object> intFunction) {
+   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, int numSegments, KeyPartitioner keyPartitioner) {
+      super(numSegments, keyPartitioner);
       this.entryFactory = entryFactory;
-      this.intFunction = intFunction;
       // we assume the # of segments won't change between different consistent hashes
       this.queues = new AtomicReferenceArray<>(numSegments);
       for (int i = 0; i < queues.length(); ++i) {
-         Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = new ConcurrentLinkedQueue<>();
-         queues.set(i, queue);
+         queues.set(i, new ConcurrentLinkedQueue<>());
       }
    }
 
    @Override
    public boolean handleEvent(EventWrapper<K, V, CacheEntryEvent<K, V>> wrapped, ListenerInvocation<Event<K, V>> invocation) {
+      // If we already completed, don't even attempt to enqueue
+      if (completed.get()) {
+         return false;
+      }
       K key = wrapped.getKey();
-      // If we already completed, don't enqueue
-      boolean enqueued = !completed.get();
       CacheEntryEvent<K, V> event = wrapped.getEvent();
+      int segment = segmentFromEventWrapper(wrapped);
       CacheEntry<K, V> cacheEntry = entryFactory.create(event.getKey(), event.getValue(), event.getMetadata());
-      if (enqueued && !addEvent(key, cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
+      boolean enqueued = true;
+      if (!addEvent(key, segment, cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
          // If it wasn't added it means we haven't processed this value yet, so add it to the queue for this segment
-         int segment = intFunction.applyAsInt(key);
          Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue;
          // If the queue is not null, try to see if we can add to it
          if ((queue = queues.get(segment)) != null) {
@@ -83,20 +82,18 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    @Override
    public CompletionStage<Void> transferComplete() {
-      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-      // Complete any segments that are still open - means we just didn't receive the completion yet
-      // Iterator is guaranteed to not complete until all segments are complete.
-      for (int i = 0; i < queues.length(); ++i) {
-         if (queues.get(i) != null) {
-            CompletionStage<Void> segmentStage = completeSegment(i);
-            if (segmentStage != null) {
-               aggregateCompletionStage.dependsOn(segmentStage);
-            }
-         }
-      }
       completed.set(true);
-      notifiedKeys.clear();
-      return aggregateCompletionStage.freeze();
+      for (int i = 0; i < notifiedKeys.length(); ++i) {
+         assert notifiedKeys.get(i) == null;
+         assert queues.get(i) == null;
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   Flowable<CacheEntry<K, V>> segmentComplete(int segment) {
+      return super.segmentComplete(segment)
+            .concatWith(Completable.defer(() -> Completable.fromCompletionStage(completeSegment(segment))));
    }
 
    private CompletionStage<Void> completeSegment(int segment) {
@@ -110,37 +107,6 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
                aggregateCompletionStage.dependsOn(event.getValue().invoke(event.getKey()));
             }
          }
-      }
-      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null;
-   }
-
-   @Override
-   void segmentComplete(int segment) {
-      if (justCompletedSegments == null) {
-         justCompletedSegments = IntSets.mutableEmptySet();
-      }
-      justCompletedSegments.set(segment);
-   }
-
-   @Override
-   public CompletionStage<Void> delayProcessing() {
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
-      if (justCompletedSegments != null) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Segments %s completed for listener", justCompletedSegments);
-         }
-         // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
-         PrimitiveIterator.OfInt iter = justCompletedSegments.iterator();
-         while (iter.hasNext()) {
-            CompletionStage<Void> segmentStage = completeSegment(iter.nextInt());
-            if (segmentStage != null) {
-               if (aggregateCompletionStage == null) {
-                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-               }
-               aggregateCompletionStage.dependsOn(segmentStage);
-            }
-         }
-         justCompletedSegments = null;
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
    }
