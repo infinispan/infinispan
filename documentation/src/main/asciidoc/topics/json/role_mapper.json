@@ -1,0 +1,11 @@
+{
+  "infinispan" : {
+    "cache-container" : {
+      "security" : {
+        "authorization" : {
+          "common-name-role-mapper": {}
+        }
+      }
+    }
+  }
+}

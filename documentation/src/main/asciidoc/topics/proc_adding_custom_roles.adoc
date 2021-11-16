@@ -1,0 +1,38 @@
+[id='creating-custom-roles-statically_{context}']
+= Adding custom roles to Cache Manager configuration
+
+Add roles with custom permission mappings to your Cache Manager configuration before you start your {brandname} cluster.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Add a security authorization section to your Cache Manager configuration.
+. Declare each custom role and permission mapping in a `role` element or field.
+. Specify a unique name for each custom role with the `name` attribute.
+. Specify the permissions for the role with the `permissions` attribute.
+. Save the changes to your configuration.
+
+.Next steps
+
+Assign roles to {brandname} users with the [command]`user roles grant` command.
+
+[discrete]
+== Custom roles and permissions configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/authorization_roles_custom.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/authorization_roles_custom.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/authorization_roles_custom.yaml[]
+----

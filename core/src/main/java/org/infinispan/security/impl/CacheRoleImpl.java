@@ -3,9 +3,15 @@ package org.infinispan.security.impl;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Role;
 
@@ -15,16 +21,21 @@ import org.infinispan.security.Role;
  * @author Tristan Tarrant
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.ROLE)
 public class CacheRoleImpl implements Role {
-   private final String name;
-   private final Set<AuthorizationPermission> permissions;
+   @ProtoField(number = 1, required = true)
+   final String name;
+   @ProtoField(number = 2, required = true)
+   final boolean inheritable;
+   @ProtoField(number = 3, collectionImplementation = HashSet.class)
+   final Set<AuthorizationPermission> permissions;
    private final int mask;
-   private final boolean inheritable;
 
    public CacheRoleImpl(String name, boolean inheritable, AuthorizationPermission... authorizationPermissions) {
-      this(name, inheritable, new HashSet<>(Arrays.asList(authorizationPermissions)));
+      this(name, inheritable, EnumSet.copyOf(Arrays.asList(authorizationPermissions)));
    }
 
+   @ProtoFactory
    public CacheRoleImpl(String name, boolean inheritable, Set<AuthorizationPermission> permissions) {
       this.name = name;
       this.permissions = Collections.unmodifiableSet(permissions);
@@ -70,19 +81,12 @@ public class CacheRoleImpl implements Role {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       CacheRoleImpl cacheRole = (CacheRoleImpl) o;
-
-      if (mask != cacheRole.mask) return false;
-      if (!name.equals(cacheRole.name)) return false;
-      return permissions.equals(cacheRole.permissions);
+      return inheritable == cacheRole.inheritable && mask == cacheRole.mask && name.equals(cacheRole.name);
    }
 
    @Override
    public int hashCode() {
-      int result = name.hashCode();
-      result = 31 * result + permissions.hashCode();
-      result = 31 * result + mask;
-      return result;
+      return Objects.hash(name, inheritable, mask);
    }
 }

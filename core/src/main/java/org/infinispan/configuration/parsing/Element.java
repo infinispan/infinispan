@@ -33,11 +33,13 @@ public enum Element {
     CLUSTERING,
     CLUSTER_LOADER,
     CLUSTER_STORE,
+    CLUSTER_PERMISSION_MAPPER,
     CLUSTER_ROLE_MAPPER,
     COMMON_NAME_ROLE_MAPPER,
     COMPATIBILITY,
     CUSTOM_INTERCEPTORS,
     CUSTOM_CONFIGURATION_STORAGE,
+    CUSTOM_PERMISSION_MAPPER,
     CUSTOM_ROLE_MAPPER,
     DATA,
     DATA_CONTAINER,
@@ -115,6 +117,7 @@ public enum Element {
     SITES,
     STATE_TRANSFER,
     STACK,
+    STACKS,
     STACK_FILE,
     STORE,
     STORE_AS_BINARY,
@@ -135,7 +138,7 @@ public enum Element {
     @Deprecated
     WHITE_LIST,
     WRITE_BEHIND,
-    STACKS;
+    ;
 
    private final String name;
 

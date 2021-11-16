@@ -1,0 +1,41 @@
+[id='configuring-role-mappers_{context}']
+= Configuring role mappers
+
+{brandname} enables the cluster role mapper and cluster permission mapper by default.
+You should configure role mappers if you want to use the identity role mapper, Common Name (CN) role mapper, or a custom implementation.
+For example, if your deployment integrates with an LDAP directory and you want to use the Distinguished Name (DN) as the security principal you can configure {brandname} to use the Common Name (CN) role mapper.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Declare the role mapper as part of the security authorization in the Cache Manager configuration.
+. Save the changes to your configuration.
+
+ifdef::embedded_caches[]
+With embedded caches you can programmatically configure role and permission mappers with the `principalRoleMapper()` and `rolePermissionMapper()` methods.
+endif::embedded_caches[]
+
+[discrete]
+== Role mapper configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/role_mapper.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/role_mapper.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/role_mapper.yaml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]

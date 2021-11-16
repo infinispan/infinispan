@@ -9,11 +9,11 @@ import org.infinispan.security.PrincipalRoleMapperContext;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class PrincipalRoleMapperContextImpl implements PrincipalRoleMapperContext {
+public class AuthorizationMapperContextImpl implements PrincipalRoleMapperContext {
 
    private final EmbeddedCacheManager cacheManager;
 
-   public PrincipalRoleMapperContextImpl(EmbeddedCacheManager cacheManager) {
+   public AuthorizationMapperContextImpl(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
 

@@ -151,7 +151,7 @@ public class AeshTestConnection implements Connection, AutoCloseable {
    public void close() {
       if (reading) { //close() can be invoked multiple times.
          //send a disconnect just in case the connection was left open
-         readln("disconnect");
+         send("disconnect");
       }
       reading = false;
       if (closeHandler != null)
@@ -173,14 +173,18 @@ public class AeshTestConnection implements Connection, AutoCloseable {
 
    }
 
-   private void doRead(int[] input) {
+   private void doSend(String input) {
+      doSend(Parser.toCodePoints(input));
+   }
+
+   private void doSend(int[] input) {
       if (reading) {
          if (stdinHandler != null) {
             stdinHandler.accept(input);
          } else {
             try {
                Thread.sleep(10);
-               doRead(input);
+               doSend(input);
             } catch (InterruptedException e) {
                e.printStackTrace();
             }
@@ -225,17 +229,19 @@ public class AeshTestConnection implements Connection, AutoCloseable {
             () -> expected.equals(bufferBuilder.toString()), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 
-   public void read(String data) {
-      doRead(Parser.toCodePoints(data));
-   }
-
-   public void readln(String data) {
-      read(data + Config.getLineSeparator());
+   public void send(String data) {
+      doSend(data + Config.getLineSeparator());
    }
 
    public void assertContains(String expected) {
       Eventually.eventually(
             () -> new ComparisonFailure("Expected output did not contain expected string after timeout", expected, bufferBuilder.toString()),
             () -> bufferBuilder.toString().contains(expected), 10_000, 50, TimeUnit.MILLISECONDS);
+   }
+
+   public void assertNotContains(String unexpected) {
+      Eventually.eventually(
+            () -> new ComparisonFailure("Expected output should not contain expected string after timeout", unexpected, bufferBuilder.toString()),
+            () -> !bufferBuilder.toString().contains(unexpected), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 }

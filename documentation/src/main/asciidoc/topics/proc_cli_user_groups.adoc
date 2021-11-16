@@ -1,0 +1,70 @@
+[id='adding-users-to-groups_{context}']
+= Adding users to groups
+
+Groups let you change permissions for multiple users.
+You assign a role to a group and then add users to that group.
+Users inherit permissions from the group role.
+
+[NOTE]
+====
+You use groups as part of a property realm in the {brandname} Server configuration.
+Each group is a special type of user that also requires a username and password.
+====
+
+.Prerequisites
+
+* Have `ADMIN` permissions for {brandname}.
+* Create {brandname} users.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Use the [command]`user create` command to create a group.
+.. Specify a group name with the `--groups` argument.
+.. Set a username and password for the group.
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user create --groups=developers developers -p changeme
+----
++
+. List groups.
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user ls --groups
+["developers"]
+----
++
+. Grant a role to the group.
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles grant --roles=application developers
+----
++
+. List roles for the group.
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles ls developers
+["application"]
+----
++
+. Add users to the group one at a time.
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user groups john --groups=developers
+----
+
+.Verification
+
+Open `groups.properties` and confirm the group exists.
+
+[source,options="nowrap",subs=attributes+]
+----
+$ cat server/conf/groups.properties
+
+developers=application
+----

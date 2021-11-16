@@ -1,0 +1,23 @@
+[id='role-mappers_{context}']
+= Role and permission mappers
+
+{brandname} users are implemented with the `javax.security.auth.Subject` class and represent a grouping of security principals of type `java.security.Principal`.
+
+{brandname} includes the `PrincipalRoleMapper` API to associate security principals to roles and the `RolePermissionMapper` API to associate roles with sets of permissions.
+{brandname} also provides the following role and permission mapper implementations:
+
+Cluster role mapper:: Stores principal to role mappings in the cluster registry.
+
+Cluster permission mapper:: Stores role to permission mappings in the cluster registry and allows you to dynamically modify user roles and permissions.
+
+Identity role mapper:: Uses the principal name as the role name. The type or format of the principal name depends on the source. For example in an LDAP directory the principal name could be a Distinguished Name (DN).
+
+Common name role mapper:: Uses the Common Name (CN) as the role name. You can use this role mapper with an LDAP directory that contains Distinguished Names (DN); for example `cn=managers,ou=people,dc=example,dc=com` maps to the `managers` role.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/security/package-summary.html[{brandname} Security API]
+* link:{javadocroot}/org/infinispan/security/PrincipalRoleMapper.html[org.infinispan.security.PrincipalRoleMapper]
+* link:{javadocroot}/org/infinispan/security/RolePermissionMapper.html[org.infinispan.security.RolePermissionMapper]
+* link:{javadocroot}/org/infinispan/security/mappers/IdentityRoleMapper.html[org.infinispan.security.mappers.IdentityRoleMapper]
+* link:{javadocroot}/org/infinispan/security/mappers/CommonNameRoleMapper.html[org.infinispan.security.mappers.CommonNameRoleMapper]

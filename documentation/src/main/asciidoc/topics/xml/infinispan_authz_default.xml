@@ -1,5 +1,0 @@
-<distributed-cache>
-  <security>
-    <!-- Inherit authorization settings from the cache-container. --> <authorization/>
-  </security>
-</distributed-cache>

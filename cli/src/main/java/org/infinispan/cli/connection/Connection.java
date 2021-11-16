@@ -95,5 +95,7 @@ public interface Connection extends Closeable {
 
    String getUsername();
 
+   Collection<String> getRoles() throws IOException;
+
    enum ResponseMode {QUIET, BODY, FILE, HEADERS}
 }

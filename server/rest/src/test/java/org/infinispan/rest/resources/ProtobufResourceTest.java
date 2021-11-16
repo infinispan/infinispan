@@ -32,7 +32,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    @Override
    public void createBeforeMethod() {
       //Clear schema cache to avoid conflicts between methods
-      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
          cacheManagers.get(0).getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME).clear();
          return null;
       });

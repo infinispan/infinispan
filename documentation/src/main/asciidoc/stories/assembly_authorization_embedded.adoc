@@ -1,0 +1,18 @@
+[id='rbac-embedded']
+:context: rbac-embedded
+= Programmatically configuring user roles and permissions
+
+Configure security authorization programmatically when using embedded caches in Java applications.
+
+include::{topics}/ref_default_user_roles.adoc[leveloffset=+1]
+include::{topics}/ref_permissions.adoc[leveloffset=+2]
+include::{topics}/ref_role_permission_mappers.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_role_mappers.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_authorization_embedded.adoc[leveloffset=+1]
+include::{topics}/proc_adding_authorization_roles.adoc[leveloffset=+1]
+include::{topics}/proc_executing_secure_caches.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_acl_cache.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -1,0 +1,34 @@
+[id='granting-roles-to-users_{context}']
+= Granting roles to users
+
+Assign roles to users and grant them permissions to perform cache operations and interact with {brandname} resources.
+
+[TIP]
+====
+Grant roles to groups instead of users if you want to assign the same role to multiple users and centrally maintain their permissions.
+====
+
+.Prerequisites
+
+* Have `ADMIN` permissions for {brandname}.
+* Create {brandname} users.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Assign roles to users with the [command]`user roles grant` command, for example:
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles grant --roles=deployer katie
+----
+
+.Verification
+
+List roles that you grant to users with the [command]`user roles ls` command.
+
+[source,sh,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles ls katie
+["deployer"]
+----

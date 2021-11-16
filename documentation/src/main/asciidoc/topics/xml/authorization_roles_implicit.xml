@@ -1,0 +1,5 @@
+<distributed-cache>
+  <security>
+    <authorization/>
+  </security>
+</distributed-cache>

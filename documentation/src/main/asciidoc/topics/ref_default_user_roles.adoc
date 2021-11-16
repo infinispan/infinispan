@@ -1,16 +1,7 @@
-[id='user-roles-permissions_{context}']
-= User roles and permissions
+[id='default-user-roles_{context}']
+= {brandname} user roles and permissions
 
-{brandname} includes a default set of roles that grant users with permissions to access data and interact with {brandname} resources.
-
-`ClusterRoleMapper` is the default mechanism that {brandname} uses to associate security principals to authorization roles.
-
-[IMPORTANT]
-====
-`ClusterRoleMapper` matches principal names to role names.
-A user named `admin` gets `admin` permissions automatically, a user named `deployer` gets `deployer` permissions, and so on.
-====
-
+{brandname} includes several roles that provide users with permissions to access caches and {brandname} resources.
 
 [cols="1,1,1"]
 |===
@@ -38,7 +29,7 @@ A user named `admin` gets `admin` permissions automatically, a user named `deplo
 
 |===
 
-.Reference
-
-* link:{javadocroot}[org.infinispan.security.AuthorizationPermission Enumeration]
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/security/AuthorizationPermission.html[org.infinispan.security.AuthorizationPermission Enum]
 * link:{configdocroot}[{brandname} configuration schema reference]

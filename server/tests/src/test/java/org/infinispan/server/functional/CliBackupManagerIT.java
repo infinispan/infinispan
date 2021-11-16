@@ -55,9 +55,9 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       String backupName = "partial-backup";
       String fileName = backupName + ".zip";
       try (AeshTestConnection t = cli(source)) {
-         t.readln("backup create --templates=* -n " + backupName);
+         t.send("backup create --templates=* -n " + backupName);
          // Ensure that the backup has finished before stopping the source cluster
-         t.readln("backup get --no-content " + backupName);
+         t.send("backup get --no-content " + backupName);
       }
       source.driver.syncFilesFromServer(0, "data");
       Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
@@ -92,9 +92,9 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
 
       try (AeshTestConnection t = cli(source)) {
          t.clear();
-         t.readln(String.format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
+         t.send(String.format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
          // Ensure that the backup has finished before stopping the source cluster
-         t.readln("backup get --no-content " + backupName);
+         t.send("backup get --no-content " + backupName);
       }
       localBackupDir = new File(source.driver.syncFilesFromServer(0, serverBackupDir.getAbsolutePath()));
       if (!localBackupDir.getName().equals("custom-dir")) {
@@ -109,15 +109,15 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       String backupName = "server-backup";
       String fileName = backupName + ".zip";
       try (AeshTestConnection t = cli(source)) {
-         t.readln("create cache --template=org.infinispan.DIST_SYNC backupCache");
-         t.readln("cd caches/backupCache");
-         t.readln("put k1 v1");
-         t.readln("ls");
+         t.send("create cache --template=org.infinispan.DIST_SYNC backupCache");
+         t.send("cd caches/backupCache");
+         t.send("put k1 v1");
+         t.send("ls");
          t.assertContains("k1");
          t.clear();
-         t.readln("backup create -n " + backupName);
+         t.send("backup create -n " + backupName);
          // Ensure that the backup has finished before stopping the source cluster
-         t.readln("backup get --no-content " + backupName);
+         t.send("backup get --no-content " + backupName);
       }
 
       source.driver.syncFilesFromServer(0, "data");
@@ -129,9 +129,9 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       createdBackup = Paths.get(target.driver.syncFilesToServer(0, createdBackup.toString()));
 
       try (AeshTestConnection t = cli(target)) {
-         t.readln("backup restore " + createdBackup);
+         t.send("backup restore " + createdBackup);
          Thread.sleep(1000);
-         t.readln("ls caches/backupCache");
+         t.send("ls caches/backupCache");
          t.assertContains("k1");
       }
       Files.deleteIfExists(createdBackup);
@@ -142,17 +142,17 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       startSourceCluster();
       Path createdBackup;
       try (AeshTestConnection t = cli(source)) {
-         t.readln("create cache --template=org.infinispan.DIST_SYNC backupCache");
-         t.readln("cd caches/backupCache");
-         t.readln("put k1 v1");
-         t.readln("ls");
+         t.send("create cache --template=org.infinispan.DIST_SYNC backupCache");
+         t.send("cd caches/backupCache");
+         t.send("put k1 v1");
+         t.send("ls");
          t.assertContains("k1");
          t.clear();
          String backupName = "example-backup";
-         t.readln("backup create -n " + backupName);
-         t.readln("backup get " + backupName);
+         t.send("backup create -n " + backupName);
+         t.send("backup get " + backupName);
          Thread.sleep(1000);
-         t.readln("backup delete " + backupName);
+         t.send("backup delete " + backupName);
          String fileName = backupName + ".zip";
          createdBackup = Paths.get(System.getProperty("user.dir")).resolve(fileName);
       }
@@ -161,9 +161,9 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       startTargetCluster();
 
       try (AeshTestConnection t = cli(target)) {
-         t.readln("backup restore -u " + createdBackup);
+         t.send("backup restore -u " + createdBackup);
          Thread.sleep(1000);
-         t.readln("ls caches/backupCache");
+         t.send("ls caches/backupCache");
          t.assertContains("k1");
       }
       Files.delete(createdBackup);
@@ -174,7 +174,7 @@ public class CliBackupManagerIT extends AbstractMultiClusterIT {
       CLI.main(new AeshDelegatingShell(t), new String[]{}, new Properties());
       String host = cluster.driver.getServerAddress(0).getHostAddress();
       int port = cluster.driver.getServerSocket(0, 11222).getPort();
-      t.readln(String.format("connect %s:%d", host, port));
+      t.send(String.format("connect %s:%d", host, port));
       t.assertContains("//containers/default]>");
       t.clear();
       return t;

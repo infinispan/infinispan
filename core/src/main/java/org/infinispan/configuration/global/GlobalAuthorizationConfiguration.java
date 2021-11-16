@@ -16,8 +16,8 @@ import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
+import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.audit.NullAuditLogger;
-import org.infinispan.security.impl.CacheRoleImpl;
 
 /**
  * GlobalAuthorizationConfiguration.
@@ -26,7 +26,7 @@ import org.infinispan.security.impl.CacheRoleImpl;
  * @since 7.0
  */
 public class GlobalAuthorizationConfiguration {
-   private static final Map<String, Role> DEFAULT_ROLES;
+   public static final Map<String, Role> DEFAULT_ROLES;
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUDIT_LOGGER, (AuditLogger) new NullAuditLogger())
          .copier(identityCopier()).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
@@ -44,15 +44,15 @@ public class GlobalAuthorizationConfiguration {
 
    static {
       Map<String, Role> roles = new HashMap<>();
-      roles.put("admin", new CacheRoleImpl("admin", true, AuthorizationPermission.ALL));
-      roles.put("application", new CacheRoleImpl("application", true,
+      roles.put("admin", Role.newRole("admin", true, AuthorizationPermission.ALL));
+      roles.put("application", Role.newRole("application", true,
             AuthorizationPermission.ALL_READ,
             AuthorizationPermission.ALL_WRITE,
             AuthorizationPermission.LISTEN,
             AuthorizationPermission.EXEC,
             AuthorizationPermission.MONITOR
       ));
-      roles.put("deployer", new CacheRoleImpl("deployer", true,
+      roles.put("deployer", Role.newRole("deployer", true,
             AuthorizationPermission.ALL_READ,
             AuthorizationPermission.ALL_WRITE,
             AuthorizationPermission.LISTEN,
@@ -60,18 +60,18 @@ public class GlobalAuthorizationConfiguration {
             AuthorizationPermission.CREATE,
             AuthorizationPermission.MONITOR
       ));
-      roles.put("observer", new CacheRoleImpl("observer", true,
+      roles.put("observer", Role.newRole("observer", true,
             AuthorizationPermission.ALL_READ,
             AuthorizationPermission.MONITOR
       ));
-      roles.put("monitor", new CacheRoleImpl("monitor", true,
+      roles.put("monitor", Role.newRole("monitor", true,
             AuthorizationPermission.MONITOR
       ));
       // Deprecated roles. Will be removed in Infinispan 16.0
-      roles.put("___schema_manager", new CacheRoleImpl("___schema_manager", false,
+      roles.put("___schema_manager", Role.newRole("___schema_manager", false,
             AuthorizationPermission.CREATE
       ));
-      roles.put("___script_manager", new CacheRoleImpl("___script_manager", false,
+      roles.put("___script_manager", Role.newRole("___script_manager", false,
             AuthorizationPermission.CREATE
       ));
       DEFAULT_ROLES = Collections.unmodifiableMap(roles);
@@ -79,17 +79,21 @@ public class GlobalAuthorizationConfiguration {
 
    private final Attribute<Boolean> enabled;
    private final Attribute<AuditLogger> auditLogger;
-   private final Attribute<Map<String, Role>> roles;
+   private final Map<String, Role> roles;
    private final PrincipalRoleMapperConfiguration roleMapperConfiguration;
+   private final RolePermissionMapperConfiguration permissionMapperConfiguration;
+   private final RolePermissionMapper rolePermissionMapper;
 
    private final AttributeSet attributes;
 
-   public GlobalAuthorizationConfiguration(AttributeSet attributes, PrincipalRoleMapperConfiguration roleMapperConfiguration) {
+   public GlobalAuthorizationConfiguration(AttributeSet attributes, PrincipalRoleMapperConfiguration roleMapperConfiguration, RolePermissionMapperConfiguration permissionMapperConfiguration) {
       this.attributes = attributes.checkProtection();
       this.enabled = attributes.attribute(ENABLED);
       this.auditLogger = attributes.attribute(AUDIT_LOGGER);
-      this.roles = attributes.attribute(ROLES);
+      this.roles = attributes.attribute(ROLES).get();
       this.roleMapperConfiguration = roleMapperConfiguration;
+      this.permissionMapperConfiguration = permissionMapperConfiguration;
+      this.rolePermissionMapper = permissionMapperConfiguration.permissionMapper();
    }
 
    public boolean enabled() {
@@ -104,29 +108,47 @@ public class GlobalAuthorizationConfiguration {
       return roleMapperConfiguration.roleMapper();
    }
 
+   public RolePermissionMapper rolePermissionMapper() {
+      return rolePermissionMapper;
+   }
+
    public PrincipalRoleMapperConfiguration roleMapperConfiguration() {
       return roleMapperConfiguration;
    }
 
    public boolean isDefaultRoles() {
-      return roles.get() == DEFAULT_ROLES;
+      return roles == DEFAULT_ROLES;
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      GlobalAuthorizationConfiguration that = (GlobalAuthorizationConfiguration) o;
-      return Objects.equals(roleMapperConfiguration, that.roleMapperConfiguration) && Objects.equals(attributes, that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(roleMapperConfiguration, attributes);
+   public RolePermissionMapperConfiguration permissionMapperConfiguration() {
+      return permissionMapperConfiguration;
    }
 
    public Map<String, Role> roles() {
-      return roles.get();
+      Map<String, Role> all = new HashMap<>(roles);
+      if (rolePermissionMapper != null) {
+         all.putAll(rolePermissionMapper.getAllRoles());
+      }
+      return all;
+   }
+
+   public void addRole(Role role) {
+      roles.put(role.getName(), role);
+   }
+
+   public boolean hasRole(String name) {
+      return roles.containsKey(name) || (rolePermissionMapper != null && rolePermissionMapper.hasRole(name));
+   }
+
+   public Role getRole(String name) {
+      Role role = roles.get(name);
+      if (role != null) {
+         return role;
+      } else if (rolePermissionMapper != null) {
+         return rolePermissionMapper.getRole(name);
+      } else {
+         return null;
+      }
    }
 
    public AttributeSet attributes() {
@@ -134,11 +156,26 @@ public class GlobalAuthorizationConfiguration {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GlobalAuthorizationConfiguration that = (GlobalAuthorizationConfiguration) o;
+      return Objects.equals(roleMapperConfiguration, that.roleMapperConfiguration) &&
+            Objects.equals(permissionMapperConfiguration, that.permissionMapperConfiguration) &&
+            Objects.equals(attributes, that.attributes);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(roleMapperConfiguration, permissionMapperConfiguration, attributes);
+   }
+
+   @Override
    public String toString() {
       return "GlobalAuthorizationConfiguration{" +
             "roleMapperConfiguration=" + roleMapperConfiguration +
+            "permissionMapperConfiguration=" + permissionMapperConfiguration +
             ", attributes=" + attributes +
             '}';
    }
-
 }

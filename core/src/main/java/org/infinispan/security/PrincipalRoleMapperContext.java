@@ -1,16 +1,12 @@
 package org.infinispan.security;
 
-import org.infinispan.manager.EmbeddedCacheManager;
-
 /**
  * PrincipalRoleMapperContext.
  *
  * @author Tristan Tarrant
  * @since 7.0
+ * @deprecated since 14.0. To be removed in 17.0. Use {@link AuthorizationMapperContext} instead
  */
-public interface PrincipalRoleMapperContext {
-   /**
-    * Returns the {@link EmbeddedCacheManager} in which this role mapper is being instantiated
-    */
-   EmbeddedCacheManager getCacheManager();
+@Deprecated
+public interface PrincipalRoleMapperContext extends AuthorizationMapperContext {
 }

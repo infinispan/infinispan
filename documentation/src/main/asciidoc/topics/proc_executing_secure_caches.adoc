@@ -1,0 +1,36 @@
+[id='executing-secure-caches_{context}']
+= Executing code with secure caches
+
+When you construct a `DefaultCacheManager` for an embedded cache that uses security authorization, the Cache Manager returns a `SecureCache` that checks the security context before invoking any operations.
+A `SecureCache` also ensures that applications cannot retrieve lower-level insecure objects such as `DataContainer`.
+For this reason, you must execute code with a {brandname} user that has a role with the appropriate level of permission.
+
+.Prerequisites
+
+* Configure authorization for embedded caches.
+
+.Procedure
+
+. If necessary, retrieve the current Subject from the {brandname} context or `AccessControlContext`:
++
+[source,java]
+----
+Security.getSubject();
+----
+. Wrap method calls in a `PrivilegedAction` to execute them with the Subject.
++
+[source,java]
+----
+Security.doAs(mySubject, PrivilegedAction<String>() -> cache.put("key", "value"));
+----
+
+[NOTE]
+====
+You can use the `Security.doAs()` or `Subject.doAs()` method.
+{brandname} recommends `Security.doAs()` for better performance.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/security/Security.html[org.infinispan.security.Security]
+* link:{javadocroot}/org/infinispan/security/SecureCache.html[org.infinispan.security.SecureCache]

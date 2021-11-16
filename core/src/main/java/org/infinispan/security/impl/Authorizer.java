@@ -13,6 +13,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalSecurityConfiguration;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuditLogger;
@@ -145,10 +146,11 @@ public class Authorizer {
    }
 
    private SubjectACL computeSubjectACL(Subject subject, AuthorizationConfiguration configuration) {
-      PrincipalRoleMapper roleMapper = globalConfiguration.authorization().principalRoleMapper();
+      GlobalAuthorizationConfiguration authorization = globalConfiguration.authorization();
+      PrincipalRoleMapper roleMapper = authorization.principalRoleMapper();
       Set<Principal> principals = subject.getPrincipals();
       Set<String> allRoles = new HashSet<>(principals.size());
-      // Map all of the Subject's principals to roles using the role mapper. There maybe be more than one role per principal
+      // Map all the Subject's principals to roles using the role mapper. There may be more than one role per principal
       for (Principal principal : principals) {
          Set<String> roleNames = roleMapper.principalToRoles(principal);
          if (roleNames != null) {
@@ -157,12 +159,11 @@ public class Authorizer {
       }
       // Create a bitmask of the permissions this Subject has for the resource identified by the configuration
       int subjectMask = 0;
-      Map<String, Role> globalRoles = globalConfiguration.authorization().roles();
-      // If this resource has not declared any roles, all of the inheritable global roles will be checked
+      // If this resource has not declared any roles, all the inheritable global roles will be checked
       boolean implicit = configuration != null ? configuration.roles().isEmpty() : false;
       for (String role : allRoles) {
          if (configuration == null || implicit || configuration.roles().contains(role)) {
-            Role globalRole = globalRoles.get(role);
+            Role globalRole = authorization.getRole(role);
             if (globalRole != null && (!implicit || globalRole.isInheritable())) {
                subjectMask |= globalRole.getMask();
             }

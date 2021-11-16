@@ -1,12 +1,10 @@
 [id='user-permissions_{context}']
 = Permissions
 
-Authorization roles have different permissions with varying levels of access to {brandname}.
-Permissions let you restrict user access to both Cache Managers and caches.
+User roles are sets of permissions with different access levels.
 
-== Cache Manager permissions
-
-[%header,cols=3*]
+.Cache Manager permissions
+[%autowidth,cols="1,1,1",stripes=even]
 |===
 |Permission
 |Function
@@ -37,9 +35,8 @@ Permissions let you restrict user access to both Cache Managers and caches.
 |Includes all Cache Manager permissions.
 |===
 
-== Cache permissions
-
-[%header,cols=3*]
+.Cache permissions
+[%autowidth,cols="1,1,1",stripes=even]
 |===
 |Permission
 |Function
@@ -93,7 +90,6 @@ Permissions let you restrict user access to both Cache Managers and caches.
 |-
 |Combines the WRITE and BULK_WRITE permissions.
 |===
-
 
 [role="_additional-resources"]
 .Additional resources

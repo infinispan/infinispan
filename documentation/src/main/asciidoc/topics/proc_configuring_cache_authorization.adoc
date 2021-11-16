@@ -1,62 +1,65 @@
 [id='configuring-cache-authorization_{context}']
 = Configuring caches with security authorization
 
-Use authorization in your cache configuration to restrict user access.
-Before they can read or write cache entries, or create and delete caches, users must have a role with a sufficient level of permission.
+Add security authorization to caches to enforce role-based access control (RBAC).
+This requires {brandname} users to have a role with a sufficient level of permission to perform cache operations.
 
 .Prerequisites
 
-* Ensure the `authorization` element is included in the `security` section of the `cache-container` configuration.
-+
-{brandname} enables security authorization in the Cache Manager by default and provides a global set of roles and permissions for caches.
-* If necessary, declare custom roles and permissions in the Cache Manager configuration.
+* Create {brandname} users and either grant them with roles or assign them to groups.
 
 .Procedure
 
-. Open your cache configuration for editing.
-. Add the `authorization` element to caches to restrict user access based on their roles and permissions.
+. Open your {brandname} configuration for editing.
+. Add a `security` section to the configuration.
+. Specify roles that users must have to perform cache operations with the `authorization` element.
++
+You can implicitly add all roles defined in the Cache Manager or explicitly define a subset of roles.
 . Save the changes to your configuration.
 
 [discrete]
-== Authorization configuration
+== Implicit role configuration
 
-The following configuration shows how to use implicit authorization configuration with default roles and permissions:
+The following configuration implicitly adds every role defined in the Cache Manager:
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/infinispan_authz_default.xml[]
+include::xml/authorization_roles_implicit.xml[]
 ----
 
 .JSON
 [source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::json/infinispan_authz_default.json[]
+include::json/authorization_roles_implicit.json[]
 ----
 
 .YAML
 [source,yaml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::yaml/infinispan_authz_default.yaml[]
+include::yaml/authorization_roles_implicit.yaml[]
 ----
 
 [discrete]
-== Custom roles and permissions
+== Explicit role configuration
+
+The following configuration explicitly adds a subset of roles defined in the Cache Manager.
+In this case {brandname} denies cache operations for any users that do not have one of the configured roles.
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/infinispan_authz_custom.xml[]
+include::xml/authorization_roles_explicit.xml[]
 ----
 
 .JSON
 [source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::json/infinispan_authz_custom.json[]
+include::json/authorization_roles_explicit.json[]
 ----
 
 .YAML
 [source,yaml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::yaml/infinispan_authz_custom.yaml[]
+include::yaml/authorization_roles_explicit.yaml[]
 ----

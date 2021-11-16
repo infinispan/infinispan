@@ -5,11 +5,11 @@ import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
 import static org.infinispan.scripting.ScriptingManager.SCRIPT_MANAGER_ROLE;
 
 import java.util.EnumSet;
-import java.util.Map;
 
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -21,9 +21,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.Role;
-import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 
 /**
@@ -74,12 +71,12 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
       cfg.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
-      if (globalConfiguration.security().authorization().enabled()) {
-         Map<String, Role> globalRoles = globalConfiguration.security().authorization().roles();
-         globalRoles.put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, false, AuthorizationPermission.ALL));
+      GlobalAuthorizationConfiguration globalAuthz = globalConfiguration.security().authorization();
+      if (globalAuthz.enabled()) {
+         globalAuthz.addRole(GlobalAuthorizationConfiguration.DEFAULT_ROLES.get(SCRIPT_MANAGER_ROLE));
          AuthorizationConfigurationBuilder authorization = cfg.security().authorization().enable();
          // Copy all global roles
-         globalRoles.keySet().forEach(role -> authorization.role(role));
+         globalAuthz.roles().keySet().forEach(role -> authorization.role(role));
          // Add a special module which translates permissions
          cfg.addModule(CreatePermissionConfigurationBuilder.class);
       }

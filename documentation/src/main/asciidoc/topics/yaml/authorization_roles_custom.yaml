@@ -1,0 +1,12 @@
+infinispan:
+  cacheContainer:
+    name: "custom-authorization"
+    security:
+      authorization:
+        roles:
+          temprole:
+            role:
+              permissions: "ALL_WRITE LISTEN"
+          myrole:
+            role:
+              permissions: "READ WRITE"

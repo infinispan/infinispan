@@ -66,11 +66,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    public static final String REALM = "ApplicationRealm";
-   public static final Subject ADMIN_USER = TestingUtil.makeSubject("ADMIN", ScriptingManager.SCRIPT_MANAGER_ROLE, ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
+   public static final Subject ADMIN = TestingUtil.makeSubject("ADMIN", ScriptingManager.SCRIPT_MANAGER_ROLE, ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
    public static final Subject USER = TestingUtil.makeSubject("USER", ScriptingManager.SCRIPT_MANAGER_ROLE, ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    protected RestClient client;
+   protected RestClient adminClient;
    private static final int NUM_SERVERS = 2;
    private final List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
@@ -121,12 +122,12 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    protected void addSecurity(GlobalConfigurationBuilder globalBuilder) {
       globalBuilder.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper())
             .role("ADMIN").permission(AuthorizationPermission.ALL)
-            .role("USER").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC);
+            .role("USER").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC, AuthorizationPermission.BULK_READ);
    }
 
    @Override
    protected void createCacheManagers() throws Exception {
-      Security.doAs(ADMIN_USER, () -> {
+      Security.doAs(ADMIN, () -> {
          for (int i = 0; i < NUM_SERVERS; i++) {
             GlobalConfigurationBuilder configForNode = getGlobalConfigForNode(i);
             addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(configForNode.build()), getDefaultCacheBuilder(), TransportFlags.minimalXsiteFlags());
@@ -148,7 +149,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             }).toArray(String[]::new));
             RestServerHelper restServerHelper = new RestServerHelper(cm);
             if (isSecurityEnabled()) {
-               BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(ADMIN_USER, USER), REALM);
+               BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(ADMIN, USER), REALM);
                restServerHelper.withAuthenticator(basicAuthenticator);
             }
             if (ssl) {
@@ -159,7 +160,9 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             restServers.add(restServerHelper);
          }
       });
-      client = RestClient.forConfiguration(getClientConfig().build());
+
+      adminClient = RestClient.forConfiguration(getClientConfig("admin", "admin").build());
+      client = RestClient.forConfiguration(getClientConfig("user", "user").build());
    }
 
    protected RestServerHelper restServer() {
@@ -171,16 +174,17 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    @AfterClass
    public void afterClass() {
-      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
          restServers.forEach(RestServerHelper::stop);
          return null;
       });
       Util.close(client);
+      Util.close(adminClient);
    }
 
    @AfterMethod
    public void afterMethod() {
-      Security.doAs(ADMIN_USER, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
          restServers.forEach(RestServerHelper::clear);
          return null;
       });
@@ -232,7 +236,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       removeFromCache(cacheName, key, TEXT_PLAIN_TYPE);
    }
 
-   protected RestClientConfigurationBuilder getClientConfig() {
+   protected RestClientConfigurationBuilder getClientConfig(String username, String password) {
       RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
       if (protocol != null) {
          clientConfigurationBuilder.protocol(protocol);
@@ -244,7 +248,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
                .keyStoreFileName(CLIENT_KEY_STORE).keyStorePassword(STORE_PASSWORD).keyStoreType(STORE_TYPE);
       }
       if (isSecurityEnabled()) {
-         clientConfigurationBuilder.security().authentication().enable().username("user").password("user");
+         clientConfigurationBuilder.security().authentication().enable().username(username).password(password);
       }
       restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
       return clientConfigurationBuilder;
