@@ -312,7 +312,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public void testMutableAttributes() {
       String cacheName = "mutable-attributes";
       String json = "{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}";
-      RestCacheClient cacheClient = createCache(json, cacheName);
+      RestCacheClient cacheClient = createCache(adminClient, json, cacheName);
       CompletionStage<RestResponse> response = cacheClient.configurationAttributes(true);
       assertThat(response).isOk();
       Json attributes = Json.read(join(response).getBody());
@@ -514,13 +514,17 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       return createCache(cacheConfigToJson(name, builder.build()), name);
    }
 
-   private RestCacheClient createCache(String json, String name) {
+   private RestCacheClient createCache(RestClient c, String json, String name) {
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, json);
 
-      RestCacheClient cache = client.cache(name);
+      RestCacheClient cache = c.cache(name);
       CompletionStage<RestResponse> response = cache.createWithConfiguration(jsonEntity);
       assertThat(response).isOk();
       return cache;
+   }
+
+   private RestCacheClient createCache(String json, String name) {
+      return createCache(client, json, name);
    }
 
    private Json getCacheDetail(String name) {
@@ -813,7 +817,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String cacheName = "default";
       assertRebalancingStatus(cacheName, true);
 
-      RestCacheClient cacheClient = client.cache(cacheName);
+      RestCacheClient cacheClient = adminClient.cache(cacheName);
       RestResponse response = join(cacheClient.disableRebalancing());
       ResponseAssertion.assertThat(response).isOk();
       assertRebalancingStatus(cacheName, false);
@@ -985,17 +989,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testSearchStatistics() {
-      RestCacheClient cacheClient = client.cache("indexedCache");
+      RestCacheClient cacheClient = adminClient.cache("indexedCache");
       join(cacheClient.clear());
 
       // Clear all stats
       RestResponse response = join(cacheClient.clearSearchStats());
-      assertThat(response).isOk();
-      if (security) {
-         RestClient adminClient = RestClient.forConfiguration(getClientConfig().security().authentication().username("admin").password("admin").build());
-         response = join(adminClient.cache("indexedCache").clearSearchStats());
-         Util.close(adminClient);
-      }
       assertThat(response).isOk();
       response = join(cacheClient.searchStats());
       Json statJson = Json.read(response.getBody());
@@ -1182,7 +1180,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCacheAvailability() {
-      RestCacheClient cacheClient = client.cache("denyReadWritesCache");
+      RestCacheClient cacheClient = adminClient.cache("denyReadWritesCache");
       RestResponse restResponse = join(cacheClient.getAvailability());
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
 
@@ -1193,7 +1191,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("DEGRADED_MODE");
 
       // Ensure that the endpoints can be utilised with internal caches
-      cacheClient = client.cache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME);
+      cacheClient = adminClient.cache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME);
       restResponse = join(cacheClient.getAvailability());
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
 

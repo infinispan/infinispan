@@ -46,7 +46,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
-      RestClientConfigurationBuilder builder = super.getClientConfig();
+      RestClientConfigurationBuilder builder = super.getClientConfig("admin", "admin");
       builder.followRedirects(false).addServer().host(restServer().getHost()).port(restServer().getPort());
       noRedirectsClient = RestClient.forConfiguration(builder.build());
    }

@@ -2,6 +2,8 @@ package org.infinispan.security;
 
 import java.util.Collection;
 
+import org.infinispan.security.impl.CacheRoleImpl;
+
 /**
  * A role to permission mapping.
  *
@@ -28,4 +30,8 @@ public interface Role {
     * Whether this role can be implicitly inherited.
     */
    boolean isInheritable();
+
+   static Role newRole(String name, boolean inheritable, AuthorizationPermission... authorizationPermissions) {
+      return new CacheRoleImpl(name, inheritable, authorizationPermissions);
+   }
 }

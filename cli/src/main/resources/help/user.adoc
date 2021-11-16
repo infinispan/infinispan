@@ -30,6 +30,10 @@ SYNOPSIS
 
 *user roles deny* --roles='role1'[,'role2'...] 'principal'
 
+*user roles create* --permissions='perm1'[,'perm2'...] 'role'
+
+*user roles remove* 'role'
+
 
 DESCRIPTION
 -----------
@@ -69,6 +73,12 @@ Grants one or more roles to a principal.
 
 *user roles deny* --roles='role1'[,'role2'...] 'principal'::
 Denies one or more roles to a principal.
+
+*user roles create* --permissions='perm1'[,'perm2'...] 'role'::
+Creates a new role with the specified permissions.
+
+*user roles remove* 'role'::
+Deletes an existing role.
 
 
 COMMON OPTIONS
@@ -120,3 +130,11 @@ USER ENCRYPT-ALL OPTIONS
 
 *-a, --algorithms*::
 Specifies the algorithms used to hash the password.
+
+
+USER ROLES OPTIONS
+------------------
+
+*-p, --permissions*::
+Specifies one or more of the following permissions: `LIFECYCLE`, `READ`, `WRITE`, `EXEC`, `LISTEN`,
+`BULK_READ`, `BULK_WRITE`, `ADMIN`, `CREATE`, `MONITOR`, `ALL`, `ALL_READ`, `ALL_WRITE`

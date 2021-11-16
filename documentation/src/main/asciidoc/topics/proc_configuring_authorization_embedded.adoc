@@ -1,0 +1,36 @@
+[id='configuring-authorization-embedded_{context}']
+= Enabling and configuring authorization for embedded caches
+
+When using embedded caches, you can configure authorization with the `GlobalSecurityConfigurationBuilder` and `ConfigurationBuilder` classes.
+
+.Procedure
+
+. Construct a `GlobalConfigurationBuilder` and enable security authorization with the `security().authorization().enable()` method.
+. Specify a role mapper with the `principalRoleMapper()` method.
+. If required, define custom role and permission mappings with the `role()` and `permission()` methods.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/GlobalAuthorizationConfiguration.java[]
+----
+. Enable authorization for caches in the `ConfigurationBuilder`.
++
+* Add all roles from the global configuration.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+ConfigurationBuilder config = new ConfigurationBuilder();
+config.security().authorization().enable();
+----
++
+* Explicitly define roles for a cache so that {brandname} denies access for users who do not have the role.
++
+----
+ConfigurationBuilder config = new ConfigurationBuilder();
+config.security().authorization().enable().role("admin");
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/configuration/global/GlobalSecurityConfigurationBuilder.html[org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder]
+* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

@@ -4,8 +4,10 @@
 The command line interface (CLI) lets you remotely connect to {brandname} Server to access data and perform administrative functions.
 Complete the following procedures to learn basic CLI usage such as creating users, connecting to {brandname}, and navigating resources.
 
-include::{topics}/proc_cli_creating_users.adoc[leveloffset=+1]
-include::{topics}/ref_user_roles_permissions.adoc[leveloffset=+2]
+include::{topics}/proc_cli_user_create.adoc[leveloffset=+1]
+include::{topics}/proc_cli_user_grant_roles.adoc[leveloffset=+2]
+include::{topics}/proc_cli_user_groups.adoc[leveloffset=+2]
+include::{topics}/ref_default_user_roles.adoc[leveloffset=+2]
 include::{topics}/proc_cli_connecting.adoc[leveloffset=+1]
 include::{topics}/proc_cli_navigating.adoc[leveloffset=+1]
 include::{topics}/ref_cli_resource_tree.adoc[leveloffset=+2]

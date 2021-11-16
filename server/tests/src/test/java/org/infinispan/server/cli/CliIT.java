@@ -16,6 +16,7 @@ import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.AeshTestShell;
 import org.infinispan.server.test.core.Common;
@@ -37,7 +38,7 @@ public class CliIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+         InfinispanServerRuleBuilder.config("configuration/AuthorizationImplicitTest.xml")
                .mavenArtifacts(Common.NASHORN_DEPS)
                .runMode(ServerRunMode.CONTAINER)
                .build();
@@ -67,81 +68,81 @@ public class CliIT {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
-         terminal.readln("echo Hi");
+         terminal.send("echo Hi");
          terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
          terminal.clear();
          connect(terminal);
-         terminal.readln("stats");
+         terminal.send("stats");
          terminal.assertContains("required_minimum_number_of_nodes");
          terminal.clear();
-         terminal.readln("create cache --template=org.infinispan.DIST_SYNC dcache");
-         terminal.readln("cd caches/dcache");
+         terminal.send("create cache --template=org.infinispan.DIST_SYNC dcache");
+         terminal.send("cd caches/dcache");
          terminal.assertContains("//containers/default/caches/dcache]>");
-         terminal.readln("put k1 v1");
+         terminal.send("put k1 v1");
          terminal.clear();
-         terminal.readln("ls");
+         terminal.send("ls");
          terminal.assertContains("k1");
-         terminal.readln("get k1");
+         terminal.send("get k1");
          terminal.assertContains("v1");
-         terminal.readln("put --ttl=10 k2 v2");
+         terminal.send("put --ttl=10 k2 v2");
          terminal.clear();
-         terminal.readln("describe k2");
+         terminal.send("describe k2");
          terminal.assertContains("\"timetoliveseconds\" : [ \"10\" ]");
 
-         terminal.readln("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
-         terminal.readln("schema upload -f=" + getCliResource("person.proto").getPath() + " person.proto");
+         terminal.send("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
+         terminal.send("schema upload -f=" + getCliResource("person.proto").getPath() + " person.proto");
          terminal.clear();
-         terminal.readln("cd /containers/default/schemas");
-         terminal.readln("ls");
+         terminal.send("cd /containers/default/schemas");
+         terminal.send("ls");
          terminal.assertContains("person.proto");
-         terminal.readln("cache qcache");
+         terminal.send("cache qcache");
          terminal.assertContains("//containers/default/caches/qcache]>");
          for (String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
-            terminal.readln("put --encoding=application/json --file=" + getCliResource(person + ".json").getPath() + " " + person);
+            terminal.send("put --encoding=application/json --file=" + getCliResource(person + ".json").getPath() + " " + person);
          }
          terminal.clear();
-         terminal.readln("ls");
+         terminal.send("ls");
          for (String person : Arrays.asList("jessicajones", "dannyrandy", "lukecage", "matthewmurdock")) {
             terminal.assertContains(person);
          }
          terminal.clear();
-         terminal.readln("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
+         terminal.send("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
          terminal.assertContains("\"total_results\":3,");
 
          terminal.clear();
 
-         terminal.readln("stats");
+         terminal.send("stats");
          terminal.assertContains("required_minimum_number_of_nodes");
 
          // COUNTERS
-         terminal.readln("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
-         terminal.readln("cd /containers/default/counters/cnt1");
-         terminal.readln("describe");
+         terminal.send("create counter --type=strong --storage=PERSISTENT --upper-bound=100 cnt1");
+         terminal.send("cd /containers/default/counters/cnt1");
+         terminal.send("describe");
          terminal.assertContains("\"upper-bound\" : \"100\"");
          terminal.clear();
-         terminal.readln("add");
+         terminal.send("add");
          terminal.assertContains("1");
          terminal.clear();
-         terminal.readln("reset");
-         terminal.readln("ls");
+         terminal.send("reset");
+         terminal.send("ls");
          terminal.assertContains("0");
          terminal.clear();
-         terminal.readln("add --delta=100");
+         terminal.send("add --delta=100");
          terminal.assertContains("100");
 
          // ALTER CACHE
-         terminal.readln("create cache --file=" + getCliResource("xcache.xml").getPath() + " xcache");
-         terminal.readln("describe /containers/default/caches/xcache");
+         terminal.send("create cache --file=" + getCliResource("xcache.xml").getPath() + " xcache");
+         terminal.send("describe /containers/default/caches/xcache");
          terminal.assertContains("\"lifespan\" : \"60000\"");
          terminal.assertContains("\"max-count\" : \"1000\"");
          terminal.clear();
-         terminal.readln("alter cache --file=" + getCliResource("xcache-alter.xml").getPath() + " xcache");
-         terminal.readln("describe /containers/default/caches/xcache");
+         terminal.send("alter cache --file=" + getCliResource("xcache-alter.xml").getPath() + " xcache");
+         terminal.send("describe /containers/default/caches/xcache");
          terminal.assertContains("\"lifespan\" : \"30000\"");
          terminal.assertContains("\"max-count\" : \"2000\"");
          terminal.clear();
-         terminal.readln("alter cache xcache --attribute=memory.max-count --value=5000");
-         terminal.readln("describe /containers/default/caches/xcache");
+         terminal.send("alter cache xcache --attribute=memory.max-count --value=5000");
+         terminal.send("describe /containers/default/caches/xcache");
          terminal.assertContains("\"lifespan\" : \"30000\"");
          terminal.assertContains("\"max-count\" : \"5000\"");
          terminal.clear();
@@ -169,7 +170,7 @@ public class CliIT {
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, new String[]{connectionString(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties);
+      CLI.main(shell, new String[]{"-c", connectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath()}, properties);
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }
@@ -177,42 +178,76 @@ public class CliIT {
    @Test
    public void testCliTasks() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{"-c", connectionUrl()}, properties);
          connect(terminal);
 
-         terminal.readln("cd tasks");
-         terminal.readln("ls");
+         terminal.send("cd tasks");
+         terminal.send("ls");
          terminal.assertContains("@@cache@names");
          terminal.clear();
-         terminal.readln("task exec @@cache@names");
+         terminal.send("task exec @@cache@names");
          terminal.assertContains("\"___script_cache\"");
          terminal.clear();
          File resource = getCliResource("hello.js");
-         terminal.readln("task upload --file=" + resource.getPath() + " hello");
-         terminal.readln("task exec hello -Pgreetee=world");
+         terminal.send("task upload --file=" + resource.getPath() + " hello");
+         terminal.send("task exec hello -Pgreetee=world");
          terminal.assertContains("\"Hello world\"");
       }
    }
 
    @Test
    public void testCliCredentials() {
-
       try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new String[]{connectionString()}, properties);
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          String keyStore = Paths.get(System.getProperty("build.directory", ""), "key.store").toAbsolutePath().toString();
 
-         terminal.readln("credentials add --path=" + keyStore + " --password=secret --credential=credential password");
-         terminal.readln("credentials add --path=" + keyStore + " --password=secret --credential=credential another");
+         terminal.send("credentials add --path=" + keyStore + " --password=secret --credential=credential password");
+         terminal.send("credentials add --path=" + keyStore + " --password=secret --credential=credential another");
          terminal.clear();
-         terminal.readln("credentials ls --path=" + keyStore + " --password=secret");
+         terminal.send("credentials ls --path=" + keyStore + " --password=secret");
          terminal.assertContains("password");
          terminal.assertContains("another");
       }
    }
 
+   @Test
+   public void testCliAuthorization() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         connect(terminal);
+         terminal.send("user roles ls");
+         terminal.assertContains("\"admin\"");
+         terminal.send("user roles create --permissions=ALL_WRITE wizard");
+         terminal.send("user roles create --permissions=ALL_READ cleric");
+         terminal.clear();
+         terminal.send("user roles ls");
+         terminal.assertContains("\"wizard\"");
+         terminal.assertContains("\"cleric\"");
+         terminal.send("user roles grant --roles=wizard,cleric,admin admin");
+         terminal.clear();
+         terminal.send("user roles ls admin");
+         terminal.assertContains("\"wizard\"");
+         terminal.assertContains("\"cleric\"");
+         terminal.send("user roles deny --roles=cleric admin");
+         terminal.clear();
+         terminal.send("user roles ls admin");
+         terminal.assertContains("\"wizard\"");
+         terminal.assertNotContains("\"cleric\"");
+         terminal.send("user roles remove wizard");
+         terminal.clear();
+         terminal.send("user roles ls");
+         terminal.assertContains("\"cleric\"");
+         terminal.assertNotContains("\"wizard\"");
+      }
+   }
+
    private void connect(AeshTestConnection terminal) {
+      connect(terminal, TestUser.ADMIN);
+   }
+
+   private void connect(AeshTestConnection terminal, TestUser user) {
       // connect
-      terminal.readln("connect " + hostAddress() + ":11222");
+      terminal.send("connect -u " + user.getUser() + " -p " + user.getPassword() + " " + hostAddress() + ":11222");
       terminal.assertContains("//containers/default]>");
       terminal.clear();
    }
@@ -226,20 +261,20 @@ public class CliIT {
          connect(terminal);
 
          // upload
-         terminal.readln("schema upload --file=" + getCliResource("person.proto").getPath() + " person.proto");
+         terminal.send("schema upload --file=" + getCliResource("person.proto").getPath() + " person.proto");
          terminal.assertContains("\"error\" : null");
          terminal.clear();
-         terminal.readln("cd /containers/default/schemas");
-         terminal.readln("ls");
+         terminal.send("cd /containers/default/schemas");
+         terminal.send("ls");
          terminal.assertContains("person.proto");
          terminal.clear();
-         terminal.readln("schema ls");
+         terminal.send("schema ls");
          terminal.assertContains("person.proto");
-         terminal.readln("schema get person.proto");
+         terminal.send("schema get person.proto");
          terminal.assertContains("PhoneNumber");
-         terminal.readln("schema remove person.proto");
+         terminal.send("schema remove person.proto");
          terminal.clear();
-         terminal.readln("schema ls");
+         terminal.send("schema ls");
          terminal.assertContains("[]");
       }
    }
@@ -250,7 +285,7 @@ public class CliIT {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
          // no cache
-         terminal.readln("benchmark http://" + hostAddress() + ":11222");
+         terminal.send("benchmark " + connectionUrl());
          terminal.assertContains("java.lang.IllegalArgumentException: Could not find cache");
       }
    }
@@ -260,16 +295,16 @@ public class CliIT {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
-         terminal.readln("config set autoconnect-url http://" + hostAddress() + ":11222");
+         terminal.send("config set autoconnect-url " + connectionUrl());
          terminal.clear();
-         terminal.readln("config get autoconnect-url");
-         terminal.assertContains("http://" + hostAddress() + ":11222");
+         terminal.send("config get autoconnect-url");
+         terminal.assertContains(connectionUrl());
       }
       // Close and recreate the CLI so that auto-connection kicks in
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          terminal.assertContains("//containers/default]>");
-         terminal.readln("config set autoconnect-url");
+         terminal.send("config set autoconnect-url");
       }
    }
 
@@ -279,13 +314,13 @@ public class CliIT {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
          connect(terminal);
-         terminal.readln("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability " + CLUSTERED_LOCK_CACHE_NAME);
          terminal.assertContains("AVAILABLE");
-         terminal.readln("availability --mode=DEGRADED_MODE " + CLUSTERED_LOCK_CACHE_NAME);
-         terminal.readln("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability --mode=DEGRADED_MODE " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability " + CLUSTERED_LOCK_CACHE_NAME);
          terminal.assertContains("DEGRADED_MODE");
-         terminal.readln("availability --mode=AVAILABILITY " + CLUSTERED_LOCK_CACHE_NAME);
-         terminal.readln("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability --mode=AVAILABILITY " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability " + CLUSTERED_LOCK_CACHE_NAME);
          terminal.assertContains("AVAILABLE");
       }
    }
@@ -294,8 +329,12 @@ public class CliIT {
       return SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress();
    }
 
-   private String connectionString() {
-      return String.format("--connect=http://%s:11222", hostAddress());
+   private String connectionUrl() {
+      return connectionUrl(TestUser.ADMIN);
+   }
+
+   private String connectionUrl(TestUser user) {
+      return String.format("http://%s:%s@%s:11222", user.getUser(), user.getPassword(), hostAddress());
    }
 
    private File getCliResource(String resource) {

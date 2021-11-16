@@ -1,0 +1,56 @@
+[id='creating-custom-roles-dynamically_{context}']
+= Creating custom roles at runtime
+
+Add roles with custom permission mappings while your {brandname} cluster is running.
+{brandname} stores any roles that you create dynamically in the `server/data` directory of your {brandname} Server installation so they are available after cluster restarts.
+
+[IMPORTANT]
+====
+Dynamically creating and removing roles can have a performance impact because {brandname} recomputes user permissions each time you add or remove a role.
+You should avoid frequently or repeatedly adding roles at runtime in any production environment.
+====
+
+.Prerequisites
+
+* Have `ADMIN` permissions for {brandname}.
+* Have access to the command line interface (CLI) for a running {brandname} cluster.
+
+.Procedure
+
+. Create a CLI connection to {brandname}.
+. Define a role with set of permissions with the [command]`user roles create` command.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles create --permissions=ALL_WRITE,LISTEN temprole
+[//containers/default]> user roles create --permissions=READ,WRITE myrole
+----
+. Assign those roles to user with the [command]`user roles grant` command.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles grant --roles=temprole myrole username
+----
+
+.Verification
+
+List roles for users with the [command]`user roles ls` command.
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles ls username
+["temprole,myrole"]
+----
+
+To confirm user permissions, log in to the CLI or {brandname} Console with those credentials and try performing an operation.
+If the user does not have permission for an operation, {brandname} denies the request.
+
+.Next steps
+
+* If you are temporarily assigning roles to users, you should remove them when you are done.
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+[//containers/default]> user roles deny --roles=temprole username
+[//containers/default]> user remove roles temprole
+----

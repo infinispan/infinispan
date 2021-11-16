@@ -64,7 +64,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    private Configuration cache2Config;
    private Configuration templateConfig;
-   private RestCacheManagerClient cacheManagerClient;
+   private RestCacheManagerClient cacheManagerClient, adminCacheManagerClient;
    private ControlledTimeService timeService;
 
    @Override
@@ -92,6 +92,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       Util.recursiveFileRemove(PERSISTENT_LOCATION);
       super.createCacheManagers();
       cacheManagerClient = client.cacheManager("default");
+      adminCacheManagerClient = adminClient.cacheManager("default");
       timeService = new ControlledTimeService();
       cacheManagers.forEach(cm -> TestingUtil.replaceComponent(cm, TimeService.class, timeService, true));
    }
@@ -252,13 +253,13 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testGetGlobalConfig() {
-      RestResponse response = join(cacheManagerClient.globalConfiguration());
+      RestResponse response = join(adminCacheManagerClient.globalConfiguration());
 
       ResponseAssertion.assertThat(response).isOk();
 
       String json = response.getBody();
       EmbeddedCacheManager embeddedCacheManager = cacheManagers.get(0);
-      GlobalConfiguration globalConfiguration = embeddedCacheManager.withSubject(ADMIN_USER).getCacheManagerConfiguration();
+      GlobalConfiguration globalConfiguration = embeddedCacheManager.withSubject(ADMIN).getCacheManagerConfiguration();
       StringBuilderWriter sw = new StringBuilderWriter();
       try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
          new ParserRegistry().serialize(w, globalConfiguration, Collections.emptyMap());
@@ -268,7 +269,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testGetGlobalConfigXML() {
-      RestResponse response = join(cacheManagerClient.globalConfiguration(APPLICATION_XML_TYPE));
+      RestResponse response = join(adminCacheManagerClient.globalConfiguration(APPLICATION_XML_TYPE));
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -302,7 +303,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testStats() {
-      RestResponse response = join(cacheManagerClient.stats());
+      RestResponse response = join(adminCacheManagerClient.stats());
 
       ResponseAssertion.assertThat(response).isOk();
 
@@ -317,7 +318,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       timeService.advance(1000);
 
       cacheManagers.iterator().next().getCache("cache1").put("key", "value");
-      cmStats = Json.read(join(cacheManagerClient.stats()).getBody());
+      cmStats = Json.read(join(adminCacheManagerClient.stats()).getBody());
       assertEquals(1, cmStats.at("stores").asInteger());
       assertEquals(1, cmStats.at("number_of_entries").asInteger());
    }
@@ -325,7 +326,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testConfigListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      try (Closeable ignored = client.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
+      try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 
          // Assert that all of the existing caches and templates have a corresponding event
@@ -359,11 +360,11 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testRebalancingActions() {
       assertRebalancingStatus(true);
 
-      RestResponse response = join(cacheManagerClient.disableRebalancing());
+      RestResponse response = join(adminCacheManagerClient.disableRebalancing());
       ResponseAssertion.assertThat(response).isOk();
       assertRebalancingStatus(false);
 
-      response = join(cacheManagerClient.enableRebalancing());
+      response = join(adminCacheManagerClient.enableRebalancing());
       ResponseAssertion.assertThat(response).isOk();
       assertRebalancingStatus(true);
    }

@@ -66,11 +66,11 @@ public class XSiteCliOperations {
       doWithTerminal(terminal -> {
          connect(terminal, XSiteIT.LON);
 
-         terminal.readln("site name");
+         terminal.send("site name");
          terminal.assertContains(XSiteIT.LON);
          terminal.clear();
 
-         terminal.readln("site view");
+         terminal.send("site view");
          terminal.assertContains(XSiteIT.LON);
          terminal.assertContains(XSiteIT.NYC);
          terminal.clear();
@@ -78,11 +78,11 @@ public class XSiteCliOperations {
          disconnect(terminal);
          connect(terminal, XSiteIT.NYC);
 
-         terminal.readln("site name");
+         terminal.send("site name");
          terminal.assertContains(XSiteIT.NYC);
          terminal.clear();
 
-         terminal.readln("site view");
+         terminal.send("site view");
          terminal.assertContains(XSiteIT.LON);
          terminal.assertContains(XSiteIT.NYC);
          terminal.clear();
@@ -105,53 +105,53 @@ public class XSiteCliOperations {
       doWithTerminal(terminal -> {
          connect(terminal, XSiteIT.LON);
 
-         terminal.readln("site state-transfer-mode");
+         terminal.send("site state-transfer-mode");
          terminal.assertContains("Usage: site state-transfer-mode [<options>]");
          terminal.clear();
 
          //make sure --site is required
-         terminal.readln("site state-transfer-mode get");
+         terminal.send("site state-transfer-mode get");
          terminal.assertContains("Option: --site is required for this command.");
          terminal.clear();
 
          //check command invoked in the wrong context
-         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
          terminal.assertContains("Command invoked from the wrong context");
          terminal.clear();
 
          //check non xsite cache
-         terminal.readln("cd caches/___script_cache");
+         terminal.send("cd caches/___script_cache");
          terminal.clear();
-         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
          terminal.assertContains("Not Found: Cache '___script_cache' does not have backup sites.");
          terminal.clear();
 
          //check if --cache overrides the context
-         terminal.readln("site state-transfer-mode get --cache=st-mode --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --cache=st-mode --site=" + XSiteIT.NYC);
          terminal.assertContains("AUTO");
          terminal.clear();
 
          //check if --cache is not required
-         terminal.readln("cd ../st-mode");
+         terminal.send("cd ../st-mode");
          terminal.clear();
-         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
          terminal.assertContains("AUTO");
          terminal.clear();
 
          //check invalid site
-         terminal.readln("site state-transfer-mode get --site=NOT_A_SITE");
+         terminal.send("site state-transfer-mode get --site=NOT_A_SITE");
          terminal.assertContains("Not Found: Cache 'st-mode' does not backup to site 'NOT_A_SITE'");
          terminal.clear();
 
          //check set!
-         terminal.readln("site state-transfer-mode set --mode=MANUAL --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode set --mode=MANUAL --site=" + XSiteIT.NYC);
          terminal.clear();
-         terminal.readln("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
          terminal.assertContains("MANUAL");
          terminal.clear();
 
          //check invalid mode
-         terminal.readln("site state-transfer-mode set --mode=ABC --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode set --mode=ABC --site=" + XSiteIT.NYC);
          terminal.assertContains("No enum constant org.infinispan.configuration.cache.XSiteStateTransferMode.ABC");
          terminal.clear();
       });
@@ -162,7 +162,7 @@ public class XSiteCliOperations {
       doWithTerminal(terminal -> {
          connect(terminal, XSiteIT.LON);
 
-         terminal.readln("site is-relay-node");
+         terminal.send("site is-relay-node");
          terminal.assertContains("true");
          terminal.clear();
 
@@ -170,7 +170,7 @@ public class XSiteCliOperations {
          // method has side effects, invoke before "site relay-nodes"
          List<String> view = extractView(terminal);
 
-         terminal.readln("site relay-nodes");
+         terminal.send("site relay-nodes");
          view.forEach(terminal::assertContains);
 
          terminal.clear();
@@ -179,14 +179,14 @@ public class XSiteCliOperations {
 
    private void connect(AeshTestConnection terminal, String site) {
       // connect
-      terminal.readln("connect " + hostAndPort(site));
+      terminal.send("connect " + hostAndPort(site));
       terminal.assertContains("//containers/default]>");
       terminal.clear();
    }
 
    private void disconnect(AeshTestConnection terminal) {
       // connect
-      terminal.readln("disconnect");
+      terminal.send("disconnect");
       terminal.clear();
    }
 
@@ -202,7 +202,7 @@ public class XSiteCliOperations {
    }
 
    private static List<String> extractView(AeshTestConnection terminal) {
-      terminal.readln("describe");
+      terminal.send("describe");
       // make sure the command succeed
       terminal.assertContains("//containers/default");
       String allOutput = terminal.getOutputBuffer();
