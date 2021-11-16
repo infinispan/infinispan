@@ -505,6 +505,32 @@
         <xs:complexType>
           <xs:sequence>
             <xs:choice minOccurs="0" maxOccurs="1">
+              <xs:element name="cluster-permission-mapper">
+                <xs:annotation>
+                  <xs:documentation>
+                    Stores role to permission mappings in the cluster registry.
+                    This role mapper is enabled by default in the server configuration.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element name="custom-permission-mapper">
+                <xs:annotation>
+                  <xs:documentation>
+                    Configures a custom permission mapper implementation.
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:attribute name="class" type="xs:string">
+                    <xs:annotation>
+                      <xs:documentation>
+                        Specifies the class name of a custom implementation that maps roles to permissions.
+                      </xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:choice>
+            <xs:choice minOccurs="0" maxOccurs="1">
               <xs:element name="identity-role-mapper">
                 <xs:annotation>
                   <xs:documentation>
@@ -515,28 +541,29 @@
               <xs:element name="common-name-role-mapper">
                 <xs:annotation>
                   <xs:documentation>
-                    Uses the common name role mapper which assumes principal names are in Distinguished Name format and extracts the Common Name to use as a role
+                    Uses the common name role mapper which assumes principal names are in Distinguished Name format and extracts the Common Name to use as a role.
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element name="cluster-role-mapper">
                 <xs:annotation>
                   <xs:documentation>
-                    Uses the cluster role mapper which stores the principal to role mappings within the cluster registry.
+                    Stores the principal to role mappings in the cluster registry.
+                    This role mapper is enabled by default in the server configuration.
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element name="custom-role-mapper">
                 <xs:annotation>
                   <xs:documentation>
-                    Uses a custom role mapper.
+                    Configures a custom role mapper.
                   </xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
                   <xs:attribute name="class" type="xs:string">
                     <xs:annotation>
                       <xs:documentation>
-                        Class of the custom principal to role mapper
+                        Specifies the class name of a custom principal to role mapper implementation. 
                       </xs:documentation>
                     </xs:annotation>
                   </xs:attribute>

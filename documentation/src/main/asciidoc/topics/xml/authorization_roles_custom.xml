@@ -1,0 +1,10 @@
+<infinispan>
+  <cache-container name="custom-authorization">
+    <security>
+      <authorization>
+        <role name="temprole" permissions="ALL_WRITE,LISTEN" />
+        <role name="myrole" permissions="READ,WRITE"/>
+      </authorization>
+    </security>
+  </cache-container>
+</infinispan>

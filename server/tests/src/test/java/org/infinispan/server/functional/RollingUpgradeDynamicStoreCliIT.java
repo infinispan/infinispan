@@ -64,9 +64,9 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.readln("migrate cluster connect --file=" + dest + " --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster connect --file=" + dest + " --cache=" + CACHE_NAME);
          terminal.clear();
-         terminal.readln("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster source-connection --cache=" + CACHE_NAME);
          terminal.assertContains("remote-store");
       }
    }
@@ -78,7 +78,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.readln("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster source-connection --cache=" + CACHE_NAME);
          terminal.assertContains("remote-store");
       }
    }
@@ -90,7 +90,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.readln("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster source-connection --cache=" + CACHE_NAME);
          terminal.assertContains("Not Found");
       }
    }
@@ -102,7 +102,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.readln("migrate cluster synchronize --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster synchronize --cache=" + CACHE_NAME);
       }
    }
 
@@ -113,11 +113,11 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.readln("migrate cluster disconnect --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster disconnect --cache=" + CACHE_NAME);
       }
    }
 
    private void connectToCluster(AeshTestConnection terminal, Cluster cluster) {
-      terminal.readln("connect " + cluster.driver.getServerAddress(0).getHostAddress() + ":" + cluster.getSinglePort(0));
+      terminal.send("connect " + cluster.driver.getServerAddress(0).getHostAddress() + ":" + cluster.getSinglePort(0));
    }
 }

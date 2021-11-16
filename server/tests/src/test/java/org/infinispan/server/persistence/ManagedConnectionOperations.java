@@ -112,13 +112,13 @@ public class ManagedConnectionOperations {
    public void testDataSourceCLI() {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, new Properties());
-         terminal.readln("connect " + SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222");
+         terminal.send("connect " + SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.readln("server datasource ls");
+         terminal.send("server datasource ls");
          terminal.assertContains(database.getType());
          terminal.clear();
-         terminal.readln("server datasource test " + database.getType());
+         terminal.send("server datasource test " + database.getType());
          terminal.assertContains("ISPN012502: Connection to data source '" + database.getType()+ "' successful");
       }
    }

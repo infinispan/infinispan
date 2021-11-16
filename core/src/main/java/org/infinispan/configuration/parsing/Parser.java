@@ -51,6 +51,8 @@ import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurat
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.security.mappers.ClusterPermissionMapper;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
@@ -919,17 +921,35 @@ public class Parser extends CacheParser {
          }
       }
       PrincipalRoleMapper roleMapper = null;
+      RolePermissionMapper permissionMapper = null;
       while (reader.hasNext()) {
          reader.nextElement();
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHORIZATION: {
                reader.require(ConfigurationReader.ElementType.END_ELEMENT);
+               if (permissionMapper != null) {
+                  builder.rolePermissionMapper(permissionMapper);
+               }
                if (roleMapper != null) {
                   builder.principalRoleMapper(roleMapper);
                }
                return;
             }
+            case CLUSTER_PERMISSION_MAPPER:
+               if (permissionMapper != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
+               permissionMapper = new ClusterPermissionMapper();
+               break;
+            case CUSTOM_PERMISSION_MAPPER:
+               if (permissionMapper != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               permissionMapper = parseCustomPermissionMapper(reader, holder);
+               break;
             case IDENTITY_ROLE_MAPPER:
                if (roleMapper != null) {
                   throw ParseUtils.unexpectedElement(reader);
@@ -958,7 +978,7 @@ public class Parser extends CacheParser {
                if (roleMapper != null) {
                   throw ParseUtils.unexpectedElement(reader);
                }
-               roleMapper = parseCustomMapper(reader, holder);
+               roleMapper = parseCustomRoleMapper(reader, holder);
                break;
             case ROLES: {
                while (reader.inTag()) {
@@ -979,7 +999,13 @@ public class Parser extends CacheParser {
       }
    }
 
-   private PrincipalRoleMapper parseCustomMapper(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+   private PrincipalRoleMapper parseCustomRoleMapper(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      String mapperClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
+      ParseUtils.requireNoContent(reader);
+      return Util.getInstance(mapperClass, holder.getClassLoader());
+   }
+
+   private RolePermissionMapper parseCustomPermissionMapper(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String mapperClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
       ParseUtils.requireNoContent(reader);
       return Util.getInstance(mapperClass, holder.getClassLoader());

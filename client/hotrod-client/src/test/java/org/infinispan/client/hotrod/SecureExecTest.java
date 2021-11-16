@@ -106,9 +106,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
    @Override
    protected HotRodServer initServer(Map<String, String> mechProperties, int index) {
-      return Security.doAs(ADMIN, (PrivilegedAction<HotRodServer>) () -> {
-         return SecureExecTest.super.initServer(mechProperties, index);
-      });
+      return Security.doAs(ADMIN, (PrivilegedAction<HotRodServer>) () -> SecureExecTest.super.initServer(mechProperties, index));
    }
 
    public void testSimpleScriptExecutionWithValidAuth() throws IOException, PrivilegedActionException {

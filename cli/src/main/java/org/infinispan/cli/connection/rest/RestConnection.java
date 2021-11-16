@@ -296,6 +296,11 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
+   public Collection<String> getRoles() throws IOException {
+      return parseBody(fetch(() -> client.security().listRoles(null)), List.class);
+   }
+
+   @Override
    public boolean isConnected() {
       return connected;
    }

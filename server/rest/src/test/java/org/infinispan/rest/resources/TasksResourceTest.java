@@ -49,7 +49,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskList() {
-      RestTaskClient taskClient = client.tasks();
+      RestTaskClient taskClient = adminClient.tasks();
 
       RestResponse response = join(taskClient.list(ALL));
       ResponseAssertion.assertThat(response).isOk();

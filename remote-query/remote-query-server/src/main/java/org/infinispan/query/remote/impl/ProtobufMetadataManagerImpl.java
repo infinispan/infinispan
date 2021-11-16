@@ -20,6 +20,7 @@ import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -48,9 +49,6 @@ import org.infinispan.query.remote.client.impl.MarshallerRegistration;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.Role;
-import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -172,12 +170,14 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
             .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
             .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-      if (globalConfiguration.security().authorization().enabled()) {
-         Map<String, Role> globalRoles = globalConfiguration.security().authorization().roles();
-         globalRoles.put(SCHEMA_MANAGER_ROLE, new CacheRoleImpl(SCHEMA_MANAGER_ROLE, false, AuthorizationPermission.ALL));
+      GlobalAuthorizationConfiguration globalAuthz = globalConfiguration.security().authorization();
+      if (globalAuthz.enabled()) {
+         if (!globalAuthz.hasRole(SCHEMA_MANAGER_ROLE)) {
+            globalAuthz.addRole(GlobalAuthorizationConfiguration.DEFAULT_ROLES.get(SCHEMA_MANAGER_ROLE));
+         }
          AuthorizationConfigurationBuilder authorization = cfg.security().authorization().enable();
          // Copy all global roles
-         globalRoles.keySet().forEach(role -> authorization.role(role));
+         globalAuthz.roles().keySet().forEach(role -> authorization.role(role));
          // Add a special module which translates permissions
          cfg.addModule(CreatePermissionConfigurationBuilder.class);
       }

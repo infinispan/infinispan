@@ -15,4 +15,8 @@ public interface RestSecurityClient {
    CompletionStage<RestResponse> deny(String principal, List<String> roles);
 
    CompletionStage<RestResponse> flushCache();
+
+   CompletionStage<RestResponse> createRole(String name, List<String> permissions);
+
+   CompletionStage<RestResponse> removeRole(String name);
 }

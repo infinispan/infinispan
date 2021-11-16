@@ -4,10 +4,12 @@ import static org.infinispan.configuration.cache.AuthorizationConfiguration.ENAB
 import static org.infinispan.configuration.cache.AuthorizationConfiguration.ROLES;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -72,14 +74,19 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
-      if (attributes.attribute(ENABLED).get() && !globalConfig.security().authorization().enabled()) {
+      GlobalAuthorizationConfiguration authorization = globalConfig.security().authorization();
+      if (attributes.attribute(ENABLED).get() && !authorization.enabled()) {
          throw CONFIG.globalSecurityAuthShouldBeEnabled();
       }
       Set<String> cacheRoles = attributes.attribute(ROLES).get();
-      Set<String> globalRoles = globalConfig.security().authorization().roles().keySet();
-      if (!globalRoles.containsAll(cacheRoles)) {
-         cacheRoles.removeAll(globalRoles);
-         throw CONFIG.noSuchGlobalRoles(cacheRoles);
+      Set<String> missingRoles = new HashSet<>();
+      for(String role : cacheRoles) {
+         if (!authorization.hasRole(role)) {
+            missingRoles.add(role);
+         }
+      }
+      if (!missingRoles.isEmpty()) {
+         throw CONFIG.noSuchGlobalRoles(missingRoles);
       }
    }
 

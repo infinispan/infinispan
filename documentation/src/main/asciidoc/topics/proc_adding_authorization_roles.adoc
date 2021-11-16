@@ -1,0 +1,23 @@
+[id='adding-authorization-roles-at-runtime_{context}']
+= Adding authorization roles at runtime
+
+Dynamically map roles to permissions when using security authorization with {brandname} caches.
+
+.Prerequisites
+
+* Configure authorization for embedded caches.
+* Have `ADMIN` permissions for {brandname}.
+
+.Procedure
+
+. Obtain the `RolePermissionMapper` instance.
+. Define new roles with the `addRole()` method.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/MutablePermissionMapper.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/security/RolePermissionMapper.html[org.infinispan.security.RolePermissionMapper]

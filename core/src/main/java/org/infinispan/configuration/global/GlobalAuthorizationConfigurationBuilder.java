@@ -16,6 +16,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
+import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.audit.LoggingAuditLogger;
 import org.infinispan.security.audit.NullAuditLogger;
 
@@ -28,11 +29,13 @@ import org.infinispan.security.audit.NullAuditLogger;
 public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalAuthorizationConfiguration> {
    private final AttributeSet attributes;
    private final PrincipalRoleMapperConfigurationBuilder roleMapper;
+   private final RolePermissionMapperConfigurationBuilder permissionMapper;
    private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<>();
 
    public GlobalAuthorizationConfigurationBuilder(GlobalSecurityConfigurationBuilder builder) {
       super(builder.getGlobalConfig());
       roleMapper = new PrincipalRoleMapperConfigurationBuilder(getGlobalConfig());
+      permissionMapper = new RolePermissionMapperConfigurationBuilder(getGlobalConfig());
       attributes = GlobalAuthorizationConfiguration.attributeDefinitionSet();
    }
 
@@ -73,6 +76,16 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
       return this;
    }
 
+   /**
+    * The class of a mapper which maps {@link Role}s to {@link org.infinispan.security.AuthorizationPermission}s
+    *
+    * @param rolePermissionMapper
+    */
+   public GlobalAuthorizationConfigurationBuilder rolePermissionMapper(RolePermissionMapper rolePermissionMapper) {
+      permissionMapper.mapper(rolePermissionMapper);
+      return this;
+   }
+
    public GlobalRoleConfigurationBuilder role(String name) {
       GlobalRoleConfigurationBuilder role = new GlobalRoleConfigurationBuilder(name, this);
       roles.put(name, role);
@@ -95,13 +108,14 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
          rolesCfg.put(roleCfg.getName(), roleCfg);
       }
       if (!rolesCfg.isEmpty()) attributes.attribute(ROLES).set(rolesCfg);
-      return new GlobalAuthorizationConfiguration(attributes.protect(), roleMapper.create());
+      return new GlobalAuthorizationConfiguration(attributes.protect(), roleMapper.create(), permissionMapper.create());
    }
 
    @Override
    public Builder<?> read(GlobalAuthorizationConfiguration template) {
       attributes.read(template.attributes());
       this.roleMapper.read(template.roleMapperConfiguration());
+      this.permissionMapper.read(template.permissionMapperConfiguration());
       this.roles.clear();
       for(Role role : template.roles().values()) {
          this.role(role.getName()).read(role);

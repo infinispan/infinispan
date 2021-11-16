@@ -1,0 +1,41 @@
+[id='creating-users_{context}']
+= Creating {brandname} users
+
+Add credentials to authenticate with {brandname} Server deployments through Hot Rod and REST endpoints.
+Before you can access the {brandname} Console or perform cache operations you must create at least one user with the {brandname} command line interface (CLI).
+
+[TIP]
+====
+{brandname} enforces security authorization with role-based access control (RBAC).
+Create an `admin` user the first time you add credentials to gain full `ADMIN` permissions to your {brandname} deployment.
+====
+
+.Prerequisites
+
+* Download and install {brandname} Server.
+
+.Procedure
+
+. Open a terminal in `{server_home}`.
+. Create an `admin` user with the [command]`user create` command.
++
+[source,sh,options="nowrap",subs=attributes+]
+----
+include::cmd_examples/user_tool_nix.adoc[]
+----
++
+[TIP]
+====
+Run [command]`help user` from a CLI session to get complete command details.
+====
+
+.Verification
+
+Open `user.properties` and confirm the user exists.
+
+[source,options="nowrap",subs=attributes+]
+----
+$ cat server/conf/users.properties
+
+admin=scram-sha-1\:BYGcIAwvf6b...
+----

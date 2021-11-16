@@ -1,0 +1,54 @@
+[id='configuring-acl-cache_{context}']
+= Configuring the access control list (ACL) cache
+
+When you grant or deny roles to users, {brandname} stores details about which users can access your caches internally.
+This ACL cache improves performance for security authorization by avoiding the need for {brandname} to calculate if users have the appropriate permissions to perform read and write operations for every request.
+
+[NOTE]
+====
+Whenever you grant or deny roles to users, {brandname} flushes the ACL cache to ensure it applies user permissions correctly.
+This means that {brandname} must recalculate cache permissions for all users each time you grant or deny roles.
+For best performance you should not frequently or repeatedly grant and deny roles in production environments.
+====
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify the maximum number of entries for the ACL cache with the `cache-size` attribute.
++
+Entries in the ACL cache have a cardinality of `caches * users`. You should set the maximum number of entries to a value that can hold information for all your caches and users. For example, the default size of `1000` is appropriate for deployments with up to 100 caches and 10 users.
+. Set the timeout value, in milliseconds, with the `cache-timeout` attribute.
++
+If {brandname} does not access an entry in the ACL cache within the timeout period that entry is evicted. When the user subsequently attempts cache operations then {brandname} recalculates their cache permissions and adds an entry to the ACL cache.
++
+[IMPORTANT]
+====
+Specifying a value of `0` for either the `cache-size` or `cache-timeout` attribute disables the ACL cache.
+You should disable the ACL cache only if you disable authorization.
+====
+. Save the changes to your configuration.
+
+[discrete]
+== ACL cache configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/authorization_acl_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/authorization_acl_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/authorization_acl_cache.yaml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]

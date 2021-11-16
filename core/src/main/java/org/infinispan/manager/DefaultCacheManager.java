@@ -82,8 +82,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationMapperContextImpl;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.security.impl.PrincipalRoleMapperContextImpl;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
@@ -779,7 +779,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          CONFIG.authorizationEnabledWithoutSecurityManager();
       }
       if (authorizationConfig.enabled()) {
-         authorizationConfig.principalRoleMapper().setContext(new PrincipalRoleMapperContextImpl(this));
+         AuthorizationMapperContextImpl context = new AuthorizationMapperContextImpl(this);
+         authorizationConfig.principalRoleMapper().setContext(context);
+         authorizationConfig.rolePermissionMapper().setContext(context);
       }
    }
 

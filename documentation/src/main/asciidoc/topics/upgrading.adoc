@@ -1,5 +1,9 @@
 = Upgrading from 13.0 to 14.0
 
+== Security authorization SPI
+
+`org.infinispan.security.PrincipalRoleMapperContext` is deprecated in 14.0 and replaced by `org.infinispan.security.AuthorizationMapperContext`.
+
 == Scattered cache deprecation
 
 The scattered cache mode is deprecated in 14.0 and will be removed in 16.0.
