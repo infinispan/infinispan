@@ -269,7 +269,7 @@ public abstract class BaseIckleFilterIndexingServiceProvider implements FilterIn
                // TODO: [anistor]
                // TODO: We need a way to propagate the CompletionStages down to the caller - so continuous query
                //   can be non blocking. This is to be fixed in https://issues.jboss.org/browse/ISPN-9729
-               CompletionStage<Void> invocationStage = invocation.invokeNoChecks(new EventWrapper<>(event.getKey(), event),
+               CompletionStage<Void> invocationStage = invocation.invokeNoChecks(new EventWrapper<>(event.getKey(), event, null),
                      false, filterAndConvert, true);
                if (invocationStage != null) {
                   CompletionStages.join(invocationStage);

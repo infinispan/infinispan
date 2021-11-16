@@ -72,6 +72,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.BaseCacheNotifierImplInitialTransferTest")
@@ -555,7 +556,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          @Override
          public Publisher<Notification<CacheEntry<String, String>>> publisherWithSegments() {
             // This may need to be changed if a test requires the actual segment
-            return flowable.map(entry -> Notifications.value(entry, 0));
+            return flowable.map(entry -> (Notification<CacheEntry<String, String>>) Notifications.value(entry, 0))
+                  .concatWith(Single.just(Notifications.segmentComplete(0)));
          }
       };
    }

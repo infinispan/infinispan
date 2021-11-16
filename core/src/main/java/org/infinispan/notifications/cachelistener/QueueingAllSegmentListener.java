@@ -6,14 +6,15 @@ import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,7 +33,8 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
          new ConcurrentLinkedQueue<>();
    protected final InternalEntryFactory entryFactory;
 
-   QueueingAllSegmentListener(InternalEntryFactory entryFactory) {
+   QueueingAllSegmentListener(InternalEntryFactory entryFactory, int segment, KeyPartitioner keyPartitioner) {
+      super(segment, keyPartitioner);
       this.entryFactory = entryFactory;
    }
 
@@ -46,7 +48,7 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
             CacheEntryEvent<K, V> cacheEvent = (CacheEntryEvent<K, V>) event;
             CacheEntry<K, V> cacheEntry = entryFactory.create(cacheEvent.getKey(), cacheEvent.getValue(),
                                                               cacheEvent.getMetadata());
-            if (addEvent(wrapper.getKey(), cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
+            if (addEvent(wrapper.getKey(), segmentFromEventWrapper(wrapper), cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
                continueQueueing = false;
             }
          }
