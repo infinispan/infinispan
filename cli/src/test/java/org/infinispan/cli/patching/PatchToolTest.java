@@ -1,5 +1,6 @@
 package org.infinispan.cli.patching;
 
+import static org.infinispan.cli.util.Utils.sha256;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -140,7 +141,7 @@ public class PatchToolTest {
          w.newLine();
          w.write("<!-- Some modification -->");
       }
-      String v1sha256 = PatchTool.sha256(v1config);
+      String v1sha256 = sha256(v1config);
 
       // Install the patch on v1
       patchTool.installPatch(patch, v1, false);
@@ -149,7 +150,7 @@ public class PatchToolTest {
       out.reset();
 
       // Ensure that the file has not been replaced
-      assertEquals("Expecting SHA-256 of " + v1config +" to stay the same", v1sha256, PatchTool.sha256(v1config));
+      assertEquals("Expecting SHA-256 of " + v1config +" to stay the same", v1sha256, sha256(v1config));
       // And that there is a new file next to it
       assertTrue(v1.resolve("server").resolve("conf").resolve("infinispan.xml-1.1.0.Final").toFile().exists());
    }
