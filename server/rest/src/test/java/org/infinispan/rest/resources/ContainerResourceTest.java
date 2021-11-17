@@ -325,18 +325,36 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testConfigListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      Closeable listen = client.raw().listen("/rest/v2/container/config?action=listen", Collections.emptyMap(), sseListener);
-      AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
-      createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}", "listen1");
-      assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-      AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("text/plain"));
-      createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"application/octet-stream\"}}}", "listen2");
-      assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-      AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("application/octet-stream"));
-      assertThat(client.cache("listen1").delete()).isOk();
-      assertEquals("remove-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-      assertEquals("listen1", sseListener.data.removeFirst());
-      listen.close();
+      try (Closeable ignored = client.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
+         AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
+
+         // Assert that all of the existing caches have a corresponding event
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("___protobuf_metadata"));
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("cache2"));
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("invalid"));
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("cache1"));
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("defaultcache"));
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("___script_cache"));
+
+         // Assert that new cache creations create an event
+         createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}", "listen1");
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("text/plain"));
+         createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"application/octet-stream\"}}}", "listen2");
+         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("application/octet-stream"));
+
+         // Assert that deletions create an event
+         assertThat(client.cache("listen1").delete()).isOk();
+         assertEquals("remove-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
+         assertEquals("listen1", sseListener.data.removeFirst());
+      }
    }
 
    private void createCache(String json, String name) {
