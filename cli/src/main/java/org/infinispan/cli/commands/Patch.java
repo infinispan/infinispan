@@ -141,7 +141,7 @@ public class Patch extends CliCommand {
          }
          PatchTool patchTool = new PatchTool(invocation.getShellOutput(), invocation.getShellError());
          try {
-            patchTool.installPatch(Paths.get(patch.getAbsolutePath()), getServerHome(server), dryRun);
+            patchTool.installPatch(Paths.get(patch.getAbsolutePath()), CLI.getServerHome(server), dryRun);
             return CommandResult.SUCCESS;
          } catch (IOException e) {
             throw new CommandException(e);
@@ -169,7 +169,7 @@ public class Patch extends CliCommand {
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          PatchTool patchTool = new PatchTool(invocation.getShellOutput(), invocation.getShellError());
-         patchTool.listPatches(getServerHome(server), verbose);
+         patchTool.listPatches(CLI.getServerHome(server), verbose);
          return CommandResult.SUCCESS;
       }
    }
@@ -195,24 +195,10 @@ public class Patch extends CliCommand {
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          PatchTool patchTool = new PatchTool(invocation.getShellOutput(), invocation.getShellError());
          try {
-            patchTool.rollbackPatch(getServerHome(server), dryRun);
+            patchTool.rollbackPatch(CLI.getServerHome(server), dryRun);
             return CommandResult.SUCCESS;
          } catch (IOException e) {
             throw new CommandException(e);
-         }
-      }
-   }
-
-   public static Path getServerHome(Resource server) {
-      if (server != null) {
-         return Paths.get(server.getAbsolutePath());
-      } else {
-         String serverHome = System.getProperty("infinispan.server.home.path");
-         if (serverHome != null) {
-            return Paths.get(serverHome);
-         } else {
-            // Fall back to the cwd
-            return Paths.get(System.getProperty("user.dir"));
          }
       }
    }

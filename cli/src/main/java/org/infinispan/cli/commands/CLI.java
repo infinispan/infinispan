@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.Map;
@@ -108,6 +109,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Echo.class,
             Encoding.class,
             Get.class,
+            Install.class,
             Logging.class,
             Ls.class,
             Migrate.class,
@@ -354,5 +356,19 @@ public class CLI extends CliCommand {
 
    public static void main(String[] args) {
       System.exit(main(new DefaultShell(), args, System.getProperties()));
+   }
+
+   public static Path getServerHome(Resource server) {
+      if (server != null) {
+         return Paths.get(server.getAbsolutePath());
+      } else {
+         String serverHome = System.getProperty("infinispan.server.home.path");
+         if (serverHome != null) {
+            return Paths.get(serverHome);
+         } else {
+            // Fall back to the cwd
+            return Paths.get(System.getProperty("user.dir"));
+         }
+      }
    }
 }

@@ -302,6 +302,7 @@
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
+      <versionx.org.apache.commons.commons-compress>${version.commons.compress}</versionx.org.apache.commons.commons-compress>
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
@@ -603,6 +604,11 @@
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>${versionx.com.thoughtworks.xstream.xstream}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${versionx.org.apache.commons.commons-compress}</version>
          </dependency>
          <dependency>
             <groupId>commons-dbcp</groupId>

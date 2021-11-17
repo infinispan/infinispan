@@ -234,4 +234,16 @@ public interface Messages {
 
    @Message("A username must be specified")
    IllegalArgumentException usernameRequired();
+
+   @Message("Checksum for '%s' does not match. Supplied: %s Actual: %s")
+   SecurityException checksumFailed(String path, String checksum, String computed);
+
+   @Message("Checksum for '%s' verified")
+   String checksumVerified(String path);
+
+   @Message("Artifact '%s' not found")
+   IllegalArgumentException artifactNotFound(String path);
+
+   @Message("Retry download '%d/%d'")
+   String retryDownload(int retry, int retries);
 }
