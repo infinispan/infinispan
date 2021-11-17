@@ -77,6 +77,10 @@
          <artifactId>wildfly-elytron</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-compress</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.openssl</groupId>
          <artifactId>wildfly-openssl-java</artifactId>
          <optional>true</optional>
