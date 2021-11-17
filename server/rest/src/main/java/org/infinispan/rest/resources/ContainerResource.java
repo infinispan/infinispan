@@ -570,7 +570,7 @@ public class ContainerResource implements ResourceHandler {
                      (stream) -> {
                         for (String cache : cacheManager.getCacheNames()) {
                            try {
-                              stream.sendEvent(new ServerSentEvent("cache-create", cacheConfig(cacheManager, cache, mediaType)));
+                              stream.sendEvent(new ServerSentEvent("create-cache", cacheConfig(cacheManager, cache, mediaType)));
                            } catch (Exception e) {
                               Log.REST.errorf(e, "Could not serialize cache configuration");
                            }
