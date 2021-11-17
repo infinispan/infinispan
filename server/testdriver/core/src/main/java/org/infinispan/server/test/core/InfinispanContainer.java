@@ -83,6 +83,20 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
    }
 
    /**
+    * One or more artifacts to deploy in Infinispan Server's <tt>server/lib</tt> directory.
+    * Artifacts can be specified as URLs or as Maven coordinates (e.g. org.postgresql:postgresql:42.3.1)
+    *
+    * @param artifacts
+    * @return
+    */
+   public InfinispanContainer withArtifacts(String... artifacts) {
+      if (artifacts != null || artifacts.length > 0) {
+         withEnv("SERVER_LIBS", String.join(" ", artifacts));
+      }
+      return this;
+   }
+
+   /**
     * Creates a {@link RemoteCacheManager} configured to connect to the containerized server
     * @return
     */
