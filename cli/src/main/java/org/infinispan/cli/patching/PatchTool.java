@@ -2,6 +2,7 @@ package org.infinispan.cli.patching;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.cli.logging.Messages.MSG;
+import static org.infinispan.cli.util.Utils.sha256;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,10 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -24,7 +21,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -45,8 +41,6 @@ import org.infinispan.commons.util.Version;
  * @since 11.0
  **/
 public class PatchTool {
-
-   public static final int BUFFER_SIZE = 8192;
    public static final String PATCHES_DIR = ".patches";
    public static final String PATCHES_FILE = "patches.json";
    private final PrintStream out;
@@ -418,7 +412,7 @@ public class PatchTool {
       if (commons == null || commons.length != 1) {
          throw MSG.patchCannotFindCommons(lib);
       }
-      URI jarUri = URI.create("jar:" + commons[0].toURI().toString());
+      URI jarUri = URI.create("jar:" + commons[0].toURI());
       try (FileSystem zipfs = FileSystems.newFileSystem(jarUri, Collections.emptyMap()); InputStream in = Files.newInputStream(zipfs.getPath("META-INF", "infinispan-version.properties"))) {
          return Version.from(in);
       }
@@ -429,7 +423,7 @@ public class PatchTool {
       if (create && patch.toFile().exists()) {
          throw MSG.patchFileAlreadyExists(patch);
       }
-      URI jarUri = URI.create("jar:" + patch.toUri().toString());
+      URI jarUri = URI.create("jar:" + patch.toUri());
       return FileSystems.newFileSystem(jarUri, create ? Collections.singletonMap("create", "true") : Collections.emptyMap());
    }
 
@@ -447,29 +441,6 @@ public class PatchTool {
          Files.copy(basePath.resolve(file.getVersionedPath()), target, StandardCopyOption.REPLACE_EXISTING);
       } catch (IOException e) {
          throw MSG.patchCreateError(e);
-      }
-   }
-
-   static String sha256(Path path) {
-      try (ByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
-         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-         if (channel instanceof FileChannel) {
-            FileChannel fileChannel = (FileChannel) channel;
-            MappedByteBuffer byteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
-            digest.update(byteBuffer);
-         } else {
-            ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
-            while (channel.read(bb) != -1) {
-               bb.flip();
-               digest.update(bb);
-               bb.flip();
-            }
-         }
-         return Util.toHexString(digest.digest());
-      } catch (NoSuchFileException e) {
-         return null;
-      } catch (Exception e) {
-         throw new RuntimeException(e);
       }
    }
 }
