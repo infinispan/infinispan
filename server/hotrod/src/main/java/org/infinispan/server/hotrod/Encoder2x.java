@@ -661,7 +661,12 @@ class Encoder2x implements VersionedEncoder {
       int currentTopologyId = cacheTopology.getTopologyId();
       List<Address> cacheMembers = cacheTopology.getActualMembers();
       Map<Address, ServerAddress> serverEndpoints = new HashMap<>();
-      addressCache.forEach(serverEndpoints::put);
+      try {
+         serverEndpoints.putAll(addressCache);
+      } catch (IllegalLifecycleStateException e) {
+         // Address cache has been shut down, ignore the exception and don't send a topology update
+         return Optional.empty();
+      }
 
       int topologyId = currentTopologyId;
 
