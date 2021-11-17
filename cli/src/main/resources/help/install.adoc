@@ -1,0 +1,82 @@
+INSTALL(1)
+==========
+:doctype: manpage
+
+
+NAME
+----
+install - download and install artifacts for ${infinispan.brand.name} Server.
+
+
+DESCRIPTION
+-----------
+Download and install artifacts to the `server/lib` directory.
+You can specify the download location for artifacts as Maven artifact coordinates, a URL, or a local file path.
+
+When downloading Maven artifacts, an optional Maven `settings.xml` file determines the location of the remote and local repositories as well as credentials and proxy configuration.
+
+If you download artifacts as `zip`, `tar.gz`, or `tgz` archives, the content is extracted.
+
+
+SYNOPSIS
+--------
+*install* 'artifact-1[[|algorithm]|checksum]' ['artifact-2[[|algorithm]|checksum]'...]
+
+
+ARTIFACT NAMES
+--------------
+Artifact names can be any of the following:
+
+* Maven coordinates using the `groupId:artifactId:version` format, for example `org.postgresql:postgresql:42.3.1`.
+* HTTP, HTTPS, or FTP URLs
+* Local paths
+
+
+CHECKSUM VALIDATION
+-------------------
+You can validate the checksum of an artifact after download.
+The algorithm defaults to `SHA-256` but it can also be `MD-5`, `SHA-1`, `SHA-256`, `SHA-384`, or `SHA-512'.
+
+
+PATCH LIST OPTIONS
+------------------
+
+*--server-home*='path/to/server'::
+Sets the path of the server installation.
+
+*--server-root*='server'::
+Sets the server root directory relative to the server home.
+
+*--maven-settings='$HOME/.m2/maven-settings.xml'::
+Sets the path of a Maven `settings.xml` file and uses the default location, if not specified.
+
+*-o, --overwrite*::
+Forces overwriting of artifacts in the `server/lib` directory. By default artifacts are not overwritten, which causes the installation to fail if an artifact already exists.
+
+*-v, --verbose*::
+Shows verbose information about artifact downloads.
+
+*-f, --force*::
+Forces download of remote artifacts, even if they are already present locally.
+
+*-r, --retries=num*::
+The number of retries in case the downloaded artifacts do not match the supplied checksums.
+
+*--clean*::
+Deletes all the contents of the `server/lib` directory before downloading artifacts.
+
+
+EXAMPLES
+--------
+
+`install -o org.postgresql:postgresql:42.3.1` +
+Installs the PostgreSQL JDBC driver JAR and overwrites if it already exists.
+
+`install https://example.org/artifact.zip` +
+Downloads the `artifact.zip` and extracts the contents.
+
+`install https://example.org/artifact.zip|52d73f9b3611610ebbb4dca7c2ac1171218eb09891c1faba10f5f54c1d2acc13` +
+Downloads the `artifact.zip`, verifies its SHA-256 checksum, and extracts the contents.
+
+`install https://example.org/artifact.zip|MD5|2b48d1871ee26f969d8481db94e103c2` +
+Downloads the `artifact.zip`, verifies its MD-5 checksum, and extracts the contents.
