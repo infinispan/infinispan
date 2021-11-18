@@ -308,10 +308,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                   cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
                }
             });
-
-      // Replace 99 with index of server to debug
-      if (i == 99) {
-         container.withEnv("JAVA_OPTS", debugJvmOption());
+      String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
+      if (debug != null && Integer.parseInt(debug) == i) {
+         String option = debugJvmOption();
+         container.withEnv("JAVA_OPTS", option);
+         log.infof("Container debug enabled with options '%s'%n", option);
       }
 
       // Process any enhancers

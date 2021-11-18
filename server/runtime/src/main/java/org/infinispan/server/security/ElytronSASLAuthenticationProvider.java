@@ -1,6 +1,7 @@
 package org.infinispan.server.security;
 
 import java.security.Principal;
+import java.security.Provider;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +17,18 @@ import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
 import org.wildfly.security.auth.server.sasl.SaslAuthenticationFactory;
+import org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider;
+import org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider;
+import org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider;
+import org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider;
+import org.wildfly.security.sasl.localuser.WildFlyElytronSaslLocalUserProvider;
+import org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider;
+import org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider;
+import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
 import org.wildfly.security.sasl.util.AggregateSaslServerFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslServerFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslServerFactory;
-import org.wildfly.security.sasl.util.SaslFactories;
 import org.wildfly.security.sasl.util.SecurityProviderSaslServerFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
 
@@ -48,10 +56,20 @@ public class ElytronSASLAuthenticationProvider implements ServerAuthenticationPr
    }
 
    public void init(ServerConfiguration serverConfiguration, ScheduledExecutorService timeoutExecutor) {
+      Provider[] providers = new Provider[]{
+            WildFlyElytronSaslPlainProvider.getInstance(),
+            WildFlyElytronSaslDigestProvider.getInstance(),
+            WildFlyElytronSaslScramProvider.getInstance(),
+            WildFlyElytronSaslExternalProvider.getInstance(),
+            WildFlyElytronSaslLocalUserProvider.getInstance(),
+            WildFlyElytronSaslOAuth2Provider.getInstance(),
+            WildFlyElytronSaslGssapiProvider.getInstance(),
+            WildFlyElytronSaslGs2Provider.getInstance()
+      };
+      SecurityProviderSaslServerFactory securityProviderSaslServerFactory = new SecurityProviderSaslServerFactory(() -> providers);
       ServerSecurityRealm realm = serverConfiguration.security().realms().getRealm(name).serverSecurityRealm();
       SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
-      SecurityProviderSaslServerFactory all = SaslFactories.getProviderSaslServerFactory();
-      AggregateSaslServerFactory factory = new AggregateSaslServerFactory(new FilterMechanismSaslServerFactory(all, true, mechanisms));
+      AggregateSaslServerFactory factory = new AggregateSaslServerFactory(new FilterMechanismSaslServerFactory(securityProviderSaslServerFactory, true, mechanisms));
       builder.setFactory(factory);
       builder.setSecurityDomain(realm.getSecurityDomain());
       MechanismConfiguration.Builder mechConfigurationBuilder = MechanismConfiguration.builder();

@@ -5,9 +5,13 @@ import java.net.SocketAddress;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.Provider;
 import java.security.Security;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -19,6 +23,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
@@ -28,6 +33,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.SslContextFactory;
+import org.infinispan.commons.util.Util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -50,6 +56,26 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private final ChannelFactory channelFactory;
    private ChannelPool channelPool;
    private volatile boolean isFirstPing = true;
+
+   private static final Provider[] SECURITY_PROVIDERS;
+
+   static {
+      // Register only the providers that matter to us
+      List<Provider> providers = new ArrayList<>();
+      for (String name : Arrays.asList(
+            "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
+            "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
+            "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
+            "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
+            "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
+            "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
+            "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
+      )) {
+         Provider provider = Util.getInstance(name, RemoteCacheManager.class.getClassLoader());
+         providers.add(provider);
+      }
+      SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
+   }
 
    ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory) {
       this.bootstrap = bootstrap;
@@ -182,7 +208,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
          log.tracef("Attempting to load SaslClientFactory implementation with mech=%s, props=%s",
                configuration.saslMechanism(), configuration.saslProperties());
       }
-      Collection<SaslClientFactory> clientFactories = SaslUtils.getSaslClientFactories(this.getClass().getClassLoader(), true);
+      Collection<SaslClientFactory> clientFactories = SaslUtils.getSaslClientFactories(this.getClass().getClassLoader(), SECURITY_PROVIDERS, true);
       for (SaslClientFactory saslFactory : clientFactories) {
          try {
             String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.saslProperties());

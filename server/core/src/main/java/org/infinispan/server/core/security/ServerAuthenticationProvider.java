@@ -77,7 +77,7 @@ public interface ServerAuthenticationProvider {
          }
          throw new IllegalStateException("EXTERNAL mech requires X500Principal");
       } else {
-         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true)) {
+         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), null, true)) {
             if (factory != null) {
                SaslServer saslServer = factory.createSaslServer(mechanism, protocol, serverName, props, callbacks -> {
                   if (callbackHandler != null) {
