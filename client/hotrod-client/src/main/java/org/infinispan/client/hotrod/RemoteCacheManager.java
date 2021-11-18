@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.security.Provider;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -123,22 +121,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private ObjectName mbeanObjectName;
    private TimeService timeService = DefaultTimeService.INSTANCE;
    private ExecutorService asyncExecutorService;
-
-   static {
-      // Register only the providers that matter to us
-      for (String name : Arrays.asList(
-            "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
-            "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
-            "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
-            "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
-            "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
-            "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
-            "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
-      )) {
-         Provider provider = Util.getInstance(name, RemoteCacheManager.class.getClassLoader());
-         SecurityActions.addSecurityProvider(provider);
-      }
-   }
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}. The RemoteCacheManager will be started

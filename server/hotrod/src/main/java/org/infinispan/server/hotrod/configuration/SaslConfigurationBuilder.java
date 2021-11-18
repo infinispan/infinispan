@@ -116,7 +116,7 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
    @Override
    public void validate() {
       Set<String> allMechs = new LinkedHashSet<>(Arrays.asList(ExternalSaslServerFactory.NAMES));
-      for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true)) {
+      for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), null, true)) {
          allMechs.addAll(Arrays.asList(factory.getMechanismNames(mechProperties)));
       }
       Attribute<Set<String>> mechanismAttr = attributes.attribute(SaslConfiguration.MECHANISMS);
