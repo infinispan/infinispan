@@ -20,6 +20,7 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.BasicPasswordSpecEncoding;
 import org.wildfly.security.password.spec.PasswordSpec;
 
@@ -113,10 +114,10 @@ public class UserToolTest {
          String algorithm = split[i].substring(0, colon);
          String encoded = split[i].substring(colon + 1);
          byte[] passwordBytes = CodePointIterator.ofChars(encoded.toCharArray()).base64Decode().drain();
-         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+         PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, WildFlyElytronPasswordProvider.getInstance());
          PasswordSpec passwordSpec = BasicPasswordSpecEncoding.decode(passwordBytes);
          PasswordCredential credential = new PasswordCredential(passwordFactory.generatePassword(passwordSpec));
-         assertTrue("Passwords don't match", credential.verify(evidence));
+         assertTrue("Passwords don't match", credential.verify(UserTool.PROVIDERS, evidence));
       }
    }
 }
