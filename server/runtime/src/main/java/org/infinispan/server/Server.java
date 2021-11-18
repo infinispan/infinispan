@@ -238,8 +238,8 @@ public class Server implements ServerManagement, AutoCloseable {
       this.status = ComponentStatus.INSTANTIATED;
 
       // Populate system properties unless they have already been set externally
-      properties.putIfAbsent(INFINISPAN_SERVER_HOME_PATH, serverHome);
-      properties.putIfAbsent(INFINISPAN_SERVER_ROOT_PATH, serverRoot);
+      properties.putIfAbsent(INFINISPAN_SERVER_HOME_PATH, serverHome.getAbsolutePath());
+      properties.putIfAbsent(INFINISPAN_SERVER_ROOT_PATH, serverRoot.getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_CONFIG_PATH, new File(serverRoot, DEFAULT_SERVER_CONFIG).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_DATA_PATH, new File(serverRoot, DEFAULT_SERVER_DATA).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
