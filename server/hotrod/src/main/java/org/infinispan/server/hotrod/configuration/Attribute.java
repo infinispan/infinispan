@@ -29,8 +29,7 @@ public enum Attribute {
    SOCKET_BINDING,
    TOPOLOGY_STATE_TRANSFER,
    STRENGTH,
-   VALUE,
-   ;
+   VALUE;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

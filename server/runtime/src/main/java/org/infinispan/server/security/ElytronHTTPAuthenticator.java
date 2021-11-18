@@ -2,6 +2,7 @@ package org.infinispan.server.security;
 
 import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
+import java.security.Provider;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -25,7 +26,12 @@ import org.wildfly.security.auth.server.http.HttpAuthenticationFactory;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
+import org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider;
+import org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider;
 import org.wildfly.security.http.digest.DigestMechanismFactory;
+import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
+import org.wildfly.security.http.spnego.WildFlyElytronHttpSpnegoProvider;
 import org.wildfly.security.http.util.FilterServerMechanismFactory;
 import org.wildfly.security.http.util.SecurityProviderServerMechanismFactory;
 import org.wildfly.security.http.util.SetMechanismInformationMechanismFactory;
@@ -40,6 +46,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
    private final String name;
    private final String serverPrincipal;
    private final Collection<String> mechanisms;
+   private final Provider[] providers;
    private HttpAuthenticationFactory factory;
    private ServerSecurityRealm serverSecurityRealm;
    private Executor executor;
@@ -49,6 +56,13 @@ public class ElytronHTTPAuthenticator implements Authenticator {
       this.name = name;
       this.serverPrincipal = serverPrincipal;
       this.mechanisms = mechanisms;
+      this.providers = new Provider[]{
+            WildFlyElytronHttpBasicProvider.getInstance(),
+            WildFlyElytronHttpBearerProvider.getInstance(),
+            WildFlyElytronHttpDigestProvider.getInstance(),
+            WildFlyElytronHttpClientCertProvider.getInstance(),
+            WildFlyElytronHttpSpnegoProvider.getInstance(),
+      };
    }
 
    public static void init(RestServerConfiguration configuration, ServerConfiguration serverConfiguration) {
@@ -63,7 +77,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
       HttpAuthenticationFactory.Builder httpBuilder = HttpAuthenticationFactory.builder();
       httpBuilder.setSecurityDomain(serverSecurityRealm.getSecurityDomain());
 
-      HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory();
+      HttpServerAuthenticationMechanismFactory httpServerFactory = new SecurityProviderServerMechanismFactory(providers);
       httpServerFactory = new SetMechanismInformationMechanismFactory(new FilterServerMechanismFactory(httpServerFactory, true, mechanisms));
       httpBuilder.setFactory(httpServerFactory);
 
