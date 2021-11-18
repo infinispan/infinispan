@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.elements.ElementDefinition;
 import org.infinispan.server.configuration.Element;
 import org.infinispan.server.configuration.PasswordSerializer;
 
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0

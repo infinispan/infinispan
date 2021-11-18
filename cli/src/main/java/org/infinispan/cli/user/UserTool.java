@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.cli.logging.Messages;
@@ -41,6 +43,7 @@ import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
  * @since 10.0
  **/
 public class UserTool {
+   public static final Supplier<Provider[]> PROVIDERS = () -> new Provider[]{WildFlyElytronPasswordProvider.getInstance()};
    public static final String DEFAULT_USERS_PROPERTIES_FILE = "users.properties";
    public static final String DEFAULT_GROUPS_PROPERTIES_FILE = "groups.properties";
    public static final String DEFAULT_REALM_NAME = "default";
@@ -84,7 +87,6 @@ public class UserTool {
    }
 
    public UserTool(Path serverRoot, Path usersFile, Path groupsFile) {
-      installSecurityProvider();
       if (serverRoot != null && serverRoot.isAbsolute()) {
          this.serverRoot = serverRoot;
       } else {
@@ -113,14 +115,6 @@ public class UserTool {
       }
       load();
    }
-
-   private void installSecurityProvider() {
-      WildFlyElytronPasswordProvider instance = WildFlyElytronPasswordProvider.getInstance();
-      if (java.security.Security.getProvider(instance.getName()) == null) {
-         java.security.Security.insertProviderAt(instance, 1);
-      }
-   }
-
 
    public void reload() {
       this.realm = null;
@@ -304,7 +298,7 @@ public class UserTool {
          }
          StringBuilder sb = new StringBuilder();
          for (String algorithm : algorithms) {
-            PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm, WildFlyElytronPasswordProvider.getInstance());
             AlgorithmParameterSpec spec;
             sb.append(algorithm);
             sb.append(":");
@@ -326,7 +320,7 @@ public class UserTool {
                   throw MSG.userToolUnknownAlgorithm(algorithm);
             }
             Password encrypted = passwordFactory.generatePassword(new EncryptablePasswordSpec(password.toCharArray(), spec));
-            byte[] encoded = BasicPasswordSpecEncoding.encode(encrypted);
+            byte[] encoded = BasicPasswordSpecEncoding.encode(encrypted, PROVIDERS);
             sb.append(ByteIterator.ofBytes(encoded).base64Encode().drainToString());
             sb.append(";");
          }
