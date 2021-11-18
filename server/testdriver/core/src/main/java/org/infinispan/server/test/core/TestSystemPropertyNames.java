@@ -78,6 +78,10 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS = "org.infinispan.test.database.jdbc.drivers.external";
    /**
+    * Specifies the number of the container to start with JVM debug options (port 5005)
+    */
+   public static final String INFINISPAN_TEST_SERVER_CONTAINER_DEBUG = PREFIX + "container.debug";
+   /**
     * Specifies the name of the keycloak base image
     */
    public static final String KEYCLOAK_IMAGE = "org.infinispan.test.keycloakImage";

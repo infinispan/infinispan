@@ -1,7 +1,6 @@
 package org.infinispan.server.security.realm;
 
 import static org.infinispan.server.Server.log;
-import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,6 +43,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.BasicPasswordSpecEncoding;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
@@ -73,7 +73,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
    private EncryptedPropertiesSecurityRealm(Builder builder) {
       plainText = builder.plainText;
       groupsAttribute = builder.groupsAttribute;
-      providers = builder.providers;
+      providers = () -> new Provider[]{WildFlyElytronPasswordProvider.getInstance()};
       defaultRealm = builder.defaultRealm;
    }
 
@@ -281,7 +281,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
 
                         accounts.put(username, new AccountEntry(username, credentials, groups.getProperty(username)));
                         // Notify any caching layer that the principal has been reloaded
-                        for(Consumer<Principal> listener : listeners) {
+                        for (Consumer<Principal> listener : listeners) {
                            listener.accept(new NamePrincipal(username));
                         }
                      }
@@ -336,8 +336,6 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
     * A builder for properties security realms.
     */
    public static class Builder {
-
-      private Supplier<Provider[]> providers = INSTALLED_PROVIDERS;
       private InputStream usersStream;
       private InputStream groupsStream;
       private String defaultRealm = null;
