@@ -12,9 +12,6 @@
    <name>Infinispan parent pom for the test driver</name>
    <packaging>pom</packaging>
 
-   <properties>
-      <server.output.dir.prefix>${infinispan.brand.prefix}-testdriver</server.output.dir.prefix>
-   </properties>
    <modules>
       <module>core</module>
       <module>junit4</module>
