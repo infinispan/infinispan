@@ -3157,9 +3157,9 @@ than is allowed without. This is because without the bloom filter every modify/r
 will cause an invalidation message to be sent. The bloom filter will limit the number of these messages that are
 generated.
 
-.add bloom filter client listener
+.Add bloom filter client listener
 
-Request (0x43):
+Request (0x41):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -3169,6 +3169,25 @@ Request (0x43):
 | Bloom filter bit size | vInt | Defines how many bits should be held on the
 server to keep track of the near cache in a bloom filter. This allows the server
 to not send a notification on many false positives.
+|==============================================================================
+
+Response (0x42):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+|==============================================================================
+
+.Update bloom filter
+
+Request (0x42):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Bloom filter bits   | byte array   | The current client bloom filter
 |==============================================================================
 
 Response (0x44):
