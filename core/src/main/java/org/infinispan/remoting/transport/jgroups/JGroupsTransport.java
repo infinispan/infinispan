@@ -599,8 +599,7 @@ public class JGroupsTransport implements Transport {
       FileLookup fileLookup = FileLookupFactory.newInstance();
 
       // in order of preference - we first look for an external JGroups file, then a set of XML
-      // properties, and
-      // finally the legacy JGroups String properties.
+      // properties, and finally the legacy JGroups String properties.
       String cfg;
       if (props != null) {
          if (props.containsKey(CHANNEL_LOOKUP)) {
@@ -622,19 +621,7 @@ public class JGroupsTransport implements Transport {
          }
 
          if (channel == null && props.containsKey(CHANNEL_CONFIGURATOR)) {
-            JGroupsChannelConfigurator configurator = (JGroupsChannelConfigurator) props.get(CHANNEL_CONFIGURATOR);
-            if (props.containsKey(SOCKET_FACTORY)) {
-               SocketFactory socketFactory = (SocketFactory) props.get(SOCKET_FACTORY);
-               if (socketFactory instanceof NamedSocketFactory) {
-                  ((NamedSocketFactory)socketFactory).setName(configuration.transport().clusterName());
-               }
-               configurator.setSocketFactory(socketFactory);
-            }
-            try {
-               channel = configurator.createChannel(configuration.transport().clusterName());
-            } catch (Exception e) {
-               throw CLUSTER.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
-            }
+            channelFromConfigurator((JGroupsChannelConfigurator) props.get(CHANNEL_CONFIGURATOR));
          }
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
@@ -675,6 +662,9 @@ public class JGroupsTransport implements Transport {
                throw CLUSTER.errorCreatingChannelFromConfigString(cfg, e);
             }
          }
+         if (channel == null && configuration.transport().stack() != null) {
+            channelFromConfigurator(configuration.transport().jgroups().configurator(configuration.transport().stack()));
+         }
       }
 
       if (channel == null) {
@@ -689,6 +679,21 @@ public class JGroupsTransport implements Transport {
       if (props != null && props.containsKey(SOCKET_FACTORY) && !props.containsKey(CHANNEL_CONFIGURATOR)) {
          Protocol protocol = channel.getProtocolStack().getTopProtocol();
          protocol.setSocketFactory((SocketFactory) props.get(SOCKET_FACTORY));
+      }
+   }
+
+   private void channelFromConfigurator(JGroupsChannelConfigurator configurator) {
+      if (props.containsKey(SOCKET_FACTORY)) {
+         SocketFactory socketFactory = (SocketFactory) props.get(SOCKET_FACTORY);
+         if (socketFactory instanceof NamedSocketFactory) {
+            ((NamedSocketFactory)socketFactory).setName(configuration.transport().clusterName());
+         }
+         configurator.setSocketFactory(socketFactory);
+      }
+      try {
+         channel = configurator.createChannel(configuration.transport().clusterName());
+      } catch (Exception e) {
+         throw CLUSTER.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
       }
    }
 

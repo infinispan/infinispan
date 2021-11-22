@@ -1,13 +1,10 @@
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
-                            urn:infinispan:server:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-server-${infinispan.core.schema.version}.xsd"
-        xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
-        xmlns:server="urn:infinispan:server:${infinispan.core.schema.version}">
+      xmlns="urn:infinispan:config:14.0"
+      xmlns:server="urn:infinispan:server:14.0">
    <cache-container>
       <transport server:security-realm="default"/>
    </cache-container>
-   <server xmlns="urn:infinispan:server:${infinispan.core.schema.version}">
+   <server xmlns="urn:infinispan:server:14.0">
       <interfaces>
          <interface name="default">
             <loopback/>
@@ -37,7 +34,7 @@
                   <ssl>
                      <keystore path="ServerConfigurationParserTest-keystore.pfx"
                                relative-to="infinispan.server.config.path"
-                               password="password" alias="server" key-password="password"
+                               keystore-password="password" alias="server" key-password="password"
                                generate-self-signed-certificate-host="localhost" provider="SunJSSE"/>
                      <truststore path="truststore.p12" provider="SunJSSE"
                                  relative-to="infinispan.server.config.path"

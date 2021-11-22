@@ -172,7 +172,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       gc.transport().clusterName(null).build();
    }
 
-   @Test
+   @Test(enabled = false, description = "JGRP-2590")
    public void testSchema() throws Exception {
       FileLookup lookup = FileLookupFactory.newInstance();
       String schemaFilename = String.format("schema/infinispan-config-%s.xsd", Version.getMajorMinor());

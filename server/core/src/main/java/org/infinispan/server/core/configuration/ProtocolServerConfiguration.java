@@ -33,6 +33,7 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
          .immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zero-capacity-node", false).immutable().build();
    public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).immutable().build();
+   public static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR = AttributeDefinition.builder("implicit-connector", false).immutable().autoPersist(false).build();
 
    // The default value can be overridden so it is the responsibility of each protocol to add it to the set
    public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 1).immutable().build();
@@ -40,7 +41,9 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ProtocolServerConfiguration.class,
-            DEFAULT_CACHE_NAME, NAME, HOST, PORT, IDLE_TIMEOUT, IGNORED_CACHES, RECV_BUF_SIZE, SEND_BUF_SIZE, START_TRANSPORT, TCP_NODELAY, TCP_KEEPALIVE, IO_THREADS, ADMIN_OPERATION_HANDLER, ZERO_CAPACITY_NODE, SOCKET_BINDING);
+            DEFAULT_CACHE_NAME, NAME, HOST, PORT, IDLE_TIMEOUT, IGNORED_CACHES, RECV_BUF_SIZE, SEND_BUF_SIZE, START_TRANSPORT,
+            TCP_NODELAY, TCP_KEEPALIVE, IO_THREADS, ADMIN_OPERATION_HANDLER, ZERO_CAPACITY_NODE, SOCKET_BINDING,
+            IMPLICIT_CONNECTOR);
    }
 
    private final Attribute<String> defaultCacheName;
@@ -166,5 +169,9 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
 
    public boolean isEnabled() {
       return enabled;
+   }
+
+   public boolean isImplicit() {
+      return attributes.attribute(IMPLICIT_CONNECTOR).get();
    }
 }

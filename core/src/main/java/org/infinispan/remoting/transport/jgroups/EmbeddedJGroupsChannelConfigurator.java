@@ -4,10 +4,12 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -29,26 +31,37 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
    private static final String PROTOCOL_PREFIX = "org.jgroups.protocols.";
 
    private final String name;
+   private final String parent;
+   private JGroupsConfiguration jgroupsConfiguration;
    final List<ProtocolConfiguration> stack;
-   final Map<String, RemoteSite> remoteSites;
+   final RemoteSites remoteSites;
 
-   public EmbeddedJGroupsChannelConfigurator(String name, List<ProtocolConfiguration> stack) {
-      this.name = name;
-      this.stack = stack;
-      this.remoteSites = new HashMap<>(2);
+   public EmbeddedJGroupsChannelConfigurator(String name, List<ProtocolConfiguration> stack, RemoteSites remoteSites) {
+      this(name, stack, remoteSites, null);
    }
 
-   public EmbeddedJGroupsChannelConfigurator(String name) {
-      this(name, new ArrayList<>());
+   public EmbeddedJGroupsChannelConfigurator(String name, List<ProtocolConfiguration> stack, RemoteSites remoteSites, String parent) {
+      this.name = name;
+      this.stack = stack;
+      this.remoteSites = remoteSites;
+      this.parent = parent;
+   }
+
+   public void setConfiguration(JGroupsConfiguration configuration) {
+      this.jgroupsConfiguration = configuration;
    }
 
    @Override
    public String getProtocolStackString() {
-      return stack.toString();
+      return getProtocolStack().toString();
    }
 
    @Override
    public List<ProtocolConfiguration> getProtocolStack() {
+      return combineStack(jgroupsConfiguration.configurator(parent), stack);
+   }
+
+   public List<ProtocolConfiguration> getUncombinedProtocolStack() {
       return stack;
    }
 
@@ -59,8 +72,9 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
    @Override
    public JChannel createChannel(String name) throws Exception {
       StackType stackType = org.jgroups.util.Util.getIpStackType();
-      List<Protocol> protocols = new ArrayList<>(stack.size());
-      for(ProtocolConfiguration c : stack) {
+      List<ProtocolConfiguration> actualStack = combineStack(jgroupsConfiguration.configurator(parent), stack);
+      List<Protocol> protocols = new ArrayList<>(actualStack.size());
+      for (ProtocolConfiguration c : actualStack) {
          Protocol protocol;
          try {
             String className = PROTOCOL_PREFIX + c.getProtocolName();
@@ -75,14 +89,18 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
          if (protocol instanceof RELAY2) {
             // Process remote sites if any
             RELAY2 relay2 = (RELAY2) protocol;
+            RemoteSites actualSites = getRemoteSites();
             if (relay2 != null) {
-               if (remoteSites.size() == 0) {
+               if (actualSites.remoteSites.size() == 0) {
                   throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
                }
-               for (Map.Entry<String, RemoteSite> remoteSite : remoteSites.entrySet()) {
-                  JGroupsChannelConfigurator configurator = remoteSite.getValue().configurator;
+               for (Map.Entry<String, RemoteSite> remoteSite : actualSites.remoteSites.entrySet()) {
+                  JGroupsChannelConfigurator configurator = jgroupsConfiguration.configurator(remoteSite.getValue().stack);
                   SocketFactory socketFactory = getSocketFactory();
-                  final String remoteCluster = remoteSite.getValue().cluster;
+                  String remoteCluster = remoteSite.getValue().cluster;
+                  if (remoteCluster == null) {
+                     remoteCluster = actualSites.defaultCluster;
+                  }
                   if (socketFactory instanceof NamedSocketFactory) {
                      // Create a new NamedSocketFactory using the remote cluster name
                      socketFactory = new NamedSocketFactory((NamedSocketFactory) socketFactory, remoteCluster);
@@ -100,7 +118,7 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
                }
 
             } else {
-               if (remoteSites.size() > 0) {
+               if (actualSites.remoteSites.size() > 0) {
                   throw CONFIG.jgroupsRemoteSitesWithoutRelay(name);
                }
             }
@@ -110,23 +128,17 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
       return applySocketFactory(new JChannel(protocols));
    }
 
-   public void addRemoteSite(String remoteSite, String cluster, JGroupsChannelConfigurator stackConfigurator) {
-      if (remoteSites.containsKey(remoteSite)) {
-         throw CONFIG.duplicateRemoteSite(remoteSite, name);
-      } else {
-         remoteSites.put(remoteSite, new RemoteSite(cluster, stackConfigurator));
-      }
-   }
-
-   public static EmbeddedJGroupsChannelConfigurator combine(JGroupsChannelConfigurator baseStack, EmbeddedJGroupsChannelConfigurator stack) {
+   public static List<ProtocolConfiguration> combineStack(JGroupsChannelConfigurator baseStack, List<ProtocolConfiguration> stack) {
       List<ProtocolConfiguration> actualStack = new ArrayList<>();
-      // We copy the protocols and properties from the base stack
-      for (ProtocolConfiguration originalProtocol : baseStack.getProtocolStack()) {
-         ProtocolConfiguration protocol = new ProtocolConfiguration(originalProtocol.getProtocolName(), new HashMap<>(originalProtocol.getProperties()));
-         actualStack.add(protocol);
+      if (baseStack != null) {
+         // We copy the protocols and properties from the base stack. This will recursively perform inheritance
+         for (ProtocolConfiguration originalProtocol : baseStack.getProtocolStack()) {
+            ProtocolConfiguration protocol = new ProtocolConfiguration(originalProtocol.getProtocolName(), new HashMap<>(originalProtocol.getProperties()));
+            actualStack.add(protocol);
+         }
       }
       // We process this stack's rules
-      for (ProtocolConfiguration protocol : stack.stack) {
+      for (ProtocolConfiguration protocol : stack) {
          String protocolName = protocol.getProtocolName();
          int position = findProtocol(protocolName, actualStack);
          EmbeddedJGroupsChannelConfigurator.StackCombine mode = position < 0 ? StackCombine.APPEND : StackCombine.COMBINE;
@@ -182,9 +194,16 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
                break;
          }
       }
-      EmbeddedJGroupsChannelConfigurator newStack = new EmbeddedJGroupsChannelConfigurator(stack.getName(), actualStack);
-      newStack.remoteSites.putAll(stack.remoteSites);
-      return newStack;
+      return actualStack;
+   }
+
+   private Map<String, RemoteSite> combineSites(Map<String, RemoteSite> sites) {
+      JGroupsChannelConfigurator parentConfigurator = jgroupsConfiguration.configurator(parent);
+      if (parentConfigurator instanceof EmbeddedJGroupsChannelConfigurator) {
+         ((EmbeddedJGroupsChannelConfigurator) parentConfigurator).combineSites(sites);
+      }
+      sites.putAll(this.remoteSites.remoteSites);
+      return sites;
    }
 
    private static void assertNoStackPosition(EmbeddedJGroupsChannelConfigurator.StackCombine mode, String stackAfter) {
@@ -207,6 +226,26 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
       return -1;
    }
 
+   public RemoteSites getRemoteSites() {
+      RemoteSites combinedSites = new RemoteSites(this.remoteSites.defaultStack, this.remoteSites.defaultCluster);
+      combineSites(combinedSites.remoteSites);
+      return combinedSites;
+   }
+
+   public RemoteSites getUncombinedRemoteSites() {
+      return remoteSites;
+   }
+
+   @Override
+   public String toString() {
+      return "EmbeddedJGroupsChannelConfigurator{" +
+            "name='" + name + '\'' +
+            ", parent='" + parent + '\'' +
+            ", stack=" + stack +
+            ", remoteSites=" + remoteSites +
+            '}';
+   }
+
    public enum StackCombine {
       COMBINE,
       INSERT_AFTER,
@@ -218,13 +257,70 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
       APPEND, // non-public
    }
 
+   public static class RemoteSites {
+      final String defaultCluster;
+      final String defaultStack;
+      final Map<String, RemoteSite> remoteSites;
+
+      public RemoteSites(String defaultStack, String defaultCluster) {
+         this.defaultStack = defaultStack;
+         this.defaultCluster = defaultCluster;
+         this.remoteSites = new LinkedHashMap<>();
+      }
+
+      public String getDefaultCluster() {
+         return defaultCluster;
+      }
+
+      public String getDefaultStack() {
+         return defaultStack;
+      }
+
+      public Map<String, RemoteSite> getRemoteSites() {
+         return remoteSites;
+      }
+
+      public void addRemoteSite(String stackName, String remoteSite, String cluster, String stack) {
+         if (remoteSites.containsKey(remoteSite)) {
+            throw CONFIG.duplicateRemoteSite(remoteSite, stackName);
+         } else {
+            remoteSites.put(remoteSite, new RemoteSite(cluster, stack));
+         }
+      }
+
+      @Override
+      public String toString() {
+         return "RemoteSites{" +
+               "defaultCluster='" + defaultCluster + '\'' +
+               ", defaultStack='" + defaultStack + '\'' +
+               ", remoteSites=" + remoteSites +
+               '}';
+      }
+   }
+
    public static class RemoteSite {
       final String cluster;
-      final JGroupsChannelConfigurator configurator;
+      final String stack;
 
-      public RemoteSite(String cluster, JGroupsChannelConfigurator configurator) {
+      RemoteSite(String cluster, String stack) {
          this.cluster = cluster;
-         this.configurator = configurator;
+         this.stack = stack;
+      }
+
+      public String getCluster() {
+         return cluster;
+      }
+
+      public String getStack() {
+         return stack;
+      }
+
+      @Override
+      public String toString() {
+         return "RemoteSite{" +
+               "cluster='" + cluster + '\'' +
+               ", stack='" + stack + '\'' +
+               '}';
       }
    }
 }

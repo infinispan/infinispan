@@ -1,10 +1,7 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.StackConfiguration.EXTENDS;
 import static org.infinispan.configuration.global.StackConfiguration.NAME;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
@@ -15,12 +12,12 @@ import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
  */
 public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements StackBuilder<StackConfiguration> {
    private final AttributeSet attributes;
-
-   private List<JGroupsProtocolConfigurationBuilder> protocols = new ArrayList<>();
+   private final JGroupsConfigurationBuilder jgroups;
    private EmbeddedJGroupsChannelConfigurator configurator;
 
-   StackConfigurationBuilder(String name, GlobalConfigurationBuilder globalConfig) {
-      super(globalConfig);
+   StackConfigurationBuilder(String name, JGroupsConfigurationBuilder jgroups) {
+      super(jgroups.getGlobalConfig());
+      this.jgroups = jgroups;
       attributes = StackConfiguration.attributeDefinitionSet();
       attributes.attribute(NAME).set(name);
    }
@@ -29,32 +26,32 @@ public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilde
       return attributes;
    }
 
-   public JGroupsProtocolConfigurationBuilder newProtocol() {
-      JGroupsProtocolConfigurationBuilder protocolConfigurationBuilder = new JGroupsProtocolConfigurationBuilder(getGlobalConfig());
-      this.protocols.add(protocolConfigurationBuilder);
-      return protocolConfigurationBuilder;
+   public StackConfigurationBuilder extend(String extend) {
+      attributes.attribute(EXTENDS).set(extend);
+      return this;
    }
 
    public StackConfigurationBuilder channelConfigurator(EmbeddedJGroupsChannelConfigurator configurator) {
-      this.configurator = configurator;
-      attributes.attribute(NAME).set(configurator.getName());
-      configurator.getProtocolStack().forEach(protocolConfiguration -> {
-         JGroupsProtocolConfigurationBuilder protocol = newProtocol();
-         protocol.protocolConfig(protocolConfiguration);
-      });
+      String extend = attributes.attribute(EXTENDS).get();
+      this.configurator = extend == null ? configurator :
+            new EmbeddedJGroupsChannelConfigurator(
+                  configurator.getName(),
+                  configurator.getUncombinedProtocolStack(),
+                  configurator.getUncombinedRemoteSites(),
+                  extend
+            );
       return this;
    }
 
    @Override
    public StackConfiguration create() {
-      List<JGroupsProtocolConfiguration> protocolConfigurations = protocols.stream()
-            .map(JGroupsProtocolConfigurationBuilder::create).collect(Collectors.toList());
-      return new StackConfiguration(attributes.protect(), protocolConfigurations);
+      return new StackConfiguration(attributes.protect(), configurator);
    }
 
    @Override
    public StackConfigurationBuilder read(StackConfiguration template) {
       attributes.read(template.attributes());
+      this.configurator = template.configurator();
       return this;
    }
 

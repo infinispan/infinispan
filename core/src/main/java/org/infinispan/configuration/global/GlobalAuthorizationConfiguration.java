@@ -5,6 +5,7 @@ import static org.infinispan.commons.configuration.attributes.IdentityAttributeC
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -107,6 +108,23 @@ public class GlobalAuthorizationConfiguration {
       return roleMapperConfiguration;
    }
 
+   public boolean isDefaultRoles() {
+      return roles.get() == DEFAULT_ROLES;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GlobalAuthorizationConfiguration that = (GlobalAuthorizationConfiguration) o;
+      return Objects.equals(roleMapperConfiguration, that.roleMapperConfiguration) && Objects.equals(attributes, that.attributes);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(roleMapperConfiguration, attributes);
+   }
+
    public Map<String, Role> roles() {
       return roles.get();
    }
@@ -123,22 +141,4 @@ public class GlobalAuthorizationConfiguration {
             '}';
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      GlobalAuthorizationConfiguration that = (GlobalAuthorizationConfiguration) o;
-
-      if (roleMapperConfiguration != null ? !roleMapperConfiguration.equals(that.roleMapperConfiguration) : that.roleMapperConfiguration != null)
-         return false;
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = roleMapperConfiguration != null ? roleMapperConfiguration.hashCode() : 0;
-      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
-      return result;
-   }
 }
