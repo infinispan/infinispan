@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.ExceptionRunnable;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -71,8 +72,6 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
 
       Cache cache2 = cache(2);
       LocalPublisherManager lpm = TestingUtil.extractComponent(cache2, LocalPublisherManager.class);
-      // Our tests mess with replacing the DataContainer - which is cached
-      ((LocalPublisherManagerImpl) lpm).resetKeyAndEntrySet();
    }
 
    @DataProvider(name = "GuaranteeParallelEntry")
@@ -253,10 +252,10 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
          ClusterPublisherManager<MagicKey, String> cpm = TestingUtil.extractComponent(cache(0), ClusterPublisherManager.class);
          CompletionStage<Long> stageCount;
          if (isEntry) {
-            stageCount = cpm.entryReduction(parallel, null, keys, null, false, deliveryGuarantee,
+            stageCount = cpm.entryReduction(parallel, null, keys, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                   PublisherReducers.count(), PublisherReducers.add());
          } else {
-            stageCount = cpm.keyReduction(parallel, null, keys, null, false, deliveryGuarantee,
+            stageCount = cpm.keyReduction(parallel, null, keys, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                   PublisherReducers.count(), PublisherReducers.add());
          }
          return stageCount;

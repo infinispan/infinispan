@@ -12,8 +12,10 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
@@ -32,7 +34,7 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    private IntSet segments;
    private Set<K> keys;
    private Set<K> excludedKeys;
-   private boolean includeLoader;
+   private long explicitFlags;
    private boolean entryStream;
    private Function transformer;
    private Function finalizer;
@@ -56,7 +58,7 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    }
 
    public ReductionPublisherRequestCommand(ByteString cacheName, boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
          Function transformer, Function finalizer) {
       super(cacheName);
       this.parallelStream = parallelStream;
@@ -64,7 +66,7 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
       this.segments = segments;
       this.keys = keys;
       this.excludedKeys = excludedKeys;
-      this.includeLoader = includeLoader;
+      this.explicitFlags = explicitFlags;
       this.entryStream = entryStream;
       this.transformer = transformer;
       this.finalizer = finalizer;
@@ -81,10 +83,10 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
       LocalPublisherManager lpm = componentRegistry.getLocalPublisherManager().running();
       if (entryStream) {
          return lpm.entryReduction(parallelStream, segments, keys, excludedKeys,
-               includeLoader, deliveryGuarantee, transformer, finalizer);
+               explicitFlags, deliveryGuarantee, transformer, finalizer);
       } else {
          return lpm.keyReduction(parallelStream, segments, keys, excludedKeys,
-               includeLoader, deliveryGuarantee, transformer, finalizer);
+               explicitFlags, deliveryGuarantee, transformer, finalizer);
       }
    }
 
@@ -101,7 +103,7 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
       output.writeObject(segments);
       MarshallUtil.marshallCollection(keys, output);
       MarshallUtil.marshallCollection(excludedKeys, output);
-      output.writeBoolean(includeLoader);
+      output.writeLong(explicitFlags);
       output.writeBoolean(entryStream);
       if (transformer == finalizer) {
          output.writeBoolean(true);
@@ -121,7 +123,7 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
       segments = (IntSet) input.readObject();
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
-      includeLoader = input.readBoolean();
+      explicitFlags = input.readLong();
       entryStream = input.readBoolean();
       boolean same = input.readBoolean();
       if (same) {
@@ -141,13 +143,13 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    @Override
    public String toString() {
       return "PublisherRequestCommand{" +
-            ", includeLoader=" + includeLoader +
-            ", topologyId=" + topologyId +
-            ", segments=" + segments +
-            ", keys=" + Util.toStr(keys) +
-            ", excludedKeys=" + Util.toStr(excludedKeys) +
-            ", transformer= " + transformer +
-            ", finalizer=" + finalizer +
-            '}';
+             ", flags=" + EnumUtil.prettyPrintBitSet(explicitFlags, Flag.class) +
+             ", topologyId=" + topologyId +
+             ", segments=" + segments +
+             ", keys=" + Util.toStr(keys) +
+             ", excludedKeys=" + Util.toStr(excludedKeys) +
+             ", transformer= " + transformer +
+             ", finalizer=" + finalizer +
+             '}';
    }
 }

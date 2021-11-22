@@ -3,13 +3,11 @@ package org.infinispan.anchored.impl;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.InternalCacheSet;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -27,9 +25,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.NullCacheEntry;
@@ -49,12 +45,15 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
-import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * Fetch the real value from the anchor owner in an anchored cache.
@@ -133,7 +132,7 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
 //      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP))
 //         return invokeNext(ctx, command);
 
-      return new BackingEntrySet((CacheSet<CacheEntry<K, V>>) invokeNext(ctx, command));
+      return new BackingEntrySet((CacheSet<CacheEntry<K,V>>)  invokeNext(ctx, command));
    }
 
    @Override
@@ -233,7 +232,7 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       }
    }
 
-   private CompletionStage<CacheEntry<K, V>> getRemoteValue(Address keyLocation, K key, int segment,
+   private CompletionStage<CacheEntry<K, V>> getRemoteValue(Address keyLocation, K key, Integer segment,
                                                             boolean isWrite) {
       ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, segment, FlagBitSets.SKIP_OWNERSHIP_CHECK);
       getCommand.setTopologyId(0);
@@ -267,75 +266,40 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       }
    }
 
-   private class BackingEntrySet extends AbstractDelegatingEntryCacheSet<K, V> implements CacheSet<CacheEntry<K, V>> {
-      private final CacheSet<CacheEntry<K, V>> entrySet;
+   private class BackingEntrySet extends InternalCacheSet<CacheEntry<K, V>> {
+      protected final CacheSet<CacheEntry<K, V>> next;
 
-      public BackingEntrySet(CacheSet<CacheEntry<K, V>> entrySet) {
-         super(cache.wired(), entrySet);
-         this.entrySet = entrySet;
+      public BackingEntrySet(CacheSet<CacheEntry<K, V>> next) {
+         this.next = next;
       }
 
       @Override
-      public CloseableIterator<CacheEntry<K, V>> iterator() {
-         // It's safe to use entrySet.iterator() because everything happens on the originator
-         return new BackingIterator(entrySet.iterator());
+      public Publisher<CacheEntry<K, V>> localPublisher(int segment) {
+         return fixPublisher(next.localPublisher(segment), segment);
       }
 
       @Override
-      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return Closeables.spliterator(iterator(), Long.MAX_VALUE,
-                                       Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
-      }
-   }
-
-   private class BackingIterator implements CloseableIterator<CacheEntry<K, V>> {
-
-      private Iterator<CacheEntry<K, V>> iterator;
-
-      public BackingIterator(Iterator<CacheEntry<K, V>> iterator) {
-         this.iterator = iterator;
+      public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
+         return fixPublisher(next.localPublisher(segments), null);
       }
 
-      @Override
-      public void close() {
-         if (iterator instanceof CloseableIterator<?>) {
-            ((CloseableIterator<?>) iterator).close();
-         }
+      private Flowable<CacheEntry<K, V>> fixPublisher(Publisher<CacheEntry<K, V>> nextPublisher, Integer segment) {
+         return Flowable.fromPublisher(nextPublisher)
+                        .groupBy(entry -> entry.getMetadata() instanceof RemoteMetadata)
+                        .flatMap(gf -> {
+                           if (!gf.getKey()) {
+                              return gf;
+                           }
+                           return gf.concatMapMaybe(incompleteEntry -> fixPublisherEntry(segment, incompleteEntry));
+                        }, 2);
       }
 
-      @Override
-      public boolean hasNext() {
-         if (iterator == null) {
-            return false;
-         }
-         return iterator.hasNext();
-      }
+      private Maybe<CacheEntry<K, V>> fixPublisherEntry(Integer segment, CacheEntry<K, V> localEntry) {
+         // The key exists and the anchor location is a remote node
+         RemoteMetadata remoteMetadata = (RemoteMetadata) localEntry.getMetadata();
+         Address keyLocation = remoteMetadata.getAddress();
 
-      @Override
-      public CacheEntry<K, V> next() {
-         if (iterator == null) {
-            throw new NoSuchElementException();
-         }
-         CacheEntry<K, V> localEntry = iterator.next();
-         if (localEntry.getMetadata() instanceof RemoteMetadata) {
-            // The key exists and the anchor location is a remote node
-            RemoteMetadata remoteMetadata = (RemoteMetadata) localEntry.getMetadata();
-            Address keyLocation = remoteMetadata.getAddress();
-
-            int segment = distributionManager.getCacheTopology().getSegment(localEntry.getKey());
-            return CompletionStages.join(getRemoteValue(keyLocation, localEntry.getKey(), segment, false));
-         }
-         return localEntry;
-      }
-
-      @Override
-      public void remove() {
-
-      }
-
-      @Override
-      public void forEachRemaining(Consumer<? super CacheEntry<K, V>> action) {
-
+         return Maybe.fromCompletionStage(getRemoteValue(keyLocation, localEntry.getKey(), segment, false));
       }
    }
 }

@@ -29,7 +29,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    private IntSet segments;
    private Set<K> keys;
    private Set<K> excludedKeys;
-   private boolean includeLoader;
+   private long explicitFlags;
    private boolean entryStream;
    private boolean trackKeys;
    private Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
@@ -43,7 +43,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    }
 
    public InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee,
-         int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+         int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
          boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
       super(cacheName);
       this.requestId = requestId;
@@ -52,7 +52,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       this.segments = segments;
       this.keys = keys;
       this.excludedKeys = excludedKeys;
-      this.includeLoader = includeLoader;
+      this.explicitFlags = explicitFlags;
       this.entryStream = entryStream;
       this.trackKeys = trackKeys;
       this.transformer = transformer;
@@ -82,8 +82,8 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       return excludedKeys;
    }
 
-   public boolean isIncludeLoader() {
-      return includeLoader;
+   public long getExplicitFlags() {
+      return explicitFlags;
    }
 
    public boolean isEntryStream() {
@@ -137,7 +137,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       MarshallUtil.marshallCollection(keys, output);
       MarshallUtil.marshallCollection(excludedKeys, output);
       // Maybe put the booleans into a single byte - only saves 2 bytes though
-      output.writeBoolean(includeLoader);
+      output.writeLong(explicitFlags);
       output.writeBoolean(entryStream);
       output.writeBoolean(trackKeys);
       output.writeObject(transformer);
@@ -151,7 +151,7 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       segments = (IntSet) input.readObject();
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
-      includeLoader = input.readBoolean();
+      explicitFlags = input.readLong();
       entryStream = input.readBoolean();
       trackKeys = input.readBoolean();
       transformer = (Function) input.readObject();

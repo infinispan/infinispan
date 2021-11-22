@@ -147,7 +147,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public LockedStream<K, V> lockedStream() {
       assertNoLockOwner("lockedStream");
-      return super.lockedStream();
+      return cache.lockedStream();
    }
 
    @Override
@@ -559,7 +559,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<K> keySet() {
-      return cacheImplementation.keySet(flags);
+      return cacheImplementation.keySet(flags, lockOwner);
    }
 
    @Override
@@ -580,12 +580,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<Entry<K, V>> entrySet() {
-      return cacheImplementation.entrySet(flags);
+      return cacheImplementation.entrySet(flags, lockOwner);
    }
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return cacheImplementation.cacheEntrySet(flags, readContext(-1));
+      return cacheImplementation.cacheEntrySet(flags, lockOwner);
    }
 
    @Override
@@ -737,7 +737,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    protected InvocationContext writeContext(int size) {
-      InvocationContext ctx = cacheImplementation.invocationHelper.defaultContextBuilderForWrite().create(size);
+      InvocationContext ctx = cacheImplementation.defaultContextBuilderForWrite().create(size);
       if (lockOwner != null) {
          ctx.setLockOwner(lockOwner);
       }

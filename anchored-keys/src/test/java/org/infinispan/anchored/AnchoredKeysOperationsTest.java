@@ -13,10 +13,12 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.anchored.configuration.AnchoredKeysConfigurationBuilder;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -40,6 +42,8 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 @Test(groups = "functional", testName = "anchored.AnchoredKeysOperationsTest")
 @AbstractInfinispanTest.FeatureCondition(feature = "anchored-keys")
@@ -163,6 +167,11 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
          assertEquals(new HashSet<>(data.values()), new HashSet<>(cache.values()));
          assertEquals(data.size(), cache.size());
          assertEquals(data.size(), (long) CompletionStages.join(cache.sizeAsync()));
+
+         assertEquals(data,
+                      Flowable.fromPublisher(cache.entrySet().localPublisher(IntSets.immutableRangeSet(3)))
+                              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                              .blockingGet());
          cache.clear();
       }
    }

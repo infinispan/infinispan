@@ -1,5 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
+import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 
 import java.lang.invoke.MethodHandles;
@@ -16,6 +17,11 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
+import org.infinispan.cache.impl.InvocationHelper;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
@@ -26,6 +32,8 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -75,6 +83,9 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    @Inject PersistenceManager persistenceManager;
    @Inject Configuration configuration;
    @Inject KeyPartitioner keyPartitioner;
+   @Inject ComponentRef<InvocationHelper> invocationHelper;
+   @Inject CommandsFactory commandsFactory;
+   @Inject InvocationContextFactory invocationContextFactory;
    // This cache should only be used for retrieving entries via Cache#get
    protected AdvancedCache<K, V> remoteCache;
    // This cache should be used for iteration purposes or Cache#get that are local only
@@ -82,12 +93,6 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    protected Scheduler nonBlockingScheduler;
    protected int maxSegment;
    protected final int cpuCount = ProcessorInfo.availableProcessors();
-
-   protected CacheSet<K> keySet;
-   protected CacheSet<K> keySetWithoutLoader;
-
-   protected CacheSet<CacheEntry<K, V>> entrySet;
-   protected CacheSet<CacheEntry<K, V>> entrySetWithoutLoader;
 
    protected final Set<IntConsumer> changeListener = ConcurrentHashMap.newKeySet();
 
@@ -113,8 +118,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       // Any mappings will be provided by the originator node in their intermediate operation stack in the operation itself.
       this.remoteCache = AbstractDelegatingCache.unwrapCache(cacheComponentRef.running()).getAdvancedCache();
       // The iteration caches should only deal with local entries.
-      // Also the iterations here are always remote initiated
-      this.cache = remoteCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.REMOTE_ITERATION);
+      this.cache = remoteCache.withFlags(Flag.CACHE_MODE_LOCAL);
       ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
       this.maxSegment = clusteringConfiguration.hash().numSegments();
 
@@ -137,15 +141,15 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
    @Override
    public <R> CompletionStage<PublisherResult<R>> keyReduction(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       if (keysToInclude != null) {
-         return handleSpecificKeys(parallelPublisher, keysToInclude, keysToExclude, includeLoader, deliveryGuarantee,
+         return handleSpecificKeys(parallelPublisher, keysToInclude, keysToExclude, explicitFlags, deliveryGuarantee,
                collator, finalizer);
       }
 
-      CacheSet<K> keySet = getKeySet(includeLoader);
+      CacheSet<K> keySet = getKeySet(explicitFlags);
 
       Function<K, K> toKeyFunction = Function.identity();
       switch (deliveryGuarantee) {
@@ -164,15 +168,15 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
    @Override
    public <R> CompletionStage<PublisherResult<R>> entryReduction(boolean parallelPublisher, IntSet segments,
-         Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       if (keysToInclude != null) {
-         return handleSpecificEntries(parallelPublisher, keysToInclude, keysToExclude, includeLoader, deliveryGuarantee,
+         return handleSpecificEntries(parallelPublisher, keysToInclude, keysToExclude, explicitFlags, deliveryGuarantee,
                collator, finalizer);
       }
 
-      CacheSet<CacheEntry<K, V>> entrySet = getEntrySet(includeLoader);
+      CacheSet<CacheEntry<K, V>> entrySet = getEntrySet(explicitFlags);
 
       // We have to cast to Function, since we can't cast our inner generic
       Function<CacheEntry<K, V>, K> toKeyFunction = (Function) StreamMarshalling.entryToKeyFunction();
@@ -192,14 +196,14 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
    @Override
    public <R> SegmentAwarePublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-                                                            Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                            Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
                                                             Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       if (keysToInclude != null) {
-         AdvancedCache<K, V> cache = getCache(deliveryGuarantee, includeLoader);
+         AdvancedCache<K, V> cache = getCache(deliveryGuarantee, explicitFlags);
          return specificKeyPublisher(segments, keysToInclude, keyFlowable -> keyFlowable.filter(cache::containsKey),
                transformer);
       }
-      return new SegmentAwarePublisherSupplierImpl<>(segments, getKeySet(includeLoader), Function.identity(),
+      return new SegmentAwarePublisherSupplierImpl<>(segments, getKeySet(explicitFlags), Function.identity(),
                                                      keysToExclude, deliveryGuarantee, transformer);
    }
 
@@ -221,15 +225,15 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
    @Override
    public <R> SegmentAwarePublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-                                                              Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+                                                              Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
                                                               Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       if (keysToInclude != null) {
-         AdvancedCache<K, V> cacheToUse = getCache(deliveryGuarantee, includeLoader);
+         AdvancedCache<K, V> cacheToUse = getCache(deliveryGuarantee, explicitFlags);
          return specificKeyPublisher(segments, keysToInclude, entryFlowable ->
                      filterEntries(cacheToUse, entryFlowable)
                , transformer);
       }
-      return new SegmentAwarePublisherSupplierImpl<>(segments, getEntrySet(includeLoader),
+      return new SegmentAwarePublisherSupplierImpl<>(segments, getEntrySet(explicitFlags),
                                                      StreamMarshalling.entryToKeyFunction(), keysToExclude, deliveryGuarantee, transformer);
    }
 
@@ -293,16 +297,17 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
    private class SegmentAwarePublisherSupplierImpl<I, R> extends BaseSegmentAwarePublisherSupplier<R> {
       private final IntSet segments;
-      private final CacheSet<I> set;
+      private final CacheSet<I> cacheSet;
       private final Predicate<? super I> predicate;
       private final DeliveryGuarantee deliveryGuarantee;
       private final Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
 
-      private SegmentAwarePublisherSupplierImpl(IntSet segments, CacheSet<I> set, Function<? super I, K> toKeyFunction,
-                                                Set<K> keysToExclude, DeliveryGuarantee deliveryGuarantee,
-                                                Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+      private SegmentAwarePublisherSupplierImpl(IntSet segments, CacheSet<I> cacheSet,
+                                        Function<? super I, K> toKeyFunction, Set<K> keysToExclude,
+                                        DeliveryGuarantee deliveryGuarantee,
+                                        Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
          this.segments = segments;
-         this.set = set;
+         this.cacheSet = cacheSet;
          this.predicate = keysToExclude != null ? v -> !keysToExclude.contains(toKeyFunction.apply(v)) : null;
          this.deliveryGuarantee = deliveryGuarantee;
          this.transformer = transformer;
@@ -311,7 +316,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       @Override
       public Publisher<R> publisherWithoutSegments() {
          return Flowable.fromIterable(segments).concatMap(segment -> {
-            Publisher<I> publisher = set.localPublisher(segment);
+            Publisher<I> publisher = cacheSet.localPublisher(segment);
             if (predicate != null) {
                publisher = Flowable.fromPublisher(publisher)
                      .filter(predicate);
@@ -334,7 +339,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                            if (localizedCacheTopology != null && !localizedCacheTopology.isSegmentReadOwner(segment)) {
                               return Flowable.just(builder.segmentLost(segment));
                            }
-                           Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
+                           Flowable<I> flowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
                            if (predicate != null) {
                               flowable = flowable.filter(predicate);
                            }
@@ -362,10 +367,9 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                      if (!concurrentSet.contains(segment)) {
                         return Flowable.just(builder.segmentLost(segment));
                      }
-                     Flowable<I> flowable = Flowable.fromPublisher(set.localPublisher(segment));
+                     Flowable<I> flowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
                      if (predicate != null) {
-                        flowable = flowable
-                              .filter(predicate);
+                        flowable = flowable.filter(predicate);
                      }
                      return flowable.compose(transformer::apply)
                            .map(r -> builder.value(r, segment))
@@ -543,19 +547,19 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       return localPublisherStrategy.exactlyOnceSequential(set, keysToExclude, toKeyFunction, segments, collator, listener, concurrentSegments);
    }
 
-   private AdvancedCache<K, V> getCache(DeliveryGuarantee deliveryGuarantee, boolean includeLoader) {
+   private AdvancedCache<K, V> getCache(DeliveryGuarantee deliveryGuarantee, long explicitFlags) {
       AdvancedCache<K, V> cache = deliveryGuarantee == DeliveryGuarantee.AT_MOST_ONCE ? this.cache : remoteCache;
-      if (!includeLoader) {
-         return cache.withFlags(Flag.SKIP_CACHE_LOAD);
+      if (explicitFlags != EnumUtil.EMPTY_BIT_SET) {
+         return cache.withFlags(EnumUtil.enumSetOf(explicitFlags, Flag.class));
       }
       return cache;
    }
 
    private <R> CompletionStage<PublisherResult<R>> handleSpecificKeys(boolean parallelPublisher, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
-      AdvancedCache<K, V> cache = getCache(deliveryGuarantee, includeLoader);
+      AdvancedCache<K, V> cache = getCache(deliveryGuarantee, explicitFlags);
       return handleSpecificObjects(parallelPublisher, keysToInclude, keysToExclude, keyFlowable ->
             // Filter out all the keys that aren't in the cache
             keyFlowable.concatMapMaybe(key ->
@@ -566,10 +570,10 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
    }
 
    private <R> CompletionStage<PublisherResult<R>> handleSpecificEntries(boolean parallelPublisher, Set<K> keysToInclude,
-         Set<K> keysToExclude, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
-      AdvancedCache<K, V> cache = getCache(deliveryGuarantee, includeLoader);
+      AdvancedCache<K, V> cache = getCache(deliveryGuarantee, explicitFlags);
       return handleSpecificObjects(parallelPublisher, keysToInclude, keysToExclude, keyFlowable ->
                   keyFlowable.concatMapMaybe(k -> {
                      CompletableFuture<CacheEntry<K, V>> future = cache.getCacheEntryAsync(k);
@@ -612,7 +616,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }
    }
 
-   private <I, R> CompletionStage<R> parallelAtMostOnce(CacheSet<I> cacheSet, Set<K> keysToExclude,
+   private <I, R> CompletionStage<R> parallelAtMostOnce(CacheSet<I> set, Set<K> keysToExclude,
          Function<I, K> toKeyFunction, IntSet segments,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
@@ -620,7 +624,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
             .parallel(cpuCount)
             .runOn(nonBlockingScheduler)
             .concatMap(segment -> {
-               Flowable<I> innerFlowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
+               Flowable<I> innerFlowable = Flowable.fromPublisher(set.localPublisher(segment));
                if (keysToExclude != null) {
                   innerFlowable = innerFlowable.filter(i -> !keysToExclude.contains(toKeyFunction.apply(i)));
                }
@@ -648,7 +652,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }
    }
 
-   private <I, R> CompletionStage<PublisherResult<R>> atLeastOnce(boolean parallel, CacheSet<I> cacheSet,
+   private <I, R> CompletionStage<PublisherResult<R>> atLeastOnce(boolean parallel, CacheSet<I> set,
          Set<K> keysToExclude, Function<I, K> toKeyFunction, IntSet segments,
          Function<? super Publisher<I>, ? extends CompletionStage<R>> collator,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
@@ -657,7 +661,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
       listener.verifyTopology(distributionManager.getCacheTopology());
 
-      CompletionStage<R> stage = atMostOnce(parallel, cacheSet, keysToExclude, toKeyFunction, segments, collator, finalizer);
+      CompletionStage<R> stage = atMostOnce(parallel, set, keysToExclude, toKeyFunction, segments, collator, finalizer);
       return handleLostSegments(stage, listener);
    }
 
@@ -672,40 +676,16 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       }).whenComplete((u, t) -> changeListener.remove(segmentListener));
    }
 
-   private CacheSet<K> getKeySet(boolean includeLoader) {
-      if (includeLoader) {
-         if (keySet == null) {
-            // Due to the nature of retries, we can't have the collection looking at the transaction
-            keySet = cache.withFlags(Flag.IGNORE_TRANSACTION).keySet();
-         }
-         return keySet;
-      } else {
-         if (keySetWithoutLoader == null) {
-            keySetWithoutLoader = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_TRANSACTION).keySet();
-         }
-         return keySetWithoutLoader;
-      }
+   private CacheSet<K> getKeySet(long explicitFlags) {
+      KeySetCommand<?, ?> command = commandsFactory.buildKeySetCommand(explicitFlags);
+      InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
+      return invocationHelper.running().invoke(ctx, command);
    }
 
-   void resetKeyAndEntrySet() {
-      keySet = null;
-      keySetWithoutLoader = null;
-      entrySet = null;
-      entrySetWithoutLoader = null;
-   }
-
-   private CacheSet<CacheEntry<K, V>> getEntrySet(boolean includeLoader) {
-      if (includeLoader) {
-         if (entrySet == null) {
-            entrySet = cache.withFlags(Flag.IGNORE_TRANSACTION).cacheEntrySet();
-         }
-         return entrySet;
-      } else {
-         if (entrySetWithoutLoader == null) {
-            entrySetWithoutLoader = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_TRANSACTION).cacheEntrySet();
-         }
-         return entrySetWithoutLoader;
-      }
+   private CacheSet<CacheEntry<K, V>> getEntrySet(long explicitFlags) {
+      EntrySetCommand<?,?> command = commandsFactory.buildEntrySetCommand(explicitFlags);
+      InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
+      return invocationHelper.running().invoke(ctx, command);
    }
 
    class RemoveSegmentListener implements IntConsumer {

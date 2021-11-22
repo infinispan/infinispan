@@ -39,15 +39,16 @@ import org.infinispan.LongCacheStream;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.reactive.publisher.PublisherReducers;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.transport.Address;
@@ -63,7 +64,6 @@ import org.infinispan.stream.impl.intops.object.MapToDoubleOperation;
 import org.infinispan.stream.impl.intops.object.MapToIntOperation;
 import org.infinispan.stream.impl.intops.object.MapToLongOperation;
 import org.infinispan.stream.impl.intops.object.PeekOperation;
-import org.infinispan.util.Closeables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -83,31 +83,26 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
 
    private final int maxSegment;
 
-   // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
-   protected static <R> Supplier<CacheStream<R>> supplierStreamCast(Supplier supplier) {
-      return supplier;
-   }
-
    /**
     * Standard constructor requiring all pertinent information to properly utilize a distributed cache stream
     * @param localAddress the local address for this node
     * @param parallel whether or not this stream is parallel
-    * @param dm the distribution manager to find out what keys map where
     * @param ctx the invocation context when this stream is created
-    * @param supplier a supplier of local cache stream instances.
-    * @param includeLoader whether or not a cache loader should be utilized for these operations
+    * @param explicitFlags whether or not a cache loader should be utilized for these operations
     * @param distributedBatchSize default size of distributed batches
     * @param executor executor to be used for certain operations that require async processing (ie. iterator)
     * @param registry component registry to wire objects with
     * @param toKeyFunction function that can be applied to an object in the stream to convert it to a key or null if it
     *                      is a key already. This variable is used to tell also if the underlying stream contains
     *                      entries or not by this value being non null
+    * @param clusterPublisherManager publisher manager
     */
-   public DistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm, InvocationContext ctx,
-           Supplier<CacheStream<R>> supplier, boolean includeLoader,
-           int distributedBatchSize, Executor executor, ComponentRegistry registry, Function<? super Original, ?> toKeyFunction) {
-      super(localAddress, parallel, dm, ctx, supplierStreamCast(supplier), includeLoader, distributedBatchSize,
-              executor, registry, toKeyFunction);
+   public DistributedCacheStream(Address localAddress, boolean parallel, InvocationContext ctx,
+                                 long explicitFlags, int distributedBatchSize, Executor executor,
+                                 ComponentRegistry registry, Function<? super Original, ?> toKeyFunction,
+                                 ClusterPublisherManager<?, ?> clusterPublisherManager) {
+      super(localAddress, parallel, ctx, explicitFlags, distributedBatchSize, executor, registry, toKeyFunction,
+            clusterPublisherManager);
 
       Configuration configuration = registry.getComponent(Configuration.class);
       maxSegment = configuration.clustering().hash().numSegments();
@@ -354,10 +349,10 @@ public class DistributedCacheStream<Original, R> extends AbstractCacheStream<Ori
       Publisher<R> publisherToSubscribeTo;
       SegmentPublisherSupplier<R> publisher;
       if (toKeyFunction == null) {
-         publisher = cpm.keyPublisher(segmentsToFilter, keysToFilter, invocationContext, includeLoader,
+         publisher = cpm.keyPublisher(segmentsToFilter, keysToFilter, invocationContext, explicitFlags,
                deliveryGuarantee, distributedBatchSize, usedTransformer);
       } else {
-         publisher = cpm.entryPublisher(segmentsToFilter, keysToFilter, invocationContext, includeLoader,
+         publisher = cpm.entryPublisher(segmentsToFilter, keysToFilter, invocationContext, explicitFlags,
                deliveryGuarantee, distributedBatchSize, usedTransformer);
       }
 

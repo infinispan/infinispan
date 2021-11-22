@@ -1,7 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -180,7 +180,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          initialValues.add(new ImmortalCacheEntry(key, value));
       }
 
-      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any()))
             .thenReturn(wrapCompletionPublisher(Flowable.fromIterable(initialValues)));
 
       n.addListener(listener);
@@ -202,7 +202,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
       // the filter/converter are not used by us
 
-      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any()))
             .thenReturn(wrapCompletionPublisher(Flowable.fromIterable(initialValues)));
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
@@ -226,7 +226,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
       // the filter/converter are not used by us
-      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any()))
             .thenReturn(wrapCompletionPublisher(Flowable.fromIterable(initialValues)));
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
@@ -321,7 +321,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any()))
             .thenReturn(wrapCompletionPublisher(Flowable.defer(() -> {
                barrier.await(10, TimeUnit.SECONDS);
                barrier.await(10, TimeUnit.SECONDS);
@@ -422,7 +422,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any()))
+      when(mockPublisherManager.entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any()))
             .thenReturn(wrapCompletionPublisher(Flowable.fromIterable(initialValues)
                   .doOnComplete(() -> {
                      barrier.await(10, TimeUnit.SECONDS);

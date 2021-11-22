@@ -163,16 +163,14 @@ public abstract class CacheAPITest extends APINonTxTest {
       withTx(tm, () -> {
          Map<Integer, String> txDataIn = new HashMap<>();
          txDataIn.put(3, v(m, 3));
-         Map<Object, Object> allEntriesIn = new HashMap<>(dataIn);
-
-         // Modify expectations to include data to be included
-         allEntriesIn.putAll(txDataIn);
 
          // Add an entry within tx
          cache.putAll(txDataIn);
 
          Set<Map.Entry<Object, Object>> entries = cache.entrySet();
-         assertEquals(allEntriesIn.entrySet(), entries);
+
+         dataIn.putAll(txDataIn);
+         assertEquals(dataIn.entrySet(), entries);
          return null;
       });
    }
@@ -199,11 +197,10 @@ public abstract class CacheAPITest extends APINonTxTest {
          tm.setRollbackOnly();
          return null;
       });
-      assertEquals(4, foundValues.size());
-      assertEquals(v(m, 1), foundValues.get(1));
-      assertEquals(v(m, 2), foundValues.get(2));
-      assertEquals(v(m, 3), foundValues.get(3));
-      assertEquals(v(m, 4), foundValues.get(4));
+
+      dataIn.put(3, v(m, 3));
+      dataIn.put(4, v(m, 4));
+      assertEquals(dataIn, foundValues);
    }
 
    public void testEntrySetIterationAfterInTx(Method m) throws Exception {
@@ -231,11 +228,38 @@ public abstract class CacheAPITest extends APINonTxTest {
          tm.setRollbackOnly();
          return null;
       });
-      assertEquals(4, foundValues.size());
-      assertEquals(v(m, 1), foundValues.get(1));
-      assertEquals(v(m, 2), foundValues.get(2));
-      assertEquals(v(m, 3), foundValues.get(3));
-      assertEquals(v(m, 4), foundValues.get(4));
+
+      assertEquals(dataIn, foundValues);
+   }
+
+   public void testEntrySetIterationInTx(Method m) throws Exception {
+      Map<Integer, String> dataIn = new HashMap<>();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+
+      Map<Object, Object> foundValues = new HashMap<>();
+      TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+      withTx(tm, () -> {
+         // Add some entries before iteration start
+         cache.putAll(dataIn);
+
+         Set<Entry<Object, Object>> entries = cache.entrySet();
+
+         Iterator<Entry<Object, Object>> itr = entries.iterator();
+
+         // Add more entries during iteration
+         cache.put(3, v(m, 3));
+         cache.put(4, v(m, 4));
+
+         while (itr.hasNext()) {
+            Entry<Object, Object> entry = itr.next();
+            foundValues.put(entry.getKey(), entry.getValue());
+         }
+         tm.setRollbackOnly();
+         return null;
+      });
+
+      assertEquals(dataIn, foundValues);
    }
 
    public void testRollbackAfterPut() throws Exception {

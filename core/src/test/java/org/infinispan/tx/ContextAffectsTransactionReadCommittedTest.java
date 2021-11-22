@@ -1,11 +1,12 @@
 package org.infinispan.tx;
 
-import static org.jgroups.util.Util.assertFalse;
-import static org.jgroups.util.Util.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -90,11 +91,14 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
          Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
          assertEquals(1, entrySet.size());
+         assertTrue(entrySet.contains(TestingUtil.createMapEntry(1, "v1")));
 
-         Map.Entry<Object, Object> entry = entrySet.iterator().next();
+         Iterator<Map.Entry<Object, Object>> iterator = entrySet.iterator();
+         Map.Entry<Object, Object> entry = iterator.next();
          assertEquals(1, entry.getKey());
          assertEquals("v1", entry.getValue());
-         assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
+
+         assertFalse(iterator.hasNext());
       } finally {
          safeCommit(false);
       }
@@ -112,6 +116,12 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
          Set<Object> keySet = cache.keySet();
          assertEquals(1, keySet.size());
          assertTrue(keySet.contains(1));
+
+         Iterator<Object> iterator = keySet.iterator();
+         Object key = iterator.next();
+         assertEquals(1, key);
+
+         assertFalse(iterator.hasNext());
       } finally {
          safeCommit(false);
       }
@@ -129,6 +139,12 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Collection<Object> values = cache.values();
       assertEquals(1, values.size());
       assertTrue(values.contains("v1"));
+
+      Iterator<Object> iterator = values.iterator();
+      Object value = iterator.next();
+      assertEquals("v1", value);
+
+      assertFalse(iterator.hasNext());
       } finally {
          safeCommit(false);
       }

@@ -1,8 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -674,7 +674,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
          return Mocks.blockingSegmentPublisherOnElement(publisher, checkPoint,
                n -> n.isSegmentComplete() && n.completedSegment() == segment);
-      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
+      }).when(spy).entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any());
    }
 
    private static void registerBlockingPublisher(final CheckPoint checkPoint, Cache<?, ?> cache) {
@@ -683,6 +683,6 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       doAnswer(invocation -> {
          SegmentPublisherSupplier<?> result = (SegmentPublisherSupplier<?>) invocation.callRealMethod();
          return Mocks.blockingPublisher(result, checkPoint);
-      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
+      }).when(spy).entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any());
    }
 }

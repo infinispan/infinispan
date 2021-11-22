@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
@@ -26,7 +27,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -108,8 +108,9 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    @Override
    public <R> Map<K, R> invokeAll(BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction) {
       Map<K, R> map = new HashMap<>();
-      Iterator<KeyValuePair<K, R>> iterator = realStream.map(new CacheEntryFunction<>(biFunction, predicate))
-            .filter(StreamMarshalling.nonNullPredicate()).iterator();
+      Iterator<KeyValuePair<K, R>> iterator =
+            realStream.flatMap(new CacheEntryFunction<>(biFunction, predicate))
+                      .iterator();
       iterator.forEachRemaining(e -> map.put(e.getKey(), e.getValue()));
       return map;
    }
@@ -253,7 +254,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
 
    @Scope(Scopes.NONE)
    @SerializeWith(value = CacheEntryFunction.Externalizer.class)
-   static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, KeyValuePair<K, R>> {
+   static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, Stream<KeyValuePair<K, R>>> {
       private final BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction;
       @Inject protected transient Cache<K, V> cache;
 
@@ -264,8 +265,9 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       }
 
       @Override
-      public KeyValuePair<K, R> apply(CacheEntry<K, V> kvCacheEntry) {
-         return perform(cache, kvCacheEntry);
+      public Stream<KeyValuePair<K, R>> apply(CacheEntry<K, V> kvCacheEntry) {
+         KeyValuePair<K, R> pair = perform(cache, kvCacheEntry);
+         return pair != null ? Stream.of(pair) : Stream.empty();
       }
 
       @Override

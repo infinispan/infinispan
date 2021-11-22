@@ -1,5 +1,6 @@
 package org.infinispan.stream;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertSame;
@@ -30,7 +31,7 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
       InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       try {
          Throwable t = new CacheException();
-         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).spliterator()).thenThrow(t).getMock();
+         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).publisher(anyInt())).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
 
          try {

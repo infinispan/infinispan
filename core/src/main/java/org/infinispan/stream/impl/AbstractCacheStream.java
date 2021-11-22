@@ -12,11 +12,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 
-import org.infinispan.CacheStream;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
@@ -41,15 +39,13 @@ import org.reactivestreams.Publisher;
 public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
    protected final Queue<IntermediateOperation> intermediateOperations;
    protected final Address localAddress;
-   protected final DistributionManager dm;
-   protected final Supplier<CacheStream<Original>> supplier;
    protected final ClusterPublisherManager cpm;
    protected final Executor executor;
    protected final ComponentRegistry registry;
    protected final PartitionHandlingManager partition;
    protected final KeyPartitioner keyPartitioner;
    protected final StateTransferLock stateTransferLock;
-   protected final boolean includeLoader;
+   protected final long explicitFlags;
    protected final Function<? super Original, ?> toKeyFunction;
    protected final InvocationContext invocationContext;
 
@@ -71,15 +67,14 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
    protected long timeout = 30;
    protected TimeUnit timeoutUnit = TimeUnit.SECONDS;
 
-   protected AbstractCacheStream(Address localAddress, boolean parallel, DistributionManager dm, InvocationContext ctx,
-           Supplier<CacheStream<Original>> supplier, boolean includeLoader, int distributedBatchSize, Executor executor,
-         ComponentRegistry registry, Function<? super Original, ?> toKeyFunction) {
+   protected AbstractCacheStream(Address localAddress, boolean parallel, InvocationContext ctx,
+                                 long explicitFlags, int distributedBatchSize, Executor executor,
+                                 ComponentRegistry registry, Function<? super Original, ?> toKeyFunction,
+                                 ClusterPublisherManager<?, ?> clusterPublisherManager) {
       this.localAddress = localAddress;
       this.parallel = parallel;
-      this.dm = dm;
       this.invocationContext = ctx;
-      this.supplier = supplier;
-      this.includeLoader = includeLoader;
+      this.explicitFlags = explicitFlags;
       this.distributedBatchSize = distributedBatchSize;
       this.executor = executor;
       this.registry = registry;
@@ -87,17 +82,15 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       this.partition = registry.getComponent(PartitionHandlingManager.class);
       this.keyPartitioner = registry.getComponent(KeyPartitioner.class);
       this.stateTransferLock = registry.getComponent(StateTransferLock.class);
-      this.cpm = registry.getComponent(ClusterPublisherManager.class);
+      this.cpm = clusterPublisherManager;
       intermediateOperations = new ArrayDeque<>();
    }
 
    protected AbstractCacheStream(AbstractCacheStream<Original, T, S, S2> other) {
       this.intermediateOperations = other.intermediateOperations;
       this.localAddress = other.localAddress;
-      this.dm = other.dm;
       this.invocationContext = other.invocationContext;
-      this.supplier = other.supplier;
-      this.includeLoader = other.includeLoader;
+      this.explicitFlags = other.explicitFlags;
       this.executor = other.executor;
       this.registry = other.registry;
       this.toKeyFunction = other.toKeyFunction;
@@ -198,10 +191,10 @@ public abstract class AbstractCacheStream<Original, T, S extends BaseStream<T, S
       DeliveryGuarantee guarantee = rehashAware ? DeliveryGuarantee.EXACTLY_ONCE : DeliveryGuarantee.AT_MOST_ONCE;
       CompletionStage<R> stage;
       if (toKeyFunction == null) {
-         stage = cpm.keyReduction(parallel, segmentsToFilter, keysToFilter, invocationContext, includeLoader, guarantee,
+         stage = cpm.keyReduction(parallel, segmentsToFilter, keysToFilter, invocationContext, explicitFlags, guarantee,
                usedTransformer, finalizer);
       } else {
-         stage = cpm.entryReduction(parallel, segmentsToFilter, keysToFilter, invocationContext, includeLoader, guarantee,
+         stage = cpm.entryReduction(parallel, segmentsToFilter, keysToFilter, invocationContext, explicitFlags, guarantee,
                usedTransformer, finalizer);
       }
       return CompletionStages.join(stage);

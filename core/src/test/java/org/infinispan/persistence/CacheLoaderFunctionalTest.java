@@ -11,10 +11,9 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
@@ -567,18 +566,16 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testValuesForCacheLoader() {
       cache.putIfAbsent("k1", "v1");
-      List<String> copy1 = copyValues(cache);
-      assertEquals(1, copy1.size());
-      assertEquals("v1", copy1.get(0));
+      Set<String> copy1 = copyValues(cache);
+      assertEquals(TestingUtil.setOf("v1"), copy1);
 
       cache.putIfAbsent("k2", "v2");
-      List<String> copy2 = copyValues(cache);
-      assertEquals(2, copy2.size());
-      assertEquals(Arrays.asList("v1", "v2"), copy2);
+      Set<String> copy2 = copyValues(cache);
+      assertEquals(TestingUtil.setOf("v1", "v2"), copy2);
    }
 
-   private List<String> copyValues(Cache<?, String> cache) {
-      return new ArrayList<>(cache.values());
+   private Set<String> copyValues(Cache<?, String> cache) {
+      return new HashSet<>(cache.values());
    }
 
 

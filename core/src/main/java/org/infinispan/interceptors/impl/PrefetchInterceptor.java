@@ -3,25 +3,19 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.context.impl.FlagBitSets.SKIP_OWNERSHIP_CHECK;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Spliterator;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.InternalCacheSet;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
@@ -55,14 +49,8 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
-import org.infinispan.commons.util.FilterIterator;
-import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -91,8 +79,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
-import org.infinispan.util.CacheSetMapper;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
@@ -493,14 +479,16 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       // Need the full entry to filter out tombstones
       EntrySetCommand<K, V> entrySetCommand = commandsFactory.buildEntrySetCommand(command.getFlagsBitSet());
-      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) visitEntrySetCommand(ctx, entrySetCommand);
-      return new CacheSetMapper<>(entrySet, (InjectiveFunction<CacheEntry<K, V>, K>) CacheEntry::getKey);
+      return invokeNextThenApply(ctx, entrySetCommand, (rCtx, rCommand, rv) -> {
+         boolean ignoreOwnership = rCommand.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL);
+         return new BackingKeySet(ignoreOwnership, (CacheSet<CacheEntry<K, V>>) rv);
+      });
    }
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         boolean ignoreOwnership = rCommand.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
+         boolean ignoreOwnership = rCommand.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL);
          return new BackingEntrySet(ignoreOwnership, (CacheSet<CacheEntry<K, V>>) rv);
       });
    }
@@ -528,197 +516,71 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
 
    private Publisher<CacheEntry<K, V>> getPublisher(int segment, boolean ignoreOwnership,
                                                     CacheSet<CacheEntry<K, V>> next) {
-       if (ignoreOwnership) {
-          return next.localPublisher(segment);
-       }
-       ScatteredVersionManager.SegmentState segmentState = svm.getSegmentState(segment);
-       switch (segmentState) {
-          case NOT_OWNED:
-             return Flowable.empty();
-          case OWNED:
-             return next.localPublisher(segment);
-          case BLOCKED:
-          case KEY_TRANSFER:
-          case VALUE_TRANSFER:
-             CompletionStage<Publisher<CacheEntry<K, V>>> stage =
-                   svm.valuesFuture(dm.getCacheTopology().getTopologyId())
-                      .thenApply(__ -> next.localPublisher(segment));
-             return Single.fromCompletionStage(stage)
-                          .flatMapPublisher(p -> p);
-          default:
-             throw new IllegalStateException();
-       }
-    }
+      if (ignoreOwnership) {
+         return next.localPublisher(segment);
+      }
+      ScatteredVersionManager.SegmentState segmentState = svm.getSegmentState(segment);
+      switch (segmentState) {
+         case NOT_OWNED:
+            return Flowable.empty();
+         case OWNED:
+            return next.localPublisher(segment);
+         case BLOCKED:
+         case KEY_TRANSFER:
+         case VALUE_TRANSFER:
+            CompletionStage<Publisher<CacheEntry<K, V>>> stage =
+                  svm.valuesFuture(dm.getCacheTopology().getTopologyId())
+                     .thenApply(__ -> next.localPublisher(segment));
+            return Single.fromCompletionStage(stage)
+                         .flatMapPublisher(p -> p);
+         default:
+            throw new IllegalStateException();
+      }
+   }
 
-   private class BackingEntrySet extends AbstractDelegatingEntryCacheSet<K, V> implements CacheSet<CacheEntry<K, V>> {
-      private final CacheSet<CacheEntry<K, V>> entrySet;
+   private class BackingEntrySet extends InternalCacheSet<CacheEntry<K, V>> {
+      protected final CacheSet<CacheEntry<K, V>> next;
       private final boolean ignoreOwnership;
 
-      public BackingEntrySet(boolean ignoreOwnership, CacheSet<CacheEntry<K, V>> entrySet) {
-         super(cache.wired(), entrySet);
+      public BackingEntrySet(boolean ignoreOwnership, CacheSet<CacheEntry<K, V>> next) {
+         this.next = next;
          this.ignoreOwnership = ignoreOwnership;
-         this.entrySet = entrySet;
-      }
-
-      @Override
-      public CloseableIterator<CacheEntry<K, V>> iterator() {
-         // Here we use stream because plain .iterator() would return non-serializable EntryWrapper entries
-         BackingIterator<CacheEntry<K, V>> backingIterator =
-               new BackingIterator<>(cache.wired(), ignoreOwnership, () -> entrySet.stream().iterator(),
-                                     Map.Entry::getKey);
-         return new FilterIterator<>(backingIterator, e -> e.getValue() != null);
-      }
-
-      @Override
-      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         return  Closeables.spliterator(iterator(), Long.MAX_VALUE,
-                                        Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
       }
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
          // Wait for each segment independently
          return Flowable.fromIterable(segments)
-               .concatMap(this::localPublisher);
+                        .concatMap(this::localPublisher);
       }
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(int segment) {
-         return Flowable.fromPublisher(getPublisher(segment, ignoreOwnership, entrySet))
+         return Flowable.fromPublisher(getPublisher(segment, ignoreOwnership, next))
                         .filter(e -> e.getValue() != null);
       }
    }
 
-   private class BackingIterator<O> implements CloseableIterator<O> {
-      private final Cache<K, V> cache;
-      private final Supplier<Iterator<O>> supplier;
-      private final Function<O, K> keyRetrieval;
+   private class BackingKeySet extends InternalCacheSet<K> {
       private final boolean ignoreOwnership;
-      private Iterator<O> iterator;
-      private K previousKey;
-      private O next;
-      private List<Integer> blockedSegments;
-      private int lastTopology;
-      private boolean[] finishedSegments;
+      protected final CacheSet<CacheEntry<K, V>> next;
 
-      @Override
-      public void remove() {
-         if (previousKey == null) {
-            throw new IllegalStateException();
-         }
-         cache.remove(previousKey);
-         previousKey = null;
-      }
-
-      public BackingIterator(Cache<K, V> cache, boolean ignoreOwnership, Supplier<Iterator<O>> supplier, Function<O, K> keyRetrieval) {
-         this.cache = cache;
+      public BackingKeySet(boolean ignoreOwnership, CacheSet<CacheEntry<K, V>> next) {
          this.ignoreOwnership = ignoreOwnership;
-         this.supplier = supplier;
-         log.tracef("Retrieving iterator for %s for the first time", cache);
-         this.iterator = supplier.get();
-         this.keyRetrieval = keyRetrieval;
-         findNotReadySegments();
-      }
-
-      protected void findNotReadySegments() {
-      if (ignoreOwnership) {
-            return;
-         }
-         do {
-            lastTopology = dm.getCacheTopology().getTopologyId();
-            int numSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
-            if (blockedSegments != null) {
-               blockedSegments.clear();
-      }
-            for (int segment = 0; segment < numSegments; ++segment) {
-               switch (svm.getSegmentState(segment)) {
-         case NOT_OWNED:
-                     break;
-         case BLOCKED:
-         case KEY_TRANSFER:
-         case VALUE_TRANSFER:
-                     addBlocked(segment);
-                     break;
-                  case OWNED:
-                     break;
-               }
-      }
-         } while (dm.getCacheTopology().getTopologyId() != lastTopology);
-   }
-
-      private void addBlocked(int segment) {
-         if (blockedSegments == null) {
-            blockedSegments = new ArrayList<>();
-         }
-         blockedSegments.add(segment);
+         this.next = next;
       }
 
       @Override
-      public boolean hasNext() {
-         if (iterator == null) {
-            next = null;
-            return false;
-         }
-         for (;;) {
-            while (iterator.hasNext()) {
-               next = iterator.next();
-               if (ignoreOwnership) {
-                  return true;
-               }
-               int segment = keyPartitioner.getSegment(keyRetrieval.apply(next));
-               if (finishedSegments == null || !finishedSegments[segment]) {
-                  if (svm.getSegmentState(segment) == ScatteredVersionManager.SegmentState.OWNED) {
-                     return true;
-                  }
-               }
-            }
-            if (blockedSegments != null && !blockedSegments.isEmpty()) {
-               if (lastTopology == dm.getCacheTopology().getTopologyId()) {
-                  int numSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
-                  boolean[] newFinishedSegments = finishedSegments == null ? new boolean[numSegments] : Arrays.copyOf(finishedSegments, numSegments);
-                  for (int segment = 0; segment < numSegments; ++segment) {
-                     if (svm.getSegmentState(segment) == ScatteredVersionManager.SegmentState.OWNED) {
-                        newFinishedSegments[segment] = true;
-                     }
-                  }
-                  // do one more check to find if the topology hasn't changed during iteration through states
-                  if (lastTopology == dm.getCacheTopology().getTopologyId()) {
-                     finishedSegments = newFinishedSegments;
-                  }
-               }
-               try {
-                  svm.valuesFuture(lastTopology).get(cacheConfiguration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
-               } catch (Exception e) {
-                  throw new CacheException(e);
-               }
-               findNotReadySegments();
-               if (iterator instanceof CloseableIterator) {
-                  ((CloseableIterator) iterator).close();
-               }
-               log.tracef("Retrieving iterator for %s in topology %d, blocked segments are %s", cache, lastTopology, blockedSegments);
-               iterator = supplier.get();
-            } else {
-               return false;
-            }
-         }
+      public Publisher<K> localPublisher(IntSet segments) {
+         // Wait for each segment independently
+         return Flowable.fromIterable(segments)
+                        .concatMap(this::localPublisher);
       }
 
       @Override
-      public O next() {
-         if (next == null && !hasNext()) {
-            throw new NoSuchElementException();
-         }
-         assert next != null;
-         previousKey = keyRetrieval.apply(next);
-         return next;
-      }
-
-      @Override
-      public void close() {
-         if (iterator instanceof CloseableIterator) {
-            ((CloseableIterator) iterator).close();
-         }
-         iterator = null;
+      public Publisher<K> localPublisher(int segment) {
+         return Flowable.fromPublisher(getPublisher(segment, ignoreOwnership, next))
+                        .mapOptional(e -> e.getValue() != null ? Optional.of(e.getKey()) : Optional.empty());
       }
    }
 }
