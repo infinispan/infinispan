@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.infinispan.configuration.parsing.ParserScope;
+
 /**
  * SerializedWith, specifies the {@link ConfigurationSerializer} to use to serialize the annotated class
  *
@@ -15,4 +17,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface SerializedWith {
    Class<? extends ConfigurationSerializer> value();
+
+   ParserScope scope() default ParserScope.CACHE_CONTAINER;
 }

@@ -4,19 +4,21 @@ import static org.infinispan.server.configuration.ServerConfigurationParser.NAME
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
-import org.infinispan.configuration.serializing.SerializeUtils;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoreConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoresConfiguration;
+import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
 import org.infinispan.server.configuration.security.FileSystemRealmConfiguration;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration;
 import org.infinispan.server.configuration.security.LdapAttributeConfiguration;
@@ -44,7 +46,6 @@ public class ServerConfigurationSerializer
 
    @Override
    public void serialize(ConfigurationWriter writer, ServerConfiguration configuration) {
-      writer.writeStartDocument();
       writer.writeStartElement(Element.SERVER);
       writer.writeDefaultNamespace(NAMESPACE + Version.getMajorMinor());
       writeInterfaces(writer, configuration.interfaces);
@@ -53,7 +54,6 @@ public class ServerConfigurationSerializer
       writeDataSources(writer, configuration.dataSources());
       writeEndpoints(writer, configuration.endpoints());
       writer.writeEndElement();
-      writer.writeEndDocument();
    }
 
    private void writeInterfaces(ConfigurationWriter writer, InterfacesConfiguration networkInterfaces) {
@@ -75,24 +75,25 @@ public class ServerConfigurationSerializer
    }
 
    private void writeSocketBindings(ConfigurationWriter writer, SocketBindingsConfiguration socketBindings) {
-      writer.writeStartListElement(Element.SOCKET_BINDINGS, true);
-      socketBindings.attributes().write(writer);
       if (writer.hasFeature(ConfigurationFormatFeature.MIXED_ELEMENTS)) {
+         writer.writeStartElement(Element.SOCKET_BINDINGS);
+         socketBindings.attributes().write(writer);
          for (SocketBindingConfiguration socketBinding : socketBindings.socketBindings().values()) {
             writer.writeStartElement(Element.SOCKET_BINDING);
             socketBinding.attributes().write(writer);
             writer.writeEndElement(); // SOCKET_BINDING
          }
+         writer.writeEndElement(); // SOCKET_BINDINGS
       } else {
-         writer.writeStartElement(Element.SOCKET_BINDING);
+         writer.writeStartElement(Element.SOCKET_BINDINGS);
+         socketBindings.attributes().write(writer);
+         writer.writeStartArrayElement(Element.SOCKET_BINDING);
          for (SocketBindingConfiguration socketBinding : socketBindings.socketBindings().values()) {
-            writer.writeStartArrayElement(Element.SOCKET_BINDING);
-            socketBinding.attributes().write(writer);
-            writer.writeEndArrayElement(); // SOCKET_BINDING
+            socketBinding.write(writer);
          }
-         writer.writeEndElement();
+         writer.writeEndArrayElement(); // SOCKET_BINDING
+         writer.writeEndElement(); // SOCKET_BINDINGS
       }
-      writer.writeEndListElement(); // SOCKET_BINDINGS
    }
 
    private void writeSecurity(ConfigurationWriter writer, SecurityConfiguration security) {
@@ -103,38 +104,42 @@ public class ServerConfigurationSerializer
    }
 
    private void writeCredentialStores(ConfigurationWriter writer, CredentialStoresConfiguration credentialStores) {
-      writer.writeStartArrayElement(Element.CREDENTIAL_STORES);
-      for (CredentialStoreConfiguration credentialStore : credentialStores.credentialStores().values()) {
-         credentialStore.write(writer);
+      if (!credentialStores.credentialStores().isEmpty()) {
+         writer.writeStartArrayElement(Element.CREDENTIAL_STORES);
+         for (CredentialStoreConfiguration credentialStore : credentialStores.credentialStores().values()) {
+            credentialStore.write(writer);
+         }
+         writer.writeEndArrayElement();
       }
-      writer.writeEndArrayElement();
    }
 
    private void writeSecurityRealms(ConfigurationWriter writer, RealmsConfiguration realms) {
-      writer.writeStartArrayElement(Element.SECURITY_REALMS);
-      for (Map.Entry<String, RealmConfiguration> e : realms.realms().entrySet()) {
-         RealmConfiguration realm = e.getValue();
-         writer.writeStartElement(Element.SECURITY_REALM);
-         realm.attributes().write(writer);
-         writeServerIdentities(writer, realm.serverIdentitiesConfiguration());
-         for (RealmProvider provider : realm.realmProviders()) {
-            if (provider instanceof FileSystemRealmConfiguration) {
-               writeRealm(writer, (FileSystemRealmConfiguration) provider);
-            } else if (provider instanceof LdapRealmConfiguration) {
-               writeRealm(writer, (LdapRealmConfiguration) provider);
-            } else if (provider instanceof LocalRealmConfiguration) {
-               writeRealm(writer, (LocalRealmConfiguration) provider);
-            } else if (provider instanceof PropertiesRealmConfiguration) {
-               writeRealm(writer, (PropertiesRealmConfiguration) provider);
-            } else if (provider instanceof TokenRealmConfiguration) {
-               writeRealm(writer, (TokenRealmConfiguration) provider);
-            } else if (provider instanceof TrustStoreConfiguration) {
-               writeRealm(writer, (TrustStoreRealmConfiguration) provider);
+      if (!realms.realms().isEmpty()) {
+         writer.writeStartArrayElement(Element.SECURITY_REALMS);
+         for (Map.Entry<String, RealmConfiguration> e : realms.realms().entrySet()) {
+            RealmConfiguration realm = e.getValue();
+            writer.writeStartElement(Element.SECURITY_REALM);
+            realm.attributes().write(writer);
+            writeServerIdentities(writer, realm.serverIdentitiesConfiguration());
+            for (RealmProvider provider : realm.realmProviders()) {
+               if (provider instanceof FileSystemRealmConfiguration) {
+                  writeRealm(writer, (FileSystemRealmConfiguration) provider);
+               } else if (provider instanceof LdapRealmConfiguration) {
+                  writeRealm(writer, (LdapRealmConfiguration) provider);
+               } else if (provider instanceof LocalRealmConfiguration) {
+                  writeRealm(writer, (LocalRealmConfiguration) provider);
+               } else if (provider instanceof PropertiesRealmConfiguration) {
+                  writeRealm(writer, (PropertiesRealmConfiguration) provider);
+               } else if (provider instanceof TokenRealmConfiguration) {
+                  writeRealm(writer, (TokenRealmConfiguration) provider);
+               } else if (provider instanceof TrustStoreConfiguration) {
+                  writeRealm(writer, (TrustStoreRealmConfiguration) provider);
+               }
             }
+            writer.writeEndElement(); // SECURITY_REALM
          }
-         writer.writeEndElement(); // SECURITY_REALM
+         writer.writeEndArrayElement(); // SECURITY_REALMS
       }
-      writer.writeEndArrayElement(); // SECURITY_REALMS
    }
 
    private void writeRealm(ConfigurationWriter writer, LdapRealmConfiguration realm) {
@@ -204,61 +209,66 @@ public class ServerConfigurationSerializer
    }
 
    private void writeServerIdentities(ConfigurationWriter writer, ServerIdentitiesConfiguration identities) {
-      writer.writeStartElement(Element.SERVER_IDENTITIES);
       SSLConfiguration ssl = identities.sslConfiguration();
-      if (ssl != null) {
-         writer.writeStartElement(Element.SSL);
-         ssl.keyStore().write(writer);
-         TrustStoreConfiguration trustStore = ssl.trustStore();
-         if (trustStore != null) {
-            trustStore.write(writer);
+      List<KerberosSecurityFactoryConfiguration> kerberosList = identities.kerberosConfigurations();
+      if (ssl != null || !kerberosList.isEmpty()) {
+         writer.writeStartElement(Element.SERVER_IDENTITIES);
+         if (ssl != null) {
+            writer.writeStartElement(Element.SSL);
+            ssl.keyStore().write(writer);
+            TrustStoreConfiguration trustStore = ssl.trustStore();
+            if (trustStore != null) {
+               trustStore.write(writer);
+            }
+            ssl.engine().write(writer);
+            writer.writeEndElement();
          }
-         ssl.engine().write(writer);
+
+         if (!kerberosList.isEmpty()) {
+            for (KerberosSecurityFactoryConfiguration kerberos : kerberosList) {
+               kerberos.write(writer);
+            }
+         }
          writer.writeEndElement();
       }
-      List<KerberosSecurityFactoryConfiguration> kerberosList = identities.kerberosConfigurations();
-      if (!kerberosList.isEmpty()) {
-         for (KerberosSecurityFactoryConfiguration kerberos : kerberosList) {
-            kerberos.write(writer);
-         }
-      }
-      writer.writeEndElement();
    }
 
    private void writeDataSources(ConfigurationWriter writer, Map<String, DataSourceConfiguration> dataSources) {
-      writer.writeStartListElement(Element.DATA_SOURCES, true);
-      for (Map.Entry<String, DataSourceConfiguration> configuration : dataSources.entrySet()) {
-         AttributeSet attributes = configuration.getValue().attributes();
-         writer.writeStartElement(Element.DATA_SOURCE);
-         attributes.write(writer, DataSourceConfiguration.NAME);
-         attributes.write(writer, DataSourceConfiguration.JNDI_NAME);
-         attributes.write(writer, DataSourceConfiguration.STATISTICS);
-         writer.writeStartElement(Element.CONNECTION_FACTORY);
-         attributes.write(writer, DataSourceConfiguration.DRIVER);
-         attributes.write(writer, DataSourceConfiguration.USERNAME);
-         // We don't serialize the password
-         attributes.write(writer, DataSourceConfiguration.URL);
-         attributes.write(writer, DataSourceConfiguration.INITIAL_SQL);
-         Map<String, String> properties = attributes.attribute(DataSourceConfiguration.CONNECTION_PROPERTIES).get();
-         SerializeUtils.writeTypedProperties(writer, TypedProperties.toTypedProperties(properties), Element.CONNECTION_PROPERTIES, Element.CONNECTION_PROPERTY, false);
-         writer.writeEndElement(); // Element.CONNECTION_FACTORY
-         writer.writeStartElement(Element.CONNECTION_POOL);
-         attributes.write(writer, DataSourceConfiguration.BACKGROUND_VALIDATION);
-         attributes.write(writer, DataSourceConfiguration.BLOCKING_TIMEOUT);
-         attributes.write(writer, DataSourceConfiguration.IDLE_REMOVAL);
-         attributes.write(writer, DataSourceConfiguration.INITIAL_SIZE);
-         attributes.write(writer, DataSourceConfiguration.LEAK_DETECTION);
-         attributes.write(writer, DataSourceConfiguration.MAX_SIZE);
-         attributes.write(writer, DataSourceConfiguration.MIN_SIZE);
-         writer.writeEndElement(); // Element.CONNECTION_POOL
-         writer.writeEndElement(); // Element.DATA_SOURCE
+      if (!dataSources.isEmpty()) {
+         writer.writeStartListElement(Element.DATA_SOURCES, true);
+         for (Map.Entry<String, DataSourceConfiguration> configuration : dataSources.entrySet()) {
+            AttributeSet attributes = configuration.getValue().attributes();
+            writer.writeStartElement(Element.DATA_SOURCE);
+            attributes.write(writer, DataSourceConfiguration.NAME);
+            attributes.write(writer, DataSourceConfiguration.JNDI_NAME);
+            attributes.write(writer, DataSourceConfiguration.STATISTICS);
+            writer.writeStartElement(Element.CONNECTION_FACTORY);
+            attributes.write(writer, DataSourceConfiguration.DRIVER);
+            attributes.write(writer, DataSourceConfiguration.USERNAME);
+            attributes.write(writer, DataSourceConfiguration.URL);
+            attributes.write(writer, DataSourceConfiguration.INITIAL_SQL);
+            attributes.write(writer, DataSourceConfiguration.PASSWORD);
+            attributes.write(writer, DataSourceConfiguration.CONNECTION_PROPERTIES);
+            writer.writeEndElement(); // Element.CONNECTION_FACTORY
+            writer.writeStartElement(Element.CONNECTION_POOL);
+            attributes.write(writer, DataSourceConfiguration.BACKGROUND_VALIDATION);
+            attributes.write(writer, DataSourceConfiguration.BLOCKING_TIMEOUT);
+            attributes.write(writer, DataSourceConfiguration.IDLE_REMOVAL);
+            attributes.write(writer, DataSourceConfiguration.INITIAL_SIZE);
+            attributes.write(writer, DataSourceConfiguration.LEAK_DETECTION);
+            attributes.write(writer, DataSourceConfiguration.MAX_SIZE);
+            attributes.write(writer, DataSourceConfiguration.MIN_SIZE);
+            writer.writeEndElement(); // Element.CONNECTION_POOL
+            writer.writeEndElement(); // Element.DATA_SOURCE
+         }
+         writer.writeEndListElement();
       }
-      writer.writeEndListElement();
    }
 
    private void writeEndpoints(ConfigurationWriter writer, EndpointsConfiguration endpoints) {
+      writer.writeStartElement(Element.ENDPOINTS);
       for (EndpointConfiguration endpoint : endpoints.endpoints()) {
-         writer.writeStartElement(Element.ENDPOINTS);
+         writer.writeStartElement(Element.ENDPOINT);
          endpoint.attributes().write(writer);
          for (ProtocolServerConfiguration connector : endpoint.connectors()) {
             if (connector instanceof HotRodServerConfiguration) {
@@ -271,9 +281,13 @@ public class ServerConfigurationSerializer
          }
          writer.writeEndElement();
       }
+      writer.writeEndElement();
    }
 
    private void writeConnector(ConfigurationWriter writer, HotRodServerConfiguration connector) {
+      if (connector.isImplicit()) {
+         return;
+      }
       writer.writeStartElement(org.infinispan.server.hotrod.configuration.Element.HOTROD_CONNECTOR);
       connector.attributes().write(writer);
       connector.topologyCache().write(writer);
@@ -281,7 +295,6 @@ public class ServerConfigurationSerializer
          writer.writeStartElement(org.infinispan.server.hotrod.configuration.Element.AUTHENTICATION);
          connector.authentication().attributes().write(writer);
          connector.authentication().sasl().write(writer);
-         SerializeUtils.writeTypedProperties(writer, TypedProperties.toTypedProperties(connector.authentication().mechProperties()), Element.PROPERTIES, org.infinispan.server.hotrod.configuration.Element.PROPERTY, false);
          writer.writeEndElement();
       }
       connector.encryption().write(writer);
@@ -289,6 +302,9 @@ public class ServerConfigurationSerializer
    }
 
    private void writeConnector(ConfigurationWriter writer, RestServerConfiguration connector) {
+      if (connector.isImplicit()) {
+         return;
+      }
       writer.writeStartElement(org.infinispan.server.configuration.rest.Element.REST_CONNECTOR);
       connector.attributes().write(writer);
       if (connector.authentication().enabled()) {
@@ -302,6 +318,24 @@ public class ServerConfigurationSerializer
    }
 
    private void writeConnector(ConfigurationWriter writer, MemcachedServerConfiguration connector) {
+      if (connector.isImplicit()) {
+         return;
+      }
       connector.write(writer);
    }
+
+   public static AttributeSerializer<Supplier<char[]>> CREDENTIAL = (writer, name, value) -> {
+      if (value instanceof InstanceSupplier) {
+         String credential = writer.clearTextSecrets() ? new String(value.get()) : "***";
+         writer.writeAttribute(name, credential);
+      } else if (value instanceof CredentialStoresConfigurationBuilder.CredentialSupplier) {
+         CredentialStoresConfigurationBuilder.CredentialSupplier credentialSupplier = (CredentialStoresConfigurationBuilder.CredentialSupplier) value;
+         writer.writeStartElement(Element.CREDENTIAL_REFERENCE);
+         writer.writeAttribute(Attribute.STORE, credentialSupplier.getStore());
+         writer.writeAttribute(Attribute.ALIAS, credentialSupplier.getAlias());
+         writer.writeEndElement();
+      } else {
+         throw new IllegalArgumentException();
+      }
+   };
 }

@@ -112,6 +112,12 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public S implicitConnector(boolean implicitConnector) {
+      builder.implicitConnector(implicitConnector);
+      return self();
+   }
+
+   @Override
    public T build() {
       return builder.build();
    }

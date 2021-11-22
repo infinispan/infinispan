@@ -2,9 +2,14 @@ package org.infinispan.configuration.serializing;
 
 import static org.infinispan.configuration.parsing.Attribute.BIAS_ACQUISITION;
 import static org.infinispan.configuration.parsing.Attribute.BIAS_LIFESPAN;
+import static org.infinispan.configuration.parsing.Attribute.CLUSTER;
+import static org.infinispan.configuration.parsing.Attribute.DEFAULT_STACK;
+import static org.infinispan.configuration.parsing.Attribute.EXTENDS;
 import static org.infinispan.configuration.parsing.Attribute.INVALIDATION_BATCH_SIZE;
+import static org.infinispan.configuration.parsing.Attribute.NAME;
+import static org.infinispan.configuration.parsing.Attribute.PATH;
+import static org.infinispan.configuration.parsing.Attribute.STACK;
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
-import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.InvocationTargetException;
@@ -26,7 +31,6 @@ import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -60,6 +64,8 @@ import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.GlobalStatePathConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.global.StackConfiguration;
+import org.infinispan.configuration.global.StackFileConfiguration;
 import org.infinispan.configuration.global.TemporaryGlobalStatePathConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
@@ -67,6 +73,7 @@ import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.configuration.parsing.Parser;
+import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -77,15 +84,12 @@ import org.infinispan.persistence.sifs.configuration.IndexConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
-import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.jgroups.conf.ProtocolConfiguration;
-import org.jgroups.conf.ProtocolStackConfigurator;
 
 /**
  * Serializes an Infinispan configuration to an {@link ConfigurationWriter}
@@ -115,6 +119,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeThreads(writer, globalConfiguration);
       }
       writeCacheContainer(writer, holder);
+      if (globalConfiguration != null) {
+         writeExtraConfiguration(writer, globalConfiguration.modules(), ParserScope.GLOBAL);
+      }
       writer.writeEndElement();
    }
 
@@ -122,34 +129,51 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       if (globalConfiguration.isClustered()) {
          writer.writeStartElement(Element.JGROUPS);
          writer.writeAttribute(Attribute.TRANSPORT, globalConfiguration.transport().transport().getClass().getName());
-         TypedProperties properties = globalConfiguration.transport().properties();
-         for (Object oProperty : properties.keySet()) {
-            String property = oProperty.toString();
-            if (JGroupsTransport.CHANNEL_CONFIGURATOR.equals(property)) {
-               ProtocolStackConfigurator configurator = (ProtocolStackConfigurator) properties.get(property);
-
-               if (configurator.getClass() == FileJGroupsChannelConfigurator.class) {
-                  FileJGroupsChannelConfigurator fileConfigurator = (FileJGroupsChannelConfigurator) configurator;
-                  writer.writeStartElement(Element.STACK_FILE);
-                  writer.writeAttribute(Attribute.NAME, fileConfigurator.getName());
-                  writer.writeAttribute(Attribute.PATH, fileConfigurator.getPath());
-                  writer.writeEndElement();
-               } else if (configurator instanceof EmbeddedJGroupsChannelConfigurator) {
-                  EmbeddedJGroupsChannelConfigurator embeddedConfigurator = (EmbeddedJGroupsChannelConfigurator) configurator;
-                  writer.writeStartElement(Element.STACK);
-                  writer.writeAttribute(Attribute.NAME, embeddedConfigurator.getName());
-                  for (ProtocolConfiguration protocol : embeddedConfigurator.getProtocolStack()) {
+         List<StackFileConfiguration> stackFiles = globalConfiguration.transport().jgroups().stackFiles();
+         List<StackConfiguration> stacks = globalConfiguration.transport().jgroups().stacks();
+         if ((stackFiles.stream().filter(s -> !s.builtIn()).count() + stacks.size()) > 0) {
+            writer.writeStartMap(Element.STACKS);
+            for (StackFileConfiguration stack : stackFiles) {
+               if (!stack.builtIn()) {
+                  writer.writeMapItem(Element.STACK_FILE, NAME, stack.name());
+                  writer.writeAttribute(PATH, stack.path());
+                  writer.writeEndMapItem();
+               }
+            }
+            for (StackConfiguration stack : stacks) {
+               writer.writeMapItem(Element.STACK, NAME, stack.name());
+               writeOptional(writer, EXTENDS, stack.extend());
+               for (ProtocolConfiguration protocol : stack.configurator().getUncombinedProtocolStack()) {
+                  if (protocol.getProperties().isEmpty()) {
+                     writer.writeEmptyElement(protocol.getProtocolName());
+                  } else {
                      writer.writeStartElement(protocol.getProtocolName());
                      for (Entry<String, String> attr : protocol.getProperties().entrySet()) {
                         writer.writeAttribute(attr.getKey(), attr.getValue());
                      }
                      writer.writeEndElement();
                   }
-                  writer.writeEndElement();
                }
+               EmbeddedJGroupsChannelConfigurator.RemoteSites remoteSites = stack.configurator().getUncombinedRemoteSites();
+               if (remoteSites != null) {
+                  writer.writeStartElement(Element.REMOTE_SITES);
+                  writer.writeAttribute(DEFAULT_STACK, remoteSites.getDefaultStack());
+                  writeOptional(writer, CLUSTER, remoteSites.getDefaultCluster());
+                  Map<String, EmbeddedJGroupsChannelConfigurator.RemoteSite> sites = remoteSites.getRemoteSites();
+                  for (Entry<String, EmbeddedJGroupsChannelConfigurator.RemoteSite> remote : sites.entrySet()) {
+                     writer.writeStartElement(Element.REMOTE_SITE);
+                     writer.writeAttribute(NAME, remote.getKey());
+                     writeOptional(writer, CLUSTER, remote.getValue().getCluster());
+                     writer.writeAttribute(STACK, remote.getValue().getStack());
+                     writer.writeEndElement(); // REMOTE_SITE
+                  }
+                  writer.writeEndElement(); // REMOTE_SITES
+               }
+               writer.writeEndMapItem(); // STACK
             }
+            writer.writeEndMap();
          }
-         writer.writeEndElement();
+         writer.writeEndElement(); // JGROUPS
       }
    }
 
@@ -246,7 +270,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeMetrics(writer, globalConfiguration);
          writeJMX(writer, globalConfiguration);
          writeGlobalState(writer, globalConfiguration);
-         writeExtraConfiguration(writer, globalConfiguration.modules());
+         writeExtraConfiguration(writer, globalConfiguration.modules(), ParserScope.CACHE_CONTAINER);
       }
       writer.writeStartMap(Element.CACHES);
       for (Entry<String, Configuration> configuration : holder.getConfigurations().entrySet()) {
@@ -283,9 +307,13 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writeExtraConfiguration(ConfigurationWriter writer, Map<Class<?>, ?> modules) {
+      writeExtraConfiguration(writer, modules, null);
+   }
+
+   private void writeExtraConfiguration(ConfigurationWriter writer, Map<Class<?>, ?> modules, ParserScope scope) {
       for (Entry<Class<?>, ?> entry : modules.entrySet()) {
          SerializedWith serializedWith = entry.getKey().getAnnotation(SerializedWith.class);
-         if (serializedWith == null) {
+         if (serializedWith == null || (scope != null && scope != serializedWith.scope())) {
             continue;
          }
          try {
@@ -362,13 +390,15 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
                writer.writeEndElement();
             }
          }
-         writer.writeStartMap(Element.ROLES);
-         for (Role role : authorization.roles().values()) {
-            writer.writeMapItem(Element.ROLE, Attribute.NAME, role.getName());
-            writeCollectionAsAttribute(writer, Attribute.PERMISSIONS, role.getPermissions());
-            writer.writeEndMapItem();
+         if (!authorization.isDefaultRoles()) {
+            writer.writeStartMap(Element.ROLES);
+            for (Role role : authorization.roles().values()) {
+               writer.writeMapItem(Element.ROLE, Attribute.NAME, role.getName());
+               writeCollectionAsAttribute(writer, Attribute.PERMISSIONS, role.getPermissions());
+               writer.writeEndMapItem();
+            }
+            writer.writeEndMap();
          }
-         writer.writeEndMap();
          writer.writeEndElement();
          writer.writeEndElement();
       }
@@ -480,10 +510,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             attributes.write(writer, TransportConfiguration.SITE_ID, Attribute.SITE);
          }
          attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
-         TypedProperties properties = globalConfiguration.transport().properties();
-         if (properties.containsKey("stack")) {
-            writer.writeAttribute(Attribute.STACK, properties.getProperty("stack"));
-         }
+         attributes.write(writer, TransportConfiguration.STACK);
          if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
             writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, transport.remoteThreadPoolName());
          }
@@ -545,7 +572,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          attributes.write(writer, GlobalJmxConfiguration.ENABLED, Attribute.ENABLED);
          attributes.write(writer, GlobalJmxConfiguration.DOMAIN, Attribute.DOMAIN);
          attributes.write(writer, GlobalJmxConfiguration.MBEAN_SERVER_LOOKUP, Attribute.MBEAN_SERVER_LOOKUP);
-         writeTypedProperties(writer, attributes.attribute(GlobalJmxConfiguration.PROPERTIES).get());
+         attributes.write(writer, GlobalJmxConfiguration.PROPERTIES);
          writer.writeEndElement();
       }
    }
@@ -651,7 +678,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
                attributes.write(writer, InterceptorConfiguration.BEFORE, Attribute.BEFORE);
                attributes.write(writer, InterceptorConfiguration.INDEX, Attribute.INDEX);
                attributes.write(writer, InterceptorConfiguration.POSITION, Attribute.POSITION);
-               writeTypedProperties(writer, interceptor.properties());
+               attributes.write(writer, InterceptorConfiguration.PROPERTIES);
                writer.writeEndMapItem();
             }
          }
@@ -728,7 +755,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             }
             writer.writeEndListElement();
          }
-         writeTypedProperties(writer, indexing.properties());
+         attributes.write(writer, GlobalJmxConfiguration.PROPERTIES);
          writer.writeEndElement();
       }
    }

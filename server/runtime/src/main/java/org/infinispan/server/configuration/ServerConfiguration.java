@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
@@ -15,7 +16,7 @@ import org.infinispan.server.configuration.security.SecurityConfiguration;
  * @since 10.0
  */
 @BuiltBy(ServerConfigurationBuilder.class)
-@SerializedWith(ServerConfigurationSerializer.class)
+@SerializedWith(value = ServerConfigurationSerializer.class, scope = ParserScope.GLOBAL)
 public class ServerConfiguration {
    final InterfacesConfiguration interfaces;
    final SocketBindingsConfiguration socketBindings;

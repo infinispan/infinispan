@@ -20,8 +20,8 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
    private boolean openTag;
    private final Deque<Json> json;
 
-   public JsonConfigurationWriter(Writer writer, boolean prettyPrint) {
-      super(writer, 2, prettyPrint, NamingStrategy.KEBAB_CASE);
+   public JsonConfigurationWriter(Writer writer, boolean prettyPrint, boolean clearTextSecrets) {
+      super(writer, 2, prettyPrint, clearTextSecrets, NamingStrategy.KEBAB_CASE);
       json = new ArrayDeque<>();
    }
 

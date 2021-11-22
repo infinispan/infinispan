@@ -4,6 +4,7 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.DEFAULT_CACHE_NAME;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.HOST;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IDLE_TIMEOUT;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IMPLICIT_CONNECTOR;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IO_THREADS;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.PORT;
@@ -152,6 +153,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    public String socketBinding() {
       return attributes.attribute(SOCKET_BINDING).get();
+   }
+
+   @Override
+   public S implicitConnector(boolean implicitConnector) {
+      attributes.attribute(IMPLICIT_CONNECTOR).set(implicitConnector);
+      return this.self();
    }
 
    @Override

@@ -5,11 +5,11 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
@@ -25,7 +25,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfiguration> implements RealmProvider {
 
    static final AttributeDefinition<Supplier<char[]>> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, (Class<Supplier<char[]>>) (Class<?>) char[].class)
-         .serializer(AttributeSerializer.SECRET)
+         .serializer(ServerConfigurationSerializer.CREDENTIAL)
          .immutable()
          .build();
    static final AttributeDefinition<Boolean> DIRECT_EVIDENCE_VERIFICATION = AttributeDefinition.builder(Attribute.DIRECT_VERIFICATION, null, Boolean.class).immutable().build();
@@ -41,7 +41,7 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LdapRealmConfiguration.class, CREDENTIAL, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, URL, CONNECTION_TIMEOUT, READ_TIMEOUT, CONNECTION_POOLING, REFERRAL_MODE, CLIENT_SSL_CONTEXT);
+      return new AttributeSet(LdapRealmConfiguration.class, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, URL, CONNECTION_TIMEOUT, READ_TIMEOUT, CONNECTION_POOLING, REFERRAL_MODE, CLIENT_SSL_CONTEXT, CREDENTIAL);
    }
 
    private final LdapIdentityMappingConfiguration identityMapping;

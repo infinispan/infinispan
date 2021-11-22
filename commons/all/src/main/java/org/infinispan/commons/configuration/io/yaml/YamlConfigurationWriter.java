@@ -17,9 +17,10 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
    public static final int INDENT = 2;
    private boolean openTag;
    private boolean attributes;
+   private boolean array;
 
-   public YamlConfigurationWriter(Writer writer) {
-      super(writer, INDENT, true, NamingStrategy.CAMEL_CASE);
+   public YamlConfigurationWriter(Writer writer, boolean clearTextSecrets) {
+      super(writer, INDENT, true, clearTextSecrets, NamingStrategy.CAMEL_CASE);
    }
 
    @Override
@@ -41,11 +42,13 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
          tab();
          if (parent != null && parent.isRepeating()) {
             writer.write("- ");
+            array = true;
          } else {
+            array = false;
             writeName(tag.getName(), naming);
          }
-         openTag = true;
          attributes = false;
+         openTag = true;
          indent();
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
@@ -79,7 +82,8 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeEndArrayElement() {
-      writeEndElement();   }
+      writeEndElement();
+   }
 
    @Override
    public void writeStartListElement(String name, boolean explicit) {
@@ -106,10 +110,18 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeEndElement() {
-      openTag = false;
-      attributes = false;
-      tagStack.pop();
-      outdent();
+      try {
+         if (openTag && !attributes) {
+            writer.write('~');
+            nl();
+         }
+         openTag = false;
+         attributes = false;
+         tagStack.pop();
+         outdent();
+      } catch (IOException e) {
+         throw new ConfigurationWriterException(e);
+      }
    }
 
    @Override
@@ -129,10 +141,15 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
       try {
          openTag = false;
          if (!attributes) {
-            nl();
+            if (!array) {
+               nl();
+            }
             attributes = true;
          }
-         tab();
+         if (!array) {
+            tab();
+         }
+         array = false;
          writer.write(naming.convert(name));
          writer.write(": \"");
          writer.write(value);
@@ -154,17 +171,21 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
          tab();
          writer.write(naming.convert(name));
          writer.write(":");
-         nl();
-         indent();
-         for(String value : values) {
-            tab();
-            writer.write("- \"");
-            writer.write(value);
-            writer.write('"');
+         if (values.length == 0) {
+            writer.write(" ~");
             nl();
+         } else {
+            nl();
+            indent();
+            for (String value : values) {
+               tab();
+               writer.write("- \"");
+               writer.write(value);
+               writer.write('"');
+               nl();
+            }
+            outdent();
          }
-         outdent();
-         nl();
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
       }
@@ -184,6 +205,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
                writer.write('"');
                nl();
             }
+            openTag = false;
             writeEndElement();
          }
       } catch (IOException e) {
@@ -209,14 +231,8 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeEmptyElement(String name) {
-      try {
-         writeStartElement(name);
-         writer.write('~');
-         nl();
-         writeEndElement();
-      } catch (IOException e) {
-         throw new ConfigurationWriterException(e);
-      }
+      writeStartElement(name);
+      writeEndElement();
    }
 
    @Override

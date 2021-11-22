@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -169,8 +170,8 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          for (String config : configNames) {
             configurationMap.put(config, configurationManager.getConfiguration(config, true));
          }
-         try (FileOutputStream f = new FileOutputStream(temp)) {
-            parserRegistry.serialize(f, null, configurationMap);
+         try (ConfigurationWriter writer = ConfigurationWriter.to(new FileOutputStream(temp)).clearTextSecrets(true).prettyPrint(true).build()) {
+            parserRegistry.serialize(writer, null, configurationMap);
          }
          try {
             renameTempFile(temp, lock, file);
