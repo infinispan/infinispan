@@ -705,14 +705,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put("A", "B");
       cache.put("C", "D");
 
-      List<String> values = new ArrayList<>();
+      Set<String> values = new HashSet<>();
       BiConsumer<? super Object, ? super Object> collectKeyValues = (k, v) -> values.add("hello_" + k.toString() + v.toString());
 
       cache.forEach(collectKeyValues);
 
-      assertEquals(2, values.size());
-      assertEquals("hello_AB", values.get(0));
-      assertEquals("hello_CD", values.get(1));
+      assertEquals(TestingUtil.setOf("hello_AB", "hello_CD"), values);
    }
 
    public void testComputeIfAbsent() {
@@ -966,10 +964,10 @@ public class APINonTxTest extends SingleCacheManagerTest {
       }
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
    public void testLockedStreamWithinLockedStream() {
-      cache.put("key", "value");
-      cache.getAdvancedCache().lockedStream().forEach((c, e) -> c.getAdvancedCache().lockedStream());
+      cache.getAdvancedCache().lockedStream()
+           .forEach((c, e) -> expectException(IllegalArgumentException.class,
+                                              () -> c.getAdvancedCache().lockedStream()));
    }
 
    private <R> void assertLockStreamInvokeAll(LockedStream<Object, Object> lockedStream,

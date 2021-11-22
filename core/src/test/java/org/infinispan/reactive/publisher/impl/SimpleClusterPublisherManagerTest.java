@@ -20,6 +20,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
@@ -106,10 +107,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, null, null, null, false, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, null, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, null, null, null, false, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, null, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
@@ -131,10 +132,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, targetSegments, null, null, false, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, targetSegments, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, targetSegments, null, null, false, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, targetSegments, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
@@ -159,10 +160,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
@@ -190,10 +191,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, null, null, ctx, false, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, null, null, ctx, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, null, null, ctx, false, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, null, null, ctx, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
@@ -240,10 +241,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, targetSegments, null, ctx, false, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, targetSegments, null, ctx, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, targetSegments, null, ctx, false, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, targetSegments, null, ctx, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
@@ -285,7 +286,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       SegmentPublisherSupplier<?> publisher;
       Consumer<Object> assertConsumer;
       if (isEntry) {
-         publisher = cpm.entryPublisher(segments, keys, context, false,
+         publisher = cpm.entryPublisher(segments, keys, context, EnumUtil.EMPTY_BIT_SET,
                deliveryGuarantee, 10, MarshallableFunctions.identity());
          assertConsumer = obj -> {
             Map.Entry<Object, Object> entry = (Map.Entry) obj;
@@ -293,7 +294,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
             assertEquals(value, entry.getValue());
          };
       } else {
-         publisher = cpm.keyPublisher(segments, keys, context, false,
+         publisher = cpm.keyPublisher(segments, keys, context, EnumUtil.EMPTY_BIT_SET,
                deliveryGuarantee, 10, MarshallableFunctions.identity());
          assertConsumer = obj -> assertTrue(expectedValues.containsKey(obj));
       }
@@ -378,13 +379,13 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       SegmentPublisherSupplier<String> publisher;
       if (isEntry) {
          mappedValues = values.entrySet().stream().map(Map.Entry::getValue).map(String::valueOf).collect(Collectors.toList());
-         publisher = cpm.entryPublisher(null, null, null, false,
+         publisher = cpm.entryPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
                deliveryGuarantee, 10,
                (SerializableFunction<Publisher<CacheEntry<Integer, String>>, Publisher<String>>) entryPublisher ->
                      Flowable.fromPublisher(entryPublisher).map(Map.Entry::getValue).map(String::valueOf));
       } else {
          mappedValues = values.keySet().stream().map(String::valueOf).collect(Collectors.toList());
-         publisher = cpm.keyPublisher(null, null, null, false,
+         publisher = cpm.keyPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
                deliveryGuarantee, 10,
                (SerializableFunction<Publisher<Integer>, Publisher<String>>) entryPublisher ->
                      Flowable.fromPublisher(entryPublisher).map(String::valueOf));
@@ -402,10 +403,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache(0));
       SegmentPublisherSupplier<R> publisher;
       if (isEntry) {
-         publisher = (SegmentPublisherSupplier) cpm.entryPublisher(segments, keys, context, false,
+         publisher = (SegmentPublisherSupplier) cpm.entryPublisher(segments, keys, context, EnumUtil.EMPTY_BIT_SET,
                deliveryGuarantee, 10, MarshallableFunctions.identity());
       } else {
-         publisher = (SegmentPublisherSupplier) cpm.keyPublisher(segments, keys, context, false,
+         publisher = (SegmentPublisherSupplier) cpm.keyPublisher(segments, keys, context, EnumUtil.EMPTY_BIT_SET,
                deliveryGuarantee, 10, MarshallableFunctions.identity());
       }
 

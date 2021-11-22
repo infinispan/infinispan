@@ -49,6 +49,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -1118,7 +1119,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
          UUID generatedId, Listener l, Function<Object, Object> kc, Function<Object, Object> kv) {
       SegmentPublisherSupplier<CacheEntry<K, V>> publisher = publisherManager.running().entryPublisher(
-            null, null, null, true,
+            null, null, null, EnumUtil.EMPTY_BIT_SET,
             // TODO: do we really need EXACTLY_ONCE? AT_LEAST_ONCE should be fine I think
             DeliveryGuarantee.EXACTLY_ONCE, config.clustering().stateTransfer().chunkSize(),
             intermediateOperations.isEmpty() ? PublisherTransformers.identity() : new CacheIntermediatePublisher(intermediateOperations));

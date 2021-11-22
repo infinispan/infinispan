@@ -635,22 +635,22 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <K, R> ReductionPublisherRequestCommand<K> buildKeyReductionPublisherCommand(boolean parallelStream,
-         DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       return actual.buildKeyReductionPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
-            includeLoader, transformer, finalizer);
+            explicitFlags, transformer, finalizer);
    }
 
    @Override
-   public <K, V, R> ReductionPublisherRequestCommand<K> buildEntryReductionPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+   public <K, V, R> ReductionPublisherRequestCommand<K> buildEntryReductionPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       return actual.buildEntryReductionPublisherCommand(parallelStream, deliveryGuarantee, segments, keys, excludedKeys,
-            includeLoader, transformer, finalizer);
+            explicitFlags, transformer, finalizer);
    }
 
    @Override
-   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee, int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream, boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-      return actual.buildInitialPublisherCommand(requestId, deliveryGuarantee, batchSize, segments, keys, excludedKeys, includeLoader, entryStream, trackKeys, transformer);
+   public <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee, int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream, boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
+      return actual.buildInitialPublisherCommand(requestId, deliveryGuarantee, batchSize, segments, keys, excludedKeys, explicitFlags, entryStream, trackKeys, transformer);
    }
 
    @Override

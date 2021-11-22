@@ -1503,24 +1503,10 @@ public class TestingUtil {
     * @return returns whatever the callable returns
     */
    public static <T> T withTx(TransactionManager tm, Callable<T> c) throws Exception {
-      return withTxCallable(tm, c).call();
-   }
-
-   /**
-    * Returns a callable that will call the provided callable within a transaction.  This method guarantees that the
-    * right pattern is used to make sure that the transaction is always either committed or rollbacked around
-    * the callable.
-    *
-    * @param tm transaction manager
-    * @param c callable instance to run within a transaction
-    * @param <T> tyep of callable to return
-    * @return The callable to invoke.  Note as long as the provided callable is thread safe this callable will be as well
-    */
-   public static <T> Callable<T> withTxCallable(final TransactionManager tm, final Callable<? extends T> c) {
-      return () -> {
+      return ((Callable<T>) () -> {
          tm.begin();
          try {
-            return c.call();
+            return ((Callable<? extends T>) c).call();
          } catch (Exception e) {
             tm.setRollbackOnly();
             throw e;
@@ -1528,7 +1514,7 @@ public class TestingUtil {
             if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
             else tm.rollback();
          }
-      };
+      }).call();
    }
 
    /**

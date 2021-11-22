@@ -166,27 +166,27 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public void putForExternalRead(K key, V value) {
-      super.putForExternalRead(keyToStorage(key), valueToStorage(value));
+      cache.putForExternalRead(keyToStorage(key), valueToStorage(value));
    }
 
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
-      super.putForExternalRead(keyToStorage(key), valueToStorage(value), lifespan, unit);
+      cache.putForExternalRead(keyToStorage(key), valueToStorage(value), lifespan, unit);
    }
 
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      super.putForExternalRead(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      cache.putForExternalRead(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
    public void evict(K key) {
-      super.evict(keyToStorage(key));
+      cache.evict(keyToStorage(key));
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
-      V ret = super.put(keyToStorage(key), valueToStorage(value), lifespan, unit);
+      V ret = cache.put(keyToStorage(key), valueToStorage(value), lifespan, unit);
       return valueFromStorage(ret);
    }
 
@@ -201,179 +201,174 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
-   protected void set(K key, V value) {
-      super.set(keyToStorage(key), valueToStorage(value));
-   }
-
-   @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
-      V v = super.putIfAbsent(keyToStorage(key), valueToStorage(value), lifespan, unit);
+      V v = cache.putIfAbsent(keyToStorage(key), valueToStorage(value), lifespan, unit);
       return valueFromStorage(v);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
-      super.putAll(encodeMapForWrite(map), lifespan, unit);
+      cache.putAll(encodeMapForWrite(map), lifespan, unit);
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
-      V ret = super.replace(keyToStorage(key), valueToStorage(value), lifespan, unit);
+      V ret = cache.replace(keyToStorage(key), valueToStorage(value), lifespan, unit);
       return valueFromStorage(ret);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      return super.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(value), lifespan, unit);
+      return cache.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(value), lifespan, unit);
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      V ret = super.put(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      V ret = cache.put(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(ret);
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      V ret = super.putIfAbsent(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      V ret = cache.putIfAbsent(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(ret);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      super.putAll(encodeMapForWrite(map), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      cache.putAll(encodeMapForWrite(map), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      V ret = super.replace(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      V ret = cache.replace(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(ret);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return super.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return cache.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-      super.replaceAll(convertFunction(function));
+      cache.replaceAll(convertFunction(function));
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value) {
-      return super.putAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
+      return cache.putAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return super.putAsync(keyToStorage(key), valueToStorage(value), lifespan, unit).thenApply(decodedValueForRead);
+      return cache.putAsync(keyToStorage(key), valueToStorage(value), lifespan, unit).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.putAsync(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
+      return cache.putAsync(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return super.putAllAsync(encodeMapForWrite(data));
+      return cache.putAllAsync(encodeMapForWrite(data));
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      return super.putAllAsync(encodeMapForWrite(data), lifespan, unit);
+      return cache.putAllAsync(encodeMapForWrite(data), lifespan, unit);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.putAllAsync(encodeMapForWrite(data), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return cache.putAllAsync(encodeMapForWrite(data), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Metadata metadata) {
-      return super.putAllAsync(encodeMapForWrite(map), metadata);
+      return cache.putAllAsync(encodeMapForWrite(map), metadata);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
-      return super.putIfAbsentAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
+      return cache.putIfAbsentAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return super.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), lifespan, unit).thenApply(decodedValueForRead);
+      return cache.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), lifespan, unit).thenApply(decodedValueForRead);
    }
 
    @Override
    public boolean lock(K... keys) {
       K[] encoded = (K[]) Arrays.stream(keys).map(this::keyToStorage).toArray();
-      return super.lock(encoded);
+      return cache.lock(encoded);
    }
 
    @Override
    public boolean lock(Collection<? extends K> keys) {
-      return super.lock(encodeKeysForWrite(keys));
+      return cache.lock(encodeKeysForWrite(keys));
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
+      return cache.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
-      return super.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+      return cache.putIfAbsentAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
-      return super.removeAsync(keyToStorage(key)).thenApply(decodedValueForRead);
+      return cache.removeAsync(keyToStorage(key)).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return super.removeAsync(keyToStorage(key), valueToStorage(value));
+      return cache.removeAsync(keyToStorage(key), valueToStorage(value));
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(value), lifespan, unit).thenApply(decodedValueForRead);
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(value), lifespan, unit).thenApply(decodedValueForRead);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
    }
 
    @Override
    public Map<K, V> getAll(Set<?> keys) {
-      Map<K, V> ret = super.getAll(encodeKeysForWrite(keys));
+      Map<K, V> ret = cache.getAll(encodeKeysForWrite(keys));
       return decodeMapForRead(ret);
    }
 
    @Override
    public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
-      return super.getAllAsync(encodeKeysForWrite(keys)).thenApply(this::decodeMapForRead);
+      return cache.getAllAsync(encodeKeysForWrite(keys)).thenApply(this::decodeMapForRead);
    }
 
    @Override
    public CacheEntry<K, V> getCacheEntry(Object key) {
       K keyToStorage = keyToStorage(key);
-      CacheEntry<K, V> returned = super.getCacheEntry(keyToStorage);
+      CacheEntry<K, V> returned = cache.getCacheEntry(keyToStorage);
       return unwrapCacheEntry(key, keyToStorage, returned);
    }
 
    @Override
    public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
       K keyToStorage = keyToStorage(key);
-      CompletableFuture<CacheEntry<K, V>> stage = super.getCacheEntryAsync(keyToStorage);
+      CompletableFuture<CacheEntry<K, V>> stage = cache.getCacheEntryAsync(keyToStorage);
       if (stage.isDone() && !stage.isCompletedExceptionally()) {
          return CompletableFuture.completedFuture(unwrapCacheEntry(key, keyToStorage, stage.join()));
       }
@@ -393,101 +388,101 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(value), lifespan, lifespanUnit, maxIdle, maxIdleUnit)
             .thenApply(decodedValueForRead);
    }
 
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
-      Map<K, CacheEntry<K, V>> returned = super.getAllCacheEntries(encodeKeysForWrite(keys));
+      Map<K, CacheEntry<K, V>> returned = cache.getAllCacheEntries(encodeKeysForWrite(keys));
       return decodeEntryMapForRead(returned);
    }
 
    @Override
    public Map<K, V> getGroup(String groupName) {
-      Map<K, V> ret = super.getGroup(groupName);
+      Map<K, V> ret = cache.getGroup(groupName);
       return decodeMapForRead(ret);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue));
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue));
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), lifespan, unit);
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), lifespan, unit);
    }
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      V ret = super.put(keyToStorage(key), valueToStorage(value), metadata);
+      V ret = cache.put(keyToStorage(key), valueToStorage(value), metadata);
       return valueFromStorage(ret);
    }
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      V ret = super.replace(keyToStorage(key), valueToStorage(value), metadata);
+      V ret = cache.replace(keyToStorage(key), valueToStorage(value), metadata);
       return valueFromStorage(ret);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return super.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(value), metadata);
+      return cache.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(value), metadata);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, Metadata metadata) {
-      return super.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), metadata);
+      return cache.replaceAsync(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue), metadata);
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      V ret = super.putIfAbsent(keyToStorage(key), valueToStorage(value), metadata);
+      V ret = cache.putIfAbsent(keyToStorage(key), valueToStorage(value), metadata);
       return valueFromStorage(ret);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return super.putAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+      return cache.putAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
    }
 
    @Override
    public void putForExternalRead(K key, V value, Metadata metadata) {
-      super.putForExternalRead(keyToStorage(key), valueToStorage(value), metadata);
+      cache.putForExternalRead(keyToStorage(key), valueToStorage(value), metadata);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      super.putAll(encodeMapForWrite(map), metadata);
+      cache.putAll(encodeMapForWrite(map), metadata);
    }
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       EncoderEntryMapper<K, V, CacheEntry<K, V>> cacheEntryMapper = EncoderEntryMapper.newCacheEntryMapper(
             keyDataConversion, valueDataConversion, entryFactory);
-      return new WriteableCacheSetMapper<>(super.cacheEntrySet(), cacheEntryMapper,
+      return new WriteableCacheSetMapper<>(cache.cacheEntrySet(), cacheEntryMapper,
             e -> new CacheEntryWrapper<>(cacheEntryMapper.apply(e), e), this::toCacheEntry, this::keyToStorage);
    }
 
    @Override
    public CompletableFuture<Boolean> removeLifespanExpired(K key, V value, Long lifespan) {
-      return super.removeLifespanExpired(keyToStorage(key), valueToStorage(value), lifespan);
+      return cache.removeLifespanExpired(keyToStorage(key), valueToStorage(value), lifespan);
    }
 
    @Override
    public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
-      return super.removeMaxIdleExpired(keyToStorage(key), valueToStorage(value));
+      return cache.removeMaxIdleExpired(keyToStorage(key), valueToStorage(value));
    }
 
    @Override
    public V putIfAbsent(K key, V value) {
-      V ret = super.putIfAbsent(keyToStorage(key), valueToStorage(value));
+      V ret = cache.putIfAbsent(keyToStorage(key), valueToStorage(value));
       return valueFromStorage(ret);
    }
 
@@ -582,111 +577,111 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public boolean remove(Object key, Object value) {
-      return super.remove(keyToStorage(key), valueToStorage(value));
+      return cache.remove(keyToStorage(key), valueToStorage(value));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return super.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue));
+      return cache.replace(keyToStorage(key), valueToStorage(oldValue), valueToStorage(newValue));
    }
 
    @Override
    public V replace(K key, V value) {
-      V ret = super.replace(keyToStorage(key), valueToStorage(value));
+      V ret = cache.replace(keyToStorage(key), valueToStorage(value));
       return valueFromStorage(ret);
    }
 
    @Override
    public boolean containsKey(Object key) {
-      return super.containsKey(keyToStorage(key));
+      return cache.containsKey(keyToStorage(key));
    }
 
    @Override
    public boolean containsValue(Object value) {
-      return super.containsValue(valueToStorage(value));
+      return cache.containsValue(valueToStorage(value));
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction));
+      Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
+      Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
       return valueFromStorage(returned);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
+      Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
       return valueFromStorage(returned);
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      Object returned = super.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      Object returned = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction));
+      Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
+      Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
+      Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      Object returned = super.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction));
+      Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction));
       return valueFromStorage(ret);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
-      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), metadata);
+      Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), metadata);
       return valueFromStorage(ret);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit);
+      Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit);
       return valueFromStorage(ret);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      Object ret = super.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(ret);
    }
 
    @Override
    public V get(Object key) {
-      V v = super.get(keyToStorage(key));
+      V v = cache.get(keyToStorage(key));
       return valueFromStorage(v);
    }
 
    @Override
    public V getOrDefault(Object key, V defaultValue) {
-      V returned = super.getOrDefault(keyToStorage(key), defaultValue);
+      V returned = cache.getOrDefault(keyToStorage(key), defaultValue);
       if (returned == defaultValue) {
          return returned;
       }
@@ -695,7 +690,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public V put(K key, V value) {
-      V ret = super.put(keyToStorage(key), valueToStorage(value));
+      V ret = cache.put(keyToStorage(key), valueToStorage(value));
       if (ret == null) {
          return null;
       }
@@ -704,42 +699,42 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public V remove(Object key) {
-      V ret = super.remove(keyToStorage(key));
+      V ret = cache.remove(keyToStorage(key));
       return valueFromStorage(ret);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> t) {
-      super.putAll(encodeMapForWrite(t));
+      cache.putAll(encodeMapForWrite(t));
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction));
+      Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata);
+      Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata);
       return valueFromStorage(returned);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
-      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
+      Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit);
       return valueFromStorage(returned);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      Object returned = super.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(returned);
    }
 
    @Override
    public void forEach(BiConsumer<? super K, ? super V> action) {
-      super.forEach((k, v) -> {
+      cache.forEach((k, v) -> {
          K newK = keyFromStorage(k);
          V newV = valueFromStorage(v);
          action.accept(newK, newV);
@@ -749,7 +744,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public CacheSet<K> keySet() {
       InjectiveFunction<Object, K> keyToStorage = this::keyToStorage;
-      return new WriteableCacheSetMapper<>(super.keySet(), new EncoderKeyMapper<>(keyDataConversion),
+      return new WriteableCacheSetMapper<>(cache.keySet(), new EncoderKeyMapper<>(keyDataConversion),
             keyToStorage, keyToStorage);
    }
 
@@ -757,7 +752,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public CacheSet<Map.Entry<K, V>> entrySet() {
       EncoderEntryMapper<K, V, Map.Entry<K, V>> entryMapper = EncoderEntryMapper.newEntryMapper(keyDataConversion,
             valueDataConversion, entryFactory);
-      return new WriteableCacheSetMapper<>(super.entrySet(), entryMapper,
+      return new WriteableCacheSetMapper<>(cache.entrySet(), entryMapper,
             e -> new EntryWrapper<>(e, entryMapper.apply(e)), this::toEntry, this::keyToStorage);
    }
 
@@ -802,7 +797,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CacheCollection<V> values() {
-      return new WriteableCacheCollectionMapper<>(super.values(), new EncoderValueMapper<>(valueDataConversion),
+      return new WriteableCacheCollectionMapper<>(cache.values(), new EncoderValueMapper<>(valueDataConversion),
             this::valueToStorage, this::keyToStorage);
    }
 
@@ -863,7 +858,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      return super.getAsync(keyToStorage(key)).thenApply(decodedValueForRead);
+      return cache.getAsync(keyToStorage(key)).thenApply(decodedValueForRead);
    }
 
    @Override
@@ -878,7 +873,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addListenerAsync(listenerHolder);
       } else {
-         return super.addListenerAsync(listener);
+         return cache.addListenerAsync(listener);
       }
    }
 
@@ -896,7 +891,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addListenerAsync(listenerHolder, filter, converter);
       } else {
-         return super.addListenerAsync(listener, filter, converter );
+         return cache.addListenerAsync(listener, filter, converter );
       }
    }
 
@@ -918,7 +913,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, false);
          return ((CacheImpl) unwrapped).addFilteredListenerAsync(listenerHolder, filter, converter, filterAnnotations);
       } else {
-         return super.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
+         return cache.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
       }
    }
 
@@ -935,7 +930,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          ListenerHolder listenerHolder = new ListenerHolder(listener, keyDataConversion, valueDataConversion, true);
          return ((CacheImpl) unwrapped).addFilteredListenerAsync(listenerHolder, filter, converter, filterAnnotations);
       } else {
-         return super.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
+         return cache.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
       }
    }
 

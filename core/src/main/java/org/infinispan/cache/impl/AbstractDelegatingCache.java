@@ -37,7 +37,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
-   private final Cache<K, V> cache;
+   protected final Cache<K, V> cache;
 
    public AbstractDelegatingCache(Cache<K, V> cache) {
       this.cache = cache;
@@ -111,14 +111,6 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       return cache.put(key, value, lifespan, unit);
-   }
-
-   /**
-    * Don't remove.
-    * @see {@link org.infinispan.cache.impl.CacheSupport#set(Object, Object)}
-    */
-   protected void set(K key, V value) {
-      cache.put(key, value);
    }
 
    @Override

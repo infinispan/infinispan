@@ -613,17 +613,17 @@ public interface CommandsFactory {
    BackupNoopCommand buildBackupNoopCommand();
 
    <K, R> ReductionPublisherRequestCommand<K> buildKeyReductionPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
    <K, V, R> ReductionPublisherRequestCommand<K> buildEntryReductionPublisherCommand(boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
-         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
    <K, I, R> InitialPublisherCommand<K, I, R> buildInitialPublisherCommand(String requestId, DeliveryGuarantee deliveryGuarantee,
-                                                                           int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, boolean entryStream,
+                                                                           int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
                                                                            boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer);
 
    NextPublisherCommand buildNextPublisherCommand(String requestId);

@@ -1,7 +1,7 @@
 package org.infinispan.partitionhandling;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -172,7 +172,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       doAnswer(invocation -> {
          SegmentPublisherSupplier<?> result = (SegmentPublisherSupplier<?>) invocation.callRealMethod();
          return Mocks.blockingPublisher(result, checkPoint);
-      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
+      }).when(spy).entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any());
    }
 
    private static void registerBlockingRpcManagerOnInitialPublisherCommand(final CheckPoint checkPoint, Cache<?, ?> cache, Executor completionExecutor) {

@@ -173,8 +173,9 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    }
 
    private Void removeInternal(Predicate<? super V> p) {
-      cache.keySet().stream().forEach((c, key) -> c.computeIfPresent(key, (k, bucket) -> {
-         Bucket<V> newBucket = ((Bucket<V>) bucket).removeIf(p);
+      // Iterate over keys on the caller thread so that compute operations join the running transaction (if any)
+      cache.keySet().forEach(key -> cache.computeIfPresent(key, (k, bucket) -> {
+         Bucket<V> newBucket = bucket.removeIf(p);
          if (newBucket == null) {
             return bucket;
          }
@@ -184,11 +185,11 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    }
 
    private Boolean containsEntryInternal(V value) {
-      return cache.entrySet().parallelStream().anyMatch(entry -> entry.getValue().contains(value));
+      return cache.values().stream().anyMatch(bucket -> bucket.contains(value));
    }
 
    private Long sizeInternal() {
-      return cache.values().parallelStream().mapToLong(Bucket::size).sum();
+      return cache.values().stream().mapToLong(Bucket::size).sum();
    }
 
    @Override

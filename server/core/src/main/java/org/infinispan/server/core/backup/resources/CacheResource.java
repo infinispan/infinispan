@@ -30,6 +30,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -258,8 +259,8 @@ public class CacheResource extends AbstractContainerResource {
          int bufferSize = configuration.clustering().stateTransfer().chunkSize();
          Publisher<CacheBackupEntry> p =
                Flowable.fromPublisher(
-                     clusterPublisherManager.entryPublisher(null, null, null, true,
-                           DeliveryGuarantee.EXACTLY_ONCE, bufferSize, PublisherTransformers.identity()).publisherWithoutSegments()
+                     clusterPublisherManager.entryPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
+                                                            DeliveryGuarantee.EXACTLY_ONCE, bufferSize, PublisherTransformers.identity()).publisherWithoutSegments()
                )
                .map(e -> {
                   CacheBackupEntry be = new CacheBackupEntry();

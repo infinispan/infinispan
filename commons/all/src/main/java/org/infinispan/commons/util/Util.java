@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -603,6 +604,9 @@ public final class Util {
    }
 
    public static CacheException rewrapAsCacheException(Throwable t) {
+      if (t instanceof CompletionException)
+         throw new IllegalArgumentException("CompletionException should never be wrapped");
+
       if (t instanceof CacheException)
          return (CacheException) t;
       else

@@ -60,22 +60,22 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
 
    @Override
    public <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       checkPartitionStatus();
-      CompletionStage<R> original = super.keyReduction(parallelPublisher, segments, keysToInclude, ctx, includeLoader,
+      CompletionStage<R> original = super.keyReduction(parallelPublisher, segments, keysToInclude, ctx, explicitFlags,
             deliveryGuarantee, transformer, finalizer);
       return registerStage(original);
    }
 
    @Override
    public <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext ctx, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext ctx, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       checkPartitionStatus();
-      CompletionStage<R> original = super.entryReduction(parallelPublisher, segments, keysToInclude, ctx, includeLoader,
+      CompletionStage<R> original = super.entryReduction(parallelPublisher, segments, keysToInclude, ctx, explicitFlags,
             deliveryGuarantee, transformer, finalizer);
       return registerStage(original);
    }
@@ -106,21 +106,21 @@ public class PartitionAwareClusterPublisherManager<K, V> extends ClusterPublishe
 
    @Override
    public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
+         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       checkPartitionStatus();
       SegmentPublisherSupplier<R> original = super.keyPublisher(segments, keysToInclude, invocationContext,
-            includeLoader, deliveryGuarantee, batchSize, transformer);
+            explicitFlags, deliveryGuarantee, batchSize, transformer);
       return registerPublisher(original);
    }
 
    @Override
    public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
+         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       checkPartitionStatus();
       SegmentPublisherSupplier<R> original = super.entryPublisher(segments, keysToInclude, invocationContext,
-            includeLoader, deliveryGuarantee, batchSize, transformer);
+            explicitFlags, deliveryGuarantee, batchSize, transformer);
       return registerPublisher(original);
    }
 
