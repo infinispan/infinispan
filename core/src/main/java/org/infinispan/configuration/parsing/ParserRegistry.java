@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -98,6 +99,10 @@ public class ParserRegistry implements NamespaceMappingParser {
             }
          }
       }
+   }
+
+   public ConfigurationBuilderHolder parse(Path path) throws IOException {
+      return parse(path.toUri().toURL());
    }
 
    public ConfigurationBuilderHolder parse(URL url) throws IOException {
@@ -246,7 +251,9 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param os the output stream where the configuration should be serialized to
     * @param globalConfiguration the global configuration. Can be null
     * @param configurations a map of named configurations
+    * @deprecated use {@link #serialize(ConfigurationWriter, GlobalConfiguration, Map)} instead
     */
+   @Deprecated
    public void serialize(OutputStream os, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
       ConfigurationWriter writer = ConfigurationWriter.to(os).build();
       serialize(writer, globalConfiguration, configurations);
@@ -276,7 +283,9 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param os
     * @param name
     * @param configuration
+    * @deprecated use {@link #serialize(ConfigurationWriter, GlobalConfiguration, Map)} instead
     */
+   @Deprecated
    public void serialize(OutputStream os, String name, Configuration configuration) {
       serialize(os, null, Collections.singletonMap(name, configuration));
    }
@@ -286,7 +295,9 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param name the name of the configuration
     * @param configuration the {@link Configuration}
     * @return the XML representation of the specified configuration
+    * @deprecated use {@link #serialize(ConfigurationWriter, GlobalConfiguration, Map)} instead
     */
+   @Deprecated
    public String serialize(String name, Configuration configuration) {
       try {
          ByteArrayOutputStream os = new ByteArrayOutputStream();

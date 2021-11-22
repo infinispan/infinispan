@@ -15,7 +15,7 @@ public class JsonConfigurationWriterTest {
    @Test
    public void testWriteJson() {
       StringWriter sw = new StringWriter();
-      JsonConfigurationWriter w = new JsonConfigurationWriter(sw, false);
+      JsonConfigurationWriter w = new JsonConfigurationWriter(sw, false, false);
       w.writeStartDocument();
       w.writeStartElement("e1");
       w.writeAttribute("a1", "v1");

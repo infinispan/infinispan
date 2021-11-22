@@ -1,29 +1,27 @@
 package org.infinispan.configuration.global;
 
-import java.util.List;
-
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 
 /*
  * @since 10.0
  */
-public class StackConfiguration {
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
+public class StackConfiguration implements NamedStackConfiguration {
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
+   static final AttributeDefinition<String> EXTENDS = AttributeDefinition.builder(Attribute.EXTENDS, null, String.class).build();
+   private final EmbeddedJGroupsChannelConfigurator configurator;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(StackConfiguration.class, NAME);
+      return new AttributeSet(StackConfiguration.class, NAME, EXTENDS);
    }
 
-   private final Attribute<String> name;
-   private final List<JGroupsProtocolConfiguration> protocolConfigurations;
    private final AttributeSet attributes;
 
-   StackConfiguration(AttributeSet attributes, List<JGroupsProtocolConfiguration> protocolConfigurations) {
+   StackConfiguration(AttributeSet attributes, EmbeddedJGroupsChannelConfigurator configurator) {
       this.attributes = attributes.checkProtection();
-      this.name = attributes.attribute(NAME);
-      this.protocolConfigurations = protocolConfigurations;
+      this.configurator = configurator;
    }
 
    public AttributeSet attributes() {
@@ -31,13 +29,21 @@ public class StackConfiguration {
    }
 
    public String name() {
-      return name.get();
+      return attributes.attribute(NAME).get();
+   }
+
+   public String extend() {
+      return attributes.attribute(EXTENDS).get();
+   }
+
+   public EmbeddedJGroupsChannelConfigurator configurator() {
+      return configurator;
    }
 
    @Override
    public String toString() {
       return "StackConfiguration{" +
-            "protocolConfigurations=" + protocolConfigurations +
+            "configurator=" + configurator +
             ", attributes=" + attributes +
             '}';
    }

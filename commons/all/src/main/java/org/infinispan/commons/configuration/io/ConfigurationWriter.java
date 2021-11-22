@@ -20,6 +20,7 @@ public interface ConfigurationWriter extends AutoCloseable {
       private final BufferedWriter writer;
       private MediaType type = MediaType.APPLICATION_XML;
       private boolean prettyPrint = true;
+      private boolean clearTextSecrets = false;
 
       private Builder(OutputStream os) {
          this(new OutputStreamWriter(os));
@@ -39,14 +40,19 @@ public interface ConfigurationWriter extends AutoCloseable {
          return this;
       }
 
+      public ConfigurationWriter.Builder clearTextSecrets(boolean clearTextSecrets) {
+         this.clearTextSecrets = clearTextSecrets;
+         return this;
+      }
+
       public ConfigurationWriter build() {
          switch (type.toString()) {
             case MediaType.APPLICATION_XML_TYPE:
-               return new XmlConfigurationWriter(writer, prettyPrint);
+               return new XmlConfigurationWriter(writer, prettyPrint, clearTextSecrets);
             case MediaType.APPLICATION_YAML_TYPE:
-               return new YamlConfigurationWriter(writer);
+               return new YamlConfigurationWriter(writer, clearTextSecrets);
             case MediaType.APPLICATION_JSON_TYPE:
-               return new JsonConfigurationWriter(writer, prettyPrint);
+               return new JsonConfigurationWriter(writer, prettyPrint, clearTextSecrets);
             default:
                throw new IllegalArgumentException(type.toString());
          }
@@ -60,6 +66,8 @@ public interface ConfigurationWriter extends AutoCloseable {
    static ConfigurationWriter.Builder to(Writer writer) {
       return new ConfigurationWriter.Builder(writer);
    }
+
+   boolean clearTextSecrets();
 
    void writeStartDocument();
 

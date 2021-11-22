@@ -17,7 +17,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.JGroupsConfigurationBuilder;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
-import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
 public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
 
@@ -120,35 +119,15 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
    }
 
    public void addJGroupsStack(FileJGroupsChannelConfigurator stack) {
-      String name = stack.getName();
-      if (jgroupsBuilder.getStack(name) != null) {
-         throw CONFIG.duplicateJGroupsStack(name);
-      }
-      jgroupsBuilder.addStackFile(name).fileChannelConfigurator(stack);
+      jgroupsBuilder.addStackFile(stack.getName()).fileChannelConfigurator(stack);
    }
 
    public void addJGroupsStack(EmbeddedJGroupsChannelConfigurator stack, String extend) {
-      String name = stack.getName();
-      if (jgroupsBuilder.getStack(name) != null) {
-         throw CONFIG.duplicateJGroupsStack(name);
-      }
-
-      if (extend == null) {
-         // Add as is
-         jgroupsBuilder.addStack(stack.getName()).channelConfigurator(stack);
-      } else {
-         // See if the parent exists
-         if (jgroupsBuilder.getStack(extend) == null) {
-            throw CONFIG.missingJGroupsStack(extend);
-         } else {
-            JGroupsChannelConfigurator baseStack = jgroupsBuilder.getStack(extend);
-            jgroupsBuilder.addStack(stack.getName()).channelConfigurator(EmbeddedJGroupsChannelConfigurator.combine(baseStack, stack));
-         }
-      }
+      jgroupsBuilder.addStack(stack.getName()).extend(extend).channelConfigurator(stack);
    }
 
-   JGroupsChannelConfigurator getJGroupsStack(String name) {
-      return jgroupsBuilder.getStack(name);
+   boolean hasJGroupsStack(String name) {
+      return jgroupsBuilder.hasStack(name);
    }
 
    public void setNamespaceMappingParser(NamespaceMappingParser namespaceMappingParser) {

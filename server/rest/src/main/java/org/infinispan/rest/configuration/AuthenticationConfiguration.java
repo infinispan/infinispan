@@ -19,7 +19,7 @@ public class AuthenticationConfiguration extends ConfigurationElement<Authentica
    public static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).immutable().build();
    public static final AttributeDefinition<List<String>> MECHANISMS = AttributeDefinition.builder("mechanisms", null, (Class<List<String>>) (Class<?>) List.class)
          .initializer(ArrayList::new).immutable().serializer(AttributeSerializer.STRING_COLLECTION).build();
-   public static final AttributeDefinition<Boolean> METRICS_AUTH = AttributeDefinition.builder("metrics-auth", true, Boolean.class).build();
+   public static final AttributeDefinition<Boolean> METRICS_AUTH = AttributeDefinition.builder("metrics-auth", true, Boolean.class).autoPersist(false).build();
 
    private final Boolean enabled;
    private final Authenticator authenticator;
