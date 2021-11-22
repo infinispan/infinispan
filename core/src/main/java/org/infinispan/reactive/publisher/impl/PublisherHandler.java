@@ -252,10 +252,10 @@ public class PublisherHandler {
          SegmentAwarePublisherSupplier<Object> sap;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                  command.isIncludeLoader(), command.getDeliveryGuarantee(), command.getTransformer());
+                                                       command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
          } else {
             sap = localPublisherManager.keyPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                  command.isIncludeLoader(), command.getDeliveryGuarantee(), command.getTransformer());
+                                                     command.getExplicitFlags(), command.getDeliveryGuarantee(), command.getTransformer());
          }
 
          Flowable.fromPublisher(sap.publisherWithLostSegments(true))
@@ -537,11 +537,11 @@ public class PublisherHandler {
          io.reactivex.rxjava3.functions.Function<Object, Object> toKeyFunction;
          if (command.isEntryStream()) {
             sap = localPublisherManager.entryPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                  command.isIncludeLoader(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
+                                                       command.getExplicitFlags(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
             toKeyFunction = (io.reactivex.rxjava3.functions.Function) RxJavaInterop.entryToKeyFunction();
          } else {
             sap = localPublisherManager.keyPublisher(command.getSegments(), command.getKeys(), command.getExcludedKeys(),
-                  command.isIncludeLoader(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
+                                                     command.getExplicitFlags(), DeliveryGuarantee.EXACTLY_ONCE, Function.identity());
             toKeyFunction = RxJavaInterop.identityFunction();
          }
 

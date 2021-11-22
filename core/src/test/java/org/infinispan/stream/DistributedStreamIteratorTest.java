@@ -2,7 +2,7 @@ package org.infinispan.stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -224,7 +224,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       doAnswer(invocation -> {
          SegmentPublisherSupplier<?> result = (SegmentPublisherSupplier<?>) invocation.callRealMethod();
          return Mocks.blockingPublisher(result, checkPoint);
-      }).when(spy).entryPublisher(any(), any(), any(), anyBoolean(), any(), anyInt(), any());
+      }).when(spy).entryPublisher(any(), any(), any(), anyLong(), any(), anyInt(), any());
 
       final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
       Future<Void> future = fork(() -> {
@@ -468,7 +468,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
    protected void waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       Mocks.blockingMock(checkPoint, LocalPublisherManager.class, cache, (stub, m) -> {
-                            stub.when(m).entryPublisher(any(), any(), any(), anyBoolean(), any(), any());
+                            stub.when(m).entryPublisher(any(), any(), any(), anyLong(), any(), any());
                          }
       );
    }

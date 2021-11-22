@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
@@ -27,6 +26,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.time.TimeServiceTicker;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.encoding.DataConversion;
@@ -157,7 +157,7 @@ public class DefaultIterationManager implements IterationManager {
       if (filterConverterFactory == null) {
          stream = cache.cacheEntrySet().stream();
          if (segments != null) {
-            stream.filterKeySegments(segments.stream().boxed().collect(Collectors.toSet()));
+            stream.filterKeySegments(IntSets.from(segments.stream().iterator()));
          }
          filteredStream = stream.segmentCompletionListener(segmentListener);
       } else {
@@ -171,7 +171,7 @@ public class DefaultIterationManager implements IterationManager {
          }
          stream = iterationCache.cacheEntrySet().stream();
          if (segments != null) {
-            stream.filterKeySegments(segments.stream().boxed().collect(Collectors.toSet()));
+            stream.filterKeySegments(IntSets.from(segments.stream().iterator()));
          }
          IterationFilter iterationFilter = new IterationFilter(storageMediaType, requestValueType, Optional.of(filter.getKey()));
          filteredStream = filterAndConvert(stream.segmentCompletionListener(segmentListener), iterationFilter);

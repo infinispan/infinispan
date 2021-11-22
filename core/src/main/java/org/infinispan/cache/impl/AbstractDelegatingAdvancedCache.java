@@ -1,7 +1,6 @@
 package org.infinispan.cache.impl;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +21,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -591,14 +589,6 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public DataConversion getValueDataConversion() {
       return cache.getValueDataConversion();
-   }
-
-   protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
-      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, EnumUtil.bitSetOf(flags));
-   }
-
-   protected final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> flags, ClassLoader classLoader) {
-      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(flags));
    }
 
    @Override

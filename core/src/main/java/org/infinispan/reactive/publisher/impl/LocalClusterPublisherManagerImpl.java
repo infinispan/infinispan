@@ -73,7 +73,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
    @Override
    public <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       if (transformer instanceof InjectableComponent) {
@@ -84,11 +84,11 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
       }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.keyReduction(parallelPublisher, handleNullSegments(segments), keysToInclude, null,
-               includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
+               explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
       }
 
       CompletionStage<R> stage = localPublisherManager.keyReduction(parallelPublisher, handleNullSegments(segments), keysToInclude,
-                  (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer)
+                  (Set<K>) invocationContext.getLookedUpEntries().keySet(), explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer)
             .thenApply(PublisherResult::getResult);
 
       Flowable<K> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude)
@@ -100,7 +100,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
    @Override
    public <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer,
          Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
       if (transformer instanceof InjectableComponent) {
@@ -111,11 +111,11 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
       }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.entryReduction(parallelPublisher, handleNullSegments(segments), keysToInclude, null,
-               includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
+               explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer).thenApply(PublisherResult::getResult);
       }
 
       CompletionStage<R> stage = localPublisherManager.entryReduction(parallelPublisher, handleNullSegments(segments), keysToInclude,
-                  (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer)
+                  (Set<K>) invocationContext.getLookedUpEntries().keySet(), explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer, finalizer)
             .thenApply(PublisherResult::getResult);
 
       Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
@@ -127,18 +127,19 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
    @Override
    public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee,
+         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
          int batchSize, Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
       if (transformer instanceof InjectableComponent) {
          ((InjectableComponent) transformer).inject(componentRegistry);
       }
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.keyPublisher(handleNullSegments(segments),
-               keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
+               keysToInclude, null, explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer);
       }
 
+      Set<K> contextKeys = (Set<K>) invocationContext.getLookedUpEntries().keySet();
       SegmentAwarePublisherSupplier<R> cachePublisher = localPublisherManager.keyPublisher(handleNullSegments(segments),
-            keysToInclude, (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
+            keysToInclude, contextKeys, explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       return new SegmentPublisherSupplier<R>() {
          @Override
@@ -164,7 +165,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
    @Override
    public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude,
-         InvocationContext invocationContext, boolean includeLoader, DeliveryGuarantee deliveryGuarantee, int batchSize,
+         InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
       if (transformer instanceof InjectableComponent) {
          ((InjectableComponent) transformer).inject(componentRegistry);
@@ -172,11 +173,12 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
 
       if (invocationContext == null || invocationContext.lookedUpEntriesCount() == 0) {
          return localPublisherManager.entryPublisher(handleNullSegments(segments),
-               keysToInclude, null, includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
+               keysToInclude, null, explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer);
       }
 
+      Set<K> contextKeys = (Set<K>) invocationContext.getLookedUpEntries().keySet();
       SegmentAwarePublisherSupplier<R> cachePublisher = localPublisherManager.entryPublisher(handleNullSegments(segments),
-            keysToInclude, (Set<K>) invocationContext.getLookedUpEntries().keySet(), includeLoader, DeliveryGuarantee.AT_MOST_ONCE, transformer);
+               keysToInclude, contextKeys, explicitFlags, DeliveryGuarantee.AT_MOST_ONCE, transformer);
 
       return new SegmentPublisherSupplier<R>() {
 
@@ -197,6 +199,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          public Publisher<R> publisherWithoutSegments() {
             Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
                   keysToInclude);
+
             return Flowable.concat(transformer.apply(entryFlowable),
                   cachePublisher.publisherWithoutSegments());
          }

@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -117,5 +118,10 @@ public class Bucket<V> {
     */
    public Set<V> toSet() {
       return new HashSet<>(values);
+   }
+
+   @Override
+   public String toString() {
+      return "Bucket{values=" + Util.toStr(values) + '}';
    }
 }

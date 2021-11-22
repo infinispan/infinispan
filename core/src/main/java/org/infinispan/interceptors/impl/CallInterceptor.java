@@ -6,7 +6,6 @@ import static org.infinispan.functional.impl.EntryViews.snapshot;
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.lang.invoke.MethodHandles;
-import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,15 +15,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Spliterator;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
+import org.infinispan.InternalCacheSet;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -69,13 +66,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -84,7 +75,6 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -115,11 +105,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
-import org.infinispan.stream.impl.local.LocalCacheStream;
-import org.infinispan.stream.impl.local.SegmentedEntryStreamSupplier;
-import org.infinispan.stream.impl.local.SegmentedKeyStreamSupplier;
-import org.infinispan.util.DataContainerRemoveIterator;
-import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -608,14 +593,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       return false;
    }
 
-   private Cache cacheWithFlags(long flagBitSet) {
-      if (flagBitSet != EnumUtil.EMPTY_BIT_SET) {
-         return unwrappedCache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flagBitSet, Flag.class));
-      } else {
-         return unwrappedCache;
-      }
-   }
-
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       ClusterPublisherManager managerToUse;
@@ -626,7 +603,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
 
       return asyncValue(managerToUse.keyReduction(false, null, null, ctx,
-            !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD), DeliveryGuarantee.EXACTLY_ONCE, PublisherReducers.count(),
+            command.getFlagsBitSet(), DeliveryGuarantee.EXACTLY_ONCE, PublisherReducers.count(),
             PublisherReducers.add()));
    }
 
@@ -703,25 +680,12 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      long flagBitSet = command.getFlagsBitSet();
-      // We have to check for the flags when we do perform - as interceptor could change this while going down
-      // the stack
-      boolean isRemoteIteration = EnumUtil.containsAny(flagBitSet, FlagBitSets.REMOTE_ITERATION);
-      return new BackingKeySet<>(cacheWithFlags(flagBitSet), dataContainer, keyPartitioner, isRemoteIteration);
+      return new BackingKeySet<>(dataContainer);
    }
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      long flagsBitSet = command.getFlagsBitSet();
-      // We have to check for the flags when we do perform - as interceptor could change this while going down
-      // the stack
-      boolean isRemoteIteration = EnumUtil.containsAny(flagsBitSet, FlagBitSets.REMOTE_ITERATION);
-      Cache flagCache = cacheWithFlags(flagsBitSet);
-      Object lockOwner = ctx.getLockOwner();
-      if (ctx.getLockOwner() != null) {
-         return new BackingEntrySet<>(flagCache.getAdvancedCache().lockAs(lockOwner), dataContainer, keyPartitioner, isRemoteIteration);
-      }
-      return new BackingEntrySet<>(flagCache, dataContainer, keyPartitioner, isRemoteIteration);
+      return new BackingEntrySet<>(dataContainer);
    }
 
    @Override
@@ -1156,86 +1120,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
    }
 
-   static class BackingEntrySet<K, V> extends AbstractCollection<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
-      private final boolean isRemoteIteration;
-      private final Cache<K, V> cache;
+   static class BackingEntrySet<K, V> extends InternalCacheSet<CacheEntry<K, V>> {
       private final InternalDataContainer<K, V> dataContainer;
-      private final KeyPartitioner keyPartitioner;
 
-      BackingEntrySet(Cache<K, V> cache, InternalDataContainer<K, V> dataContainer, KeyPartitioner keyPartitioner,
-            boolean isRemoteIteration) {
-         this.cache = cache;
+      BackingEntrySet(InternalDataContainer<K, V> dataContainer) {
          this.dataContainer = dataContainer;
-         this.keyPartitioner = keyPartitioner;
-         this.isRemoteIteration = isRemoteIteration;
-      }
-
-      @Override
-      public CloseableIterator<CacheEntry<K, V>> iterator() {
-         if (isRemoteIteration) {
-            // If remote don't do all this wrapping
-            return Closeables.iterator(dataContainer.iterator());
-         }
-         Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache, dataContainer);
-         return new IteratorMapper<>(iterator, e -> new EntryWrapper<>(cache, e));
-      }
-
-      static <K, V> CloseableSpliterator<CacheEntry<K, V>> closeableCast(Spliterator spliterator) {
-         if (spliterator instanceof CloseableSpliterator) {
-            return (CloseableSpliterator<CacheEntry<K, V>>) spliterator;
-         }
-         return Closeables.spliterator((Spliterator<CacheEntry<K, V>>) spliterator);
-      }
-
-      @Override
-      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-         // Spliterator doesn't support remove so just return it without wrapping
-         return closeableCast(dataContainer.spliterator());
-      }
-
-      @Override
-      public int size() {
-         return dataContainer.size();
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         Map.Entry entry = toEntry(o);
-         if (entry != null) {
-            InternalCacheEntry<K, V> value = dataContainer.get(entry.getKey());
-            return value != null && value.getValue().equals(entry.getValue());
-         }
-         return false;
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         Map.Entry entry = toEntry(o);
-         // Remove must be done by the cache
-         return entry != null && cache.remove(entry.getKey(), entry.getValue());
-      }
-
-      private Map.Entry<K, V> toEntry(Object obj) {
-         if (obj instanceof Map.Entry) {
-            return (Map.Entry) obj;
-         } else {
-            return null;
-         }
-      }
-
-      private CacheStream<CacheEntry<K, V>> doStream(boolean parallel) {
-         return new LocalCacheStream<>(new SegmentedEntryStreamSupplier<>(cache, keyPartitioner, dataContainer),
-               parallel, cache.getAdvancedCache().getComponentRegistry());
-      }
-
-      @Override
-      public CacheStream<CacheEntry<K, V>> stream() {
-         return doStream(false);
-      }
-
-      @Override
-      public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return doStream(true);
       }
 
       @Override
@@ -1252,62 +1141,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
    }
 
-   private static class BackingKeySet<K, V> extends AbstractCollection<K> implements CacheSet<K> {
-      private final boolean isRemoteIteration;
-      private final Cache<K, V> cache;
+   private static class BackingKeySet<K, V>  extends InternalCacheSet<K> {
       private final InternalDataContainer<K, V> dataContainer;
-      private final KeyPartitioner keyPartitioner;
 
-      BackingKeySet(Cache<K, V> cache, InternalDataContainer<K, V> dataContainer, KeyPartitioner keyPartitioner, boolean isRemoteIteration) {
-         this.cache = cache;
+      BackingKeySet(InternalDataContainer<K, V> dataContainer) {
          this.dataContainer = dataContainer;
-         this.keyPartitioner = keyPartitioner;
-         this.isRemoteIteration = isRemoteIteration;
-      }
-
-      @Override
-      public CloseableIterator<K> iterator() {
-         if (isRemoteIteration) {
-            // Don't add the extra wrapping for removal
-            return new IteratorMapper<>(dataContainer.iterator(), Map.Entry::getKey);
-         }
-         return new IteratorMapper<>(new DataContainerRemoveIterator<>(cache, dataContainer), Map.Entry::getKey);
-      }
-
-      @Override
-      public CloseableSpliterator<K> spliterator() {
-         // Spliterator doesn't support remove so just return it without wrapping
-         return new SpliteratorMapper<>(dataContainer.spliterator(), Map.Entry::getKey);
-      }
-
-      @Override
-      public int size() {
-         return dataContainer.size();
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         return dataContainer.containsKey(o);
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         return cache.remove(o) != null;
-      }
-
-      private CacheStream<K> doStream(boolean parallel) {
-         return new LocalCacheStream<>(new SegmentedKeyStreamSupplier<>(cache, keyPartitioner, dataContainer), parallel,
-               cache.getAdvancedCache().getComponentRegistry());
-      }
-
-      @Override
-      public CacheStream<K> stream() {
-         return doStream(false);
-      }
-
-      @Override
-      public CacheStream<K> parallelStream() {
-         return doStream(true);
       }
 
       @Override

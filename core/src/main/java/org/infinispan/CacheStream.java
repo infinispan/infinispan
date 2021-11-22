@@ -590,6 +590,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * implement <code>Serializable</code>
     * <p>
     * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
+    *
+    * <p>Just like in the cache, {@code null} values are not supported.</p>
+    *
     * @param <U> The type of the result
     * @param identity the identity value for the combiner function
     * @param accumulator an associative, non-interfering, stateless
@@ -641,6 +644,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
 
    /**
     * {@inheritDoc}
+    *
+    * <p>Just like in the cache, {@code null} values are not supported.</p>
+    *
     * @return the new cache stream
     */
    @Override

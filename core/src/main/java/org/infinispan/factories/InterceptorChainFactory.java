@@ -17,7 +17,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.BiasedScatteredDistributionInterceptor;
-import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
@@ -116,11 +115,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
       CacheMode cacheMode = configuration.clustering().cacheMode();
-
-      if (cacheMode.needsStateTransfer()) {
-         interceptorChain.appendInterceptor(createInterceptor(new DistributionBulkInterceptor<>(),
-                 DistributionBulkInterceptor.class), false);
-      }
 
       // load the icInterceptor first
       if (invocationBatching) {

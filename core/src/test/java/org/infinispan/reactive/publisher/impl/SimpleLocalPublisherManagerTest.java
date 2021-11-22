@@ -88,11 +88,11 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
       SegmentAwarePublisherSupplier<?> publisher;
       Consumer<Object> assertConsumer;
       if (isEntry) {
-         publisher = lpm.keyPublisher(allSegments, null, null, true,
+         publisher = lpm.keyPublisher(allSegments, null, null, 0L,
                deliveryGuarantee, Function.identity());
          assertConsumer = obj -> assertTrue(inserted.containsKey(obj));
       } else {
-         publisher = lpm.entryPublisher(allSegments, null, null, true,
+         publisher = lpm.entryPublisher(allSegments, null, null, 0L,
                deliveryGuarantee, Function.identity());
          assertConsumer = obj -> {
             Map.Entry<Object, Object> entry = (Map.Entry) obj;
@@ -123,10 +123,10 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
       IntSet allSegments = IntSets.immutableRangeSet(SEGMENT_COUNT);
       SegmentAwarePublisherSupplier<?> publisher;
       if (isEntry) {
-         publisher = lpm.keyPublisher(allSegments, null, null, true,
+         publisher = lpm.keyPublisher(allSegments, null, null, 0L,
                deliveryGuarantee, Function.identity());
       } else {
-         publisher = lpm.entryPublisher(allSegments, null, null, true,
+         publisher = lpm.entryPublisher(allSegments, null, null, 0L,
                deliveryGuarantee, Function.identity());
       }
 
@@ -201,7 +201,7 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
             Single.fromCompletionStage(blockingManager.supplyBlocking(() -> value, "test-blocking-thread"));
 
       if (isEntry) {
-         stage = lpm.keyReduction(isParallel, allSegments, null, null, true, deliveryGuarantee,
+         stage = lpm.keyReduction(isParallel, allSegments, null, null, 0L, deliveryGuarantee,
                publisher -> Flowable.fromPublisher(publisher)
                      .concatMapSingle(sleepOnBlockingPoolFunction)
                      .collect(collector)
@@ -211,7 +211,7 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
                      .toCompletionStage(Collections.emptySet()));
          assertConsumer = obj -> assertTrue(inserted.containsKey(obj));
       } else {
-         stage = lpm.entryReduction(isParallel, allSegments, null, null, true,
+         stage = lpm.entryReduction(isParallel, allSegments, null, null, 0L,
                deliveryGuarantee, publisher -> Flowable.fromPublisher(publisher)
                      .concatMapSingle(sleepOnBlockingPoolFunction).collect(collector).toCompletionStage()
                , publisher -> Flowable.fromPublisher(publisher)

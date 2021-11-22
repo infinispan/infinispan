@@ -14,8 +14,6 @@ import org.infinispan.util.ByteString;
 public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 25;
 
-   private PublisherHandler publisherHandler;
-
    private String requestId;
    private int topologyId = -1;
 

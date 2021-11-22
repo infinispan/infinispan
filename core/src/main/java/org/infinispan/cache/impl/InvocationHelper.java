@@ -43,7 +43,6 @@ public class InvocationHelper {
    @Inject protected Configuration config;
    @Inject protected BatchContainer batchContainer;
    @Inject protected BlockingManager blockingManager;
-   private final ContextBuilder defaultBuilder = i -> createInvocationContextWithImplicitTransaction(i, false);
 
    private static void checkLockOwner(InvocationContext context, VisitableCommand command) {
       if (context.getLockOwner() == null && command instanceof RemoteLockCommand) {
@@ -144,13 +143,6 @@ public class InvocationHelper {
       return isTxInjected(context) ?
              executeCommandAsyncWithInjectedTx(context, command) :
              doInvokeAsync(context, command);
-   }
-
-   /**
-    * @return The default {@link ContextBuilder} implementation for write operations.
-    */
-   public ContextBuilder defaultContextBuilderForWrite() {
-      return defaultBuilder;
    }
 
    /**
