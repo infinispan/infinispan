@@ -1,46 +1,42 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
+import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
-/*
+/**
  * @since 10.0
  */
-public class StackFileConfiguration {
-   static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
-   static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class).build();
+public class StackFileConfiguration extends ConfigurationElement<StackFileConfiguration> implements NamedStackConfiguration {
+   static final AttributeDefinition<String> NAME = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAME, null, String.class).build();
+   static final AttributeDefinition<String> PATH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).build();
+   static final AttributeDefinition<Boolean> BUILTIN = AttributeDefinition.builder("builtin", false, Boolean.class).autoPersist(false).build();
+   private final JGroupsChannelConfigurator configurator;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(StackFileConfiguration.class, NAME, PATH);
+      return new AttributeSet(StackFileConfiguration.class, NAME, PATH, BUILTIN);
    }
 
-   private final Attribute<String> name;
-   private final Attribute<String> path;
-   private final AttributeSet attributes;
-
-   StackFileConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-      this.name = attributes.attribute(NAME);
-      this.path = attributes.attribute(PATH);
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
+   StackFileConfiguration(AttributeSet attributes, JGroupsChannelConfigurator configurator) {
+      super(Element.STACK_FILE, attributes);
+      this.configurator = configurator;
    }
 
    public String name() {
-      return name.get();
+      return attributes.attribute(NAME).get();
    }
 
    public String path() {
-      return path.get();
+      return attributes.attribute(PATH).get();
    }
 
-   @Override
-   public String toString() {
-      return "StackFileConfiguration{" +
-            "attributes=" + attributes +
-            '}';
+   public boolean builtIn() {
+      return attributes.attribute(BUILTIN).get();
+   }
+
+   public JGroupsChannelConfigurator configurator() {
+      return configurator;
    }
 }

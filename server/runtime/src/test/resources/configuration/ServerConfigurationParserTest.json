@@ -63,7 +63,7 @@
                   "alias": "server",
                   "generate-self-signed-certificate-host": "localhost",
                   "key-password": "password",
-                  "keystore-password": "password",
+                  "password": "password",
                   "path": "ServerConfigurationParserTest-keystore.pfx",
                   "provider": "SunJSSE"
                 },

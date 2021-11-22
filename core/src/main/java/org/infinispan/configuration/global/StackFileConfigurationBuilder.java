@@ -1,9 +1,11 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.StackFileConfiguration.BUILTIN;
 import static org.infinispan.configuration.global.StackFileConfiguration.NAME;
 import static org.infinispan.configuration.global.StackFileConfiguration.PATH;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
@@ -14,8 +16,8 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
    private final AttributeSet attributes;
    private FileJGroupsChannelConfigurator configurator;
 
-   StackFileConfigurationBuilder(String name, GlobalConfigurationBuilder globalConfig) {
-      super(globalConfig);
+   StackFileConfigurationBuilder(String name, JGroupsConfigurationBuilder jgroups) {
+      super(jgroups.getGlobalConfig());
       attributes = StackFileConfiguration.attributeDefinitionSet();
       attributes.attribute(NAME).set(name);
    }
@@ -33,6 +35,7 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.configurator = configurator;
       attributes.attribute(NAME).set(configurator.getName());
       attributes.attribute(PATH).set(configurator.getPath());
+      attributes.attribute(BUILTIN).set(configurator instanceof BuiltinJGroupsChannelConfigurator);
       return this;
    }
 
@@ -42,12 +45,13 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    @Override
    public StackFileConfiguration create() {
-      return new StackFileConfiguration(attributes.protect());
+      return new StackFileConfiguration(attributes.protect(), configurator);
    }
 
    @Override
    public StackFileConfigurationBuilder read(StackFileConfiguration template) {
       attributes.read(template.attributes());
+      this.configurator = (FileJGroupsChannelConfigurator) template.configurator();
       return this;
    }
 

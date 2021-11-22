@@ -21,8 +21,8 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    private boolean openTag;
    private boolean skipIndentClose;
 
-   public XmlConfigurationWriter(Writer writer, boolean prettyPrint) {
-      super(writer, 4, prettyPrint, NamingStrategy.KEBAB_CASE);
+   public XmlConfigurationWriter(Writer writer, boolean prettyPrint, boolean clearTextSecrets) {
+      super(writer, 4, prettyPrint, clearTextSecrets, NamingStrategy.KEBAB_CASE);
    }
 
    public String getVersion() {
@@ -336,6 +336,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    public boolean hasFeature(ConfigurationFormatFeature feature) {
       switch (feature) {
          case MIXED_ELEMENTS:
+         case BARE_COLLECTIONS:
             return true;
          default:
             return false;

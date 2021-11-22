@@ -17,9 +17,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.commons.util.FileLookup;
@@ -39,7 +37,6 @@ import org.infinispan.server.memcached.configuration.MemcachedServerConfiguratio
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.infinispan.server.security.ElytronPasswordProviderSupplier;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -67,14 +64,8 @@ public class ServerConfigurationParserTest {
 
    @BeforeClass
    public static void setup() {
-      System.setProperty("org.infinispan.configuration.clear-text-secrets", "true");
       registerSecurityProviders();
       createCredentialStore(getConfigPath().resolve("credentials.pfx"), "secret");
-   }
-
-   @AfterClass
-   public static void cleanup() {
-      System.clearProperty("org.infinispan.configuration.clear-text-secrets");
    }
 
    @Parameterized.Parameters(name = "{0}")
@@ -98,14 +89,6 @@ public class ServerConfigurationParserTest {
       GlobalConfiguration global = holder.getGlobalConfigurationBuilder().build();
       ServerConfiguration serverConfiguration = global.module(ServerConfiguration.class);
       validateConfiguration(serverConfiguration);
-
-      // Output serialized version
-      for (MediaType t : data()) {
-         StringBuilderWriter sw = new StringBuilderWriter();
-         try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(t).build()) {
-            new ServerConfigurationSerializer().serialize(w, serverConfiguration);
-         }
-      }
    }
 
    private void validateConfiguration(ServerConfiguration configuration) {
@@ -170,7 +153,6 @@ public class ServerConfigurationParserTest {
       assertEquals("strongPassword", new String(((Supplier<char[]>) realmProvider(realmConfiguration, LdapRealmConfiguration.class).attributes().attribute(Attribute.CREDENTIAL).get()).get()));
       assertEquals("secret", new String(((Supplier<char[]>) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().trustStore().attributes().attribute(Attribute.PASSWORD).get()).get()));
       assertEquals("1fdca4ec-c416-47e0-867a-3d471af7050f", new String(((Supplier<char[]>) realmProvider(realmConfiguration, TokenRealmConfiguration.class).oauth2Configuration().attributes().attribute(Attribute.CLIENT_SECRET).get()).get()));
-      assertEquals("password", new String(((Supplier<char[]>) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().keyStore().attributes().attribute(Attribute.KEYSTORE_PASSWORD).get()).get()));
    }
 
    <T extends RealmProvider> T realmProvider(RealmConfiguration realm, Class<T> providerClass) {

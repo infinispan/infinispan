@@ -259,6 +259,7 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
    public boolean hasFeature(ConfigurationFormatFeature feature) {
       switch (feature) {
          case MIXED_ELEMENTS:
+         case BARE_COLLECTIONS:
             return true;
          default:
             return false;

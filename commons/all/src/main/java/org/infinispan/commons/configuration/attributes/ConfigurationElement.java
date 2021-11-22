@@ -154,27 +154,36 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
     */
    public void write(ConfigurationWriter writer) {
       if (isModified()) {
-         writer.writeStartElement(element);
-         attributes.write(writer);
-         String repeatElement = null;
-         for (ConfigurationElement<?> child : children) {
-            if (child.repeated) {
-               if (!child.element.equals(repeatElement)) {
-                  if (repeatElement != null) {
-                     writer.writeEndListElement();
-                  }
-                  repeatElement = child.element;
-                  writer.writeStartListElement(repeatElement, true);
-               }
-            } else {
-               repeatElement = null;
+         if (attributes.attributes().isEmpty() && children.length > 0 && Arrays.stream(children).allMatch(c -> children[0].element.equals(c.element))) {
+            // Simple array: all children are homogeneous
+            writer.writeStartListElement(element, true);
+            for (ConfigurationElement<?> child : children) {
+               child.write(writer);
             }
-            child.write(writer);
-         }
-         if (repeatElement != null) {
             writer.writeEndListElement();
+         } else {
+            writer.writeStartElement(element);
+            attributes.write(writer);
+            String repeatElement = null;
+            for (ConfigurationElement<?> child : children) {
+               if (child.repeated) {
+                  if (!child.element.equals(repeatElement)) {
+                     if (repeatElement != null) {
+                        writer.writeEndListElement();
+                     }
+                     repeatElement = child.element;
+                     writer.writeStartListElement(repeatElement, false);
+                  }
+               } else {
+                  repeatElement = null;
+               }
+               child.write(writer);
+            }
+            if (repeatElement != null) {
+               writer.writeEndListElement();
+            }
+            writer.writeEndElement();
          }
-         writer.writeEndElement();
       }
    }
 

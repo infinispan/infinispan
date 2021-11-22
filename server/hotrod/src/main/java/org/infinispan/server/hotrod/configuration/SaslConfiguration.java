@@ -11,6 +11,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.configuration.attributes.PropertiesAttributeSerializer;
 
 /**
  * @since 10.0
@@ -26,7 +27,8 @@ public class SaslConfiguration extends ConfigurationElement<SaslConfiguration> {
          .initializer(ArrayList::new).serializer(AttributeSerializer.ENUM_COLLECTION).immutable().build();
    public static final AttributeDefinition<List<Policy>> POLICY = AttributeDefinition.builder(Attribute.POLICY, new ArrayList<>(), (Class<List<Policy>>) (Class<?>) Policy.class)
          .initializer(ArrayList::new).serializer(AttributeSerializer.ENUM_COLLECTION).immutable().build();
-   static final AttributeDefinition<Map<String, String>> SASL_PROPERTIES = AttributeDefinition.builder(Element.PROPERTY, null, (Class<Map<String, String>>) (Class<?>) Map.class).initializer(LinkedHashMap::new).autoPersist(false).immutable().build();
+   static final AttributeDefinition<Map<String, String>> SASL_PROPERTIES = AttributeDefinition.builder(Element.PROPERTY, null, (Class<Map<String, String>>) (Class<?>) Map.class).initializer(LinkedHashMap::new)
+         .serializer(PropertiesAttributeSerializer.PROPERTIES).immutable().build();
 
    private final Map<String, String> mechProperties;
 

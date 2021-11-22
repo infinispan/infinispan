@@ -42,13 +42,14 @@ public class RestServerResource {
       Json interfaces = server.at("interfaces");
       Json security = server.at("security");
       Json endpoints = server.at("endpoints");
+      Json endpoint = endpoints.at("endpoint");
 
       String inetAddress = SERVERS.getServerDriver() instanceof ContainerInfinispanServerDriver ? "SITE_LOCAL" : "127.0.0.1";
       assertEquals(inetAddress, interfaces.at(0).at("inet-address").at("value").asString());
       assertEquals("default", security.at("security-realms").at(0).at("name").asString());
-      assertEquals("hotrod", endpoints.at("hotrod-connector").at("name").asString());
-      assertEquals("rest", endpoints.at("rest-connector").at("name").asString());
-      assertEquals("memcachedCache", endpoints.at("memcached-connector").at("cache").asString());
+      assertEquals("hotrod", endpoint.at("hotrod-connector").at("name").asString());
+      assertEquals("rest", endpoint.at("rest-connector").at("name").asString());
+      assertEquals("memcachedCache", endpoint.at("memcached-connector").at("cache").asString());
    }
 
    @Test

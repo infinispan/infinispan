@@ -325,17 +325,17 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          responseBuilder.status(HttpResponseStatus.BAD_REQUEST);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
-      ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents, request.contentType());
-      Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-      Configuration configuration = entry.getValue().build();
-
-      StringBuilderWriter out = new StringBuilderWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(toType).build()) {
-         parserRegistry.serialize(writer, entry.getKey(), configuration);
-      }
-      responseBuilder.contentType(toType).entity(out.toString());
-      return completedFuture(responseBuilder.build());
+      return CompletableFuture.supplyAsync(() -> {
+         ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
+         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents, request.contentType());
+         Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
+         Configuration configuration = entry.getValue().build();
+         StringBuilderWriter out = new StringBuilderWriter();
+         try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(toType).clearTextSecrets(true).prettyPrint(true).build()) {
+            parserRegistry.serialize(writer, entry.getKey(), configuration);
+         }
+         return responseBuilder.contentType(toType).entity(out.toString()).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> convertToJson(RestRequest request) {
@@ -506,19 +506,16 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             return responseBuilder.build();
          }, invocationHelper.getExecutor());
       }
-
-      ConfigurationBuilder cfgBuilder;
       MediaType sourceType = request.contentType() == null ? APPLICATION_JSON : request.contentType();
-      if (sourceType.match(APPLICATION_JSON) || sourceType.match(APPLICATION_XML) || sourceType.match(APPLICATION_YAML)) {
-         ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8), sourceType);
-         cfgBuilder = holder.getCurrentConfigurationBuilder() != null ? holder.getCurrentConfigurationBuilder() : new ConfigurationBuilder();
-      } else {
+      if (!sourceType.match(APPLICATION_JSON) && !sourceType.match(APPLICATION_XML) && !sourceType.match(APPLICATION_YAML)) {
          responseBuilder.status(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
 
       return CompletableFuture.supplyAsync(() -> {
          try {
+            ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8), sourceType);
+            ConfigurationBuilder cfgBuilder = holder.getCurrentConfigurationBuilder() != null ? holder.getCurrentConfigurationBuilder() : new ConfigurationBuilder();
             if (request.method() == PUT) {
                administration.getOrCreateCache(cacheName, cfgBuilder.build());
             } else {

@@ -20,13 +20,20 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    protected int currentIndent = 0;
    private final int indent;
    protected final boolean prettyPrint;
+   protected final boolean clearTextSecrets;
    protected final NamingStrategy naming;
 
-   protected AbstractConfigurationWriter(Writer writer, int indent, boolean prettyPrint, NamingStrategy naming) {
+   protected AbstractConfigurationWriter(Writer writer, int indent, boolean prettyPrint, boolean clearTextSecrets, NamingStrategy naming) {
       this.writer = writer;
       this.indent = indent;
       this.prettyPrint = prettyPrint;
+      this.clearTextSecrets = clearTextSecrets;
       this.naming = naming;
+   }
+
+   @Override
+   public boolean clearTextSecrets() {
+      return clearTextSecrets;
    }
 
    @Override

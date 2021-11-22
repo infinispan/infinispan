@@ -22,6 +22,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.keystore.AliasFilter;
@@ -36,14 +37,14 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
    static final AttributeDefinition<String> GENERATE_SELF_SIGNED_CERTIFICATE_HOST = AttributeDefinition.builder(Attribute.GENERATE_SELF_SIGNED_CERTIFICATE_HOST, null, String.class).build();
    static final AttributeDefinition<Supplier<char[]>> KEY_PASSWORD = AttributeDefinition.builder(Attribute.KEY_PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
          .serializer(AttributeSerializer.SECRET).build();
-   static final AttributeDefinition<Supplier<char[]>> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.KEYSTORE_PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
-         .serializer(AttributeSerializer.SECRET).build();
+   static final AttributeDefinition<Supplier<char[]>> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
+         .serializer(ServerConfigurationSerializer.CREDENTIAL).build();
    static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
    static final AttributeDefinition<String> PROVIDER = AttributeDefinition.builder(Attribute.PROVIDER, null, String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(KeyStoreConfiguration.class, ALIAS, GENERATE_SELF_SIGNED_CERTIFICATE_HOST, KEY_PASSWORD, KEYSTORE_PASSWORD, PATH, RELATIVE_TO, PROVIDER);
+      return new AttributeSet(KeyStoreConfiguration.class, ALIAS, GENERATE_SELF_SIGNED_CERTIFICATE_HOST, PATH, RELATIVE_TO, PROVIDER, KEY_PASSWORD, KEYSTORE_PASSWORD);
    }
 
    KeyStoreConfiguration(AttributeSet attributes) {

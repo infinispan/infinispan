@@ -1,17 +1,17 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.JGroupsConfiguration.TRANSPORT;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
 /**
  * @since 10.0
@@ -21,7 +21,7 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
 
    private List<StackConfigurationBuilder> stackConfigurationBuilders = new ArrayList<>();
    private List<StackFileConfigurationBuilder> stackFileConfigurationBuilders = new ArrayList<>();
-   private Map<String, StackBuilder<?>> buildersByName = new HashMap<>();
+   private Set<String> buildersByName = new HashSet<>();
 
    JGroupsConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -35,16 +35,22 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    public StackConfigurationBuilder addStack(String name) {
-      StackConfigurationBuilder stackConfigurationBuilder = new StackConfigurationBuilder(name, this.getGlobalConfig());
-      buildersByName.put(name, stackConfigurationBuilder);
+      if (buildersByName.contains(name)) {
+         throw CONFIG.duplicateJGroupsStack(name);
+      }
+      StackConfigurationBuilder stackConfigurationBuilder = new StackConfigurationBuilder(name, this);
+      buildersByName.add(name);
       stackConfigurationBuilders.add(stackConfigurationBuilder);
       return stackConfigurationBuilder;
    }
 
    public StackFileConfigurationBuilder addStackFile(String name) {
-      StackFileConfigurationBuilder stackFileConfigurationBuilder = new StackFileConfigurationBuilder(name, this.getGlobalConfig());
+      if (buildersByName.contains(name)) {
+         throw CONFIG.duplicateJGroupsStack(name);
+      }
+      StackFileConfigurationBuilder stackFileConfigurationBuilder = new StackFileConfigurationBuilder(name, this);
+      buildersByName.add(name);
       stackFileConfigurationBuilders.add(stackFileConfigurationBuilder);
-      buildersByName.put(name, stackFileConfigurationBuilder);
       return stackFileConfigurationBuilder;
    }
 
@@ -75,14 +81,16 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    @Override
    public JGroupsConfigurationBuilder read(JGroupsConfiguration template) {
       attributes.read(template.attributes());
-      template.stackFiles().forEach(s -> stackFileConfigurationBuilders.add(new StackFileConfigurationBuilder(s.name(), getGlobalConfig()).read(s)));
-      template.stacks().forEach(s -> stackConfigurationBuilders.add(new StackConfigurationBuilder(s.name(), getGlobalConfig()).read(s)));
+      buildersByName.clear();
+      stackFileConfigurationBuilders.clear();
+      stackConfigurationBuilders.clear();
+      template.stackFiles().forEach(s -> addStackFile(s.name()).read(s));
+      template.stacks().forEach(s -> addStack(s.name()).read(s));
       return this;
    }
 
-   public JGroupsChannelConfigurator getStack(String name) {
-      StackBuilder<?> stackBuilder = buildersByName.get(name);
-      return stackBuilder == null ? null : stackBuilder.getConfigurator(name);
+   public boolean hasStack(String name) {
+      return buildersByName.contains(name);
    }
 
    @Override

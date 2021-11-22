@@ -443,8 +443,10 @@ public class Server implements ServerManagement, AutoCloseable {
 
    @Override
    public void serializeConfiguration(ConfigurationWriter writer) {
+      writer.writeStartDocument();
       ServerConfigurationSerializer serializer = new ServerConfigurationSerializer();
       serializer.serialize(writer, this.serverConfiguration);
+      writer.writeEndDocument();
    }
 
    @Override
