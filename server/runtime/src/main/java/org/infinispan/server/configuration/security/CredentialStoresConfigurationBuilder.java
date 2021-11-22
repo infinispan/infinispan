@@ -57,7 +57,7 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       return credentialSupplier;
    }
 
-   private static class CredentialSupplier implements Supplier<char[]> {
+   public static class CredentialSupplier implements Supplier<char[]> {
       final String store;
       final String alias;
       CredentialStoresConfiguration configuration;
@@ -70,6 +70,14 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       @Override
       public char[] get() {
          return configuration.getCredential(store, alias);
+      }
+
+      public String getStore() {
+         return store;
+      }
+
+      public String getAlias() {
+         return alias;
       }
    }
 }

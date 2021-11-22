@@ -1,13 +1,13 @@
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
-                            urn:infinispan:server:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-server-${infinispan.core.schema.version}.xsd"
-        xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
-        xmlns:server="urn:infinispan:server:${infinispan.core.schema.version}">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
+                          urn:infinispan:server:13.0  https://infinispan.org/schemas/infinispan-server-13.0.xsd"
+      xmlns="urn:infinispan:config:13.0"
+      xmlns:server="urn:infinispan:server:13.0">
    <cache-container>
       <transport server:security-realm="default"/>
    </cache-container>
-   <server xmlns="urn:infinispan:server:${infinispan.core.schema.version}">
+   <server xmlns="urn:infinispan:server:13.0">
       <interfaces>
          <interface name="default">
             <loopback/>
@@ -37,7 +37,7 @@
                   <ssl>
                      <keystore path="ServerConfigurationParserTest-keystore.pfx"
                                relative-to="infinispan.server.config.path"
-                               password="password" alias="server" key-password="password"
+                               keystore-password="password" alias="server" key-password="password"
                                generate-self-signed-certificate-host="localhost" provider="SunJSSE"/>
                      <truststore path="truststore.p12" provider="SunJSSE"
                                  relative-to="infinispan.server.config.path"
@@ -45,14 +45,17 @@
                      <engine enabled-protocols="TLSV1.1 TLSV1.2 TLSV1.3"
                              enabled-ciphersuites="DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"/>
                   </ssl>
-                  <kerberos principal="kerberos@DOMAIN.ORG" keytab-path="keytab" required="false" debug="false" fail-cache="1000" mechanism-names="KRB5 SPNEGO" relative-to="infinispan.server.config.path"/>
+                  <kerberos principal="kerberos@DOMAIN.ORG" keytab-path="keytab" required="false" debug="false"
+                            fail-cache="1000" mechanism-names="KRB5 SPNEGO"
+                            relative-to="infinispan.server.config.path"/>
                </server-identities>
                <filesystem-realm path="security" levels="3" encoded="false"
                                  relative-to="infinispan.server.config.path"/>
                <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
                            principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
                   <name-rewriter>
-                     <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG" replacement="$1"/>
+                     <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG"
+                                                  replacement="$1"/>
                   </name-rewriter>
                   <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
                      <attribute-mapping>
@@ -73,7 +76,9 @@
                   <group-properties path="ServerConfigurationParserTest-group.properties"
                                     relative-to="infinispan.server.config.path"/>
                </properties-realm>
-               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+               <token-realm name="token-test" principal-claim="username-claim"
+                            auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/"
+                            client-id="infinispan-console">
                   <oauth2-introspection host-name-verification-policy="ANY"
                                         introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
                                         client-id="infinispan-server"
@@ -101,14 +106,16 @@
                   <credential-reference store="credentials" alias="ldap"/>
                   <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org"/>
                </ldap-realm>
-               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+               <token-realm name="token-test" principal-claim="username-claim"
+                            auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/"
+                            client-id="infinispan-console">
                   <oauth2-introspection host-name-verification-policy="ANY"
                                         introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
                                         client-id="infinispan-server">
                      <credential-reference store="credentials" alias="oauth2"/>
                   </oauth2-introspection>
                </token-realm>
-               <truststore-realm />
+               <truststore-realm/>
             </security-realm>
             <security-realm name="basic">
                <properties-realm groups-attribute="Roles">
@@ -123,31 +130,39 @@
 
       <data-sources>
          <data-source name="database" jndi-name="jdbc/database" statistics="true">
-            <connection-factory driver="org.h2.Driver" username="test" password="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test" new-connection-sql="SELECT 1">
+            <connection-factory driver="org.h2.Driver" username="test" password="test"
+                                url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test"
+                                new-connection-sql="SELECT 1">
                <connection-property name="someproperty">somevalue</connection-property>
             </connection-factory>
-            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000" validate-on-acquisition="500"/>
+            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1"
+                             leak-detection="10000" validate-on-acquisition="500"/>
          </data-source>
          <data-source name="database-with-credential" jndi-name="jdbc/database-with-credential" statistics="true">
-            <connection-factory driver="org.h2.Driver" username="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test" new-connection-sql="SELECT 1">
+            <connection-factory driver="org.h2.Driver" username="test"
+                                url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test"
+                                new-connection-sql="SELECT 1">
                <credential-reference store="credentials" alias="db"/>
             </connection-factory>
-            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1"
+                             leak-detection="10000"/>
          </data-source>
       </data-sources>
 
       <endpoints>
          <endpoint socket-binding="default" security-realm="default" io-threads="12" idle-timeout="1"
-                    receive-buffer-size="2" send-buffer-size="3" tcp-keepalive="true"
-                    tcp-nodelay="true" worker-threads="10">
-            <hotrod-connector name="hotrod" io-threads="23" tcp-nodelay="false" worker-threads="20" tcp-keepalive="false"
+                   receive-buffer-size="2" send-buffer-size="3" tcp-keepalive="true"
+                   tcp-nodelay="true" worker-threads="10">
+            <hotrod-connector name="hotrod" io-threads="23" tcp-nodelay="false" worker-threads="20"
+                              tcp-keepalive="false"
                               send-buffer-size="10" receive-buffer-size="20" idle-timeout="2" socket-binding="hotrod"
                               external-host="external" external-port="12345">
                <topology-state-transfer await-initial-retrieval="false" lazy-retrieval="false" lock-timeout="12"
                                         replication-timeout="13"/>
                <authentication security-realm="default">
                   <sasl server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth auth-conf"
-                        strength="high medium low" policy="forward-secrecy no-active no-anonymous no-dictionary no-plain-text pass-credentials">
+                        strength="high medium low"
+                        policy="forward-secrecy no-active no-anonymous no-dictionary no-plain-text pass-credentials">
                      <property name="prop1">value1</property>
                      <property name="prop2">value2</property>
                      <property name="prop3">value3</property>
@@ -164,9 +179,9 @@
                <authentication security-realm="default" mechanisms="DIGEST BASIC"/>
                <cors-rules>
                   <cors-rule name="rule1" allow-credentials="true" max-age-seconds="1" allowed-origins="origin1 origin2"
-                     allowed-methods="GET POST"
-                     allowed-headers="Accept"
-                     expose-headers="Accept Content-Type"/>
+                             allowed-methods="GET POST"
+                             allowed-headers="Accept"
+                             expose-headers="Accept Content-Type"/>
                   <cors-rule name="rule2" allowed-origins="*" allowed-methods="GET POST"/>
                </cors-rules>
                <encryption require-ssl-client-auth="false" security-realm="default">

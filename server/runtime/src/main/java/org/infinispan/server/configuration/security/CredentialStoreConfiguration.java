@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import java.security.KeyStore;
+import java.security.Provider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -8,7 +9,6 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.configuration.parsing.ParseUtils;
@@ -22,6 +22,7 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.CredentialStoreSpi;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
@@ -34,7 +35,15 @@ public class CredentialStoreConfiguration extends ConfigurationElement<Credentia
    public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
    public static final AttributeDefinition<String> TYPE = AttributeDefinition.builder(Attribute.TYPE, "pkcs12", String.class).build();
    static final AttributeDefinition<Supplier<char[]>> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
-         .serializer(AttributeSerializer.SECRET).build();
+         .serializer((writer, name, value) -> {
+            writer.writeStartElement(Element.CLEAR_TEXT_CREDENTIAL);
+            if (writer.clearTextSecrets()) {
+               writer.writeAttribute(Attribute.CLEAR_TEXT, new String(value.get()));
+            } else {
+               writer.writeAttribute(Attribute.CLEAR_TEXT, "***");
+            }
+            writer.writeEndElement();
+         }).build();
 
    static AttributeSet attributeDefinitionSet() {
       KeyStore.getDefaultType();
@@ -66,7 +75,7 @@ public class CredentialStoreConfiguration extends ConfigurationElement<Credentia
                   map,
                   new CredentialStore.CredentialSourceProtectionParameter(
                         IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, credential)))),
-                  null
+                  new Provider[]{WildFlyElytronPasswordProvider.getInstance()}
             );
          } catch (CredentialStoreException e) {
             // We ignore the exception if it's about automatic creation

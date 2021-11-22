@@ -98,7 +98,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       assertEquals(globalConfigurationBefore.security().securityCacheTimeout(), globalConfigurationAfter.security().securityCacheTimeout());
       assertEquals(globalConfigurationBefore.security().securityCacheSize(), globalConfigurationAfter.security().securityCacheSize());
       compareAttributeSets("Global", globalConfigurationBefore.globalState().attributes(), globalConfigurationAfter.globalState().attributes(), "localConfigurationStorage");
-      compareAttributeSets("Global", globalConfigurationBefore.jmx().attributes(), globalConfigurationAfter.jmx().attributes(), "mbeanServerLookup");
+      compareAttributeSets("Global", globalConfigurationBefore.jmx().attributes(), globalConfigurationAfter.jmx().attributes(), org.infinispan.configuration.parsing.Attribute.MBEAN_SERVER_LOOKUP.toString());
       compareAttributeSets("Global", globalConfigurationBefore.security().authorization().attributes(), globalConfigurationAfter.security().authorization().attributes());
       compareAttributeSets("Global", globalConfigurationBefore.serialization().attributes(), globalConfigurationAfter.serialization().attributes(), "marshaller", "classResolver", "advancedExternalizer", "contextInitializers");
       compareAttributeSets("Global", globalConfigurationBefore.transport().attributes(), globalConfigurationAfter.transport().attributes(), "transport", "properties");
@@ -167,7 +167,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       }
    }
 
-   protected void compareAttributeSets(String name, AttributeSet before, AttributeSet after, String... exclude) {
+   protected static void compareAttributeSets(String name, AttributeSet before, AttributeSet after, String... exclude) {
       if (before != null && after != null) {
          List<String> exclusions = exclude != null ? Arrays.asList(exclude) : Collections.emptyList();
          for (Attribute<?> attribute : before.attributes()) {

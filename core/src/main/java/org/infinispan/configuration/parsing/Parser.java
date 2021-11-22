@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +50,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
-import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.CommonNameRoleMapper;
@@ -77,6 +76,7 @@ public class Parser extends CacheParser {
 
    @Override
    public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
+      addJGroupsDefaultStacksIfNeeded(reader, holder);
       while (reader.inTag("infinispan")) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -85,8 +85,6 @@ public class Parser extends CacheParser {
                break;
             }
             case JGROUPS: {
-               // Preload some default JGroups stacks
-               addJGroupsDefaultStacksIfNeeded(reader, holder);
                parseJGroups(reader, holder);
                break;
             }
@@ -485,23 +483,41 @@ public class Parser extends CacheParser {
       while (reader.inTag(Element.JGROUPS)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
-            case STACKS: {
-               // Wrapper element for YAML/JSON
-               break;
-            }
             case STACK_FILE:
-               parseStackFile(reader, holder);
+               parseStackFile(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0]);
+               break;
+            case STACKS:
+               parseJGroupsStacks(reader, holder);
                break;
             case STACK:
                if (!reader.getSchema().since(10, 0)) {
                   throw ParseUtils.unexpectedElement(reader);
                }
-               parseJGroupsStack(reader, holder);
+               parseJGroupsStack(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0]);
                break;
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
+      }
+   }
+
+   private void parseJGroupsStacks(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      while (reader.inTag(Element.STACKS)) {
+         Map.Entry<String, String> mapElement = reader.getMapItem(Attribute.NAME);
+         Element type = Element.forName(mapElement.getValue());
+         switch (type) {
+            case STACK:
+               parseJGroupsStack(reader, holder, mapElement.getKey());
+               break;
+            case STACK_FILE:
+               parseStackFile(reader, holder, mapElement.getKey());
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+
+         reader.endMapItem();
       }
    }
 
@@ -516,9 +532,7 @@ public class Parser extends CacheParser {
       }
    }
 
-   private void parseJGroupsStack(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      String stackName = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
-      EmbeddedJGroupsChannelConfigurator stackConfigurator = new EmbeddedJGroupsChannelConfigurator(stackName);
+   private void parseJGroupsStack(ConfigurationReader reader, ConfigurationBuilderHolder holder, String stackName) {
       String extend = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -535,12 +549,13 @@ public class Parser extends CacheParser {
          }
       }
 
-      List<ProtocolConfiguration> stack = stackConfigurator.getProtocolStack();
+      List<ProtocolConfiguration> stack = new ArrayList<>();
+      EmbeddedJGroupsChannelConfigurator.RemoteSites remoteSites = null;
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case REMOTE_SITES:
-               parseJGroupsRelay(reader, holder, stackConfigurator);
+               remoteSites = parseJGroupsRelay(reader, holder, stackName);
                break;
             default:
                // It should be an actual JGroups protocol
@@ -554,13 +569,14 @@ public class Parser extends CacheParser {
                break;
          }
       }
+      EmbeddedJGroupsChannelConfigurator stackConfigurator = new EmbeddedJGroupsChannelConfigurator(stackName, stack, remoteSites);
       holder.addJGroupsStack(stackConfigurator, extend);
    }
 
-   private void parseJGroupsRelay(ConfigurationReader reader, ConfigurationBuilderHolder holder, EmbeddedJGroupsChannelConfigurator stackConfigurator) {
+   private EmbeddedJGroupsChannelConfigurator.RemoteSites parseJGroupsRelay(ConfigurationReader reader, ConfigurationBuilderHolder holder, String stackName) {
       String defaultStack = ParseUtils.requireAttributes(reader, Attribute.DEFAULT_STACK)[0];
       String defaultCluster = "xsite";
-      if (holder.getJGroupsStack(defaultStack) == null) {
+      if (!holder.hasJGroupsStack(defaultStack)) {
          throw CONFIG.missingJGroupsStack(defaultStack);
       }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -580,45 +596,46 @@ public class Parser extends CacheParser {
             }
          }
       }
+      EmbeddedJGroupsChannelConfigurator.RemoteSites remoteSites = new EmbeddedJGroupsChannelConfigurator.RemoteSites(defaultStack, defaultCluster);
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case REMOTE_SITE:
-               String remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
-               String cluster = defaultCluster;
-               String stack = defaultStack;
-               for (int i = 0; i < reader.getAttributeCount(); i++) {
-                  Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-                  switch (attribute) {
-                     case NAME:
-                        break;
-                     case STACK:
-                        stack = reader.getAttributeValue(i);
-                        if (holder.getJGroupsStack(stack) == null) {
-                           throw CONFIG.missingJGroupsStack(stack);
-                        }
-                        break;
-                     case CLUSTER:
-                        cluster = reader.getAttributeValue(i);
-                        break;
-                     default:
-                        throw ParseUtils.unexpectedAttribute(reader, i);
+               if (reader.getAttributeCount() > 0) {
+                  String remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+                  String cluster = defaultCluster;
+                  String stack = defaultStack;
+                  for (int i = 0; i < reader.getAttributeCount(); i++) {
+                     Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+                     switch (attribute) {
+                        case NAME:
+                           break;
+                        case STACK:
+                           stack = reader.getAttributeValue(i);
+                           break;
+                        case CLUSTER:
+                           cluster = reader.getAttributeValue(i);
+                           break;
+                        default:
+                           throw ParseUtils.unexpectedAttribute(reader, i);
+                     }
                   }
+                  ParseUtils.requireNoContent(reader);
+                  remoteSites.addRemoteSite(stackName, remoteSite, cluster, stack);
                }
-               ParseUtils.requireNoContent(reader);
-               stackConfigurator.addRemoteSite(remoteSite, cluster, holder.getJGroupsStack(stack));
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
          }
       }
+      return remoteSites;
    }
 
-   private void parseStackFile(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME, Attribute.PATH);
+   private void parseStackFile(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name) {
+      String path = ParseUtils.requireAttributes(reader, Attribute.PATH)[0];
       ParseUtils.requireNoContent(reader);
 
-      addJGroupsStackFile(holder, attributes[0], attributes[1], reader.getProperties(), reader.getResourceResolver());
+      addJGroupsStackFile(holder, name, path, reader.getProperties(), reader.getResourceResolver());
    }
 
    private void parseContainer(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -1084,16 +1101,7 @@ public class Parser extends CacheParser {
             Attribute attribute = Attribute.forName(reader.getAttributeName(i));
             switch (attribute) {
                case STACK: {
-                  // Make sure we have the default stacks added
-                  addJGroupsDefaultStacksIfNeeded(reader, holder);
-                  JGroupsChannelConfigurator jGroupsStack = holder.getJGroupsStack(value);
-                  if (jGroupsStack == null) {
-                     throw CONFIG.missingJGroupsStack(value);
-                  }
-                  Properties p = new Properties();
-                  p.put(JGroupsTransport.CHANNEL_CONFIGURATOR, jGroupsStack);
-                  p.put("stack", value);
-                  transport.withProperties(p);
+                  transport.stack(value);
                   break;
                }
                case CLUSTER: {
@@ -1328,8 +1336,13 @@ public class Parser extends CacheParser {
       storeBuilder.addProperty(property, value);
    }
 
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
+
    private void addJGroupsDefaultStacksIfNeeded(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
-      if (holder.getJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP_STACK_NAME) == null) {
+      if (!holder.hasJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP_STACK_NAME)) {
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.TCP(reader.getProperties()));
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.UDP(reader.getProperties()));
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.KUBERNETES(reader.getProperties()));
@@ -1338,10 +1351,4 @@ public class Parser extends CacheParser {
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.AZURE(reader.getProperties()));
       }
    }
-
-   @Override
-   public Namespace[] getNamespaces() {
-      return ParseUtils.getNamespaceAnnotations(getClass());
-   }
-
 }

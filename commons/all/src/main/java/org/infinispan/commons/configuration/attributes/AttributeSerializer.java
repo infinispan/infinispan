@@ -11,7 +11,6 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
  * @since 10.0
  */
 public interface AttributeSerializer<T> {
-
    AttributeSerializer<Object> DEFAULT = (writer, name, value) -> {
       if (Boolean.class == value.getClass()) {
          writer.writeAttribute(name, (Boolean) value);
@@ -20,7 +19,7 @@ public interface AttributeSerializer<T> {
       }
    };
    AttributeSerializer<Supplier<char[]>> SECRET = (writer, name, value) -> {
-      if (Boolean.getBoolean("org.infinispan.configuration.clear-text-secrets")) {
+      if (writer.clearTextSecrets()) {
          writer.writeAttribute(name, new String(value.get()));
       } else {
          writer.writeAttribute(name, "***");

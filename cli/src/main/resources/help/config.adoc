@@ -16,9 +16,11 @@ SYNOPSIS
 
 *config get* 'name'
 
+*config convert* --outputFormat=[xml|json|yaml] [-o outputFile] [inputFile]
+
 DESCRIPTION
 -----------
-Manage (list, set, get) CLI configuration properties.
+Manage (list, set, get) CLI configuration properties and provide configuration conversion between the different formats (XML, JSON, YAML)
 
 
 COMMAND SYNOPSIS
@@ -33,6 +35,9 @@ Sets the value of a specific property. If you do not specify a value, the proper
 *config get* 'name'::
 Retrieves the value of a specific property.
 
+*config convert* --format=[xml|json|yaml] [-o outputFile] [inputFile]::
+Converts a configuration file to a different format.
+
 
 COMMON OPTIONS
 --------------
@@ -41,6 +46,18 @@ These options apply to all commands:
 
 *-h, --help*::
 Displays a help page for the command or sub-command.
+
+
+CONVERT OPTIONS
+---------------
+
+The following options apply to the `convert` command:
+
+*-f, --format*='xml|json|yaml'::
+Specifies the format for the conversion.
+
+*-o, --output*='path'::
+Specifies the path to the output file. Uses standard output (`stdout`) if you do not specify a path.
 
 
 PROPERTIES
@@ -82,6 +99,12 @@ Specifies the path of a keystore named "my-trust-store.jks".
 
 `config set truststore-password secret` +
 Sets the keystore password, if required.
+
+`config convert -f yaml -o infinispan.yaml infinispan.xml` +
+Converts the `infinispan.xml` file to YAML and writes the output to the `infinispan.yaml` file.
+
+`config convert -f json` +
+Converts the configuration from standard input to JSON, and writes the output to standard output.
 
 
 SEE ALSO
