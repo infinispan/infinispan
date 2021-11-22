@@ -1,15 +1,15 @@
 infinispan:
-  cache-container: {}
+  cacheContainer: {}
   server:
     interfaces:
     - name: default
       loopback: null
     - name: another
       loopback: null
-    socket-bindings:
-      port-offset: '0'
-      default-interface: default
-      socket-binding:
+    socketBindings:
+      portOffset: '0'
+      defaultInterface: default
+      socketBinding:
       - name: default
         port: '11222'
         interface: default
@@ -26,20 +26,20 @@ infinispan:
         port: '8080'
         interface: default
     security:
-      credential-stores:
+      credentialStores:
         - name: credentials
           path: credentials.pfx
-          clear-text-credential:
-            clear-text: secret
-      security-realms:
+          clearTextCredential:
+            clearText: secret
+      securityRealms:
         - name: default
-          server-identities:
+          serverIdentities:
             ssl:
               keystore:
                 alias: server
-                generate-self-signed-certificate-host: localhost
-                key-password: password
-                keystore-password: password
+                generateSelfSignedCertificateHost: localhost
+                keyPassword: password
+                password: password
                 path: ServerConfigurationParserTest-keystore.pfx
                 provider: SunJSSE
               truststore:
@@ -47,235 +47,263 @@ infinispan:
                 path: truststore.p12
                 provider: SunJSSE
               engine:
-                enabled-protocols: TLSV1.1 TLSV1.2 TLSV1.3
-                enabled-ciphersuites: 'DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256'
+                enabledProtocols:
+                  - TLSV1.1
+                  - TLSV1.2
+                  - TLSV1.3
+                enabledCiphersuites: 'DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256'
             kerberos:
               principal: kerberos@DOMAIN.ORG
-              keytab-path: keytab
-              relative-to: infinispan.server.config.path
+              keytabPath: keytab
+              relativeTo: infinispan.server.config.path
               debug: false
-              fail-cache: '1000'
+              failCache: '1000'
               required: false
-          filesystem-realm:
+          filesystemRealm:
             name: filesystem
             path: security
             levels: '3'
             encoded: false
-          ldap-realm:
+          ldapRealm:
             credential: strongPassword
             name: ldap
             principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
             url: 'ldap://${org.infinispan.test.host.address}:10389'
-            name-rewriter:
-              regex-principal-transformer:
+            nameRewriter:
+              regexPrincipalTransformer:
                 pattern: (.*)@INFINISPAN\.ORG
                 replacement: $1
-            identity-mapping:
-              rdn-identifier: uid
-              search-dn: 'ou=People,dc=infinispan,dc=org'
-              attribute-mapping:
+            identityMapping:
+              rdnIdentifier: uid
+              searchDn: 'ou=People,dc=infinispan,dc=org'
+              attributeMapping:
                 - filter: '(&(objectClass=groupOfNames)(member={1}))'
-                  filter-dn: 'ou=Roles,dc=infinispan,dc=org'
+                  filterDn: 'ou=Roles,dc=infinispan,dc=org'
                   from: cn
                   to: Roles
                 - filter: '(&(objectClass=GroupOfUniqueNames)(member={0}))'
-                  filter-dn: 'ou=People,dc=infinispan,dc=org'
+                  filterDn: 'ou=People,dc=infinispan,dc=org'
                   from: cn2
                   to: Roles2
                 - to: Roles3
                   reference: memberOf
-              user-password-mapper:
+              userPasswordMapper:
                 from: userPassword
                 verifiable: false
-          local-realm:
+          localRealm:
             name: test-local
-          properties-realm:
-            groups-attribute: Roles
-            user-properties:
-              digest-realm-name: digest
+          propertiesRealm:
+            groupsAttribute: Roles
+            userProperties:
+              digestRealmName: digest
               path: ServerConfigurationParserTest-user.properties
-              plain-text: true
-            group-properties:
+              plainText: true
+            groupProperties:
               path: ServerConfigurationParserTest-group.properties
-          token-realm:
+          tokenRealm:
             name: token-test
-            auth-server-url: 'http://${org.infinispan.test.host.address}:14567/auth/'
-            client-id: infinispan-console
-            principal-claim: username-claim
-            oauth2-introspection:
-              client-id: infinispan-server
-              client-secret: '***'
-              introspection-url: http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect
-              host-name-verification-policy: ANY
-          truststore-realm:
+            authServerUrl: 'http://${org.infinispan.test.host.address}:14567/auth/'
+            clientId: infinispanConsole
+            principalClaim: usernameClaim
+            oauth2Introspection:
+              clientId: infinispanServer
+              clientSecret: '***'
+              introspectionUrl: http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openidConnect/token/introspect
+              hostNameVerificationPolicy: ANY
+          truststoreRealm:
             name: trust
         - name: using-credentials
-          server-identities:
+          serverIdentities:
             ssl:
               keystore:
                 alias: server
                 path: ServerConfigurationParserTest-keystore.pfx
                 provider: SunJSSE
-                credential-reference:
+                credentialReference:
                   store: credentials
                   alias: keystore
               truststore:
                 path: truststore.p12
                 provider: SunJSSE
-                credential-reference:
+                credentialReference:
                   store: credentials
                   alias: trust
-          ldap-realm:
+          ldapRealm:
             name: ldap
             principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
             url: 'ldap://${org.infinispan.test.host.address}:10389'
-            credential-reference:
+            credentialReference:
               store: credentials
               alias: ldap
-            identity-mapping:
-              rdn-identifier: uid
-              search-dn: 'ou=People,dc=infinispan,dc=org'
-          token-realm:
+            identityMapping:
+              rdnIdentifier: uid
+              searchDn: 'ou=People,dc=infinispan,dc=org'
+          tokenRealm:
             name: token-test
-            auth-server-url: 'http://${org.infinispan.test.host.address}:14567/auth/'
-            client-id: infinispan-console
-            principal-claim: username-claim
-            oauth2-introspection:
-              client-id: infinispan-server
-              introspection-url: http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect
-              host-name-verification-policy: ANY
-              credential-reference:
+            authServerUrl: 'http://${org.infinispan.test.host.address}:14567/auth/'
+            clientId: infinispan-console
+            principalClaim: username-claim
+            oauth2Introspection:
+              clientId: infinispan-server
+              introspectionUrl: http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openidConnect/token/introspect
+              hostNameVerificationPolicy: ANY
+              credentialReference:
                 store: credentials
                 alias: oauth2
-          truststore-realm:
+          truststoreRealm:
             name: trust
         - name: basic
-          server-identities: {}
-          properties-realm:
-            groups-attribute: Roles
-            user-properties:
-              digest-realm-name: digest
+          serverIdentities: {}
+          propertiesRealm:
+            groupsAttribute: Roles
+            userProperties:
+              digestRealmName: digest
               path: ServerConfigurationParserTest-user.properties
-              plain-text: true
-            group-properties:
+              plainText: true
+            groupProperties:
               path: ServerConfigurationParserTest-group.properties
-    data-sources:
+    dataSources:
       - name: database
-        jndi-name: jdbc/database
+        jndiName: jdbc/database
         statistics: true
-        connection-factory:
+        connectionFactory:
           driver: org.h2.Driver
           username: test
           password: test
           url: 'jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test'
-          new-connection-sql: SELECT 1
-          connection-properties:
+          newConnectionSql: SELECT 1
+          connectionProperties:
             someproperty: somevalue
-        connection-pool:
-          background-validation: '1000'
-          idle-removal: '1'
-          initial-size: '1'
-          leak-detection: '10000'
-          max-size: '10'
-          min-size: '1'
-          validate-on-acquisition: '500'
+        connectionPool:
+          backgroundValidation: '1000'
+          idleRemoval: '1'
+          initialSize: '1'
+          leakDetection: '10000'
+          maxSize: '10'
+          minSize: '1'
+          validateOnAcquisition: '500'
       - name: database-with-credential
-        jndi-name: jdbc/database-with-credential
+        jndiName: jdbc/database-with-credential
         statistics: true
-        connection-factory:
+        connectionFactory:
           driver: org.h2.Driver
           username: test
           url: 'jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test'
-          new-connection-sql: SELECT 1
-          credential-reference:
+          newConnectionSql: SELECT 1
+          credentialReference:
             store: credentials
             alias: db
-        connection-pool:
-          background-validation: '1000'
-          idle-removal: '1'
-          initial-size: '1'
-          leak-detection: '10000'
-          max-size: '10'
-          min-size: '1'
+        connectionPool:
+          backgroundValidation: '1000'
+          idleRemoval: '1'
+          initialSize: '1'
+          leakDetection: '10000'
+          maxSize: '10'
+          minSize: '1'
     endpoints:
-      - socket-binding: default
-        security-realm: default
+      - socketBinding: default
+        securityRealm: default
         connectors:
           hotrod:
-            hotrod-connector:
-              idle-timeout: '2'
-              receive-buffer-size: '20'
-              send-buffer-size: '10'
-              tcp-nodelay: false
-              tcp-keepalive: false
-              io-threads: '23'
-              socket-binding: hotrod
-              worker-threads: '20'
-              external-host: external
-              external-port: '12345'
-              topology-state-transfer:
-                await-initial-retrieval: false
-                lock-timeout: '12'
-                replication-timeout: '13'
-                lazy-retrieval: false
+            hotrodConnector:
+              idleTimeout: '2'
+              receiveBufferSize: '20'
+              sendBufferSize: '10'
+              tcpNodelay: false
+              tcpKeepalive: false
+              ioThreads: '23'
+              socketBinding: hotrod
+              workerThreads: '20'
+              externalHost: external
+              externalPort: '12345'
+              topologyStateTransfer:
+                awaitInitialRetrieval: false
+                lockTimeout: '12'
+                replicationTimeout: '13'
+                lazyRetrieval: false
               authentication:
-                security-realm: default
+                securityRealm: default
                 sasl:
-                  server-name: localhost
-                  mechanisms: GSSAPI DIGEST-MD5 PLAIN
-                  qop: auth auth-conf
-                  strength: high medium low
-                  policy: forward-secrecy no-active no-anonymous no-dictionary no-plain-text pass-credentials
+                  serverName: localhost
+                  mechanisms:
+                    - GSSAPI
+                    - DIGEST-MD5
+                    - PLAIN
+                  qop:
+                    - auth
+                    - auth-conf
+                  strength:
+                    - high
+                    - medium
+                    - low
+                  policy:
+                    - forward-secrecy
+                    - no-active
+                    - no-anonymous
+                    - no-dictionary
+                    - no-plain-text
+                    - pass-credentials
                   properties:
                     com.sun.security.sasl.digest.realm: default
               encryption:
-                require-ssl-client-auth: true
-                security-realm: default
+                requireSslClientAuth: true
+                securityRealm: default
                 sni:
-                  - host-name: sni-host-1
-                    security-realm: default
-                  - host-name: sni-host-2
-                    security-realm: default
+                  - hostName: sni-host-1
+                    securityRealm: default
+                  - hostName: sni-host-2
+                    securityRealm: default
           rest:
-            rest-connector:
-              io-threads: '11'
-              socket-binding: rest
-              worker-threads: '3'
-              extended-headers: NEVER
-              context-path: rest
-              max-content-length: '3'
-              compression-level: '3'
+            restConnector:
+              ioThreads: '11'
+              socketBinding: rest
+              workerThreads: '3'
+              extendedHeaders: NEVER
+              contextPath: rest
+              maxContentLength: '3'
+              compressionLevel: '3'
               authentication:
-                mechanisms: DIGEST BASIC
-                security-realm: default
-              cors-rules:
+                mechanisms:
+                  - DIGEST
+                  - BASIC
+                securityRealm: default
+              corsRules:
                 - name: rule1
-                  allow-credentials: true
-                  max-age-seconds: '1'
-                  allowed-origins: origin1 origin2
-                  allowed-methods: GET POST
-                  allowed-headers: Accept
-                  expose-headers: Accept Content-Type
+                  allowCredentials: true
+                  maxAgeSeconds: '1'
+                  allowedOrigins:
+                    - origin1
+                    - origin2
+                  allowedMethods:
+                    - GET
+                    - POST
+                  allowedHeaders:
+                    - Accept
+                  exposeHeaders:
+                    - Accept
+                    - ContentType
                 - name: rule2
-                  allowed-origins: '*'
-                  allowed-methods: GET POST
+                  allowedOrigins: '*'
+                  allowedMethods:
+                    - GET
+                    - POST
               encryption:
-                require-ssl-client-auth: false
-                security-realm: default
+                requireSslClientAuth: false
+                securityRealm: default
                 sni:
-                  - host-name: sni-host-3
-                    security-realm: default
-                  - host-name: sni-hHost-4
-                    security-realm: default
+                  - hostName: sni-host-3
+                    securityRealm: default
+                  - hostName: sni-host-4
+                    securityRealm: default
           memcached:
-            memcached-connector:
+            memcachedConnector:
               cache: string
-              idle-timeout: '1'
-              receive-buffer-size: '3'
-              send-buffer-size: '3'
-              tcp-nodelay: true
-              tcp-keepalive: true
-              io-threads: '1'
-              socket-binding: memcached
-              worker-threads: '160'
-              client-encoding: application/json
+              idleTimeout: '1'
+              receiveBufferSize: '3'
+              sendBufferSize: '3'
+              tcpNodelay: true
+              tcpKeepalive: true
+              ioThreads: '1'
+              socketBinding: memcached
+              workerThreads: '160'
+              clientEncoding: application/json

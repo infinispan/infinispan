@@ -6,18 +6,14 @@ import java.util.Properties;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.PropertiesAttributeSerializer;
 import org.infinispan.commons.configuration.attributes.TypedPropertiesAttributeCopier;
 import org.infinispan.commons.util.TypedProperties;
 
 public abstract class AbstractTypedPropertiesConfiguration {
-   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(new AttributeInitializer<TypedProperties>() {
-      @Override
-      public TypedProperties initialize() {
-         return new TypedProperties();
-      }
-   }).build();
+   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
+         .copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(() -> new TypedProperties()).serializer(PropertiesAttributeSerializer.PROPERTIES).build();
    public static AttributeSet attributeSet() {
       return new AttributeSet(AbstractTypedPropertiesConfiguration.class, PROPERTIES);
    };

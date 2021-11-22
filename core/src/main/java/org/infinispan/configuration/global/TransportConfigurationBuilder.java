@@ -79,6 +79,11 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   public TransportConfigurationBuilder stack(String stack) {
+      attributes.attribute(STACK).set(stack);
+      return this;
+   }
+
    /**
     * Timeout for coordinating cluster formation when nodes join or leave the cluster.
     *
@@ -202,7 +207,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    TransportConfiguration create() {
-      if (typedProperties.containsKey("stack")) attributes.attribute(STACK).set(typedProperties.getProperty("stack"));
+      //if (typedProperties.containsKey("stack")) attributes.attribute(STACK).set(typedProperties.getProperty("stack"));
       return new TransportConfiguration(attributes.protect(),
             jgroupsConfigurationBuilder.create(), threads.transportThreadPool().create(), threads.remoteCommandThreadPool().create(), typedProperties);
    }

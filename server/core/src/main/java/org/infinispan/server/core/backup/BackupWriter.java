@@ -23,6 +23,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -141,8 +142,8 @@ class BackupWriter {
 
    private void writeGlobalConfig(GlobalConfiguration configuration, Path root) {
       Path xmlPath = root.resolve(GLOBAL_CONFIG_FILE);
-      try (OutputStream os = Files.newOutputStream(xmlPath)) {
-         parserRegistry.serialize(os, configuration, Collections.emptyMap());
+      try (ConfigurationWriter writer = ConfigurationWriter.to(Files.newOutputStream(xmlPath)).clearTextSecrets(true).prettyPrint(true).build()) {
+         parserRegistry.serialize(writer, configuration, Collections.emptyMap());
       } catch (Exception e) {
          throw new CacheException(String.format("Unable to create global configuration file '%s'", xmlPath), e);
       }

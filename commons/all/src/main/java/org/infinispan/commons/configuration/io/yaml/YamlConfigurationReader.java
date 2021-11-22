@@ -409,11 +409,27 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
             }
          } else {
             // Read the attributes: they are indented relative to the element and have a value
-            while (next != null && next.indent > currentIndent && next.name != null && next.value != null) {
-               this.attributeNames.add(next.name);
-               this.attributeNamespaces.add(next.nsPrefix);
-               this.attributeValues.add(replaceProperties(next.value));
-               readNext();
+            while (next != null && next.indent > currentIndent && next.name != null) {
+               if (next.value != null) {
+                  this.attributeNames.add(next.name);
+                  this.attributeNamespaces.add(next.nsPrefix);
+                  this.attributeValues.add(replaceProperties(next.value));
+                  readNext();
+               } else {
+                  if (lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
+                     this.attributeNames.add(next.name);
+                     this.attributeNamespaces.add(next.nsPrefix);
+                     StringBuilder sb = new StringBuilder();
+                     readNext();
+                     while(next.listItem) {
+                        sb.append(replaceProperties(next.value)).append(' ');
+                        readNext();
+                     }
+                     this.attributeValues.add(sb.toString());
+                  } else {
+                     break;
+                  }
+               }
             }
          }
          type = ElementType.START_ELEMENT;

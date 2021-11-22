@@ -1556,8 +1556,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
 
    private void configureDefaultEndpoint(ConfigurationReader reader, String socketBinding, EndpointConfigurationBuilder endpoint) {
       if (endpoint.connectors().isEmpty()) {
-         endpoint.addConnector(HotRodServerConfigurationBuilder.class).startTransport(false).socketBinding(socketBinding);
-         RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).startTransport(false).socketBinding(socketBinding);
+         endpoint.addConnector(HotRodServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
+         RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          configureEndpoint(reader.getProperties(), endpoint, rest);
       }
    }

@@ -2109,35 +2109,31 @@ public class CacheParser implements ConfigurationParser {
    }
 
    public static Properties parseProperties(final ConfigurationReader reader, Enum<?> outerElement) {
-      return parseProperties(reader, outerElement.toString());
+      return parseProperties(reader, outerElement.toString(), Element.PROPERTIES.toString(), Element.PROPERTY.toString());
    }
 
-   public static Properties parseProperties(final ConfigurationReader reader, String outerElement) {
+   public static Properties parseProperties(final ConfigurationReader reader, Enum<?> outerElement, Enum<?> collectionElement, Enum<?> itemElement) {
+      return parseProperties(reader, outerElement.toString(), collectionElement.toString(), itemElement.toString());
+   }
+
+   public static Properties parseProperties(final ConfigurationReader reader, String outerElement, String collectionElement, String itemElement) {
       Properties properties = new Properties();
       while (reader.hasNext()) {
          ConfigurationReader.ElementType type = reader.nextElement();
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case PROPERTIES: {
-               // JSON/YAML map properties to attributes
-               for(int i = 0; i < reader.getAttributeCount(); i++) {
-                  properties.setProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
-               }
-               break;
+         String element = reader.getLocalName();
+         if (element.equals(collectionElement)) {
+            // JSON/YAML map properties to attributes
+            for (int i = 0; i < reader.getAttributeCount(); i++) {
+               properties.setProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
             }
-            case PROPERTY: {
-               if (type == ConfigurationReader.ElementType.START_ELEMENT) {
-                  parseProperty(reader, properties);
-               }
-               break;
+         } else if (element.equals(itemElement)) {
+            if (type == ConfigurationReader.ElementType.START_ELEMENT) {
+               parseProperty(reader, properties);
             }
-            default: {
-               if (type == ConfigurationReader.ElementType.END_ELEMENT && reader.getLocalName().equals(outerElement)) {
-                  return properties;
-               } else {
-                  throw ParseUtils.unexpectedElement(reader);
-               }
-            }
+         } else if (type == ConfigurationReader.ElementType.END_ELEMENT && reader.getLocalName().equals(outerElement)) {
+            return properties;
+         } else {
+            throw ParseUtils.unexpectedElement(reader);
          }
       }
       return properties;

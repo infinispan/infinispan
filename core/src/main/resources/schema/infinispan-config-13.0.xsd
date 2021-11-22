@@ -5,7 +5,7 @@
            xmlns:jgroups="urn:org:jgroups"
            xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-  <xs:import namespace="urn:org:jgroups" schemaLocation="http://www.jgroups.org/schema/jgroups-4.2.xsd"/>
+  <xs:import namespace="urn:org:jgroups" schemaLocation="http://www.jgroups.org/schema/jgroups-4.0.xsd"/>
 
   <xs:element name="infinispan" type="tns:infinispan">
     <xs:annotation>

@@ -9,5 +9,10 @@ public enum ConfigurationFormatFeature {
     * The underlying format supports elements which can have both attributes and an array of child elements.
     * True for XML, false for JSON and YAML.
     */
-   MIXED_ELEMENTS;
+   MIXED_ELEMENTS,
+   /**
+    * The underlying format supports collections without the need for wrapping in a container element.
+    * True for XML, false for JSON and YAML.
+    */
+   BARE_COLLECTIONS;
 }

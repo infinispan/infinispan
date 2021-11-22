@@ -96,6 +96,11 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S socketBinding(String name);
 
    /**
+    * Indicates whether this connector was added implicitly
+    */
+   S implicitConnector(boolean implicitConnector);
+
+   /**
     * Builds a configuration object
     */
    T build();
