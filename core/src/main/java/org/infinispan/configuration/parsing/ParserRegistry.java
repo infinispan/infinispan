@@ -10,7 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -55,7 +54,7 @@ import org.infinispan.configuration.serializing.CoreConfigurationSerializer;
  * @since 5.2
  */
 public class ParserRegistry implements NamespaceMappingParser {
-   private final WeakReference<ClassLoader> cl;
+   private final ClassLoader cl;
    private final ConcurrentMap<QName, NamespaceParserPair> parserMappings;
    private final Properties properties;
 
@@ -69,9 +68,9 @@ public class ParserRegistry implements NamespaceMappingParser {
 
    public ParserRegistry(ClassLoader classLoader, boolean defaultOnly, Properties properties) {
       this.parserMappings = new ConcurrentHashMap<>();
-      this.cl = new WeakReference<>(classLoader);
+      this.cl = classLoader;
       this.properties = properties;
-      Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
+      Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl, ParserRegistry.class.getClassLoader());
       for (ConfigurationParser parser : parsers) {
 
          Namespace[] namespaces = parser.getNamespaces();
@@ -113,7 +112,7 @@ public class ParserRegistry implements NamespaceMappingParser {
 
    public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
       FileLookup fileLookup = FileLookupFactory.newInstance();
-      URL url = fileLookup.lookupFileLocation(filename, cl.get());
+      URL url = fileLookup.lookupFileLocation(filename, cl);
       if (url == null) {
          throw new FileNotFoundException(filename);
       }
@@ -153,7 +152,7 @@ public class ParserRegistry implements NamespaceMappingParser {
     */
    public ConfigurationBuilderHolder parse(InputStream is, ConfigurationResourceResolver resourceResolver, MediaType mediaType) {
       try {
-         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
+         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
          parse(is, holder, resourceResolver, mediaType);
          holder.validate();
          return holder;
