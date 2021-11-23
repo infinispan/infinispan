@@ -60,7 +60,7 @@ include::protobuf/books_composite_keys_values.protobuf[]
 
 The following table contains default mappings of SQL data types to Protobuf data types:
 
-[%header%autowidth,cols="1,1,1",stripes=even]
+[%header%autowidth,cols="1,1",stripes=even]
 |===
 |SQL type |Protobuf type
 
