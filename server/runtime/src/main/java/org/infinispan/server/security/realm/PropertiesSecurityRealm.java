@@ -39,18 +39,11 @@ public class PropertiesSecurityRealm implements CacheableSecurityRealm {
    }
 
    private void load() {
-      try (InputStream usersInputStream = new FileInputStream(usersFile);
-           InputStream groupsInputStream = groupsFile != null ? new FileInputStream(groupsFile) : null) {
-         delegate = EncryptedPropertiesSecurityRealm.builder()
-               .setUsersStream(usersInputStream)
-               .setGroupsStream(groupsInputStream)
-               .setPlainText(plainText)
-               .setGroupsAttribute(groupsAttribute)
-               .setDefaultRealm(realmName)
-               .build();
-      } catch (IOException e) {
-         throw Server.log.unableToLoadRealmPropertyFiles(e);
-      }
+      delegate = EncryptedPropertiesSecurityRealm.builder()
+            .setPlainText(plainText)
+            .setGroupsAttribute(groupsAttribute)
+            .setDefaultRealm(realmName)
+            .build();
    }
 
    void reload() {
@@ -78,12 +71,12 @@ public class PropertiesSecurityRealm implements CacheableSecurityRealm {
    }
 
    @Override
-   public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+   public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
       return delegate.getCredentialAcquireSupport(credentialType, algorithmName, parameterSpec);
    }
 
    @Override
-   public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+   public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) {
       return delegate.getEvidenceVerifySupport(evidenceType, algorithmName);
    }
 
