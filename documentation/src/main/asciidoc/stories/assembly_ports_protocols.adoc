@@ -10,7 +10,7 @@ clients through your firewall. Likewise, you should adjust ports that
 {brandname} nodes use for cluster communication to prevent conflicts or network
 issues.
 
-include::{topics}/ref_server_ports.adoc[leveloffset=+1]
+include::{topics}/ref_server_ports_protocols.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_firewall.adoc[leveloffset=+2]
 include::{topics}/ref_jgroups_ports.adoc[leveloffset=+1]
 
