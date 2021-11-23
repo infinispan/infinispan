@@ -106,6 +106,8 @@ public class DefaultThreadFactory implements ThreadFactory {
       thread.setName(nameInfo.format(thread, threadNamePattern));
       thread.setPriority(initialPriority);
       thread.setDaemon(true);
+      // Do not use the context classloader of the thread that submitted the task to the executor
+      SecurityActions.setContextClassLoader(thread, DefaultThreadFactory.class.getClassLoader());
       return thread;
    }
 
