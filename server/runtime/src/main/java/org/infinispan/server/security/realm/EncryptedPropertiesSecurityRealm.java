@@ -35,7 +35,6 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
-import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
@@ -75,6 +74,11 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
       groupsAttribute = builder.groupsAttribute;
       providers = ElytronPasswordProviderSupplier.INSTANCE;
       defaultRealm = builder.defaultRealm;
+      try {
+         load(null, null);
+      } catch (IOException e) {
+         Server.log.debugf(e, "Error while loading properties");
+      }
    }
 
    @Override
@@ -199,6 +203,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
          }
       }
 
+      long loadTime = 0;
       String realmName = null;
       String algorithm = "clear";
       if (usersStream != null) {
@@ -297,6 +302,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
                throw log.noRealmFoundInProperties();
             }
          }
+         loadTime = System.currentTimeMillis();
       }
 
       // users, which are in groups file only
@@ -306,7 +312,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
          }
       }
 
-      loadedState.set(new LoadedState(accounts, realmName, System.currentTimeMillis()));
+      loadedState.set(new LoadedState(accounts, realmName, loadTime));
    }
 
    /**
@@ -336,37 +342,11 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
     * A builder for properties security realms.
     */
    public static class Builder {
-      private InputStream usersStream;
-      private InputStream groupsStream;
       private String defaultRealm = null;
       private boolean plainText;
       private String groupsAttribute = "groups";
 
       Builder() {
-      }
-
-      /**
-       * Set the {@link InputStream} to use to load the users.
-       *
-       * @param usersStream the {@link InputStream} to use to load the users.
-       * @return this {@link Builder}
-       */
-      public Builder setUsersStream(InputStream usersStream) {
-         this.usersStream = usersStream;
-
-         return this;
-      }
-
-      /**
-       * Set the {@link InputStream} to use to load the group information.
-       *
-       * @param groupsStream the {@link InputStream} to use to load the group information.
-       * @return this {@link Builder}
-       */
-      public Builder setGroupsStream(InputStream groupsStream) {
-         this.groupsStream = groupsStream;
-
-         return this;
       }
 
       /**
@@ -412,15 +392,9 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
        * Builds the {@link EncryptedPropertiesSecurityRealm}.
        *
        * @return built {@link EncryptedPropertiesSecurityRealm}
-       * @throws IOException                   when loading of property files fails
-       * @throws java.io.FileNotFoundException when property file does not exist
-       * @throws RealmUnavailableException     when property file of users does not contain realm name specification
        */
-      public EncryptedPropertiesSecurityRealm build() throws IOException {
-         EncryptedPropertiesSecurityRealm realm = new EncryptedPropertiesSecurityRealm(this);
-         realm.load(usersStream, groupsStream);
-
-         return realm;
+      public EncryptedPropertiesSecurityRealm build() {
+         return new EncryptedPropertiesSecurityRealm(this);
       }
 
    }
