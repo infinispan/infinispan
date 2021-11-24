@@ -1,10 +1,17 @@
 package org.infinispan.server.test.core;
 
+import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_ATTRIBUTE_TO;
+import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_FILTER_DN;
+import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_PRINCIPAL;
+import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_SEARCH_DN;
+import static org.infinispan.server.test.core.ldap.AbstractLdapServer.TEST_LDAP_URL;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.security.auth.kerberos.KerberosPrincipal;
 
@@ -50,6 +57,12 @@ public class LdapServerListener implements InfinispanServerListener {
 
    @Override
    public void before(InfinispanServerDriver driver) {
+      Properties properties = driver.getConfiguration().properties();
+      properties.setProperty(TEST_LDAP_URL, System.getProperty(TEST_LDAP_URL));
+      properties.setProperty(TEST_LDAP_PRINCIPAL, System.getProperty(TEST_LDAP_PRINCIPAL));
+      properties.setProperty(TEST_LDAP_SEARCH_DN, System.getProperty(TEST_LDAP_SEARCH_DN));
+      properties.setProperty(TEST_LDAP_ATTRIBUTE_TO, System.getProperty(TEST_LDAP_ATTRIBUTE_TO));
+      properties.setProperty(TEST_LDAP_FILTER_DN, System.getProperty(TEST_LDAP_FILTER_DN));
       Exceptions.unchecked(() -> {
          if (withKdc) {
             generateKeyTab(new File(driver.getConfDir(), "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
