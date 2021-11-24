@@ -1,10 +1,5 @@
 package org.infinispan.server.test.core.ldap;
 
-import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.TEST_LDAP_HOST_PASSWORD;
-import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.TEST_LDAP_HOST_USER;
-import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.TEST_LDAP_SEARCH_DN;
-import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.TEST_LDAP_URL;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
