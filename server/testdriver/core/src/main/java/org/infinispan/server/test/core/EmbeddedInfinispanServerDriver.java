@@ -59,12 +59,6 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
          properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
 
-         properties.setProperty(TEST_LDAP_URL, System.getProperty(TEST_LDAP_URL));
-         properties.setProperty(TEST_LDAP_PRINCIPAL, System.getProperty(TEST_LDAP_PRINCIPAL));
-         properties.setProperty(TEST_LDAP_SEARCH_DN, System.getProperty(TEST_LDAP_SEARCH_DN));
-         properties.setProperty(TEST_LDAP_ATTRIBUTE_TO, System.getProperty(TEST_LDAP_ATTRIBUTE_TO));
-         properties.setProperty(TEST_LDAP_FILTER_DN, System.getProperty(TEST_LDAP_FILTER_DN));
-
          configureSite(properties);
          configuration.properties().forEach((k, v) -> {
             String value = StringPropertyReplacer.replaceProperties((String) v, properties);
