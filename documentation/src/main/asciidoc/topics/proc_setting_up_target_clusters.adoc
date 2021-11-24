@@ -28,11 +28,11 @@ include::json/remote_store_minimal.json[]
 +
 . Use the {brandname} Command Line Interface (CLI) or REST API to add the remote cache store configuration to the target cluster so it can connect to the source cluster.
 +
-* CLI: Use the [command]`migrate cluster connect` command.
+* CLI: Use the [command]`migrate cluster connect` command on the target cluster.
 +
 [source,bash,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> migrate cluster connect -c myCache -f remote-store.json
+[//containers/default]> migrate cluster connect -c myCache --file=remote-store.json
 ----
 +
 * REST API: Invoke a POST request that includes the remote store configuration in the payload with the `rolling-upgrade/source-connection` method.
