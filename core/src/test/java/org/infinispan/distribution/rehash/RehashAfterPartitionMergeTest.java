@@ -42,8 +42,8 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
          assert manager(c).getMembers().size() == 2;
       }
 
-      d1.setDiscardAll(true);
-      d2.setDiscardAll(true);
+      d1.discardAll(true);
+      d2.discardAll(true);
 
       // Wait until c1 and c2 have a view of 1 member each
       TestingUtil.blockUntilViewsChanged(60000, 1, c1, c2);
@@ -61,8 +61,8 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       assert null == c1.get("4");
 
       // lets "heal" the partition
-      d1.setDiscardAll(false);
-      d2.setDiscardAll(false);
+      d1.discardAll(false);
+      d2.discardAll(false);
 
       // Wait until c1 and c2 have a view of 2 members each
       TestingUtil.blockUntilViewsChanged(45000, 2, c1, c2);

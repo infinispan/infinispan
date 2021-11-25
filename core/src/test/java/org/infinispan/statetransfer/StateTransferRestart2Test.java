@@ -115,7 +115,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
                                                   ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                   long timeout, TimeUnit unit) {
          if (command instanceof StateTransferStartCommand && target.equals(address(1))) {
-            d1.setDiscardAll(true);
+            d1.discardAll(true);
 
             fork((Callable<Void>) () -> {
                log.info("KILLING the c1 cache");

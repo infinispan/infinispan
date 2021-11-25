@@ -1,8 +1,8 @@
 package org.infinispan.replication;
 
-import static org.jgroups.util.Util.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Collection;

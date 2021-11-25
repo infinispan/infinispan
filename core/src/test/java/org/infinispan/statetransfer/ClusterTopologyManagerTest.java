@@ -92,7 +92,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // create the partitions
       log.debugf("Splitting cluster");
-      d3.setDiscardAll(true);
+      d3.discardAll(true);
       TestingUtil.installNewView(manager(0), manager(1));
       TestingUtil.installNewView(manager(2));
 
@@ -136,7 +136,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    public void testClusterRecoveryAfterCoordLeave() {
       // create the partitions
       log.debugf("Splitting cluster");
-      d1.setDiscardAll(true);
+      d1.discardAll(true);
       TestingUtil.installNewView(manager(0));
       TestingUtil.installNewView(manager(1), manager(2));
 
@@ -162,9 +162,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    public void testClusterRecoveryAfterThreeWaySplit() {
       // create the partitions
       log.debugf("Splitting the cluster in three");
-      d1.setDiscardAll(true);
-      d2.setDiscardAll(true);
-      d3.setDiscardAll(true);
+      d1.discardAll(true);
+      d2.discardAll(true);
+      d3.discardAll(true);
 
       TestingUtil.installNewView(manager(0));
       TestingUtil.installNewView(manager(1));
@@ -180,9 +180,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // merge the remaining partitions
       log.debugf("Merging the cluster partitions");
-      d1.setDiscardAll(false);
-      d2.setDiscardAll(false);
-      d3.setDiscardAll(false);
+      d1.discardAll(false);
+      d2.discardAll(false);
+      d3.discardAll(false);
 
       // wait for the merged cluster to form
       long startTime = System.currentTimeMillis();
@@ -204,9 +204,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    public void testClusterRecoveryAfterSplitAndCoordLeave() {
       // create the partitions
       log.debugf("Splitting the cluster in three");
-      d1.setDiscardAll(true);
-      d2.setDiscardAll(true);
-      d3.setDiscardAll(true);
+      d1.discardAll(true);
+      d2.discardAll(true);
+      d3.discardAll(true);
 
       TestingUtil.installNewView(manager(0));
       TestingUtil.installNewView(manager(1));
@@ -225,8 +225,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // merge the two remaining partitions
       log.debugf("Merging the cluster partitions");
-      d2.setDiscardAll(false);
-      d3.setDiscardAll(false);
+      d2.discardAll(false);
+      d3.discardAll(false);
 
       // wait for the merged cluster to form
       long startTime = System.currentTimeMillis();
@@ -256,9 +256,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // create the partitions
       log.debugf("Splitting the cluster in three");
-      d1.setDiscardAll(true);
-      d2.setDiscardAll(true);
-      d3.setDiscardAll(true);
+      d1.discardAll(true);
+      d2.discardAll(true);
+      d3.discardAll(true);
 
       TestingUtil.installNewView(manager(0));
       TestingUtil.installNewView(manager(1));
@@ -273,9 +273,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForNoRebalance(c3);
 
       // Disable DISCARD *only* on the merge coordinator
-      if (mergeCoordIndex == 0) d1.setDiscardAll(false);
-      if (mergeCoordIndex == 1) d2.setDiscardAll(false);
-      if (mergeCoordIndex == 2) d3.setDiscardAll(false);
+      if (mergeCoordIndex == 0) d1.discardAll(false);
+      if (mergeCoordIndex == 1) d2.discardAll(false);
+      if (mergeCoordIndex == 2) d3.discardAll(false);
 
       int viewIdAfterSplit = mergeCoordManager.getTransport().getViewId();
       final CheckPoint checkpoint = new CheckPoint();
@@ -295,9 +295,9 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // merge the partitions
       log.debugf("Merging the cluster partitions");
-      d1.setDiscardAll(false);
-      d2.setDiscardAll(false);
-      d3.setDiscardAll(false);
+      d1.discardAll(false);
+      d2.discardAll(false);
+      d3.discardAll(false);
 
       // wait for the JGroups merge
       long startTime = System.currentTimeMillis();
@@ -404,7 +404,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    private void killNode(EmbeddedCacheManager nodeToKill, EmbeddedCacheManager[] nodesToKeep) {
       log.debugf("Killing node %s", nodeToKill);
-      d1.setDiscardAll(true);
+      d1.discardAll(true);
       TestingUtil.installNewView(nodeToKill);
       nodeToKill.stop();
       TestingUtil.installNewView(nodesToKeep);

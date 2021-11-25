@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd">
    <!-- Disable the regular thread pool queue for tests so we can set a lower min_threads -->
    <TCP_NIO2
          bind_addr="${jgroups.bind.address,jgroups.tcp.address:127.0.0.1}"
@@ -8,7 +8,7 @@
          port_range="30"
          recv_buf_size="20m"
          send_buf_size="640k"
-         enable_diagnostics="false"
+         diag.enabled="false"
          bundler_type="transfer-queue"
 
          thread_naming_pattern="pl"
@@ -17,7 +17,7 @@
          thread_pool.max_threads="8"
          thread_pool.keep_alive_time="60000"
 
-         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+         thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
          />
    <RED/>
 
@@ -67,8 +67,6 @@
                max_join_attempts="3"
                max_leave_attempts="3"
    />
-   <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
-
    <UFC max_credits="4m" min_threshold="0.40"/>
    <MFC max_credits="4m" min_threshold="0.40"/>
 

@@ -6,7 +6,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
-import static org.jgroups.util.Util.assertFalse;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.lang.reflect.Method;
 

@@ -120,7 +120,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
          // Isolate c1, install view [c2, a1, a2] on the other nodes
          // The new view will trigger a rebalance
          BlockedRequest request = controlledTransportCoord.block(coordinator.getName());
-         discard1.setDiscardAll(true);
+         discard1.discardAll(true);
          Stream<Address> newMembers1 = manager(c2).getTransport().getMembers().stream()
                                                   .filter(n -> !n.equals(manager(c1).getAddress()));
          TestingUtil.installNewView(newMembers1, manager(c2), manager(a1), manager(a2));
@@ -142,7 +142,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
          // Isolate c2, install view [a1, a2] on the remaining nodes
          // After that, the default cache should become degraded on all nodes
-         discard2.setDiscardAll(true);
+         discard2.discardAll(true);
          Stream<Address> newMembers2 = manager(a1).getTransport().getMembers().stream()
                                                   .filter(n -> !n.equals(manager(c2).getAddress()));
          TestingUtil.installNewView(newMembers2, manager(a1), manager(a2));
@@ -164,7 +164,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
       int m1 = mergeInSplitOrder ? c1 : c2;
       int m2 = mergeInSplitOrder ? c2 : c1;
-      (mergeInSplitOrder ? discard1 : discard2).setDiscardAll(false);
+      (mergeInSplitOrder ? discard1 : discard2).discardAll(false);
       TestingUtil.installNewView(manager(a1), manager(a2), manager(m1));
 
       eventuallyAvailable(cache(a1));
@@ -177,7 +177,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       assertKeysAvailableForRead(cache(a2), keys);
       assertKeysNotAvailableForRead(cache(m2), keys);
 
-      (mergeInSplitOrder ? discard2 : discard1).setDiscardAll(false);
+      (mergeInSplitOrder ? discard2 : discard1).discardAll(false);
       TestingUtil.installNewView(manager(a1), manager(a2), manager(m1), manager(m2));
 
       eventuallyAvailable(cache(m2));
