@@ -328,7 +328,9 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       try (Closeable ignored = client.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 
-         // Assert that all of the existing caches have a corresponding event
+         // Assert that all of the existing caches and templates have a corresponding event
+         assertEquals("create-template", sseListener.events.poll(10, TimeUnit.SECONDS));
+         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("template"));
          assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
          AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("___protobuf_metadata"));
          assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));

@@ -482,7 +482,7 @@ completes.
 [id='rest_v2_container_configuration_listen']
 = Listening to container configuration events
 Receive events about configuration changes using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
-The `event` value will be one of `create-cache`, `remove-cache` or `update-cache`.
+The `event` value will be one of `create-cache`, `remove-cache`, `update-cache`, `create-template`, `remove-template` or `update-template`.
 The `data` value will contain the declarative configuration of the entity that has been created. Remove events will only contain the name of the removed entity.
 
 [source,options="nowrap",subs=attributes+]
