@@ -36,7 +36,7 @@ public class CrashJoinTest extends AbstractStateTransferTest {
       List<MagicKey> keys = init();
 
       assertFalse(c2.getCacheManager().isCoordinator());
-      d2.setDiscardAll(true);
+      d2.discardAll(true);
       TestingUtil.blockUntilViewsReceived(30000, false, c1, c3);
       TestingUtil.waitForNoRebalance(c1, c3);
 
@@ -47,7 +47,7 @@ public class CrashJoinTest extends AbstractStateTransferTest {
       List<MagicKey> keys = init();
 
       assertTrue(c1.getCacheManager().isCoordinator());
-      d1.setDiscardAll(true);
+      d1.discardAll(true);
       TestingUtil.blockUntilViewsReceived(30000, false, c2, c3);
       TestingUtil.waitForNoRebalance(c2, c3);
 

@@ -49,7 +49,7 @@ public class AsymmetricClusterTest extends MultipleCacheManagersTest {
       manager(1).getCache(CACHE_NAME);
 
       if (crash) {
-         d2.setDiscardAll(true);
+         d2.discardAll(true);
       }
       manager(1).stop();
 
@@ -62,7 +62,7 @@ public class AsymmetricClusterTest extends MultipleCacheManagersTest {
    }
 
    public void testCoordinatorCrashesDuringJoin() {
-      d2.setDiscardAll(true);
+      d2.discardAll(true);
 
       manager(1).defineConfiguration(CACHE_NAME, clusteredConfig.build());
       fork((Callable<Object>) () -> cache(1, CACHE_NAME));

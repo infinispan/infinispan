@@ -1,8 +1,8 @@
 package org.infinispan.container.versioning;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
-import static org.jgroups.util.Util.assertNotNull;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.fail;
 
 import javax.transaction.RollbackException;

@@ -220,7 +220,7 @@ public class TestingUtil {
          JChannel channel = extractJChannel(cm);
          try {
             DISCARD discard = new DISCARD();
-            discard.setDiscardAll(true);
+            discard.discardAll(true);
             channel.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
          } catch (Exception e) {
             log.warn("Problems inserting discard", e);
@@ -1347,7 +1347,7 @@ public class TestingUtil {
       JChannel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DISCARD discard = new DISCARD();
-      discard.setExcludeItself(false);
+      discard.excludeItself(false);
       ps.insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
       return discard;
    }

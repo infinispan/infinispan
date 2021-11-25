@@ -34,7 +34,7 @@ public class MergeViewTest extends MultipleCacheManagersTest {
       manager(0).addListener(ml0);
 
       discard = TestingUtil.getDiscardForCache(manager(0));
-      discard.setDiscardAll(true);
+      discard.discardAll(true);
 
       addClusterEnabledCacheManager(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true),
                                     new TransportFlags().withMerge(true));
@@ -51,7 +51,7 @@ public class MergeViewTest extends MultipleCacheManagersTest {
    }
 
    public void testMergeViewHappens() {
-      discard.setDiscardAll(false);
+      discard.discardAll(false);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
 

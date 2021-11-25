@@ -146,7 +146,7 @@
                     <property name="thread_pool.min_threads">0</property>
                     <property name="thread_pool.max_threads">200</property>
                     <property name="thread_pool.keep_alive_time">5000000000</property>
-                    <property name="max_bundle_size">8500</property>
+                    <property name="bundler.max_site">8500</property>
                     <property name="bundler_type">transfer-queue</property>
                 </transport>
                 <protocol type="PING">

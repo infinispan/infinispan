@@ -75,7 +75,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
 
       ControlledRpcManager.BlockedRequest blockedReplace = controlledRpcManager.expectCommand(ReplaceCommand.class);
 
-      discard[nonOwner].setDiscardAll(true);
+      discard[nonOwner].discardAll(true);
 
       // wait for the partitions to form
       TestingUtil.blockUntilViewsReceived(30000, false, partition1.get(0), partition1.get(1));

@@ -20,6 +20,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.jgroups.BytesMessage;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.blocks.RequestCorrelator;
@@ -115,12 +116,12 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
             if (header != null) {
                log.debugf("Sending CacheNotFoundResponse reply for %s", header);
                short flags = JGroupsTransport.REPLY_FLAGS;
-               Message response = message.makeReply().setFlag(flags);
+               Message response = new BytesMessage(message.getSrc()).setFlag(flags, false);
 
                response.putHeader(FORK.ID, message.getHeader(FORK.ID));
                response.putHeader(id,
                      new RequestCorrelator.Header(RequestCorrelator.Header.RSP, header.req_id, id));
-               response.setBuffer(FORK_NOT_FOUND_BUFFER);
+               response.setArray(FORK_NOT_FOUND_BUFFER);
 
                fork.down(response);
             }

@@ -442,7 +442,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       Map<String, String> entities = new HashMap<>();
 
       public TestResolver() {
-         entities.put("urn:org:jgroups", "jgroups-4.0.xsd");
+         entities.put("urn:org:jgroups", "jgroups-5.2.xsd");
          entities.put("urn:jgroups:relay:1.0", "relay.xsd");
          entities.put("fork", "fork-stacks.xsd");
       }
