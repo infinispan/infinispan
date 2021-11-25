@@ -1,5 +1,6 @@
 package org.infinispan.remoting.jgroups;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -42,7 +43,9 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
       when(mockChannel.down(isA(Event.class))).thenReturn(a);
       when(mockChannel.getView()).thenReturn(v);
       when(mockChannel.getProtocolStack()).thenReturn(ps);
-      when(ps.getTransport()).thenReturn(new UDP());
+      UDP mockUDPTransport = mock(UDP.class);
+      when(mockUDPTransport.registerProbeHandler(any())).thenReturn(mockUDPTransport);
+      when(ps.getTransport()).thenReturn(mockUDPTransport);
 
       EmbeddedCacheManager cm = null;
       try {

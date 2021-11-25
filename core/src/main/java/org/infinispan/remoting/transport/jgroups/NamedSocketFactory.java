@@ -8,7 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -147,10 +146,5 @@ public class NamedSocketFactory implements SocketFactory {
    @Override
    public void close(DatagramSocket datagramSocket) {
       Util.close(datagramSocket);
-   }
-
-   @Override
-   public Map<Object, String> getSockets() {
-      return null;
    }
 }

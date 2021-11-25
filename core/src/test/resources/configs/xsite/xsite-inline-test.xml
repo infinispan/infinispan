@@ -2,7 +2,7 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config:${infinispan.core.schema.version}
-                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
+                            urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd"
         xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
    <jgroups>
       <stack name="bridge">
@@ -12,14 +12,14 @@
               recv_buf_size="20000000"
               send_buf_size="640000"
               sock_conn_timeout="300"
-              enable_diagnostics="false"
+              diag.enabled="false"
               bundler_type="transfer-queue"
 
               thread_pool.min_threads="0"
               thread_pool.max_threads="8"
               thread_pool.keep_alive_time="5000"
 
-              thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+              thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
          />
          <RED/>
          <LOCAL_PING/>

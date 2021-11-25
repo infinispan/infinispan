@@ -93,7 +93,7 @@ public class PessimisticTxPartitionHandlingReleaseLockTest extends MultipleCache
       localTopologyManager0.blockStableTopologyUpdate();
 
       //isolate backup owner
-      getDiscardForCache(manager(1)).setDiscardAll(true);
+      getDiscardForCache(manager(1)).discardAll(true);
 
       //wait for the transaction to finish
       //after the view change, the transaction is handled by the PartitionHandlingManager which finishes the commit

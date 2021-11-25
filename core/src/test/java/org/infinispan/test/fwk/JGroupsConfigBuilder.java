@@ -304,8 +304,7 @@ public class JGroupsConfigBuilder {
       UFC, MFC, FC, UFC_NB, MFC_NB,
       FRAG2, FRAG3,
       STREAMING_STATE_TRANSFER,
-      TEST_RELAY2,
-      TOA
+      TEST_RELAY2
    }
 
 }

@@ -1,6 +1,6 @@
 <jgroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-fragment-14.0.xsd
-                             urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
+                             urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd"
          xmlns="urn:infinispan:config:14.0"
          xmlns:ispn="urn:infinispan:config:14.0">
    <stack name="test-tcp" extends="tcp">
@@ -32,15 +32,15 @@
            mcast_recv_buf_size="25m"
            ip_ttl="${jgroups.ip_ttl:2}"
            thread_naming_pattern="pl"
-           enable_diagnostics="false"
+           diag.enabled="false"
            bundler_type="transfer-queue"
-           max_bundle_size="8500"
+           bundler.max_size="8500"
 
            thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
            thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
            thread_pool.keep_alive_time="60000"
 
-           thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+           thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
            ispn:stack.combine="REPLACE"
       />
       <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>

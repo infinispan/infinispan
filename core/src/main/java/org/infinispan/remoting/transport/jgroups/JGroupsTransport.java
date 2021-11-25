@@ -101,6 +101,7 @@ import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteNamedCache;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
+import org.jgroups.BytesMessage;
 import org.jgroups.ChannelListener;
 import org.jgroups.Event;
 import org.jgroups.Header;
@@ -1122,7 +1123,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (checkView && !clusterView.contains(target))
          return;
 
-      Message message = new Message(toJGroupsAddress(target));
+      Message message = new BytesMessage(toJGroupsAddress(target));
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, noRelay);
 
@@ -1136,7 +1137,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private void marshallRequest(Message message, ReplicableCommand command, long requestId) {
       try {
          ByteBuffer bytes = marshaller.objectToBuffer(command);
-         message.setBuffer(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
+         message.setArray(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
          addRequestHeader(message, requestId);
       } catch (RuntimeException e) {
          throw e;
@@ -1146,12 +1147,13 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    private static void setMessageFlags(Message message, DeliverOrder deliverOrder, boolean noRelay) {
-      if (noRelay) {
-         message.setFlag(Message.Flag.NO_RELAY.value());
-      }
       short flags = encodeDeliverMode(deliverOrder);
-      message.setFlag(flags);
-      message.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK.value());
+      if (noRelay) {
+         flags |= Message.Flag.NO_RELAY.value();
+      }
+
+      message.setFlag(flags, false);
+      message.setFlag(Message.TransientFlag.DONT_LOOPBACK);
    }
 
    private void send(Message message) {
@@ -1269,7 +1271,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
     * Send a command to the entire cluster.
     */
    private void sendCommandToAll(ReplicableCommand command, long requestId, DeliverOrder deliverOrder) {
-      Message message = new Message();
+      Message message = new BytesMessage();
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, true);
       send(message);
@@ -1334,7 +1336,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private void sendCommand(Collection<Address> targets, ReplicableCommand command, long requestId,
                             DeliverOrder deliverOrder, boolean checkView) {
       Objects.requireNonNull(targets);
-      Message message = new Message();
+      Message message = new BytesMessage();
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, true);
 
@@ -1353,7 +1355,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
          // Send a different Message instance to each target
          if (it.hasNext()) {
-            copy = copy.copy(true);
+            copy = copy.copy(true, true);
          }
       }
    }
@@ -1369,9 +1371,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
    void processMessage(Message message) {
       org.jgroups.Address src = message.src();
       short flags = message.getFlags();
-      byte[] buffer = message.rawBuffer();
-      int offset = message.offset();
-      int length = message.length();
+      byte[] buffer = message.getArray();
+      int offset = message.getOffset();
+      int length = message.getLength();
       RequestCorrelator.Header header = message.getHeader(HEADER_ID);
       byte type;
       long requestId;
@@ -1428,8 +1430,8 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
 
       try {
-         Message message = new Message(target).setFlag(REPLY_FLAGS);
-         message.setBuffer(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
+         Message message = new BytesMessage(target).setFlag(REPLY_FLAGS, false);
+         message.setArray(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
          RequestCorrelator.Header header = new RequestCorrelator.Header(RESPONSE, requestId,
                CORRELATOR_ID);
          message.putHeader(HEADER_ID, header);
@@ -1501,7 +1503,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    private DeliverOrder decodeDeliverMode(short flags) {
-      boolean oob = Message.isFlagSet(flags, Message.Flag.OOB);
+      boolean oob = org.jgroups.util.Util.isFlagSet(flags, Message.Flag.OOB);
       return oob ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
    }
 
@@ -1579,6 +1581,12 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
 
       @Override
+      public UpHandler setLocalAddress(org.jgroups.Address a) {
+         //no-op
+         return this;
+      }
+
+      @Override
       public Object up(Event evt) {
          switch (evt.getType()) {
             case Event.VIEW_CHANGE:
@@ -1601,7 +1609,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
       @Override
       public void up(MessageBatch batch) {
-         batch.forEach((message, messages) -> {
+         batch.forEach(message -> {
             // Removed messages are null
             if (message == null)
                return;

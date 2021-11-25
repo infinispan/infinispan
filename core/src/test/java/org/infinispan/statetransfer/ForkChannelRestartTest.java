@@ -27,6 +27,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.jgroups.BytesMessage;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.blocks.RequestCorrelator;
@@ -72,7 +73,7 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
       }
 
       log.debugf("Cache managers created. Crashing manager %s but keeping the channel in the view", names[1]);
-      getDiscardForCache(managers[1]).setDiscardAll(true);
+      getDiscardForCache(managers[1]).discardAll(true);
       installNewView(managers[1]);
       managers[1].stop();
 
@@ -148,12 +149,12 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
             if (requestHeader != null) {
                log.debugf("Sending CacheNotFoundResponse reply from %s for %s", name, requestHeader);
                short flags = JGroupsTransport.REPLY_FLAGS;
-               Message response = message.makeReply().setFlag(flags);
+               Message response = new BytesMessage(message.getSrc()).setFlag(flags, false);
 
                FORK.ForkHeader forkHeader = message.getHeader(FORK.ID);
                response.putHeader(FORK.ID, forkHeader);
                response.putHeader(id, new RequestCorrelator.Header(RequestCorrelator.Header.RSP, requestHeader.req_id, id));
-               response.setBuffer(FORK_NOT_FOUND_BUFFER);
+               response.setArray(FORK_NOT_FOUND_BUFFER);
 
                fork.down(response);
             }

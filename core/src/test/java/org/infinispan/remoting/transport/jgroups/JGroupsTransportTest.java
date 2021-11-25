@@ -49,13 +49,13 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
       Address randomAddress = JGroupsAddressCache.fromJGroupsAddress(randomUuid);
 
       JGroupsTransport transport = (JGroupsTransport) manager(0).getTransport();
-      long initialMessages = transport.getChannel().getSentMessages();
+      long initialMessages = transport.getChannel().getProtocolStack().getTransport().getMessageStats().getNumMsgsSent();
       ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0, 0);
       CompletableFuture<Map<Address, Response>> future = transport
             .invokeRemotelyAsync(Collections.singletonList(randomAddress), command,
                                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, 1, null, DeliverOrder.NONE, true);
       assertEquals(CacheNotFoundResponse.INSTANCE, future.get().get(randomAddress));
-      assertEquals(initialMessages, transport.getChannel().getSentMessages());
+      assertEquals(initialMessages, transport.getChannel().getProtocolStack().getTransport().getMessageStats().getNumMsgsSent());
    }
 
    public void testInvokeCommandStaggeredToNonMember() throws Exception {

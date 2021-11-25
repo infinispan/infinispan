@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd">
    <UDP
          bind_addr="${jgroups.bind.address,jgroups.udp.address:SITE_LOCAL}"
          bind_port="${jgroups.bind.port,jgroups.udp.port:0}"
@@ -11,9 +11,9 @@
          ucast_send_buf_size="640k"
          mcast_recv_buf_size="25m"
          mcast_send_buf_size="640k"
-         max_bundle_size="8500"
+         bundler.max_size="8500"
          ip_ttl="${jgroups.udp.ip_ttl:2}"
-         enable_diagnostics="false"
+         diag.enabled="false"
          bundler_type="transfer-queue"
 
          thread_naming_pattern="pl"
@@ -22,7 +22,7 @@
          thread_pool.max_threads="8"
          thread_pool.keep_alive_time="60000"
 
-         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+         thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
    <RED/>
 
@@ -56,7 +56,6 @@
                max_join_attempts="3"
                max_leave_attempts="3"
    />
-   <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
    <UFC max_credits="4m" min_threshold="0.40"/>
    <MFC max_credits="4m" min_threshold="0.40"/>
