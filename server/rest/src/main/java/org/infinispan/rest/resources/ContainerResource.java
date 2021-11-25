@@ -68,7 +68,6 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
-import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -546,9 +545,7 @@ public class ContainerResource implements ResourceHandler {
       return cacheManager.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
    }
 
-   private static String cacheConfig(EmbeddedCacheManager cacheManager, String name, MediaType mediaType) throws
-         Exception {
-      Configuration cacheConfiguration = SecurityActions.getCacheConfigurationFromManager(cacheManager, name);
+   private static String serializeConfig(Configuration cacheConfiguration, String name, MediaType mediaType) {
       StringWriter sw = new StringWriter();
       try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).build()) {
          new ParserRegistry().serialize(writer, null, Collections.singletonMap(name, cacheConfiguration));
@@ -568,12 +565,10 @@ public class ContainerResource implements ResourceHandler {
          this.eventStream = new EventStream(
                includeCurrentState ?
                      (stream) -> {
-                        for (String cache : cacheManager.getCacheNames()) {
-                           try {
-                              stream.sendEvent(new ServerSentEvent("create-cache", cacheConfig(cacheManager, cache, mediaType)));
-                           } catch (Exception e) {
-                              Log.REST.errorf(e, "Could not serialize cache configuration");
-                           }
+                        for (String configName : cacheManager.getCacheConfigurationNames()) {
+                           Configuration config = cacheManager.getCacheConfiguration(configName);
+                           String eventType = config.isTemplate() ? "create-template" : "create-cache";
+                           stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType)));
                         }
                      } : null,
                () -> Security.doPrivileged((PrivilegedAction<Object>) () -> {
@@ -595,12 +590,9 @@ public class ContainerResource implements ResourceHandler {
          } else {
             switch (event.getConfigurationEntityType()) {
                case "cache":
-                  try {
-                     sse = new ServerSentEvent(eventType, cacheConfig(cacheManager, event.getConfigurationEntityName(), mediaType));
-                  } catch (Exception e) {
-                     Log.REST.errorf(e, "Could not serialize cache configuration");
-                     return CompletableFutures.completedNull();
-                  }
+               case "template":
+                     Configuration config = cacheManager.getCacheConfiguration(event.getConfigurationEntityName());
+                     sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType));
                   break;
                default:
                   // Unhandled entity type, ignore
