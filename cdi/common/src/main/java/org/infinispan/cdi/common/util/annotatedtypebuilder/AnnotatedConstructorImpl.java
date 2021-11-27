@@ -21,7 +21,7 @@ class AnnotatedConstructorImpl<X> extends AnnotatedCallableImpl<X, Constructor<X
       // length, this is a hack to fix this.
       // TODO: investigate this behavior further, on different JVM's and
       // compilers
-      if (genericTypes.length + 1 == constructor.getParameterTypes().length) {
+      if (genericTypes.length + 1 == constructor.getParameterCount()) {
          genericTypes = new Type[constructor.getGenericParameterTypes().length + 1];
          genericTypes[0] = constructor.getParameterTypes()[0];
          for (int i = 0; i < constructor.getGenericParameterTypes().length; ++i) {

@@ -86,7 +86,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    static void testListenerMethodValidity(Method m, Class<?>[] allowedParameters, String annotationName) {
       boolean isAllowed = false;
       for (Class<?> allowedParameter : allowedParameters) {
-         if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0].isAssignableFrom(allowedParameter)) {
+         if (m.getParameterCount() == 1 && m.getParameterTypes()[0].isAssignableFrom(allowedParameter)) {
             isAllowed = true;
             break;
          }

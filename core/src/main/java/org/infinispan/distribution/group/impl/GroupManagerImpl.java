@@ -55,7 +55,7 @@ public class GroupManagerImpl implements GroupManager {
       private final Method method;
 
       GroupMetadataImpl(Method method) {
-         if (method.getParameterTypes().length > 0)
+         if (method.getParameterCount() > 0)
             throw new IllegalArgumentException(Util.formatString("@Group method %s must have zero arguments", method));
          this.method = method;
       }

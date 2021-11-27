@@ -24,7 +24,7 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
             Constructor<?>[] declaredCtors = c.getDeclaredConstructors();
             Constructor<?> constructor = null;
             for (Constructor<?> declaredCtor : declaredCtors) {
-               if (declaredCtor.getParameterTypes().length == 0) {
+               if (declaredCtor.getParameterCount() == 0) {
                   constructor = declaredCtor;
                   constructor.setAccessible(true);
                   break;

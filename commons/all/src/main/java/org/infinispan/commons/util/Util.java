@@ -210,7 +210,7 @@ public final class Util {
 
    private static Method getFactoryMethod(Class<?> c) {
       for (Method m : c.getMethods()) {
-         if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))
+         if (m.getName().equals("getInstance") && m.getParameterCount() == 0 && Modifier.isStatic(m.getModifiers()))
             return m;
       }
       return null;
