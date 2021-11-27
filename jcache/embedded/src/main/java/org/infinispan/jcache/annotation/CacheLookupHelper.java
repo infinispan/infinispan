@@ -141,7 +141,7 @@ public final class CacheLookupHelper {
     */
    private static String getDefaultMethodCacheName(Method method) {
       int i = 0;
-      int nbParameters = method.getParameterTypes().length;
+      int nbParameters = method.getParameterCount();
 
       StringBuilder cacheName = new StringBuilder()
             .append(method.getDeclaringClass().getName())

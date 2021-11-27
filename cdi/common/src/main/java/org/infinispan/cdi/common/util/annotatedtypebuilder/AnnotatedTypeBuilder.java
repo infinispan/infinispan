@@ -212,7 +212,7 @@ public class AnnotatedTypeBuilder<X> {
             parameters = new HashMap<Integer, AnnotationBuilder>();
             methodParameters.put(method, parameters);
          }
-         for (int i = 0; i < method.getParameterTypes().length; ++i) {
+         for (int i = 0; i < method.getParameterCount(); ++i) {
             AnnotationBuilder parameterAnnotationBuilder = parameters.get(i);
             if (parameterAnnotationBuilder == null) {
                parameterAnnotationBuilder = new AnnotationBuilder();
@@ -243,7 +243,7 @@ public class AnnotatedTypeBuilder<X> {
             mparams = new HashMap<Integer, AnnotationBuilder>();
             constructorParameters.put(constructor, mparams);
          }
-         for (int i = 0; i < constructor.getParameterTypes().length; ++i) {
+         for (int i = 0; i < constructor.getParameterCount(); ++i) {
             AnnotationBuilder parameterAnnotationBuilder = mparams.get(i);
             if (parameterAnnotationBuilder == null) {
                parameterAnnotationBuilder = new AnnotationBuilder();
