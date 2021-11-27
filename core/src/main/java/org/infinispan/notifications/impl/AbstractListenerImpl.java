@@ -360,7 +360,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
     * @throws IncorrectListenerException if the listener is not a valid target
     */
    protected static void testListenerMethodValidity(Method m, Class<?> allowedParameter, String annotationName) {
-      if (m.getParameterTypes().length != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
+      if (m.getParameterCount() != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
       Class<?> returnType = m.getReturnType();
       if (!returnType.equals(void.class) && !CompletionStage.class.isAssignableFrom(returnType)) {

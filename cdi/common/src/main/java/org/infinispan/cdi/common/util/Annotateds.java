@@ -69,7 +69,7 @@ public class Annotateds {
             if (result != 0) {
                 return result;
             }
-            for (int i = 0; i < arg0.getJavaMember().getParameterTypes().length; ++i) {
+            for (int i = 0; i < arg0.getJavaMember().getParameterCount(); ++i) {
                 Class<?> p0 = arg0.getJavaMember().getParameterTypes()[i];
                 Class<?> p1 = arg1.getJavaMember().getParameterTypes()[i];
                 result = p0.getName().compareTo(p1.getName());
@@ -95,7 +95,7 @@ public class Annotateds {
             if (result != 0) {
                 return result;
             }
-            for (int i = 0; i < arg0.getJavaMember().getParameterTypes().length; ++i) {
+            for (int i = 0; i < arg0.getJavaMember().getParameterCount(); ++i) {
                 Class<?> p0 = arg0.getJavaMember().getParameterTypes()[i];
                 Class<?> p1 = arg1.getJavaMember().getParameterTypes()[i];
                 result = p0.getName().compareTo(p1.getName());
