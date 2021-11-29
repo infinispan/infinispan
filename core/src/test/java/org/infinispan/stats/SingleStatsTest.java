@@ -30,7 +30,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    protected final int TOTAL_ENTRIES = 5;
    protected StorageType storageType;
    protected EvictionType evictionType;
-   protected Cache cache;
+   protected Cache<String, String> cache;
    protected Stats stats;
 
    @Override
@@ -116,6 +116,13 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       refreshStats();
       assertEquals(TOTAL_ENTRIES, stats.getCurrentNumberOfEntries());
       assertEquals(EVICTION_MAX_ENTRIES, stats.getCurrentNumberOfEntriesInMemory());
+
+      // Approximate size stats are the same as the accurate size stats with DummyInMemoryStore
+      // Only expiration is ignored, and we do not have expired entries
+      assertEquals(TOTAL_ENTRIES, stats.getApproximateEntries());
+      assertEquals(EVICTION_MAX_ENTRIES, stats.getApproximateEntriesInMemory());
+      assertEquals(primaryKeysCount(cache), stats.getApproximateEntriesUnique());
+
       // Eviction stats with passivation can be delayed
       eventuallyEquals((long) TOTAL_ENTRIES - EVICTION_MAX_ENTRIES, () -> {
          refreshStats();
@@ -124,7 +131,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
 
       int additionalMisses = 0;
       for (int i = 0; i < TOTAL_ENTRIES; i++) {
-         Cache skipLoaderCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+         Cache<?, ?> skipLoaderCache = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
          String key = "key" + i;
          if (skipLoaderCache.containsKey(key)) {
             cache.evict(key);
@@ -164,13 +171,17 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       assertTrue(stats.getAverageRemoveTimeNanos() >= 0);
       assertTrue(stats.getAverageWriteTimeNanos() >= 0);
       if (evictionType == EvictionType.COUNT) {
-         assertEquals(0, stats.getDataMemoryUsed());
+         assertEquals(-1L, stats.getDataMemoryUsed());
       } else {
          assertTrue(stats.getDataMemoryUsed() > 0);
       }
       if (storageType == StorageType.OFF_HEAP) {
          assertTrue(stats.getOffHeapMemoryUsed() > 0);
       }
+   }
+
+   protected long primaryKeysCount(Cache<?, ?> cache) {
+      return TOTAL_ENTRIES;
    }
 
    protected void refreshStats() {

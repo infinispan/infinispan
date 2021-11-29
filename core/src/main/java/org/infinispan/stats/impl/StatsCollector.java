@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.LongAdder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
@@ -31,6 +33,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.stats.Stats;
 
 /**
@@ -39,6 +42,7 @@ import org.infinispan.stats.Stats;
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 @Scope(Scopes.NAMED_CACHE)
 public final class StatsCollector implements Stats, JmxStatisticsExposer {
+   public static final IntSet SEGMENT_0 = IntSets.immutableSet(0);
    private final LongAdder hitTimes = new LongAdder();
    private final LongAdder missTimes = new LongAdder();
    private final LongAdder storeTimes = new LongAdder();
@@ -58,6 +62,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    @Inject OffHeapMemoryAllocator allocator;
    @Inject Configuration configuration;
    @Inject ComponentRegistry componentRegistry;
+   @Inject ComponentRef<PersistenceManager> persistenceManager;
 
    @Start
    public void start() {
@@ -256,6 +261,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          description = "Number of entries in the cache including passivated entries",
          displayName = "Number of current cache entries"
    )
+   @Deprecated
    public int getNumberOfEntries() {
       return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
    }
@@ -265,6 +271,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of in-memory cache entries"
    )
    @Override
+   @Deprecated
    public int getCurrentNumberOfEntriesInMemory() {
       return dataContainer.running().size();
    }
@@ -290,6 +297,30 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
    }
 
+   @ManagedAttribute(
+         description = "Approximate number of entries currently in the cache, including persisted and expired entries",
+         displayName = "Approximate number of entries"
+   )
+   public long getApproximateEntries() {
+      return dataContainer.running().sizeIncludingExpired();
+   }
+
+   @ManagedAttribute(
+         description = "Approximate number of entries currently in memory, including expired entries",
+         displayName = "Approximate number of cache entries in memory"
+   )
+   public long getApproximateEntriesInMemory() {
+      return dataContainer.running().sizeIncludingExpired();
+   }
+
+   @ManagedAttribute(
+         description = "Approximate number of entries currently in the cache, including persisted and expired entries.",
+         displayName = "Approximate number of entries"
+   )
+   public long getApproximateEntriesUnique() {
+      return getApproximateEntries();
+   }
+
    @Override
    public int getCurrentNumberOfEntries() {
       return getNumberOfEntries();
@@ -310,7 +341,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
          return dataContainer.running().evictionSize();
       }
-      return 0;
+      return -1L;
    }
 
    @ManagedAttribute(

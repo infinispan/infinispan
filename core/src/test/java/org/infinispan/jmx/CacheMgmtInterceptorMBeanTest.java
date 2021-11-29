@@ -134,9 +134,12 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertStores(2);
 
       assertCurrentNumberOfEntries(1);
+      assertApproximateEntries(1);
       cache.evict("key");
       assertCurrentNumberOfEntriesInMemory(0);
+      assertApproximateEntriesInMemory(0);
       assertCurrentNumberOfEntries(1);
+      assertApproximateEntries(1);
 
       Map<String, String> toAdd = new HashMap<>();
       toAdd.put("key", "value");
@@ -145,7 +148,9 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertStores(4);
       TestingUtil.cleanUpDataContainerForCache(cache);
       assertCurrentNumberOfEntriesInMemory(1);
+      assertApproximateEntriesInMemory(1);
       assertCurrentNumberOfEntries(2);
+      assertApproximateEntries(2);
 
       resetStats();
 
@@ -285,5 +290,15 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private void assertCurrentNumberOfEntriesInMemory(int expectedValue) throws Exception {
       assertAttributeValue("NumberOfEntriesInMemory", expectedValue);
       assertEquals(expectedValue, advanced.getStats().getCurrentNumberOfEntriesInMemory());
+   }
+
+   private void assertApproximateEntries(int expectedValue) throws Exception {
+      assertAttributeValue("ApproximateEntries", expectedValue);
+      assertEquals(expectedValue, advanced.getStats().getApproximateEntries());
+   }
+
+   private void assertApproximateEntriesInMemory(int expectedValue) throws Exception {
+      assertAttributeValue("ApproximateEntriesInMemory", expectedValue);
+      assertEquals(expectedValue, advanced.getStats().getApproximateEntriesInMemory());
    }
 }
