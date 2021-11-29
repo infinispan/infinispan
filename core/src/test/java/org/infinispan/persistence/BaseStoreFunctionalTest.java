@@ -35,7 +35,6 @@ import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
@@ -266,7 +265,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          assertCacheEntry(cache, "1", "v1", -1, -1);
          ByRef<Boolean> passivate = new ByRef<>(false);
          PersistenceManager actual = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
-         PersistenceManager stub = new DelegatingPersistenceManager(actual, passivate);
+         PersistenceManager stub = new TrackingPersistenceManager(actual, passivate);
          TestingUtil.replaceComponent(cache, PersistenceManager.class, stub, true);
          local.administration().removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
@@ -370,18 +369,12 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    }
 
    @SurvivesRestarts
-   static class DelegatingPersistenceManager extends PersistenceManagerStub {
-      private final PersistenceManager actual;
+   static class TrackingPersistenceManager extends org.infinispan.persistence.support.DelegatingPersistenceManager {
       private final ByRef<Boolean> passivate;
 
-      public DelegatingPersistenceManager(PersistenceManager actual, ByRef<Boolean> passivate) {
-         this.actual = actual;
+      public TrackingPersistenceManager(PersistenceManager actual, ByRef<Boolean> passivate) {
+         super(actual);
          this.passivate = passivate;
-      }
-
-      @Override
-      public void stop() {
-         actual.stop();
       }
 
       @Override

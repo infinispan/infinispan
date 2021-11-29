@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.HotRodURI;
@@ -143,16 +144,16 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                   log.debugf("Remote Store for cache %s cannot support segmentation as the number of segments was not found from the remote cache", cacheName);
                   segmentsMatch = false;
                } else {
-                  segmentsMatch = numSegments == segmentCount;
+                  segmentsMatch = numSegments == this.segmentCount;
                   if (segmentsMatch) {
                      log.debugf("Remote Store for cache %s can support segmentation as the number of segments matched the remote cache", cacheName);
                   } else {
                      log.debugf("Remote Store for cache %s cannot support segmentation as the number of segments %d do not match the remote cache %d",
-                           cacheName, segmentCount, numSegments);
+                                cacheName, this.segmentCount, numSegments);
                   }
                }
                if (!segmentsMatch && configuration.segmented()) {
-                  throw log.segmentationRequiresEqualSegments(segmentCount, numSegments);
+                  throw log.segmentationRequiresEqualSegments(this.segmentCount, numSegments);
                }
                StorageConfigurationManager storageConfigurationManager = ctx.getCache().getAdvancedCache().getComponentRegistry()
                      .getComponent(StorageConfigurationManager.class);
@@ -320,6 +321,21 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          return remoteCache.sizeAsync();
       }
       return publishKeys(segments, null).count().toCompletionStage();
+   }
+
+   @Override
+   public CompletionStage<Long> approximateSize(IntSet segments) {
+      // NB. When the server has accurate-size="true", the stats operation computes the accurate size,
+      // and that makes the operation O(n) instead of O(1).
+      // Ideally we should skip the stats operation in that case.
+      return remoteCache.serverStatisticsAsync()
+                        .thenApply(stats -> getApproximateSizeStatistic(stats, segments.size()));
+   }
+
+   private long getApproximateSizeStatistic(ServerStatistics serverStatistics, long segments) {
+      long serverSize = serverStatistics.getIntStatistic(ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
+      // We assume that entries are uniformly distributed across segments to compute an estimate
+      return serverSize * segments / segmentCount;
    }
 
    @Override

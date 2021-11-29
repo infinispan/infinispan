@@ -3,6 +3,7 @@ package org.infinispan.persistence.spi;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
@@ -157,6 +158,11 @@ public interface NonBlockingStore<K, V> {
        */
       EXPIRATION
    }
+
+   /**
+    * Shortcut to return -1L when the size or approximate size is unavailable.
+    */
+   CompletableFuture<Long> SIZE_UNAVAILABLE_FUTURE = CompletableFuture.completedFuture(-1L);
 
    /**
     * The first method to invoke so that the store can be configured and additional steps, such as connecting through
@@ -568,6 +574,11 @@ public interface NonBlockingStore<K, V> {
     * {@link #size(IntSet)} except that it is not strict about the returned size. For instance, this method might ignore
     * if an entry is expired or if the store has some underlying optimizations to eventually have a consistent size.
     * <p>
+    * The implementations should be O(1).
+    * If a size approximation cannot be returned without iterating over all the entries in the store,
+    * the implementation should return {@code -1L}.
+    * </p>
+    * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
     *    <tr>
@@ -580,9 +591,9 @@ public interface NonBlockingStore<K, V> {
     *    </tr>
     *    <tr>
     *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td valign="top">When the store does not have this characteristic or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
-    *       the {@code segment} parameter may be ignored.</td>
+    *       the {@code segment} parameter is always {@code IntSets.immutableRangeSet(numSegments)}.</td>
     *    </tr>
     * </table>
     * <p>
@@ -590,15 +601,13 @@ public interface NonBlockingStore<K, V> {
     * {@link PersistenceException} and the stage be completed exceptionally.
     * <p>
     * @implSpec
-    * A default implementation is provided that does the following:
-    * <pre>{@code
-    * return size(segments);}
-    * </pre>
+    * A default implementation is provided that always returns {@code -1}.
     * @param segments the segments for which the entries are counted.
-    * @return a stage that, when complete, contains the count of how many entries are present for the given segments.
+    * @return a stage that, when complete, contains the approximate count of the entries in the given segments,
+    * or {@code -1L} if an approximate count cannot be provided.
     */
    default CompletionStage<Long> approximateSize(IntSet segments) {
-      return size(segments);
+      return SIZE_UNAVAILABLE_FUTURE;
    }
 
    /**

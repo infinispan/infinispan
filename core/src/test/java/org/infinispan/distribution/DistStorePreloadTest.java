@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -15,7 +16,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -117,7 +117,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
       timeService.advance(1000);
 
       DummyInMemoryStore store = TestingUtil.getFirstStore(c1);
-      assertEquals(1, store.size());
+      assertEquals(1, store.getStoreDataSize());
 
       addClusterEnabledCacheManager();
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
@@ -128,7 +128,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
       waitForClusterToForm(cacheName);
 
       DataContainer<String, String> dc2 = c2.getAdvancedCache().getDataContainer();
-      entry = dc2.get(key);
+      entry = dc2.peek(key);
       assertNotNull(entry);
       // Created time should be the same, not the incremented one
       assertEquals(createdTime, entry.getCreated());

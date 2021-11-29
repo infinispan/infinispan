@@ -1,6 +1,9 @@
 package org.infinispan.stats.impl;
 
 import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
@@ -88,7 +91,9 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Inject AdvancedCache<?, ?> cache;
    @Inject Configuration cacheConfiguration;
    @Inject GlobalConfiguration globalConfiguration;
-   private ClusterExecutor clusterExecutor;
+
+   ClusterExecutor clusterExecutor;
+
    private double readWriteRatio;
    private double hitRatio;
 
@@ -140,6 +145,10 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
       putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
       putIntAttributesMax(responseList, REQUIRED_MIN_NODES);
+
+      putLongAttributes(responseList, APPROXIMATE_ENTRIES);
+      putLongAttributes(responseList, APPROXIMATE_ENTRIES_IN_MEMORY);
+      putLongAttributes(responseList, APPROXIMATE_ENTRIES_UNIQUE);
 
       if (accurateSize) {
          // Count each entry only once
@@ -259,6 +268,29 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    )
    public long getMisses() {
       return getStatAsLong(MISSES);
+   }
+
+   @ManagedAttribute(description = "Cluster wide approximate number of entries in the cache, including passivated entries and ignoring copies",
+         displayName = "Cluster wide approximate number of cache entries"
+   )
+   public long getApproximateEntries() {
+      return getStatAsLong(APPROXIMATE_ENTRIES);
+   }
+
+   @Override
+   @ManagedAttribute(description = "Cluster wide approximate number of entries in memory",
+         displayName = "Cluster wide approximate number of cache entries in memory"
+   )
+   public long getApproximateEntriesInMemory() {
+      return getStatAsLong(APPROXIMATE_ENTRIES_IN_MEMORY);
+   }
+
+   @Override
+   @ManagedAttribute(description = "Cluster approximate average number of unique entries",
+         displayName = "Cluster wide approximate number of cache entries (ignoring duplicate copies)"
+   )
+   public long getApproximateEntriesUnique() {
+      return getStatAsLong(APPROXIMATE_ENTRIES_UNIQUE);
    }
 
    @ManagedAttribute(description = "Cluster wide total number of entries currently in the cache, including passivated entries",
@@ -467,8 +499,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,
                                                                                  Class<T> interceptorClass) {
-      return interceptorClass
-            .cast(cache.getAsyncInterceptorChain().findInterceptorExtending(interceptorClass));
+      return cache.getAsyncInterceptorChain().findInterceptorExtending(interceptorClass);
    }
 
    @Override
@@ -494,9 +525,9 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
          AdvancedCache<Object, Object> remoteCache =
                SecurityActions.getUnwrappedCache(embeddedCacheManager.getCache(cacheName)).getAdvancedCache();
+         CacheMgmtInterceptor stats = getFirstInterceptorWhichExtends(remoteCache, CacheMgmtInterceptor.class);
 
          Map<String, Number> map = new HashMap<>();
-         CacheMgmtInterceptor stats = getFirstInterceptorWhichExtends(remoteCache, CacheMgmtInterceptor.class);
          map.put(AVERAGE_READ_TIME, stats.getAverageReadTime());
          map.put(AVERAGE_READ_TIME_NANOS, stats.getAverageReadTimeNanos());
          map.put(AVERAGE_WRITE_TIME, stats.getAverageWriteTime());
@@ -506,6 +537,10 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          map.put(EVICTIONS, stats.getEvictions());
          map.put(HITS, stats.getHits());
          map.put(MISSES, stats.getMisses());
+
+         map.put(APPROXIMATE_ENTRIES, stats.getApproximateEntries());
+         map.put(APPROXIMATE_ENTRIES_IN_MEMORY, stats.getApproximateEntriesInMemory());
+         map.put(APPROXIMATE_ENTRIES_UNIQUE, stats.getApproximateEntriesUnique());
 
          map.put(DATA_MEMORY_USED, stats.getDataMemoryUsed());
          map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());

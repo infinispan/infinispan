@@ -156,7 +156,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public Set<Characteristic> characteristics() {
-      // Does not support segmented or expiration yet
       return EnumSet.of(Characteristic.BULK_READ, Characteristic.SEGMENTABLE, Characteristic.EXPIRATION);
    }
 
@@ -189,8 +188,9 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
 
       Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
-      temporaryTable = new TemporaryTable(cacheConfig.clustering().hash().numSegments());
-      temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
+      int numSegments = cacheConfig.clustering().hash().numSegments();
+      temporaryTable = new TemporaryTable(numSegments);
+      temporaryTable.addSegments(IntSets.immutableRangeSet(numSegments));
 
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
             configuration.maxFileSize());
@@ -510,7 +510,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
       // Approximation doesn't pause the appender so the index can be slightly out of sync
-      return CompletableFuture.completedFuture(index.approximateSize());
+      long totalSize = index.approximateSize();
+      IntSet matchingSegments = IntSets.mutableCopyFrom(segments);
+      matchingSegments.retainAll(temporaryTable.getOwnedSegments());
+      int totalSegments = temporaryTable.getOwnedSegments().size();
+      return CompletableFuture.completedFuture(totalSize * matchingSegments.size() / totalSegments);
    }
 
    @Override
