@@ -77,6 +77,8 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       assertEquals(statsMap.get(ServerStatistics.REMOVE_MISSES),"0");
       assertEquals(statsMap.get(ServerStatistics.RETRIEVALS),"0");
       assertEquals(statsMap.get(ServerStatistics.TOTAL_NR_OF_ENTRIES),"0");
+      assertEquals(statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES), "0");
+      assertEquals(statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE), "0");
       assertEquals(0, remoteCache.size());
       assertTrue(remoteCache.isEmpty());
 
@@ -88,61 +90,72 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       assertEquals(0, remoteCache.size());
       assertTrue(remoteCache.isEmpty());
       remoteCache.put("a","v");
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.STORES));
+      ServerStatistics serverStatistics = remoteCache.serverStatistics();
+      assertIntStatistic(1, serverStatistics, ServerStatistics.STORES);
+      assertIntStatistic(1, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertEquals(1, remoteCache.clientStatistics().getRemoteStores());
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      assertIntStatistic(1, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
+      assertIntStatistic(1, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
+      assertIntStatistic(1, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
       assertEquals(1, remoteCache.size());
       assertFalse(remoteCache.isEmpty());
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+
       remoteCache.put("a2","v2");
-      assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.STORES));
+      serverStatistics = remoteCache.serverStatistics();
+      assertIntStatistic(2, serverStatistics, ServerStatistics.STORES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertEquals(2, remoteCache.clientStatistics().getRemoteStores());
-      assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
-      assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+      assertIntStatistic(2, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
       assertEquals(2,remoteCache.size());
       assertFalse(remoteCache.isEmpty());
+
       remoteCache.put("a2","v3");
-      assertEquals((Integer)3, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.STORES));
+      serverStatistics = remoteCache.serverStatistics();
+      assertIntStatistic(3, serverStatistics, ServerStatistics.STORES);
+      assertIntStatistic(3, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertEquals(3, remoteCache.clientStatistics().getRemoteStores());
-      assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
-      assertEquals((Integer)3, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+      assertIntStatistic(2, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
       assertEquals(2, remoteCache.size());
       assertFalse(remoteCache.isEmpty());
    }
 
    public void testHitsAndMisses() {
       remoteCache.get("a");
-      assertEquals((Integer)0, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.HITS));
+      assertIntStatistic(0, remoteCache.serverStatistics(), ServerStatistics.HITS);
       assertEquals(0, remoteCache.clientStatistics().getRemoteHits());
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.MISSES));
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.MISSES);
       assertEquals(1, remoteCache.clientStatistics().getRemoteMisses());
       remoteCache.put("a","v");
-      assertEquals((Integer)0, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.HITS));
+      assertIntStatistic(0, remoteCache.serverStatistics(), ServerStatistics.HITS);
       assertEquals(0, remoteCache.clientStatistics().getRemoteHits());
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.MISSES));
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.MISSES);
       assertEquals(1, remoteCache.clientStatistics().getRemoteMisses());
       remoteCache.get("a");
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.HITS));
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.HITS);
       assertEquals(1, remoteCache.clientStatistics().getRemoteHits());
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.MISSES));
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.MISSES);
       assertEquals(1, remoteCache.clientStatistics().getRemoteMisses());
       remoteCache.get("a");
       remoteCache.get("a");
       remoteCache.get("a");
-      assertEquals((Integer)4, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.HITS));
+      assertIntStatistic(4, remoteCache.serverStatistics(), ServerStatistics.HITS);
       assertEquals(4, remoteCache.clientStatistics().getRemoteHits());
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.MISSES));
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.MISSES);
       assertEquals(1, remoteCache.clientStatistics().getRemoteMisses());
    }
 
    public void testRemoveHitsAndMisses() {
       remoteCache.remove("a");
-      assertEquals((Integer)0, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.REMOVE_HITS));
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.REMOVE_MISSES));
+      assertIntStatistic(0, remoteCache.serverStatistics(), ServerStatistics.REMOVE_HITS);
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.REMOVE_MISSES);
       remoteCache.put("a","v");
       remoteCache.remove("a");
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.REMOVE_HITS));
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.REMOVE_MISSES));
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.REMOVE_HITS);
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.REMOVE_MISSES);
       remoteCache.put("a","v");
       remoteCache.put("b","v");
       remoteCache.put("c","v");
@@ -150,18 +163,32 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       remoteCache.remove("a");
       remoteCache.remove("b");
       remoteCache.remove("c");
-      assertEquals((Integer)4, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.REMOVE_HITS));
-      assertEquals((Integer)1, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.REMOVE_MISSES));
+      assertIntStatistic(4, remoteCache.serverStatistics(), ServerStatistics.REMOVE_HITS);
+      assertIntStatistic(1, remoteCache.serverStatistics(), ServerStatistics.REMOVE_MISSES);
    }
 
    public void testNumberOfEntriesAfterClear() {
-      assertEquals((Integer)0, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      ServerStatistics serverStatistics = remoteCache.serverStatistics();
+      assertIntStatistic(0, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
+      assertIntStatistic(0, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
+      assertIntStatistic(0, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
+
       remoteCache.put("k", "v");
       remoteCache.put("k2", "v");
-      assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      serverStatistics = remoteCache.serverStatistics();
+      assertIntStatistic(2, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
+
       remoteCache.clear();
-      assertEquals((Integer)0, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.CURRENT_NR_OF_ENTRIES));
-      assertEquals((Integer)2, remoteCache.serverStatistics().getIntStatistic(ServerStatistics.TOTAL_NR_OF_ENTRIES));
+      serverStatistics = remoteCache.serverStatistics();
+      assertIntStatistic(0, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
+      assertIntStatistic(2, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
+      assertIntStatistic(0, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
+      assertIntStatistic(0, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
    }
 
+   private void assertIntStatistic(int expected, ServerStatistics serverStatistics, String statName) {
+      assertEquals((Integer) expected, serverStatistics.getIntStatistic(statName));
+   }
 }

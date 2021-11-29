@@ -87,6 +87,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.persistence.manager.PersistenceStatus;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.stream.impl.local.AbstractLocalCacheStream;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
@@ -315,7 +316,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    private CompletionStage<Long> trySizeOptimization(long flagBitSet) {
       if (EnumUtil.containsAny(flagBitSet, FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_SIZE_OPTIMIZATION)) {
-         return CompletableFuture.completedFuture(-1L);
+         return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
       }
       // Get the size from any shared store that isn't async
       return persistenceManager.size(SHARED.and(NOT_ASYNC));

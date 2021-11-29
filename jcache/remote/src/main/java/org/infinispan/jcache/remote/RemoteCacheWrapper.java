@@ -3,6 +3,7 @@ package org.infinispan.jcache.remote;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -613,6 +614,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public ServerStatistics serverStatistics() {
       return delegate.serverStatistics();
+   }
+
+   @Override
+   public CompletionStage<ServerStatistics> serverStatisticsAsync() {
+      return delegate.serverStatisticsAsync();
    }
 
    @Override

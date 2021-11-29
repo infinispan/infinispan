@@ -211,11 +211,8 @@ class Index {
 
    public long approximateSize() {
       long size = 0;
-      for (Segment seg : segments) {
-         size += seg.size.get();
-         if (size < 0) {
-            return Long.MAX_VALUE;
-         }
+      for (Segment segment : segments) {
+         size += segment.size.get();
       }
       return size;
    }

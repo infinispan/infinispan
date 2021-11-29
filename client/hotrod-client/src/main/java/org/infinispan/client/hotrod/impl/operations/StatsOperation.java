@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ServerStatisticsImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -21,8 +21,8 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class StatsOperation extends RetryOnFailureOperation<Map<String, String>> {
-   private Map<String, String> result;
+public class StatsOperation extends RetryOnFailureOperation<ServerStatistics> {
+   private ServerStatisticsImpl result;
    private int numStats = -1;
 
    public StatsOperation(Codec codec, ChannelFactory channelFactory,
@@ -46,13 +46,13 @@ public class StatsOperation extends RetryOnFailureOperation<Map<String, String>>
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (numStats < 0) {
          numStats = ByteBufUtil.readVInt(buf);
-         result = new HashMap<>();
+         result = new ServerStatisticsImpl();
          decoder.checkpoint();
       }
       while (result.size() < numStats) {
          String statName = ByteBufUtil.readString(buf);
          String statValue = ByteBufUtil.readString(buf);
-         result.put(statName, statValue);
+         result.addStats(statName, statValue);
          decoder.checkpoint();
       }
       complete(result);

@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntConsumer;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -20,9 +21,11 @@ import io.reactivex.rxjava3.core.Flowable;
 public class TemporaryTable {
    private static final Log log = LogFactory.getLog(TemporaryTable.class, Log.class);
    private final AtomicReferenceArray<ConcurrentMap<Object, Entry>> table;
+   private final IntSet ownedSegments;
 
-   public TemporaryTable(int segments) {
-      table = new AtomicReferenceArray<>(segments);
+   public TemporaryTable(int numSegments) {
+      table = new AtomicReferenceArray<>(numSegments);
+      ownedSegments = IntSets.concurrentSet(numSegments);
    }
 
    public int getSegmentMax() {
@@ -30,10 +33,12 @@ public class TemporaryTable {
    }
 
    public void addSegments(IntSet segments) {
+      ownedSegments.addAll(segments);
       segments.forEach((IntConsumer) segment -> table.compareAndSet(segment, null, new ConcurrentHashMap<>()));
    }
 
    public void removeSegments(IntSet segments) {
+      ownedSegments.removeAll(segments);
       segments.forEach((IntConsumer) segment -> table.set(segment, null));
    }
 
@@ -162,6 +167,10 @@ public class TemporaryTable {
             }
          }
       }
+   }
+
+   public IntSet getOwnedSegments() {
+      return ownedSegments;
    }
 
    private static class Entry extends LockedEntry {

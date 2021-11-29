@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -38,6 +40,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.StripedCounters;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -49,8 +53,9 @@ import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -61,7 +66,10 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManager.AccessMode;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Captures cache management statistics.
@@ -72,12 +80,14 @@ import org.infinispan.topology.CacheTopology;
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
-   @Inject ComponentRef<AdvancedCache> cache;
-   @Inject InternalDataContainer dataContainer;
+   @Inject ComponentRef<AdvancedCache<?, ?>> cache;
+   @Inject InternalDataContainer<?, ?> dataContainer;
    @Inject TimeService timeService;
    @Inject OffHeapMemoryAllocator allocator;
    @Inject ComponentRegistry componentRegistry;
    @Inject GlobalConfiguration globalConfiguration;
+   @Inject ComponentRef<PersistenceManager> persistenceManager;
+   @Inject DistributionManager distributionManager;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
@@ -675,9 +685,80 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
+         description = "Approximate number of entries currently in the cache, including persisted and expired entries",
+         displayName = "Approximate number of entries"
+   )
+   public long getApproximateEntries() {
+      // Don't restrict the segments in case some writes used CACHE_MODE_LOCAL
+      IntSet allSegments = IntSets.immutableRangeSet(cacheConfiguration.clustering().hash().numSegments());
+      // Do restrict the segments when counting entries in shared stores
+      IntSet writeSegments;
+      if (distributionManager != null) {
+         writeSegments = distributionManager.getCacheTopology().getLocalWriteSegments();
+      } else {
+         writeSegments = allSegments;
+      }
+      long persistenceSize = CompletionStages.join(approximatePersistenceSize(allSegments, writeSegments));
+      return approximateTotalSize(persistenceSize, allSegments);
+   }
+
+   private CompletionStage<Long> approximatePersistenceSize(IntSet privateSegments, IntSet sharedSegments) {
+      return persistenceManager.running().approximateSize(AccessMode.PRIVATE, privateSegments)
+                               .thenCompose(privateSize -> {
+                                  if (privateSize >= 0)
+                                     return CompletableFuture.completedFuture(privateSize);
+
+                                  return persistenceManager.running().approximateSize(AccessMode.SHARED, sharedSegments);
+                               });
+   }
+
+   private long approximateTotalSize(long persistenceSize, IntSet segments) {
+      if (cacheConfiguration.persistence().passivation()) {
+         long inMemorySize = dataContainer.sizeIncludingExpired(segments);
+         if (persistenceSize >= 0) {
+            return inMemorySize + persistenceSize;
+         } else {
+            return inMemorySize;
+         }
+      } else {
+         if (persistenceSize >= 0) {
+            return persistenceSize;
+         } else {
+            return dataContainer.sizeIncludingExpired(segments);
+         }
+      }
+   }
+
+   @ManagedAttribute(
+         description = "Approximate number of entries currently in memory, including expired entries",
+         displayName = "Approximate number of cache entries in memory"
+   )
+   public long getApproximateEntriesInMemory() {
+      return dataContainer.sizeIncludingExpired();
+   }
+
+   @ManagedAttribute(
+         description = "Approximate number of entries currently in the cache for which the local node is a primary " +
+                       "owner, including persisted and expired entries",
+         displayName = "Approximate number of entries owned as primary"
+   )
+   public long getApproximateEntriesUnique() {
+      IntSet primarySegments;
+      if (distributionManager != null) {
+         LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+         primarySegments = cacheTopology.getLocalPrimarySegments();
+      } else {
+         primarySegments = IntSets.immutableRangeSet(cacheConfiguration.clustering().hash().numSegments());
+      }
+      long persistenceSize = CompletionStages.join(approximatePersistenceSize(primarySegments, primarySegments));
+      return approximateTotalSize(persistenceSize, primarySegments);
+   }
+
+   @ManagedAttribute(
          description = "Number of entries in the cache including passivated entries",
          displayName = "Number of current cache entries"
    )
+   @Deprecated
    public int getNumberOfEntries() {
       return globalConfiguration.metrics().accurateSize() ? cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size() : -1;
    }
@@ -686,6 +767,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          description = "Number of entries currently in-memory excluding expired entries",
          displayName = "Number of in-memory cache entries"
    )
+   @Deprecated
    public int getNumberOfEntriesInMemory() {
       return globalConfiguration.metrics().accurateSize() ? dataContainer.size() : -1;
    }
@@ -695,10 +777,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Memory used by data in the cache"
    )
    public long getDataMemoryUsed() {
-      if (cacheConfiguration.memory().isEvictionEnabled() && cacheConfiguration.memory().evictionType() == EvictionType.MEMORY) {
+      if (cacheConfiguration.memory().maxSizeBytes() > 0) {
          return dataContainer.evictionSize();
       }
-      return 0;
+      return -1L;
    }
 
    @ManagedAttribute(

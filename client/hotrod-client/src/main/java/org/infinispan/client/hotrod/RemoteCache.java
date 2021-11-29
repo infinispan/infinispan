@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
@@ -16,15 +17,15 @@ import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 
 /**
- * Provides remote reference to a Hot Rod server/cluster. It implements {@link org.infinispan.Cache}, but given its
+ * Provides remote reference to a Hot Rod server/cluster. It implements {@link BasicCache}, but given its
  * nature (remote) some operations are not supported. All these unsupported operations are being overridden within this
  * interface and documented as such.
  * <p/>
- * <b>New operations</b>: besides the operations inherited from {@link org.infinispan.Cache}, RemoteCache also adds new
+ * <b>New operations</b>: besides the operations inherited from {@link BasicCache}, RemoteCache also adds new
  * operations to optimize/reduce network traffic: e.g. versioned put operation.
  * <p/>
  * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
- * org.infinispan.Cache} supports it.
+ * BasicCache} supports it.
  * <p/>
  * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned, null
  * is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value associated to the
@@ -457,6 +458,11 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Returns server-side statistics for this cache.
     */
    ServerStatistics serverStatistics();
+
+   /**
+    * Returns server-side statistics for this cache.
+    */
+   CompletionStage<ServerStatistics> serverStatisticsAsync();
 
    /**
     * Applies one or more {@link Flag}s to the scope of a single invocation.  See the {@link Flag} enumeration to for

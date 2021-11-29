@@ -71,8 +71,6 @@ public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
 
    @Override
    protected Configuration buildConfig(ConfigurationBuilder cb) {
-      // Lower number of segments as it takes much longer to start up store otherwise (makes test take a long time otherwise)
-      cb.clustering().hash().numSegments(16);
       createCacheStoreConfig(cb.persistence());
       return cb.build();
    }

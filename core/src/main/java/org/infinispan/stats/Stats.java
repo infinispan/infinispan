@@ -21,6 +21,30 @@ public interface Stats extends JsonSerialization {
    long getTimeSinceReset();
 
    /**
+    * Returns the approximate number of entries (in memory or in persistence) in this cache.
+    *
+    * When the cache is configured with distribution, this method only returns the
+    * number of entries in the local cache instance. In other words, it does
+    * not attempt to communicate with other nodes to find out about the data
+    * stored in other nodes in the cluster that is not available locally.
+    *
+    * @return Number of entries currently in the cache, including passivated entries.
+    */
+   long getApproximateEntries();
+
+   /**
+    * The same as {@link #getApproximateEntries()}, however passivated entries are not included.
+    */
+   long getApproximateEntriesInMemory();
+
+   /**
+    * The same as {@link #getApproximateEntries()}, however only entries owned as primary are counted.
+    *
+    * This is only different from {@link #getApproximateEntries()} only in distributed and replicated caches.
+    */
+   long getApproximateEntriesUnique();
+
+   /**
     * Returns the number of entries currently in this cache instance. When
     * the cache is configured with distribution, this method only returns the
     * number of entries in the local cache instance. In other words, it does
@@ -28,12 +52,16 @@ public interface Stats extends JsonSerialization {
     * stored in other nodes in the cluster that is not available locally.
     *
     * @return Number of entries currently in the cache, including passivated entries.
+    * @deprecated Since 14.0, please use {@link #getApproximateEntries()} or {@link #getApproximateEntriesUnique()} instead.
     */
+   @Deprecated
    int getCurrentNumberOfEntries();
 
    /**
     * The same as {@link #getCurrentNumberOfEntries()}, however passivated entries are not included.
+    * @deprecated Since 14.0, please use {@link #getApproximateEntriesInMemory()} instead.
     */
+   @Deprecated
    int getCurrentNumberOfEntriesInMemory();
 
    /**
@@ -44,25 +72,24 @@ public interface Stats extends JsonSerialization {
    long getTotalNumberOfEntries();
 
    /**
-    * The amount of off-heap memory used by this cache
-    * @return
+    * The amount of off-heap memory used by this cache, or -1 if the cache stores data in the heap.
     */
    long getOffHeapMemoryUsed();
 
    /**
     * Provides how much memory the current eviction algorithm estimates is in use for data. This method will return a
-    * number 0 or greater if memory eviction is in use. If memory eviction is not enabled this method will always return 0.
-    * @return memory in use or 0 if memory eviction is not enabled
+    * number 0 or greater if memory eviction is in use. If memory eviction is not enabled this method will always return -1.
+    * @return memory in use or -1 if memory eviction is not enabled
     */
    long getDataMemoryUsed();
 
    /**
-    * @return Number of put operations on the cache.
+    * @return Number of entries stored in cache since start.
     */
    long getStores();
 
    /**
-    * @return Number of get operations.
+    * @return Number of entries read from the cache since start.
     */
    long getRetrievals();
 
@@ -103,7 +130,9 @@ public interface Stats extends JsonSerialization {
 
    /**
     * @return Average number of milliseconds for a cache put on the cache
+    * @deprecated Since 14.0, please use {@link #getAverageReadTimeNanos()} instead.
     */
+   @Deprecated
    long getAverageWriteTime();
 
    /**
@@ -113,7 +142,9 @@ public interface Stats extends JsonSerialization {
 
    /**
     * @return Average number of milliseconds for a cache remove on the cache
+    * @deprecated Since 14.0, please use {@link #getAverageWriteTimeNanos()} instead.
     */
+   @Deprecated
    long getAverageRemoveTime();
 
    /**

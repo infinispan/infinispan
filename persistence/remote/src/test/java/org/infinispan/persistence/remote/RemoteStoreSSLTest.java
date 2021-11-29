@@ -1,15 +1,18 @@
 package org.infinispan.persistence.remote;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.BaseNonBlockingStoreTest;
@@ -34,21 +37,21 @@ import org.testng.annotations.Test;
 public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";
-   private EmbeddedCacheManager localCacheManager;
+   private EmbeddedCacheManager serverCacheManager;
+   private Cache<Object, Object> serverCache;
    private HotRodServer hrServer;
 
    @Override
    protected Configuration buildConfig(ConfigurationBuilder builder) {
-      localCacheManager = TestCacheManagerFactory.createCacheManager(
+      serverCacheManager = TestCacheManagerFactory.createCacheManager(
             new GlobalConfigurationBuilder().defaultCacheName(REMOTE_CACHE),
             hotRodCacheConfiguration(builder));
 
       ClassLoader cl = RemoteStoreSSLTest.class.getClassLoader();
-      // Unfortunately BaseNonBlockingStore stops and restarts the store, which can start a second hrServer - prevent that
+      // Unfortunately BaseNonBlockingStoreTest stops and restarts the store, which can start a second hrServer - prevent that
       if (hrServer == null) {
-         localCacheManager.getCache(REMOTE_CACHE);
-         TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
-         localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
+         serverCache = serverCacheManager.getCache(REMOTE_CACHE);
+         TestingUtil.replaceComponent(serverCacheManager, TimeService.class, timeService, true);
 
          SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
          HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
@@ -68,7 +71,7 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
                .addAllowedMech("EXTERNAL")
                .serverAuthenticationProvider(sap);
          hrServer = new HotRodServer();
-         hrServer.start(serverBuilder.build(), localCacheManager);
+         hrServer.start(serverBuilder.build(), serverCacheManager);
       }
 
       SecurityConfigurationBuilder remoteSecurity = builder
@@ -96,13 +99,13 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
-   protected NonBlockingStore createStore() throws Exception {
-      return new RemoteStore();
+   protected NonBlockingStore<Object, Object> createStore() throws Exception {
+      return new RemoteStore<>();
    }
 
    @Override
    protected PersistenceMarshaller getMarshaller() {
-      return TestingUtil.extractPersistenceMarshaller(localCacheManager);
+      return TestingUtil.extractPersistenceMarshaller(serverCacheManager);
    }
 
    @Override
@@ -112,7 +115,12 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
       super.tearDown();
       HotRodClientTestingUtil.killServers(hrServer);
       hrServer = null;
-      TestingUtil.killCacheManagers(localCacheManager);
+      TestingUtil.killCacheManagers(serverCacheManager);
+   }
+
+   @Override
+   protected boolean storePurgesAllExpired() {
+      return false;
    }
 
    @Override
@@ -125,7 +133,14 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
-   protected boolean storePurgesAllExpired() {
-      return false;
+   public void testApproximateSize() {
+      // The server only reports the approximate size when the cache's statistics are enabled
+      TestingUtil.findInterceptor(serverCache, CacheMgmtInterceptor.class).setStatisticsEnabled(true);
+
+      super.testApproximateSize();
+
+      TestingUtil.findInterceptor(serverCache, CacheMgmtInterceptor.class).setStatisticsEnabled(false);
+
+      assertEquals(-1L, store.approximateSizeWait(segments));
    }
 }

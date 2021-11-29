@@ -282,14 +282,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public ServerStatistics serverStatistics() {
+      return await(serverStatisticsAsync());
+   }
+
+   @Override
+   public CompletionStage<ServerStatistics> serverStatisticsAsync() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      Map<String, String> statsMap = await(op.execute());
-      ServerStatisticsImpl stats = new ServerStatisticsImpl();
-      for (Map.Entry<String, String> entry : statsMap.entrySet()) {
-         stats.addStats(entry.getKey(), entry.getValue());
-      }
-      return stats;
+      return op.execute();
    }
 
    @Override

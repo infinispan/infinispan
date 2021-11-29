@@ -45,6 +45,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.InterceptorChainFactory;
@@ -165,6 +166,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return null;
    }
 
+   @GuardedBy("lock#readLock")
+   private StoreStatus getStoreStatusLocked(Predicate<? super StoreStatus> predicate) {
+      for (StoreStatus storeStatus : stores) {
+         if (predicate.test(storeStatus)) {
+            return storeStatus;
+         }
+      }
+      return null;
+   }
+
 
    @Override
    @Start
@@ -203,7 +214,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // the value that can be read from the store
          // Max idle is not currently supported with stores, it sorta works with passivation though
          if (configuration.expiration().maxIdle() > 0 &&
-               stores.stream().anyMatch(status -> !status.characteristics.contains(Characteristic.READ_ONLY))) {
+               stores.stream().anyMatch(status -> !status.hasCharacteristic(Characteristic.READ_ONLY))) {
             if (!configuration.persistence().passivation()) {
                throw CONFIG.maxIdleNotAllowedWithoutPassivation();
             }
@@ -250,8 +261,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @GuardedBy("lock")
    private boolean allStoresSegmentedOrShared() {
-      return getStoreLocked(storeStatus -> !storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) ||
-            !storeStatus.characteristics.contains(Characteristic.SHAREABLE)) != null;
+      return getStoreLocked(storeStatus -> !storeStatus.hasCharacteristic(Characteristic.SEGMENTABLE) ||
+                                           !storeStatus.hasCharacteristic(Characteristic.SHAREABLE)) != null;
    }
 
    private Set<Characteristic> updateCharacteristics(NonBlockingStore<?, ?> store, Set<Characteristic> characteristics,
@@ -377,7 +388,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          for (StoreStatus storeStatus : stores) {
             NonBlockingStore<Object, Object> store = storeStatus.store();
             CompletionStage<Void> storeStage;
-            if (clearOnStop && !storeStatus.characteristics.contains(Characteristic.READ_ONLY)) {
+            if (clearOnStop && !storeStatus.hasCharacteristic(Characteristic.READ_ONLY)) {
                // Clear the persistent store before stopping
                storeStage = store.clear().thenCompose(__ -> store.stop());
             } else {
@@ -404,14 +415,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
-   // This here solely to document that we are using a blocking method. This is because the start/stop lifecycle
-   // methods themselves are blocking but our API is not. This can be removed if lifecycle ever allows for non
-   // blocking, but don't hold your breath for it.
-   @SuppressWarnings("checkstyle:ForbiddenMethod")
-   private void blockingSubscribe(Flowable<?> flowable) {
-      flowable.blockingSubscribe();
-   }
-
    @Override
    public boolean isEnabled() {
       return enabled;
@@ -419,12 +422,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public boolean isReadOnly() {
-      return getStore(storeStatus -> !storeStatus.characteristics.contains(Characteristic.READ_ONLY)) == null;
+      return getStore(storeStatus -> !storeStatus.hasCharacteristic(Characteristic.READ_ONLY)) == null;
    }
 
    @Override
    public boolean hasWriter() {
-      return getStore(storeStatus -> !storeStatus.characteristics.contains(Characteristic.READ_ONLY)) != null;
+      return getStore(storeStatus -> !storeStatus.hasCharacteristic(Characteristic.READ_ONLY)) != null;
    }
 
    @Override
@@ -581,7 +584,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return store;
    }
 
-   private boolean containedInAdapter(NonBlockingStore nonBlockingStore, String adaptedClassName) {
+   private boolean containedInAdapter(NonBlockingStore<?, ?> nonBlockingStore, String adaptedClassName) {
       return nonBlockingStore instanceof NonBlockingStoreAdapter &&
             ((NonBlockingStoreAdapter<?, ?>) nonBlockingStore).getActualStore().getClass().getName().equals(adaptedClassName);
    }
@@ -636,7 +639,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
          AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores) {
-            if (storeStatus.characteristics.contains(Characteristic.EXPIRATION)) {
+            if (storeStatus.hasCharacteristic(Characteristic.EXPIRATION)) {
                Flowable<MarshallableEntry<Object, Object>> flowable = Flowable.fromPublisher(storeStatus.store().purgeExpired());
                Completable completable = flowable.concatMapCompletable(me -> Completable.fromCompletionStage(
                      expirationManager.running().handleInStoreExpirationInternal(me)));
@@ -665,7 +668,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          // Let the clear work in parallel across the stores
          AggregateCompletionStage<Void> stageBuilder = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores) {
-            if (!storeStatus.characteristics.contains(Characteristic.READ_ONLY)
+            if (!storeStatus.hasCharacteristic(Characteristic.READ_ONLY)
                   && predicate.test(storeStatus.config)) {
                stageBuilder.dependsOn(storeStatus.store.clear());
             }
@@ -703,7 +706,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          AtomicBoolean removedAny = new AtomicBoolean();
          AggregateCompletionStage<AtomicBoolean> stageBuilder = CompletionStages.aggregateCompletionStage(removedAny);
          for (StoreStatus storeStatus : stores) {
-            if (!storeStatus.characteristics.contains(Characteristic.READ_ONLY)
+            if (!storeStatus.hasCharacteristic(Characteristic.READ_ONLY)
                   && predicate.test(storeStatus.config)) {
                stageBuilder.dependsOn(storeStatus.store.delete(segment, key)
                      .thenAccept(removed -> {
@@ -867,15 +870,17 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private boolean allowLoad(StoreStatus storeStatus, boolean localInvocation, boolean includeStores) {
-      return !storeStatus.characteristics.contains(Characteristic.WRITE_ONLY) && (localInvocation || !isLocalOnlyLoader(storeStatus.store)) &&
-             (includeStores || storeStatus.characteristics.contains(Characteristic.READ_ONLY) || storeStatus.config.ignoreModifications());
+      return !storeStatus.hasCharacteristic(Characteristic.WRITE_ONLY) &&
+             (localInvocation || !isLocalOnlyLoader(storeStatus.store)) &&
+             (includeStores || storeStatus.hasCharacteristic(Characteristic.READ_ONLY) ||
+              storeStatus.config.ignoreModifications());
    }
 
-   private boolean isLocalOnlyLoader(NonBlockingStore store) {
+   private boolean isLocalOnlyLoader(NonBlockingStore<?, ?> store) {
       if (store instanceof LocalOnlyCacheLoader) return true;
-      NonBlockingStore unwrappedStore;
+      NonBlockingStore<?, ?> unwrappedStore;
       if (store instanceof DelegatingNonBlockingStore) {
-         unwrappedStore = ((DelegatingNonBlockingStore) store).delegate();
+         unwrappedStore = ((DelegatingNonBlockingStore<?, ?>) store).delegate();
       } else {
          unwrappedStore = store;
       }
@@ -883,9 +888,54 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return true;
       }
       if (unwrappedStore instanceof NonBlockingStoreAdapter) {
-         return ((NonBlockingStoreAdapter) unwrappedStore).getActualStore() instanceof LocalOnlyCacheLoader;
+         return ((NonBlockingStoreAdapter<?, ?>) unwrappedStore).getActualStore() instanceof LocalOnlyCacheLoader;
       }
       return false;
+   }
+
+   @Override
+   public CompletionStage<Long> approximateSize(Predicate<? super StoreConfiguration> predicate, IntSet segments) {
+      if (!isEnabled()) {
+         return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
+      }
+      long stamp = acquireReadLock();
+      try {
+         if (!isAvailable()) {
+            releaseReadLock(stamp);
+            return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
+         }
+
+         // Ignore stores without BULK_READ, they don't implement approximateSize()
+         StoreStatus firstStoreStatus = getStoreStatusLocked(storeStatus -> {
+            return storeStatus.hasCharacteristic(Characteristic.BULK_READ) &&
+                   predicate.test(storeStatus.config);
+         });
+         if (firstStoreStatus == null) {
+            releaseReadLock(stamp);
+            return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
+         }
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Obtaining approximate size from store %s", firstStoreStatus.store);
+         }
+         if (firstStoreStatus.hasCharacteristic(Characteristic.SEGMENTABLE)) {
+            return firstStoreStatus.store.approximateSize(segments)
+                                         .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
+         } else {
+            return firstStoreStatus.store.approximateSize(IntSets.immutableRangeSet(segmentCount))
+                  .thenApply(size -> {
+                     // Counting only the keys in the given segments would be expensive,
+                     // so we compute an estimate assuming that each segment has a similar number of entries
+                     LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+                     int storeSegments = firstStoreStatus.hasCharacteristic(Characteristic.SHAREABLE) ?
+                                         segmentCount : cacheTopology.getLocalWriteSegmentsCount();
+                     return size * segments.size() / storeSegments;
+                  });
+         }
+      } catch (Throwable t) {
+         releaseReadLock(stamp);
+         throw t;
+      }
    }
 
    @Override
@@ -899,11 +949,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          if (log.isTraceEnabled()) {
             log.tracef("Obtaining size from stores");
          }
-         NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.characteristics.contains(
+         NonBlockingStore<?, ?> nonBlockingStore = getStoreLocked(storeStatus -> storeStatus.hasCharacteristic(
                Characteristic.BULK_READ) && predicate.test(storeStatus.config));
          if (nonBlockingStore == null) {
             releaseReadLock(stamp);
-            return CompletableFuture.completedFuture(-1L);
+            return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
          }
          return nonBlockingStore.size(IntSets.immutableRangeSet(segmentCount))
                .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
@@ -952,11 +1002,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private int segmentOrZero(StoreStatus storeStatus, int segment) {
-      return storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) ? segment : 0;
+      return storeStatus.hasCharacteristic(Characteristic.SEGMENTABLE) ? segment : 0;
    }
 
    private boolean shouldWrite(StoreStatus storeStatus, Predicate<? super StoreConfiguration> userPredicate) {
-      return !storeStatus.characteristics.contains(Characteristic.READ_ONLY)
+      return !storeStatus.hasCharacteristic(Characteristic.READ_ONLY)
             && userPredicate.test(storeStatus.config);
    }
 
@@ -969,7 +1019,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
          Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
       Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = toMvccEntryFlowable(txInvocationContext, null);
-      //noinspection unchecked
       return batchOperation(mvccEntryFlowable, txInvocationContext, (stores, segmentCount, removeFlowable,
             putFlowable) -> stores.prepareWithModifications(txInvocationContext.getTransaction(), segmentCount, removeFlowable, putFlowable))
             .thenApply(CompletableFutures.toNullFunction());
@@ -1042,7 +1091,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private boolean shouldPerformTransactionOperation(StoreStatus storeStatus, Predicate<? super StoreConfiguration> predicate) {
-      return storeStatus.characteristics.contains(Characteristic.TRANSACTIONAL)
+      return storeStatus.hasCharacteristic(Characteristic.TRANSACTIONAL)
             && predicate.test(storeStatus.config);
    }
 
@@ -1060,10 +1109,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
                return Flowable.fromIterable(stores)
                      .filter(storeStatus -> shouldWrite(storeStatus, predicate) &&
-                           !storeStatus.characteristics.contains(Characteristic.TRANSACTIONAL))
+                           !storeStatus.hasCharacteristic(Characteristic.TRANSACTIONAL))
                      // Let the write work in parallel across the stores
                      .flatMapCompletable(storeStatus -> {
-                        boolean segmented = storeStatus.characteristics.contains(Characteristic.SEGMENTABLE);
+                        boolean segmented = storeStatus.hasCharacteristic(Characteristic.SEGMENTABLE);
                         Flowable<NonBlockingStore.SegmentedPublisher<MarshallableEntry<K, V>>> flowable;
                         if (segmented) {
                            flowable = Flowable.fromIterable(iterable)
@@ -1119,7 +1168,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                }
 
                return Flowable.fromIterable(stores)
-                     .filter(storeStatus -> !storeStatus.characteristics.contains(Characteristic.READ_ONLY))
+                     .filter(storeStatus -> !storeStatus.hasCharacteristic(Characteristic.READ_ONLY))
                      .flatMapSingle(storeStatus -> {
                         Flowable<MVCCEntry<K, V>> flowableToUse;
                         boolean shared = storeStatus.config.shared();
@@ -1405,8 +1454,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private static boolean shouldInvokeSegmentMethods(StoreStatus storeStatus) {
-      return storeStatus.characteristics.contains(Characteristic.SEGMENTABLE) &&
-            !storeStatus.characteristics.contains(Characteristic.SHAREABLE);
+      return storeStatus.hasCharacteristic(Characteristic.SEGMENTABLE) &&
+             !storeStatus.hasCharacteristic(Characteristic.SHAREABLE);
    }
 
    public <K, V> List<NonBlockingStore<K, V>> getAllStores(Predicate<Set<Characteristic>> predicate) {
@@ -1483,6 +1532,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       <K, V> NonBlockingStore<K, V> store() {
          return (NonBlockingStore) store;
+      }
+
+      private boolean hasCharacteristic(Characteristic characteristic) {
+         return characteristics.contains(characteristic);
       }
    }
 
