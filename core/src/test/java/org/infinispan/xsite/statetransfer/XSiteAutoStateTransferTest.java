@@ -19,6 +19,7 @@ import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
+import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -274,7 +275,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       //let the state command go through
       newSiteMaster.getRpcManager().excludeCommands(XSiteStatePushCommand.class, StateTransferStartCommand.class,
             StateResponseCommand.class, IracRequestStateCommand.class, IracUpdateVersionCommand.class,
-            IracCleanupKeyCommand.class, IracStateResponseCommand.class);
+            IracCleanupKeyCommand.class, IracStateResponseCommand.class, StateTransferCancelCommand.class);
       //the JGroups events triggers this command where NodeB checks if it needs to starts the transfer
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
