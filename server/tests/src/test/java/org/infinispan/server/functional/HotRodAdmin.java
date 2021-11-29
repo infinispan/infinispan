@@ -6,7 +6,7 @@ import static org.junit.Assert.assertNull;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -31,7 +31,7 @@ public class HotRodAdmin {
       RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
       String cacheName = "testCreateDeleteCache";
       String config = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", cacheName);
-      RemoteCache<String, String> cache = rcm.administration().createCache(cacheName, new XMLStringConfiguration(config));
+      RemoteCache<String, String> cache = rcm.administration().createCache(cacheName, new StringConfiguration(config));
       cache.put("k", "v");
       assertNotNull(cache.get("k"));
 
@@ -44,7 +44,7 @@ public class HotRodAdmin {
       RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
       String cacheName = "testCreateDeleteCacheFragment";
       String config = String.format("<distributed-cache name=\"%s\"/>", cacheName);
-      RemoteCache<String, String> cache = rcm.administration().createCache(cacheName, new XMLStringConfiguration(config));
+      RemoteCache<String, String> cache = rcm.administration().createCache(cacheName, new StringConfiguration(config));
       cache.put("k", "v");
       assertNotNull(cache.get("k"));
 
@@ -57,7 +57,7 @@ public class HotRodAdmin {
       RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
       String templateName = "template";
       String template = String.format("<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>", templateName);
-      rcm.administration().createTemplate(templateName, new XMLStringConfiguration(template));
+      rcm.administration().createTemplate(templateName, new StringConfiguration(template));
       RemoteCache<String, String> cache = rcm.administration().createCache("testCreateDeleteTemplate", templateName);
       cache.put("k", "v");
       assertNotNull(cache.get("k"));
@@ -71,7 +71,7 @@ public class HotRodAdmin {
       RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
       String templateName = "templateFragment";
       String template = String.format("<distributed-cache name=\"%s\"/>", templateName);
-      rcm.administration().createTemplate(templateName, new XMLStringConfiguration(template));
+      rcm.administration().createTemplate(templateName, new StringConfiguration(template));
       RemoteCache<String, String> cache = rcm.administration().createCache("testCreateDeleteTemplateFragment", templateName);
       cache.put("k", "v");
       assertNotNull(cache.get("k"));

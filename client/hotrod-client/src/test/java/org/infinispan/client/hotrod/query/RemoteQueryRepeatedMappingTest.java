@@ -14,7 +14,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -92,12 +92,12 @@ public class RemoteQueryRepeatedMappingTest extends SingleHotRodServerTest {
       protoCache.put(SCHEMA_FILE, protobuf);
    }
 
-   private XMLStringConfiguration createCacheXMLConfig() {
+   private StringConfiguration createCacheXMLConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       builder.indexing().enable().storage(LOCAL_HEAP).addIndexedEntities("Parent");
-      String config = builder.build().toXMLString(CACHE_NAME);
-      return new XMLStringConfiguration(config);
+      String config = builder.build().toStringConfiguration(CACHE_NAME);
+      return new StringConfiguration(config);
    }
 
 }

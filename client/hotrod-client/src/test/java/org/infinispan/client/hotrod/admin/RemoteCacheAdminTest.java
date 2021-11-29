@@ -25,7 +25,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -88,7 +88,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       String xml = String.format(
             "<infinispan><cache-container><distributed-cache name=\"%s\"/></cache-container></infinispan>",
             templateName);
-      BasicConfiguration template = new XMLStringConfiguration(xml);
+      BasicConfiguration template = new StringConfiguration(xml);
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
                .createTemplate(templateName, template);
       assertTrue(manager(0).getCacheConfigurationNames().contains(templateName));
@@ -117,7 +117,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
       // Cache can still be created later with a string configuration
       admin.createCache("some_name",
-                        new XMLStringConfiguration("<infinispan><cache-container>" +
+                        new StringConfiguration("<infinispan><cache-container>" +
                                                    "<local-cache name=\"some_name\"/>" +
                                                    "</cache-container></infinispan>"));
       RemoteCache<Object, Object> someCache = client(0).getCache("some_name");
@@ -177,7 +177,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
             "media-type=\"text/plain\"/><value media-type=\"application/json\"/></encoding><expiration " +
             "interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>",
             cacheName);
-      cacheCreateWithXMLConfiguration(cacheName, xml);
+      cacheCreateWithStringConfiguration(cacheName, xml);
    }
 
    public void cacheCreateWithXMLFragmentConfigurationTest(Method m) {
@@ -187,12 +187,50 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
             "media-type=\"application/json\"/></encoding><expiration interval=\"10000\" lifespan=\"10\" " +
             "max-idle=\"10\"/></distributed-cache>",
             cacheName);
-      cacheCreateWithXMLConfiguration(cacheName, xml);
+      cacheCreateWithStringConfiguration(cacheName, xml);
    }
 
-   private void cacheCreateWithXMLConfiguration(String cacheName, String xml) {
+   public void cacheCreateWithJSONConfigurationTest(Method m) {
+      String cacheName = m.getName();
+      String json = "{\n" +
+            "  \"distributed-cache\" : {\n" +
+            "    \"encoding\" : {\n" +
+            "      \"key\" : {\n" +
+            "        \"media-type\" : \"text/plain\"\n" +
+            "      },\n" +
+            "      \"value\" : {\n" +
+            "        \"media-type\" : \"application/json\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    \"expiration\" : {\n" +
+            "      \"interval\" : \"10000\",\n" +
+            "      \"lifespan\" : \"10\",\n" +
+            "      \"max-idle\" : \"10\"\n" +
+            "    }\n" +
+            "  }\n" +
+            "}\n";
+      cacheCreateWithStringConfiguration(cacheName, json);
+   }
+
+   public void cacheCreateWithYAMLConfigurationTest(Method m) {
+      String cacheName = m.getName();
+      String yaml =
+            "distributed-cache:\n" +
+            "  encoding:\n" +
+            "    key:\n"+
+            "      media-type: text/plain\n"+
+            "    value:\n"+
+            "      media-type: application/json\n"+
+            "  expiration:\n"+
+            "    interval: 10000\n"+
+            "    lifespan: 10\n"+
+            "    max-idle: 10\n";
+      cacheCreateWithStringConfiguration(cacheName, yaml);
+   }
+
+   private void cacheCreateWithStringConfiguration(String cacheName, String xml) {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
-               .getOrCreateCache(cacheName, new XMLStringConfiguration(xml));
+               .getOrCreateCache(cacheName, new StringConfiguration(xml));
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
@@ -216,7 +254,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
    private void cacheCreateWithXMLConfigurationAndGetCache(String cacheName, String xml) {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
-               .createCache(cacheName, new XMLStringConfiguration(xml));
+               .createCache(cacheName, new StringConfiguration(xml));
       final RemoteCache<Object, Object> cache = client(0).getCache(cacheName);
       assertNotNull(cache);
    }

@@ -3,7 +3,7 @@ package org.infinispan.server.test.junit5;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -38,7 +38,7 @@ public class InfinispanXSiteServerTest {
    public void testSingleServer() {
       String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
       RemoteCache<String, String> lonCache = SERVER_TEST.hotrod(LON)
-            .withServerConfiguration(new XMLStringConfiguration(lonXML)).create();
+            .withServerConfiguration(new StringConfiguration(lonXML)).create();
       RemoteCache<String, String> nycCache = SERVER_TEST.hotrod(NYC).create(); //nyc cache don't backup to lon
 
       lonCache.put("k1", "v1");
