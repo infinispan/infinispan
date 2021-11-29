@@ -132,9 +132,9 @@ public class CacheResource extends AbstractContainerResource {
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
                ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, null, MediaType.fromExtension(configFile));
                Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
-               log.debugf("Restoring Cache %s: %s", cacheName, config.toXMLString(cacheName));
+               log.debugf("Restoring Cache %s: %s", cacheName, config.toStringConfiguration(cacheName));
 
-               String configXml = config.toXMLString(cacheName);
+               String configXml = config.toStringConfiguration(cacheName);
                SerializableFunction<EmbeddedCacheManager, Void> createCacheFunction = m -> {
                   GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
 
@@ -253,7 +253,7 @@ public class CacheResource extends AbstractContainerResource {
          PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
          Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
 
-         log.debugf("Backing up Cache %s", configuration.toXMLString(cacheName));
+         log.debugf("Backing up Cache %s", configuration.toStringConfiguration(cacheName));
 
          int bufferSize = configuration.clustering().stateTransfer().chunkSize();
          Publisher<CacheBackupEntry> p =

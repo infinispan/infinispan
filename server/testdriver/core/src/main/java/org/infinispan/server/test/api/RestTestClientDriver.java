@@ -78,7 +78,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       String name = testClient.getMethodName(qualifier);
       CompletionStage<RestResponse> future;
       if (serverConfiguration != null) {
-         RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toXMLString(name));
+         RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
          future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       } else if (mode != null) {
          future = restClient.cache(name).createWithTemplate("org.infinispan." + mode.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));

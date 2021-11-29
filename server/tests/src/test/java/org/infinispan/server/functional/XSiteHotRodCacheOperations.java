@@ -20,7 +20,7 @@ import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -51,7 +51,7 @@ public class XSiteHotRodCacheOperations {
    public void testHotRodOperations() {
       String lonXML = String.format(XSiteIT.LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
       RemoteCache<String, String> lonCache = SERVER_TEST.hotrod(LON)
-            .withServerConfiguration(new XMLStringConfiguration(lonXML)).create();
+            .withServerConfiguration(new StringConfiguration(lonXML)).create();
       RemoteCache<String, String> nycCache = SERVER_TEST.hotrod(NYC).create(); //nyc cache don't backup to lon
 
       insertAndVerifyEntries(lonCache, nycCache, false);
@@ -62,12 +62,12 @@ public class XSiteHotRodCacheOperations {
       RemoteCache<String, String> lonCache = SERVER_TEST.hotrod(LON)
             .createRemoteCacheManager()
             .administration()
-            .createCache("lon-cache", new XMLStringConfiguration(LON_CACHE_CUSTOM_NAME_XML_CONFIG));
+            .createCache("lon-cache", new StringConfiguration(LON_CACHE_CUSTOM_NAME_XML_CONFIG));
 
       RemoteCache<String, String> nycCache = SERVER_TEST.hotrod(NYC)
             .createRemoteCacheManager()
             .administration()
-            .createCache("nyc-cache", new XMLStringConfiguration(NYC_CACHE_CUSTOM_NAME_XML_CONFIG));
+            .createCache("nyc-cache", new StringConfiguration(NYC_CACHE_CUSTOM_NAME_XML_CONFIG));
 
       insertAndVerifyEntries(lonCache, nycCache, true);
    }
@@ -76,7 +76,7 @@ public class XSiteHotRodCacheOperations {
    public void testHotRodOperationsWithOffHeapFileStore() {
       String lonXML = String.format(LON_CACHE_OFF_HEAP, SERVER_TEST.getMethodName());
       RemoteCache<Integer, Integer> lonCache = SERVER_TEST.hotrod(LON)
-            .withServerConfiguration(new XMLStringConfiguration(lonXML)).create();
+            .withServerConfiguration(new StringConfiguration(lonXML)).create();
       RemoteCache<Integer, Integer> nycCache = SERVER_TEST.hotrod(NYC).create(); //nyc cache don't backup to lon
 
       //Just to make sure that the file store is empty
@@ -146,7 +146,7 @@ public class XSiteHotRodCacheOperations {
 
    private int getTotalMemoryEntries(String lonXML) {
       RestClient restClient = SERVER_TEST.rest(LON)
-            .withServerConfiguration(new XMLStringConfiguration(lonXML)).get();
+            .withServerConfiguration(new StringConfiguration(lonXML)).get();
 
       RestCacheClient client = restClient.cache(SERVER_TEST.getMethodName());
       Json json = Json.read(sync(client.stats()).getBody());

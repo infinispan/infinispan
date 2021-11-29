@@ -14,7 +14,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
@@ -117,7 +117,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
                   "  </cache-container>" +
                   "</infinispan>";
 
-      remoteCacheManager.administration().withFlags(VOLATILE).createCache(CACHE_NAME, new XMLStringConfiguration(config));
+      remoteCacheManager.administration().withFlags(VOLATILE).createCache(CACHE_NAME, new StringConfiguration(config));
 
       // The SearchMapping is started lazily for protobuf caches, so the exception only happens after first usage
       RemoteCache<Object, Object> cache = remoteCacheManager.getCache(CACHE_NAME);

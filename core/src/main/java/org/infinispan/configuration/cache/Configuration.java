@@ -350,7 +350,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    }
 
    @Override
-   public String toXMLString(String name) {
+   public String toStringConfiguration(String name) {
       ParserRegistry reg = new ParserRegistry();
       return reg.serialize(name, this);
    }

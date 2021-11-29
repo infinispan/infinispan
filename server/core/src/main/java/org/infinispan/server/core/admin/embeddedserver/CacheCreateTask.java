@@ -71,7 +71,7 @@ public class CacheCreateTask extends AdminServerTask<Void> {
 
    protected ConfigurationBuilder getConfigurationBuilder(String name, String configuration) {
       ParserRegistry parser = new ParserRegistry();
-      ConfigurationBuilderHolder builderHolder = parser.parse(configuration);
+      ConfigurationBuilderHolder builderHolder = parser.parse(configuration, null); // Use type auto-detection
       Map<String, ConfigurationBuilder> builders = builderHolder.getNamedConfigurationBuilders();
       if (builders.size() == 0) {
          throw log.missingCacheConfiguration(name, configuration);

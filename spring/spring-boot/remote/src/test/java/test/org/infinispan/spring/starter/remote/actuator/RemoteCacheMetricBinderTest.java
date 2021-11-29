@@ -5,7 +5,7 @@ import static java.util.Collections.emptyList;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -30,8 +30,8 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
       org.infinispan.configuration.cache.ConfigurationBuilder serverBuilder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
       serverBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      XMLStringConfiguration stringConfiguration =
-            new XMLStringConfiguration(serverBuilder.build().toXMLString("mycache"));
+      StringConfiguration stringConfiguration =
+            new StringConfiguration(serverBuilder.build().toStringConfiguration("mycache"));
 
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.statistics().enable();
