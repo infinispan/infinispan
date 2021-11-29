@@ -18,7 +18,9 @@ public interface ServerStatistics {
 
    /**
     * Number of entries currently in the Hot Rod server
+    * @deprecated Since 14.0, please use {@link #APPROXIMATE_ENTRIES}
     */
+   @Deprecated
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**
@@ -30,7 +32,21 @@ public interface ServerStatistics {
    String TOTAL_NR_OF_ENTRIES = "totalNumberOfEntries";
 
    /**
-    * Number of put operations.
+    * Approximate number of entry copies currently in the server cache, including persistence.
+    *
+    * Only entries local to the server receiving the request are included.
+    */
+   String APPROXIMATE_ENTRIES = "approximateEntries";
+
+   /**
+    * Number of unique entries currently stored in server cache, including persistence.
+    *
+    * Only entries primary-owned by the server receiving the request are included.
+    */
+   String APPROXIMATE_ENTRIES_UNIQUE = "approximateEntriesUnique";
+
+   /**
+    * Number of entries ever stored.
     */
    String STORES = "stores";
 
@@ -60,6 +76,20 @@ public interface ServerStatistics {
     * Number of removal misses.
     */
    String REMOVE_MISSES = "removeMisses";
+
+   /**
+    * Approximate number of entry copies currently in the server cache cluster-wide, including persistence.
+    *
+    * Entries owned by multiple nodes are counted once for each owner.
+    */
+   String CLUSTER_APPROXIMATE_ENTRIES = "globalApproximateEntries";
+
+   /**
+    * Number of unique entries currently stored in server cache cluster-wide, including persistence.
+    *
+    * Entries owned by multiple nodes are counted only once.
+    */
+   String CLUSTER_APPROXIMATE_ENTRIES_UNIQUE = "globalApproximateEntriesUnique";
 
    Map<String, String> getStatsMap();
 

@@ -28,6 +28,10 @@ public class ServerStatisticsImpl implements ServerStatistics {
       stats.put(name, value);
    }
 
+   public int size() {
+      return stats.size();
+   }
+
    @Override
    public Integer getIntStatistic(String statsName) {
       String value = stats.get(statsName);

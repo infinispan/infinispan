@@ -36,7 +36,7 @@ public interface ClusterCacheStats extends Stats, ClusterStats {
    long getInvalidations();
 
    /**
-    * @return the total number of actiavtions in the cluster
+    * @return the total number of activations in the cluster
     */
    long getActivations();
 
@@ -46,17 +46,40 @@ public interface ClusterCacheStats extends Stats, ClusterStats {
    long getPassivations();
 
    /**
-    * @return the total number of cacheloader load operations in the cluster
+    * @return the total number of persistence load operations in the cluster
     */
    long getCacheLoaderLoads();
 
    /**
-    * @return the total number of cacheloader misses in the cluster
+    * @return the total number of persistence misses in the cluster
     */
    long getCacheLoaderMisses();
 
    /**
-    * @return the total number of cachewriter store operations in the cluster
+    * @return the total number of persistence store operations in the cluster
     */
    long getStoreWrites();
+
+   /**
+    * @return the approximate number of entries.
+    *
+    * Each owner's copy is counted separately, except entries
+    * in shared stores.
+    */
+   @Override
+   long getApproximateEntries();
+
+   /**
+    * @return the approximate number of entries in memory.
+    *
+    * Each owner's copy is counted separately.
+    */
+   @Override
+   long getApproximateEntriesInMemory();
+
+   /**
+    * @return the approximate number of unique entries.
+    */
+   @Override
+   long getApproximateEntriesUnique();
 }

@@ -28,6 +28,8 @@ import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.stats.Stats;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -55,8 +57,20 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void stats(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      executor.execute(() -> writeResponse(header, header.encoder().statsResponse(header, server, channel,
-            cache.getStats(), server.getTransport(), SecurityActions.getCacheComponentRegistry(cache))));
+      executor.execute(() -> blockingStats(header, cache));
+   }
+
+   private void blockingStats(HotRodHeader header, AdvancedCache<byte[], byte[]> cache) {
+      try {
+         Stats stats = cache.getStats();
+         ClusterCacheStats clusterCacheStats =
+               SecurityActions.getCacheComponentRegistry(cache).getComponent(ClusterCacheStats.class);
+         ByteBuf buf = header.encoder().statsResponse(header, server, channel, stats, server.getTransport(),
+                                                      clusterCacheStats);
+         writeResponse(header, buf);
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
    }
 
    void get(HotRodHeader header, Subject subject, byte[] key) {

@@ -1,6 +1,8 @@
 package org.infinispan.stats;
 
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
@@ -9,6 +11,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -18,7 +22,6 @@ public class ClusteredStatsTest extends SingleStatsTest {
 
    protected final int CLUSTER_SIZE = 3;
    protected final String CACHE_NAME = ClusteredStatsTest.class.getSimpleName();
-   protected ClusterCacheStats stats;
 
    @Override
    public Object[] factory() {
@@ -54,13 +57,33 @@ public class ClusteredStatsTest extends SingleStatsTest {
          cache.put("key" + i, "value" + i);
       }
 
-      eventuallyEquals((CLUSTER_SIZE - 1) * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), () -> {
-         refreshClusterStats();
-         return (int) stats.getPassivations();
-      });
+      ClusterCacheStats clusteredStats = TestingUtil.extractComponent(cache, ClusterCacheStats.class);
+      clusteredStats.setStaleStatsThreshold(1);
+
+      // Approximate stats count each entry once for each node
+      int actualOwners = CLUSTER_SIZE - 1;
+      assertEquals(actualOwners * TOTAL_ENTRIES, clusteredStats.getApproximateEntries());
+      assertEquals(actualOwners * EVICTION_MAX_ENTRIES, clusteredStats.getApproximateEntriesInMemory());
+      assertEquals(TOTAL_ENTRIES, clusteredStats.getApproximateEntriesUnique());
+
+      // Accurate stats try to de-duplicate counts
+      assertEquals(TOTAL_ENTRIES, clusteredStats.getCurrentNumberOfEntries());
+      assertEquals(EVICTION_MAX_ENTRIES, clusteredStats.getCurrentNumberOfEntriesInMemory());
+
+      // Eviction stats with passivation can be delayed
+      eventuallyEquals((long) actualOwners * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), clusteredStats::getPassivations);
    }
 
-   protected void refreshClusterStats() {
-      stats = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterCacheStats.class);
+   @Override
+   protected long primaryKeysCount(Cache<?, ?> cache) {
+      DistributionManager dm = TestingUtil.extractComponent(cache, DistributionManager.class);
+      long count = 0;
+      for (int i = 0; i < TOTAL_ENTRIES; i++) {
+         DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
+         if (dm.getCacheTopology().getDistribution(keyDataConversion.toStorage("key" + i)).isPrimary()) {
+            count++;
+         }
+      }
+      return count;
    }
 }

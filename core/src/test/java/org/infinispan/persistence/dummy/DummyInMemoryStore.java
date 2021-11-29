@@ -14,6 +14,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Predicate;
 
@@ -340,9 +341,17 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       return storeName;
    }
 
+   /**
+    * @return a count of entries in all the segments, including expired entries
+    */
+   public long getStoreDataSize() {
+      return CompletionStages.join(sizeIncludingExpired(IntSets.immutableRangeSet(store.length()), store));
+   }
+
    public static long getStoreDataSize(String storeName) {
       AtomicReferenceArray<Map<Object, byte[]>> store = stores.get(storeName);
-      return store != null ? CompletionStages.join(size(IntSets.immutableRangeSet(store.length()), store)) : 0;
+      return store != null ? CompletionStages.join(
+            sizeIncludingExpired(IntSets.immutableRangeSet(store.length()), store)) : 0;
    }
 
    public static void removeStoreData(String storeName) {
@@ -391,7 +400,22 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    @Override
    public CompletionStage<Long> size(IntSet segments) {
       record("size");
-      return size(segments, store);
+
+      AtomicLong size = new AtomicLong();
+      long now = timeService.wallClockTime();
+      for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
+         Map<Object, byte[]> map = store.get(segment);
+         if (map != null) {
+            map.forEach((key, bytes) -> {
+               MarshallableEntry<?, ?> me = deserialize(key, bytes);
+               if (!me.isExpired(now)) {
+                  size.incrementAndGet();
+               }
+            });
+         }
+      }
+      return CompletableFuture.completedFuture(size.get());
    }
 
    /**
@@ -401,7 +425,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       return CompletionStages.join(size(IntSets.immutableRangeSet(store.length())));
    }
 
-   private static CompletionStage<Long> size(IntSet segments, AtomicReferenceArray<Map<Object, byte[]>> store) {
+   private static CompletionStage<Long> sizeIncludingExpired(IntSet segments, AtomicReferenceArray<Map<Object, byte[]>> store) {
       long size = 0;
       for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
          int segment = iter.nextInt();
@@ -411,6 +435,12 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
          }
       }
       return CompletableFuture.completedFuture(size);
+   }
+
+   @Override
+   public CompletionStage<Long> approximateSize(IntSet segments) {
+      record("size");
+      return sizeIncludingExpired(segments, store);
    }
 
    @Override

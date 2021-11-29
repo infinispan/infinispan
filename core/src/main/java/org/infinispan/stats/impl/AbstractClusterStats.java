@@ -129,20 +129,10 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
          long longValue = value.longValue();
-         if (longValue > -1) {
+         if (longValue >= 0) {
             total += longValue;
-         }
-      }
-      return total;
-   }
-
-   double addDoubleAttributes(Collection<Map<String, Number>> responseList, String attribute) {
-      double total = 0;
-      for (Map<String, Number> m : responseList) {
-         Number value = m.get(attribute);
-         double doubleValue = value.doubleValue();
-         if (doubleValue > -1) {
-            total += doubleValue;
+         } else {
+            total = -1;
          }
       }
       return total;
@@ -153,15 +143,17 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
          int intValue = value.intValue();
-         if (intValue > -1) {
+         if (intValue >= 0) {
             total += intValue;
+         } else {
+            total = -1;
          }
       }
       return total;
    }
 
    private int maxIntAttributes(Collection<Map<String, Number>> responseList, String attribute) {
-      int max = 0;
+      int max = -1;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
          int intValue = value.intValue();
@@ -171,18 +163,20 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
    }
 
    void putLongAttributesAverage(Collection<Map<String, Number>> responseList, String attribute) {
-      long nonZeroValues = 0;
+      long numValues = 0;
       long total = 0;
       for (Map<String, Number> m : responseList) {
          Number value = m.get(attribute);
          long longValue = value.longValue();
-         if (longValue > 0) {
+         if (longValue >= 0) {
             total += longValue;
-            nonZeroValues++;
+            numValues++;
          }
       }
-      long average = nonZeroValues > 0 ? total / nonZeroValues : 0;
-      statsMap.put(attribute, average);
+      if (numValues > 0) {
+         long average = total / numValues;
+         statsMap.put(attribute, average);
+      }
    }
 
    void putLongAttributes(Collection<Map<String, Number>> responseList, String attribute) {
