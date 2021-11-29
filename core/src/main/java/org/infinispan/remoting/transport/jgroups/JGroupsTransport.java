@@ -179,7 +179,7 @@ public class JGroupsTransport implements Transport {
    private volatile Set<String>  sitesView = Collections.emptySet();
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
-   private final Set<String> unreachableSites;
+   private final Map<String, SiteUnreachableReason> unreachableSites;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -203,7 +203,7 @@ public class JGroupsTransport implements Transport {
 
    public JGroupsTransport() {
       this.probeHandler = new ThreadPoolProbeHandler();
-      this.unreachableSites = ConcurrentHashMap.newKeySet();
+      this.unreachableSites = new ConcurrentHashMap<>();
    }
 
    @Override
@@ -341,7 +341,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
-      if (unreachableSites.contains(backup.getSiteName())) {
+      if (unreachableSites.containsKey(backup.getSiteName())) {
          // fail fast if we have thread handling a SITE_UNREACHABLE event.
          return new SiteUnreachableXSiteResponse<>(backup, timeService);
       }
@@ -1247,20 +1247,24 @@ public class JGroupsTransport implements Transport {
    }
 
    private void siteUnreachable(String site) {
-      if (!unreachableSites.add(site)) {
+      if (unreachableSites.putIfAbsent(site, SiteUnreachableReason.SITE_UNREACHABLE_EVENT) != null) {
          // only one thread handling the events. The other threads can be "dropped".
          return;
       }
       try {
-         requests.forEach(request -> {
-            if (request instanceof SingleSiteRequest) {
-               ((SingleSiteRequest<?>) request).sitesUnreachable(site);
-            }
-         });
+         cancelRequestsFromSite(site);
       } finally {
-         unreachableSites.remove(site);
+         unreachableSites.remove(site, SiteUnreachableReason.SITE_UNREACHABLE_EVENT);
       }
 
+   }
+
+   private void cancelRequestsFromSite(String site) {
+      requests.forEach(request -> {
+         if (request instanceof SingleSiteRequest) {
+            ((SingleSiteRequest<?>) request).sitesUnreachable(site);
+         }
+      });
    }
 
    /**
@@ -1448,11 +1452,22 @@ public class JGroupsTransport implements Transport {
       @Override
       public void sitesUp(String... sites) {
          updateSitesView(Arrays.asList(sites), Collections.emptyList());
+         for (String upSite : sites) {
+            unreachableSites.remove(upSite, SiteUnreachableReason.SITE_DOWN_EVENT);
+         }
       }
 
       @Override
       public void sitesDown(String... sites) {
          updateSitesView(Collections.emptyList(), Arrays.asList(sites));
+         List<String> requestsToCancel = new ArrayList<>(sites.length);
+         for (String downSite : sites) {
+            // if there is something stored in the map, do not try to cancel the requests.
+            if (unreachableSites.put(downSite, SiteUnreachableReason.SITE_DOWN_EVENT) == null) {
+               requestsToCancel.add(downSite);
+            }
+         }
+         requestsToCancel.forEach(JGroupsTransport.this::cancelRequestsFromSite);
       }
 
       @Override
@@ -1480,5 +1495,10 @@ public class JGroupsTransport implements Transport {
       public void up(MessageBatch batch) {
          batch.forEach((message, messages) -> processMessage(message));
       }
+   }
+
+   private enum SiteUnreachableReason {
+      SITE_DOWN_EVENT,
+      SITE_UNREACHABLE_EVENT
    }
 }
