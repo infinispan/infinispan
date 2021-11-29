@@ -75,7 +75,7 @@ class CacheConfigResource extends AbstractContainerResource {
             } catch (IOException e) {
                throw new CacheException(String.format("Unable to create backup file '%s'", fileName), e);
             }
-            log.debugf("Backing up template %s: %s", configName, config.toXMLString(configName));
+            log.debugf("Backing up template %s: %s", configName, config.toStringConfiguration(configName));
          }
       }, "cache-config-write");
    }
@@ -95,7 +95,7 @@ class CacheConfigResource extends AbstractContainerResource {
                // Only define configurations that don't already exist so that we don't overwrite newer versions of the default
                // templates e.g. org.infinispan.DIST_SYNC when upgrading a cluster
                SecurityActions.getOrCreateTemplate(cm, configName, cfg);
-               log.debugf("Restoring template %s: %s", configName, cfg.toXMLString(configName));
+               log.debugf("Restoring template %s: %s", configName, cfg.toStringConfiguration(configName));
             } catch (IOException e) {
                throw new CacheException(e);
             }

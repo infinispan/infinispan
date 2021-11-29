@@ -12,7 +12,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -67,7 +67,7 @@ public class HotRodTransactionalCacheOperations {
 
       String xml = String.format(TEST_CACHE_XML_CONFIG, SERVER_TEST.getMethodName(), txMode.name());
 
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(config).withServerConfiguration(new XMLStringConfiguration(xml)).create();
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(config).withServerConfiguration(new StringConfiguration(xml)).create();
       TransactionManager tm = cache.getTransactionManager();
       tm.begin();
       cache.put("k", "v1");

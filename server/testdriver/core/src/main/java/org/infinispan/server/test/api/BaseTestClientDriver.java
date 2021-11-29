@@ -1,12 +1,12 @@
 package org.infinispan.server.test.api;
 
+import java.util.EnumSet;
+
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.Self;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
-
-import java.util.EnumSet;
 
 /**
  * Base class for the driver API
@@ -29,11 +29,11 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
       return self();
    }
 
-   public S withServerConfiguration(XMLStringConfiguration xmlConfiguration) {
+   public S withServerConfiguration(StringConfiguration configuration) {
       if (mode != null) {
          throw new IllegalStateException("Cannot set server configuration and cache mode");
       }
-      this.serverConfiguration = xmlConfiguration;
+      this.serverConfiguration = configuration;
       return self();
    }
 

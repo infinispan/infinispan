@@ -65,7 +65,7 @@ import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.configuration.XMLStringConfiguration;
+import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
@@ -537,7 +537,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             if (cacheConfiguration != null && cacheConfiguration.templateName() != null) {
                params.put(RemoteCacheManagerAdminImpl.CACHE_TEMPLATE, cacheConfiguration.templateName().getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
             } else if (cacheConfiguration != null && cacheConfiguration.configuration() != null) {
-               params.put(RemoteCacheManagerAdminImpl.CACHE_CONFIGURATION, new XMLStringConfiguration(cacheConfiguration.configuration()).toXMLString(cacheName).getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+               params.put(RemoteCacheManagerAdminImpl.CACHE_CONFIGURATION, new StringConfiguration(cacheConfiguration.configuration()).toStringConfiguration(cacheName).getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
             } else {
                // We cannot create the cache
                return null;

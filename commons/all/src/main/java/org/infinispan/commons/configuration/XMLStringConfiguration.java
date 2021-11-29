@@ -5,17 +5,11 @@ package org.infinispan.commons.configuration;
  *
  * @author Tristan Tarrant
  * @since 9.2
+ * @deprecated Use {@link StringConfiguration} instead
  */
-
-public class XMLStringConfiguration implements BasicConfiguration {
-   private final String xml;
-
+@Deprecated
+public class XMLStringConfiguration extends StringConfiguration {
    public XMLStringConfiguration(String xml) {
-      this.xml = xml;
-   }
-
-   @Override
-   public String toXMLString(String name) {
-      return xml;
+      super(xml);
    }
 }
