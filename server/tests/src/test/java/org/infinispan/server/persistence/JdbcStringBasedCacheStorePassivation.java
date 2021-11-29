@@ -1,10 +1,8 @@
 package org.infinispan.server.persistence;
 
-import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,10 +10,6 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
-import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
@@ -128,7 +122,7 @@ public class JdbcStringBasedCacheStorePassivation {
             Double doubleKey = 10.0;
             Double doubleValue = 20.0;
             assertEquals(0, cache.size());
-            assertTrue(table.countAllRows() == 0);
+            assertEquals(0, table.countAllRows());
             cache.put(doubleKey, doubleValue);
             // test passivation==false, database should contain all entries which are in the cache
             assertEquals(1, table.countAllRows());
@@ -146,18 +140,18 @@ public class JdbcStringBasedCacheStorePassivation {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
             //not yet in store (eviction.max-entries=2, LRU)
-            assertTrue(table.getValueByKey("k1") == null);
-            assertTrue(table.getValueByKey("k2") == null);
+            assertNull(table.getValueByKey("k1"));
+            assertNull(table.getValueByKey("k2"));
             cache.put("k3", "v3");
             //now some key is evicted and stored in store
-            assertTrue(2 == getNumberOfEntriesInMemory(cache.getName()));
+            assertEquals(2, getNumberOfEntriesInMemory(cache));
             assertEquals(1, table.countAllRows());
 
             SERVERS.getServerDriver().stop(0);
             SERVERS.getServerDriver().restart(0); //soft stop should store all entries from cache to store
 
             // test preload==false
-            assertEquals(0, getNumberOfEntriesInMemory(cache.getName()));
+            assertEquals(0, getNumberOfEntriesInMemory(cache));
             // test purge==false, entries should remain in the database after restart
             assertEquals(3, table.countAllRows());
             assertEquals("v1", cache.get("k1"));
@@ -178,26 +172,22 @@ public class JdbcStringBasedCacheStorePassivation {
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
-            assertTrue(table.getValueByKey("k1") == null);
-            assertTrue(table.getValueByKey("k2") == null);
+            assertNull(table.getValueByKey("k1"));
+            assertNull(table.getValueByKey("k2"));
             cache.put("k3", "v3");
-            assertTrue(2 == getNumberOfEntriesInMemory(cache.getName()));
+            assertEquals(2, getNumberOfEntriesInMemory(cache));
             assertEquals(1, table.countAllRows());
 
             SERVERS.getServerDriver().kill(0);
             SERVERS.getServerDriver().restart(0);
 
-            assertEquals(0, getNumberOfEntriesInMemory(cache.getName()));
+            assertEquals(0, getNumberOfEntriesInMemory(cache));
             assertEquals(1, table.countAllRows());
             assertEquals("v1", cache.get("k1"));
         }
     }
 
-    //TODO replace with cache.withFlags(Flag.SKIP_CACHE_LOAD).size() with ISPN-12040
-    private int getNumberOfEntriesInMemory(String cacheName) {
-        RestClient client = SERVER_TEST.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
-        RestResponse response = sync(client.cache(cacheName).stats());
-        Json jsonNode = Json.read(response.getBody());
-        return jsonNode.at("current_number_of_entries_in_memory").asInteger();
+    private int getNumberOfEntriesInMemory(RemoteCache<?, ?> cache) {
+       return cache.withFlags(Flag.SKIP_CACHE_LOAD).size();
     }
 }

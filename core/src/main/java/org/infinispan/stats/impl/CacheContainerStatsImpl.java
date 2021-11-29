@@ -521,6 +521,48 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return result;
    }
 
+   @Override
+   public long getApproximateEntries() {
+      long result = statisticsEnabled ? 0 : -1;
+      if (statisticsEnabled) {
+         for (Stats stats : getEnabledStats()) {
+            long numOfEntries = stats.getApproximateEntries();
+            if (numOfEntries > 0) {
+               result += numOfEntries;
+            }
+         }
+      }
+      return result;
+   }
+
+   @Override
+   public long getApproximateEntriesInMemory() {
+      long result = statisticsEnabled ? 0 : -1;
+      if (statisticsEnabled) {
+         for (Stats stats : getEnabledStats()) {
+            long numOfEntries = stats.getApproximateEntriesInMemory();
+            if (numOfEntries > 0) {
+               result += numOfEntries;
+            }
+         }
+      }
+      return result;
+   }
+
+   @Override
+   public long getApproximateEntriesUnique() {
+      long result = statisticsEnabled ? 0 : -1;
+      if (statisticsEnabled) {
+         for (Stats stats : getEnabledStats()) {
+            long numOfEntries = stats.getApproximateEntriesUnique();
+            if (numOfEntries > 0) {
+               result += numOfEntries;
+            }
+         }
+      }
+      return result;
+   }
+
    private long calculateStores() {
       long totalStores = 0;
       for (Stats stats : getEnabledStats()) {

@@ -83,7 +83,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    protected InitializationContext initializationContext;
    protected KeyPartitioner keyPartitioner = k -> Math.abs(k.hashCode() % segmentCount);
    protected Set<NonBlockingStore.Characteristic> characteristics;
-   private IntSet segments;
+   protected IntSet segments;
 
    protected static <K, V> NonBlockingStore<K, V> asNonBlockingStore(CacheLoader<K, V> loader) {
       return new NonBlockingStoreAdapter<>(loader);
@@ -121,6 +121,8 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       // Reuse the same configuration between restarts
       if (configuration == null) {
          ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         // Set a lower number of segments to make testing the approximate size easier
+         builder.clustering().hash().numSegments(4);
          setConfiguration(buildConfig(builder));
       }
       store.startAndWait(createContext(configuration));
@@ -476,15 +478,22 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertEquals(1, store.publishKeysWait(segments, null).size());
    }
 
-   public void testSizeApproximation() {
+   public void testApproximateSize() {
       assertIsEmpty();
 
-      store.write(marshalledEntry("k1", "v1"));
-      store.write(marshalledEntry("k2", "v2"));
-      store.write(marshalledEntry("k3", "v3"));
-      store.write(marshalledEntry("k4", "v4"));
+      int numKeysPerSegment = 2;
+      int numKeys = numKeysPerSegment * segmentCount;
+      for (int i = 0; i < numKeys; i++) {
+         String key = "k" + i;
+         store.write(marshalledEntry(key, "v" + i));
+      }
 
-      assertEquals(4, store.approximateSizeWait(segments));
+      assertEquals(numKeys, store.approximateSizeWait(segments));
+      if (configuration.persistence().stores().get(0).segmented()) {
+         for (int s = 0; s < segmentCount; s++) {
+            assertEquals(numKeysPerSegment, store.approximateSizeWait(IntSets.immutableSet(s)));
+         }
+      }
    }
 
    public void testPurgeExpired() throws Exception {

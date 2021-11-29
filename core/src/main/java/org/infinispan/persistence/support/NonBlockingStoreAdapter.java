@@ -14,6 +14,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -28,7 +29,6 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -140,7 +140,7 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
       // Old SPI didn't support approximations
-      return size(segments);
+      return SIZE_UNAVAILABLE_FUTURE;
    }
 
    @Override

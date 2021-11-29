@@ -37,7 +37,6 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final int maxOwners;
    private final DistributionInfo[] distributionInfos;
    private final boolean isScattered;
-   private final IntSet localReadSegments;
 
    /**
     * @param cacheMode Ignored, the result topology is always LOCAL
@@ -85,7 +84,6 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.numSegments = readCH.getNumSegments();
          this.distributionInfos = new DistributionInfo[numSegments];
          int maxOwners = 1;
-         IntSet localReadSegments = IntSets.mutableEmptySet(numSegments);
          for (int segmentId = 0; segmentId < numSegments; segmentId++) {
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readCH.locateOwnersForSegment(segmentId);
@@ -94,13 +92,9 @@ public class LocalizedCacheTopology extends CacheTopology {
             this.distributionInfos[segmentId] =
                   new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
             maxOwners = Math.max(maxOwners, writeOwners.size());
-            if (readOwners.contains(localAddress)) {
-               localReadSegments.set(segmentId);
-            }
          }
          this.maxOwners = maxOwners;
          this.allLocal = false;
-         this.localReadSegments = IntSets.immutableSet(localReadSegments);
       } else if (isReplicated || isInvalidation) {
          this.numSegments = readCH.getNumSegments();
          // Writes/invalidations must be broadcast to the entire cluster
@@ -120,7 +114,6 @@ public class LocalizedCacheTopology extends CacheTopology {
          }
          this.maxOwners = cacheTopology.getMembers().size();
          this.allLocal = readOwnersMap.containsKey(localAddress);
-         this.localReadSegments = IntSets.immutableRangeSet(allLocal ? numSegments : 0);
       } else {
          assert cacheMode == CacheMode.LOCAL;
          this.numSegments = 1;
@@ -131,7 +124,6 @@ public class LocalizedCacheTopology extends CacheTopology {
          };
          this.maxOwners = 1;
          this.allLocal = true;
-         this.localReadSegments = IntSets.immutableRangeSet(numSegments);
       }
    }
 
@@ -140,7 +132,7 @@ public class LocalizedCacheTopology extends CacheTopology {
       this.localAddress = localAddress;
       this.numSegments = numSegments;
       this.keyPartitioner = keyPartitioner;
-      this.membersSet = Collections.unmodifiableSet(Collections.singleton(localAddress));
+      this.membersSet = Collections.singleton(localAddress);
       this.isDistributed = false;
       this.isScattered = false;
       // Reads and writes are local, only the invalidation is replicated
@@ -151,7 +143,6 @@ public class LocalizedCacheTopology extends CacheTopology {
       }
       this.maxOwners = 1;
       this.allLocal = true;
-      this.localReadSegments = IntSets.immutableRangeSet(numSegments);
    }
 
    /**
@@ -253,7 +244,73 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return The segments owned by the local node for reading.
     */
    public IntSet getLocalReadSegments() {
-      return localReadSegments;
+      if (isDistributed || isScattered) {
+         IntSet localSegments = IntSets.mutableEmptySet(numSegments);
+         for (int segment = 0; segment < numSegments; segment++) {
+            if (distributionInfos[segment].isReadOwner()) {
+               localSegments.set(segment);
+            }
+         }
+         return localSegments;
+      } else if (allLocal) {
+         return IntSets.immutableRangeSet(numSegments);
+      } else {
+         return IntSets.immutableEmptySet();
+      }
+   }
+
+   /**
+    * @return The segments owned by the local node for writing.
+    */
+   public IntSet getLocalWriteSegments() {
+      if (isDistributed || isScattered) {
+         IntSet localSegments = IntSets.mutableEmptySet(numSegments);
+         for (int segmentId = 0; segmentId < numSegments; segmentId++) {
+            if (distributionInfos[segmentId].isWriteOwner()) {
+               localSegments.set(segmentId);
+            }
+         }
+         return localSegments;
+      } else if (allLocal) {
+         return IntSets.immutableRangeSet(numSegments);
+      } else {
+         return IntSets.immutableEmptySet();
+      }
+   }
+
+   /**
+    * @return The segments owned by the local node as primary owner.
+    */
+   public IntSet getLocalPrimarySegments() {
+      if (membersSet.size() > 1) {
+         IntSet localSegments = IntSets.mutableEmptySet(numSegments);
+         for (int segment = 0; segment < numSegments; segment++) {
+            if (distributionInfos[segment].isPrimary()) {
+               localSegments.set(segment);
+            }
+         }
+         return localSegments;
+      } else {
+         return IntSets.immutableRangeSet(numSegments);
+      }
+   }
+   /**
+    * @return The number of segments owned by the local node for writing.
+    */
+   public int getLocalWriteSegmentsCount() {
+      if (isDistributed || isScattered) {
+         int count = 0;
+         for (int segment = 0; segment < numSegments; segment++) {
+            if (distributionInfos[segment].isWriteOwner()) {
+               count++;
+            }
+         }
+         return count;
+      } else if (allLocal) {
+         return numSegments;
+      } else {
+         return 0;
+      }
    }
 
    /**
