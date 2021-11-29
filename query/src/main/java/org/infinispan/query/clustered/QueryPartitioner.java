@@ -39,7 +39,7 @@ final class QueryPartitioner {
       localSegments.stream().forEach(bitSet::set);
       segmentsPerMember.put(localAddress, bitSet);
       for (int s = 0; s < numSegments; s++) {
-         if (!localSegments.contains(s)) {
+         if (!bitSet.get(s)) {
             Address primary = cacheTopology.getSegmentDistribution(s).primary();
             segmentsPerMember.computeIfAbsent(primary, address -> new BitSet()).set(s);
          }

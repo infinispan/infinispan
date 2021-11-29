@@ -226,6 +226,11 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
+   public CompletionStage<Long> approximateSize(Predicate<? super StoreConfiguration> predicate, IntSet segments) {
+      return persistenceManager.approximateSize(predicate, segments);
+   }
+
+   @Override
    public CompletionStage<Long> size() {
       return persistenceManager.size();
    }

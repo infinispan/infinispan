@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
@@ -47,10 +48,10 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 @Test(testName = "persistence.remote.RemoteStoreTest", groups = "functional")
 public class RemoteStoreTest extends BaseNonBlockingStoreTest {
+   private static final String CACHE_NAME = "remote-cache";
 
-   private static final String REMOTE_CACHE = "remote-cache";
-   private EmbeddedCacheManager localCacheManager;
-   private AdvancedCache<Object, Object> localCache;
+   private EmbeddedCacheManager serverCacheManager;
+   private AdvancedCache<Object, Object> serverCache;
    private HotRodServer hrServer;
    private boolean segmented;
    private MediaType cacheMediaType;
@@ -97,23 +98,24 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
       cb.memory().maxCount(WRITE_DELETE_BATCH_MAX_ENTRIES)
             .expiration().wakeUpInterval(10L);
 
-      // Unfortunately BaseNonBlockingStore stops and restarts the store, which can start a second hrServer - prevent that
+      // Unfortunately BaseNonBlockingStoreTest stops and restarts the store, which can start a second hrServer - prevent that
       if (hrServer == null) {
          GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().clusteredDefault();
-         globalConfig.defaultCacheName(REMOTE_CACHE);
+         globalConfig.defaultCacheName(CACHE_NAME);
 
          ConfigurationBuilder configurationBuilder = hotRodCacheConfiguration(cb);
          configurationBuilder.encoding().mediaType(cacheMediaType.toString());
          configurationBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-         localCacheManager = TestCacheManagerFactory.createClusteredCacheManager(
+         configurationBuilder.statistics().enable();
+         serverCacheManager = TestCacheManagerFactory.createClusteredCacheManager(
                globalConfig, configurationBuilder);
-         TestingUtil.replaceComponent(localCacheManager, TimeService.class, timeService, true);
+         TestingUtil.replaceComponent(serverCacheManager, TimeService.class, timeService, true);
 
-         localCache = localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache()
-               .withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OBJECT);
-         keyPartitioner = localCache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
+         serverCache = serverCacheManager.getCache(CACHE_NAME).getAdvancedCache()
+                                         .withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OBJECT);
+         keyPartitioner = TestingUtil.extractComponent(serverCache, KeyPartitioner.class);
 
-         hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
+         hrServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
       }
 
       // Set it to dist so it has segments
@@ -123,7 +125,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
       RemoteStoreConfigurationBuilder storeConfigurationBuilder = cb
             .persistence()
             .addStore(RemoteStoreConfigurationBuilder.class)
-            .remoteCacheName(REMOTE_CACHE)
+            .remoteCacheName(CACHE_NAME)
             .rawValues(isRawValues);
       storeConfigurationBuilder
             .addServer()
@@ -137,13 +139,13 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
-   protected NonBlockingStore createStore() {
-      return new RemoteStore();
+   protected NonBlockingStore<Object, Object> createStore() {
+      return new RemoteStore<>();
    }
 
    @Override
    protected PersistenceMarshaller getMarshaller() {
-      return TestingUtil.extractPersistenceMarshaller(localCacheManager);
+      return TestingUtil.extractPersistenceMarshaller(serverCacheManager);
    }
 
    @Override
@@ -153,7 +155,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
       super.tearDown();
       HotRodClientTestingUtil.killServers(hrServer);
       hrServer = null;
-      TestingUtil.killCacheManagers(localCacheManager);
+      TestingUtil.killCacheManagers(serverCacheManager);
    }
 
    @Override
@@ -201,7 +203,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
       assertEquals(1, countFunction.applyAsInt(store, IntSets.immutableSet(segment)));
 
       // Create int set that includes all segments but the one that maps to the key
-      int maxSegments = localCache.getCacheConfiguration().clustering().hash().numSegments();
+      int maxSegments = serverCache.getCacheConfiguration().clustering().hash().numSegments();
       IntSet intSet = IntSets.mutableEmptySet(maxSegments);
       for (int i = 0; i < maxSegments; ++i) {
          if (i != segment) {
@@ -259,6 +261,18 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
    @Test(enabled = false)
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
       // This test messes with the actual types provided which can fail due to different media types
+   }
+
+   @Override
+   public void testApproximateSize() {
+      // The server only reports the approximate size when the cache's statistics are enabled
+      TestingUtil.findInterceptor(serverCache, CacheMgmtInterceptor.class).setStatisticsEnabled(true);
+
+      super.testApproximateSize();
+
+      TestingUtil.findInterceptor(serverCache, CacheMgmtInterceptor.class).setStatisticsEnabled(false);
+
+      assertEquals(-1L, store.approximateSizeWait(segments));
    }
 
    @Override

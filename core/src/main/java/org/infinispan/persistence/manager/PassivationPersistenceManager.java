@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -171,7 +172,7 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
          return super.size(predicate);
       }
       // We can't use optimized size and require iteration if we have entries
-      return CompletableFuture.completedFuture(-1L);
+      return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
    }
 
    public int pendingPassivations() {

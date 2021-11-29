@@ -38,7 +38,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -174,18 +173,20 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry) {
+   public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats,
+                                NettyTransport transport, ClusterCacheStats clusterCacheStats) {
       ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
-      int numStats = 9;
+      int numStats = 11;
       if (transport != null) {
          numStats += 2;
       }
-      ClusterCacheStats clusterCacheStats = null;
       if (HotRodVersion.HOTROD_24.isAtLeast(header.version)) {
-         clusterCacheStats = cacheRegistry.getComponent(ClusterCacheStats.class);
          if (clusterCacheStats != null) {
-            numStats += 7;
+            numStats += 9;
          }
+      } else {
+         // Ignore the cluster stats
+         clusterCacheStats = null;
       }
 
       ExtendedByteBuf.writeUnsignedInt(numStats, buf);
@@ -198,6 +199,8 @@ class Encoder2x implements VersionedEncoder {
       writePair(buf, "misses", String.valueOf(stats.getMisses()));
       writePair(buf, "removeHits", String.valueOf(stats.getRemoveHits()));
       writePair(buf, "removeMisses", String.valueOf(stats.getRemoveMisses()));
+      writePair(buf, "approximateEntries", String.valueOf(stats.getApproximateEntries()));
+      writePair(buf, "approximateEntriesUnique", String.valueOf(stats.getApproximateEntriesUnique()));
 
       if (transport != null) {
          writePair(buf, "totalBytesRead", String.valueOf(transport.getTotalBytesRead()));
@@ -212,6 +215,8 @@ class Encoder2x implements VersionedEncoder {
          writePair(buf, "globalMisses", String.valueOf(clusterCacheStats.getMisses()));
          writePair(buf, "globalRemoveHits", String.valueOf(clusterCacheStats.getRemoveHits()));
          writePair(buf, "globalRemoveMisses", String.valueOf(clusterCacheStats.getRemoveMisses()));
+         writePair(buf, "globalApproximateEntries", String.valueOf(clusterCacheStats.getApproximateEntries()));
+         writePair(buf, "globalApproximateEntriesUnique", String.valueOf(clusterCacheStats.getApproximateEntriesUnique()));
       }
       return buf;
    }

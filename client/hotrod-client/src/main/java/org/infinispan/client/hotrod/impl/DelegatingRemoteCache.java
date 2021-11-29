@@ -65,7 +65,12 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
       return delegate.serverStatistics();
    }
 
-   @Override
+    @Override
+    public CompletionStage<ServerStatistics> serverStatisticsAsync() {
+        return delegate.serverStatisticsAsync();
+    }
+
+    @Override
    public InternalRemoteCache<K, V> withFlags(Flag... flags) {
       InternalRemoteCache<K, V> newCache = delegate.withFlags(flags);
       if (newCache != delegate) {

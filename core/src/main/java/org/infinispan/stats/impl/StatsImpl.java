@@ -1,5 +1,8 @@
 package org.infinispan.stats.impl;
 
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME_NANOS;
 import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
@@ -41,9 +44,12 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class StatsImpl implements Stats {
 
-   private static final String[] ATTRIBUTES = {TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
-         OFF_HEAP_MEMORY_USED, DATA_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
-         AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, AVERAGE_READ_TIME_NANOS, AVERAGE_REMOVE_TIME_NANOS, AVERAGE_WRITE_TIME_NANOS, REQUIRED_MIN_NODES};
+   private static final String[] ATTRIBUTES = {
+         TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY, OFF_HEAP_MEMORY_USED,
+         DATA_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS,
+         AVERAGE_READ_TIME, AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME, AVERAGE_READ_TIME_NANOS,
+         AVERAGE_REMOVE_TIME_NANOS, AVERAGE_WRITE_TIME_NANOS, REQUIRED_MIN_NODES,
+         APPROXIMATE_ENTRIES, APPROXIMATE_ENTRIES_IN_MEMORY, APPROXIMATE_ENTRIES_UNIQUE};
 
    private final Map<String, Long> statsMap = new HashMap<>();
 
@@ -95,6 +101,9 @@ public class StatsImpl implements Stats {
       if (mgmtInterceptor != null && mgmtInterceptor.getStatisticsEnabled()) {
          statsMap.put(TIME_SINCE_RESET, mgmtInterceptor.getTimeSinceReset());
          statsMap.put(TIME_SINCE_START, mgmtInterceptor.getTimeSinceStart());
+         statsMap.put(APPROXIMATE_ENTRIES, mgmtInterceptor.getApproximateEntries());
+         statsMap.put(APPROXIMATE_ENTRIES_IN_MEMORY, mgmtInterceptor.getApproximateEntriesInMemory());
+         statsMap.put(APPROXIMATE_ENTRIES_UNIQUE, mgmtInterceptor.getApproximateEntriesUnique());
          statsMap.put(NUMBER_OF_ENTRIES, (long) mgmtInterceptor.getNumberOfEntries());
          statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, (long) mgmtInterceptor.getNumberOfEntriesInMemory());
          statsMap.put(DATA_MEMORY_USED, mgmtInterceptor.getDataMemoryUsed());
@@ -124,6 +133,9 @@ public class StatsImpl implements Stats {
 
       statsMap.put(TIME_SINCE_RESET, other.getTimeSinceReset());
       statsMap.put(TIME_SINCE_START, other.getTimeSinceStart());
+      statsMap.put(APPROXIMATE_ENTRIES, other.getApproximateEntries());
+      statsMap.put(APPROXIMATE_ENTRIES_IN_MEMORY, other.getApproximateEntriesInMemory());
+      statsMap.put(APPROXIMATE_ENTRIES_UNIQUE, other.getApproximateEntriesUnique());
       statsMap.put(NUMBER_OF_ENTRIES, (long) other.getCurrentNumberOfEntries());
       statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, (long) other.getCurrentNumberOfEntriesInMemory());
       statsMap.put(DATA_MEMORY_USED, other.getDataMemoryUsed());
@@ -157,6 +169,21 @@ public class StatsImpl implements Stats {
    @Override
    public long getTimeSinceReset() {
       return statsMap.get(TIME_SINCE_RESET);
+   }
+
+   @Override
+   public long getApproximateEntries() {
+      return statsMap.get(APPROXIMATE_ENTRIES);
+   }
+
+   @Override
+   public long getApproximateEntriesInMemory() {
+      return statsMap.get(APPROXIMATE_ENTRIES_IN_MEMORY);
+   }
+
+   @Override
+   public long getApproximateEntriesUnique() {
+      return statsMap.get(APPROXIMATE_ENTRIES_UNIQUE);
    }
 
    @Override
@@ -278,6 +305,9 @@ public class StatsImpl implements Stats {
       return Json.object()
             .set("time_since_start", getTimeSinceStart())
             .set("time_since_reset", getTimeSinceReset())
+            .set("approximate_entries", getApproximateEntries())
+            .set("approximate_entries_in_memory", getApproximateEntriesInMemory())
+            .set("approximate_entries_unique", getApproximateEntriesUnique())
             .set("current_number_of_entries", getCurrentNumberOfEntries())
             .set("current_number_of_entries_in_memory", getCurrentNumberOfEntriesInMemory())
             .set("total_number_of_entries", getTotalNumberOfEntries())

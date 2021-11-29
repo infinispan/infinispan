@@ -9,11 +9,11 @@ import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.Events.Event;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
+import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 
 import io.netty.buffer.ByteBuf;
@@ -49,7 +49,8 @@ public interface VersionedEncoder {
       return emptyResponse(header, server, channel, status);
    }
 
-   ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats, NettyTransport transport, ComponentRegistry cacheRegistry);
+   ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats,
+                         NettyTransport transport, ClusterCacheStats clusterCacheStats1);
 
    ByteBuf valueWithVersionResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] value, long version);
 

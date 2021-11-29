@@ -293,4 +293,9 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
          }
       }, "jdbcstore-size");
    }
+
+   @Override
+   public CompletionStage<Long> approximateSize(IntSet segments) {
+      return size(segments);
+   }
 }

@@ -193,6 +193,17 @@ public interface PersistenceManager extends Lifecycle {
       return loadFromAllStores(key, localInvocation, includeStores);
    }
 
+   /**
+    * Returns an approximate count of how many entries are persisted in the given segments.
+    *
+    * If no store can handle the request for the given mode, a value of <b>-1</b> is returned instead.
+    *
+    * @param predicate whether a loader can be used
+    * @param segments the segments to include
+    * @return size or -1 if approximate size couldn't be computed
+    */
+   CompletionStage<Long> approximateSize(Predicate<? super StoreConfiguration> predicate, IntSet segments);
+
    default CompletionStage<Long> size() {
        return size(AccessMode.BOTH);
    }

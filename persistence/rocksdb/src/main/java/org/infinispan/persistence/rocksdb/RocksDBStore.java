@@ -23,7 +23,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -909,11 +908,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
 
       @Override
-      CompletionStage<Long> approximateSize(IntSet segments) {
-         return size(segments);
-      }
-
-      @Override
       CompletionStage<Void> addSegments(IntSet segments) {
          // Do nothing
          return CompletableFutures.completedNull();
@@ -924,6 +918,17 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          // Unfortunately we have to clear all entries that map to each entry, which requires a full iteration and
          // segment check on every entry
          return clear(segments);
+      }
+
+      @Override
+      CompletionStage<Long> approximateSize(IntSet segments) {
+         return blockingManager.supplyBlocking(() -> {
+            try {
+               return Long.parseLong(db.getProperty(defaultColumnFamilyHandle, "rocksdb.estimate-num-keys"));
+            } catch (RocksDBException e) {
+               throw new PersistenceException(e);
+            }
+         }, "rocksdb-approximateSize");
       }
    }
 
@@ -1025,18 +1030,6 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          return handleIteratorFunction(function, segments);
       }
 
-      @Override
-      CompletionStage<Long> approximateSize(IntSet segments) {
-         return blockingManager.subscribeBlockingCollector(Flowable.fromIterable(segments), Collectors.summingLong(segment -> {
-            ColumnFamilyHandle handle = getHandle(segment);
-            try {
-               return Long.parseLong(db.getProperty(handle, "rocksdb.estimate-num-keys"));
-            } catch (RocksDBException e) {
-               throw new PersistenceException(e);
-            }
-         }), "rocksdb-approximateSize");
-      }
-
       <R> Publisher<R> handleIteratorFunction(Function<RocksIterator, Flowable<R>> function, IntSet segments) {
          // Short circuit if only a single segment - assumed to be invoked from persistence thread
          if (segments != null && segments.size() == 1) {
@@ -1094,6 +1087,22 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             }
             handle.close();
          }, "testng-removeSegments");
+      }
+
+      @Override
+      CompletionStage<Long> approximateSize(IntSet segments) {
+         return blockingManager.supplyBlocking(() -> {
+            long size = 0;
+            for (int segment : segments) {
+               ColumnFamilyHandle handle = getHandle(segment);
+               try {
+                  size += Long.parseLong(db.getProperty(handle, "rocksdb.estimate-num-keys"));
+               } catch (RocksDBException e) {
+                  throw new PersistenceException(e);
+               }
+            }
+            return size;
+         }, "rocksdb-approximateSize");
       }
    }
 
