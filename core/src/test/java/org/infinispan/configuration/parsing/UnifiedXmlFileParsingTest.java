@@ -116,6 +116,18 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_130(13, 0) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            Configuration local = getConfiguration(holder, "local");
+            PersistenceConfiguration persistenceConfiguration = local.persistence();
+            StoreConfiguration storeConfiguration = persistenceConfiguration.stores().get(0);
+            Properties storeProperties = storeConfiguration.properties();
+            String value = storeProperties.getProperty("test_property");
+            assertEquals("foo_bar", value);
+
+         }
+      },
       INFINISPAN_120(12, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {

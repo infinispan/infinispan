@@ -3,8 +3,6 @@ package org.infinispan.persistence.remote.configuration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Properties;
-
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,11 +13,10 @@ import org.testng.annotations.Test;
 public class ConfigurationTest {
 
    public void testRemoteCacheStoreConfigurationAdaptor() {
-      Properties p = new Properties();
-      p.setProperty("protocolVersion", "PROTOCOL_VERSION_27");
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
          .remoteCacheName("RemoteCache")
+         .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_27)
          .fetchPersistentState(true)
          .addServer()
             .host("one").port(12111)
@@ -30,8 +27,7 @@ public class ConfigurationTest {
             .minIdle(5)
             .exhaustedAction(ExhaustedAction.EXCEPTION)
             .minEvictableIdleTime(10_000)
-         .async().enable()
-         .withProperties(p);
+         .async().enable();
 
       Configuration configuration = b.build();
       RemoteStoreConfiguration store = (RemoteStoreConfiguration) configuration.persistence().stores().get(0);

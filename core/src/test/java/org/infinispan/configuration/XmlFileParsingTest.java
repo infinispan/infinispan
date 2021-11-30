@@ -17,6 +17,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
@@ -169,14 +170,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testDummyInMemoryStore() {
       String config = TestingUtil.wrapXMLWithoutSchema(
             "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "<persistence >\n" +
-               "<store class=\"org.infinispan.persistence.dummy.DummyInMemoryStore\" >\n" +
-                  "<property name=\"storeName\">myStore</property>" +
-               "</store >\n" +
-            "</persistence >\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
+                  "  <local-cache name=\"default\">\n" +
+                  "    <persistence >\n" +
+                  "      <dummy-store xmlns=\"urn:infinispan:config:store:dummy:" + Version.getSchemaVersion() + "\" store-name=\"myStore\" />\n" +
+                  "    </persistence >\n" +
+                  "  </local-cache>\n" +
+                  "</cache-container>"
       );
 
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);
@@ -212,14 +211,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testStoreWithNoConfigureBy() {
       String config = TestingUtil.wrapXMLWithoutSchema(
             "<cache-container default-cache=\"default\">" +
-            "   <local-cache name=\"default\">\n" +
-            "      <persistence >\n" +
-            "         <store class=\"org.infinispan.configuration.XmlFileParsingTest$GenericLoader\" preload=\"true\" >\n" +
-            "            <property name=\"fetchState\">true</property>" +
-            "         </store >\n" +
-            "      </persistence >\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
+                  "   <local-cache name=\"default\">\n" +
+                  "      <persistence >\n" +
+                  "         <store class=\"org.infinispan.configuration.XmlFileParsingTest$GenericLoader\" preload=\"true\" fetch-state=\"true\" />\n" +
+                  "      </persistence >\n" +
+                  "   </local-cache>\n" +
+                  "</cache-container>"
       );
 
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);

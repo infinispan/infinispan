@@ -1,11 +1,11 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_STATE;
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.READ_ONLY;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PURGE_ON_STARTUP;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.READ_ONLY;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHARED;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRANSACTIONAL;
@@ -23,7 +23,6 @@ import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 
@@ -100,7 +99,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       TypedProperties properties = attributes.attribute(PROPERTIES).get();
       properties.put(key, value);
       attributes.attribute(PROPERTIES).set(properties);
-      XmlConfigHelper.setAttributes(attributes, properties, false, false);
       return self();
    }
 
@@ -109,8 +107,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S withProperties(Properties props) {
-      XmlConfigHelper.showUnrecognizedAttributes(XmlConfigHelper.setAttributes(attributes, props, false, false));
-      attributes.attribute(PROPERTIES).set(new TypedProperties(props));
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return self();
    }
 
