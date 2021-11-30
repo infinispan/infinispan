@@ -139,14 +139,21 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
    }
 
    protected void assertNoDataLeak(String cacheName) {
-
+      // First, make sure the IRAC map is empty in all nodes before triggering a tombstone cleanup round
       for (TestSite site : sites) {
-         // note: the cleanup is done asynchronously. trigger the process in all nodes
-         for (Cache<?,?> cache : site.getCaches(cacheName)) {
+         for (Cache<?, ?> cache : site.getCaches(cacheName)) {
             eventually("Updated keys map is not empty!", () -> isIracManagerEmpty(cache));
+         }
+      }
+      // Second, trigger a tombstone cleanup round, it happens asynchronously in the background
+      for (TestSite site : sites) {
+         for (Cache<?, ?> cache : site.getCaches(cacheName)) {
             iracTombstoneManager(cache).startCleanupTombstone();
          }
-         for (Cache<?,?> cache : site.getCaches(cacheName)) {
+      }
+      // Third, check if the tombstones are removed.
+      for (TestSite site : sites) {
+         for (Cache<?, ?> cache : site.getCaches(cacheName)) {
             eventually("Tombstone map is not empty!", iracTombstoneManager(cache)::isEmpty);
          }
       }
