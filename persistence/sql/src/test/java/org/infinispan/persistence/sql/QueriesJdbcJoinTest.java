@@ -106,12 +106,12 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
          builder.schemaJdbcConfigurationBuilder().embeddedKey(true);
          if (idJoin) {
             builder.queriesJdbcConfigurationBuilder()
-                  .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 ON t1.address = t2.id WHERE t1.name = :name")
-                  .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 ON t1.address = t2.id");
+                  .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 ON t1.address = t2.id WHERE t1.name = :name")
+                  .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 ON t1.address = t2.id");
          } else {
             builder.queriesJdbcConfigurationBuilder()
-                  .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 WHERE t1.name = :name AND t2.name = :name")
-                  .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 WHERE t1.name = t2.name");
+                  .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 WHERE t1.name = :name AND t2.name = :name")
+                  .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 WHERE t1.name = t2.name");
          }
       }
    }
@@ -150,6 +150,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
                   "picture VARBINARY(255), " +
                   "sex VARCHAR(255), " +
                   "birthdate TIMESTAMP, " +
+                  "accepted_tos boolean, " +
                   "notused VARCHAR(255), " +
                   "PRIMARY KEY (NAME))";
             stmt.execute(tableCreation);
@@ -233,14 +234,14 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
       address.setCity("London");
       address.setStreet("Cool Street");
       address.setZip(1321);
-      return new Person(name, address, new byte[]{0x1, 0x12}, Sex.MALE, new java.util.Date(1629495308));
+      return new Person(name, address, new byte[]{0x1, 0x12}, Sex.MALE, new java.util.Date(1629495308), true);
    }
 
    private String insertTable1Statement(boolean idJoin, boolean namedParams) {
       return "INSERT INTO " + TABLE1_NAME +
-            " (name, " + (idJoin ? "address, " : "") + " picture, sex, birthdate) " +
-            (namedParams ? "VALUES (:name" + (idJoin ? ", :address" : "") + ", :picture, :sex, :birthdate)" :
-                  "VALUES (?, ?, ?, ?" + (idJoin ? ", ?)" : ")"));
+            " (name, " + (idJoin ? "address, " : "") + " picture, sex, birthdate, accepted_tos) " +
+            (namedParams ? "VALUES (:name" + (idJoin ? ", :address" : "") + ", :picture, :sex, :birthdate, :accepted_tos)" :
+                  "VALUES (?, ?, ?, ?, ?" + (idJoin ? ", ?)" : ")"));
    }
 
    private String insertTable2Statement(boolean idJoin, boolean namedParams) {
@@ -270,7 +271,8 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
             }
             ps.setBytes(offset++, person.getPicture());
             ps.setString(offset++, person.getSex().toString());
-            ps.setTimestamp(offset, new Timestamp(person.getBirthDate().getTime()));
+            ps.setTimestamp(offset++, new Timestamp(person.getBirthDate().getTime()));
+            ps.setBoolean(offset, person.isAcceptedToS());
 
             ps.addBatch();
          }
