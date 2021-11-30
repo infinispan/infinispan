@@ -138,6 +138,10 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeAttribute(String name, String value) {
+      writeAttribute(name, value, true);
+   }
+
+   private void writeAttribute(String name, String value, boolean rename) {
       try {
          openTag = false;
          if (!attributes) {
@@ -150,7 +154,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
             tab();
          }
          array = false;
-         writer.write(naming.convert(name));
+         writer.write(rename ? naming.convert(name) : name);
          writer.write(": \"");
          writer.write(value);
          writer.write('"');
@@ -253,7 +257,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeMapItem(String element, String name, String key, String value) {
-      writeAttribute(key, value);
+      writeAttribute(key, value, false);
    }
 
    @Override
