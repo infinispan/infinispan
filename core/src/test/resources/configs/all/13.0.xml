@@ -142,6 +142,7 @@
          <persistence passivation="false" availability-interval="2000" connection-attempts="5" connection-interval="100">
             <file-store path="path" shared="false" fetch-state="false" preload="true" purge="false">
                <write-behind modification-queue-size="2048" fail-silently="true"/>
+               <property name="test_property">foo_bar</property>
             </file-store>
          </persistence>
          <memory>

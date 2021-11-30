@@ -1,16 +1,10 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.KEY2STRING_MAPPER;
-import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.PROPERTIES;
-
-import java.util.Map;
-import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
@@ -71,15 +65,6 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       super.validate(globalConfig);
-   }
-
-   @Override
-   public JdbcStringBasedStoreConfigurationBuilder withProperties(Properties props) {
-      Map<Object, Object> unrecognized = XmlConfigHelper.setAttributes(attributes, props, false, false);
-      unrecognized = XmlConfigHelper.setAttributes(table.attributes, unrecognized, false, false);
-      XmlConfigHelper.showUnrecognizedAttributes(unrecognized);
-      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
-      return this;
    }
 
    @Override

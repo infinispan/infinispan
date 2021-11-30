@@ -225,9 +225,13 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
 
    @Override
    public void writeAttribute(String name, String value) {
+      writeAttribute(name, value, true);
+   }
+
+   private void writeAttribute(String name, String value, boolean rename) {
       try {
          writer.write(' ');
-         writer.write(naming.convert(name));
+         writer.write(rename ? naming.convert(name) : name);
          writer.write("=\"");
          writer.write(value.replaceAll("&", "&amp;"));
          writer.write('"');
@@ -297,7 +301,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    @Override
    public void writeMapItem(String element, String name, String key, String value) {
       writeStartElement(element);
-      writeAttribute(name, key);
+      writeAttribute(name, key, false);
       writeCharacters(value);
       writeEndElement();
    }
@@ -305,7 +309,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    @Override
    public void writeMapItem(String element, String name, String key) {
       writeStartElement(element);
-      writeAttribute(name, key);
+      writeAttribute(name, key, false);
    }
 
    @Override
