@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.commons.util.Util;
@@ -1726,16 +1727,21 @@ public class CacheParser implements ConfigurationParser {
    public static void parseStoreProperty(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
       String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       String value = reader.getElementText();
-      storeBuilder.addProperty(reader.getNamingStrategy().convert(property), value);
+      storeBuilder.addProperty(property, value);
    }
 
    public static void parseStoreProperties(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
-      Properties properties = new Properties();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         properties.setProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
+         storeBuilder.addProperty(reader.getAttributeName(i, NamingStrategy.IDENTITY), reader.getAttributeValue(i));
       }
-      storeBuilder.withProperties(properties);
-      ParseUtils.requireNoContent(reader);
+
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         if (element != Element.PROPERTY) {
+            throw ParseUtils.unexpectedElement(reader, element);
+         }
+         parseStoreProperty(reader, storeBuilder);
+      }
    }
 
    private void parseCustomStore(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

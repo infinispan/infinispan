@@ -130,6 +130,9 @@ public interface ConfigurationWriter extends AutoCloseable {
     *    <li><strong>JSON</strong>: <tt>{ key: value }</tt></li>
     *    <li><strong>YAML</strong>: <tt>key: value</tt></li>
     * </ul>
+    * <p>
+    * The key name is not translated by the underlying serialization implementation and is used as is
+    *
     * @param element Used only by XML
     * @param name Used only by XML
     * @param key
@@ -149,6 +152,9 @@ public interface ConfigurationWriter extends AutoCloseable {
     *    <li><strong>JSON</strong>: <tt>{ key: { ... } }</tt></li>
     *    <li><strong>YAML</strong>: <tt>key:</tt></li>
     * </ul>
+    * <p>
+    * The key name is not translated by the underlying serialization implementation and is used as is
+    *
     * @param element Used only by XML
     * @param name Used only by XML
     * @param key
