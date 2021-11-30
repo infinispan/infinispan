@@ -1,13 +1,8 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.ClusterLoaderConfiguration.REMOTE_CALL_TIMEOUT;
 
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-
-import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.parsing.XmlConfigHelper;
 
 /**
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
@@ -31,13 +26,6 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
 
    public ClusterLoaderConfigurationBuilder remoteCallTimeout(long remoteCallTimeout, TimeUnit unit) {
       remoteCallTimeout(unit.toMillis(remoteCallTimeout));
-      return this;
-   }
-
-   @Override
-   public ClusterLoaderConfigurationBuilder withProperties(Properties p) {
-      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(p));
-      XmlConfigHelper.setAttributes(attributes, p, false, true);
       return this;
    }
 
