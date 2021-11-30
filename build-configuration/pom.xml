@@ -120,7 +120,8 @@
       <appserver.version>24.0.1.Final</appserver.version>
 
       <!-- Java source/target version -->
-      <version.java>11</version.java>
+      <maven.min.version>3.2.1</maven.min.version>
+      <jdk.min.version>11</jdk.min.version>
 
       <!-- Dependency versions -->
       <version.ant>1.10.7</version.ant>
