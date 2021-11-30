@@ -17,6 +17,7 @@ public class Person implements Serializable, JsonSerialization {
    byte[] picture;
    Sex sex;
    Date birthDate;
+   boolean acceptedToS;
 
    public Person() {
       // Needed for serialization
@@ -24,17 +25,18 @@ public class Person implements Serializable, JsonSerialization {
    }
 
    public Person(String name) {
-      this(name, null, null, null, null);
+      this(name, null, null, null, null, false);
    }
 
    @ProtoFactory
-   public Person(String name, Address address, byte[] picture, Sex sex, Date birthDate) {
+   public Person(String name, Address address, byte[] picture, Sex sex, Date birthDate, boolean acceptedToS) {
       this.name = name;
       this.address = address;
       this.picture = picture;
       this.sex = sex;
       // This is only required until we can remove the default 0
       this.birthDate = birthDate == null ? new Date(0) : birthDate;
+      this.acceptedToS = acceptedToS;
    }
 
    @ProtoField(1)
@@ -82,6 +84,15 @@ public class Person implements Serializable, JsonSerialization {
       this.birthDate = birthDate;
    }
 
+   @ProtoField(value = 6, defaultValue = "false", name = "accepted_tos")
+   public boolean isAcceptedToS() {
+      return acceptedToS;
+   }
+
+   public void setAcceptedToS(boolean acceptedToS) {
+      this.acceptedToS = acceptedToS;
+   }
+
    @Override
    public String toString() {
       return "Person{" +
@@ -90,6 +101,7 @@ public class Person implements Serializable, JsonSerialization {
             ", picture=" + Util.toHexString(picture) +
             ", sex=" + sex +
             ", birthDate=" + birthDate +
+            ", acceptedToS=" + acceptedToS +
             '}';
    }
 
@@ -105,6 +117,7 @@ public class Person implements Serializable, JsonSerialization {
       if (picture != null ? !Arrays.equals(picture, person.picture) : person.picture != null) return false;
       if (sex != null ? !sex.equals(person.sex) : person.sex != null) return false;
       if (birthDate != null ? !birthDate.equals(person.birthDate) : person.birthDate != null) return false;
+      if (acceptedToS != person.acceptedToS) return false;
 
       return true;
    }
@@ -117,6 +130,7 @@ public class Person implements Serializable, JsonSerialization {
       result = 29 * result + (picture != null ? Arrays.hashCode(picture) : 0);
       result = 29 * result + (sex != null ? sex.hashCode() : 0);
       result = 29 * result + (birthDate != null ? birthDate.hashCode() : 0);
+      result = 29 * result + Boolean.hashCode(acceptedToS);
       return result;
    }
 
@@ -127,6 +141,7 @@ public class Person implements Serializable, JsonSerialization {
             .set("address", Json.make(address))
             .set("picture", picture)
             .set("sex", sex)
-            .set("birthDate", birthDate == null ? 0 : birthDate.getTime());
+            .set("birthDate", birthDate == null ? 0 : birthDate.getTime())
+            .set("acceptedToS", acceptedToS);
    }
 }

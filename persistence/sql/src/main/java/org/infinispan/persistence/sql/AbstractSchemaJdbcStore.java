@@ -40,6 +40,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.protostream.descriptors.Type;
 
 public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbcConfiguration> extends BaseJdbcStore<K, V, C> {
    @Override
@@ -106,6 +107,9 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          if (typeName.contains("BIT") || typeName.contains("BINARY")) {
             return Types.VARBINARY;
          }
+      } else if (typeName.toUpperCase().startsWith("BOOL")) {
+         // Some databases store as int32 or something similar but have the typename as BOOLEAN or some derivation
+         return Types.BOOLEAN;
       }
       return sqlType;
    }
@@ -278,16 +282,29 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          if (parameter.primaryIdentifier && !key && !config.getSchemaJdbcConfiguration().embeddedKey()) {
             throw log.primaryKeyPresentButNotEmbedded(parameter.name, fieldDescriptor.getTypeName());
          }
+
+         Function<Json, Json> retrievalFunction;
+         BiConsumer<Json, Object> valueConsumer;
+
+         // Oracle doesn't have a boolean type, so use a number of 0 or 1 instead
+         if (parameter.type == ProtostreamFieldType.INT_32 && fieldDescriptor.getType() == Type.BOOL) {
+            retrievalFunction = json -> Json.factory().number(json.at(name).asBoolean() ? 1 : 0);
+            valueConsumer = (json, o) -> json.set(name, ((Integer) o) == 1);
+         } else {
+            retrievalFunction = json -> json.at(name);
+            valueConsumer = (json, o) -> json.set(name, o);
+         }
+
          if (nestedMessageNames == null) {
-            updateUnwrap(parameter, key, json -> json.at(name));
-            parameter.jsonUpdateConsumer = (json, o) -> json.set(name, o);
+            updateUnwrap(parameter, key, retrievalFunction);
+            parameter.jsonUpdateConsumer = valueConsumer;
          } else {
             updateUnwrap(parameter, key, json -> {
                for (String nestedName : nestedMessageNames) {
                   json = json.at(nestedName);
                   if (json == null) return null;
                }
-               return json.at(name);
+               return retrievalFunction.apply(json);
             });
             parameter.jsonUpdateConsumer = ((json, o) -> {
                Json nestedJSon = json;
@@ -299,7 +316,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
                   }
                   json = nestedJSon;
                }
-               nestedJSon.set(name, o);
+               valueConsumer.accept(nestedJSon, o);
             });
          }
       }
@@ -343,6 +360,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
                return FLOAT;
             case Types.DOUBLE:
                return DOUBLE;
+            case Types.BIT:
             case Types.BOOLEAN:
                return BOOL;
             case Types.VARCHAR:

@@ -102,7 +102,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    // DB table is denormalized when read
    @Override
    protected Person createEmptyPerson(String name) {
-      return new Person(name, new Address(), null, null, null);
+      return new Person(name, new Address(), null, null, null, false);
    }
 
    @Override
@@ -341,6 +341,18 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       }
    }
 
+   String booleanType() {
+      switch (DB_TYPE) {
+         case SQL_SERVER:
+            return "BIT";
+         case ORACLE:
+         case ORACLE_XE:
+            return "NUMBER(1, 0)";
+         default:
+            return "BOOLEAN";
+      }
+   }
+
    String dateTimeType() {
       switch (DB_TYPE) {
          case SYBASE:
@@ -367,6 +379,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "city VARCHAR(255), " +
                "zip INT, " +
                "picture " + binaryType() + ", " +
+               "accepted_tos " + booleanType() + ", " +
                "sex VARCHAR(255), " +
                "birthdate " + dateTimeType() + ", " +
                "PRIMARY KEY (keycolumn))";
