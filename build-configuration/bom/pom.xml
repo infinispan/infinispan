@@ -73,9 +73,6 @@
     </distributionManagement>
 
     <properties>
-        <!-- Java source/target version -->
-        <version.java>1.8</version.java>
-
         <versionx.org.infinispan.infinispan-console>${version.console}</versionx.org.infinispan.infinispan-console>
     </properties>
 
