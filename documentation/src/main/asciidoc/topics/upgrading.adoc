@@ -12,6 +12,34 @@ To disable exceptions for async backup operations, set `failure-policy="IGNORE"`
 <backup site="NYC" strategy="ASYNC" failure-policy="IGNORE" />
 ----
 
+== Store properties
+
+Store provided properties are no longer allowed to override store explicit configuration.
+
+For example the below configuration would set the read only configuration of the store to true.
+
+----
+<persistence>
+  <file-store>
+    <index path="testCache/index" />
+    <data path="testCache/data" />
+    <property name="readOnly">true</property>
+  </file-store>
+</persistence>
+----
+
+Now the readOnly property is only provided to the store itself and does not affect the store explicit configuration.
+The same configuration should be changed to the following instead.
+
+----
+<persistence>
+  <file-store read-only="true">
+    <index path="testCache/index" />
+    <data path="testCache/data" />
+  </file-store>
+</persistence>
+----
+
 = Upgrading from 12.1 to 13.0
 
 == Search
