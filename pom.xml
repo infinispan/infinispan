@@ -2124,7 +2124,7 @@
                <version>3.13.0</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
-                  <targetJdk>${version.java}</targetJdk>
+                  <targetJdk>${jdk.min.version}</targetJdk>
                   <linkXRef>false</linkXRef>
                   <sourceEncoding>utf-8</sourceEncoding>
                   <printFailingErrors>true</printFailingErrors>
@@ -2310,29 +2310,6 @@
          </plugins>
       </pluginManagement>
       <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <version>3.0.0-M1</version>
-            <executions>
-               <execution>
-                  <id>enforce-java</id>
-                  <goals>
-                     <goal>enforce</goal>
-                  </goals>
-                  <configuration>
-                     <rules>
-                        <requireJavaVersion>
-                           <version>[${version.java},)</version>
-                        </requireJavaVersion>
-                        <requireMavenVersion>
-                           <version>[3.2.1,)</version>
-                        </requireMavenVersion>
-                     </rules>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
