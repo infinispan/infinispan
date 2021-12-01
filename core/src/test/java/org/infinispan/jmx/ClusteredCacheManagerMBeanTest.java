@@ -11,6 +11,8 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.ExecutorService;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -19,7 +21,6 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -100,10 +101,8 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       String javaVersion = System.getProperty("java.version");
       assertEquals(javaVersion.startsWith("1.8.") ? 0L : 10L, server.getAttribute(objectName, "KeepAliveTime"));
 
-      LazyInitializingBlockingTaskAwareExecutorService remoteExecutor =
-         extractGlobalComponent(manager(0), LazyInitializingBlockingTaskAwareExecutorService.class,
-                                NON_BLOCKING_EXECUTOR);
-      remoteExecutor.submit(() -> {});
+      ExecutorService executor = extractGlobalComponent(manager(0), ExecutorService.class, NON_BLOCKING_EXECUTOR);
+      executor.submit(() -> {});
 
       objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", NON_BLOCKING_EXECUTOR);
       assertTrue(server.isRegistered(objectName));
