@@ -13,6 +13,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.concurrent.ScheduledExecutorService;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -25,7 +26,6 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.executors.LazyInitializingScheduledExecutorService;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
@@ -157,11 +157,9 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testExecutorMBeans() throws Exception {
-      LazyInitializingScheduledExecutorService timeoutExecutor =
-            extractGlobalComponent(cacheManager, LazyInitializingScheduledExecutorService.class,
-                  TIMEOUT_SCHEDULE_EXECUTOR);
-      timeoutExecutor.submit(() -> {
-      });
+      ScheduledExecutorService timeoutExecutor =
+            extractGlobalComponent(cacheManager, ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
+      timeoutExecutor.submit(() -> {});
 
       ObjectName objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", TIMEOUT_SCHEDULE_EXECUTOR);
       assertTrue(server.isRegistered(objectName));
