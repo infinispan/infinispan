@@ -78,8 +78,8 @@ public class NonRecursiveEventLoopGroup extends DelegatingEventLoopGroup {
    @Stop
    public void shutdownGracefullyAndWait() {
       try {
-         // Use the same timeouts as in NettyTransport
-         shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS).await();
+         // Use the same timeouts as in NettyTransport, and limit the wait time in case there's a bug in the executor
+         shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS).await(2000, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
          log.debug("Interrupted while waiting for event loop group to shut down");
          Thread.currentThread().interrupt();
