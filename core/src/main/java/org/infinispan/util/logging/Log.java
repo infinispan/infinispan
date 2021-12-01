@@ -2235,4 +2235,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The backup '%s' configuration 'failure-policy-class' is not compatible with 'failure-policy=%s'. Use 'failure-policy=\"CUSTOM\"'", id = 657)
    CacheConfigurationException failurePolicyClassNotCompatibleWith(String remoteSite, BackupFailurePolicy policy);
+
+   @Message(value = "Initial state transfer timed out for cache %s on %s", id = 658)
+   TimeoutException initialStateTransferTimeout(String cacheName, Address localAddress);
 }
