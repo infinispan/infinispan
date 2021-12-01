@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -90,7 +90,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject IracManager iracManager;
    @Inject IracVersionGenerator iracVersionGenerator;
 
-   private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
+   private final CompletableFuture<Void> initialStateTransferComplete = new CompletableFuture<>();
 
    @Start(priority = 60)
    @Override
@@ -221,12 +221,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    private void completeInitialTransferIfNeeded(CacheTopology newCacheTopology, CacheTopology.Phase phase) {
-      if (initialStateTransferComplete.getCount() > 0) {
+      if (!initialStateTransferComplete.isDone()) {
          assert distributionManager.getCacheTopology().getTopologyId() == newCacheTopology.getTopologyId();
          boolean isJoined = phase == CacheTopology.Phase.NO_REBALANCE &&
                             newCacheTopology.getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
          if (isJoined) {
-            initialStateTransferComplete.countDown();
+            initialStateTransferComplete.complete(null);
             log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
          }
       }
@@ -238,16 +238,15 @@ public class StateTransferManagerImpl implements StateTransferManager {
          try {
             if (!localTopologyManager.isCacheRebalancingEnabled(cacheName) ||
                 partitionHandlingManager.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
-               initialStateTransferComplete.countDown();
+               initialStateTransferComplete.complete(null);
             }
             if (log.isTraceEnabled())
                log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName,
                           rpcManager.getAddress());
-            boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
-            if (!success) {
-               throw new CacheException(String.format("Initial state transfer timed out for cache %s on %s",
-                                                      cacheName, rpcManager.getAddress()));
-            }
+            initialStateTransferComplete.get(configuration.clustering().stateTransfer().timeout(),
+                                             TimeUnit.MILLISECONDS);
+         } catch (TimeoutException e) {
+            throw log.initialStateTransferTimeout(cacheName, rpcManager.getAddress());
          } catch (CacheException e) {
             throw e;
          } catch (Exception e) {
@@ -262,23 +261,23 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (log.isTraceEnabled()) {
          log.tracef("Shutting down StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
-      initialStateTransferComplete.countDown();
+      initialStateTransferComplete.complete(null);
       localTopologyManager.leave(cacheName, configuration.clustering().remoteTimeout());
    }
 
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.", displayName = "Is join completed?", dataType = DataType.TRAIT)
    @Override
    public boolean isJoinComplete() {
-      return distributionManager.getCacheTopology() != null; // TODO [anistor] this does not mean we have received a topology update or a rebalance yet
+      return initialStateTransferComplete.isDone();
    }
 
-   @ManagedAttribute(description = "Retrieves the rebalancing status for this cache. Possible values are PENDING, SUSPENDED, IN_PROGRESS, BALANCED", displayName = "Rebalancing progress", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Retrieves the rebalancing status for this cache. Possible values are PENDING, SUSPENDED, IN_PROGRESS, COMPLETE", displayName = "Rebalancing progress", dataType = DataType.TRAIT)
    @Override
    public String getRebalancingStatus() throws Exception {
       return localTopologyManager.getRebalancingStatus(cacheName).toString();
    }
 
-   @ManagedAttribute(description = "Checks whether there is a pending inbound state transfer on this cluster member.", displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Checks whether the local node is receiving state from other nodes", displayName = "Is state transfer in progress?", dataType = DataType.TRAIT)
    @Override
    public boolean isStateTransferInProgress() {
       return stateConsumer.isStateTransferInProgress();
