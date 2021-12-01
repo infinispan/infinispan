@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,6 +37,8 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -422,21 +425,44 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
    public void testPreload() throws Exception {
       assertIsEmpty();
 
-      store.write(marshalledEntry("k1", "v1"));
-      store.write(marshalledEntry("k2", "v2"));
-      store.write(marshalledEntry("k3", "v3"));
-
-      Set<MarshallableEntry<Object, Object>> set = TestingUtil.allEntries(store, segments);
-
-      assertSize(set, 3);
-      Set<Object> expected = Stream.of("k1", "k2", "k3")
-            .map(this::keyToStorage)
-            .collect(Collectors.toSet());
-      for (MarshallableEntry<?, ?> se : set) {
-         assertTrue(expected.remove(se.getKey()));
+      int keyCount = 10;
+      for (int i = 0; i < keyCount; i++) {
+         store.write(marshalledEntry("k" + i, "v" + i));
       }
 
-      assertEmpty(expected, true);
+      List<Object> preloadedKeys =
+            Flowable.fromPublisher(store.publishEntries(segments, null, true))
+                    .take(keyCount / 2)
+                    .map(MarshallableEntry::getKey)
+                    .collect(Collectors.toList())
+                    .blockingGet();
+      assertSize(preloadedKeys, keyCount / 2);
+   }
+
+   public void testPreloadExpired() throws Exception {
+      assertIsEmpty();
+
+      long startTime = timeService.wallClockTime();
+      int keyCount = 10;
+      for (int i = 0; i < keyCount; i++) {
+         store.write(marshalledEntry("ke" + i, "v" + i, 1000, startTime));
+      }
+      for (int i = 0; i < keyCount; i++) {
+         store.write(marshalledEntry("ki" + i, "v" + i));
+      }
+
+      store.stop();
+      startStore(store);
+
+      timeService.advance(10_000);
+
+      List<Object> preloadedKeys =
+            Flowable.fromPublisher(store.publishEntries(segments, null, true))
+                    .take(keyCount * 3 / 2)
+                    .map(MarshallableEntry::getKey)
+                    .collect(Collectors.toList())
+                    .blockingGet();
+      assertSize(preloadedKeys, keyCount);
    }
 
    public void testStoreAndRemove() throws PersistenceException {
@@ -713,6 +739,13 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       Object transformedKey = keyToStorage(key);
       Object transformedValue = valueToStorage(value);
       return MarshalledEntryUtil.create(transformedKey, wrap(transformedKey, transformedValue), getMarshaller());
+   }
+
+   private MarshallableEntry<Object, Object> marshalledEntry(String key, String value, long lifespan, long created) {
+      Object transformedKey = keyToStorage(key);
+      Object transformedValue = valueToStorage(value);
+      Metadata metadata = new EmbeddedMetadata.Builder().lifespan(lifespan, TimeUnit.MILLISECONDS).build();
+      return MarshalledEntryUtil.create(transformedKey, wrap(transformedKey, transformedValue), metadata, created, -1, getMarshaller());
    }
 
    protected final MarshallableEntry<Object, Object> marshalledEntry(InternalCacheEntry<Object, Object> entry) {

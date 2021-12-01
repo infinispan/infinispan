@@ -804,6 +804,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             return function.apply(iterator);
          }, iterator -> {
             if (iterator != null) {
+               if (log.isTraceEnabled()) log.tracef("Close iterator %s", iterator);
                iterator.close();
             }
             readOptions.close();
@@ -895,7 +896,9 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
 
       protected RocksIterator wrapIterator(RocksDB db, ReadOptions readOptions, int segment) {
-         return db.newIterator(defaultColumnFamilyHandle, readOptions);
+         RocksIterator rocksIterator = db.newIterator(defaultColumnFamilyHandle, readOptions);
+         if (log.isTraceEnabled()) log.tracef("New iterator %s", rocksIterator);
+         return rocksIterator;
       }
 
       @Override
