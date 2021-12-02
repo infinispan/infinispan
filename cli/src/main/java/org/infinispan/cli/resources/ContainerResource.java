@@ -2,6 +2,7 @@ package org.infinispan.cli.resources;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.infinispan.cli.logging.Messages;
 
@@ -42,5 +43,9 @@ public class ContainerResource extends AbstractResource {
    @Override
    public String describe() throws IOException {
       return getConnection().describeContainer(name);
+   }
+
+   public static Optional<String> findContainerName(Resource resource) {
+      return resource.optionalFindAncestor(ContainerResource.class).map(AbstractResource::getName);
    }
 }

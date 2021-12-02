@@ -37,10 +37,13 @@ SYNOPSIS
 
 OPTIONS
 -------
-*--cache*='CACHE_NAME'::
+*-c, --cache*='CACHE_NAME'::
 Specifies a cache.
 
-*--site*='SITE_NAME'::
+*-a, --all-caches*::
+Applies the command to all caches.
+
+*-s, --site*='SITE_NAME'::
 Specifies a backup location.
 
 
@@ -55,6 +58,9 @@ EXAMPLES
 --------
 `site status --cache=mycache` +
 Returns the status of all backup locations for `mycache`.
+
+`site status --all-caches` +
+Returns the status of each backup location for all caches with backups.
 
 `site status --cache=mycache --site=NYC` +
 Returns the status of `NYC` for `mycache`.

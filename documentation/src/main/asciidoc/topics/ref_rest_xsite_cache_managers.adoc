@@ -30,6 +30,13 @@ include::json/xsite_backup_status.json[]
 | Some nodes in the local cluster have a cross-site view with the backup location, other nodes in the local cluster do not have a cross-site view. The response indicates status for each node.
 |===
 
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{site}
+----
+
+Returns the status for a single backup location.
+
 [id='rest_v2_cache_manager_take_offline']
 = Taking backup locations offline
 Take backup locations offline with the `?action=take-offline` parameter.
