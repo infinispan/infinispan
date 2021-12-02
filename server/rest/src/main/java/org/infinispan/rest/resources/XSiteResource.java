@@ -123,6 +123,9 @@ public class XSiteResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/")
                .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL STATUS").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::globalStatus)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}")
+               .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL SITE STATUS").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::globalStatus)
             .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online")
                .permission(AuthorizationPermission.ADMIN).name("XSITE BRING ALL ONLINE").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::bringAllOnline)
@@ -163,6 +166,13 @@ public class XSiteResource implements ResourceHandler {
       return supplyAsync(() -> {
          Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) globalXSiteAdmin::globalStatus);
          Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, GlobalStatus::fromSiteStatus));
+         String site = request.variables().get("site");
+         if (site != null) {
+            GlobalStatus siteStatus = collect.get(site);
+            return siteStatus == null ?
+                  responseBuilder.status(NOT_FOUND).build() :
+                  addEntityAsJson(Json.make(siteStatus), responseBuilder).build();
+         }
          return addEntityAsJson(Json.make(collect), responseBuilder).build();
       }, invocationHelper.getExecutor());
    }
