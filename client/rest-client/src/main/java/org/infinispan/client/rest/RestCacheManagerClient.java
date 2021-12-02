@@ -40,6 +40,8 @@ public interface RestCacheManagerClient {
 
    CompletionStage<RestResponse> backupStatuses();
 
+   CompletionStage<RestResponse> backupStatus(String site);
+
    CompletionStage<RestResponse> bringBackupOnline(String backup);
 
    CompletionStage<RestResponse> takeOffline(String backup);

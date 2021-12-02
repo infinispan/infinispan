@@ -1,8 +1,11 @@
 package org.infinispan.cli.commands.rest;
 
+import static org.infinispan.cli.logging.Messages.MSG;
+
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -10,6 +13,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Option;
+import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CacheAwareCommand;
 import org.infinispan.cli.commands.CliCommand;
@@ -18,9 +22,11 @@ import org.infinispan.cli.completers.SiteCompleter;
 import org.infinispan.cli.completers.XSiteStateTransferModeCompleter;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
-import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.resources.CacheResource;
+import org.infinispan.cli.resources.ContainerResource;
 import org.infinispan.cli.resources.Resource;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
@@ -51,6 +57,8 @@ import org.kohsuke.MetaInfServices;
 )
 public class Site extends CliCommand {
 
+   private static final Supplier<RequiredOptionException> MISSING_CACHE_OR_GLOBAL = () -> MSG.requiresOneOf("cache", "all-caches");
+
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -67,11 +75,14 @@ public class Site extends CliCommand {
    }
 
    @CommandDefinition(name = "status", description = "Shows site status", activator = ConnectionActivator.class)
-   public static class Status extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class Status extends RestCliCommand implements CacheAwareCommand {
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(completer = SiteCompleter.class)
+      @Option(shortName = 'a', name = "all-caches", hasValue = false, description = "Invoke operation in all caches.")
+      boolean allCaches;
+
+      @Option(shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -83,17 +94,31 @@ public class Site extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return site == null ? client.cache(cache).xsiteBackups() : client.cache(cache).backupStatus(site);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
+         checkMutualExclusiveCacheAndGlobal(cache, allCaches);
+         if (allCaches) {
+            RestCacheManagerClient cm = restCacheManagerClient(client, resource);
+            return site == null ? cm.backupStatuses() : cm.backupStatus(site);
+         }
+         RestCacheClient c = restCacheClient(client, resource, cache);
+         return site == null ? c.xsiteBackups() : c.backupStatus(site);
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
       }
    }
 
    @CommandDefinition(name = "bring-online", description = "Brings a site online", activator = ConnectionActivator.class)
-   public static class BringOnline extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class BringOnline extends RestCliCommand implements CacheAwareCommand {
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(required = true, completer = SiteCompleter.class)
+      @Option(shortName = 'a', name = "all-caches", hasValue = false, description = "Invoke operation in all caches.")
+      boolean allCaches;
+
+      @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -105,17 +130,28 @@ public class Site extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.cache(cache).bringSiteOnline(site);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
+         checkMutualExclusiveCacheAndGlobal(cache, allCaches);
+         return allCaches ?
+               restCacheManagerClient(client, resource).bringBackupOnline(site) :
+               restCacheClient(client, resource, cache).bringSiteOnline(site);
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
       }
    }
 
    @CommandDefinition(name = "take-offline", description = "Takes a site offline", activator = ConnectionActivator.class)
-   public static class TakeOffline extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class TakeOffline extends RestCliCommand implements CacheAwareCommand {
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(required = true, completer = SiteCompleter.class)
+      @Option(shortName = 'a', name = "all-caches", hasValue = false, description = "Invoke operation in all caches.")
+      boolean allCaches;
+
+      @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -127,17 +163,28 @@ public class Site extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.cache(cache).takeSiteOffline(site);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
+         checkMutualExclusiveCacheAndGlobal(cache, allCaches);
+         return allCaches ?
+               restCacheManagerClient(client, resource).takeOffline(site) :
+               restCacheClient(client, resource, cache).takeSiteOffline(site);
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
       }
    }
 
    @CommandDefinition(name = "push-site-state", description = "Starts pushing state to a site", activator = ConnectionActivator.class)
-   public static class PushSiteState extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class PushSiteState extends RestCliCommand implements CacheAwareCommand {
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(required = true, completer = SiteCompleter.class)
+      @Option(shortName = 'a', name = "all-caches", hasValue = false, description = "Invoke operation in all caches.")
+      boolean allCaches;
+
+      @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -149,17 +196,28 @@ public class Site extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.cache(cache).pushSiteState(site);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
+         checkMutualExclusiveCacheAndGlobal(cache, allCaches);
+         return allCaches ?
+               restCacheManagerClient(client, resource).pushSiteState(site) :
+               restCacheClient(client, resource, cache).pushSiteState(site);
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
       }
    }
 
    @CommandDefinition(name = "cancel-push-state", description = "Cancels pushing state to a site", activator = ConnectionActivator.class)
-   public static class CancelPushState extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class CancelPushState extends RestCliCommand implements CacheAwareCommand {
+      @Option(shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(required = true, completer = SiteCompleter.class)
+      @Option(shortName = 'a', name = "all-caches", hasValue = false, description = "Invoke operation in all caches.")
+      boolean allCaches;
+
+      @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -171,17 +229,25 @@ public class Site extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.cache(cache).cancelPushState(site);
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
+         checkMutualExclusiveCacheAndGlobal(cache, allCaches);
+         return allCaches ?
+               restCacheManagerClient(client, resource).cancelPushState(site) :
+               restCacheClient(client, resource, cache).cancelPushState(site);
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return cache == null ? CacheResource.findCacheName(activeResource) : Optional.of(cache);
       }
    }
 
    @CommandDefinition(name = "cancel-receive-state", description = "Cancels receiving state to a site", activator = ConnectionActivator.class)
-   public static class CancelReceiveState extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class CancelReceiveState extends RestCliCommand implements CacheAwareCommand {
+      @Option(required = true, shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
-      @Option(required = true, completer = SiteCompleter.class)
+      @Option(required = true, shortName = 's', completer = SiteCompleter.class, description = "The remote backup name.")
       String site;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -196,11 +262,16 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache).cancelReceiveState(site);
       }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return Optional.ofNullable(cache);
+      }
    }
 
    @CommandDefinition(name = "push-site-status", description = "Shows the status of pushing to a site", activator = ConnectionActivator.class)
-   public static class PushSiteStatus extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class PushSiteStatus extends RestCliCommand implements CacheAwareCommand {
+      @Option(required = true, shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -215,11 +286,16 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache).pushStateStatus();
       }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return Optional.ofNullable(cache);
+      }
    }
 
    @CommandDefinition(name = "clear-push-site-status", description = "Clears the push state status", activator = ConnectionActivator.class)
-   public static class ClearPushStateStatus extends RestCliCommand {
-      @Option(required = true, completer = CacheCompleter.class)
+   public static class ClearPushStateStatus extends RestCliCommand implements CacheAwareCommand {
+      @Option(required = true, shortName = 'c', completer = CacheCompleter.class, description = "The cache name.")
       String cache;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -233,6 +309,11 @@ public class Site extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache).clearPushStateStatus();
+      }
+
+      @Override
+      public Optional<String> getCacheName(Resource activeResource) {
+         return Optional.ofNullable(cache);
       }
    }
 
@@ -333,7 +414,7 @@ public class Site extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         String cacheName = getCacheName(resource).orElseThrow(Messages.MSG::illegalContext);
+         String cacheName = getCacheName(resource).orElseThrow(MSG::illegalContext);
          return client.cache(cacheName).xSiteStateTransferMode(site);
       }
    }
@@ -360,7 +441,7 @@ public class Site extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         String cacheName = getCacheName(resource).orElseThrow(Messages.MSG::illegalContext);
+         String cacheName = getCacheName(resource).orElseThrow(MSG::illegalContext);
          return client.cache(cacheName).xSiteStateTransferMode(site, XSiteStateTransferMode.valueOf(mode.toUpperCase()));
       }
 
@@ -416,5 +497,21 @@ public class Site extends CliCommand {
             throw new CommandException(e);
          }
       }
+   }
+
+   private static void checkMutualExclusiveCacheAndGlobal(String cache, boolean global) {
+      if (cache != null && global) {
+         throw MSG.mutuallyExclusiveOptions("cache", "all-caches");
+      }
+   }
+
+   private static RestCacheManagerClient restCacheManagerClient(RestClient client, Resource resource) {
+      return ContainerResource.findContainerName(resource).map(client::cacheManager).orElseThrow(MSG::illegalContext);
+   }
+
+   private static RestCacheClient restCacheClient(RestClient client, Resource resource, String cacheName) throws RequiredOptionException {
+      return cacheName == null ?
+            CacheResource.findCacheName(resource).map(client::cache).orElseThrow(MISSING_CACHE_OR_GLOBAL) :
+            client.cache(cacheName);
    }
 }
