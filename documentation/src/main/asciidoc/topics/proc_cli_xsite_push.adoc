@@ -15,4 +15,9 @@ Transfer cache state to backup locations.
 [//containers/default]> site push-site-state --cache=cacheName --site=NYC
 ----
 
+[TIP]
+====
+Use the `--all-caches` option to push state transfer for all caches.
+====
+
 For more information and examples, run the [command]`help site` command.

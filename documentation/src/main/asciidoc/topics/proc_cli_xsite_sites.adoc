@@ -20,6 +20,12 @@ Take backup locations offline manually and bring them back online.
 `--site` is an optional argument. If not set, the CLI returns all backup
 locations.
 ====
+
+[TIP]
+====
+Use the `--all-caches` option to get the backup location status for all caches.
+====
+
 +
 . Manage backup locations as follows:
 +
@@ -35,4 +41,10 @@ locations.
 [//containers/default]> site take-offline --cache=customers --site=NYC
 ----
 
+[TIP]
+====
+Use the `--all-caches` option to bring a backup location online, or take a backup location offline, for all caches.
+====
+
 For more information and examples, run the [command]`help site` command.
+
