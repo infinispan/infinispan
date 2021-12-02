@@ -173,19 +173,17 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
          boolean shouldRemove = false;
          if (oldEntry == null) {
             shouldRemove = true;
-            deleteFromStoresAndNotify(key, value, metadata, privateMetadata);
+            notify(key, value, metadata, privateMetadata);
          } else if (oldEntry.canExpire()) {
             long time = timeService.wallClockTime();
             if (oldEntry.isExpired(time)) {
                synchronized (oldEntry) {
-                  if (oldEntry.isExpired(time)) {
-                     // Even though we were provided marshalled entry - they may only provide metadata or value possibly
-                     // so we have to check for null on either
-                     if (shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
-                             (value == null || value.equals(oldEntry.getValue()))) {
-                        // TODO: this is blocking! - this needs to be fixed in https://issues.redhat.com/browse/ISPN-10377
-                        deleteFromStoresAndNotify(key, value, metadata, privateMetadata);
-                     }
+                  // Even though we were provided marshalled entry - they may only provide metadata or value possibly
+                  // so we have to check for null on either
+                  shouldRemove = oldEntry.isExpired(time) && (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
+                        (value == null || value.equals(oldEntry.getValue()));
+                  if (shouldRemove) {
+                     notify(key, value, metadata, privateMetadata);
                   }
                }
             }
@@ -210,6 +208,11 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       CompletionStages.join(CompletionStages.allOf(
             persistenceManager.deleteFromAllStores(key, keyPartitioner.getSegment(key), PersistenceManager.AccessMode.BOTH),
             cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null)));
+   }
+
+   private void notify(K key, V value, Metadata metadata, PrivateMetadata privateMetadata) {
+      listeners.forEach(l -> l.expired(key, value, metadata, privateMetadata)); //for internal use, assume non-blocking
+      CompletionStages.join(cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null));
    }
 
    @Override

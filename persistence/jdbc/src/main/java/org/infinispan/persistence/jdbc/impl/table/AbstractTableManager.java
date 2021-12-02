@@ -74,6 +74,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
    private final String selectRowSql;
    private final String selectIdRowSql;
    private final String deleteRowSql;
+   private final String getDeleteRowWithExpirationSql;
    private final String loadAllRowsSql;
    private final String countRowsSql;
    private final String loadAllNonExpiredRowsSql;
@@ -111,6 +112,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       this.selectRowSql = initSelectRowSql();
       this.selectIdRowSql = initSelectIdRowSql();
       this.deleteRowSql = initDeleteRowSql();
+      this.getDeleteRowWithExpirationSql = initDeleteRowWithExpirationSql();
       this.loadAllRowsSql = initLoadAllRowsSql();
       this.countRowsSql = initCountNonExpiredRowsSql();
       this.loadAllNonExpiredRowsSql = initLoadNonExpiredAllRowsSql();
@@ -423,9 +425,18 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       return String.format("DELETE FROM %s WHERE %s = ?", dataTableName, config.idColumnName());
    }
 
+   protected String initDeleteRowWithExpirationSql() {
+      return String.format("DELETE FROM %s WHERE %s = ? AND %s = ?", dataTableName, config.idColumnName(), config.timestampColumnName());
+   }
+
    @Override
    public String getDeleteRowSql() {
       return deleteRowSql;
+   }
+
+   @Override
+   public String getDeleteRowWithExpirationSql() {
+      return getDeleteRowWithExpirationSql;
    }
 
    protected String initLoadNonExpiredAllRowsSql() {
@@ -483,7 +494,8 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
    }
 
    protected String initSelectOnlyExpiredRowsSql() {
-      return String.format("%1$s WHERE %2$s < ? AND %2$s > 0 FOR UPDATE", getLoadAllRowsSql(), config.timestampColumnName());
+      return String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WHERE %3$s < ? AND %3$s > 0", config.dataColumnName(),
+            config.idColumnName(), config.timestampColumnName(), dataTableName);
    }
 
    @Override

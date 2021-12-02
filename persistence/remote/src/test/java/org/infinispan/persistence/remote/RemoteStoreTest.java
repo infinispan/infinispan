@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -258,5 +259,10 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
    @Test(enabled = false)
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
       // This test messes with the actual types provided which can fail due to different media types
+   }
+
+   @Override
+   protected void purgeExpired(InternalCacheEntry... expiredEntries) {
+      // RemoteStore does nothing for purgeExpired
    }
 }
