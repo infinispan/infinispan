@@ -229,7 +229,6 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
 
       builder.sites().addBackup()
             .site(SFO)
-            .backupFailurePolicy(BackupFailurePolicy.FAIL)
             .replicationTimeout(1000) //keep it small so that the test doesn't take long to run
             .takeOffline()
             .afterFailures(NUM_FAILURES)

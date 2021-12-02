@@ -1,3 +1,17 @@
+= Upgrading from 13.0 to 14.0
+
+== Cross Site Replication
+
+=== Asynchronous backup strategy logging
+
+By default, the asynchronous backup strategy logs exceptions that occur on remote sites.
+To disable exceptions for async backup operations, set `failure-policy="IGNORE"` in your configuration as follows:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<backup site="NYC" strategy="ASYNC" failure-policy="IGNORE" />
+----
+
 = Upgrading from 12.1 to 13.0
 
 == Search

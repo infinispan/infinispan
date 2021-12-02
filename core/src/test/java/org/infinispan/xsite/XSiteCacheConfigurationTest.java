@@ -86,7 +86,7 @@ public class XSiteCacheConfigurationTest {
       cb.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: It is required to specify a 'failurePolicyClass' when using a custom backup failure policy!")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: You must specify a 'failure-policy-class' to use a custom backup failure policy for backup 'LON-1'.")
    public void testCustomBackupFailurePolicyClassNotSpecified() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);

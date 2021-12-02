@@ -19,8 +19,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration> {
    private final AttributeSet attributes;
-   private XSiteStateTransferConfigurationBuilder stateTransferBuilder;
-   private TakeOfflineConfigurationBuilder takeOfflineBuilder;
+   private final XSiteStateTransferConfigurationBuilder stateTransferBuilder;
+   private final TakeOfflineConfigurationBuilder takeOfflineBuilder;
 
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -30,8 +30,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * @param site The name of the site where this cache backups. Must be a valid name, i.e. a site defined in the
-    *             global config.
+    * @param site Specifies the name of the backup location for this cache. The name must match a site defined in the
+    *             global configuration.
     */
    public BackupConfigurationBuilder site(String site) {
       attributes.attribute(SITE).set(site);
@@ -71,8 +71,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * Sets the strategy used for backing up data: sync or async. If not specified defaults
-    * to {@link org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy#ASYNC}.
+    * Sets the strategy used for backing up data: sync or async. Defaults to {@link
+    * org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy#ASYNC}.
     */
    public BackupConfigurationBuilder strategy(BackupConfiguration.BackupStrategy strategy) {
       attributes.attribute(STRATEGY).set(strategy);
@@ -91,8 +91,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * Configures how the system behaves when the backup call fails. Only applies to sync backups.
-    * The default values is  {@link org.infinispan.configuration.cache.BackupFailurePolicy#WARN}
+    * Configures the policy for handling failed requests. Defaults to {@link BackupFailurePolicy#WARN}
     */
    public BackupConfigurationBuilder backupFailurePolicy(BackupFailurePolicy backupFailurePolicy) {
       attributes.attribute(FAILURE_POLICY).set(backupFailurePolicy);
@@ -100,8 +99,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * Configures whether the replication happens in a 1PC or 2PC for sync backups.
-    * The default value is "false"
+    * Controls if replication happens in a two phase commit (2PC) for synchronous backups. The default value is {@code
+    * false}, which means replication happens in a one phase commit (1PC).
     */
    public BackupConfigurationBuilder useTwoPhaseCommit(boolean useTwoPhaseCommit) {
       attributes.attribute(USE_TWO_PHASE_COMMIT).set(useTwoPhaseCommit);
@@ -124,12 +123,41 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    public void validate() {
       takeOfflineBuilder.validate();
       stateTransferBuilder.validate();
-      if (attributes.attribute(SITE).get() == null)
+      String siteName = attributes.attribute(SITE).get();
+      if (siteName == null)
          throw CONFIG.backupMissingSite();
-      if (attributes.attribute(FAILURE_POLICY).get() == BackupFailurePolicy.CUSTOM && (attributes.attribute(FAILURE_POLICY_CLASS).get() == null)) {
-         throw CONFIG.missingBackupFailurePolicyClass();
+
+      BackupFailurePolicy policy = attributes.attribute(FAILURE_POLICY).get();
+      boolean asyncStrategy = strategy() == BackupConfiguration.BackupStrategy.ASYNC;
+      boolean hasFailurePolicyClass = failurePolicyClass() != null;
+      switch (policy) {
+         case CUSTOM:
+            if (!hasFailurePolicyClass) {
+               throw CONFIG.missingBackupFailurePolicyClass(siteName);
+            }
+            if (asyncStrategy) {
+               throw CONFIG.invalidPolicyWithAsyncStrategy(siteName, policy);
+            }
+            break;
+         case WARN:
+         case IGNORE:
+            if (hasFailurePolicyClass) {
+               throw CONFIG.failurePolicyClassNotCompatibleWith(siteName, policy);
+            }
+            break;
+         case FAIL:
+            if (hasFailurePolicyClass) {
+               throw CONFIG.failurePolicyClassNotCompatibleWith(siteName, policy);
+            }
+            if (asyncStrategy) {
+               throw CONFIG.invalidPolicyWithAsyncStrategy(siteName, policy);
+            }
+            break;
+         default:
+            throw new IllegalStateException("Unexpected backup policy " + policy + " for backup " + siteName);
       }
-      if (attributes.attribute(USE_TWO_PHASE_COMMIT).get() && attributes.attribute(STRATEGY).get() == BackupConfiguration.BackupStrategy.ASYNC) {
+
+      if (attributes.attribute(USE_TWO_PHASE_COMMIT).get() && asyncStrategy) {
          throw CONFIG.twoPhaseCommitAsyncBackup();
       }
    }

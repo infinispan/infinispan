@@ -34,6 +34,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StorageType;
@@ -768,8 +769,8 @@ public interface Log extends BasicLogger {
    void cacheBackupsDataToSameSite(String siteName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Problems backing up data for cache %s to site %s: %s", id = 202)
-   void warnXsiteBackupFailed(String cacheName, String key, Object value);
+   @Message(value = "Encountered issues while backing up data for cache %s to site %s", id = 202)
+   void warnXsiteBackupFailed(String cacheName, String siteName, @Cause Throwable throwable);
 
    @LogMessage(level = WARN)
    @Message(value = "The rollback request for tx %s cannot be processed by the cache %s as this cache is not transactional!", id = 203)
@@ -1194,8 +1195,8 @@ public interface Log extends BasicLogger {
    @Message(value = "The 'site' must be specified!", id = 337)
    CacheConfigurationException backupMissingSite();
 
-   @Message(value = "It is required to specify a 'failurePolicyClass' when using a custom backup failure policy!", id = 338)
-   CacheConfigurationException missingBackupFailurePolicyClass();
+   @Message(value = "You must specify a 'failure-policy-class' to use a custom backup failure policy for backup '%s'!", id = 338)
+   CacheConfigurationException missingBackupFailurePolicyClass(String remoteSite);
 
    @Message(value = "Null name not allowed (use 'defaultRemoteCache()' in case you want to specify the default cache name).", id = 339)
    CacheConfigurationException backupForNullCache();
@@ -2228,4 +2229,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to convert text content to JSON: '%s'", id = 655)
    EncodingException invalidJson(String s);
+
+   @Message(value = "The backup '%s' configuration 'failure-policy=%s' is not valid with an ASYNC backup strategy.", id = 656)
+   CacheConfigurationException invalidPolicyWithAsyncStrategy(String remoteSite, BackupFailurePolicy policy);
+
+   @Message(value = "The backup '%s' configuration 'failure-policy-class' is not compatible with 'failure-policy=%s'. Use 'failure-policy=\"CUSTOM\"'", id = 657)
+   CacheConfigurationException failurePolicyClassNotCompatibleWith(String remoteSite, BackupFailurePolicy policy);
 }
