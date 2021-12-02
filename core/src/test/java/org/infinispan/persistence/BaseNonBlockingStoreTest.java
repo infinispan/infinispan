@@ -10,7 +10,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -221,7 +220,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertExpired(se, false);
       store.write(marshalledEntry(se));
       timeService.advance(lifespan + 1);
-      purgeExpired("k");
+      purgeExpired(se);
       assertExpired(se, true);
       assertEventuallyExpires("k");
       assertContains("k", false);
@@ -270,7 +269,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertExpired(se, false);
       store.write(marshalledEntry(se));
       timeService.advance(idle + 1);
-      purgeExpired("k");
+      purgeExpired(se);
       assertExpired(se, true);
       assertEventuallyExpires("k");
       assertContains("k", false);
@@ -291,17 +290,21 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       return true;
    }
 
-   protected void purgeExpired(String... expiredKeys) {
-      final Set<Object> expired = Stream.of(expiredKeys).map(this::keyToStorage).collect(Collectors.toSet());
+   protected void purgeExpired(InternalCacheEntry... expiredEntries) {
       List<MarshallableEntry<Object, Object>> expiredList = store.purge();
 
-      expiredList.removeIf(me -> expired.remove(me.getKey()));
+      if (storePurgesAllExpired()) {
+         assertEquals(expiredEntries.length, expiredList.size());
+      }
+
+      for (InternalCacheEntry ice : expiredEntries) {
+         Object key = keyToStorage(ice.getKey());
+         Object value = valueToStorage(ice.getValue());
+         // This is technically O(n^2) worst case, but the arrays should be small and this is a test
+         expiredList.removeIf(me -> me.getKey().equals(key) && me.getValue().equals(value));
+      }
 
       assertEmpty(expiredList, true);
-      if (storePurgesAllExpired()) {
-         assertEmpty(expired, true);
-      }
-      assertEquals(Collections.emptyList(), expiredList);
    }
 
    public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
@@ -331,7 +334,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertExpired(se, false);
       store.write(marshalledEntry(se));
       timeService.advance(idle + 1);
-      purgeExpired("k");
+      purgeExpired(se);
       assertExpired(se, true); //expired by idle
       assertEventuallyExpires("k");
       assertContains("k", false);
@@ -367,7 +370,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       timeService.advance(lifespan + 1);
       assertExpired(se, true); //expired by lifespan
 
-      purgeExpired("k");
+      purgeExpired(se);
 
       assertEventuallyExpires("k");
       assertContains("k", false);
@@ -528,7 +531,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertContains("k4", true);
       assertContains("k5", true);
 
-      purgeExpired("k1", "k2", "k3");
+      purgeExpired(ice1, ice2, ice3);
 
       assertContains("k1", false);
       assertContains("k2", false);
