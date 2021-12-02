@@ -46,7 +46,7 @@ public interface TableManager<K, V> extends TableOperations<K, V> {
 
    int getFetchSize();
 
-   String getDeleteRowSql();
+   String getDeleteRowWithExpirationSql();
 
    String getDeleteAllSql();
 
