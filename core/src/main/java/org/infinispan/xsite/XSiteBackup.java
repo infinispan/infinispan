@@ -5,9 +5,9 @@ package org.infinispan.xsite;
  * @since 5.2
  */
 public class XSiteBackup {
-   private String siteName;
-   private boolean sync;
-   private long timeout;
+   private final String siteName;
+   private final boolean sync;
+   private final long timeout;
 
 
    public XSiteBackup(String siteName, boolean sync, long timeout) {
