@@ -362,8 +362,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          AggregateCompletionStage<Void> allStage = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores) {
             NonBlockingStore<Object, Object> store = storeStatus.store();
-            CompletionStage<Void> storeStage = CompletableFutures.completedNull();
-            if (clearOnStop) {
+            CompletionStage<Void> storeStage;
+            if (clearOnStop && !storeStatus.characteristics.contains(Characteristic.READ_ONLY)) {
                // Clear the persistent store before stopping
                storeStage = store.clear().thenCompose(__ -> store.stop());
             } else {
