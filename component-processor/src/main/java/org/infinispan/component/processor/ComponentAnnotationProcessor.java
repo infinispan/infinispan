@@ -441,9 +441,9 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          if (annotation == null)
             return;
 
-         validateLifecycleMethod(e, annotationType);
-
          if (isValidComponent(e, annotationType)) {
+            validateLifecycleMethod(e, annotationType);
+
             List<Model.LifecycleMethod> methodList = methodsExtractor.apply(currentType.component);
             Integer priority = priorityExtractor.apply(annotation);
             methodList.add(new Model.LifecycleMethod(e.getSimpleName().toString(), priority));
