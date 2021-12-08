@@ -28,10 +28,7 @@ public interface EntryLookup {
     * Note: The key inside the {@linkplain CacheEntry} may be {@code null} if the key does not exist in the cache.
     *
     * @return a map of looked up entries.
-    *
-    * @deprecated Since 9.3, please use {@link #forEachEntry(BiConsumer)} or {@link #lookedUpEntriesCount()} instead.
     */
-   @Deprecated
    Map<Object, CacheEntry> getLookedUpEntries();
 
    /**
