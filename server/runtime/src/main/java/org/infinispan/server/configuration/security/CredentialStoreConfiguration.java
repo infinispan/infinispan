@@ -35,6 +35,7 @@ public class CredentialStoreConfiguration implements ConfigurationInfo {
    @Override
    public AttributeSet attributes() {
       return attributes;
+
    }
 
    @Override
