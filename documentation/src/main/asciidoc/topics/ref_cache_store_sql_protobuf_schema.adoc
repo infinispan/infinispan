@@ -1,5 +1,5 @@
 [id='sql-store-protobuf-schema_{context}']
-= Protobuf schema for SQL store
+= Protobuf schema for SQL cache stores
 
 {brandname} loads keys and values from columns in database tables via SQL cache stores.
 If the tables in your database have composite primary keys or composite values, you need to provide {brandname} with Protobuf schema (`.proto` files) that provide a structured representation of your data.
@@ -99,3 +99,4 @@ The following table contains default mappings of SQL data types to Protobuf data
 [role="_additional-resources"]
 .Additional resources
 * link:{encoding_docs}[Cache encoding and marshalling]
+* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

@@ -2,15 +2,24 @@
 = Shared cache stores
 
 {brandname} cache stores can be local to a given node or shared across all nodes in the cluster.
+By default, cache stores are local (`shared="false"`).
 
-You should enable the `fetch-state` and `purge` parameters only if `shared="false"`.
-If the cache store is not shared then `fetch-state` and `purge` prevent nodes from loading stale data from persistent storage.
+* Local cache stores are unique to each node; for example, a file-based cache store that persists data to the host filesystem.
++
+Local cache stores can fetch state and purge on startup to avoid loading stale entries from persistent storage.
 
-Never configure a shared cache to fetch state or purge on start up.
-{brandname} throws an exception if you attempt to configure shared stores to purge.
-Fetching state with shared stores causes performance issues and leads to much longer cluster start times.
+* Shared cache stores allow multiple nodes to use the same persistent storage; for example, a JDBC cache store that allows multiple nodes to access the same database.
++
+Shared cache stores ensure that only the primary owner write to persistent storage, instead of backup nodes performing write operations for every modification.
 
-.Unique to each node
+[IMPORTANT]
+====
+Never configure shared cache stores to fetch state and purge on startup.
+Fetching state with shared cache stores results in performance issues and longer cluster start times.
+Purging deletes data, which is not typically the desired behavior for persistent storage.
+====
+
+.Local cache store
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 <persistence>
@@ -20,7 +29,7 @@ Fetching state with shared stores causes performance issues and leads to much lo
 </persistence>
 ----
 
-.Shared between the cluster
+.Shared cache store
 [source,xml,options="nowrap",subs=attributes+,role="secondary"]
 ----
 <persistence>
