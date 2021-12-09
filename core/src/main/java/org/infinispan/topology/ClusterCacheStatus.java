@@ -223,21 +223,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          return false;
       }
 
-      // Validate if the member is allowed to join
-      if (persistentState.isPresent()) {
-         if (!joinInfo.getPersistentStateChecksum().isPresent()) {
-            if (status == ComponentStatus.INSTANTIATED) {
-               throw CLUSTER.nodeWithoutPersistentStateJoiningCacheWithState(joiner, cacheName);
-            }
-         } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
-            throw CLUSTER.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
-         }
-      } else {
-         if (joinInfo.getPersistentStateChecksum().isPresent()) {
-            throw CLUSTER.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
-         }
-      }
-
       if (this.joinInfo == null) {
          this.joinInfo = joinInfo;
       }
@@ -252,6 +237,26 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          log.tracef("Added joiner %s to cache %s with persistent uuid %s: members = %s, joiners = %s", joiner, cacheName,
                joinInfo.getPersistentUUID(), expectedMembers, joiners);
       return true;
+   }
+
+   /**
+    * Validate if the member is allowed to join
+    */
+   @GuardedBy("this")
+   private void validateJoiner(Address joiner, CacheJoinInfo joinInfo) {
+      if (persistentState.isPresent()) {
+         if (!joinInfo.getPersistentStateChecksum().isPresent()) {
+            if (status == ComponentStatus.INSTANTIATED) {
+               throw CLUSTER.nodeWithoutPersistentStateJoiningCacheWithState(joiner, cacheName);
+            }
+         } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
+            throw CLUSTER.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
+         }
+      } else {
+         if (joinInfo.getPersistentStateChecksum().isPresent()) {
+            throw CLUSTER.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
+         }
+      }
    }
 
    /**
@@ -699,6 +704,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) {
+      validateJoiner(joiner, joinInfo);
+
       boolean isFirstMember = getCurrentTopology() == null;
       boolean memberJoined = addMember(joiner, joinInfo);
       if (!memberJoined) {
