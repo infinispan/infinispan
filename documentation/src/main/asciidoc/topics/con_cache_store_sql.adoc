@@ -1,17 +1,16 @@
 [id='sql-cache-store_{context}']
 = SQL cache stores
 
-SQL cache stores pre-load {brandname} caches from databases, with a supported dialect, through JDBC connections.
-
-You can create two types of SQL cache store:
+SQL cache stores let you load {brandname} caches from existing database tables.
+{brandname} offers two types of SQL cache store:
 
 Table:: {brandname} loads entries from a single database table.
-Query:: {brandname} uses SQL queries to load entries as well as perform insert, update, and delete operations.
+Query:: {brandname} uses SQL queries to load entries from single or multiple database tables, including from sub-columns within those tables, and perform insert, update, and delete operations.
 
 Both SQL table and query stores:
 
 * Allow read and write operations to persistent storage.
-* Can be read-only and act as a Cache Loader.
+* Can be read-only and act as a cache loader.
 * Support keys and values that correspond to a single database column or a composite of multiple database columns.
 +
 For composite keys and values, you must provide {brandname} with Protobuf schema (`.proto` files) that describe the keys and values.
@@ -25,3 +24,4 @@ SQL cache stores do not support expiration or segmentation.
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/persistence/jdbc/common/DatabaseType.html[DatabaseType Enum lists supported database dialects]
+* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

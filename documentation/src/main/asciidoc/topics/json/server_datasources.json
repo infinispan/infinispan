@@ -2,15 +2,13 @@
   "data-sources": [
     {
       "name": "ds",
-      "jndi-name": "jdbc/datasource",
+      "jndi-name": "jdbc/postgres",
       "statistics": true,
       "connection-factory": {
-        "driver": "org.database.Driver",
-        "username": "db_user",
-        "password": "secret",
-        "url": "jdbc:db://database-host:10000/dbname",
-        "new-connection-sql": "SELECT 1",
-        "transaction-isolation": "READ_COMMITTED",
+        "driver": "org.postgresql.Driver",
+        "url": "jdbc:postgresql://localhost:5432/postgres",
+        "username": "postgres",
+        "password": "changeme",
         "connection-properties": {
           "name": "value"
         }

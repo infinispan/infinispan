@@ -1,0 +1,21 @@
+[id='sql-cache-store-troubleshooting_{context}']
+= SQL cache store troubleshooting
+
+Find out about common issues and errors with SQL cache stores and how to troubleshoot them.
+
+[source,options="nowrap"]
+----
+ISPN008064: No primary keys found for table <table_name>, check case sensitivity
+----
+
+{brandname} logs this message in the following cases:
+
+* The database table does not exist.
+* The database table name is case sensitive and needs to be either all lower case or all upper case, depending on the database provider.
+* The database table does not have any primary keys defined.
+
+To resolve this issue you should:
+
+. Check your SQL cache store configuration and ensure that you specify the name of an existing table.
+. Ensure that the database table name conforms to an case sensitivity requirements.
+. Ensure that your database tables have primary keys that uniquely identify the appropriate rows.
