@@ -1,12 +1,13 @@
 package org.infinispan.server.security.realm;
 
-import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.infinispan.server.Server.log;
+import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 
+import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -214,7 +215,7 @@ public class CachingSecurityRealm implements SecurityRealm {
                   }
                   credentials = credentials.withCredential(credential);
                   if (credential.canVerify(evidence)) {
-                     boolean res = credential.verify(evidence);
+                     boolean res = credential.verify(ElytronPasswordProviderSupplier.INSTANCE, evidence);
                      if (res) {
                         verifiedEvidenceHash = evidenceHash;
                      }
