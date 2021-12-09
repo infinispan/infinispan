@@ -72,11 +72,6 @@
          <artifactId>metainf-services</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.security</groupId>
-         <artifactId>wildfly-elytron</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.wildfly.openssl</groupId>
          <artifactId>wildfly-openssl</artifactId>
          <scope>test</scope>
