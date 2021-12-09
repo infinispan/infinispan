@@ -110,16 +110,6 @@
          <artifactId>infinispan-cloudevents-integration</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.security</groupId>
-         <artifactId>wildfly-elytron</artifactId>
-         <exclusions>
-            <exclusion>
-               <groupId>org.wildfly.security</groupId>
-               <artifactId>*</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-      <dependency>
          <groupId>io.agroal</groupId>
          <artifactId>agroal-pool</artifactId>
       </dependency>
@@ -164,6 +154,82 @@
          <groupId>org.wildfly.openssl</groupId>
          <artifactId>wildfly-openssl-linux-x86_64</artifactId>
          <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-auth-server-http</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-auth-server-sasl</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-http-basic</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-http-bearer</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-http-cert</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-http-digest</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-http-spnego</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-http-util</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-realm-ldap</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-realm-token</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-ssl</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-digest</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-external</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-gssapi</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-gs2</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-localuser</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-oauth2</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-plain</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-sasl-scram</artifactId>
       </dependency>
       <dependency>
          <groupId>javax.annotation</groupId>
