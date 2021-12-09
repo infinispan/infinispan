@@ -55,6 +55,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             Echo.class,
             Encoding.class,
             Get.class,
+            Install.class,
             Ls.class,
             Migrate.class,
             Patch.class,
