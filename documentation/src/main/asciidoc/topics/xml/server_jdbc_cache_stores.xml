@@ -1,7 +1,8 @@
 <distributed-cache-configuration name="persistent-cache" xmlns:jdbc="urn:infinispan:config:store:jdbc:{schemaversion}">
     <persistence>
         <jdbc:string-keyed-jdbc-store>
-            <!-- Specifies the JNDI name that you provided for the datasource connection in the server configuration. -->
+            <!-- Specifies the JNDI name for the datasource connection
+                 in {brandname} Server configuration. -->
             <jdbc:data-source jndi-url="jdbc/postgres"/>
             <jdbc:string-keyed-table drop-on-exit="true"
                           create-on-start="true"
