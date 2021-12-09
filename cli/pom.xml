@@ -73,10 +73,6 @@
          <artifactId>metainf-services</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.security</groupId>
-         <artifactId>wildfly-elytron</artifactId>
-      </dependency>
-      <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-compress</artifactId>
       </dependency>
@@ -84,6 +80,10 @@
          <groupId>org.wildfly.openssl</groupId>
          <artifactId>wildfly-openssl-java</artifactId>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-credential-store</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
