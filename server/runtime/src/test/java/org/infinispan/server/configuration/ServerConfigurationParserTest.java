@@ -9,7 +9,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +36,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
+import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -48,7 +48,6 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
@@ -194,7 +193,7 @@ public class ServerConfigurationParserTest {
                map,
                new CredentialStore.CredentialSourceProtectionParameter(
                      IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, secret.toCharArray())))),
-               new Provider[]{WildFlyElytronPasswordProvider.getInstance()}
+               ElytronPasswordProviderSupplier.PROVIDERS
          );
          return credentialStore;
       } catch (CredentialStoreException e) {
