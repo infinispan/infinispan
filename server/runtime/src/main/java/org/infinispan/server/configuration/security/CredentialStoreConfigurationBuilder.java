@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
+import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -90,7 +91,7 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
                   map,
                   new CredentialStore.CredentialSourceProtectionParameter(
                         IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, credential)))),
-                  null
+                  ElytronPasswordProviderSupplier.PROVIDERS
             );
          } catch (CredentialStoreException e) {
             // We ignore the exception if it's about automatic creation
