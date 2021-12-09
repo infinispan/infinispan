@@ -38,6 +38,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
+import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -210,7 +211,7 @@ public class ServerConfigurationParserTest {
                map,
                new CredentialStore.CredentialSourceProtectionParameter(
                      IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, secret.toCharArray())))),
-               null
+               ElytronPasswordProviderSupplier.PROVIDERS
          );
          return credentialStore;
       } catch (CredentialStoreException e) {

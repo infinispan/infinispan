@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.server.Server;
+import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.wildfly.common.Assert;
 import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.SupportLevel;
@@ -43,7 +44,6 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.BasicPasswordSpecEncoding;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
@@ -73,7 +73,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
    private EncryptedPropertiesSecurityRealm(Builder builder) {
       plainText = builder.plainText;
       groupsAttribute = builder.groupsAttribute;
-      providers = () -> new Provider[]{WildFlyElytronPasswordProvider.getInstance()};
+      providers = ElytronPasswordProviderSupplier.INSTANCE;
       defaultRealm = builder.defaultRealm;
    }
 

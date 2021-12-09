@@ -1,7 +1,6 @@
 package org.infinispan.server.configuration.security;
 
 import java.security.KeyStore;
-import java.security.Provider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -16,6 +15,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.security.ElytronPasswordProviderSupplier;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -23,7 +23,6 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.CredentialStoreSpi;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
-import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
@@ -68,7 +67,7 @@ public class CredentialStoreConfiguration extends ConfigurationElement<Credentia
                   map,
                   new CredentialStore.CredentialSourceProtectionParameter(
                         IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, credential)))),
-                  new Provider[]{WildFlyElytronPasswordProvider.getInstance()}
+                  ElytronPasswordProviderSupplier.PROVIDERS
             );
          } catch (CredentialStoreException e) {
             // We ignore the exception if it's about automatic creation
