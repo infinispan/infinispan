@@ -257,6 +257,7 @@
 
    <xsl:template match="xs:schema" mode="lookup-type">
       <xsl:param name="type" />
+      <xsl:param name="location" />
       <xsl:variable name="ref">
          <xsl:choose>
             <xsl:when test="contains(string($type), ':')">
@@ -273,14 +274,15 @@
          </xsl:when>
          <xsl:otherwise>
             <xsl:for-each select="/xs:schema/xs:import">
-               <xsl:apply-templates select="document(@schemaLocation, .)/xs:schema" mode="lookup-type">
-                  <xsl:with-param name="type" select="$type"/>
-               </xsl:apply-templates>
+               <xsl:if test="string(@schemaLocation)!=string($location)">
+                  <xsl:apply-templates select="document(@schemaLocation, .)/xs:schema" mode="lookup-type">
+                     <xsl:with-param name="type" select="$type"/>
+                     <xsl:with-param name="location" select="@schemaLocation"/>
+                  </xsl:apply-templates>
+               </xsl:if>
             </xsl:for-each>
          </xsl:otherwise>
       </xsl:choose>
-
-
    </xsl:template>
 
    <xsl:template match="xs:complexType" mode="top-level">
