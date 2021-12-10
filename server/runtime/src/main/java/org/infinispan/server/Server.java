@@ -147,6 +147,9 @@ public class Server implements ServerManagement, AutoCloseable {
     */
    public static final String INFINISPAN_SERVER_LOG_PATH = "infinispan.server.log.path";
 
+   // "Internal" properties, used by tests
+   public static final String INFINISPAN_LOG4J_SHUTDOWN = "infinispan.server.log4j.shutdown";
+
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
 
@@ -525,7 +528,9 @@ public class Server implements ServerManagement, AutoCloseable {
       // Shutdown Log4j's context manually as we set shutdownHook="disable"
       // Log4j's shutdownHook may run concurrently with our shutdownHook,
       // disabling logging before the server has finished stopping.
-      LogManager.shutdown();
+      if (Boolean.parseBoolean(properties.getProperty(Server.INFINISPAN_LOG4J_SHUTDOWN, "true"))) {
+         LogManager.shutdown();
+      }
    }
 
    private void serverStopHandler(ExitStatus exitStatus) {
