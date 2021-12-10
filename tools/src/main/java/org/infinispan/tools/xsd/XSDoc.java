@@ -1,11 +1,9 @@
 package org.infinispan.tools.xsd;
 
-import gnu.getopt.Getopt;
-
-import org.infinispan.tools.ToolUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import java.io.File;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,10 +13,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.File;
-import java.io.InputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
+import org.infinispan.tools.ToolUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import gnu.getopt.Getopt;
 
 public class XSDoc {
 
