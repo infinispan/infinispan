@@ -365,22 +365,24 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       assertEquals(values.size(), count);
    }
 
-   public void testIteratorClosedProperlyOnClose() {
-      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
-      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+   /**
+    * Tests iteration that isn't fully iterated and instead closed to ensure it properly closes all resources
+    *
+    * @param dataOwnerCache cache that will own the data (must not be cache 2)
+    * @param iteratorCache cache that will iterate (must not be cache 2)
+    */
+   private void testIteratorClosedProperlyOnClose(Cache<Object, String> dataOwnerCache, Cache<Object, String> iteratorCache) {
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
       // We have to insert over the buffer size default - which iterator uses
       for (int i = 0; i < Flowable.bufferSize() + 2; ++i) {
-         // We insert 2 values into caches where we aren't the owner (they have to be in same node or else iterator
-         // will finish early)
-         cache0.put(magicKey(cache1, cache2), "not-local");
+         dataOwnerCache.put(magicKey(dataOwnerCache, cache2), "value");
       }
 
-      PublisherHandler handler = TestingUtil.extractComponent(cache1, PublisherHandler.class);
+      PublisherHandler handler = TestingUtil.extractComponent(dataOwnerCache, PublisherHandler.class);
       assertEquals(0, handler.openPublishers());
 
-      try (CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream()) {
+      try (CacheStream<Map.Entry<Object, String>> stream = iteratorCache.entrySet().stream()) {
          Iterator<Map.Entry<Object, String>> iter = stream.distributedBatchSize(1).iterator();
          assertTrue(iter.hasNext());
          assertEquals(1, handler.openPublishers());
@@ -388,6 +390,14 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       // The close is done asynchronously
       eventuallyEquals(0, handler::openPublishers);
+   }
+
+   public void testIteratorClosedWhenPartiallyIteratedLocal() {
+      testIteratorClosedProperlyOnClose(cache(1, CACHE_NAME), cache(1, CACHE_NAME));
+   }
+
+   public void testIteratorClosedWhenPartiallyIteratedRemote() {
+      testIteratorClosedProperlyOnClose(cache(1, CACHE_NAME), cache(0, CACHE_NAME));
    }
 
    public void testIteratorClosedWhenIteratedFully() {
