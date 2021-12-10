@@ -39,10 +39,6 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
-   public JGroupsChannelConfigurator getConfigurator() {
-      return configurator;
-   }
-
    @Override
    public StackFileConfiguration create() {
       return new StackFileConfiguration(attributes.protect(), configurator);
@@ -56,7 +52,7 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    @Override
-   public JGroupsChannelConfigurator getConfigurator(String stackName) {
+   public JGroupsChannelConfigurator getConfigurator() {
       return configurator;
    }
 }

@@ -5,6 +5,5 @@ import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 
 public interface StackBuilder<T> extends Builder<T> {
 
-   JGroupsChannelConfigurator getConfigurator(String stackName);
-
+   JGroupsChannelConfigurator getConfigurator();
 }

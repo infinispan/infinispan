@@ -56,7 +56,7 @@ public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilde
    }
 
    @Override
-   public JGroupsChannelConfigurator getConfigurator(String stackName) {
+   public JGroupsChannelConfigurator getConfigurator() {
       return configurator;
    }
 }
