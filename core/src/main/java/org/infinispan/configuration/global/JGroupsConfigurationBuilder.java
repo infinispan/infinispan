@@ -82,10 +82,14 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    public JGroupsConfigurationBuilder read(JGroupsConfiguration template) {
       attributes.read(template.attributes());
       buildersByName.clear();
-      stackFileConfigurationBuilders.clear();
-      stackConfigurationBuilders.clear();
       template.stackFiles().forEach(s -> addStackFile(s.name()).read(s));
       template.stacks().forEach(s -> addStack(s.name()).read(s));
+      for(StackFileConfigurationBuilder b : stackFileConfigurationBuilders) {
+         buildersByName.add(b.getConfigurator().getName());
+      }
+      for(StackConfigurationBuilder b : stackConfigurationBuilders) {
+         buildersByName.add(b.getConfigurator().getName());
+      }
       return this;
    }
 
