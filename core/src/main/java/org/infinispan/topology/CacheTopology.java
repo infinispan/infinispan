@@ -219,10 +219,10 @@ public class CacheTopology {
             '}';
    }
 
-   public final void logRoutingTableInformation() {
+   public final void logRoutingTableInformation(String cacheName) {
       if (log.isTraceEnabled()) {
-         log.tracef("Current consistent hash's routing table: %s", currentCH.getRoutingTableAsString());
-         if (pendingCH != null) log.tracef("Pending consistent hash's routing table: %s", pendingCH.getRoutingTableAsString());
+         log.tracef("[%s] Current consistent hash's routing table: %s", cacheName, currentCH.getRoutingTableAsString());
+         if (pendingCH != null) log.tracef("[%s] Pending consistent hash's routing table: %s", cacheName, pendingCH.getRoutingTableAsString());
       }
    }
 

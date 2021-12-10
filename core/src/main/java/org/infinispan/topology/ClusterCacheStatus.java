@@ -309,7 +309,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (log.isTraceEnabled()) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
             cacheName, currentTopology, expectedMembers, joiners);
       if (newTopology != null) {
-         newTopology.logRoutingTableInformation();
+         newTopology.logRoutingTableInformation(cacheName);
       }
    }
 
