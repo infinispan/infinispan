@@ -1,5 +1,6 @@
 package org.infinispan.server.security.authorization;
 
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -18,6 +19,7 @@ public class AuthorizationPropertiesIT extends AbstractAuthorization {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthorizationPropertiesTest.xml")
+               .runMode(ServerRunMode.CONTAINER)
                .build();
 
    @Rule
