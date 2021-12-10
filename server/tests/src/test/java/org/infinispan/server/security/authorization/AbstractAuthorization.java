@@ -395,6 +395,7 @@ public abstract class AbstractAuthorization {
 
    private ConfigurationBuilder clientConfigurationWithProtostreamMarshaller(TestUser user) {
       ConfigurationBuilder client = new ConfigurationBuilder().read(hotRodBuilders.get(user).build());
+      client.servers().clear();
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
       client.marshaller(marshaller);
       Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(marshaller.getSerializationContext()));
