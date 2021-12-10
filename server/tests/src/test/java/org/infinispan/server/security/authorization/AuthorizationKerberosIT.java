@@ -1,5 +1,7 @@
 package org.infinispan.server.security.authorization;
 
+import java.nio.file.Paths;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -17,8 +19,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.experimental.categories.Category;
-
-import java.nio.file.Paths;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
