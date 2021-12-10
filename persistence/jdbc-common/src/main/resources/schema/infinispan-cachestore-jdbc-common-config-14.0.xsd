@@ -45,7 +45,6 @@
     </xs:complexContent>
   </xs:complexType>
 
-
   <xs:complexType name="connection-pool">
     <xs:attribute name="properties-file" type="xs:string">
       <xs:annotation>
