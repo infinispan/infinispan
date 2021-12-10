@@ -1061,8 +1061,17 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       void sendCancelCommand(Address target) {
          CancelPublisherCommand command = commandsFactory.buildCancelPublisherCommand(requestId);
-         CompletionStage<?> stage = rpcManager.invokeCommand(target, command, VoidResponseCollector.ignoreLeavers(),
-               rpcOptions);
+         CompletionStage<?> stage;
+         if (target == rpcManager.getAddress()) {
+            try {
+               stage = command.invokeAsync(componentRegistry);
+            } catch (Throwable throwable) {
+               stage = CompletableFutures.completedExceptionFuture(throwable);
+            }
+         } else {
+            stage = rpcManager.invokeCommand(target, command, VoidResponseCollector.ignoreLeavers(),
+                  rpcOptions);
+         }
          if (log.isTraceEnabled()) {
             stage.exceptionally(t -> {
                log.tracef("There was a problem cancelling publisher for id %s at address %s", requestId, target);
