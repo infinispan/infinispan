@@ -1,5 +1,7 @@
 package org.infinispan.globalstate;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -43,9 +45,10 @@ public class ThreeNodeDistGlobalStateRestartTest extends AbstractGlobalStateRest
    public void testClusterRecoveryAfterRestart() throws Throwable {
       shutdownAndRestart(-1, false);
 
-      Thread.sleep(1000);
+      killMember(0, CACHE_NAME, false);
 
-      killMember(0, CACHE_NAME);
+      assertEquals(DATA_SIZE, (long) cache(0, CACHE_NAME).size());
+      assertEquals(DATA_SIZE, (long) cache(1, CACHE_NAME).size());
       TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
    }
 }
