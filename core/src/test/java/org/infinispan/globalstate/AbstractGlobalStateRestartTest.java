@@ -74,7 +74,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       applyCacheManagerClusteringConfiguration(config);
-      config.persistence().addSingleFileStore().location(stateDirectory);
+      config.persistence().addSingleFileStore().location(stateDirectory).fetchPersistentState(true);
       EmbeddedCacheManager manager = addClusterEnabledCacheManager(global, null);
       manager.defineConfiguration(CACHE_NAME, config.build());
    }

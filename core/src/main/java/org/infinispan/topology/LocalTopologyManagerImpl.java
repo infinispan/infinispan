@@ -371,7 +371,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
       stage = stage.thenCompose(ignored -> {
-         unionTopology.logRoutingTableInformation();
+         unionTopology.logRoutingTableInformation(cacheName);
 
          if (updateAvailabilityModeFirst && availabilityMode != null) {
             return cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
@@ -567,7 +567,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
       return stage.thenCompose(ignored -> {
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
-         cacheTopology.logRoutingTableInformation();
+         cacheTopology.logRoutingTableInformation(cacheName);
 
          return handler.rebalance(newTopology);
       });
