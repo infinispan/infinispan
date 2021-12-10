@@ -3,6 +3,7 @@ package org.infinispan.server.security.authorization;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.test.api.TestUser;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -21,6 +22,7 @@ public class AuthorizationCertIT extends AbstractAuthorization {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthorizationCertTest.xml")
+               .runMode(ServerRunMode.CONTAINER)
                .build();
 
    @Rule
