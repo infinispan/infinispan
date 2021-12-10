@@ -50,7 +50,7 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       Object result = transcoder.transcode(dataSrc, personMediaType, jsonMediaType);
 
       assertEquals(new String((byte[]) result),
-            String.format("{\"" + TYPE_PROPERTY + "\":\"%s\",\"name\":\"%s\",\"address\":{\"" + TYPE_PROPERTY + "\":\"%s\",\"street\":null,\"city\":\"%s\",\"zip\":0},\"picture\":null,\"sex\":null,\"birthDate\":[\"java.util.Date\",0]}",
+            String.format("{\"" + TYPE_PROPERTY + "\":\"%s\",\"name\":\"%s\",\"address\":{\"" + TYPE_PROPERTY + "\":\"%s\",\"street\":null,\"city\":\"%s\",\"zip\":0},\"picture\":null,\"sex\":null,\"birthDate\":[\"java.util.Date\",0],\"acceptedToS\":false}",
                   Person.class.getName(),
                   "joe",
                   Address.class.getName(),
