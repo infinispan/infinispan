@@ -79,7 +79,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Dinfinispan.brand.version=${version} -DskipArtifactUpload=true"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Dinfinispan.brand.version=${version}"
             }
         }
 
