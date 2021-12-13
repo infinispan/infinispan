@@ -229,7 +229,7 @@
       <upload.downloadsDir>${upload.username}@${upload.host}:/downloads_htdocs/infinispan/${project.version}</upload.downloadsDir>
       <upload.docsPath>/docs_htdocs/infinispan/${infinispan.base.version}</upload.docsPath>
       <upload.docsDir>${upload.username}@${upload.host}:${upload.docsPath}</upload.docsDir>
-      <upload.keyFile>${env.HOME}/.ssh/ispn_release</upload.keyFile>
+      <upload.keyFile>${env.HOME}/.ssh/infinispan</upload.keyFile>
       <upload.schemaDir>${upload.username}@${upload.host}:/schema_htdocs/infinispan</upload.schemaDir>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
@@ -2902,7 +2902,7 @@
                               <available file="${project.build.outputDirectory}/schema" type="dir" property="hasSchema"/>
 
                               <echo level="info" message="Uploading Schema files to ${upload.schemaDir}" if:set="hasSchema" xmlns:if="ant:if"/>
-                              <scp todir="${upload.schemaDir}" keyfile="${upload.keyFile}" verbose="true" compressed="true" if:set="hasSchema" xmlns:if="ant:if">
+                              <scp todir="${upload.schemaDir}" keyfile="${upload.keyFile}" verbose="true" compressed="true" sftp="true" if:set="hasSchema" xmlns:if="ant:if">
                                  <fileset dir="${project.build.outputDirectory}/schema">
                                     <include name="*-${infinispan.core.schema.version}.xsd" />
                                  </fileset>
