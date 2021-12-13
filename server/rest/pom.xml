@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>11.0.13.Final</version>
+      <version>11.0.14-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 

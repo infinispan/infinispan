@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan.archetypes</groupId>
         <artifactId>infinispan-archetypes</artifactId>
-        <version>11.0.13.Final</version>
+        <version>11.0.14-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
