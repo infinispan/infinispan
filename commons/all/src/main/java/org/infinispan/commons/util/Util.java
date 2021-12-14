@@ -637,12 +637,12 @@ public final class Util {
    }
 
    public static String hexDump(byte[] buffer, int actualLength) {
-      int dumpLength = Math.min(buffer.length, HEX_DUMP_LIMIT);
+      int dumpLength = Math.min(Math.min(buffer.length, HEX_DUMP_LIMIT), actualLength);
       StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
       for (int i = 0; i < dumpLength; ++i) {
          addHexByte(sb, buffer[i]);
       }
-      if (dumpLength < actualLength) {
+      if (dumpLength < HEX_DUMP_LIMIT) {
          sb.append("...");
       }
       sb.append(" (").append(actualLength).append(" bytes)");
@@ -1087,5 +1087,29 @@ public final class Util {
     */
    public interface ByteGetter {
       byte get(int index);
+   }
+
+   /**
+    * This method is to be replaced by Java 9 Arrays#equals with the same arguments.
+    *
+    * @param a first array to test contents
+    * @param aFromIndex the offset into the first array to start comparison
+    * @param aToIndex the last element (exclusive) of the first array to compare
+    * @param b second array to test contents
+    * @param bFromIndex the offset into the second array to start comparison
+    * @param bToIndex the last element (exclusive) of the second array to compare
+    * @return if the bytes in the two array ranges are equal
+    */
+   public static boolean arraysEqual(byte[] a, int aFromIndex, int aToIndex, byte[] b, int bFromIndex, int bToIndex) {
+      int totalAmount = aToIndex - aFromIndex;
+      if (totalAmount != bToIndex - bFromIndex) {
+         return false;
+      }
+      for (int i = 0; i < totalAmount; ++i) {
+         if (a[aFromIndex + i] != b[bFromIndex + i]) {
+            return false;
+         }
+      }
+      return true;
    }
 }
