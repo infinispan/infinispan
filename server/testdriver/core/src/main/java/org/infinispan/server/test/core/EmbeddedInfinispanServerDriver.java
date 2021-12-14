@@ -35,7 +35,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
 
    protected EmbeddedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
-      System.setProperty("infinispan.security.elytron.skipnonceshutdown", "true");
+      System.setProperty(Server.INFINISPAN_ELYTRON_NONCE_SHUTDOWN, "false");
    }
 
    protected int clusterPortOffset() {

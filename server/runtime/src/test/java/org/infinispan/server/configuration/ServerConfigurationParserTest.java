@@ -46,7 +46,6 @@ import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
-import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
@@ -64,7 +63,6 @@ public class ServerConfigurationParserTest {
 
    @BeforeClass
    public static void setup() {
-      registerSecurityProviders();
       createCredentialStore(getConfigPath().resolve("credentials.pfx"), "secret");
    }
 
@@ -161,13 +159,6 @@ public class ServerConfigurationParserTest {
 
    public static Path getConfigPath() {
       return Paths.get(System.getProperty("build.directory"), "test-classes", "configuration");
-   }
-
-   public static void registerSecurityProviders() {
-      WildFlyElytronCredentialStoreProvider provider = WildFlyElytronCredentialStoreProvider.getInstance();
-      if (java.security.Security.getProvider(provider.getName()) == null) {
-         java.security.Security.insertProviderAt(provider, 1);
-      }
    }
 
    static void addCredential(KeyStoreCredentialStore store, String alias, String credential) {
