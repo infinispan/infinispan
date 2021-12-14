@@ -153,7 +153,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
    @Override
    public void close() {
       // Hack to shutdown the nonce executor
-      if (!Boolean.getBoolean("infinispan.security.elytron.skipnonceshutdown")) {
+      if (Boolean.parseBoolean(System.getProperty(Server.INFINISPAN_ELYTRON_NONCE_SHUTDOWN, "true"))) {
          new DigestMechanismFactory().shutdown();
       }
       factory.shutdownAuthenticationMechanismFactory();

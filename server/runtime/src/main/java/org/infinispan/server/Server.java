@@ -103,6 +103,19 @@ import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
+import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
+import org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider;
+import org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider;
+import org.wildfly.security.http.digest.WildFlyElytronHttpDigestProvider;
+import org.wildfly.security.http.spnego.WildFlyElytronHttpSpnegoProvider;
+import org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider;
+import org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider;
+import org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider;
+import org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider;
+import org.wildfly.security.sasl.localuser.WildFlyElytronSaslLocalUserProvider;
+import org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider;
+import org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider;
+import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -149,6 +162,7 @@ public class Server implements ServerManagement, AutoCloseable {
 
    // "Internal" properties, used by tests
    public static final String INFINISPAN_LOG4J_SHUTDOWN = "infinispan.server.log4j.shutdown";
+   public static final String INFINISPAN_ELYTRON_NONCE_SHUTDOWN = "infinispan.security.elytron.nonceshutdown";
 
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
@@ -249,6 +263,21 @@ public class Server implements ServerManagement, AutoCloseable {
       } catch (PrivilegedActionException e) {
          throw new RuntimeException(e.getCause());
       }
+
+      // Register only the providers that matter to us
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpBasicProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpBearerProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpDigestProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpClientCertProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronHttpSpnegoProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslPlainProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslDigestProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslScramProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslExternalProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslLocalUserProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslOAuth2Provider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslGssapiProvider.getInstance());
+      SecurityActions.addSecurityProvider(WildFlyElytronSaslGs2Provider.getInstance());
    }
 
    private void parseConfiguration(List<Path> configurationFiles) {
