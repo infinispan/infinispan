@@ -1,6 +1,5 @@
 package org.infinispan.marshall.protostream.impl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,6 +7,7 @@ import java.io.OutputStream;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
@@ -57,13 +57,7 @@ public abstract class AbstractInternalProtoStreamMarshaller implements Marshalle
       return userMarshaller;
    }
 
-   @Override
-   public ByteBuffer objectToBuffer(Object o) {
-      return ByteBufferImpl.create(objectToByteBuffer(o, -1));
-   }
-
-   @Override
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) {
+   private LazyByteArrayOutputStream objectToOutputStream(Object obj, int estimatedSize) {
       if (obj == null)
          return null;
 
@@ -71,15 +65,26 @@ public abstract class AbstractInternalProtoStreamMarshaller implements Marshalle
          if (requiresWrapping(obj))
             obj = new MarshallableUserObject<>(obj);
          int size = estimatedSize < 0 ? PROTOSTREAM_DEFAULT_BUFFER_SIZE : estimatedSize;
-         ByteArrayOutputStream baos = new ByteArrayOutputStream(size);
+         LazyByteArrayOutputStream baos = new LazyByteArrayOutputStream(size);
          ProtobufUtil.toWrappedStream(getSerializationContext(), baos, obj, size);
-         return baos.toByteArray();
+         return baos;
       } catch (Throwable t) {
          log.cannotMarshall(obj.getClass(), t);
          if (t instanceof MarshallingException)
             throw (MarshallingException) t;
          throw new MarshallingException(t.getMessage(), t.getCause());
       }
+   }
+
+   @Override
+   public ByteBuffer objectToBuffer(Object o) {
+      LazyByteArrayOutputStream objectStream = objectToOutputStream(o, -1);
+      return ByteBufferImpl.create(objectStream.getRawBuffer(), 0, objectStream.size());
+   }
+
+   @Override
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) {
+      return objectToOutputStream(obj, estimatedSize).getTrimmedBuffer();
    }
 
    @Override

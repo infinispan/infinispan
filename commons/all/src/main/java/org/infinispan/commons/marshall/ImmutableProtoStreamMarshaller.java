@@ -52,7 +52,8 @@ public class ImmutableProtoStreamMarshaller extends AbstractMarshaller {
 
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
-      return ByteBufferImpl.create(ProtobufUtil.toWrappedByteArray(getSerializationContext(), o));
+      java.nio.ByteBuffer nioBuffer = ProtobufUtil.toWrappedByteBuffer(getSerializationContext(), o);
+      return ByteBufferImpl.create(nioBuffer.array(), nioBuffer.arrayOffset(), nioBuffer.remaining());
    }
 
    @Override
