@@ -3,7 +3,7 @@ package org.infinispan.persistence.sifs;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.io.ByteBuffer;
 
 /**
  * Request for some change to be persisted in the Index or operation executed by index updater thread.
@@ -29,10 +29,10 @@ class IndexRequest extends CompletableFuture<Object> {
    private final int offset;
    private final int prevFile;
    private final int prevOffset;
-   private final byte[] serializedKey;
+   private final ByteBuffer serializedKey;
    private final int size;
 
-   private IndexRequest(Type type, int segment, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+   private IndexRequest(Type type, int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
       this.type = type;
       this.segment = segment;
       this.key = key;
@@ -44,19 +44,19 @@ class IndexRequest extends CompletableFuture<Object> {
       this.size = size;
    }
 
-   public static IndexRequest update(int segment, Object key, byte[] serializedKey, int file, int offset, int size) {
+   public static IndexRequest update(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size) {
       return new IndexRequest(Type.UPDATE, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
    }
 
-   public static IndexRequest moved(int segment, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+   public static IndexRequest moved(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
       return new IndexRequest(Type.MOVED, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, prevFile, prevOffset);
    }
 
-   public static IndexRequest dropped(int segment, Object key, byte[] serializedKey, int prevFile, int prevOffset) {
+   public static IndexRequest dropped(int segment, Object key, ByteBuffer serializedKey, int prevFile, int prevOffset) {
       return new IndexRequest(Type.DROPPED, segment, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
-   public static IndexRequest foundOld(int segment, Object key, byte[] serializedKey, int prevFile, int prevOffset) {
+   public static IndexRequest foundOld(int segment, Object key, ByteBuffer serializedKey, int prevFile, int prevOffset) {
       return new IndexRequest(Type.FOUND_OLD, segment, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
@@ -99,7 +99,7 @@ class IndexRequest extends CompletableFuture<Object> {
       return prevOffset;
    }
 
-   public byte[] getSerializedKey() {
+   public ByteBuffer getSerializedKey() {
       return serializedKey;
    }
 
@@ -119,7 +119,7 @@ class IndexRequest extends CompletableFuture<Object> {
    public String toString() {
       return "IndexRequest{" +
             "key=" + key +
-            ", serializedKey=" + Util.printArray(serializedKey) +
+            ", serializedKey=" + serializedKey +
             ", file=" + file +
             ", offset=" + offset +
             ", prevFile=" + prevFile +

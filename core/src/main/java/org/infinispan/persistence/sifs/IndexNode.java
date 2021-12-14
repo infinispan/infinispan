@@ -13,8 +13,12 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.LogFactory;
@@ -82,8 +86,7 @@ class IndexNode {
       if ((flags & HAS_LEAVES) != 0) {
          leafNodes = new LeafNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
-            leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort(),
-                 buffer.getInt());
+            leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort(), buffer.getInt());
          }
       } else if ((flags & HAS_NODES) != 0){
          innerNodes = new InnerNode[numKeyParts + 1];
@@ -217,24 +220,29 @@ class IndexNode {
       }
    }
 
+   private static boolean entryRecordEqualBuffer(EntryRecord headerAndKey, org.infinispan.commons.io.ByteBuffer buffer) {
+      byte[] key = headerAndKey.getKey();
+      return Util.arraysEqual(key, 0, key.length, buffer.getBuf(), buffer.getOffset(), buffer.getOffset() + buffer.getLength());
+   }
+
    public enum ReadOperation {
       GET_RECORD {
          @Override
-         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+         protected EntryRecord apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             return leafNode.loadRecord(fileProvider, key, timeService);
          }
       },
       GET_EXPIRED_RECORD {
          @Override
-         protected EntryRecord apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+         protected EntryRecord apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             return leafNode.loadRecord(fileProvider, key, null);
          }
       },
       GET_POSITION {
          @Override
-         protected EntryPosition apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+         protected EntryPosition apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
-            if (Arrays.equals(hak.getKey(), key)) {
+            if (entryRecordEqualBuffer(hak, key)) {
                if (hak.getHeader().expiryTime() > 0 && hak.getHeader().expiryTime() <= timeService.wallClockTime()) {
                   if (log.isTraceEnabled()) {
                      log.tracef("Found node on %d:%d but it is expired", leafNode.file, leafNode.offset);
@@ -252,9 +260,9 @@ class IndexNode {
       },
       GET_INFO {
          @Override
-         protected EntryInfo apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+         protected EntryInfo apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
-            if (Arrays.equals(hak.getKey(), key)) {
+            if (entryRecordEqualBuffer(hak, key)) {
                return leafNode;
             } else {
                if (log.isTraceEnabled()) {
@@ -265,12 +273,12 @@ class IndexNode {
          }
       };
 
-      protected abstract <T> T apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException;
+      protected abstract <T> T apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException;
    }
 
-   public static <T> T applyOnLeaf(Index.Segment segment, byte[] key, Lock rootLock, ReadOperation operation) throws IOException {
+   public static <T> T applyOnLeaf(Index.Segment segment, int cacheSegment, byte[] indexKey, Lock rootLock, ReadOperation operation) throws IOException {
       int attempts = 0;
-      for (;;) {
+      for (; ; ) {
          rootLock.lock();
          IndexNode node = segment.getRoot();
          Lock parentLock = rootLock, currentLock = null;
@@ -280,7 +288,7 @@ class IndexNode {
                currentLock.lock();
                parentLock.unlock();
                parentLock = currentLock;
-               int insertionPoint = node.getInsertionPoint(key);
+               int insertionPoint = node.getInsertionPoint(indexKey);
                node = node.innerNodes[insertionPoint].getIndexNode(segment);
                if (node == null) {
                   return null;
@@ -291,8 +299,10 @@ class IndexNode {
             if (node.leafNodes.length == 0) {
                return null;
             }
-            int insertionPoint = node.getInsertionPoint(key);
-            return operation.apply(node.leafNodes[insertionPoint], key, segment.getFileProvider(), segment.getTimeService());
+            int insertionPoint = node.getInsertionPoint(indexKey);
+            int segmentBytes = UnsignedNumeric.sizeUnsignedInt(cacheSegment);
+            return operation.apply(node.leafNodes[insertionPoint], ByteBufferImpl.create(indexKey, segmentBytes, indexKey.length - segmentBytes),
+                  segment.getFileProvider(), segment.getTimeService());
          } catch (IndexNodeOutdatedException e) {
             try {
                if (attempts > 10) {
@@ -361,10 +371,10 @@ class IndexNode {
       this.segment.getIndexFile().write(buffer, offset);
    }
 
-   private static IndexNode findParentNode(IndexNode root, byte[] key, Deque<Path> stack) throws IOException {
+   private static IndexNode findParentNode(IndexNode root, byte[] indexKey, Deque<Path> stack) throws IOException {
       IndexNode node = root;
       while (node.innerNodes != null) {
-         int insertionPoint = node.getInsertionPoint(key);
+         int insertionPoint = node.getInsertionPoint(indexKey);
          if (stack != null) stack.push(new Path(node, insertionPoint));
          if (log.isTraceEnabled()) {
             log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
@@ -374,10 +384,14 @@ class IndexNode {
       return node;
    }
 
-   public static void setPosition(IndexNode root, int segment, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   public static void setPosition(IndexNode root, int cacheSegment, org.infinispan.commons.io.ByteBuffer key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+      setPosition(root, cacheSegment, Index.toIndexKey(cacheSegment, key), file, offset, size, overwriteHook, recordChange);
+   }
+
+   private static void setPosition(IndexNode root, int cacheSegment, byte[] indexKey, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       Deque<Path> stack = new ArrayDeque<>();
-      IndexNode node = findParentNode(root, key, stack);
-      IndexNode copy = node.copyWith(segment, key, file, offset, size, overwriteHook, recordChange);
+      IndexNode node = findParentNode(root, indexKey, stack);
+      IndexNode copy = node.copyWith(cacheSegment, indexKey, file, offset, size, overwriteHook, recordChange);
       if (copy == node) {
          // no change was executed
          return;
@@ -443,8 +457,7 @@ class IndexNode {
                   oldNode.offset = -1;
                   oldNode.occupiedSpace = -1;
                }
-            }
-            finally {
+            } finally {
                oldNode.lock.writeLock().unlock();
             }
          }
@@ -605,7 +618,7 @@ class IndexNode {
       } else {
          for (LeafNode leafNode : leafNodes) {
             EntryRecord hak = leafNode.loadHeaderAndKey(segment.getFileProvider());
-            if (hak.getKey() != null) return hak.getKey();
+            if (hak.getKey() != null) return Index.toIndexKey(leafNode.segment, hak.getKey());
          }
       }
       return null;
@@ -620,7 +633,7 @@ class IndexNode {
       } else {
          for (int i = leafNodes.length - 1; i >= 0; --i) {
             EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
-            if (hak.getKey() != null) return hak.getKey();
+            if (hak.getKey() != null) return Index.toIndexKey(leafNodes[i].segment, hak.getKey());
          }
       }
       return null;
@@ -629,20 +642,20 @@ class IndexNode {
    /**
     * Called on the most bottom node
     */
-   private IndexNode copyWith(int cacheSegment, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   private IndexNode copyWith(int cacheSegment, byte[] indexKey, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       if (leafNodes == null) throw new IllegalArgumentException();
       byte[] newPrefix;
       if (leafNodes.length == 0) {
          overwriteHook.setOverwritten(false, -1, -1);
          if (overwriteHook.check(-1, -1)) {
-            return new IndexNode(segment, prefix, keyParts, new LeafNode[]{ new LeafNode(file, offset, (short) 1, cacheSegment)});
+            return new IndexNode(segment, prefix, keyParts, new LeafNode[]{new LeafNode(file, offset, (short) 1, cacheSegment)});
          } else {
             segment.getCompactor().free(file, size);
             return this;
          }
       }
 
-      int insertPart = getInsertionPoint(key);
+      int insertPart = getInsertionPoint(indexKey);
       LeafNode oldLeafNode = leafNodes[insertPart];
 
       short numRecords = oldLeafNode.numRecords;
@@ -669,7 +682,8 @@ class IndexNode {
       } catch (IndexNodeOutdatedException e) {
          throw new IllegalStateException("Index cannot be outdated for segment updater thread", e);
       }
-      int keyComp = compare(hak.getKey(), key);
+      byte[] hakKeyWithSegment = Index.toIndexKey(oldLeafNode.segment, hak.getKey());
+      int keyComp = compare(hakKeyWithSegment, indexKey);
       if (keyComp == 0) {
          if (numRecords > 0) {
             if (overwriteHook.check(oldLeafNode.file, oldLeafNode.offset)) {
@@ -733,26 +747,27 @@ class IndexNode {
          // IndexRequest cannot be MOVED or DROPPED when the key is not in the index
          assert recordChange == RecordChange.INCREASE;
          overwriteHook.setOverwritten(false, -1, -1);
+
          // We have to insert the record even if this is a delete request and the key was not found
          // because otherwise we would have incorrect numRecord count. Eventually, Compactor will
          // drop the tombstone and update index, removing this node
          if (keyParts.length == 0) {
             // TODO: we may use unnecessarily long keys here and the key is never shortened
-            newPrefix = keyComp > 0 ? key : hak.getKey();
+            newPrefix = keyComp > 0 ? indexKey : hakKeyWithSegment;
          } else {
-            newPrefix = commonPrefix(prefix, key);
+            newPrefix = commonPrefix(prefix, indexKey);
          }
          newKeyParts = new byte[keyParts.length + 1][];
          newLeafNodes = new LeafNode[leafNodes.length + 1];
          copyKeyParts(keyParts, 0, newKeyParts, 0, insertPart, prefix, newPrefix);
          copyKeyParts(keyParts, insertPart, newKeyParts, insertPart + 1, keyParts.length - insertPart, prefix, newPrefix);
          if (keyComp > 0) {
-            newKeyParts[insertPart] = substring(key, newPrefix.length, keyComp);
+            newKeyParts[insertPart] = substring(indexKey, newPrefix.length, keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart + 1);
             System.arraycopy(leafNodes, insertPart + 1, newLeafNodes, insertPart + 2, leafNodes.length - insertPart - 1);
             newLeafNodes[insertPart + 1] = new LeafNode(file, offset, (short) 1, cacheSegment);
          } else {
-            newKeyParts[insertPart] = substring(hak.getKey(), newPrefix.length, -keyComp);
+            newKeyParts[insertPart] = substring(hakKeyWithSegment, newPrefix.length, -keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart);
             System.arraycopy(leafNodes, insertPart, newLeafNodes, insertPart + 1, leafNodes.length - insertPart);
             newLeafNodes[insertPart] = new LeafNode(file, offset, (short) 1, cacheSegment);
@@ -761,12 +776,31 @@ class IndexNode {
       return new IndexNode(segment, newPrefix, newKeyParts, newLeafNodes);
    }
 
-   private int getInsertionPoint(byte[] key) {
-      int comp = compare(prefix, key, prefix.length);
+   private int getIterationPoint(byte[] segmentPrefix) {
+      int comp = compare(segmentPrefix, prefix, prefix.length);
       int insertionPoint;
-      if (comp < 0) {
+      if (comp > 0) {
          insertionPoint = 0;
-      } else if (comp > 0) {
+      } else if (comp < 0) {
+         insertionPoint = keyParts.length;
+      } else {
+         byte[] keyPostfix = substring(segmentPrefix, prefix.length, segmentPrefix.length);
+         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, (o1, o2) -> IndexNode.compare(o2, o1, o1.length));
+         if (insertionPoint < 0) {
+            insertionPoint = -insertionPoint - 1;
+         } else {
+            insertionPoint++; // identical elements must go to the right
+         }
+      }
+      return insertionPoint;
+   }
+
+   private int getInsertionPoint(byte[] key) {
+      int comp = compare(key, prefix, prefix.length);
+      int insertionPoint;
+      if (comp > 0) {
+         insertionPoint = 0;
+      } else if (comp < 0) {
          insertionPoint = keyParts.length;
       } else {
          byte[] keyPostfix = substring(key, prefix.length, key.length);
@@ -881,6 +915,9 @@ class IndexNode {
 
    private static byte[] substring(byte[] key, int begin, int end) {
       if (end <= begin) return Util.EMPTY_BYTE_ARRAY;
+      if (begin == 0 && end == key.length) {
+         return key;
+      }
       byte[] sub = new byte[end - begin];
       System.arraycopy(key, begin, sub, 0, end - begin);
       return sub;
@@ -904,10 +941,12 @@ class IndexNode {
       return prefix;
    }
 
-   private static int compare(byte[] first, byte[] second, int length) {
-      for (int i = 0; i < length; ++i) {
-         if (i >= second.length) {
-            return -1;
+   // Compares the two arrays. This is different from a regular compare that if the second array has more bytes than
+   // the first but contains all the same bytes it is treated equal
+   private static int compare(byte[] first, byte[] second, int secondLength) {
+      for (int i = 0; i < secondLength; ++i) {
+         if (i >= first.length) {
+            return 1;
          }
          if (second[i] == first[i]) continue;
          return second[i] > first[i] ? 1 : -1;
@@ -1052,7 +1091,7 @@ class IndexNode {
          return headerAndKey;
       }
 
-      public EntryRecord loadRecord(FileProvider fileProvider, byte[] key, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+      public EntryRecord loadRecord(FileProvider fileProvider, org.infinispan.commons.io.ByteBuffer key, TimeService timeService) throws IOException, IndexNodeOutdatedException {
          FileProvider.Handle handle = fileProvider.getFile(file);
          int readOffset = offset < 0 ? ~offset : offset;
          if (handle == null) {
@@ -1061,7 +1100,7 @@ class IndexNode {
          try {
             boolean trace = log.isTraceEnabled();
             EntryRecord headerAndKey = getHeaderAndKey(fileProvider, handle);
-            if (key != null && !Arrays.equals(key, headerAndKey.getKey())) {
+            if (key != null && !entryRecordEqualBuffer(headerAndKey, key)) {
                if (trace) {
                   log.trace("Key on " + file + ":" + readOffset + " not matched.");
                }
@@ -1115,44 +1154,101 @@ class IndexNode {
 
    Flowable<EntryRecord> publish(IntSet segments, boolean loadValues) {
       long currentTime = segment.getTimeService().wallClockTime();
-      // TODO: this is not non blocking
-      return Flowable.create(emitter -> {
-         try {
-            recursiveNode(this, segment, segments, emitter, loadValues, currentTime);
-         } catch (Throwable t) {
-            emitter.onError(t);
-         }
-         emitter.onComplete();
-      }, BackpressureStrategy.BUFFER);
+
+      int cacheSegmentSize = segments.size();
+      if (cacheSegmentSize == 0) {
+         return Flowable.empty();
+      }
+      // Needs defer as we mutate the deque so publisher can be subscribed to multiple times
+      return Flowable.defer(() -> {
+         // First sort all the segments by their unsigned numeric byte[] values.
+         // This allows us to start at the left most node, and we can iterate within the nodes if the segments are
+         // contiguous in the data
+         Deque<byte[]> sortedSegmentPrefixes = segments.intStream().mapToObj(cacheSegment -> {
+                  byte[] segmentPrefix = new byte[UnsignedNumeric.sizeUnsignedInt(cacheSegment)];
+                  UnsignedNumeric.writeUnsignedInt(segmentPrefix, 0, cacheSegment);
+                  return segmentPrefix;
+               }).sorted((o1, o2) -> IndexNode.compare(o2, o1))
+               .collect(Collectors.toCollection(ArrayDeque::new));
+
+         return Flowable.<EntryRecord>create(emitter -> {
+            ByRef.Boolean done = new ByRef.Boolean(false);
+            recursiveNode(this, segment, sortedSegmentPrefixes, emitter, loadValues, currentTime, new ByRef.Boolean(false), done);
+            // Only way to get here is if done was set to true, or we iterated on all data.
+            // The latter means we just read the last segment, so we need to remove it, so we don't repeat.
+            if (!done.get()) {
+               assert sortedSegmentPrefixes.size() == 1;
+               sortedSegmentPrefixes.removeFirst();
+            }
+            emitter.onComplete();
+         }, BackpressureStrategy.BUFFER).repeatUntil(sortedSegmentPrefixes::isEmpty);
+      });
    }
 
-   void recursiveNode(IndexNode node, Index.Segment segment, IntSet segments, FlowableEmitter<EntryRecord> emitter,
-                      boolean loadValues, long currentTime) throws IOException, IndexNodeOutdatedException {
+   void recursiveNode(IndexNode node, Index.Segment segment, Deque<byte[]> segmentPrefixes, FlowableEmitter<EntryRecord> emitter,
+         boolean loadValues, long currentTime, ByRef.Boolean foundData, ByRef.Boolean done) throws IOException, IndexNodeOutdatedException {
       Lock readLock = node.lock.readLock();
       readLock.lock();
       try {
          if (node.innerNodes != null) {
-            for (InnerNode innerNode : node.innerNodes) {
-               IndexNode indexNode = innerNode.getIndexNode(segment);
-               recursiveNode(indexNode, segment, segments, emitter, loadValues, currentTime);
+            int point = foundData.get() ? 0 : node.getIterationPoint(segmentPrefixes.peekFirst());
+            // Need to search all inner nodes starting from that point until we hit the last entry for the segment
+            for (int i = point; !segmentPrefixes.isEmpty() && i < node.innerNodes.length && !done.get(); ++i) {
+               recursiveNode(node.innerNodes[i].getIndexNode(segment), segment, segmentPrefixes, emitter,
+                     loadValues, currentTime, foundData, done);
             }
-         }
-         for (LeafNode leafNode : node.leafNodes) {
-            if (!segments.contains(leafNode.segment)) {
-               continue;
-            }
-            EntryRecord record;
-            if (loadValues) {
-               log.tracef("Loading record for leafeNode: %s", leafNode);
-               record = leafNode.loadRecord(segment.getFileProvider(), null, segment.getTimeService());
+         } else if (node.leafNodes != null) {
+            int suggestedIteration;
+            byte[] segmentPrefix = segmentPrefixes.getFirst();
+            boolean firstData = !foundData.get();
+            if (firstData) {
+               suggestedIteration = node.getIterationPoint(segmentPrefix);
+               foundData.set(true);
             } else {
-               log.tracef("Loading header and key for leafeNode: %s", leafNode);
-               record = leafNode.getHeaderAndKey(segment.getFileProvider(), null);
+               suggestedIteration = 0;
             }
-            if (record != null && record.getHeader().valueLength() > 0) {
-               long expiryTime = record.getHeader().expiryTime();
-               if (expiryTime < 0 || expiryTime > currentTime) {
-                  emitter.onNext(record);
+
+            // Should we optimize this creation
+            int cacheSegment = UnsignedNumeric.readUnsignedInt(segmentPrefix, 0);
+            for (int i = suggestedIteration; i < node.leafNodes.length; ++i) {
+               LeafNode leafNode = node.leafNodes[i];
+               if (leafNode.segment != cacheSegment) {
+                  // The suggestion may be off by 1 if the page index prefix is longer than the segment
+                  if (i == suggestedIteration && firstData) continue;
+                  segmentPrefixes.removeFirst();
+
+                  // End of a segment only continue if we have outstanding requests and not cancelled
+                  if (emitter.requested() <= 0 || emitter.isCancelled()) {
+                     done.set(true);
+                     break;
+                  }
+
+                  // If the data maps to the next segment in our ordered queue, we can continue reading,
+                  // otherwise we end and the retry will kick in
+                  segmentPrefix = segmentPrefixes.peekFirst();
+                  if (segmentPrefix != null) {
+                     cacheSegment = UnsignedNumeric.readUnsignedInt(segmentPrefix, 0);
+                  }
+                  // Next segment doesn't match either, thus we have to retry with the next segment
+                  if (cacheSegment != leafNode.segment) {
+                     done.set(true);
+                     break;
+                  }
+               }
+               EntryRecord record;
+               if (loadValues) {
+                  log.tracef("Loading record for leafNode: %s", leafNode);
+                  record = leafNode.loadRecord(segment.getFileProvider(), null, segment.getTimeService());
+               } else {
+                  log.tracef("Loading header and key for leafNode: %s", leafNode);
+                  record = leafNode.getHeaderAndKey(segment.getFileProvider(), null);
+               }
+
+               if (record != null && record.getHeader().valueLength() > 0) {
+                  long expiryTime = record.getHeader().expiryTime();
+                  if (expiryTime < 0 || expiryTime > currentTime) {
+                     emitter.onNext(record);
+                  }
                }
             }
          }

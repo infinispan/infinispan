@@ -68,6 +68,8 @@ public class TemporaryTable {
                entry.update(file, offset);
                break;
             }
+         } else {
+            break;
          }
       }
       return true;

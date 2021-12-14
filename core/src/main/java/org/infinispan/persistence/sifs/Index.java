@@ -19,6 +19,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
@@ -89,6 +90,24 @@ class Index {
       }
    }
 
+   public static byte[] toIndexKey(int cacheSegment, org.infinispan.commons.io.ByteBuffer buffer) {
+      int segmentBytes = UnsignedNumeric.sizeUnsignedInt(cacheSegment);
+      byte[] indexKey = new byte[buffer.getLength() + segmentBytes];
+      UnsignedNumeric.writeUnsignedInt(indexKey, 0, cacheSegment);
+      System.arraycopy(buffer.getBuf(), buffer.getOffset(), indexKey, segmentBytes, buffer.getLength());
+
+      return indexKey;
+   }
+
+   static byte[] toIndexKey(int cacheSegment, byte[] bytes) {
+      int segmentBytes = UnsignedNumeric.sizeUnsignedInt(cacheSegment);
+      byte[] indexKey = new byte[bytes.length + segmentBytes];
+      UnsignedNumeric.writeUnsignedInt(indexKey, 0, cacheSegment);
+      System.arraycopy(bytes, 0, indexKey, segmentBytes, bytes.length);
+
+      return indexKey;
+   }
+
    /**
     * @return True if the index was loaded from well persisted state
     */
@@ -102,22 +121,22 @@ class Index {
    /**
     * Get record or null if expired
     */
-   public EntryRecord getRecord(Object key, byte[] serializedKey) throws IOException {
-      return getRecord(key, serializedKey, IndexNode.ReadOperation.GET_RECORD);
+   public EntryRecord getRecord(Object key, int cacheSegment, org.infinispan.commons.io.ByteBuffer serializedKey) throws IOException {
+      return getRecord(key, cacheSegment, toIndexKey(cacheSegment, serializedKey), IndexNode.ReadOperation.GET_RECORD);
    }
 
    /**
     * Get record (even if expired) or null if not present
     */
-   public EntryRecord getRecordEvenIfExpired(Object key, byte[] serializedKey) throws IOException {
-      return getRecord(key, serializedKey, IndexNode.ReadOperation.GET_EXPIRED_RECORD);
+   public EntryRecord getRecordEvenIfExpired(Object key, int cacheSegment, byte[] serializedKey) throws IOException {
+      return getRecord(key, cacheSegment, toIndexKey(cacheSegment, serializedKey), IndexNode.ReadOperation.GET_EXPIRED_RECORD);
    }
 
-   private EntryRecord getRecord(Object key, byte[] serializedKey, IndexNode.ReadOperation readOperation) throws IOException {
+   private EntryRecord getRecord(Object key, int cacheSegment, byte[] indexKey, IndexNode.ReadOperation readOperation) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
-         return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), readOperation);
+         return IndexNode.applyOnLeaf(segments[segment], cacheSegment, indexKey, segments[segment].rootReadLock(), readOperation);
       } finally {
          lock.readLock().unlock();
       }
@@ -126,11 +145,11 @@ class Index {
    /**
     * Get position or null if expired
     */
-   public EntryPosition getPosition(Object key, byte[] serializedKey) throws IOException {
+   public EntryPosition getPosition(Object key, int cacheSegment, org.infinispan.commons.io.ByteBuffer serializedKey) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
-         return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_POSITION);
+         return IndexNode.applyOnLeaf(segments[segment], cacheSegment, toIndexKey(cacheSegment, serializedKey), segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_POSITION);
       } finally {
          lock.readLock().unlock();
       }
@@ -139,11 +158,11 @@ class Index {
    /**
     * Get position + numRecords, without expiration
     */
-   public EntryInfo getInfo(Object key, byte[] serializedKey) throws IOException {
+   public EntryInfo getInfo(Object key, int cacheSegment, byte[] serializedKey) throws IOException {
       int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
-         return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_INFO);
+         return IndexNode.applyOnLeaf(segments[segment], cacheSegment, toIndexKey(cacheSegment, serializedKey), segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_INFO);
       } finally {
          lock.readLock().unlock();
       }
@@ -384,47 +403,51 @@ class Index {
       // This is ran when the flowable ends either via normal termination or error
       @Override
       public void run() throws IOException {
-         IndexSpace rootSpace = allocateIndexSpace(root.length());
-         root.store(rootSpace);
-         indexFile.position(indexFileSize);
-         ByteBuffer buffer = ByteBuffer.allocate(4);
-         buffer.putInt(0, freeBlocks.size());
-         write(indexFile, buffer);
-         for (Map.Entry<Short, List<IndexSpace>> entry : freeBlocks.entrySet()) {
-            List<IndexSpace> list = entry.getValue();
-            int requiredSize = 8 + list.size() * 10;
-            buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
-            buffer.position(0);
-            buffer.limit(requiredSize);
-            // TODO: change this to short
-            buffer.putInt(entry.getKey());
-            buffer.putInt(list.size());
-            for (IndexSpace space : list) {
-               buffer.putLong(space.offset);
-               buffer.putShort(space.length);
-            }
-            buffer.flip();
+         try {
+            IndexSpace rootSpace = allocateIndexSpace(root.length());
+            root.store(rootSpace);
+            indexFile.position(indexFileSize);
+            ByteBuffer buffer = ByteBuffer.allocate(4);
+            buffer.putInt(0, freeBlocks.size());
             write(indexFile, buffer);
-         }
-         int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 8;
-         buffer = buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
-         buffer.position(0);
-         // we need to set limit ahead, otherwise the putLong could throw IndexOutOfBoundsException
-         buffer.limit(headerWithoutMagic);
-         buffer.putLong(0, rootSpace.offset);
-         buffer.putShort(8, rootSpace.length);
-         buffer.putLong(10, indexFileSize);
-         buffer.putLong(18, size.get());
-         indexFile.position(8);
-         write(indexFile, buffer);
-         buffer.position(0);
-         buffer.limit(8);
-         buffer.putInt(0, GRACEFULLY);
-         buffer.putInt(4, temporaryTable.getSegmentMax());
-         indexFile.position(0);
-         write(indexFile, buffer);
+            for (Map.Entry<Short, List<IndexSpace>> entry : freeBlocks.entrySet()) {
+               List<IndexSpace> list = entry.getValue();
+               int requiredSize = 8 + list.size() * 10;
+               buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
+               buffer.position(0);
+               buffer.limit(requiredSize);
+               // TODO: change this to short
+               buffer.putInt(entry.getKey());
+               buffer.putInt(list.size());
+               for (IndexSpace space : list) {
+                  buffer.putLong(space.offset);
+                  buffer.putShort(space.length);
+               }
+               buffer.flip();
+               write(indexFile, buffer);
+            }
+            int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 8;
+            buffer = buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
+            buffer.position(0);
+            // we need to set limit ahead, otherwise the putLong could throw IndexOutOfBoundsException
+            buffer.limit(headerWithoutMagic);
+            buffer.putLong(0, rootSpace.offset);
+            buffer.putShort(8, rootSpace.length);
+            buffer.putLong(10, indexFileSize);
+            buffer.putLong(18, size.get());
+            indexFile.position(8);
+            write(indexFile, buffer);
+            buffer.position(0);
+            buffer.limit(8);
+            buffer.putInt(0, GRACEFULLY);
+            buffer.putInt(4, temporaryTable.getSegmentMax());
+            indexFile.position(0);
+            write(indexFile, buffer);
 
-         complete(null);
+            complete(null);
+         } catch (Throwable t) {
+            completeExceptionally(t);
+         }
       }
 
       private void loadFreeBlocks(long freeBlocksOffset) throws IOException {
