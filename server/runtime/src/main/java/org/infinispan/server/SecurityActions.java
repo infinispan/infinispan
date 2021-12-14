@@ -4,6 +4,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.Provider;
 import java.util.Properties;
 
 import javax.naming.spi.InitialContextFactoryBuilder;
@@ -50,6 +51,17 @@ final class SecurityActions {
 
    static Properties getSystemProperties() {
       return doPrivileged(System::getProperties);
+   }
+
+   static void addSecurityProvider(Provider provider) {
+      doPrivileged(() -> {
+               if (java.security.Security.getProvider(provider.getName()) == null) {
+                  java.security
+                        .Security.insertProviderAt(provider, 1);
+               }
+               return null;
+            }
+      );
    }
 
    static void startCacheManager(final EmbeddedCacheManager cacheManager) {
