@@ -35,8 +35,16 @@ public class ByteBufferImpl implements ByteBuffer {
          return EMPTY_INSTANCE;
       }
       if (array.length < offset + length)
-         throw new IllegalArgumentException("Incorrect arguments: array.length" + array.length + ", offset=" + offset +", length="+ length);
+         throw new IllegalArgumentException("Incorrect arguments: array.length" + array.length + ", offset=" + offset + ", length=" + length);
       return new ByteBufferImpl(array, offset, length);
+   }
+
+   public static ByteBufferImpl create(java.nio.ByteBuffer javaBuffer) {
+      int remaining = javaBuffer.remaining();
+      if (remaining == 0) {
+         return EMPTY_INSTANCE;
+      }
+      return new ByteBufferImpl(javaBuffer.array(), javaBuffer.arrayOffset(), remaining);
    }
 
    private ByteBufferImpl(byte[] buf, int offset, int length) {

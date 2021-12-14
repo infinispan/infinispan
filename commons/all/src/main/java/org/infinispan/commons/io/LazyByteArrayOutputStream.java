@@ -1,6 +1,7 @@
 package org.infinispan.commons.io;
 
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import org.infinispan.commons.util.Util;
 
@@ -62,6 +63,22 @@ public final class LazyByteArrayOutputStream extends OutputStream {
       if (buf == null)
          return Util.EMPTY_BYTE_ARRAY;
       return buf;
+   }
+
+   /**
+    * Gets a buffer that is trimmed so that there are no excess bytes. If the current count does not match the
+    * underlying buffer than a new one is created with the written bytes.
+    *
+    * @return a byte[] that contains all the bytes written to this stream
+    */
+   public byte[] getTrimmedBuffer() {
+      if (buf == null) {
+         return Util.EMPTY_BYTE_ARRAY;
+      }
+      if (buf.length == count) {
+         return buf;
+      }
+      return Arrays.copyOf(this.buf, this.count);
    }
 
    @Override

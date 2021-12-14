@@ -1,7 +1,6 @@
 package org.infinispan.commons.marshall;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
@@ -13,6 +12,7 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.io.LazyByteArrayOutputStream;
 
 /**
  * Standard Java serialization marshaller.
@@ -39,12 +39,12 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
 
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      LazyByteArrayOutputStream baos = new LazyByteArrayOutputStream();
       ObjectOutput out = new ObjectOutputStream(baos);
       out.writeObject(o);
       out.close();
       baos.close();
-      return ByteBufferImpl.create(baos.toByteArray());
+      return ByteBufferImpl.create(baos.getRawBuffer(), 0, baos.size());
    }
 
    @Override
