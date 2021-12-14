@@ -652,14 +652,6 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
             MarshallableEntry::getKey, keyPartitioner)));
    }
 
-   public void testWriteAndDeleteBatchIterable() {
-      // Number of entries is randomized to even numbers between 80 and 120
-      int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
-      testBatch(numberOfEntries, () -> store.batchUpdate(segmentCount, Flowable.empty(),
-            TestingUtil.multipleSegmentPublisher(Flowable.range(0, numberOfEntries).map(i -> marshalledEntry(i.toString(), "Val" + i)),
-            MarshallableEntry::getKey, keyPartitioner)));
-   }
-
    public void testEmptyWriteAndDeleteBatchIterable() {
       assertIsEmpty();
       assertNull("should not be present in the store", store.loadEntry(keyToStorage(0)));

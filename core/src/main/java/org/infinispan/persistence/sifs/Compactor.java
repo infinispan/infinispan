@@ -11,6 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -365,7 +367,7 @@ class Compactor implements Consumer<Object> {
                // we could remove the entry and delete would not find it
                drop = false;
             } else {
-               EntryInfo info = index.getInfo(key, serializedKey);
+               EntryInfo info = index.getInfo(key, segment, serializedKey);
                assert info != null : "No index info found for key: " + key;
                assert info.numRecords > 0;
                if (info.file == scheduledFile && info.offset == scheduledOffset) {
@@ -375,7 +377,7 @@ class Compactor implements Consumer<Object> {
                   if (entryExpiryTime >= 0 && entryExpiryTime <= currentTimeMilliseconds) {
                      // We can only truncate expired entries if this was compacted with purge expire
                      if (expiredIndex != null) {
-                        EntryRecord record = index.getRecordEvenIfExpired(key, serializedKey);
+                        EntryRecord record = index.getRecordEvenIfExpired(key, segment, serializedKey);
                         truncate = true;
                         expiredIndex.add(record);
                         // If there are more entries we cannot drop the index as we need a tombstone
@@ -415,7 +417,7 @@ class Compactor implements Consumer<Object> {
                   log.tracef("Drop %d:%d (%s)", scheduledFile, (Object) scheduledOffset,
                         header.valueLength() > 0 ? "record" : "tombstone");
                }
-               index.handleRequest(IndexRequest.dropped(segment, key, serializedKey, scheduledFile, scheduledOffset));
+               index.handleRequest(IndexRequest.dropped(segment, key, ByteBufferImpl.create(serializedKey), scheduledFile, scheduledOffset));
             } else {
                if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
                   if (logFile != null) {
@@ -458,7 +460,7 @@ class Compactor implements Consumer<Object> {
                } else {
                   boolean update = false;
                   try {
-                     EntryInfo info = index.getInfo(key, serializedKey);
+                     EntryInfo info = index.getInfo(key, segment, serializedKey);
                      if (info == null) {
                         throw new IllegalStateException(String.format(
                               "%s was not found in index but it was not in temporary table and there's entry on %d:%d", key, scheduledFile, indexedOffset));
@@ -481,13 +483,14 @@ class Compactor implements Consumer<Object> {
                         logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
                }
                IndexRequest indexRequest;
+               ByteBuffer keyBuffer = ByteBufferImpl.create(serializedKey);
                if (isLogFile) {
                   // When it is a log file we are still keeping the original entry, we are just updating it to say
                   // it was expired
-                  indexRequest = IndexRequest.update(segment, key, serializedKey, logFile.fileId, entryOffset, writtenLength);
+                  indexRequest = IndexRequest.update(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength);
                } else {
                   // entryFile cannot be used as we have to report the file due to free space statistics
-                  indexRequest = IndexRequest.moved(segment, key, serializedKey, logFile.fileId, entryOffset, writtenLength,
+                  indexRequest = IndexRequest.moved(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength,
                         scheduledFile, indexedOffset);
                }
                index.handleRequest(indexRequest);

@@ -22,6 +22,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.time.TimeService;
@@ -383,11 +384,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                   int segment = keyPartitioner.getSegment(key);
                   // We may check the seqId safely as we are the only thread writing to index
                   if (isSeqIdOld(seqId, segment, key, serializedKey)) {
-                     index.handleRequest(IndexRequest.foundOld(segment, key, serializedKey, file, offset));
+                     index.handleRequest(IndexRequest.foundOld(segment, key, ByteBufferImpl.create(serializedKey), file, offset));
                      return null;
                   }
                   if (temporaryTable.set(segment, key, file, offset)) {
-                     index.handleRequest(IndexRequest.update(segment, key, serializedKey, file, offset, size));
+                     index.handleRequest(IndexRequest.update(segment, key, ByteBufferImpl.create(serializedKey), file, offset, size));
                   }
                   return null;
                }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get()));
@@ -412,7 +413,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       for (; ; ) {
          EntryPosition entry = temporaryTable.get(segment, key);
          if (entry == null) {
-            entry = index.getInfo(key, serializedKey);
+            entry = index.getInfo(key, segment, serializedKey);
          }
          if (entry == null) {
             if (log.isTraceEnabled()) {
@@ -524,6 +525,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          throw log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength);
       }
       try {
+         log.tracef("Writing entry for key %s for segment %d", entry.getKey(), segment);
          return logAppender.storeRequest(segment, entry);
       } catch (Exception e) {
          return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
@@ -533,7 +535,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
       try {
-         return logAppender.deleteRequest(segment, key, toBuffer(marshaller.objectToByteBuffer(key)));
+         log.tracef("Deleting key %s for segment %d", key, segment);
+         return logAppender.deleteRequest(segment, key, marshaller.objectToBuffer(key));
       } catch (Exception e) {
          return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
       }
@@ -568,7 +571,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                   }, "soft-index-containsKey");
                }
             } else {
-               EntryPosition position = index.getPosition(key, marshaller.objectToByteBuffer(key));
+               EntryPosition position = index.getPosition(key, segment, marshaller.objectToBuffer(key));
                return CompletableFutures.booleanStage(position != null);
             }
          }
@@ -580,6 +583,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
       return blockingManager.supplyBlocking(() -> {
+         log.tracef("Loading key %s for segment %d", key, segment);
          try {
             for (;;) {
                EntryPosition entry = temporaryTable.get(segment, key);
@@ -593,7 +597,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      return marshallableEntry;
                   }
                } else {
-                  EntryRecord record = index.getRecord(key, marshaller.objectToByteBuffer(key));
+                  EntryRecord record = index.getRecord(key, segment, marshaller.objectToBuffer(key));
                   if (record == null) {
                      log.tracef("Entry for key=%s not found in index, returning null", key);
                      return null;
@@ -761,21 +765,22 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
             return Maybe.just(marshallableEntry);
          });
-         MarshallableEntry<K, V> emptyME = marshallableEntryFactory.getEmpty();
          Flowable<MarshallableEntry<K, V>> indexFlowable = index.publish(segments, includeValues)
-               .filter(er -> er.getHeader().valueLength() > 0)
-               .map(er -> {
-                  final K key = (K) marshaller.objectFromByteBuffer(er.getKey());
-                  if ((filter != null && !filter.test(key)) || seenKeys.contains(key)) {
-                     return emptyME;
+               .mapOptional(er -> {
+                  if (er.getHeader().valueLength() == 0) {
+                     return Optional.empty();
                   }
 
-                  return marshallableEntryFactory.create(key, byteBufferFactory.newByteBuffer(er.getValue()),
+                  final K key = (K) marshaller.objectFromByteBuffer(er.getKey());
+                  if ((filter != null && !filter.test(key)) || seenKeys.contains(key)) {
+                     return Optional.empty();
+                  }
+
+                  return Optional.of(marshallableEntryFactory.create(key, byteBufferFactory.newByteBuffer(er.getValue()),
                         byteBufferFactory.newByteBuffer(er.getMetadata()),
                         byteBufferFactory.newByteBuffer(er.getInternalMetadata()),
-                        er.getCreated(), er.getLastUsed());
-               })
-               .filter(me -> me != emptyME);
+                        er.getCreated(), er.getLastUsed()));
+               });
 
          return Flowable.concat(entryFlowable, indexFlowable);
       }));
