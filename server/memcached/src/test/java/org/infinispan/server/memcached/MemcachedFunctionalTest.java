@@ -63,22 +63,22 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    public void testSetWithExpirySeconds(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = client.set(k(m), 1, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
    public void testSetWithExpiryUnixTime(Method m) throws InterruptedException, ExecutionException, TimeoutException {
-      int future = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 1000);
+      int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       OperationFuture<Boolean> f = client.set(k(m), future, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
    public void testSetWithExpiryUnixTimeInPast(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = client.set(k(m), 60 * 60 * 24 * 30 + 1, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
@@ -108,14 +108,14 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    public void testTouchWithExpiryUnixTime(Method m) throws InterruptedException, ExecutionException, TimeoutException {
-      int future = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 1000);
+      int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       OperationFuture<Boolean> f = client.set(k(m), future, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       f = client.touch(k(m), future + 1);
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertEquals(v(m), client.get(k(m)));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
@@ -124,16 +124,16 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       f = client.touch(k(m), 2);
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertEquals(v(m), client.get(k(m)));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
    public void testAddWithExpirySeconds(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = client.add(k(m), 1, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
       f = client.add(k(m), 0, v(m, "v1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -141,10 +141,10 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    public void testAddWithExpiryUnixTime(Method m) throws InterruptedException, ExecutionException, TimeoutException {
-      int future = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 1000);
+      int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       OperationFuture<Boolean> f = client.add(k(m), future, v(m));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
       f = client.add(k(m), 0, v(m, "v1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
@@ -176,17 +176,17 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       OperationFuture<Boolean> f = client.replace(k(m), 1, v(m, "v1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       assertEquals(client.get(k(m)), v(m, "v1-"));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
    public void testReplaceWithExpiryUnixTime(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       addAndGet(m);
-      int future = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 1000);
+      int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       OperationFuture<Boolean> f = client.replace(k(m), future, v(m, "v1-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       assertEquals(client.get(k(m)), v(m, "v1-"));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m)));
    }
 
@@ -453,7 +453,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    }
 
    public void testFlushAllDelayedUnixTime(Method m) throws InterruptedException, ExecutionException, TimeoutException {
-      int delay = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 2000);
+      int delay = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 2000);
       flushAllDelayed(m, delay, 2200);
    }
 
@@ -469,7 +469,9 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       OperationFuture<Boolean> f = client.flush(delay);
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
 
+      // The underlying ScheduledExecutorService does not use the ControlledTimeService unfortunately, so we need to sleep
       sleepThread(sleep);
+      timeService.advance(sleep);
 
       for (int i = 1; i < 5; ++i) {
          String key = k(m, "k" + i + "-");

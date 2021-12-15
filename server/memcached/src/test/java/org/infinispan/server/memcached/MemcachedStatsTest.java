@@ -150,10 +150,10 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertEquals(stats.getVal1().get("delete_hits"), "1");
       assertEquals(stats.getVal1().get("delete_misses"), "1");
 
-      int future = (int) TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() + 1000);
+      int future = (int) TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() + 1000);
       f = client.set(k(m, "k3-"), future, v(m, "v3-"));
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
-      sleepThread(1100);
+      timeService.advance(1100);
       assertNull(client.get(k(m, "k3-")));
       stats = getStats(stats.getVal2(), stats.getVal3());
       assertEquals(stats.getVal1().get("curr_items"), "1");
