@@ -36,7 +36,7 @@ Distributed caches allow you to increase the data set size either by adding more
 
 [source,options="nowrap",subs=attributes+]
 ----
-Distributed data set size \<= Available memory per node * Minimum number of nodes
+Distributed data set size <= Available memory per node * Minimum number of nodes
 ----
 
 .Adjusting for node loss tolerance
@@ -48,7 +48,7 @@ Distributed caches tolerate the loss of `Number of owners - 1` nodes without los
 ----
 Planned nodes = Minimum number of nodes + Number of owners - 1
 
-Distributed data set size \<= Available memory per node * (Planned nodes - Number of owners + 1)
+Distributed data set size <= Available memory per node * (Planned nodes - Number of owners + 1)
 ----
 
 For example, you plan to store one million entries that are 10KB each in size and configure three owners per entry for availability.
@@ -58,7 +58,7 @@ If you plan to allocate 4GB of RAM for each node in the cluster, you can then us
 ----
 Data set size = 1_000_000 * 10KB = 10GB
 Distributed data set size = (3 + 1) * 10GB = 40GB
-40GB \<= 4GB * Minimum number of nodes
+40GB <= 4GB * Minimum number of nodes
 Minimum number of nodes >= 40GB / 4GB = 10
 Planned nodes = 10 + 3 - 1 = 12
 ----
