@@ -55,6 +55,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
@@ -99,16 +100,18 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       this.transport = transport;
       this.ignoreCache = ignoreCache;
       isStatsEnabled = cache.getCacheConfiguration().statistics().enabled();
+      this.timeService = memcachedCache.getComponentRegistry().getTimeService();
    }
 
    private final AdvancedCache<byte[], byte[]> cache;
    private final ScheduledExecutorService scheduler;
    protected final NettyTransport transport;
    protected final Predicate<? super String> ignoreCache;
+   private final TimeService timeService;
 
    private final static Log log = LogFactory.getLog(MemcachedDecoder.class, Log.class);
 
-   private static final int SecondsInAMonth = 60 * 60 * 24 * 30;
+   public static final int SecondsInAMonth = 60 * 60 * 24 * 30;
 
    long defaultLifespanTime;
    long defaultMaxIdleTime;
@@ -887,7 +890,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
     */
    private long toMillis(int lifespan) {
       if (lifespan > SecondsInAMonth) {
-         long unixTimeExpiry = TimeUnit.SECONDS.toMillis(lifespan) - System.currentTimeMillis();
+         long unixTimeExpiry = TimeUnit.SECONDS.toMillis(lifespan) - timeService.wallClockTime();
          return unixTimeExpiry < 0 ? 0 : unixTimeExpiry;
       } else {
          return TimeUnit.SECONDS.toMillis(lifespan);
@@ -926,7 +929,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             buildStat("pid", 0, sb),
             buildStat("uptime", stats.getTimeSinceStart(), sb),
             buildStat("uptime", stats.getTimeSinceStart(), sb),
-            buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), sb),
+            buildStat("time", TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime()), sb),
             buildStat("version", cache.getVersion(), sb),
             buildStat("pointer_size", 0, sb), // Unsupported
             buildStat("rusage_user", 0, sb), // Unsupported

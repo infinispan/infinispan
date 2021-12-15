@@ -27,7 +27,7 @@ public class ControlledTimeService extends DefaultTimeService {
       this(id, other.currentMillis);
    }
 
-   private ControlledTimeService(Object id, long currentMillis) {
+   public ControlledTimeService(Object id, long currentMillis) {
       this.id = id;
       this.currentMillis = currentMillis;
    }
