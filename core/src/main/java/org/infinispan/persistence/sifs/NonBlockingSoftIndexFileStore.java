@@ -369,7 +369,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       Flowable<Integer> filePublisher = filePublisher();
       CompletionStage<Void> stage = filePublisher.flatMap(outerFile -> {
          ByRef.Long nextExpirationTime = new ByRef.Long(-1);
-         return handleFilePublisher(filePublisher, false, false,
+         return handleFilePublisher(outerFile, false, false,
                (file, offset, size, serializedKey, entryMetadata, serializedValue, serializedInternalMetadata, seqId, expiration) -> {
                   long prevSeqId;
                   while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
@@ -704,33 +704,29 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             CloseableIterator::close);
    }
 
-   private <R> Flowable<R> handleFilePublisher(Flowable<Integer> filePublisher, boolean fetchValue, boolean fetchMetadata,
-                                               EntryFunctor<R> functor) {
-      return filePublisher.flatMap(f -> {
-         // Unbox here once
-         int file = f;
-         return Flowable.using(() -> {
-                  log.tracef("Loading entries from file %d", file);
-                  return Optional.ofNullable(fileProvider.getFile(file));
-               },
-               optHandle -> {
-                  if (!optHandle.isPresent()) {
-                     log.tracef("File %d was deleted during iteration", file);
-                     return Flowable.empty();
-                  }
-
-                  FileProvider.Handle handle = optHandle.get();
-                  AtomicInteger offset = new AtomicInteger();
-                  return Flowable.fromIterable(() -> new HandleIterator<>(offset, handle, fetchMetadata, fetchValue,
-                        functor, file));
-               },
-               optHandle -> {
-                  if (optHandle.isPresent()) {
-                     optHandle.get().close();
-                  }
+   private <R> Flowable<R> handleFilePublisher(int file, boolean fetchValue, boolean fetchMetadata,
+         EntryFunctor<R> functor) {
+      return Flowable.using(() -> {
+               log.tracef("Loading entries from file %d", file);
+               return Optional.ofNullable(fileProvider.getFile(file));
+            },
+            optHandle -> {
+               if (!optHandle.isPresent()) {
+                  log.tracef("File %d was deleted during iteration", file);
+                  return Flowable.empty();
                }
-         );
-      });
+
+               FileProvider.Handle handle = optHandle.get();
+               AtomicInteger offset = new AtomicInteger();
+               return Flowable.fromIterable(() -> new HandleIterator<>(offset, handle, fetchMetadata, fetchValue,
+                     functor, file));
+            },
+            optHandle -> {
+               if (optHandle.isPresent()) {
+                  optHandle.get().close();
+               }
+            }
+      );
    }
 
    @Override
