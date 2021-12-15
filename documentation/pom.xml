@@ -26,10 +26,10 @@
         <javaee.docroot>https://docs.oracle.com/javaee/7/api</javaee.docroot>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
-        <asciidoctorj.version>2.1.0</asciidoctorj.version>
-        <asciidoctor.maven.plugin.version>2.0.0-RC.1</asciidoctor.maven.plugin.version>
-        <asciidoctorj.pdf.version>1.5.0-alpha.18</asciidoctorj.pdf.version>
-        <jruby.version>9.2.9.0</jruby.version>
+        <asciidoctorj.version>2.5.2</asciidoctorj.version>
+        <asciidoctor.maven.plugin.version>2.2.1</asciidoctor.maven.plugin.version>
+        <asciidoctorj.pdf.version>1.6.0</asciidoctorj.pdf.version>
+        <jruby.version>9.2.17.0</jruby.version>
         <asciidoctorj.tabbed.code.version>0.3</asciidoctorj.tabbed.code.version>
         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
@@ -190,7 +190,7 @@
 
     <profiles>
         <profile>
-            <id>distribution</id>
+            <id>pdf</id>
             <build>
                 <plugins>
                     <plugin>
@@ -298,6 +298,43 @@
                                     </target>
                                 </configuration>
                             </execution>
+                        </executions>
+                    </plugin>
+                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assemble-html</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/assemblies/pdf.xml</descriptor>
+                                    </descriptors>
+                                    <attach>true</attach>
+                                    <recompressZippedFiles>true</recompressZippedFiles>
+                                    <finalName>${project.artifactId}-${project.version}</finalName>
+                                    <appendAssemblyId>true</appendAssemblyId>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>distribution</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
                             <execution>
                                 <id>create-logging-report</id>
                                 <goals>
@@ -364,7 +401,6 @@
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/main/assemblies/html.xml</descriptor>
-                                        <descriptor>src/main/assemblies/pdf.xml</descriptor>
                                     </descriptors>
                                     <attach>true</attach>
                                     <recompressZippedFiles>true</recompressZippedFiles>
