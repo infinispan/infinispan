@@ -8,7 +8,7 @@ public class IndexConfiguration {
 
    public static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder(Attribute.PATH, null, String.class).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder(Attribute.INDEX_QUEUE_LENGTH, 1000).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder(Attribute.SEGMENTS, 16).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder(Attribute.SEGMENTS, 3).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder(Attribute.MIN_NODE_SIZE, 0).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder(Attribute.MAX_NODE_SIZE, 4096).immutable().autoPersist(false).build();
 

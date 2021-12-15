@@ -78,16 +78,24 @@ class Index {
       this.maxNodeSize = maxNodeSize;
       indexDir.toFile().mkdirs();
 
+      // If there are more index files than our segments, that means we can't load them
+      boolean hasExtraIndexFile = fileExists(segments);
+
       this.segments = new Segment[segments];
       this.flowableProcessors = new FlowableProcessor[segments];
       for (int i = 0; i < segments; ++i) {
          UnicastProcessor<IndexRequest> flowableProcessor = UnicastProcessor.create();
-         Segment segment = new Segment(i, temporaryTable);
+         Segment segment = new Segment(i, temporaryTable, !hasExtraIndexFile);
 
          this.segments[i] = segment;
          // It is possible to write from multiple threads
          this.flowableProcessors[i] = flowableProcessor.toSerialized();
       }
+   }
+
+   boolean fileExists(int id) {
+      File indexFileFile = new File(indexDir.toFile(), "index." + id);
+      return indexFileFile.exists();
    }
 
    public static byte[] toIndexKey(int cacheSegment, org.infinispan.commons.io.ByteBuffer buffer) {
@@ -250,6 +258,11 @@ class Index {
    }
 
    public void start(Executor executor) {
+
+      // Now that all index segment files are created and marked as dirty we can delete the excess index file if present
+      // If this file was present we assume all indexes are dirty since the number of indexes was reduced
+      new File(indexDir.toFile(), "index." + segments.length).delete();
+
       for (int i = 0; i < segments.length; ++i) {
          Segment segment = segments[i];
          flowableProcessors[i]
@@ -270,7 +283,7 @@ class Index {
       private volatile IndexNode root;
 
 
-      private Segment(int id, TemporaryTable temporaryTable) throws IOException {
+      private Segment(int id, TemporaryTable temporaryTable, boolean attemptLoad) throws IOException {
          this.temporaryTable = temporaryTable;
 
          int segmentMax = temporaryTable.getSegmentMax();
@@ -280,7 +293,9 @@ class Index {
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
          int gracefulValue = -1, segmentValue = -1;
          if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
-               && (gracefulValue = buffer.getInt(0)) == GRACEFULLY && (segmentValue = buffer.getInt(4)) == segmentMax) {
+               && (gracefulValue = buffer.getInt(0)) == GRACEFULLY
+               && (segmentValue = buffer.getInt(4)) == segmentMax
+               && attemptLoad) {
             long rootOffset = buffer.getLong(8);
             short rootOccupied = buffer.getShort(16);
             long freeBlocksOffset = buffer.getLong(18);
@@ -290,7 +305,7 @@ class Index {
             indexFileSize = freeBlocksOffset;
             loaded = true;
          } else {
-            log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d", id, gracefulValue, segmentValue);
+            log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d attemptLoad=%s", id, gracefulValue, segmentValue, attemptLoad);
             this.indexFile.truncate(0);
             root = IndexNode.emptyWithLeaves(this);
             loaded = false;
