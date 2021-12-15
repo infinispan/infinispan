@@ -15,10 +15,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.DummyServerStateManager;
 import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 
@@ -34,11 +37,13 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    protected MemcachedClient client;
    protected MemcachedServer server;
    protected static final int timeout = 60;
+   final ControlledTimeService timeService = new ControlledTimeService("memcached", 1000l * MemcachedDecoder.SecondsInAMonth);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = createTestCacheManager();
       cacheManager.getGlobalComponentRegistry().registerComponent(new DummyServerStateManager(), ServerStateManager.class);
+      TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
       server = startMemcachedTextServer(cacheManager);
       client = createMemcachedClient(60000, server.getPort());
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
