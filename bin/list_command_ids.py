@@ -40,30 +40,31 @@ for test_file in GlobDirectoryWalker(get_search_path(sys.argv[0]) + 'core/src/ma
   finally:
     tf.close()
 
-print 'Scanned %s Command source files.  IDs are (in order):' % len(command_ids)
+print('Scanned %s Command source files.  IDs are (in order):' % len(command_ids))
 
-sorted_keys = command_ids.keys()
-sorted_keys.sort()
+sorted_keys = sorted(command_ids.keys())
 
 i=1
 prev_id = 0
 for k in sorted_keys:
   prev_id += 1
   while k > prev_id:
-    print '  ---'
+    print('  ---')
     prev_id += 1
 
   zeropad = ""
   if (i < 10 and len(sorted_keys) > 9):
     zeropad = " "
-  print '   %s%s) Class [%s%s%s] has COMMAND_ID [%s%s%s]' % (zeropad, i, Colors.green(), command_ids[k], Colors.end_color(), Colors.yellow(), k, Colors.end_color())
+  if i < 100 and len(sorted_keys) > 90:
+    zeropad += " "
+  print('  %s%s) Class [%s%s%s] has COMMAND_ID [%s%s%s]' % (zeropad, i, Colors.green(), command_ids[k], Colors.end_color(), Colors.yellow(), k, Colors.end_color()))
   i += 1
 
-print "\n"
+print("\n")
 if len(warnings) > 0:
-  print "WARNINGS:"
+  print("WARNINGS:")
   for w in warnings:
-    print "  *** %s" % w
-  print "\n"
+    print("  *** %s" % w)
+  print("\n")
 
-print "Next available ID is %s%s%s" % (Colors.cyan(), get_next(sorted_keys), Colors.end_color())
+print("Next available ID is %s%s%s" % (Colors.cyan(), get_next(sorted_keys), Colors.end_color()))
