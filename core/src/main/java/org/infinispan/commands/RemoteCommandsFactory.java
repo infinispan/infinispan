@@ -16,13 +16,16 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
-import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
@@ -488,8 +491,17 @@ public class RemoteCommandsFactory {
             case XSiteSetStateTransferModeCommand.COMMAND_ID:
                command = new XSiteSetStateTransferModeCommand(cacheName);
                break;
-            case IracCleanupTombstoneCommand.COMMAND_ID:
-               command = new IracCleanupTombstoneCommand(cacheName);
+            case IracTombstoneCleanupCommand.COMMAND_ID:
+               command = new IracTombstoneCleanupCommand(cacheName);
+               break;
+            case IracTombstoneRemoteSiteCheckCommand.COMMAND_ID:
+               command = new IracTombstoneRemoteSiteCheckCommand(cacheName);
+               break;
+            case IracTombstoneStateResponseCommand.COMMAND_ID:
+               command = new IracTombstoneStateResponseCommand(cacheName);
+               break;
+            case IracTombstonePrimaryCheckCommand.COMMAND_ID:
+               command = new IracTombstonePrimaryCheckCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

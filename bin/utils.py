@@ -91,7 +91,7 @@ def prettyprint(message, level):
   start_color = Levels.get_color(level)
   end_color = Levels.end_color()
     
-  print "[%s%s%s] %s" % (start_color, level, end_color, message)
+  print("[%s%s%s] %s" % (start_color, level, end_color, message))
 
 def apply_defaults(s):
   for e in default_settings.items():

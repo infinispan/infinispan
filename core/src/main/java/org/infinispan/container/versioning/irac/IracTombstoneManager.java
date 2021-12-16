@@ -1,6 +1,11 @@
 package org.infinispan.container.versioning.irac;
 
+import java.util.Collection;
+
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Stores and manages tombstones for removed keys.
@@ -32,15 +37,26 @@ public interface IracTombstoneManager {
     * @param segment  The key's segment.
     * @param metadata The {@link IracMetadata}.
     */
-   void storeTombstoneIfAbsent(int segment, Object key, IracMetadata metadata);
+   default void storeTombstoneIfAbsent(int segment, Object key, IracMetadata metadata) {
+      if (metadata == null) {
+         return;
+      }
+      storeTombstoneIfAbsent(new IracTombstoneInfo(key, segment, metadata));
+   }
 
    /**
-    * Removes the tombstone for {@code key} if the metadata matches.
+    * Same as {@link #storeTombstoneIfAbsent(int, Object, IracMetadata)} but with a {@link IracTombstoneInfo} instance.
     *
-    * @param key          The key.
-    * @param iracMetadata The expected {@link IracMetadata}.
+    * @param tombstone The tombstone to store.
     */
-   void removeTombstone(Object key, IracMetadata iracMetadata);
+   void storeTombstoneIfAbsent(IracTombstoneInfo tombstone);
+
+   /**
+    * Removes the tombstone if it matches.
+    *
+    * @param tombstone The {@link IracTombstoneInfo}.
+    */
+   void removeTombstone(IracTombstoneInfo tombstone);
 
    /**
     * Removes the tombstone for {@code key}.
@@ -76,4 +92,22 @@ public interface IracTombstoneManager {
     * @return The current delay between cleanup task in milliseconds.
     */
    long getCurrentDelayMillis();
+
+   /**
+    * Sends the tombstone belonging to the segments in {@code segment} to the {@code originator}
+    * <p>
+    * The sending is done asynchronously, and it does not wait for the sending to complete.
+    *
+    * @param requestor The requestor {@link Address}.
+    * @param segments  The segments requested.
+    */
+   void sendStateTo(Address requestor, IntSet segments);
+
+   /**
+    * It receives a {@link Collection} of {@link IracTombstoneInfo} and sends {@link IracTombstoneCleanupCommand} for
+    * the tombstone no longer valid.
+    *
+    * @param tombstones The {@link IracTombstoneInfo} collection.
+    */
+   void checkStaleTombstone(Collection<? extends IracTombstoneInfo> tombstones);
 }
