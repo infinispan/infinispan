@@ -26,13 +26,16 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
-import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -93,6 +96,7 @@ import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
+import org.infinispan.container.versioning.irac.IracTombstoneInfo;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
@@ -644,7 +648,7 @@ public interface CommandsFactory {
 
    IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner);
 
-   IracCleanupTombstoneCommand buildIracCleanupTombstoneCommand(Object key, IracMetadata tombstone);
+   IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(IracTombstoneInfo tombstone);
 
    IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment, IracEntryVersion versionSeen);
 
@@ -662,4 +666,10 @@ public interface CommandsFactory {
    XSiteAutoTransferStatusCommand buildXSiteAutoTransferStatusCommand(String site);
 
    XSiteSetStateTransferModeCommand buildXSiteSetStateTransferModeCommand(String site, XSiteStateTransferMode mode);
+
+   IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(Object key);
+
+   IracTombstoneStateResponseCommand buildIracTombstoneStateResponseCommand(Collection<IracTombstoneInfo> state);
+
+   IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(int capacity);
 }

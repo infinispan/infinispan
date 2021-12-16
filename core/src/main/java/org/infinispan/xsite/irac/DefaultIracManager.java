@@ -241,6 +241,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    @Override
    public void requestState(Address origin, IntSet segments) {
       updatedKeys.values().forEach(state -> sendStateIfNeeded(origin, segments, state.segment, state.key, state.owner));
+      iracTombstoneManager.sendStateTo(origin, segments);
    }
 
    @Override

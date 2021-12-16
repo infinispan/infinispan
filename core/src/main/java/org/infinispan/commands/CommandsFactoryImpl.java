@@ -27,13 +27,16 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
-import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -102,6 +105,7 @@ import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
+import org.infinispan.container.versioning.irac.IracTombstoneInfo;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
@@ -734,8 +738,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracCleanupTombstoneCommand buildIracCleanupTombstoneCommand(Object key, IracMetadata tombstone) {
-      return new IracCleanupTombstoneCommand(cacheName, key, tombstone);
+   public IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(IracTombstoneInfo tombstone) {
+      return new IracTombstoneCleanupCommand(cacheName, tombstone);
    }
 
    @Override
@@ -777,5 +781,20 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public XSiteSetStateTransferModeCommand buildXSiteSetStateTransferModeCommand(String site, XSiteStateTransferMode mode) {
       return new XSiteSetStateTransferModeCommand(cacheName, site, mode);
+   }
+
+   @Override
+   public IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(Object key) {
+      return new IracTombstoneRemoteSiteCheckCommand(cacheName, key);
+   }
+
+   @Override
+   public IracTombstoneStateResponseCommand buildIracTombstoneStateResponseCommand(Collection<IracTombstoneInfo> state) {
+      return new IracTombstoneStateResponseCommand(cacheName, state);
+   }
+
+   @Override
+   public IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(int capacity) {
+      return new IracTombstonePrimaryCheckCommand(cacheName, capacity);
    }
 }
