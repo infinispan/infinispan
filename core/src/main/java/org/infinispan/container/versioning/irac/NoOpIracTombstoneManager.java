@@ -1,6 +1,10 @@
 package org.infinispan.container.versioning.irac;
 
+import java.util.Collection;
+
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * No-op implementation for {@link IracTombstoneManager}.
@@ -26,12 +30,12 @@ public final class NoOpIracTombstoneManager implements IracTombstoneManager {
    }
 
    @Override
-   public void storeTombstoneIfAbsent(int segment, Object key, IracMetadata metadata) {
+   public void storeTombstoneIfAbsent(IracTombstoneInfo tombstone) {
       //no-op
    }
 
    @Override
-   public void removeTombstone(Object key, IracMetadata iracMetadata) {
+   public void removeTombstone(IracTombstoneInfo tombstone) {
       //no-op
    }
 
@@ -63,5 +67,15 @@ public final class NoOpIracTombstoneManager implements IracTombstoneManager {
    @Override
    public long getCurrentDelayMillis() {
       return 0;
+   }
+
+   @Override
+   public void sendStateTo(Address requestor, IntSet segments) {
+      //no-op
+   }
+
+   @Override
+   public void checkStaleTombstone(Collection<? extends IracTombstoneInfo> tombstones) {
+      //no-op
    }
 }
