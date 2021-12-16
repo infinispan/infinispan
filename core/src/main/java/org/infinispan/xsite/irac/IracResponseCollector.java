@@ -1,13 +1,16 @@
 package org.infinispan.xsite.irac;
 
+import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import org.infinispan.util.concurrent.CountDownRunnable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.status.DefaultTakeOfflineManager;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * A response collector for a single key update.
@@ -18,87 +21,74 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 12
  */
-public class IracResponseCollector extends CompletableFuture<IracResponseCollector.Result> {
+public class IracResponseCollector implements Runnable {
 
    private static final Log log = LogFactory.getLog(IracResponseCollector.class);
+   private static final AtomicReferenceFieldUpdater<IracResponseCollector, Result> RESULT_UPDATER = newUpdater(IracResponseCollector.class, Result.class, "result");
 
-   @GuardedBy("this")
-   private Result result = Result.OK;
-   @GuardedBy("this")
-   private int missing;
-   @GuardedBy("this")
-   private boolean frozen = false;
+   private volatile Result result = Result.OK;
    private final String cacheName;
+   private final IracManagerKeyState state;
+   private final CountDownRunnable countDownRunnable;
+   private final IracResponseCompleted notifier;
 
-   public IracResponseCollector(String cacheName) {
+   public IracResponseCollector(String cacheName, IracManagerKeyState state, IracResponseCompleted notifier) {
       this.cacheName = cacheName;
+      this.state = state;
+      this.notifier = Objects.requireNonNull(notifier);
+      countDownRunnable = new CountDownRunnable(this);
    }
 
    public void dependsOn(IracXSiteBackup backup, CompletionStage<Void> request) {
-      synchronized (this) {
-         missing++;
-      }
+      countDownRunnable.increment();
       request.whenComplete((unused, throwable) -> onResponse(backup, throwable));
    }
 
-   public IracResponseCollector freeze() {
-      Result completeResult = null;
-      synchronized (this) {
-         frozen = true;
-         if (missing == 0) {
-            completeResult = result;
-         }
-         if (log.isTraceEnabled()) {
-            log.tracef("Freeze collector. result=%s, missing=%s", result, missing);
-         }
-      }
-      tryComplete(completeResult);
-      return this;
+   public void freeze() {
+      countDownRunnable.freeze();
    }
 
    private void onResponse(IracXSiteBackup backup, Throwable throwable) {
-      final boolean trace = log.isTraceEnabled();
-      Result completeResult = null;
-      synchronized (this) {
-         Result old = result;
+      boolean trace = log.isTraceEnabled();
+      try {
          if (throwable != null) {
             if (DefaultTakeOfflineManager.isCommunicationError(throwable)) {
                //in case of communication error, we need to back-off.
-               result = Result.NETWORK_EXCEPTION;
+               RESULT_UPDATER.set(this, Result.NETWORK_EXCEPTION);
             } else {
                //don't overwrite communication errors
-               result = result == Result.OK ? Result.REMOTE_EXCEPTION : result;
+               RESULT_UPDATER.compareAndSet(this, Result.OK, Result.REMOTE_EXCEPTION);
             }
             if (backup.logExceptions()) {
                log.warnXsiteBackupFailed(cacheName, backup.getSiteName(), throwable);
             } else if (trace) {
                log.tracef(throwable, "Encountered issues while backing up data for cache %s to site %s", cacheName, backup.getSiteName());
             }
+         } else if (trace) {
+            log.tracef("Receive response from %s (%d missing). New result=%s", backup.getSiteName(), countDownRunnable.missing(), result);
          }
-         if (--missing == 0 && frozen) {
-            completeResult = result;
-         }
-         if (trace) {
-            log.tracef("Receive response. old=%s, new=%s, missing=%s", old, result, missing);
-         }
+      } finally {
+         countDownRunnable.decrement();
       }
-      tryComplete(completeResult);
    }
 
 
-   private void tryComplete(Result result) {
-      if (result == null) {
-         return;
-      }
+   @Override
+   public void run() {
       if (log.isTraceEnabled()) {
-         log.tracef("All response received: %s", result);
+         log.tracef("All responses received for state %s. global result is %s", state, result);
       }
-      complete(result);
+      notifier.onResponseCompleted(state, result);
    }
 
-   enum Result {
+   public enum Result {
       OK,
       REMOTE_EXCEPTION,
       NETWORK_EXCEPTION
+   }
+
+   @FunctionalInterface
+   public interface IracResponseCompleted {
+      void onResponseCompleted(IracManagerKeyState state, Result result);
    }
 }
