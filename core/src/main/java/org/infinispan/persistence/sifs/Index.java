@@ -1,6 +1,8 @@
 package org.infinispan.persistence.sifs;
 
+import java.io.DataInput;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -9,12 +11,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -236,11 +240,18 @@ class Index {
       return aggregateCompletionStage.freeze().thenApply(AtomicLong::get);
    }
 
-   public long approximateSize() {
+   public long approximateSize(IntSet cacheSegments) {
       long size = 0;
-      for (Segment segment : segments) {
-         size += segment.size.get();
+      for (PrimitiveIterator.OfInt segIter = cacheSegments.iterator(); segIter.hasNext(); ) {
+         int cacheSegment = segIter.nextInt();
+         for (Segment seg : segments) {
+            size += seg.sizePerSegment.get(cacheSegment);
+            if (size < 0) {
+               return Long.MAX_VALUE;
+            }
+         }
       }
+
       return size;
    }
 
@@ -277,46 +288,68 @@ class Index {
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
       private final boolean loaded;
       private final FileChannel indexFile;
+      private final File indexCountFile;
       private long indexFileSize;
-      private final AtomicLong size = new AtomicLong();
+      final AtomicLongArray sizePerSegment;
 
       private volatile IndexNode root;
 
 
       private Segment(int id, TemporaryTable temporaryTable, boolean attemptLoad) throws IOException {
          this.temporaryTable = temporaryTable;
+         this.sizePerSegment = new AtomicLongArray(temporaryTable.getSegmentMax());
 
          int segmentMax = temporaryTable.getSegmentMax();
          File indexFileFile = new File(indexDir.toFile(), "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
+         this.indexCountFile = new File(indexDir.toFile(), "index-count." + id);
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
          int gracefulValue = -1, segmentValue = -1;
-         if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
+         boolean validIndex = false;
+         if (attemptLoad && indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
                && (gracefulValue = buffer.getInt(0)) == GRACEFULLY
-               && (segmentValue = buffer.getInt(4)) == segmentMax
-               && attemptLoad) {
+               && (segmentValue = buffer.getInt(4)) == segmentMax) {
+            try (RandomAccessFile indexCount = new RandomAccessFile(indexCountFile, "r")) {
+               for (int i = 0; i < sizePerSegment.length(); ++i) {
+                  long value = readUnsignedLong(indexCount);
+                  sizePerSegment.set(i, value);
+               }
+
+               validIndex = true;
+            } catch (IOException e) {
+               log.tracef("Encountered IOException %s while reading index count file, assuming index dirty", e.getMessage());
+            }
+         } else {
+            log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d attemptLoad=%s", id, gracefulValue, segmentValue, attemptLoad);
+         }
+         if (validIndex) {
             long rootOffset = buffer.getLong(8);
             short rootOccupied = buffer.getShort(16);
             long freeBlocksOffset = buffer.getLong(18);
-            size.set(buffer.getLong(26));
             root = new IndexNode(this, rootOffset, rootOccupied);
             loadFreeBlocks(freeBlocksOffset);
             indexFileSize = freeBlocksOffset;
             loaded = true;
          } else {
-            log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d attemptLoad=%s", id, gracefulValue, segmentValue, attemptLoad);
             this.indexFile.truncate(0);
             root = IndexNode.emptyWithLeaves(this);
             loaded = false;
             // reserve space for shutdown
             indexFileSize = INDEX_FILE_HEADER_SIZE;
          }
+         this.indexCountFile.delete();
          buffer.putInt(0, DIRTY);
          buffer.position(0);
          buffer.limit(4);
          indexFile.position(0);
+
          write(indexFile, buffer);
+      }
+
+      // Here solely for BlockHound
+      private long readUnsignedLong(DataInput input) throws IOException {
+         return UnsignedNumeric.readUnsignedLong(input);
       }
 
       private void write(FileChannel indexFile, ByteBuffer buffer) throws IOException {
@@ -349,8 +382,10 @@ class Index {
                indexFile.truncate(0);
                indexFileSize = INDEX_FILE_HEADER_SIZE;
                freeBlocks.clear();
-               size.set(0);
-               nonBlockingManager.complete(request,null);
+               for (int i = 0; i < sizePerSegment.length(); ++i) {
+                  sizePerSegment.set(i, 0);
+               }
+               nonBlockingManager.complete(request, null);
                return;
             case SYNC_REQUEST:
                Runnable runnable = (Runnable) request.getKey();
@@ -366,29 +401,29 @@ class Index {
                   }
 
                   @Override
-                  public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                  public void setOverwritten(int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
                      if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-                        size.decrementAndGet();
+                        sizePerSegment.incrementAndGet(cacheSegment);
                      }
                   }
                };
                break;
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
-               overwriteHook = (overwritten, prevFile, prevOffset) -> {
+               overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
                   nonBlockingManager.complete(request, overwritten);
                   if (request.getOffset() >= 0 && prevOffset < 0) {
-                     size.incrementAndGet();
+                     sizePerSegment.incrementAndGet(cacheSegment);
                   } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                     size.decrementAndGet();
+                     sizePerSegment.decrementAndGet(cacheSegment);
                   }
                };
                break;
             case DROPPED:
                recordChange = IndexNode.RecordChange.DECREASE;
-               overwriteHook = (overwritten, prevFile, prevOffset) -> {
+               overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
                   if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-                     size.decrementAndGet();
+                     sizePerSegment.decrementAndGet(cacheSegment);
                   }
                };
                break;
@@ -397,7 +432,15 @@ class Index {
                overwriteHook = IndexNode.NOOP_HOOK;
                break;
             case SIZE:
-               nonBlockingManager.complete(request, size.get());
+               long size = 0;
+               for (int i = 0; i < sizePerSegment.length(); ++i) {
+                  size += sizePerSegment.get(i);
+                  if (size < 0) {
+                     size = Long.MAX_VALUE;
+                     break;
+                  }
+               }
+               nonBlockingManager.complete(request, size);
                return;
             default:
                throw new IllegalArgumentException(request.toString());
@@ -449,7 +492,6 @@ class Index {
             buffer.putLong(0, rootSpace.offset);
             buffer.putShort(8, rootSpace.length);
             buffer.putLong(10, indexFileSize);
-            buffer.putLong(18, size.get());
             indexFile.position(8);
             write(indexFile, buffer);
             buffer.position(0);
@@ -458,6 +500,14 @@ class Index {
             buffer.putInt(4, temporaryTable.getSegmentMax());
             indexFile.position(0);
             write(indexFile, buffer);
+
+            // Create the file first as it should not be present as we deleted during startup
+            this.indexCountFile.createNewFile();
+            try (FileOutputStream indexCountStream = new FileOutputStream(indexCountFile)) {
+               for (int i = 0; i < sizePerSegment.length(); ++i) {
+                  UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
+               }
+            }
 
             complete(null);
          } catch (Throwable t) {

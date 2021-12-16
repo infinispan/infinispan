@@ -75,6 +75,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // Loading up the EnhancedQueueExecutor class loads org.jboss.threads.Version that reads a file to determine version
       builder.allowBlockingCallsInside(EnhancedQueueExecutorFactory.class.getName(), "createExecutor");
 
+      // Reads from a file during initialization which is during store startup
+      builder.allowBlockingCallsInside("org.infinispan.persistence.sifs.Index$Segment", "readUnsignedLong");
+
       methodsToBeRemoved(builder);
 
       questionableMethodsAllowedToBlock(builder);
