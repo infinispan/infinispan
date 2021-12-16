@@ -455,7 +455,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return iracVersionGenerator;
    }
 
-   public ComponentRef<IracTombstoneManager> getIracTombstoneCleaner() {
+   public ComponentRef<IracTombstoneManager> getIracTombstoneManager() {
       return iracTombstoneCleaner;
    }
 
