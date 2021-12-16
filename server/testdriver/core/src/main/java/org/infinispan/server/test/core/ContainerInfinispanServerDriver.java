@@ -54,13 +54,13 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.Base58;
-import org.testcontainers.utility.ResourceReaper;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.Network;
+import com.github.dockerjava.api.model.PruneType;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -88,10 +88,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          46655, // JGroups UDP
          9999
    };
+   private static String baseImageName; // Reused across tests
    private final InfinispanGenericContainer[] containers;
    private final String[] volumes;
    private String name;
-   ImageFromDockerfile image;
+   private ImageFromDockerfile image;
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
@@ -107,6 +108,31 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       Network bridge = dockerClient.inspectNetworkCmd().withNetworkId("bridge").exec();
       String gateway = bridge.getIpam().getConfig().get(0).getGateway();
       return Exceptions.unchecked(() -> InetAddress.getByName(gateway));
+   }
+
+   public static synchronized String createBaseImage(String serverOutputDir) {
+      if (baseImageName == null) {
+         Path serverOutputPath = Paths.get(serverOutputDir).normalize();
+         ImageFromDockerfile baseImage = new ImageFromDockerfile("localhost/infinispan-server/" + Base58.randomString(16).toLowerCase(), true)
+               .withFileFromPath("target", serverOutputPath.getParent())
+               .withFileFromPath("src", serverOutputPath.getParent().getParent().resolve("src"))
+               .withFileFromPath("build", cleanServerDirectory(serverOutputPath));
+         baseImage.withDockerfileFromBuilder(builder -> {
+            builder
+                  .from(JDK_BASE_IMAGE_NAME)
+                  .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
+                  .env("INFINISPAN_VERSION", Version.getVersion())
+                  .label("name", "Infinispan Server")
+                  .label("version", Version.getVersion())
+                  .label("release", Version.getVersion())
+                  .label("architecture", "x86_64")
+                  .copy("build", INFINISPAN_SERVER_HOME);
+         });
+         baseImage.get(); // Builds the image
+         baseImageName = baseImage.getDockerImageName();
+         log.infof("Built base image '%s' from server at '%s'", baseImageName, serverOutputDir);
+      }
+      return baseImageName;
    }
 
    @Override
@@ -168,7 +194,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             .withFileFromPath("test", rootDir.toPath())
             .withFileFromPath("tmp", tmp)
             .withFileFromPath("lib", libDir.toPath());
-      final boolean prebuiltImage;
       final String imageName;
       String baseImageName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
       if (baseImageName == null) {
@@ -176,22 +201,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          if (serverOutputDir == null) {
             // We try to use the latest public image for this major.minor version
             imageName = "quay.io/infinispan/server:" + Version.getMajorMinor();
-            prebuiltImage = true;
             log.infof("Using prebuilt image '%s'", imageName);
          } else {
-            // We build our local image based on the supplied server
-            Path serverOutputPath = Paths.get(serverOutputDir).normalize();
-            imageName = JDK_BASE_IMAGE_NAME;
-            image
-                  .withFileFromPath("target", serverOutputPath.getParent())
-                  .withFileFromPath("src", serverOutputPath.getParent().getParent().resolve("src"))
-                  .withFileFromPath("build", cleanServerDirectory(serverOutputPath));
-            prebuiltImage = false;
-            log.infof("Using local image from server built at '%s'", serverOutputPath);
+            imageName = createBaseImage(serverOutputDir);
+            log.infof("Using local image from server built at '%s'", serverOutputDir);
          }
       } else {
          imageName = baseImageName;
-         prebuiltImage = true;
          log.infof("Using prebuilt image '%s'", imageName);
       }
       image.withDockerfileFromBuilder(builder -> {
@@ -203,10 +219,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                .label("version", Version.getVersion())
                .label("release", Version.getVersion())
                .label("architecture", "x86_64");
-
-         if (!prebuiltImage) {
-            builder.copy("build", INFINISPAN_SERVER_HOME);
-         }
          // Copy the resources to a location from where they can be added to the image
          try {
             URL resource = ContainerInfinispanServerDriver.class.getResource("/overlay");
@@ -248,12 +260,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(numServers, String.format(CLUSTER_VIEW_REGEX, numServers));
       if (configuration.isParallelStartup()) {
          CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(numServers, STARTUP_MESSAGE_REGEX);
-         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, startupLatch, clusterLatch));
+         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(image, i, startupLatch, clusterLatch));
          Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } else {
          for (int i = 0; i < configuration.numServers(); i++) {
             CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
-            createContainer(i, startupLatch, clusterLatch);
+            createContainer(image, i, startupLatch, clusterLatch);
             Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          }
       }
@@ -280,13 +292,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
     * Removing the `server/data` and `server/log` directories from the local server directory to prevent issues with
     * the tests
     */
-   private Path cleanServerDirectory(Path serverOutputPath) {
+   private static Path cleanServerDirectory(Path serverOutputPath) {
       Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("data").toString());
       Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("log").toString());
       return serverOutputPath;
    }
 
-   private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
+   private GenericContainer<?> createContainer(ImageFromDockerfile image, int i, Consumer<OutputFrame>... logConsumers) {
 
       if (this.volumes[i] == null) {
          String volumeName = Util.threadLocalRandomUUID().toString();
@@ -295,7 +307,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       GenericContainer<?> container = new GenericContainer<>(image)
-            //.withExposedPorts(EXPOSED_PORTS)
             .withCreateContainerCmdModifier(cmd -> {
                cmd.getHostConfig().withMounts(
                      Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
@@ -333,9 +344,20 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          stop(i);
          log.infof("Stopped container %d", i);
       }
-      ResourceReaper.instance().performCleanup();
+      removeDockerImage(image.getDockerImageName());
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
+   }
+
+   public static void removeDockerImage(String dockerImageName) {
+      try {
+         DockerClient dockerClient = DockerClientFactory.instance().client();
+         dockerClient.removeImageCmd(dockerImageName).withForce(true).exec();
+         log.infof("Removed image %s", dockerImageName);
+         dockerClient.pruneCmd(PruneType.BUILD).exec();
+      } catch (Throwable t) {
+         log.errorf(t, "Error while removing image %s", dockerImageName);
+      }
    }
 
    @Override
@@ -404,7 +426,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       stop(server);
 
       log.infof("Restarting container %d", server);
-      createContainer(server, startupLatch);
+      createContainer(image, server, startupLatch);
       Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.Containers;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.testcontainers.containers.GenericContainer;
@@ -63,6 +64,7 @@ public class ContainerDatabase extends Database {
       log.infof("Stopping database %s", getType());
       container.stop();
       log.infof("Stopped database %s", getType());
+      ContainerInfinispanServerDriver.removeDockerImage(container.getDockerImageName());
    }
 
    public int getPort() {
