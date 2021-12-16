@@ -120,6 +120,7 @@ class IndexRequest extends CompletableFuture<Object> {
       return "IndexRequest{" +
             "key=" + key +
             ", serializedKey=" + serializedKey +
+            ", cacheSegment=" + segment +
             ", file=" + file +
             ", offset=" + offset +
             ", prevFile=" + prevFile +
