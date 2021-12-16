@@ -1,6 +1,6 @@
-[id='offline_data_migration']
-:context: upgrade
-= Migrating Data Between Cache Stores
+[id='migrating-data-between-stores']
+:context: store-migrator
+= Migrating data between cache stores
 {brandname} provides a Java utility for migrating persisted data between cache
 stores.
 
