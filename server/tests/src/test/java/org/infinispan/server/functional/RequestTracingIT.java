@@ -33,7 +33,7 @@ import okhttp3.Response;
  * @since 10.0
  */
 public class RequestTracingIT {
-   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/app-sre/jaegertracing-all-in-one:latest");
+   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/jaegertracing/all-in-one:latest");
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
 
