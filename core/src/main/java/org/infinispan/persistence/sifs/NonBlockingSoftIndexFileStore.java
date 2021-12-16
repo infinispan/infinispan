@@ -157,6 +157,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public Set<Characteristic> characteristics() {
+      // Does not support segmented or expiration yet
       return EnumSet.of(Characteristic.BULK_READ, Characteristic.SEGMENTABLE, Characteristic.EXPIRATION);
    }
 
@@ -189,9 +190,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
 
       Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
-      int numSegments = cacheConfig.clustering().hash().numSegments();
-      temporaryTable = new TemporaryTable(numSegments);
-      temporaryTable.addSegments(IntSets.immutableRangeSet(numSegments));
+      temporaryTable = new TemporaryTable(cacheConfig.clustering().hash().numSegments());
+      temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
 
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
             configuration.maxFileSize());
@@ -511,11 +511,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
       // Approximation doesn't pause the appender so the index can be slightly out of sync
-      long totalSize = index.approximateSize();
-      IntSet matchingSegments = IntSets.mutableCopyFrom(segments);
-      matchingSegments.retainAll(temporaryTable.getOwnedSegments());
-      int totalSegments = temporaryTable.getOwnedSegments().size();
-      return CompletableFuture.completedFuture(totalSize * matchingSegments.size() / totalSegments);
+      return CompletableFuture.completedFuture(index.approximateSize(segments));
    }
 
    @Override
@@ -528,7 +524,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          log.tracef("Writing entry for key %s for segment %d", entry.getKey(), segment);
          return logAppender.storeRequest(segment, entry);
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
+         throw new PersistenceException(e);
       }
    }
 
@@ -538,7 +534,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          log.tracef("Deleting key %s for segment %d", key, segment);
          return logAppender.deleteRequest(segment, key, marshaller.objectToBuffer(key));
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
+         throw new PersistenceException(e);
       }
    }
 
@@ -576,7 +572,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
          }
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(log.cannotLoadKeyFromIndex(key, e));
+         throw log.cannotLoadKeyFromIndex(key, e);
       }
    }
 

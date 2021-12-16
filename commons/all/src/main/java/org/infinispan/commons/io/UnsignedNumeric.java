@@ -1,9 +1,9 @@
 package org.infinispan.commons.io;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.OutputStream;
 
 /**
@@ -17,7 +17,7 @@ public class UnsignedNumeric {
     * Reads an int stored in variable-length format.  Reads between one and five bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   public static int readUnsignedInt(ObjectInput in) throws IOException {
+   public static int readUnsignedInt(DataInput in) throws IOException {
       byte b = in.readByte();
       int i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -53,7 +53,7 @@ public class UnsignedNumeric {
     *
     * @param i int to write
     */
-   public static void writeUnsignedInt(ObjectOutput out, int i) throws IOException {
+   public static void writeUnsignedInt(DataOutput out, int i) throws IOException {
       while ((i & ~0x7F) != 0) {
          out.writeByte((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;
@@ -91,7 +91,7 @@ public class UnsignedNumeric {
     * Reads a long stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   public static long readUnsignedLong(ObjectInput in) throws IOException {
+   public static long readUnsignedLong(DataInput in) throws IOException {
       byte b = in.readByte();
       long i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -126,7 +126,7 @@ public class UnsignedNumeric {
     *
     * @param i int to write
     */
-   public static void writeUnsignedLong(ObjectOutput out, long i) throws IOException {
+   public static void writeUnsignedLong(DataOutput out, long i) throws IOException {
       while ((i & ~0x7F) != 0) {
          out.writeByte((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;
