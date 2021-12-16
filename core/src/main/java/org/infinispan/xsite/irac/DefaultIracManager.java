@@ -14,7 +14,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
@@ -26,7 +25,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracTombstoneManager;
-import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.KnownComponentNames;
@@ -61,8 +59,6 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
-import net.jcip.annotations.GuardedBy;
-
 /**
  * Default implementation of {@link IracManager}.
  * <p>
@@ -84,33 +80,31 @@ import net.jcip.annotations.GuardedBy;
  */
 @MBean(objectName = "AsyncXSiteStatistics", description = "Statistics for Asynchronous cross-site replication")
 @Scope(Scopes.NAMED_CACHE)
-public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
+public class DefaultIracManager implements IracManager, JmxStatisticsExposer, IracResponseCollector.IracResponseCompleted {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
-   private static final String STATE_TRANSFER_OWNER = "state-transfer";
 
    @Inject RpcManager rpcManager;
    @Inject TakeOfflineManager takeOfflineManager;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject CommandsFactory commandsFactory;
-   @Inject IracVersionGenerator iracVersionGenerator;
    @Inject IracTombstoneManager iracTombstoneManager;
 
-   private final Map<Object, State> updatedKeys;
+   private final Map<Object, IracManagerKeyState> updatedKeys;
    private final Collection<IracXSiteBackup> asyncBackups;
    private final IracExecutor iracExecutor;
    private volatile boolean hasClear;
 
-   private boolean statisticsEnabled = false;
+   private boolean statisticsEnabled;
    private final LongAdder discardCounts = new LongAdder();
    private final LongAdder conflictLocalWinsCount = new LongAdder();
    private final LongAdder conflictRemoteWinsCount = new LongAdder();
    private final LongAdder conflictMergedCount = new LongAdder();
 
    public DefaultIracManager(Configuration config) {
-      this.updatedKeys = new ConcurrentHashMap<>();
-      this.iracExecutor = new IracExecutor(this::run);
-      this.asyncBackups = asyncBackups(config);
+      updatedKeys = new ConcurrentHashMap<>();
+      iracExecutor = new IracExecutor(this::run);
+      asyncBackups = asyncBackups(config);
       setStatisticsEnabled(config.statistics().enabled());
    }
 
@@ -147,28 +141,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      if (log.isTraceEnabled()) {
-         log.tracef("Tracking key for %s: %s", lockOwner, key);
-      }
-      State old = updatedKeys.put(key, new State(segment, key, lockOwner));
-      if (old != null) {
-         //avoid sending the cleanup command to the cluster members
-         old.discard();
-      }
-      iracExecutor.run();
+      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, false));
    }
 
    @Override
    public void trackExpiredKey(int segment, Object key, Object lockOwner) {
-      if (log.isTraceEnabled()) {
-         log.tracef("Tracking expired key for %s: %s", lockOwner, key);
-      }
-      State old = updatedKeys.put(key, new ExpirationState(segment, key, lockOwner));
-      if (old != null) {
-         //avoid sending the cleanup command to the cluster members
-         old.discard();
-      }
-      iracExecutor.run();
+      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, true));
    }
 
    @Override
@@ -177,10 +155,10 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       LocalizedCacheTopology topology = clusteringDependentLogic.getCacheTopology();
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
-         CompletableState completableState = new CompletableState(segment, state.key());
+         IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key());
          // if an update is in progress, we don't need to send the same value again.
-         if (updatedKeys.putIfAbsent(state.key(), completableState) == null) {
-            cf.dependsOn(completableState.completableFuture);
+         if (updatedKeys.putIfAbsent(iracState.getKey(), iracState) == null) {
+            cf.dependsOn(iracState.getCompletionStage());
          }
       }
       iracExecutor.run();
@@ -194,7 +172,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          log.tracef("Tracking clear request. Replicate to backup sites? %s", sendClear);
       }
       hasClear = sendClear;
-      updatedKeys.values().forEach(State::discard);
+      updatedKeys.values().forEach(IracManagerKeyState::discard);
       if (sendClear) {
          iracExecutor.run();
       }
@@ -202,8 +180,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Override
    public void cleanupKey(int segment, Object key, Object lockOwner) {
-      State state = new State(segment, key, lockOwner);
-      removeStateFromLocal(state);
+      removeStateFromLocal(new IracManagerKeyInfoImpl(segment, key, lockOwner));
    }
 
    @Override
@@ -243,13 +220,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Override
    public void requestState(Address origin, IntSet segments) {
-      updatedKeys.values().forEach(state -> sendStateIfNeeded(origin, segments, state.segment, state.key, state.owner));
+      updatedKeys.values().forEach(state -> sendStateIfNeeded(origin, segments, state.getSegment(), state.getKey(), state.getOwner()));
    }
 
    @Override
    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
       iracTombstoneManager.storeTombstoneIfAbsent(segment, key, tombstone);
-      updatedKeys.putIfAbsent(key, new State(segment, key, lockOwner));
+      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(segment, key, lockOwner, false));
       iracExecutor.run();
    }
 
@@ -300,6 +277,18 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       rpcManager.sendTo(origin, cmd, DeliverOrder.NONE);
    }
 
+   private void trackState(IracManagerKeyState state) {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Tracking state %s", state);
+      }
+      IracManagerKeyState old = updatedKeys.put(state.getKey(), state);
+      if (old != null) {
+         //avoid sending the cleanup command to the cluster members
+         old.discard();
+      }
+      iracExecutor.run();
+   }
+
    private CompletionStage<Void> run() {
       // this run on a blocking thread!
       if (log.isTraceEnabled()) {
@@ -311,13 +300,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          return sendClearUpdate();
       }
 
-      for (State state : updatedKeys.values()) {
+      for (IracManagerKeyState state : updatedKeys.values()) {
          if (!state.canSend()) {
             continue;
          }
-         DistributionInfo dInfo = getDistributionInfo(state.segment);
+         DistributionInfo dInfo = getDistributionInfo(state.getSegment());
          if (!dInfo.isPrimary()) {
-            state.retrySend();
+            state.retry();
             continue;
          } else if (!dInfo.isWriteOwner()) {
             // topology changed! cleanup the key
@@ -328,24 +317,24 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             // we need the data in DataContainer and CacheLoaders, so we must wait until we
             // receive the key or will end up sending a remove update.
             // when the new topology arrives, this will be triggered again
-            state.retrySend();
+            state.retry();
             continue;
          }
 
-         fetchEntry(state.key, dInfo.segmentId()).thenApply(
+         fetchEntry(state.getKey(), dInfo.segmentId()).thenApply(
                lEntry -> lEntry == null ? buildRemoveCommand(state) : commandsFactory.buildIracPutKeyCommand(lEntry))
                .thenAccept(cmd -> {
                   if (cmd == null) { // only buildRemoveCommand can return null if tombstone is missing
-                     log.sendFailMissingTombstone(Util.toStr(state.key));
+                     log.sendFailMissingTombstone(Util.toStr(state.getKey()));
                      // avoid retrying
-                     state.accept(IracResponseCollector.Result.OK, null);
+                     onResponseCompleted(state, IracResponseCollector.Result.OK);
                      return;
                   }
-                  IracResponseCollector rsp = sendCommandToAllBackups(cmd);
-                  rsp.whenComplete(state); // this can block in JGroups Flow Control. move to thread pool?
+                  sendCommandToAllBackups(cmd, state, this);
                })
                .exceptionally(throwable -> {
-                  state.accept(null, CompletableFutures.extractException(throwable));
+                  state.retry();
+                  onUnexpectedThrowable(throwable);
                   return null;
                });
 
@@ -363,17 +352,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private CompletionStage<Void> sendClearUpdate() {
       // make sure the clear is replicated everywhere before sending the updates!
-      return sendCommandToAllBackups(commandsFactory.buildIracClearKeysCommand()).whenComplete(this::onClearCompleted)
-            .exceptionally(CompletableFutures.toNullFunction()).thenRun(() -> {
-            });
-   }
-
-   private void onClearCompleted(IracResponseCollector.Result result, Throwable throwable) {
-      if (throwable != null) {
-         onUnexpectedThrowable(throwable);
-         return;
-      }
-      onRoundCompleted(result, true);
+      CompletableFuture<Void> cf = new CompletableFuture<>();
+      sendCommandToAllBackups(commandsFactory.buildIracClearKeysCommand(), null, (s, r) -> {
+         onRoundCompleted(r, true);
+         cf.complete(null);
+      });
+      return cf;
    }
 
    private void onRoundCompleted(IracResponseCollector.Result result, boolean isClear) {
@@ -420,21 +404,22 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return rsp;
    }
 
-   private void removeStateFromCluster(State state) {
+   private void removeStateFromCluster(IracManagerKeyInfo state) {
       if (log.isTraceEnabled()) {
-         log.tracef("Replication completed for key '%s'. Lock Owner='%s'", state.key, state.owner);
+         log.tracef("Replication completed for state %s", state);
       }
       // removes the key from the "updated keys map" in all owners.
-      DistributionInfo dInfo = getDistributionInfo(state.segment);
-      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.segment, state.key, state.owner);
+      DistributionInfo dInfo = getDistributionInfo(state.getSegment());
+      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.getSegment(), state.getKey(), state.getOwner());
       rpcManager.sendToMany(dInfo.writeOwners(), cmd, DeliverOrder.NONE);
       removeStateFromLocal(state);
    }
 
-   private void removeStateFromLocal(State state) {
-      boolean removed = updatedKeys.remove(state.key, state);
+   private void removeStateFromLocal(IracManagerKeyInfo state) {
+      //noinspection SuspiciousMethodCalls
+      boolean removed = updatedKeys.remove(state.getKey(), state);
       if (log.isTraceEnabled()) {
-         log.tracef("Removing key '%s'. LockOwner='%s', removed=%s", state.key, state.owner, removed);
+         log.tracef("Removing state '%s'. removed=%s", state, removed);
       }
    }
 
@@ -442,176 +427,38 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segmentId);
    }
 
-   private IracResponseCollector sendCommandToAllBackups(XSiteReplicateCommand<Void> command) {
+   private void sendCommandToAllBackups(XSiteReplicateCommand<Void> command, IracManagerKeyState state, IracResponseCollector.IracResponseCompleted notifier) {
       assert Objects.nonNull(command);
-      IracResponseCollector collector = new IracResponseCollector(commandsFactory.getCacheName());
+      IracResponseCollector collector = new IracResponseCollector(commandsFactory.getCacheName(), state, notifier);
       for (IracXSiteBackup backup : asyncBackups) {
          if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
             continue; // backup is offline
          }
          collector.dependsOn(backup, sendToRemoteSite(backup, command));
       }
-      return collector.freeze();
+      collector.freeze();
    }
 
-   private XSiteReplicateCommand<Void> buildRemoveCommand(State state) {
-      Object key = state.key;
-      IracMetadata metadata = iracTombstoneManager.getTombstone(key);
+   private XSiteReplicateCommand<Void> buildRemoveCommand(IracManagerKeyState state) {
+      IracMetadata metadata = iracTombstoneManager.getTombstone(state.getKey());
       if (metadata == null) {
          return null;
       }
-      return commandsFactory.buildIracRemoveKeyCommand(key, metadata, state.isExpiration());
+      return commandsFactory.buildIracRemoveKeyCommand(state.getKey(), metadata, state.isExpiration());
    }
 
    private CompletionStage<InternalCacheEntry<Object, Object>> fetchEntry(Object key, int segmentId) {
       return clusteringDependentLogic.getEntryLoader().loadAndStoreInDataContainer(key, segmentId);
    }
 
-   private enum StateStatus {
-      NEW, SENDING, COMPLETED
-   }
-
-   private class State implements BiConsumer<IracResponseCollector.Result, Throwable> {
-      private final Object key;
-      private final Object owner;
-      private final int segment;
-      @GuardedBy("this")
-      StateStatus stateStatus;
-
-      private State(int segment, Object key, Object owner) {
-         this.segment = segment;
-         this.key = key;
-         this.owner = owner;
-         stateStatus = StateStatus.NEW;
+   @Override
+   public void onResponseCompleted(IracManagerKeyState state, IracResponseCollector.Result result) {
+      if (result == IracResponseCollector.Result.OK && state.done()) {
+         removeStateFromCluster(state);
+      } else {
+         state.retry();
       }
-
-      synchronized boolean canSend() {
-         if (log.isTraceEnabled()) {
-            log.tracef("[IRAC] State.canSend for key %s (status=%s)", key, stateStatus);
-         }
-         if (stateStatus == StateStatus.NEW) {
-            stateStatus = StateStatus.SENDING;
-            return true;
-         }
-         return false;
-      }
-
-      void discard() {
-         synchronized (this) {
-            if (log.isTraceEnabled()) {
-               log.tracef("[IRAC] State.discard for key %s (status=%s)", key, stateStatus);
-            }
-            stateStatus = StateStatus.COMPLETED;
-         }
-         removeStateFromLocal(this);
-      }
-
-      synchronized void retrySend() {
-         if (log.isTraceEnabled()) {
-            log.tracef("[IRAC] State.retrySend for key %s (status=%s)", key, stateStatus);
-         }
-         if (stateStatus == StateStatus.SENDING) {
-            stateStatus = StateStatus.NEW;
-         }
-      }
-
-      boolean isExpiration() {
-         return false;
-      }
-
-      private void onSuccess() {
-         synchronized (this) {
-            // send succeed.
-            if (log.isTraceEnabled()) {
-               log.tracef("[IRAC] State.onSuccess for key %s (status=%s)", key, stateStatus);
-            }
-            if (stateStatus != StateStatus.SENDING) {
-               // discarded or overwritten by another write operation
-               // do not send the cleanup command.
-               return;
-            }
-            stateStatus = StateStatus.COMPLETED;
-         }
-         onRoundCompleted(IracResponseCollector.Result.OK, false);
-         removeStateFromCluster(this);
-      }
-
-      private void onResponse(IracResponseCollector.Result result, Throwable throwable) {
-         if (log.isTraceEnabled()) {
-            log.tracef("[IRAC] State.onResponse for key %s (status=%s). Result=%s, Throwable=%s", key, stateStatus, result, throwable);
-         }
-         if (throwable != null) {
-            retrySend();
-            onUnexpectedThrowable(throwable);
-            return;
-         }
-         if (result != IracResponseCollector.Result.OK) {
-            retrySend();
-            onRoundCompleted(result, false);
-            return;
-         }
-         onSuccess();
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o)
-            return true;
-         if (o == null || getClass() != o.getClass())
-            return false;
-         State state = (State) o;
-         return key.equals(state.key) && owner.equals(state.owner);
-      }
-
-      @Override
-      public int hashCode() {
-         return Objects.hash(key, owner);
-      }
-
-      @Override
-      public void accept(IracResponseCollector.Result result, Throwable throwable) {
-         onResponse(result, throwable);
-      }
-   }
-
-   private class CompletableState extends State {
-
-      private final CompletableFuture<Void> completableFuture;
-
-      private CompletableState(int segment, Object key) {
-         super(segment, key, STATE_TRANSFER_OWNER);
-         completableFuture = new CompletableFuture<>();
-      }
-
-      @Override
-      void discard() {
-         super.discard();
-         completableFuture.complete(null);
-      }
-
-      @Override
-      public void accept(IracResponseCollector.Result result, Throwable throwable) {
-         super.accept(result, throwable);
-         if (isCompleted()) {
-            completableFuture.complete(null);
-         }
-      }
-
-      synchronized boolean isCompleted() {
-         return stateStatus == StateStatus.COMPLETED;
-      }
-   }
-
-   private class ExpirationState extends State {
-
-      private ExpirationState(int segment, Object key, Object owner) {
-         super(segment, key, owner);
-      }
-
-      @Override
-      boolean isExpiration() {
-         return true;
-      }
+      onRoundCompleted(result, false);
    }
 
    @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)",
