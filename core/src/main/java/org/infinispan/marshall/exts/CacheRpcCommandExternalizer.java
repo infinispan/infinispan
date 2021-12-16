@@ -7,13 +7,16 @@ import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
-import org.infinispan.commands.irac.IracCleanupTombstoneCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPutKeyCommand;
 import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
+import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -129,7 +132,10 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracUpdateVersionCommand.class,
             XSiteAutoTransferStatusCommand.class,
             XSiteSetStateTransferModeCommand.class,
-            IracCleanupTombstoneCommand.class);
+            IracTombstoneCleanupCommand.class,
+            IracTombstoneStateResponseCommand.class,
+            IracTombstonePrimaryCheckCommand.class,
+            IracTombstoneRemoteSiteCheckCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

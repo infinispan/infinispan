@@ -17,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
@@ -196,7 +197,8 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       SiteMasterController controller = findSiteMaster();
 
       //let the state command go through
-      controller.getRpcManager().excludeCommands(XSiteStatePushCommand.class, IracCleanupKeyCommand.class);
+      controller.getRpcManager().excludeCommands(XSiteStatePushCommand.class, IracCleanupKeyCommand.class,
+            IracTombstoneStateResponseCommand.class, StateTransferCancelCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 =
             controller.getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteBringOnlineCommand>> req2 =
@@ -277,7 +279,8 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
                                                     StateTransferStartCommand.class, StateResponseCommand.class,
                                                     StateTransferCancelCommand.class,
                                                     IracRequestStateCommand.class, IracStateResponseCommand.class,
-                                                    IracUpdateVersionCommand.class, IracCleanupKeyCommand.class);
+                                                    IracUpdateVersionCommand.class, IracCleanupKeyCommand.class,
+                                                    IracTombstoneStateResponseCommand.class);
       //the JGroups events triggers this command where NodeB checks if it needs to starts the transfer
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);

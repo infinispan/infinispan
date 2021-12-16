@@ -33,6 +33,7 @@ import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallingException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -2249,4 +2250,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "'%s' has been deprecated with no replacement.", id = 661)
    void configDeprecated(Enum<?> element);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
+   void failedToTransferTombstones(Address requestor, IntSet segments,  @Cause Throwable t);
 }

@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -17,37 +16,34 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.infinispan.xsite.irac.IracManager;
 
 /**
- * A {@link XSiteReplicateCommand} to check and cleanup tombstones for IRAC algorithm.
+ * A {@link XSiteReplicateCommand} to check tombstones for IRAC algorithm.
  * <p>
- * This command has 2 modes: (1, when tombstone==null) when it is sent to a remote site, it checks if the key exists in
- * the {@link IracManager}. This check is performed in the primary owner of the key; (2, when tombstone!=null) if it is
- * sent from primary owner to backup owners, the backup owners remove the tombstone.
+ * Periodically, the primary owner sends this command to the remote sites where they check if the tombstone for this key
+ * is still necessary.
  *
  * @since 14.0
  */
-public class IracCleanupTombstoneCommand extends XSiteReplicateCommand<Boolean> {
+public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<Boolean> {
 
-   public static final byte COMMAND_ID = 37;
+   public static final byte COMMAND_ID = 38;
 
+   // TODO add batching https://issues.redhat.com/browse/ISPN-13496
    private Object key;
-   private IracMetadata tombstone;
 
    @SuppressWarnings("unused")
-   public IracCleanupTombstoneCommand() {
+   public IracTombstoneRemoteSiteCheckCommand() {
       super(COMMAND_ID, null);
    }
 
-   public IracCleanupTombstoneCommand(ByteString cacheName) {
+   public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName) {
       super(COMMAND_ID, cacheName);
    }
 
-   public IracCleanupTombstoneCommand(ByteString cacheName, Object key, IracMetadata tombstone) {
+   public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName, Object key) {
       super(COMMAND_ID, cacheName);
       this.key = key;
-      this.tombstone = tombstone;
    }
 
    @Override
@@ -57,14 +53,7 @@ public class IracCleanupTombstoneCommand extends XSiteReplicateCommand<Boolean> 
 
    @Override
    public CompletionStage<Boolean> invokeAsync(ComponentRegistry registry) {
-      if (tombstone == null) {
-         // command received from a remote site.
-         // check if the key exists in IracManager
-         return isKeyInIracManager(registry);
-      }
-      // removes the tombstone
-      registry.getIracTombstoneCleaner().running().removeTombstone(key, tombstone);
-      return CompletableFutures.completedNull();
+      return isKeyInIracManager(registry);
    }
 
    @Override
@@ -96,13 +85,11 @@ public class IracCleanupTombstoneCommand extends XSiteReplicateCommand<Boolean> 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      IracMetadata.writeTo(output, tombstone);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       this.key = input.readObject();
-      this.tombstone = IracMetadata.readFrom(input);
    }
 
    @Override
@@ -118,10 +105,9 @@ public class IracCleanupTombstoneCommand extends XSiteReplicateCommand<Boolean> 
 
    @Override
    public String toString() {
-      return "IracCleanupTombstoneCommand{" +
+      return "IracSiteTombstoneCheckCommand{" +
             "cacheName=" + cacheName +
             ", key=" + Util.toStr(key) +
-            ", tombstone=" + tombstone +
             '}';
    }
 
