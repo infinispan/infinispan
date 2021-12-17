@@ -11,7 +11,7 @@ public class Config {
    //cookie that obtains configuration.
    //For more information refer to the Spring Session documentation.
    @Bean
-   public HttpSessionStrategy httpSessionStrategy() {
-      return new HeaderHttpSessionStrategy();
+   public HttpSessionIdResolver httpSessionIdResolver() {
+       return HeaderHttpSessionIdResolver.xAuthToken();
    }
 }

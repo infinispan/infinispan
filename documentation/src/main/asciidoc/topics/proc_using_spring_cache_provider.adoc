@@ -1,0 +1,38 @@
+[id='using-spring-cache-provider_{context}']
+= Using {brandname} as a Spring Cache provider
+
+Add the `@EnableCaching` annotation to one of your configuration classes and then add the `@Cacheable` and `@CacheEvict` annotations to use remote or embedded caches.
+
+.Prerequisites
+
+* Add the {brandname} dependencies to your application project.
+* Create the required remote caches and configure Hot Rod client properties if you use a {brandname} Server deployment.
+
+.Procedure
+
+. Enable cache annotations in your application context in one of the following ways:
++
+.Declarative
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/spring_annotation_driven.xml[]
+----
++
+.Programmatic
+[source,java,options=nowrap,subs=attributes+,role="secondary"]
+----
+include::code_examples/SpringEnableCaching.java[]
+----
+
+. Annotate methods with `@Cacheable` to cache return values.
++
+[TIP]
+====
+To reference entries in the cache directly, you must include the `key` attribute.
+====
+
+. Annotate methods with `@CacheEvict` to remove old entries from the cache.
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://docs.spring.io/spring-framework/docs/current/reference/html/integration.html#cache-annotations-cacheable-default-key[Spring Framework - Default Key Generation]
