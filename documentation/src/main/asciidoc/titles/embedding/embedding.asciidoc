@@ -11,6 +11,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :icons: font
 :toclevels: 3
 :numbered:
+:sectanchors:
 :stem: asciimath
 
 //
