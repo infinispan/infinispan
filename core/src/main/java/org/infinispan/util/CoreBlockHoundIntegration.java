@@ -11,10 +11,10 @@ import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
-import org.infinispan.interceptors.impl.PrefetchInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.scattered.impl.ScatteredStateConsumerImpl;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManagerImpl;
@@ -106,9 +106,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // https://issues.redhat.com/browse/ISPN-11272
       builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
 
-      // Scattered prefetch iteration is currently blocking - needs to be rewritten to be non blocking
+      // Scattered state consumer is currently blocking - needs to be rewritten to be non blocking
       // https://issues.redhat.com/browse/ISPN-10864
-      builder.allowBlockingCallsInside(PrefetchInterceptor.class.getName() + "$BackingIterator", "hasNext");
+      builder.allowBlockingCallsInside(ScatteredStateConsumerImpl.class.getName(), "blockingSubscribe");
    }
 
    private static void registerBlockingMethods(BlockHound.Builder builder) {
