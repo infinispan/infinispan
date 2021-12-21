@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
+import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
+import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -36,7 +38,7 @@ public enum ResponseWriter {
       void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
          HttpResponse res = response.getResponse();
          HttpUtil.setContentLength(res, 0);
-         accessLog.log(ctx, request, response.getResponse());
+         log(ctx, request, res);
          ctx.writeAndFlush(response.getResponse());
       }
    },
@@ -54,7 +56,7 @@ public enum ResponseWriter {
             ByteBufUtil.writeUtf8(responseContent, entity.toString());
          }
          HttpUtil.setContentLength(res, responseContent.readableBytes());
-         accessLog.log(ctx, request, response.getResponse());
+         log(ctx, request, res);
          ctx.writeAndFlush(res);
       }
    },
@@ -66,7 +68,7 @@ public enum ResponseWriter {
             RandomAccessFile randomAccessFile = new RandomAccessFile((File) response.getEntity(), "r");
             HttpResponse res = response.getResponse();
             HttpUtil.setContentLength(res, randomAccessFile.length());
-            accessLog.log(ctx, request, res);
+            log(ctx, request, res);
             response.getResponse().headers().add(ResponseHeader.TRANSFER_ENCODING.getValue(), "chunked");
             ctx.write(res);
             ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(randomAccessFile, 0, randomAccessFile.length(), 8192)), ctx.newProgressivePromise());
@@ -82,7 +84,7 @@ public enum ResponseWriter {
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
          res.headers().set(CONNECTION, KEEP_ALIVE);
          InputStream inputStream = (InputStream) response.getEntity();
-         accessLog.log(ctx, request, res);
+         log(ctx, request, res);
          ctx.write(res);
          ctx.writeAndFlush(new HttpChunkedInput(new ChunkedStream(inputStream)), ctx.newProgressivePromise());
       }
@@ -94,7 +96,7 @@ public enum ResponseWriter {
          res.headers().set(CACHE_CONTROL, NO_CACHE);
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
          res.headers().set(CONNECTION, KEEP_ALIVE);
-         accessLog.log(ctx, request, res);
+         log(ctx, request, res);
          ctx.writeAndFlush(res).addListener(v -> {
             EventStream eventStream = (EventStream) response.getEntity();
             eventStream.setChannelHandlerContext(ctx);
@@ -102,6 +104,14 @@ public enum ResponseWriter {
       }
    };
 
+   void log(ChannelHandlerContext ctx,  FullHttpRequest req, HttpResponse rsp) {
+      accessLog.log(ctx, req, rsp);
+      if (logger.isTraceEnabled()) {
+         logger.trace(HttpMessageUtil.dumpResponse(rsp));
+      }
+   }
+
+   final static Log logger = LogFactory.getLog(ResponseWriter.class, Log.class);
    final RestAccessLoggingHandler accessLog = new RestAccessLoggingHandler();
 
    abstract void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response);
