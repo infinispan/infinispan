@@ -61,7 +61,7 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void requestState(Address origin, IntSet segments) {
+   public void requestState(Address requestor, IntSet segments) {
       // no-op
    }
 

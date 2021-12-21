@@ -1,5 +1,11 @@
 package org.infinispan.xsite.irac;
 
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Objects;
 
 /**
@@ -53,5 +59,23 @@ public class IracManagerKeyInfoImpl implements IracManagerKeyInfo {
       result = 31 * result + key.hashCode();
       result = 31 * result + owner.hashCode();
       return result;
+   }
+
+   public static void writeTo(IracManagerKeyInfo keyInfo, ObjectOutput output) throws IOException {
+      if (keyInfo == null) {
+         output.writeObject(null);
+         return;
+      }
+      output.writeObject(keyInfo.getKey());
+      writeUnsignedInt(output, keyInfo.getSegment());
+      output.writeObject(keyInfo.getOwner());
+   }
+
+   public static IracManagerKeyInfo readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      Object key = input.readObject();
+      if (key == null) {
+         return null;
+      }
+      return new IracManagerKeyInfoImpl(readUnsignedInt(input), key, input.readObject());
    }
 }
