@@ -522,7 +522,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       try {
          return logAppender.storeRequest(segment, entry);
       } catch (Exception e) {
-         throw new PersistenceException(e);
+         return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
       }
    }
 
@@ -531,7 +531,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       try {
          return logAppender.deleteRequest(segment, key, toBuffer(marshaller.objectToByteBuffer(key)));
       } catch (Exception e) {
-         throw new PersistenceException(e);
+         return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
       }
    }
 
@@ -569,7 +569,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
          }
       } catch (Exception e) {
-         throw log.cannotLoadKeyFromIndex(key, e);
+         return CompletableFutures.completedExceptionFuture(log.cannotLoadKeyFromIndex(key, e));
       }
    }
 
