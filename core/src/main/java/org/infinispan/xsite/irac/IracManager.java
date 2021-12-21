@@ -86,10 +86,10 @@ public interface IracManager {
    /**
     * Requests the state stored in this instance for the given {@code segments}.
     *
-    * @param origin   The requestor.
-    * @param segments The segments requested.
+    * @param requestor The requestor.
+    * @param segments  The segments requested.
     */
-   void requestState(Address origin, IntSet segments);
+   void requestState(Address requestor, IntSet segments);
 
    /**
     * Receives the state related to the {@code key}.

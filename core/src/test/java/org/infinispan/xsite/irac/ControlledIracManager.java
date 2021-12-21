@@ -58,8 +58,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void requestState(Address origin, IntSet segments) {
-      actual.requestState(origin, segments);
+   public void requestState(Address requestor, IntSet segments) {
+      actual.requestState(requestor, segments);
    }
 
    @Override
