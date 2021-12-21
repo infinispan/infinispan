@@ -7,6 +7,7 @@ import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.cache.impl.EncoderValueMapper;
 import org.infinispan.cache.impl.FunctionMapper;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.functional.functions.MergeFunction;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -250,6 +251,7 @@ final class InternalExternalizers {
       addInternalExternalizer(PrepareResponse.EXTERNALIZER, exts);
       addInternalExternalizer(new InternalMetadataImpl.Externalizer(), exts);
       addInternalExternalizer(AutoStateTransferResponse.EXTERNALIZER, exts);
+      addInternalExternalizer(CommandInvocationId.EXTERNALIZER, exts);
 
       return exts;
    }

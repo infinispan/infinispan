@@ -223,6 +223,7 @@ public interface Ids {
    int PREPARE_RESPONSE = 152;
 
    int XSITE_AUTO_TRANSFER_RESPONSE = 153;
+   int COMMAND_INVOCATION_ID = 154;
 
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
