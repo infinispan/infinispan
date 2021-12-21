@@ -749,8 +749,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracStateResponseCommand buildIracStateResponseCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      return new IracStateResponseCommand(cacheName, segment, key, lockOwner, tombstone);
+   public IracStateResponseCommand buildIracStateResponseCommand(int capacity) {
+      return new IracStateResponseCommand(cacheName, capacity);
    }
 
    @Override

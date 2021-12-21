@@ -2,11 +2,11 @@ package org.infinispan.xsite.irac;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 import org.infinispan.Cache;
@@ -14,8 +14,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.statetransfer.XSiteState;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * A manually trigger {@link IracManager} delegator.
@@ -27,16 +25,12 @@ import net.jcip.annotations.GuardedBy;
  */
 public class ManualIracManager extends ControlledIracManager {
 
-   @GuardedBy("this")
-   private final Map<Object, PendingKeyRequest> pendingKeys;
-   @GuardedBy("this")
-   private boolean enabled;
-   private final List<StateTransferRequest> pendingStateTransfer;
+   private final Map<Object, PendingKeyRequest> pendingKeys = new ConcurrentHashMap<>(16);
+   private volatile boolean enabled;
+   private final List<StateTransferRequest> pendingStateTransfer = new ArrayList<>(2);
 
    private ManualIracManager(IracManager actual) {
       super(actual);
-      pendingKeys = new HashMap<>();
-      pendingStateTransfer = new ArrayList<>(2);
    }
 
    public static ManualIracManager wrapCache(Cache<?, ?> cache) {
@@ -48,7 +42,7 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    @Override
-   public synchronized void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
       if (enabled) {
          pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, false));
       } else {
@@ -66,7 +60,7 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    @Override
-   public synchronized CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+   public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
       if (enabled) {
          StateTransferRequest request = new StateTransferRequest(stateList);
          pendingStateTransfer.add(request);
@@ -77,25 +71,24 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    @Override
-   public synchronized void requestState(Address origin, IntSet segments) {
+   public void requestState(Address requestor, IntSet segments) {
       //send the state for the keys we have pending in this instance!
-      asDefaultIracManager()
-            .ifPresent(im -> pendingKeys.values().forEach(req -> im.sendStateIfNeeded(origin, segments, req.getSegment(), req.getKey(), req.getLockOwner())));
-      super.requestState(origin, segments);
+      asDefaultIracManager().ifPresent(im -> im.transferStateTo(requestor, segments, pendingKeys.values()));
+      super.requestState(requestor, segments);
    }
 
-   public synchronized void sendKeys() {
+   public void sendKeys() {
       pendingKeys.values().forEach(this::send);
       pendingKeys.clear();
       pendingStateTransfer.forEach(this::send);
       pendingStateTransfer.clear();
    }
 
-   public synchronized void enable() {
+   public void enable() {
       enabled = true;
    }
 
-   public synchronized void disable(DisableMode disableMode) {
+   public void disable(DisableMode disableMode) {
       enabled = false;
       switch (disableMode) {
          case DROP:
@@ -113,16 +106,16 @@ public class ManualIracManager extends ControlledIracManager {
       return asDefaultIracManager().map(DefaultIracManager::isEmpty).orElse(true);
    }
 
-   public boolean hasPendingKeys() {
+   boolean hasPendingKeys() {
       return !pendingKeys.isEmpty();
    }
 
    private void send(PendingKeyRequest request) {
       if (request.isExpiration()) {
-         super.trackExpiredKey(request.getSegment(), request.getKey(), request.getLockOwner());
+         super.trackExpiredKey(request.getSegment(), request.getKey(), request.getOwner());
          return;
       }
-      super.trackUpdatedKey(request.getSegment(), request.getKey(), request.getLockOwner());
+      super.trackUpdatedKey(request.getSegment(), request.getKey(), request.getOwner());
    }
 
    private void send(StateTransferRequest request) {
@@ -156,7 +149,7 @@ public class ManualIracManager extends ControlledIracManager {
       }
    }
 
-   private static class PendingKeyRequest {
+   private static class PendingKeyRequest implements IracManagerKeyState {
       private final Object key;
       private final Object lockOwner;
       private final int segment;
@@ -169,20 +162,49 @@ public class ManualIracManager extends ControlledIracManager {
          this.expiration = expiration;
       }
 
-      Object getKey() {
+      @Override
+      public Object getKey() {
          return key;
       }
 
-      Object getLockOwner() {
+      @Override
+      public Object getOwner() {
          return lockOwner;
       }
 
-      int getSegment() {
+      @Override
+      public int getSegment() {
          return segment;
       }
 
-      boolean isExpiration() {
+      @Override
+      public boolean isExpiration() {
          return expiration;
+      }
+
+      @Override
+      public boolean isStateTransfer() {
+         return false;
+      }
+
+      @Override
+      public boolean canSend() {
+         return false;
+      }
+
+      @Override
+      public void retry() {
+
+      }
+
+      @Override
+      public boolean done() {
+         return false;
+      }
+
+      @Override
+      public void discard() {
+
       }
    }
 }

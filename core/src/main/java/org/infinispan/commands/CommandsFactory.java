@@ -650,7 +650,7 @@ public interface CommandsFactory {
 
    IracRequestStateCommand buildIracRequestStateCommand(IntSet segments);
 
-   IracStateResponseCommand buildIracStateResponseCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone);
+   IracStateResponseCommand buildIracStateResponseCommand(int capacity);
 
    IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata);

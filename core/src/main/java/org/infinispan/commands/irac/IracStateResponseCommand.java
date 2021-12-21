@@ -1,17 +1,26 @@
 package org.infinispan.commands.irac;
 
+import static java.util.Objects.requireNonNull;
+import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.IracManagerKeyInfo;
+import org.infinispan.xsite.irac.IracManagerKeyInfoImpl;
 
 /**
  * The IRAC state for a given key.
@@ -24,10 +33,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
    public static final byte COMMAND_ID = 120;
 
    private ByteString cacheName;
-   private int segment;
-   private Object key;
-   private Object lockOwner;
-   private IracMetadata tombstone;
+   private Collection<State> stateCollection;
 
    @SuppressWarnings("unused")
    public IracStateResponseCommand() {
@@ -37,17 +43,17 @@ public class IracStateResponseCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public IracStateResponseCommand(ByteString cacheName, int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+   public IracStateResponseCommand(ByteString cacheName, int capacity) {
       this(cacheName);
-      this.segment = segment;
-      this.key = key;
-      this.lockOwner = lockOwner;
-      this.tombstone = tombstone;
+      stateCollection = new ArrayList<>(capacity);
    }
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      registry.getIracManager().wired().receiveState(segment, key, lockOwner, tombstone);
+      IracManager manager = registry.getIracManager().running();
+      for (State state : stateCollection) {
+         state.apply(manager);
+      }
       return CompletableFutures.completedNull();
    }
 
@@ -63,28 +69,12 @@ public class IracStateResponseCommand implements CacheRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeInt(segment);
-      output.writeObject(key);
-      boolean cId = lockOwner instanceof CommandInvocationId;
-      output.writeBoolean(cId);
-      if (cId) {
-         CommandInvocationId.writeTo(output, (CommandInvocationId) lockOwner);
-      } else {
-         output.writeObject(lockOwner);
-      }
-      IracMetadata.writeTo(output, tombstone);
+      marshallCollection(stateCollection, output, IracStateResponseCommand::writeStateTo);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.segment = input.readInt();
-      this.key = input.readObject();
-      if (input.readBoolean()) {
-         lockOwner = CommandInvocationId.readFrom(input);
-      } else {
-         this.lockOwner = input.readObject();
-      }
-      this.tombstone = IracMetadata.readFrom(input);
+      stateCollection = unmarshallCollection(input, ArrayList::new, IracStateResponseCommand::readStateFrom);
    }
 
    @Override
@@ -103,13 +93,46 @@ public class IracStateResponseCommand implements CacheRpcCommand {
       //no-op
    }
 
+   public void add(IracManagerKeyInfo keyInfo, IracMetadata tombstone) {
+      stateCollection.add(new State(keyInfo, tombstone));
+   }
+
    @Override
    public String toString() {
       return "IracStateResponseCommand{" +
             "cacheName=" + cacheName +
-            ", key=" + key +
-            ", lockOwner=" + lockOwner +
-            ", tombstone=" + tombstone +
+            ", state=" + Util.toStr(stateCollection) +
             '}';
+   }
+
+   private static void writeStateTo(ObjectOutput output, State state) throws IOException {
+      IracManagerKeyInfoImpl.writeTo(state.keyInfo, output);
+      IracMetadata.writeTo(output, state.tombstone);
+   }
+
+   private static State readStateFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      return new State(IracManagerKeyInfoImpl.readFrom(input), IracMetadata.readFrom(input));
+   }
+
+   private static class State {
+      final IracManagerKeyInfo keyInfo;
+      final IracMetadata tombstone;
+
+      State(IracManagerKeyInfo keyInfo, IracMetadata tombstone) {
+         this.keyInfo = requireNonNull(keyInfo);
+         this.tombstone = tombstone;
+      }
+
+      void apply(IracManager manager) {
+         manager.receiveState(keyInfo.getSegment(), keyInfo.getKey(), keyInfo.getOwner(), tombstone);
+      }
+
+      @Override
+      public String toString() {
+         return "State{" +
+               "keyInfo=" + keyInfo +
+               ", tombstone=" + tombstone +
+               '}';
+      }
    }
 }
