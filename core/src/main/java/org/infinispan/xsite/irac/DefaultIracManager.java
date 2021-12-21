@@ -2,11 +2,13 @@ package org.infinispan.xsite.irac;
 
 import static org.infinispan.commons.util.IntSets.mutableCopyFrom;
 import static org.infinispan.commons.util.IntSets.mutableEmptySet;
+import static org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PrimitiveIterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,15 +16,19 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.distribution.DistributionInfo;
@@ -43,7 +49,9 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
@@ -59,6 +67,9 @@ import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
+
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Default implementation of {@link IracManager}.
@@ -94,6 +105,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
    private final Map<Object, IracManagerKeyState> updatedKeys;
    private final Collection<XSiteBackup> asyncBackups;
    private final IracExecutor iracExecutor;
+   private final int batchSize;
    private volatile boolean hasClear;
 
    private boolean statisticsEnabled;
@@ -103,20 +115,20 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
    private final LongAdder conflictMergedCount = new LongAdder();
 
    public DefaultIracManager(Configuration config) {
-      updatedKeys = new ConcurrentHashMap<>();
+      updatedKeys = new ConcurrentHashMap<>(64);
       iracExecutor = new IracExecutor(this::run);
       asyncBackups = asyncBackups(config);
-      setStatisticsEnabled(config.statistics().enabled());
+      statisticsEnabled = config.statistics().enabled();
+      batchSize = config.sites().asyncBackupsStream()
+            .map(BackupConfiguration::stateTransfer)
+            .mapToInt(XSiteStateTransferConfiguration::chunkSize)
+            .reduce(1, Integer::max);
    }
 
    public static Collection<XSiteBackup> asyncBackups(Configuration config) {
       return config.sites().asyncBackupsStream()
             .map(bc -> new XSiteBackup(bc.site(), true, bc.replicationTimeout())) //convert to sync
             .collect(Collectors.toList());
-   }
-
-   private static IntSet newIntSet(Address ignored) {
-      return mutableEmptySet();
    }
 
    @Inject
@@ -205,10 +217,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
       }
 
       // group new segments by primary owner
-      Map<Address, IntSet> primarySegments = new HashMap<>();
-      for (int segment : addedSegments) {
+      Map<Address, IntSet> primarySegments = new HashMap<>(newCacheTopology.getMembers().size());
+         int numOfSegments = clusteringDependentLogic.getCacheTopology().getNumSegments();
+         Function<Address, IntSet> intSetConstructor = address -> mutableEmptySet(numOfSegments);
+      for (PrimitiveIterator.OfInt it = addedSegments.iterator(); it.hasNext(); ) {
+            int segment = it.nextInt();
          Address primary = newCacheTopology.getWriteConsistentHash().locatePrimaryOwnerForSegment(segment);
-         primarySegments.computeIfAbsent(primary, DefaultIracManager::newIntSet).add(segment);
+         primarySegments.computeIfAbsent(primary, intSetConstructor).set(segment);
       }
 
       primarySegments.forEach(this::sendStateRequest);
@@ -216,9 +231,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
    }
 
    @Override
-   public void requestState(Address origin, IntSet segments) {
-      updatedKeys.values().forEach(state -> sendStateIfNeeded(origin, segments, state.getSegment(), state.getKey(), state.getOwner()));
-      iracTombstoneManager.sendStateTo(origin, segments);
+   public void requestState(Address requestor, IntSet segments) {
+      transferStateTo(requestor, segments, updatedKeys.values());
+      iracTombstoneManager.sendStateTo(requestor, segments);
    }
 
    @Override
@@ -265,14 +280,44 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
    }
 
    // public for testing purposes
-   public void sendStateIfNeeded(Address origin, IntSet segments, int segment, Object key, Object lockOwner) {
-      if (!segments.contains(segment)) {
-         return;
+   void transferStateTo(Address dst, IntSet segments, Collection<? extends IracManagerKeyState> stateCollection) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Starting state transfer to %s. Segments=%s, %s keys to check", dst, segments, stateCollection.size());
       }
-      // send the tombstone too
-      IracMetadata tombstone = iracTombstoneManager.getTombstone(key);
-      CacheRpcCommand cmd = commandsFactory.buildIracStateResponseCommand(segment, key, lockOwner, tombstone);
-      rpcManager.sendTo(origin, cmd, DeliverOrder.NONE);
+      //noinspection ResultOfMethodCallIgnored
+      Flowable.fromIterable(stateCollection)
+            .filter(s -> !s.isStateTransfer() && !s.isExpiration() && segments.contains(s.getSegment()))
+            .buffer(batchSize)
+            .concatMapCompletableDelayError(batch -> createAndSendBatch(dst, batch))
+            .subscribe(() -> {
+               if (log.isTraceEnabled()) {
+                  log.tracef("State transfer to %s finished!", dst);
+               }
+            }, throwable -> {
+               if (log.isTraceEnabled()) {
+                  log.tracef(throwable, "State transfer to %s failed!", dst);
+               }
+            });
+   }
+
+   private Completable createAndSendBatch(Address dst, Collection<? extends IracManagerKeyState> batch) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Sending state response to %s. Batch=%s", dst, Util.toStr(batch));
+      }
+      RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+      ResponseCollector<Void> rspCollector = ignoreLeavers();
+      IracStateResponseCommand cmd = commandsFactory.buildIracStateResponseCommand(batch.size());
+      for (IracManagerKeyState state : batch) {
+         IracMetadata tombstone = iracTombstoneManager.getTombstone(state.getKey());
+         cmd.add(state, tombstone);
+      }
+      return Completable.fromCompletionStage(rpcManager.invokeCommand(dst, cmd, rspCollector, rpcOptions)
+            .exceptionally(throwable -> {
+               if (log.isTraceEnabled()) {
+                  log.tracef(throwable, "Batch sent to %s failed! Batch=%s", dst, Util.toStr(batch));
+               }
+               return null;
+            }));
    }
 
    private void trackState(IracManagerKeyState state) {

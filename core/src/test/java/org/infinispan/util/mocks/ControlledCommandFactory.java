@@ -718,8 +718,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracStateResponseCommand buildIracStateResponseCommand(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      return actual.buildIracStateResponseCommand(segment, key, lockOwner, tombstone);
+   public IracStateResponseCommand buildIracStateResponseCommand(int capacity) {
+      return actual.buildIracStateResponseCommand(capacity);
    }
 
    @Override
