@@ -39,7 +39,6 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
    protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;
-   private final String context;
    private Subject subject;
    private String authorization;
    private final Authenticator authenticator;
@@ -53,11 +52,14 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
       this.authenticator = configuration.authentication().enabled() ? configuration.authentication().authenticator() : null;
-      this.context = configuration.contextPath();
    }
 
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) {
+      if (logger.isTraceEnabled()) {
+         logger.trace(HttpMessageUtil.dumpRequest(request));
+      }
+
       restAccessLoggingHandler.preLog(request);
       if (HttpUtil.is100ContinueExpected(request)) {
          ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
