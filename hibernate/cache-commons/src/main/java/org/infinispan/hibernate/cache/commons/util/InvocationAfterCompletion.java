@@ -8,13 +8,14 @@ package org.infinispan.hibernate.cache.commons.util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
 
 import org.hibernate.HibernateException;
 import org.hibernate.jdbc.WorkExecutor;
 import org.hibernate.jdbc.WorkExecutorVisitable;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

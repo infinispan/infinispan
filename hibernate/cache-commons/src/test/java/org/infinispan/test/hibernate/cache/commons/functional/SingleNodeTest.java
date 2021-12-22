@@ -1,19 +1,19 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import org.hibernate.Session;
-import org.hibernate.SessionBuilder;
-import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
-import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.infinispan.test.hibernate.cache.commons.util.TxUtil;
-
-import javax.transaction.TransactionManager;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.concurrent.Callable;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.hibernate.Session;
+import org.hibernate.SessionBuilder;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
+import org.infinispan.hibernate.cache.commons.util.Caches;
+import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
+import org.infinispan.test.hibernate.cache.commons.util.TxUtil;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

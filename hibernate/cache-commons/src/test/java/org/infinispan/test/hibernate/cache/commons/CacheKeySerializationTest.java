@@ -6,14 +6,13 @@
  */
 package org.infinispan.test.hibernate.cache.commons;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
-import org.junit.Rule;
-import org.junit.Test;
 
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
@@ -22,15 +21,15 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.entity.EntityPersister;
-import org.infinispan.test.hibernate.cache.commons.functional.entities.WithEmbeddedId;
+import org.hibernate.testing.TestForIssue;
+import org.hibernate.testing.cache.CachingRegionFactory;
+import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.PK;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.WithEmbeddedId;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.WithSimpleId;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
-import org.hibernate.testing.TestForIssue;
-import org.hibernate.testing.junit4.BaseUnitTestCase;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Rule;
+import org.junit.Test;
 
 /**
  * @author Gail Badner
@@ -41,8 +40,8 @@ public class CacheKeySerializationTest extends BaseUnitTestCase {
 
 	private SessionFactoryImplementor getSessionFactory(String cacheKeysFactory) {
 		Configuration configuration = new Configuration()
-				.setProperty( Environment.USE_SECOND_LEVEL_CACHE, "true")
-				.setProperty(Environment.CACHE_REGION_FACTORY, TestRegionFactoryProvider.load().getRegionFactoryClass().getName())
+				.setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true")
+				.setProperty(Environment.CACHE_REGION_FACTORY, CachingRegionFactory.class.getName())
 				.setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
 				.setProperty("javax.persistence.sharedCache.mode", "ALL")
 				.setProperty(Environment.HBM2DDL_AUTO, "create-drop");
@@ -79,8 +78,8 @@ public class CacheKeySerializationTest extends BaseUnitTestCase {
 	}
 
 	private void testId(CacheKeysFactory cacheKeysFactory, String entityName, Object id) throws Exception {
-		final SessionFactoryImplementor sessionFactory = getSessionFactory( cacheKeysFactory.getClass().getName() );
-		final EntityPersister persister = sessionFactory.getEntityPersister( entityName );
+		final SessionFactoryImplementor sessionFactory = getSessionFactory(cacheKeysFactory.getClass().getName());
+		final EntityPersister persister = sessionFactory.getRuntimeMetamodels().getMappingMetamodel().getEntityDescriptor(entityName);
 		final Object key = cacheKeysFactory.createEntityKey(
 				id,
 				persister,

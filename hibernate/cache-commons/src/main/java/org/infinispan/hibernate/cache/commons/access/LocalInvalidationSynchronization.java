@@ -1,9 +1,9 @@
 package org.infinispan.hibernate.cache.commons.access;
 
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
 
 public class LocalInvalidationSynchronization implements Synchronization {
    private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(LocalInvalidationSynchronization.class);

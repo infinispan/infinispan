@@ -10,17 +10,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import javax.transaction.TransactionManager;
 
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
-import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
-
 import org.hibernate.testing.junit4.CustomParameterized;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestSupport;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
@@ -34,7 +33,7 @@ import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import org.infinispan.configuration.cache.CacheMode;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Base class for all non-functional tests of Infinispan integration.

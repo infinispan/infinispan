@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.MultiTenancyStrategy;
 import org.hibernate.boot.SessionFactoryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
@@ -68,8 +67,8 @@ public class MultiTenancyTest extends SingleNodeTest {
 
 	 @Override
 	 protected void configureSessionFactoryBuilder(SessionFactoryBuilder sfb) {
-		  super.configureSessionFactoryBuilder(sfb);
-		  sfb.applyMultiTenancyStrategy(MultiTenancyStrategy.DATABASE);
+		 super.configureSessionFactoryBuilder(sfb);
+		 sfb.applyMultiTenancy(true);
 	 }
 
 	 @Override

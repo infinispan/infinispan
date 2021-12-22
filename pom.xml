@@ -107,7 +107,6 @@
       <module>persistence</module>
       <module>persistence/jdbc</module>
       <module>persistence/jdbc-common</module>
-      <module>persistence/jpa</module>
       <module>persistence/remote</module>
       <module>persistence/rocksdb</module>
       <module>persistence/sql</module>
@@ -336,12 +335,10 @@
       <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
       <versionx.org.hamcrest.hamcrest-core>${version.hamcrest}</versionx.org.hamcrest.hamcrest-core>
       <versionx.org.hamcrest.hamcrest-library>${version.hamcrest}</versionx.org.hamcrest.hamcrest-library>
-      <versionx.org.hibernate.common.hibernate-commons-annotations>5.0.5.Final</versionx.org.hibernate.common.hibernate-commons-annotations>
       <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
       <versionx.org.hibernate.search.hibernate-search-backend-lucene>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-backend-lucene>
       <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
       <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
-      <versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>1.0.0.Final</versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api>
       <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
       <versionx.org.javassist.javassist>3.26.0-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>2.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
@@ -1030,7 +1027,24 @@
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
+            <version>${version.hibernate53.core}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
             <version>${versionx.org.hibernate.hibernate-core}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-testing</artifactId>
+            <version>${versionx.org.hibernate.hibernate-core}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-jpamodelgen</artifactId>
+            <version>${versionx.org.hibernate.hibernate-core}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.hibernate.search</groupId>
@@ -1052,16 +1066,6 @@
             <artifactId>hibernate-testing</artifactId>
             <version>${versionx.org.hibernate.hibernate-testing}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.common</groupId>
-            <artifactId>hibernate-commons-annotations</artifactId>
-            <version>${versionx.org.hibernate.common.hibernate-commons-annotations}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.1-api</artifactId>
-            <version>${versionx.org.hibernate.javax.persistence.hibernate-jpa-2.1-api}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate.lucene-jbossmodules</groupId>
@@ -1271,13 +1275,6 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cdi-embedded</artifactId>
-            <version>${version.infinispan}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-jpa</artifactId>
             <version>${version.infinispan}</version>
             <type>test-jar</type>
             <scope>test</scope>
@@ -3296,7 +3293,6 @@
                               <source>${dir.ispn}/object-filter/src/main/java</source>
                               <source>${dir.ispn}/persistence/cli/src/main/java</source>
                               <source>${dir.ispn}/persistence/jdbc/src/main/java</source>
-                              <source>${dir.ispn}/persistence/jpa/src/main/java</source>
                               <source>${dir.ispn}/persistence/leveldb/src/main/java</source>
                               <source>${dir.ispn}/persistence/remote/src/main/java</source>
                               <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>

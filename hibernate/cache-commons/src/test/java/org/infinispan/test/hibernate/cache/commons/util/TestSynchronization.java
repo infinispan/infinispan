@@ -6,7 +6,7 @@ import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRe
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public abstract class TestSynchronization implements javax.transaction.Synchronization {
+public abstract class TestSynchronization implements jakarta.transaction.Synchronization {
 	protected final Object session;
 	protected final Object key;
 	protected final Object value;

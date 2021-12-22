@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.hibernate.stat.Statistics;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
@@ -67,11 +67,10 @@ public class NonTxQueryTest extends SingleNodeTest {
    }
 
    public void queryPersons(Session s) {
-      Query query = s
-         .createQuery("from Person")
-         .setCacheable(true);
+      Query<Person> query = s.createQuery("from Person")
+            .setCacheable(true);
 
-      List<Person> result = (List<Person>) query.list();
+      List<Person> result = query.list();
       assertEquals(2, result.size());
    }
 }

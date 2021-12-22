@@ -12,9 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
@@ -29,6 +26,9 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.ByteString;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Helper for dealing with Infinispan cache instances.

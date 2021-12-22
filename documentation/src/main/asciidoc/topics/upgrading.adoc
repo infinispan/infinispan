@@ -73,6 +73,37 @@ Microprofile metrics are no longer supported, available output metrics are now P
 The implementation relies on Micrometer library, for more information see
 the link:../server/server.html#configuring-metrics_statistics-jmx[Configuring Infinispan metrics].
 
+== Jakarta EE compatible jars available
+
+We now distribute Jakarta EE based jars for users.
+This is in addition to the javax compatible jars.
+
+Some modules that have Jakarta based jars are the following (note there are quite a few more, just some prime examples)
+
+* infinispan-commons
+* infinispan-core
+* infinispan-multimap
+* infinispan-query
+* infinispan-client-hotrod
+* infinispan-api
+
+If your application requires using the jakarta instead of javax namespace all you need to do is change your maven
+dependency to use the jakarta scope
+
+```xml
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-client-hotrod</artifactId>
+   <classifier>jakarta</classifier>
+</dependency>
+```
+
+== Hibernate 6.0 2LC Update
+
+Hibernate 6.0 is now supported and is the only implementation supported moving forward.
+If Hibernate 5.3 support is needed, you must use an older version of Infinispan.
+
+
 = Upgrading from 12.1 to 13.0
 
 == Search

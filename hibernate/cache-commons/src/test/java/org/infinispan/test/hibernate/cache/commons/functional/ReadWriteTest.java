@@ -18,24 +18,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Cache;
-import org.hibernate.Criteria;
 import org.hibernate.Hibernate;
 import org.hibernate.NaturalIdLoadAccess;
 import org.hibernate.Session;
 import org.hibernate.cache.spi.entry.CacheEntry;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.stat.SecondLevelCacheStatistics;
+import org.hibernate.jpa.QueryHints;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.stat.CacheRegionStatistics;
 import org.hibernate.stat.Statistics;
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen_;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalIdOnManyToOne;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.OtherItem;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.State_;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.VersionedItem;
 import org.junit.After;
 import org.junit.Test;
+
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 /**
  * Functional entity transactional tests.
@@ -89,7 +95,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		});
 
 		String itemsRegionName = Item.class.getName() + ".items";
-		SecondLevelCacheStatistics cStats = stats.getSecondLevelCacheStatistics(itemsRegionName);
+		CacheRegionStatistics cStats = stats.getCacheRegionStatistics(itemsRegionName);
 		assertEquals( 1, cStats.getElementCountInMemory() );
 
 		withTxSession(s -> {
@@ -112,7 +118,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 	public void testAddNewOneToManyElementInitFlushLeaveCacheConsistent() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
-		SecondLevelCacheStatistics cStats = stats.getSecondLevelCacheStatistics( Item.class.getName() + ".items" );
+		CacheRegionStatistics cStats = stats.getCacheRegionStatistics(Item.class.getName() + ".items");
 
 		ByRef<Long> itemId = new ByRef<>(null);
 		saveItem(itemId);
@@ -146,7 +152,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 	public void testAddNewOneToManyElementNoInitFlushLeaveCacheConsistent() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
-		SecondLevelCacheStatistics cStats = stats.getSecondLevelCacheStatistics( Item.class.getName() + ".items" );
+		CacheRegionStatistics cStats = stats.getCacheRegionStatistics(Item.class.getName() + ".items");
 
 		ByRef<Long> itemId = new ByRef<>(null);
 
@@ -180,7 +186,6 @@ public class ReadWriteTest extends ReadOnlyTest {
 	public void testAddNewOneToManyElementNoInitFlushInitLeaveCacheConsistent() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
-		SecondLevelCacheStatistics cStats = stats.getSecondLevelCacheStatistics( Item.class.getName() + ".items" );
 
 		ByRef<Long> itemId = new ByRef<>(null);
 
@@ -229,7 +234,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 	public void testAddNewManyToManyPropertyRefNoInitFlushInitLeaveCacheConsistent() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
-		SecondLevelCacheStatistics cStats = stats.getSecondLevelCacheStatistics( Item.class.getName() + ".items" );
+		CacheRegionStatistics cStats = stats.getCacheRegionStatistics(Item.class.getName() + ".items");
 
 		ByRef<Long> otherItemId = new ByRef<>(null);
 		withTxSession(s -> {
@@ -316,7 +321,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
 
-		SecondLevelCacheStatistics slcs = stats.getSecondLevelCacheStatistics( Item.class.getName() );
+		CacheRegionStatistics slcs = stats.getCacheRegionStatistics(Item.class.getName());
 
 		ByRef<Long> itemId = new ByRef<>(null);
 		withTxSession(s -> {
@@ -344,7 +349,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 	public void testPersistEntityFlushEvictGetRollbackNotInEntityCache() throws Exception {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
-		SecondLevelCacheStatistics slcs = stats.getSecondLevelCacheStatistics( Item.class.getName() );
+		CacheRegionStatistics slcs = stats.getCacheRegionStatistics(Item.class.getName());
 
 		ByRef<Long> itemId = new ByRef<>(null);
 		withTxSession(s -> {
@@ -380,8 +385,8 @@ public class ReadWriteTest extends ReadOnlyTest {
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
 
-		SecondLevelCacheStatistics slcs = stats.getSecondLevelCacheStatistics( Item.class.getName() );
-		sessionFactory().getCache().evictEntityRegion( Item.class.getName() );
+		CacheRegionStatistics slcs = stats.getCacheRegionStatistics(Item.class.getName());
+		sessionFactory().getCache().evictEntityData(Item.class);
 
 		TIME_SERVICE.advance(1);
 
@@ -403,18 +408,18 @@ public class ReadWriteTest extends ReadOnlyTest {
 		assertEquals( 1, getNumberOfItems());
 
 		withTxSession(s -> {
-			Item item = s.get( Item.class, idRef.get() );
-			assertEquals( slcs.getHitCount(), 1 );
-			assertEquals( slcs.getMissCount(), 0 );
-			item.setDescription( "A bog standard item" );
+			Item item = s.get(Item.class, idRef.get());
+			assertEquals(slcs.getHitCount(), 1);
+			assertEquals(slcs.getMissCount(), 0);
+			item.setDescription("A bog standard item");
 		});
 
-		assertEquals( slcs.getPutCount(), 2 );
+		assertEquals(slcs.getPutCount(), 2);
 
 		CacheEntry entry = getEntry(Item.class.getName(), idRef.get());
 		Serializable[] ser = entry.getDisassembledState();
-		assertTrue( ser[0].equals( "widget" ) );
-		assertTrue( ser[1].equals( "A bog standard item" ) );
+		assertEquals("widget", ser[4]);
+		assertEquals("A bog standard item", ser[2]);
 
 		withTxSession(s -> {
 			Item item = s.load(Item.class, idRef.get());
@@ -478,32 +483,37 @@ public class ReadWriteTest extends ReadOnlyTest {
 
 		withTxSession(s -> {
 			State france = ReadWriteTest.this.getState(s, "Ile de France");
-			Criteria criteria = s.createCriteria( Citizen.class );
-			criteria.add( Restrictions.naturalId().set( "ssn", "1234" ).set( "state", france ) );
-			criteria.setCacheable( true );
+
+			HibernateCriteriaBuilder cb = s.getCriteriaBuilder();
+			CriteriaQuery<Citizen> criteria = cb.createQuery(Citizen.class);
+			Root<Citizen> root = criteria.from(Citizen.class);
+			criteria.where(cb.equal(root.get(Citizen_.ssn), "1234"), cb.equal(root.get(Citizen_.state), france));
 
 			Statistics stats = sessionFactory().getStatistics();
-			stats.setStatisticsEnabled( true );
+			stats.setStatisticsEnabled(true);
 			stats.clear();
 			assertEquals(
 					"Cache hits should be empty", 0, stats
-					.getNaturalIdCacheHitCount()
+							.getNaturalIdCacheHitCount()
 			);
+			TypedQuery<Citizen> typedQuery = s.createQuery(criteria)
+					.setHint(QueryHints.HINT_CACHEABLE, "true");
 
 			// first query
-			List results = criteria.list();
-			assertEquals( 1, results.size() );
-			assertEquals( "NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount() );
-			assertEquals( "NaturalId Cache Misses", 1, stats.getNaturalIdCacheMissCount() );
-			assertEquals( "NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount() );
-			assertEquals( "NaturalId Cache Queries", 1, stats.getNaturalIdQueryExecutionCount() );
+			List results = typedQuery
+					.getResultList();
+			assertEquals(1, results.size());
+			assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
+			assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
+			assertEquals("NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount());
+			assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
 
 			// query a second time - result should be cached in session
-			criteria.list();
-			assertEquals( "NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount() );
-			assertEquals( "NaturalId Cache Misses", 1, stats.getNaturalIdCacheMissCount() );
-			assertEquals( "NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount() );
-			assertEquals( "NaturalId Cache Queries", 1, stats.getNaturalIdQueryExecutionCount() );
+			typedQuery.getResultList();
+			assertEquals("NaturalId Cache Hits", 0, stats.getNaturalIdCacheHitCount());
+			assertEquals("NaturalId Cache Misses", 0, stats.getNaturalIdCacheMissCount());
+			assertEquals("NaturalId Cache Puts", 1, stats.getNaturalIdCachePutCount());
+			assertEquals("NaturalId Cache Queries", 0, stats.getNaturalIdQueryExecutionCount());
 
 			// cleanup
 			markRollbackOnly(s);
@@ -602,7 +612,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 			Cache cache = s.getSessionFactory().getCache();
 
 			Statistics stats = sessionFactory().getStatistics();
-			SecondLevelCacheStatistics slcStats = stats.getSecondLevelCacheStatistics(Citizen.class.getName());
+			CacheRegionStatistics slcStats = stats.getCacheRegionStatistics(Citizen.class.getName());
 
 			assertTrue("2lc entity cache is expected to contain Citizen id = " + citizens.get(0).getId(),
 					cache.containsEntity(Citizen.class, citizens.get(0).getId()));
@@ -610,7 +620,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 					cache.containsEntity(Citizen.class, citizens.get(1).getId()));
 			assertEquals(2, slcStats.getPutCount());
 
-			cache.evictEntityRegions();
+			cache.evictAll();
 			TIME_SERVICE.advance(1);
 
 			assertEquals(0, slcStats.getElementCountInMemory());
@@ -636,13 +646,13 @@ public class ReadWriteTest extends ReadOnlyTest {
 		withTxSession(s -> {
 			Cache cache = s.getSessionFactory().getCache();
 
-			cache.evictEntityRegions();
-			cache.evictEntityRegions();
+			cache.evictAll();
+			cache.evictAll();
 		});
 		withTxSession(s -> {
 			Cache cache = s.getSessionFactory().getCache();
 
-			cache.evictEntityRegions();
+			cache.evictAll();
 
 			s.delete(s.load(Citizen.class, citizens.get(0).getId()));
 			s.delete(s.load(Citizen.class, citizens.get(1).getId()));
@@ -681,10 +691,14 @@ public class ReadWriteTest extends ReadOnlyTest {
 	}
 
 	private State getState(Session s, String name) {
-		Criteria criteria = s.createCriteria( State.class );
-		criteria.add( Restrictions.eq("name", name) );
-		criteria.setCacheable(true);
-		return (State) criteria.list().get( 0 );
+		HibernateCriteriaBuilder cb = s.getCriteriaBuilder();
+		CriteriaQuery<State> criteria = cb.createQuery(State.class);
+		Root<State> root = criteria.from(State.class);
+		criteria.where(cb.equal(root.get(State_.name), name));
+
+		return s.createQuery(criteria)
+				.setHint(QueryHints.HINT_CACHEABLE, "true")
+				.getResultList().get(0);
 	}
 
 	private int getNumberOfItems() {

@@ -6,10 +6,13 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.Name;
@@ -18,29 +21,23 @@ import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.infinispan.hibernate.cache.spi.InfinispanProperties;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.stat.Statistics;
-
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
-import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
-import org.junit.Test;
-
 import org.infinispan.Cache;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
+import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.jboss.util.naming.NonSerializableFactory;
-
 import org.jnp.server.Main;
 import org.jnp.server.SingletonNamingServer;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
  * @author Galder Zamarreño
@@ -110,14 +107,14 @@ public class JndiRegionFactoryTest extends SingleNodeTest {
 
 	@Test
 	public void testRedeployment() throws Exception {
-		addEntityCheckCache( sessionFactory() );
+		addEntityCheckCache(sessionFactory());
 		bindToJndi = false;
 		rebuildSessionFactory();
 
-		addEntityCheckCache( sessionFactory() );
-		TestRegionFactory regionFactory = TestRegionFactoryProvider.load().wrap(sessionFactory().getSettings().getRegionFactory());
-		Cache cache = regionFactory.getCacheManager().getCache( Item.class.getName() );
-		assertEquals( ComponentStatus.RUNNING, cache.getStatus() );
+		addEntityCheckCache(sessionFactory());
+		TestRegionFactory regionFactory = TestRegionFactoryProvider.load().wrap(sessionFactory().getCache().getRegionFactory());
+		Cache cache = regionFactory.getCacheManager().getCache(Item.class.getName());
+		assertEquals(ComponentStatus.RUNNING, cache.getStatus());
 	}
 
 	private void addEntityCheckCache(SessionFactoryImplementor sessionFactory) throws Exception {
