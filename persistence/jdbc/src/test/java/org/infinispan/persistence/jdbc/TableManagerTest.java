@@ -95,7 +95,6 @@ public class TableManagerTest extends AbstractInfinispanTest {
             .getDefaultCacheConfiguration(false)
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-//      storeBuilder.table().createOnStart(false);
 
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table());
       PooledConnectionFactory connectionFactory = new PooledConnectionFactory();
