@@ -18,6 +18,14 @@
         <version.arquillian-tomcat-managed>1.1.0.Final</version.arquillian-tomcat-managed>
         <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
         <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
+        <driver.jar>h2.jar</driver.jar>
+        <driver.dir>${project.basedir}/db-libs</driver.dir>
+        <driver.class>org.h2.Driver</driver.class>
+<!--        <connection.url>jdbc:h2:/tmp/test;AUTO_SERVER=TRUE</connection.url>-->
+        <connection.url>jdbc:h2:mem:test</connection.url>
+        <db.username>sa</db.username>
+        <db.password>sa</db.password>
+        <database>h2</database>
     </properties>
 
     <dependencies>
@@ -35,6 +43,24 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-jdbc-common</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-jdbc</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -70,7 +96,22 @@
             <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>4.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -96,7 +137,11 @@
                         <jbossHome2>${jbossHome2}</jbossHome2>
                         <server.jvm>${server.jvm}</server.jvm>
                         <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}</infinispan.server.integration.data-source>
+                        <driver.path>${driver.dir}/${driver.jar}</driver.path>
                     </systemPropertyVariables>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${driver.dir}/${driver.jar}</additionalClasspathElement>
+                    </additionalClasspathElements>
                 </configuration>
                 <executions>
                     <execution>
@@ -107,6 +152,38 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>configs</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/test/resources</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>**/*.xml</include>
+                                        <include>**/*.properties</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <filters>
+                                <filter>src/test/resources/${database}.properties</filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
         </plugins>
     </build>
 
@@ -321,8 +398,28 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-test-libs</id>
+                                <phase>process-test-resources</phase>
+                                <configuration>
+                                    <includeScope>test</includeScope>
+                                    <outputDirectory>${project.build.directory}/test-libs</outputDirectory>
+                                    <stripVersion>true</stripVersion>
+                                </configuration>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
                 </plugins>
             </build>
         </profile>
     </profiles>
 </project>
+
