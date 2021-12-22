@@ -18,14 +18,13 @@
         <version.arquillian-tomcat-managed>1.1.0.Final</version.arquillian-tomcat-managed>
         <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
         <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
-        <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
-        <jvm.x64.args />
-        <!-- infinispan-custom.xml ignores the infinispan.cluster.stack system property and uses the test-tcp stack -->
-        <transport.stack/>
-        <mcast.ip>234.99.54.14</mcast.ip>
-        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
-        <server.jvm>${env.JAVA_HOME}</server.jvm>
-        <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+        <driver.jar>h2.jar</driver.jar>
+        <driver.dir>${project.basedir}/db-libs</driver.dir>
+        <driver.class>org.h2.Driver</driver.class>
+        <connection.url>jdbc:h2:mem:test</connection.url>
+        <db.username>sa</db.username>
+        <db.password>sa</db.password>
+        <database>h2</database>
     </properties>
 
     <dependencies>
@@ -78,7 +77,11 @@
             <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -105,7 +108,11 @@
                         <server.jvm>${server.jvm}</server.jvm>
                         <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}</infinispan.server.integration.data-source>
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
+                        <driver.path>${driver.dir}/${driver.jar}</driver.path>
                     </systemPropertyVariables>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${driver.dir}/${driver.jar}</additionalClasspathElement>
+                    </additionalClasspathElements>
                 </configuration>
                 <executions>
                     <execution>
@@ -116,6 +123,36 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>configs</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/test/resources</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>**/*.xml</include>
+                                        <include>**/*.properties</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <filters>
+                                <filter>src/test/resources/${database}.properties</filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
