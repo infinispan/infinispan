@@ -29,7 +29,6 @@ public class InfinispanStoreJdbcIT extends AbstractInfinispanStoreJdbcIT {
       war.addAsResource("jdbc-config.xml");
       addLibrary(war, "org.infinispan:infinispan-core");
       addLibrary(war, "org.infinispan:infinispan-cachestore-jdbc");
-      addLibrary(war, "org.infinispan:infinispan-cachestore-jdbc");
       if (isTomcat()) {
          addLibrary(war, "com.h2database:h2");
       }

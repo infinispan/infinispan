@@ -1,16 +1,12 @@
 package org.infinispan.server.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -21,6 +17,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -52,35 +52,12 @@ public class PooledConnectionOperations {
       this.database = PersistenceIT.DATABASE_LISTENER.getDatabase(databaseType);
    }
 
-   private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder() {
-
-      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-            .fetchPersistentState(false)
-            .ignoreModifications(false)
-            .purgeOnStartup(false)
-            .shared(false)
-            .table()
-            .dropOnExit(true)
-            .createOnStart(true)
-            .tableNamePrefix("TBL")
-            .idColumnName("ID").idColumnType(database.getIdColumType())
-            .dataColumnName("DATA").dataColumnType(database.getDataColumnType())
-            .timestampColumnName("TS").timestampColumnType(database.getTimeStampColumnType())
-            .segmentColumnName("S").segmentColumnType(database.getSegmentColumnType())
-            .connectionPool()
-            .connectionUrl(database.jdbcUrl())
-            .username(database.username())
-            .password(database.password())
-            .driverClass(database.driverClassName());
-      return builder;
-   }
-
    @Test
    public void testTwoCachesSameCacheStore() {
-      RemoteCache<String, String> cache1 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).withQualifier("2").create();
+      JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
+      RemoteCache<String, String> cache1 = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("1").create();
+      RemoteCache<String, String> cache2 = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("2").create();
+
       cache1.put("k1", "v1");
       String firstK1 = cache1.get("k1");
       assertEquals("v1", firstK1);
@@ -96,7 +73,9 @@ public class PooledConnectionOperations {
 
    @Test
    public void testPutGetRemove() {
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).create();
+      JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 
@@ -112,6 +91,49 @@ public class PooledConnectionOperations {
       assertEquals("v2", cache.get("k2"));
       cache.remove("k1");
       assertNull(cache.get("k1"));
+      assertCleanCacheAndStore(cache);
+   }
+
+   @Test
+   public void testPreload() throws Exception {
+      JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
+              .setLockingConfigurations();
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      cache.put("k1", "v1");
+      cache.put("k2", "v2");
+
+      SERVERS.getServerDriver().stop(0);
+      SERVERS.getServerDriver().restart(0);
+
+      // test preload==true, entries should be immediately in the cache after restart
+      assertEquals(2, cache.withFlags(Flag.SKIP_CACHE_LOAD).size());
+      assertEquals("v1", cache.get("k1"));
+      assertEquals("v2", cache.get("k2"));
+      cache.clear();
+   }
+
+   @Test
+   public void testSoftRestartWithPassivation() throws Exception {
+      JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
+              .setEvition()
+              .setLockingConfigurations();
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      cache.put("k1", "v1");
+      cache.put("k2", "v2");
+      cache.put("k3", "v3");
+
+      //now k3 is evicted and stored in store
+      assertEquals(2, cache.withFlags(Flag.SKIP_CACHE_LOAD).size());
+
+     SERVERS.getServerDriver().stop(0);
+     SERVERS.getServerDriver().restart(0); //soft stop should store all entries from cache to store
+
+     // test preload==false
+     assertEquals(0, cache.withFlags(Flag.SKIP_CACHE_LOAD).size());
+     // test purge==false, entries should remain in the database after restart
+     assertEquals(3, cache.size());
+     assertEquals("v1", cache.get("k1"));
+      assertCleanCacheAndStore(cache);
    }
 
    protected void assertCleanCacheAndStore(RemoteCache cache) {
