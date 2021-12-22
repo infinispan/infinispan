@@ -8,15 +8,15 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 
-import javax.transaction.Status;
+import jakarta.transaction.Status;
 
 /**
  * Synchronization that should release the locks after invalidation is complete.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class InvalidationSynchronization implements javax.transaction.Synchronization {
-   private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
+public class InvalidationSynchronization implements jakarta.transaction.Synchronization {
+	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
 
 	private final Object lockOwner;
 	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;

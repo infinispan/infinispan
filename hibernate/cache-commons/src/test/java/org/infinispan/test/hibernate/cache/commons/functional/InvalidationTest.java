@@ -118,7 +118,7 @@ public class InvalidationTest extends SingleNodeTest {
       // deleteThread loads the entity
       arriveAndAwait(deletePhaser, 2000);
       withTx(() -> {
-         sessionFactory().getCache().evictEntity(Item.class, item.getId());
+         sessionFactory().getCache().evictEntityData(Item.class, item.getId());
          assertFalse(sessionFactory().getCache().containsEntity(Item.class, item.getId()));
          return null;
       });

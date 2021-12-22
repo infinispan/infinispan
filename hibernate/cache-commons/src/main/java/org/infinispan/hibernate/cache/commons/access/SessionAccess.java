@@ -1,9 +1,10 @@
 package org.infinispan.hibernate.cache.commons.access;
 
+import java.util.ServiceLoader;
+
 import org.hibernate.engine.transaction.spi.IsolationDelegate;
 
-import javax.transaction.Synchronization;
-import java.util.ServiceLoader;
+import jakarta.transaction.Synchronization;
 
 public interface SessionAccess {
 

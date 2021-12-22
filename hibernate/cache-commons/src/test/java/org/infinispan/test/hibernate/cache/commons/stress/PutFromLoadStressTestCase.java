@@ -6,6 +6,9 @@
  */
 package org.infinispan.test.hibernate.cache.commons.stress;
 
+import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
+import static org.junit.Assert.assertFalse;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -15,31 +18,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.transaction.TransactionManager;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
-
+import org.hibernate.query.Query;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Age;
 import org.infinispan.test.hibernate.cache.commons.tm.NarayanaStandaloneJtaPlatform;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.infinispan.test.TestingUtil.withTx;
-import static org.junit.Assert.assertFalse;
+import jakarta.transaction.TransactionManager;
 
 /**
  * A stress test for putFromLoad operations
@@ -219,7 +218,7 @@ public class PutFromLoadStressTestCase {
          withTx(tm, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-               sessionFactory.getCache().evictEntityRegion(Age.class);
+               sessionFactory.getCache().evictEntityData(Age.class);
                return null;
             }
          });

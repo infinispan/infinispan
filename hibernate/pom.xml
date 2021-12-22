@@ -15,7 +15,7 @@
    <modules>
       <module>cache-spi</module>
       <module>cache-commons</module>
-      <module>cache-v53</module>
+      <module>cache-v60</module>
    </modules>
 
    <dependencies>
@@ -30,14 +30,39 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+         <classifier>jakarta</classifier>
+       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
+         <classifier>jakarta</classifier>
+         <exclusions>
+           <exclusion>
+               <!-- Exclude the non jakarta commons -->
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-commons</artifactId>
+           </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jboss-marshalling</artifactId>
+         <exclusions>
+           <exclusion>
+               <!-- Exclude the non jakarta core -->
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-core</artifactId>
+           </exclusion>
+           <exclusion>
+               <!-- Exclude the non jakarta core -->
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-commons</artifactId>
+           </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
-         <groupId>org.hibernate</groupId>
+         <groupId>org.hibernate.orm</groupId>
          <artifactId>hibernate-core</artifactId>
          <version>${version.hibernate.core}</version>
       </dependency>
@@ -51,9 +76,17 @@
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
+         <exclusions>
+           <exclusion>
+               <!-- Exclude the non jakarta commons -->
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-commons</artifactId>
+           </exclusion>
+         </exclusions>
+
       </dependency>
       <dependency>
-         <groupId>org.hibernate</groupId>
+         <groupId>org.hibernate.orm</groupId>
          <artifactId>hibernate-testing</artifactId>
          <version>${version.hibernate.core}</version>
          <scope>test</scope>
@@ -61,6 +94,10 @@
             <exclusion>
                <groupId>log4j</groupId>
                <artifactId>log4j</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>org.junit.jupiter</groupId>
+               <artifactId>junit-jupiter-api</artifactId>
             </exclusion>
          </exclusions>
       </dependency>
@@ -89,11 +126,6 @@
          <artifactId>h2</artifactId>
          <scope>test</scope>
       </dependency>
-      <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
@@ -112,11 +144,23 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <version>${version.maven.surefire}</version>
             <configuration>
                <dependenciesToScan>
                   <dependency>${project.groupId}:infinispan-hibernate-cache-commons</dependency>
                </dependenciesToScan>
-                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <groups combine.self="override">${defaultJUnitGroups}</groups> 
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <parallel>classes</parallel>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <disableXmlReport>false</disableXmlReport>
+               <properties combine.self="override">
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+               </properties>
                <systemPropertyVariables>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.ping.timeout>500</jgroups.ping.timeout>
@@ -127,6 +171,13 @@
                   <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
                </systemPropertyVariables>
             </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.junit.vintage</groupId>
+                  <artifactId>junit-vintage-engine</artifactId>
+                  <version>5.6.3</version>
+               </dependency>
+            </dependencies>
          </plugin>
       </plugins>
    </build>

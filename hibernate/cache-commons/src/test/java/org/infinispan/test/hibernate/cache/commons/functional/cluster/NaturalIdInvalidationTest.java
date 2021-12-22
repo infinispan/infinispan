@@ -16,11 +16,12 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.criterion.Restrictions;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.jpa.QueryHints;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
+import org.hibernate.query.criteria.JpaCriteriaQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
@@ -34,14 +35,19 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Citizen_;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalIdOnManyToOne;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.State_;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.jboss.util.collection.ConcurrentSet;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
+
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 /**
  * // TODO: Document this
@@ -219,29 +225,39 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	private void getCitizenWithCriteria(SessionFactory sf) throws Exception {
 		withTxSession(sf, s -> {
 			State france = getState(s, "Ile de France");
-			Criteria criteria = s.createCriteria( Citizen.class );
-			criteria.add( Restrictions.naturalId().set( "ssn", "1234" ).set( "state", france ) );
-			criteria.setCacheable( true );
-			criteria.list();
+			HibernateCriteriaBuilder cb = s.getCriteriaBuilder();
+			CriteriaQuery<Citizen> criteria = cb.createQuery(Citizen.class);
+			Root<Citizen> root = criteria.from(Citizen.class);
+			criteria.where(cb.equal(root.get(Citizen_.state), france));
+
+			s.createQuery(criteria)
+					.getResultList();
 		});
 	}
 
 	private void deleteCitizenWithCriteria(SessionFactory sf) throws Exception {
 		withTxSession(sf, s -> {
 			State france = getState(s, "Ile de France");
-			Criteria criteria = s.createCriteria( Citizen.class );
-			criteria.add( Restrictions.naturalId().set( "ssn", "1234" ).set( "state", france ) );
-			criteria.setCacheable( true );
-			Citizen c = (Citizen) criteria.uniqueResult();
-			s.delete(c);
+
+			HibernateCriteriaBuilder cb = s.getCriteriaBuilder();
+			JpaCriteriaQuery<Citizen> criteria = cb.createQuery(Citizen.class);
+			Root<Citizen> root = criteria.from(Citizen.class);
+			criteria.where(cb.equal(root.get(Citizen_.ssn), "1234"), cb.equal(root.get(Citizen_.state), france));
+
+			Citizen c = s.createQuery(criteria).uniqueResult();
+			s.remove(c);
 		});
 	}
 
 	private State getState(Session s, String name) {
-		Criteria criteria = s.createCriteria( State.class );
-		criteria.add( Restrictions.eq("name", name) );
-		criteria.setCacheable(true);
-		return (State) criteria.list().get( 0 );
+		HibernateCriteriaBuilder cb = s.getCriteriaBuilder();
+		CriteriaQuery<State> criteria = cb.createQuery(State.class);
+		Root<State> root = criteria.from(State.class);
+		criteria.where(cb.equal(root.get(State_.name), name));
+
+		return s.createQuery(criteria)
+				.setHint(QueryHints.HINT_CACHEABLE, "true")
+				.getResultList().get(0);
 	}
 
 	@Listener

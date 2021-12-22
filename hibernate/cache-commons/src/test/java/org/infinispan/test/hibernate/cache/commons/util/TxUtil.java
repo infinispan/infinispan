@@ -1,16 +1,17 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
 import java.util.concurrent.Callable;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 
 import org.hibernate.Session;
 import org.hibernate.SessionBuilder;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
+import org.infinispan.hibernate.cache.commons.util.Caches;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

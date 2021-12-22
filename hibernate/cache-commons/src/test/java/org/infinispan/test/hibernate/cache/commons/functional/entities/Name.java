@@ -1,7 +1,8 @@
 package org.infinispan.test.hibernate.cache.commons.functional.entities;
 
-import javax.persistence.Embeddable;
 import java.io.Serializable;
+
+import jakarta.persistence.Embeddable;
 
 /**
  * Test class with incorrectly defined equals and hashCode.

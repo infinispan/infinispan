@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.stat.SecondLevelCacheStatistics;
+import org.hibernate.cache.spi.access.AccessType;
+import org.hibernate.stat.CacheRegionStatistics;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
@@ -76,60 +78,63 @@ public class BulkOperationsTest extends SingleNodeTest {
 		try {
 			createContacts();
 
-			List<Integer> rhContacts = getContactsByCustomer( "Red Hat" );
-			assertNotNull( "Red Hat contacts exist", rhContacts );
-			assertEquals( "Created expected number of Red Hat contacts", 10, rhContacts.size() );
+			List<Integer> rhContacts = getContactsByCustomer("Red Hat");
+			assertNotNull("Red Hat contacts exist", rhContacts);
+			assertEquals("Created expected number of Red Hat contacts", 10, rhContacts.size());
 
-			SecondLevelCacheStatistics contactSlcs = sessionFactory()
+			CacheRegionStatistics contactSlcs = sessionFactory()
 					.getStatistics()
-					.getSecondLevelCacheStatistics( Contact.class.getName() );
-			assertEquals( 20, contactSlcs.getElementCountInMemory() );
+					.getCacheRegionStatistics(Contact.class.getName());
+			assertEquals(20, contactSlcs.getElementCountInMemory());
 
-			assertEquals( "Deleted all Red Hat contacts", 10, deleteContacts() );
-			assertEquals( 0, contactSlcs.getElementCountInMemory() );
+			assertEquals("Deleted all Red Hat contacts", 10, deleteContacts());
+			assertEquals(0, contactSlcs.getElementCountInMemory());
 
-			List<Integer> jbContacts = getContactsByCustomer( "JBoss" );
-			assertNotNull( "JBoss contacts exist", jbContacts );
-			assertEquals( "JBoss contacts remain", 10, jbContacts.size() );
+			List<Integer> jbContacts = getContactsByCustomer("JBoss");
+			assertNotNull("JBoss contacts exist", jbContacts);
+			assertEquals("JBoss contacts remain", 10, jbContacts.size());
 
-			for ( Integer id : rhContacts ) {
-				assertNull( "Red Hat contact " + id + " cannot be retrieved", getContact( id ) );
+			for (Integer id : rhContacts) {
+				assertNull("Red Hat contact " + id + " cannot be retrieved", getContact(id));
 			}
-			rhContacts = getContactsByCustomer( "Red Hat" );
-			if ( rhContacts != null ) {
-				assertEquals( "No Red Hat contacts remain", 0, rhContacts.size() );
-			}
-
-			updateContacts( "Kabir", "Updated" );
-			assertEquals( 0, contactSlcs.getElementCountInMemory() );
-
-         // Advance so that invalidation can be seen as past and data can be loaded
-         TIME_SERVICE.advance(1);
-
-			for ( Integer id : jbContacts ) {
-				Contact contact = getContact( id );
-				assertNotNull( "JBoss contact " + id + " exists", contact );
-				String expected = ("Kabir".equals( contact.getName() )) ? "Updated" : "2222";
-				assertEquals( "JBoss contact " + id + " has correct TLF", expected, contact.getTlf() );
+			rhContacts = getContactsByCustomer("Red Hat");
+			if (rhContacts != null) {
+				assertEquals("No Red Hat contacts remain", 0, rhContacts.size());
 			}
 
-			List<Integer> updated = getContactsByTLF( "Updated" );
-			assertNotNull( "Got updated contacts", updated );
+			updateContacts("Kabir", "Updated");
+			assertEquals(0, contactSlcs.getElementCountInMemory());
+
+			// Advance so that invalidation can be seen as past and data can be loaded
+			TIME_SERVICE.advance(1);
+
+			for (Integer id : jbContacts) {
+				Contact contact = getContact(id);
+				assertNotNull("JBoss contact " + id + " exists", contact);
+				String expected = ("Kabir".equals(contact.getName())) ? "Updated" : "2222";
+				assertEquals("JBoss contact " + id + " has correct TLF", expected, contact.getTlf());
+			}
+
+			List<Integer> updated = getContactsByTLF("Updated");
+			assertNotNull("Got updated contacts", updated);
 			assertEquals("Updated contacts", 5, updated.size());
 
-			assertEquals( 10, contactSlcs.getElementCountInMemory() );
-			updateContactsWithOneManual( "Kabir", "UpdatedAgain" );
-			assertEquals( 0, contactSlcs.getElementCountInMemory());
-			for ( Integer id : jbContacts ) {
-				Contact contact = getContact( id );
-				assertNotNull( "JBoss contact " + id + " exists", contact );
-				String expected = ("Kabir".equals( contact.getName() )) ? "UpdatedAgain" : "2222";
-				assertEquals( "JBoss contact " + id + " has correct TLF", expected, contact.getTlf() );
+			assertEquals(10, contactSlcs.getElementCountInMemory());
+			updateContactsWithOneManual("Kabir", "UpdatedAgain");
+			// In the other types the
+			assertEquals((accessType == AccessType.TRANSACTIONAL ||
+							(accessType == AccessType.READ_WRITE && cacheMode == CacheMode.INVALIDATION_SYNC)) ? 1 : 0,
+					contactSlcs.getElementCountInMemory());
+			for (Integer id : jbContacts) {
+				Contact contact = getContact(id);
+				assertNotNull("JBoss contact " + id + " exists", contact);
+				String expected = ("Kabir".equals(contact.getName())) ? "UpdatedAgain" : "2222";
+				assertEquals("JBoss contact " + id + " has correct TLF", expected, contact.getTlf());
 			}
 
-			updated = getContactsByTLF( "UpdatedAgain" );
-			assertNotNull( "Got updated contacts", updated );
-			assertEquals( "Updated contacts", 5, updated.size() );
+			updated = getContactsByTLF("UpdatedAgain");
+			assertNotNull("Got updated contacts", updated);
+			assertEquals("Updated contacts", 5, updated.size());
 		}
 		catch (Throwable t) {
 			cleanedUp = true;

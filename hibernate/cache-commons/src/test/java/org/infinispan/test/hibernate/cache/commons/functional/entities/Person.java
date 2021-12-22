@@ -1,11 +1,11 @@
 package org.infinispan.test.hibernate.cache.commons.functional.entities;
 
-import javax.persistence.Cacheable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
-
 import java.io.Serializable;
+
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 /**
  * Test class using EmbeddedId
