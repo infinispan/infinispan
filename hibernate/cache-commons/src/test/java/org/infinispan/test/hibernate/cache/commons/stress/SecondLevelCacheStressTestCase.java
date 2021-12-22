@@ -7,7 +7,7 @@
 
 package org.infinispan.test.hibernate.cache.commons.stress;
 
-import static org.infinispan.test.TestingUtil.withTx;
+import static org.infinispan.test.hibernate.cache.commons.util.TestingUtil.withTx;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -29,9 +29,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.TransactionManager;
-
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -42,6 +39,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
+import org.hibernate.query.Query;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
@@ -52,6 +50,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Stress test for second level cache.

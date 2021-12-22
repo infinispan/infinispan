@@ -47,11 +47,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.OptimisticLockException;
-import javax.persistence.PersistenceException;
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
-
 import org.hibernate.LockMode;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.PessimisticLockException;
@@ -68,15 +63,16 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CachedDomainDataAccess;
 import org.hibernate.cfg.Environment;
-import org.hibernate.criterion.Restrictions;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
+import org.hibernate.jpa.QueryHints;
 import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.RootClass;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
@@ -101,6 +97,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
+import org.infinispan.test.hibernate.cache.commons.stress.entities.Family_;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestConfigurationHook;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
@@ -109,6 +106,13 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tries to execute random operations for {@link #EXECUTION_TIME} and then verify the log for correctness.
@@ -337,22 +341,22 @@ public abstract class CorrectnessTestCase {
    }
 
    private final static Class[][] EXPECTED = {
-      { TransactionException.class, RollbackException.class, StaleObjectStateException.class },
-      { TransactionException.class, RollbackException.class, PessimisticLockException.class },
-      { TransactionException.class, RollbackException.class, LockAcquisitionException.class },
-      { RemoteException.class, TimeoutException.class },
-      { StaleStateException.class, PessimisticLockException.class},
-      { StaleStateException.class, ObjectNotFoundException.class},
-      { StaleStateException.class, ConstraintViolationException.class},
-      { StaleStateException.class, LockAcquisitionException.class},
-      { PersistenceException.class, ConstraintViolationException.class },
-      { PersistenceException.class, LockAcquisitionException.class },
-      { javax.persistence.PessimisticLockException.class, PessimisticLockException.class },
-      { OptimisticLockException.class, StaleStateException.class },
-      { PessimisticLockException.class },
-      { StaleObjectStateException.class },
-      { ObjectNotFoundException.class },
-      { LockAcquisitionException.class }
+         {TransactionException.class, RollbackException.class, StaleObjectStateException.class},
+         {TransactionException.class, RollbackException.class, PessimisticLockException.class},
+         {TransactionException.class, RollbackException.class, LockAcquisitionException.class},
+         {RemoteException.class, TimeoutException.class},
+         {StaleStateException.class, PessimisticLockException.class},
+         {StaleStateException.class, ObjectNotFoundException.class},
+         {StaleStateException.class, ConstraintViolationException.class},
+         {StaleStateException.class, LockAcquisitionException.class},
+         {PersistenceException.class, ConstraintViolationException.class},
+         {PersistenceException.class, LockAcquisitionException.class},
+         {jakarta.persistence.PessimisticLockException.class, PessimisticLockException.class},
+         {OptimisticLockException.class, StaleStateException.class},
+         {PessimisticLockException.class},
+         {StaleObjectStateException.class},
+         {ObjectNotFoundException.class},
+         {LockAcquisitionException.class}
    };
 
    @Test
@@ -826,7 +830,7 @@ public abstract class CorrectnessTestCase {
       public void run() throws Exception {
          withRandomFamily((s, f) -> {
                if (evict) {
-                  sessionFactory(threadNode.get()).getCache().evictEntity(Family.class, f.getId());
+                  sessionFactory(threadNode.get()).getCache().evictEntityData(Family.class, f.getId());
                }
             }, Ref.empty(), Ref.empty(), null);
       }
@@ -948,11 +952,15 @@ public abstract class CorrectnessTestCase {
          int before = timestampGenerator.getAndIncrement();
          log.tracef("Started QueryFamilies at %d", before);
          withSession(s -> {
-            List<Family> results = s.createCriteria(Family.class)
-                  .add(Restrictions.like("name", prefix))
+            HibernateCriteriaBuilder cb = s.getCriteriaBuilder();
+            CriteriaQuery<Family> criteria = cb.createQuery(Family.class);
+            Root<Family> root = criteria.from(Family.class);
+            criteria.where(cb.like(root.get(Family_.name), prefix));
+
+            List<Family> results = s.createQuery(criteria)
                   .setMaxResults(MAX_RESULTS)
-                  .setCacheable(true)
-                  .list();
+                  .setHint(QueryHints.HINT_CACHEABLE, "true")
+                  .getResultList();
             int index = 0;
             for (Family f : results) {
                ids[index] = f.getId();

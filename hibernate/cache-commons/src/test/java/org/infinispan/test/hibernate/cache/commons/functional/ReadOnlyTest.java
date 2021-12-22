@@ -6,18 +6,18 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.stat.Statistics;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.stat.Statistics;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Parent tests for both transactional and
@@ -37,7 +37,7 @@ public class ReadOnlyTest extends SingleNodeTest {
 
 	@Test
 	public void testEmptySecondLevelCacheEntry() {
-		sessionFactory().getCache().evictCollectionRegion( Item.class.getName() + ".items" );
+		sessionFactory().getCache().evictCollectionData(Item.class.getName() + ".items");
 		Statistics stats = sessionFactory().getStatistics();
 		stats.clear();
 		InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName() + ".items");

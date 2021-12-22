@@ -6,18 +6,17 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withTxSession;
+import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withTxSessionApply;
+
 import java.util.Iterator;
 import java.util.List;
 
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Account;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.AccountHolder;
-
-import org.hibernate.Query;
-import org.hibernate.SessionFactory;
-
-import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withTxSession;
-import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withTxSessionApply;
 
 /**
  * @author Brian Stansberry
@@ -64,7 +63,7 @@ public class AccountDAO {
 		return withTxSessionApply(useJta, sessionFactory, session -> {
 			Query query = session.createQuery(
 					"select account from Account as account where account.branch = :branch");
-			query.setString("branch", branch);
+			query.setParameter("branch", branch);
 			if (useRegion) {
 				query.setCacheRegion("AccountRegion");
 			}

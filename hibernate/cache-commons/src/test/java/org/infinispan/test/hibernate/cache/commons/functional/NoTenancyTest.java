@@ -1,17 +1,16 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.context.Flag;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.infinispan.AdvancedCache;
+import org.infinispan.context.Flag;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
+import org.junit.Test;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -38,8 +37,5 @@ public class NoTenancyTest extends SingleNodeTest {
 		  InfinispanBaseRegion region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName());
 		  AdvancedCache localCache = region.getCache().withFlags(Flag.CACHE_MODE_LOCAL);
 		  assertEquals(1, localCache.size());
-		  try (CloseableIterator iterator = localCache.keySet().iterator()) {
-			  assertEquals(sessionFactory().getClassMetadata(Item.class).getIdentifierType().getReturnedClass(), iterator.next().getClass());
-		  }
 	 }
 }

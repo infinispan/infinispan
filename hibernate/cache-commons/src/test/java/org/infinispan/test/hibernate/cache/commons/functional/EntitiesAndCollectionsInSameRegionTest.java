@@ -1,29 +1,28 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.Id;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cfg.Environment;
-import org.hibernate.stat.SecondLevelCacheStatistics;
+import org.hibernate.stat.CacheRegionStatistics;
 import org.hibernate.stat.Statistics;
-
 import org.hibernate.testing.TestForIssue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 /**
  * @author Gail Badner
@@ -80,7 +79,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
       );
 
       // Then entities should have been cached, but not their collections.
-      SecondLevelCacheStatistics cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+      CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
       assertEquals(0, cacheStatistics.getMissCount());
       assertEquals(0, cacheStatistics.getHitCount());
       assertEquals(2, cacheStatistics.getPutCount());
@@ -110,7 +109,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
          s -> {
             AnEntity anEntity1 = s.get(AnEntity.class, anEntity.id);
 
-            SecondLevelCacheStatistics cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
 
             // anEntity1 was cached when it was persisted
             assertEquals(0, cacheStatistics.getMissCount());
@@ -123,7 +122,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
             Hibernate.initialize(anEntity1.valuesSet);
 
             // anEntity1.values gets cached when it gets loadead
-            cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
             assertEquals(1, cacheStatistics.getMissCount());
             assertEquals(0, cacheStatistics.getHitCount());
             assertEquals(1, cacheStatistics.getPutCount());
@@ -133,7 +132,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
             AnotherEntity anotherEntity1 = s.get(AnotherEntity.class, anotherEntity.id);
 
             // anotherEntity1 was cached when it was persisted
-            cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
             assertEquals(0, cacheStatistics.getPutCount());
@@ -144,11 +143,10 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
             Hibernate.initialize(anotherEntity1.valuesSet);
 
             // anotherEntity1.values gets cached when it gets loadead
-            cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
             assertEquals(1, cacheStatistics.getMissCount());
             assertEquals(0, cacheStatistics.getHitCount());
             assertEquals(1, cacheStatistics.getPutCount());
-
          }
       );
 
@@ -161,7 +159,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
             AnEntity anEntity1 = s.get(AnEntity.class, anEntity.id);
 
-            SecondLevelCacheStatistics cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            CacheRegionStatistics cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
 
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
@@ -172,7 +170,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
             assertFalse(Hibernate.isInitialized(anEntity1.valuesSet));
             Hibernate.initialize(anEntity1.valuesSet);
 
-            cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
             assertEquals(0, cacheStatistics.getPutCount());
@@ -183,7 +181,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
             AnotherEntity anotherEntity1 = s.get(AnotherEntity.class, anotherEntity.id);
 
-            cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
             assertEquals(0, cacheStatistics.getPutCount());
@@ -193,7 +191,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
             assertFalse(Hibernate.isInitialized(anotherEntity1.valuesSet));
             Hibernate.initialize(anotherEntity1.valuesSet);
 
-            cacheStatistics = stats.getSecondLevelCacheStatistics(REGION_NAME);
+            cacheStatistics = stats.getCacheRegionStatistics(REGION_NAME);
             assertEquals(0, cacheStatistics.getMissCount());
             assertEquals(1, cacheStatistics.getHitCount());
             assertEquals(0, cacheStatistics.getPutCount());

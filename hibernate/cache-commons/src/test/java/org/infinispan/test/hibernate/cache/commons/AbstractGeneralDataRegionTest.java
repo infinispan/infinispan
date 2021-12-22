@@ -6,24 +6,18 @@
  */
 package org.infinispan.test.hibernate.cache.commons;
 
-import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.SharedSessionContract;
-import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -33,20 +27,15 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
-import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegion;
-import org.junit.Assume;
-import org.junit.Test;
 
 /**
  * Base class for tests of QueryResultsRegion and TimestampsRegion.
@@ -116,65 +105,6 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
       TestingUtil.waitForNoRebalance(caches);
    }
 
-	@Test
-	public void testEvict() throws Exception {
-		Assume.assumeFalse("Per-key eviction is not supported in 5.3",
-								 org.hibernate.Version.getVersionString().startsWith("5.3"));
-
-		withSessionFactoriesAndRegions(2, ((sessionFactories, regions) -> {
-			InfinispanBaseRegion localRegion = regions.get(0);
-         TestRegion testLocalRegion = TEST_SESSION_ACCESS.fromRegion(localRegion);
-			InfinispanBaseRegion remoteRegion = regions.get(1);
-         TestRegion testRemoteRegion = TEST_SESSION_ACCESS.fromRegion(remoteRegion);
-         Object localSession = sessionFactories.get(0).openSession();
-         Object remoteSession = sessionFactories.get(1).openSession();
-			AdvancedCache<?, ?> localCache = localRegion.getCache();
-			AdvancedCache<?, ?> remoteCache = remoteRegion.getCache();
-			try {
-				assertNull("local is clean", testLocalRegion.get(localSession, KEY));
-				assertNull("remote is clean", testRemoteRegion.get(remoteSession, KEY));
-
-				// If this node is backup owner, it will see the update once as originator and then when getting the value from primary
-				boolean isLocalNodeBackupOwner = extractCacheTopology(localCache).getDistribution(KEY).writeOwners().indexOf(localCache.getCacheManager().getAddress()) > 0;
-				CountDownLatch insertLatch = new CountDownLatch(isLocalNodeBackupOwner ? 3 : 2);
-				ExpectingInterceptor.get(localCache).when((ctx, cmd) -> cmd instanceof PutKeyValueCommand).countDown(insertLatch);
-				ExpectingInterceptor.get(remoteCache).when((ctx, cmd) -> cmd instanceof PutKeyValueCommand).countDown(insertLatch);
-
-				Transaction tx = ( (SharedSessionContract) localSession ).getTransaction();
-				tx.begin();
-				try {
-               testLocalRegion.put(localSession, KEY, VALUE1);
-					tx.commit();
-				} catch (Exception e) {
-					tx.rollback();
-					throw e;
-				}
-
-				assertTrue(insertLatch.await(2, TimeUnit.SECONDS));
-				assertEquals(VALUE1, testLocalRegion.get(localSession, KEY));
-				assertEquals(VALUE1, testRemoteRegion.get(remoteSession, KEY));
-
-				CountDownLatch removeLatch = new CountDownLatch(isLocalNodeBackupOwner ? 3 : 2);
-				ExpectingInterceptor.get(localCache).when((ctx, cmd) -> cmd instanceof RemoveCommand).countDown(removeLatch);
-				ExpectingInterceptor.get(remoteCache).when((ctx, cmd) -> cmd instanceof RemoveCommand).countDown(removeLatch);
-
-				regionEvict(localRegion);
-
-				assertTrue(removeLatch.await(2, TimeUnit.SECONDS));
-				assertEquals(null, testLocalRegion.get(localSession, KEY));
-				assertEquals(null, testRemoteRegion.get(remoteSession, KEY));
-			} finally {
-				( (Session) localSession ).close();
-				( (Session) remoteSession ).close();
-
-				ExpectingInterceptor.cleanup(localCache, remoteCache);
-			}
-		}));
-	}
-
-	protected void regionEvict(InfinispanBaseRegion region) {
-	  TEST_SESSION_ACCESS.fromRegion(region).evict(KEY);
-	}
 
 	/**
 	 * Test method for {@link QueryResultsRegion#evictAll()}.

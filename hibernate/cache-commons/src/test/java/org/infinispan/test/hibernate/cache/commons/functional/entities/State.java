@@ -7,10 +7,10 @@
 
 //$Id$
 package org.infinispan.test.hibernate.cache.commons.functional.entities;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Transient;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
 
 /**
  * @author Emmanuel Bernard

@@ -450,7 +450,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 				session.delete(c);
 			}
 			// since we don't use orphan removal, some contacts may persist
-			for (Object contact : session.createCriteria(Contact.class).list()) {
+			for (Contact contact : session.createQuery("from Contact", Contact.class).getResultList()) {
 				session.delete(contact);
 			}
 		});

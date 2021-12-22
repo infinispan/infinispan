@@ -9,6 +9,8 @@ package org.infinispan.hibernate.cache.commons.util;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import javax.naming.NamingException;
+
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.util.ByteString;
@@ -19,8 +21,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
-import javax.naming.NamingException;
-import javax.transaction.SystemException;
+import jakarta.transaction.SystemException;
 
 /**
  * The jboss-logging {@link MessageLogger} for the hibernate-infinispan module.  It reserves message ids ranging from

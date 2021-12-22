@@ -1,0 +1,5 @@
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-hibernate-cache-v60</artifactId>
+  <version>${version.infinispan}</version>
+</dependency>

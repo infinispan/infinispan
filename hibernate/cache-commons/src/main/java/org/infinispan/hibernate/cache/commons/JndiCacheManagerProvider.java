@@ -1,13 +1,12 @@
 package org.infinispan.hibernate.cache.commons;
 
+import java.util.Map;
 import java.util.Properties;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import java.util.stream.Collectors;
 
 import org.hibernate.cfg.Environment;
-import org.hibernate.internal.util.jndi.JndiHelper;
+import org.hibernate.engine.jndi.internal.JndiServiceInitiator;
+import org.hibernate.engine.jndi.spi.JndiService;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.spi.EmbeddedCacheManagerProvider;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
@@ -23,7 +22,7 @@ public class JndiCacheManagerProvider implements EmbeddedCacheManagerProvider {
    public EmbeddedCacheManager getEmbeddedCacheManager(Properties properties) {
       String jndiManagerName = properties.getProperty(InfinispanProperties.CACHE_MANAGER_RESOURCE_PROP);
       if (jndiManagerName != null) {
-         EmbeddedCacheManager cacheManager = locateCacheManager(jndiManagerName, JndiHelper.extractJndiProperties(properties));
+         EmbeddedCacheManager cacheManager = locateCacheManager(jndiManagerName, properties);
          return new AbstractDelegatingEmbeddedCacheManager(cacheManager) {
             @Override
             public void stop() {
@@ -45,23 +44,10 @@ public class JndiCacheManagerProvider implements EmbeddedCacheManagerProvider {
    }
 
    private EmbeddedCacheManager locateCacheManager(String jndiNamespace, Properties jndiProperties) {
-      Context ctx = null;
-      try {
-         ctx = new InitialContext( jndiProperties );
-         return (EmbeddedCacheManager) ctx.lookup( jndiNamespace );
-      }
-      catch (NamingException ne) {
-         throw log.unableToRetrieveCmFromJndi(jndiNamespace);
-      }
-      finally {
-         if ( ctx != null ) {
-            try {
-               ctx.close();
-            }
-            catch (NamingException ne) {
-               log.unableToReleaseContext(ne);
-            }
-         }
-      }
+
+      JndiService jndiService = JndiServiceInitiator.INSTANCE.initiateService(jndiProperties.entrySet()
+            .stream().collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue)), null);
+
+      return (EmbeddedCacheManager) jndiService.locate(jndiNamespace);
    }
 }

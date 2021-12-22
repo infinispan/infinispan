@@ -17,8 +17,6 @@ import javax.naming.Name;
 import javax.naming.NameNotFoundException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
-import javax.transaction.Status;
-import javax.transaction.UserTransaction;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -50,6 +48,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.UserTransaction;
 
 /**
  * This is an example test based on http://community.jboss.org/docs/DOC-14617 that shows how to interact with
@@ -243,7 +244,6 @@ public class JBossStandaloneJtaExampleTest {
 				  .applySetting( Environment.JNDI_CLASS, "org.jnp.interfaces.NamingContextFactory" )
 				  .applySetting( Environment.TRANSACTION_COORDINATOR_STRATEGY, JtaTransactionCoordinatorBuilderImpl.class.getName() )
 				  .applySetting( Environment.CURRENT_SESSION_CONTEXT_CLASS, "jta" )
-				  .applySetting( Environment.RELEASE_CONNECTIONS, "auto" )
 				  .applySetting( Environment.USE_SECOND_LEVEL_CACHE, "true" )
 				  .applySetting( Environment.USE_QUERY_CACHE, "true" )
 				  .applySetting( Environment.JTA_PLATFORM, new NarayanaStandaloneJtaPlatform() )

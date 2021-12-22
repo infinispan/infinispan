@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,11 +18,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import javax.transaction.Synchronization;
 
+import org.hibernate.ObjectNotFoundException;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.Session;
 import org.hibernate.StaleStateException;
+import org.hibernate.cache.spi.access.AccessType;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commons.util.ByRef;
@@ -36,6 +38,8 @@ import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.OtherItem;
 import org.junit.Test;
+
+import jakarta.transaction.Synchronization;
 
 
 /**
@@ -70,7 +74,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       Future<Boolean> second = removeFlushWait(itemId, loadBarrier, null, flushLatch, commitLatch);
       awaitOrThrow(flushLatch);
 
-      assertSingleCacheEntry();
+      assertSingleEmpty();
 
       commitLatch.countDown();
       boolean firstResult = first.get(WAIT_TIMEOUT, TimeUnit.SECONDS);
@@ -90,10 +94,10 @@ public class VersionedTest extends AbstractNonInvalidationTest {
          s.delete(item);
          assertSingleCacheEntry();
          s.flush();
-         assertSingleCacheEntry();
+
          markRollbackOnly(s);
       });
-      assertSingleCacheEntry();
+      assertSingleEmpty();
    }
 
    @Test
@@ -129,7 +133,17 @@ public class VersionedTest extends AbstractNonInvalidationTest {
 
    @Test
    public void testStaleReadDuringRemove() throws Exception {
-      testStaleRead((s, item) -> s.delete(item));
+      try {
+         testStaleRead((s, item) -> s.delete(item));
+         if (accessType == AccessType.NONSTRICT_READ_WRITE) {
+            // Nonstrict removes preemptively to prevent permanent cache inconsistency
+            fail("Should have thrown an ObjectNotFoundException!");
+         }
+      } catch (ObjectNotFoundException e) {
+         if (accessType != AccessType.NONSTRICT_READ_WRITE) {
+            throw e;
+         }
+      }
       assertSingleEmpty();
       withTxSession(s -> {
          Item item = s.get(Item.class, itemId);
@@ -220,7 +234,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
    @Test
    public void testEvictUpdateExpiration() throws Exception {
       // since the timestamp for update is based on session open/tx begin time, we have to do this sequentially
-      sessionFactory().getCache().evictEntity(Item.class, itemId);
+      sessionFactory().getCache().evictEntityData(Item.class, itemId);
       assertSingleEmpty();
       TIME_SERVICE.advance(1);
 
@@ -237,7 +251,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
 
    @Test
    public void testEvictAndPutFromLoad() throws Exception {
-      sessionFactory().getCache().evictEntity(Item.class, itemId);
+      sessionFactory().getCache().evictEntityData(Item.class, itemId);
       assertSingleEmpty();
       TIME_SERVICE.advance(1);
 

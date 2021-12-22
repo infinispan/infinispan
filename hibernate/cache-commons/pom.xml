@@ -18,9 +18,8 @@
          <artifactId>infinispan-hibernate-cache-spi</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.hibernate</groupId>
+         <groupId>org.hibernate.orm</groupId>
          <artifactId>hibernate-core</artifactId>
-         <version>${version.hibernate.core}</version>
          <exclusions>
             <exclusion>
                <groupId>org.apache.geronimo.specs</groupId>
@@ -30,9 +29,22 @@
       </dependency>
 
       <dependency>
+         <groupId>jakarta.persistence</groupId>
+         <artifactId>jakarta.persistence-api</artifactId>
+         <!-- Version is specified as it requires a different version than
+              we use in Infinispan -->
+         <version>3.0.0</version>
+      </dependency>
+      <dependency>
+         <groupId>jakarta.transaction</groupId>
+         <artifactId>jakarta.transaction-api</artifactId>
+         <!-- Version is specified as it requires a different version than
+              we use in Infinispan -->
+         <version>2.0.0</version>
+      </dependency>
+      <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-testing</artifactId>
-         <version>${version.hibernate.core}</version>
          <scope>test</scope>
          <exclusions>
             <exclusion>
@@ -41,6 +53,12 @@
             </exclusion>
          </exclusions>
       </dependency>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-jpamodelgen</artifactId>
+         <scope>test</scope>
+      </dependency>
+
    </dependencies>
 
    <build>

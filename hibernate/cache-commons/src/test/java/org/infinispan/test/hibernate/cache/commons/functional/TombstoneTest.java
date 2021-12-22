@@ -241,7 +241,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
       CountDownLatch flushLatch = new CountDownLatch(1);
       CountDownLatch commitLatch = new CountDownLatch(1);
 
-      sessionFactory().getCache().evictEntity(Item.class, itemId);
+      sessionFactory().getCache().evictEntityData(Item.class, itemId);
       // When the cache was empty, the tombstone is not stored
       assertEmptyCache();
 
@@ -260,7 +260,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
 
    @Test
    public void testEvictPutFromLoad() throws Exception {
-      sessionFactory().getCache().evictEntity(Item.class, itemId);
+      sessionFactory().getCache().evictEntityData(Item.class, itemId);
       assertEmptyCache();
 
       TIME_SERVICE.advance(1);
@@ -309,7 +309,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
       // Flush stores FutureUpdate(timestamp, null)
       awaitOrThrow(flushLatch);
 
-      sessionFactory().getCache().evictEntity(Item.class, itemId);
+      sessionFactory().getCache().evictEntityData(Item.class, itemId);
 
       commitLatch.countDown();
       update.get(WAIT_TIMEOUT, TimeUnit.SECONDS);

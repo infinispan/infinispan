@@ -6,9 +6,9 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional.entities;
 
-import javax.persistence.Cacheable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 /**
  * The class should be in a package that is different from the test

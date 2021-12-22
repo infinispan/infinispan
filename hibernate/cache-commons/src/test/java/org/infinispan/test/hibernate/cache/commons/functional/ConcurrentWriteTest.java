@@ -6,6 +6,10 @@
  */
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -22,19 +26,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.LockMode;
+import org.hibernate.stat.CacheRegionStatistics;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.stat.SecondLevelCacheStatistics;
-
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * @author nikita_tovstoles@mba.berkeley.edu
@@ -111,18 +110,18 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 		assertNull( "contact exists despite not being added", getFirstContact( customerId ) );
 
 		// check that cache was hit
-		SecondLevelCacheStatistics customerSlcs = sessionFactory()
+		CacheRegionStatistics customerSlcs = sessionFactory()
 				.getStatistics()
-				.getSecondLevelCacheStatistics( Customer.class.getName() );
+				.getCacheRegionStatistics(Customer.class.getName());
 		assertEquals( 1, customerSlcs.getPutCount() );
 		assertEquals( 1, customerSlcs.getElementCountInMemory() );
 		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), Customer.class.getName()).getElementCountInMemory());
 
 		log.infof( "Add contact to customer {0}", customerId );
 		String contactsRegionName = Customer.class.getName() + ".contacts";
-		SecondLevelCacheStatistics contactsCollectionSlcs = sessionFactory()
+		CacheRegionStatistics contactsCollectionSlcs = sessionFactory()
 				.getStatistics()
-				.getSecondLevelCacheStatistics(contactsRegionName);
+				.getCacheRegionStatistics(contactsRegionName);
 		assertEquals( 1, contactsCollectionSlcs.getPutCount() );
 		assertEquals( 1, contactsCollectionSlcs.getElementCountInMemory() );
 		assertEquals( 1, TEST_SESSION_ACCESS.getRegion(sessionFactory(), contactsRegionName).getElementCountInMemory());

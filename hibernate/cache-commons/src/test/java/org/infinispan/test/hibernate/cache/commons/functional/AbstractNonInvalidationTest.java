@@ -1,5 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,19 +19,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.persistence.OptimisticLockException;
-import javax.persistence.PessimisticLockException;
-
 import org.hibernate.StaleStateException;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-import org.infinispan.hibernate.cache.commons.util.Caches;
-import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
+import org.infinispan.AdvancedCache;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.commons.util.Caches;
+import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
@@ -35,11 +36,8 @@ import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Before;
 
-import org.infinispan.AdvancedCache;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.PessimisticLockException;
 
 /**
  * Common base for TombstoneTest and VersionedTest
@@ -91,7 +89,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    @Override
    protected void startUp() {
       super.startUp();
-      TestRegionFactory regionFactory = TestRegionFactoryProvider.load().wrap(sessionFactory().getSettings().getRegionFactory());
+      TestRegionFactory regionFactory = TestRegionFactoryProvider.load().wrap(sessionFactory().getCache().getRegionFactory());
       TIMEOUT = regionFactory.getPendingPutsCacheConfiguration().expiration().maxIdle();
       region = TEST_SESSION_ACCESS.getRegion(sessionFactory(), Item.class.getName());
       entityCache = region.getCache();
@@ -187,7 +185,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
             if (preEvictLatch != null) {
                awaitOrThrow(preEvictLatch);
             }
-            sessionFactory().getCache().evictEntity(Item.class, id);
+            sessionFactory().getCache().evictEntityData(Item.class, id);
          } finally {
             if (postEvictLatch != null) {
                postEvictLatch.countDown();
