@@ -20,6 +20,6 @@ class MappedCacheStream<R> extends AbstractDelegatingCacheStream<R> {
 
    @Override
    public AbstractDelegatingCacheStream<R> filterKeys(Set<?> keys) {
-      return super.filterKeys(new SetMapper<>(keys, keyMapper));
+      return super.filterKeys(keys != null ? new SetMapper<>(keys, keyMapper) : null);
    }
 }
