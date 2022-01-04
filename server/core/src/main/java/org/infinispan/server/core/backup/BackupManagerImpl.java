@@ -165,9 +165,10 @@ public class BackupManagerImpl implements BackupManager {
             (path, t) -> {
                CompletionStage<Void> unlock = backupLock.unlock();
                if (t != null) {
-                  log.debug("Exception encountered when creating a cluster backup", t);
+                  Throwable backupErr = log.errorCreatingBackup(t);
+                  log.errorf(backupErr.getCause(), "%s:", backupErr.getMessage());
                   return unlock.thenCompose(ignore ->
-                        CompletableFutures.completedExceptionFuture(log.errorCreatingBackup(t))
+                        CompletableFutures.completedExceptionFuture(backupErr)
                   );
                }
                log.backupComplete(path.getFileName().toString());
@@ -218,7 +219,7 @@ public class BackupManagerImpl implements BackupManager {
 
       if (!Files.exists(backup)) {
          CacheException e = log.errorRestoringBackup(backup, new FileNotFoundException(backup.toString()));
-         log.error(e);
+         log.errorf(e.getCause(), "%s:", e.getMessage());
          return CompletableFutures.completedExceptionFuture(e);
       }
 
@@ -235,9 +236,10 @@ public class BackupManagerImpl implements BackupManager {
             (path, t) -> {
                CompletionStage<Void> unlock = restoreLock.unlock();
                if (t != null) {
-                  log.debug("Exception encountered when restoring a cluster backup", t);
+                  Throwable restoreErr = log.errorRestoringBackup(backup, t);
+                  log.errorf(restoreErr.getCause(), "%s:", restoreErr.getMessage());
                   return unlock.thenCompose(ignore ->
-                        CompletableFutures.completedExceptionFuture(log.errorRestoringBackup(backup, t))
+                        CompletableFutures.completedExceptionFuture(restoreErr)
                   );
                }
                log.restoreComplete(name);
