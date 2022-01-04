@@ -194,7 +194,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
             (zip, client) -> {
                // Request that only the 'test.js' script is restored
                Map<String, List<String>> params = new HashMap<>();
-               params.put("tasks", Collections.singletonList("test.js"));
+               params.put("tasks", Collections.singletonList("scripts/test.js"));
                RestCacheManagerClient cm = client.cacheManager("clustered");
                RestResponse response = await(cm.restore(name, zip, params));
                assertEquals(202, response.getStatus());
@@ -204,7 +204,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                // Assert that the test.js task has been restored
                List<Json> tasks = Json.read(await(client.tasks().list(RestTaskClient.ResultType.USER)).getBody()).asJsonList();
                assertEquals(1, tasks.size());
-               assertEquals("test.js", tasks.iterator().next().at("name").asString());
+               assertEquals("scripts/test.js", tasks.iterator().next().at("name").asString());
 
                // Assert that no other content has been restored
                assertEquals("[\"___protobuf_metadata\",\"memcachedCache\",\"___script_cache\"]", await(client.caches()).getBody());
@@ -346,7 +346,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       try (InputStream is = BackupManagerIT.class.getResourceAsStream("/scripts/test.js")) {
          String script = CommonsTestingUtil.loadFileAsString(is);
-         RestResponse rsp = await(client.tasks().uploadScript("test.js", RestEntity.create(MediaType.APPLICATION_JAVASCRIPT, script)));
+         RestResponse rsp = await(client.tasks().uploadScript("scripts/test.js", RestEntity.create(MediaType.APPLICATION_JAVASCRIPT, script)));
          assertEquals(200, rsp.getStatus());
       }
    }
@@ -376,7 +376,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertTrue(json.isArray());
       List<Json> tasks = json.asJsonList();
       assertEquals(1, tasks.size());
-      assertEquals("test.js", tasks.get(0).at("name").asString());
+      assertEquals("scripts/test.js", tasks.get(0).at("name").asString());
    }
 
    private void createCounter(String name, Element type, Storage storage, RestClient client, long delta) {

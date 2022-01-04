@@ -79,6 +79,11 @@ class InternalCacheResource extends AbstractContainerResource {
             if (resources.contains(fileName)) {
                Path file = root.resolve(fileName);
                try {
+                  // ISPN-13591 Create directory structure if resource name contains path separator
+                  Path parent = file.getParent();
+                  if (!parent.equals(root)) {
+                     Files.createDirectories(parent);
+                  }
                   Files.write(file, entry.getValue().getBytes(StandardCharsets.UTF_8));
                } catch (IOException e) {
                   throw new CacheException(String.format("Unable to create %s", file), e);
