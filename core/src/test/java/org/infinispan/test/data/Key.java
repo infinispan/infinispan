@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 public class Key implements Externalizable {
    private static final long serialVersionUID = 4745232904453872125L;
 
-   @ProtoField(number = 1)
+   @ProtoField(number = 1, name = "value1")
    String value;
 
    public Key() {

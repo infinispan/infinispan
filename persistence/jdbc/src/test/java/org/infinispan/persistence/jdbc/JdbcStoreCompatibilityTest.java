@@ -68,7 +68,7 @@ public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibility
             .createOnStart(generatingData)
             .tableNamePrefix("ISPN_STRING_TABLE")
             .idColumnName("ID_COLUMN").idColumnType("VARCHAR(255)")
-            .dataColumnName("DATA_COLUMN").dataColumnType("BINARY")
+            .dataColumnName("DATA_COLUMN").dataColumnType("BINARY VARYING")
             .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType("BIGINT")
             .segmented(false);
       jdbcB.connectionPool()
