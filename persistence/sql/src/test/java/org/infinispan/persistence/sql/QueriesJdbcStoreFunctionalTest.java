@@ -80,14 +80,14 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                      Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate", "value2", "value3")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASMOREKEYCOLUMNS")) {
-         // The colum has to be value to match our Key proto schema
-         KEY_COLUMN = "value";
+         // The colum has to be value1 to match our Key proto schema
+         KEY_COLUMN = "value1";
          storeBuilder.keyColumns(KEY_COLUMN + ", keycolumn2");
          storeBuilder.queriesJdbcConfigurationBuilder()
-               .select("SELECT " + KEY_COLUMN + ", keycolumn2, value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", keycolumn2, value1 FROM " + tableName)
+               .select("SELECT " + KEY_COLUMN + ", keycolumn2, value2 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", keycolumn2, value2 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
-                     Arrays.asList(KEY_COLUMN, "value1")))
+                     Arrays.asList(KEY_COLUMN, "value2")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN + " AND keycolumn2 = :keycolumn2");
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASLESSVALUECOLUMNS")) {
          storeBuilder.queriesJdbcConfigurationBuilder()

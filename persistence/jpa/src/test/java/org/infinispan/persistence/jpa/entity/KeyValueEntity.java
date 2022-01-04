@@ -15,14 +15,14 @@ public class KeyValueEntity {
    private String k; // key is reserved word in SQL
 
    @Basic
-   private String value;
+   private String v; // value is reserved word in h2 SQL
 
    public KeyValueEntity() {
    }
 
    public KeyValueEntity(String key, String value) {
       this.k = key;
-      this.value = value;
+      this.v = value;
    }
 
    @ProtoField(1)
@@ -36,16 +36,16 @@ public class KeyValueEntity {
 
    @ProtoField(2)
    public String getValue() {
-      return value;
+      return v;
    }
 
    public void setValue(String value) {
-      this.value = value;
+      this.v = value;
    }
 
    @Override
    public String toString() {
-      return String.format("{key=%s, value=%s}", k, value);
+      return String.format("{key=%s, value=%s}", k, v);
    }
 
    @Override
@@ -56,13 +56,13 @@ public class KeyValueEntity {
       KeyValueEntity that = (KeyValueEntity) o;
 
       if (k != null ? !k.equals(that.k) : that.k != null) return false;
-      return value != null ? value.equals(that.value) : that.value == null;
+      return v != null ? v.equals(that.v) : that.v == null;
    }
 
    @Override
    public int hashCode() {
       int result = k != null ? k.hashCode() : 0;
-      result = 31 * result + (value != null ? value.hashCode() : 0);
+      result = 31 * result + (v != null ? v.hashCode() : 0);
       return result;
    }
 }

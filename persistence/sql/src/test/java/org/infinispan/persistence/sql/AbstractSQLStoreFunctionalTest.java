@@ -183,7 +183,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       Exceptions.expectException(CacheConfigurationException.class, CompletionException.class,
             CacheConfigurationException.class,
             ".*Primary key (?i)(KEYCOLUMN2) was not found.*",
-            () -> testSimpleGetAndPut(m.getName(), new Key("mykey"), "value"));
+            () -> testSimpleGetAndPut(m.getName(), new Key("mykey"), "value1"));
    }
 
    public void testDBHasMoreKeyColumnsWithNoKeySchema(Method m) {
@@ -402,11 +402,11 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "PRIMARY KEY (keycolumn))";
       } else if (upperCaseCacheName.startsWith("TESTDBHASMOREKEYCOLUMNS")) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
-               // The name of the field for the Key schema is "value"
-               "value VARCHAR(255) NOT NULL, " +
-               "keycolumn2 VARCHAR(255) NOT NULL," +
+               // The name of the field for the Key schema is "value1"
                "value1 VARCHAR(255) NOT NULL, " +
-               "PRIMARY KEY (value, keycolumn2))";
+               "keycolumn2 VARCHAR(255) NOT NULL, " +
+               "value2 VARCHAR(255) NOT NULL, " +
+               "PRIMARY KEY (value1, keycolumn2))";
       } else if (upperCaseCacheName.startsWith("TESTDBHASLESSVALUECOLUMNS")) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +

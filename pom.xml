@@ -257,7 +257,7 @@
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>30.1.1-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.15</versionx.com.google.testing.compile>
-      <versionx.com.h2database.h2>1.4.200</versionx.com.h2database.h2>
+      <versionx.com.h2database.h2>2.0.204</versionx.com.h2database.h2>
       <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
       <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
