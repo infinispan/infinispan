@@ -11,7 +11,7 @@
                                 driver="org.h2.Driver"/>
                <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
                   <id-column name="ID_COLUMN" type="VARCHAR(255)"/>
-                  <data-column name="DATA_COLUMN" type="BINARY"/>
+                  <data-column name="DATA_COLUMN" type="BINARY VARYING"/>
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>
                   <segment-column name="SEGMENT_COLUMN" type="BIGINT"/>
                </string-keyed-table>

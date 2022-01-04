@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.util.Objects;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -72,9 +73,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          Person person = (Person) o;
 
          if (age != person.age) return false;
-         if (name != null ? !name.equals(person.name) : person.name != null) return false;
-
-         return true;
+         return Objects.equals(name, person.name);
       }
 
       @Override
