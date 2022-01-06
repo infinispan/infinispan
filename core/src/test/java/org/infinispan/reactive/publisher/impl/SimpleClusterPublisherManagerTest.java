@@ -174,6 +174,30 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
+   public void testCountEmptyKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+
+      // This empty set filters everything, but the computation must still complete
+      Set<Integer> keysToInclude = new HashSet<>();
+
+      ClusterPublisherManager<Integer, String> cpm = cpm(cache);
+      CompletionStage<Long> stageCount;
+      if (isEntry) {
+         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+               PublisherReducers.count(), PublisherReducers.add());
+      } else {
+         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+               PublisherReducers.count(), PublisherReducers.add());
+      }
+
+      Long actualCount = stageCount.toCompletableFuture().join();
+      int expected = 0;
+      assertTrue(insertAmount > 0);
+      assertEquals(expected, actualCount.intValue());
+   }
+
+   @Test(dataProvider = "GuaranteeParallelEntry")
    public void testCountWithContext(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
       Cache<Integer, String> cache = cache(0);
       int insertAmount = insert(cache).size();
