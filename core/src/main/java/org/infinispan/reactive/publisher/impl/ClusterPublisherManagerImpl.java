@@ -204,13 +204,35 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       if (log.isTraceEnabled()) {
          // Make sure the trace occurs before response is processed
-         localStage = localStage.whenComplete((results, t) ->
-               log.tracef("Result result was: %s for context %s", results.getResult(), ctx)
-         );
+         localStage = localStage.whenComplete((results, t) -> {
+            if (t != null) {
+               log.tracef(t, "Received exception while processing context %s", ctx);
+            } else {
+               log.tracef("Result was: %s for context %s", results.getResult(), ctx);
+            }
+         });
       }
 
       // Finally report the result to the BiConsumer so it knows the result
       localStage.whenComplete(biConsumer);
+   }
+
+   private <I, R> void handleEmptyInvocation(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+         BiConsumer<PublisherResult<R>, Throwable> biConsumer) {
+      CompletionStage<PublisherResult<R>> emptyStage = transformer.apply(Flowable.empty())
+            .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
+
+      if (log.isTraceEnabled()) {
+         emptyStage = emptyStage.whenComplete((results, t) -> {
+            if (t != null) {
+               log.tracef(t, "Received exception while processing empty invocation");
+            } else {
+               log.tracef("Result was: %s for empty invocation", results.getResult());
+            }
+         });
+      }
+
+      emptyStage.whenComplete(biConsumer);
    }
 
    private <I, R> void startKeyPublisher(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
@@ -236,7 +258,14 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             parallelCount, topology.getTopologyId(), parallelPublisher, includeLoader, deliveryGuarantee,
             composedType, transformer, finalizer);
 
+      // If there is nothing todo we must complete empty to prevent blocking
+      if (parallelCount.get() == 0) {
+         handleEmptyInvocation(transformer, biConsumer);
+         return;
+      }
+
       Set<K> localKeys = keyTargets.remove(localAddress);
+
       // If any targets left, they are all remote
       if (!keyTargets.isEmpty()) {
          // We submit the remote ones first as they will not block at all, just to send remote tasks
@@ -258,10 +287,14 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
          if (log.isTraceEnabled()) {
             // Make sure the trace occurs before response is processed
-            localStage = localStage.whenComplete((results, t) ->
-                  log.tracef("Result result was: %s for keys %s from %s with %s suspected segments",
-                        results.getResult(), localKeys, localAddress, results.getSuspectedSegments())
-            );
+            localStage = localStage.whenComplete((results, t) -> {
+               if (t != null) {
+                  log.tracef(t, "Received exception while processing keys %s from %s", localKeys, localAddress);
+               } else {
+                  log.tracef("Result was: %s for keys %s from %s with %s suspected keys",
+                        results.getResult(), localKeys, localAddress, results.getSuspectedKeys());
+               }
+            });
          }
 
          // Map to the same collector, so we can reuse the same BiConsumer
@@ -295,12 +328,18 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          keysToExcludeByAddress = Collections.emptyMap();
       }
 
-      IntSet localSegments = targets.remove(localAddress);
-
       // This way we only have to allocate 1 per request chain
       BiConsumer<PublisherResult<R>, Throwable> biConsumer = new SegmentSpecificConsumer<>(flowableProcessor,
             parallelCount, topology.getTopologyId(), parallelPublisher, ctx, includeLoader, deliveryGuarantee,
             composedType, transformer, finalizer);
+
+      // If there is nothing todo we must complete empty to prevent blocking
+      if (parallelCount.get() == 0) {
+         handleEmptyInvocation(transformer, biConsumer);
+         return;
+      }
+
+      IntSet localSegments = targets.remove(localAddress);
 
       // If any targets left, they are all remote
       if (!targets.isEmpty()) {
@@ -325,10 +364,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             // Make sure the trace occurs before response is processed
             localStage = localStage.whenComplete((results, t) -> {
                if (t != null) {
-                  log.tracef(t, "Received exception while processing segments %s from %s",
-                        localSegments, localAddress);
+                  log.tracef(t, "Received exception while processing segments %s from %s", localSegments, localAddress);
                } else {
-                  log.tracef("Result result was: %s for segments %s from %s with %s suspected segments",
+                  log.tracef("Result was: %s for segments %s from %s with %s suspected segments",
                         results.getResult(), localSegments, localAddress, results.getSuspectedSegments());
                }
             });
@@ -386,8 +424,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          } else {
             handleResult(resultCollector);
 
-            // We were the last one to complete if zero, so we have to complete or resubmit
-            if (parallelCount.decrementAndGet() == 0) {
+            // There was nothing todo or we were the last one, so we have to complete or resubmit
+            if (parallelCount.get() == 0 || parallelCount.decrementAndGet() == 0) {
                onCompletion();
             }
          }
@@ -469,8 +507,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          } else {
             handleResult(resultCollector);
 
-            // We were the last one to complete if zero, so we have to complete
-            if (parallelCount.decrementAndGet() == 0) {
+            // There was nothing todo or we were the last one, so we have to complete or resubmit
+            if (parallelCount.get() == 0 || parallelCount.decrementAndGet() == 0) {
                onCompletion();
             }
          }
@@ -528,7 +566,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       protected PublisherResult<R> addValidResponse(Address sender, ValidResponse response) {
          PublisherResult<R> results = (PublisherResult<R>) response.getResponseValue();
          if (log.isTraceEnabled()) {
-            log.tracef("Result result was: %s for keys %s from %s", results.getResult(), keys, sender);
+            log.tracef("Result was: %s for keys %s from %s", results.getResult(), keys, sender);
          }
          return results;
       }
@@ -570,7 +608,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       protected PublisherResult<R> addValidResponse(Address sender, ValidResponse response) {
          PublisherResult<R> results = (PublisherResult<R>) response.getResponseValue();
          if (log.isTraceEnabled()) {
-            log.tracef("Result result was: %s for segments %s from %s with %s suspected segments", results.getResult(),
+            log.tracef("Result was: %s for segments %s from %s with %s suspected segments", results.getResult(),
                   targetSegments, sender, results.getSuspectedSegments());
          }
          return results;
