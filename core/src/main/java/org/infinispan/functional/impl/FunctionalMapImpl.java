@@ -111,4 +111,9 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    public void close() throws Exception {
       cache.stop();
    }
+
+   @Override
+   public Cache<K, V> cache() {
+      return cache;
+   }
 }

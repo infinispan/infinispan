@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ByRef;
@@ -16,6 +17,10 @@ import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.logging.Log;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -26,8 +31,6 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * It manages all the caches events and handles them. Also, it handles the user-specific {@link CounterListener}.
@@ -45,6 +48,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@Scope(Scopes.GLOBAL)
 public class CounterManagerNotificationManager {
 
    private static final Log log = LogFactory.getLog(CounterManagerNotificationManager.class, Log.class);
@@ -52,27 +56,22 @@ public class CounterManagerNotificationManager {
    private final CounterValueListener valueListener;
    private final TopologyListener topologyListener;
    private volatile BlockingManager.BlockingExecutor userListenerExecutor;
-   @GuardedBy("this")
-   private boolean listenersRegistered;
-   @GuardedBy("this")
-   private Cache<CounterKey, CounterValue> cache;
 
    public CounterManagerNotificationManager() {
-      counters = new ConcurrentHashMap<>();
+      counters = new ConcurrentHashMap<>(32);
       valueListener = new CounterValueListener();
       topologyListener = new TopologyListener();
    }
 
-   /**
-    * The blockingManager to use where the user's {@link CounterListener} is invoked.
-    *
-    * @param blockingManager The {@link BlockingManager} to use.
-    */
-   public void useBlockingManager(BlockingManager blockingManager) {
-      if (blockingManager == null) {
-         return;
-      }
+   @Inject
+   public void inject(BlockingManager blockingManager) {
       userListenerExecutor = blockingManager.limitedBlockingExecutor("counter-listener", 1);
+   }
+
+   @Stop
+   public void stop() {
+      // do not try to remove the listeners; the counter cache is already stopped at this point
+      counters.clear();
    }
 
    /**
@@ -91,60 +90,36 @@ public class CounterManagerNotificationManager {
    }
 
    /**
-    * It registers an user's {@link CounterListener} for a specific counter.
+    * It registers a user's {@link CounterListener} for a specific counter.
     *
     * @param counterName  The counter's name to listen.
     * @param userListener The {@link CounterListener} to be invoked.
     * @return The {@link Handle} for the {@link CounterListener}.
     */
    public <T extends CounterListener> Handle<T> registerUserListener(ByteString counterName, T userListener) {
-      // make sure that the counter's value listener is set
-      registerCounterValueListener();
       ByRef<Handle<T>> handleByRef = new ByRef<>(null);
       counters.computeIfPresent(counterName, (name, holder) -> holder.addListener(userListener, handleByRef));
       return handleByRef.get();
-   }
-
-   public synchronized void setCache(Cache<CounterKey, CounterValue> cache) {
-      if (this.cache != null) {
-         return;
-      }
-      this.cache = cache;
    }
 
    /**
     * It registers the clustered cache listener if they aren't already registered.
     * <p>
     * This listener receives notification when a counter's value is updated.
+    *
+    * @param cache The {@link  Cache} to listen to cluster events.
     */
-   public synchronized void registerCounterValueListener() {
-      assert cache != null;
-      if (listenersRegistered) {
-         return;
-      }
-      cache.addListener(valueListener);
+   public void registerCounterValueListener(Cache<? extends CounterKey, CounterValue> cache) {
+      valueListener.register(cache);
    }
 
    /**
     * It registers the topology cache listener if they aren't already registered.
+    *
+    * @param cache The {@link  Cache} to listen to cluster events.
     */
-   public synchronized void registerTopologyListener() {
-      assert cache != null;
-      if (topologyListener.registered) {
-         return;
-      }
+   public void registerTopologyListener(Cache<? extends CounterKey, CounterValue> cache) {
       topologyListener.register(cache);
-   }
-
-   public synchronized void stop() {
-      if (topologyListener.registered) {
-         topologyListener.unregister(cache);
-      }
-      // Too late to remove the listener now, because internal caches are already stopped
-      // But because clustered listeners are removed automatically when the originator leaves,
-      // it's not really necessary.
-      counters.clear();
-      this.cache = null;
    }
 
    /**
@@ -165,11 +140,10 @@ public class CounterManagerNotificationManager {
       private final List<CounterListenerResponse<?>> userListeners;
       private final TopologyChangeListener topologyChangeListener;
 
-      private Holder(CounterEventGenerator generator,
-            TopologyChangeListener topologyChangeListener) {
+      private Holder(CounterEventGenerator generator, TopologyChangeListener topologyChangeListener) {
          this.generator = generator;
          this.topologyChangeListener = topologyChangeListener;
-         this.userListeners = new CopyOnWriteArrayList<>();
+         userListeners = new CopyOnWriteArrayList<>();
       }
 
       <T extends CounterListener> Holder addListener(T userListener,
@@ -245,6 +219,8 @@ public class CounterManagerNotificationManager {
    @Listener(clustered = true, observation = Listener.Observation.POST)
    private class CounterValueListener {
 
+      final AtomicBoolean registered = new AtomicBoolean(false);
+
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
@@ -267,6 +243,12 @@ public class CounterManagerNotificationManager {
          }
          userListenerExecutor.execute(() -> userListeners.forEach(l -> l.onUpdate(event)), event);
       }
+
+      void register(Cache<? extends CounterKey, CounterValue> cache) {
+         if (registered.compareAndSet(false, true)) {
+            cache.addListener(this);
+         }
+      }
    }
 
    /**
@@ -275,7 +257,7 @@ public class CounterManagerNotificationManager {
    @Listener(sync = false)
    private class TopologyListener {
 
-      private volatile boolean registered = false;
+      final AtomicBoolean registered = new AtomicBoolean(false);
 
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<?, ?> event) {
@@ -286,17 +268,13 @@ public class CounterManagerNotificationManager {
       }
 
       private void register(Cache<?, ?> cache) {
-         registered = true;
          ClusteringConfiguration config = cache.getCacheConfiguration().clustering();
          if (!config.cacheMode().isClustered()) {
             return;
          }
-         cache.addListener(this);
-      }
-
-      private void unregister(Cache<?, ?> cache) {
-         cache.removeListener(this);
-         registered = false;
+         if (registered.compareAndSet(false, true)) {
+            cache.addListener(this);
+         }
       }
    }
 }
