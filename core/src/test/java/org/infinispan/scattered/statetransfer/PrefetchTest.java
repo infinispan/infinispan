@@ -142,8 +142,12 @@ public class PrefetchTest extends MultipleCacheManagersTest {
 
       controlledRpcManager.stopBlocking();
       // release any threads waiting
-      beforeBarrier.reset();
-      afterBarrier.reset();
+      if (beforeBarrier.getNumberWaiting() == 1) {
+         beforeBarrier.await(0, TimeUnit.SECONDS);
+      }
+      if (afterBarrier.getNumberWaiting() == 1) {
+         afterBarrier.await(0, TimeUnit.SECONDS);
+      }
    }
 
    private static boolean isStateTransferPut(VisitableCommand command) {

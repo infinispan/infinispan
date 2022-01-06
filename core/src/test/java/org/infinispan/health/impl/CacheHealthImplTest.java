@@ -1,16 +1,17 @@
 package org.infinispan.health.impl;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
-import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.testng.annotations.Test;
 
 @Test(testName = "health.impl.CacheHealthImplTest", groups = "functional")
@@ -19,15 +20,19 @@ public class CacheHealthImplTest {
     @Test
     public void testHealthyStatus() {
         //given
-        CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
+
         DistributionManager distributionManagerMock = mock(DistributionManager.class);
-
         doReturn(false).when(distributionManagerMock).isRehashInProgress();
-        doReturn(distributionManagerMock).when(cache).getDistributionManager();
-        doReturn(ComponentStatus.RUNNING).when(cache).getStatus();
-        doReturn(AvailabilityMode.AVAILABLE).when(cache).getAvailability();
+        doReturn(distributionManagerMock).when(componentRegistryMock).getDistributionManager();
 
-        CacheHealth cacheHealth = new CacheHealthImpl(cache);
+        doReturn(ComponentStatus.RUNNING).when(componentRegistryMock).getStatus();
+
+        PartitionHandlingManager partitionHandlingManagerMock = mock(PartitionHandlingManager.class);
+        doReturn(AvailabilityMode.AVAILABLE).when(partitionHandlingManagerMock).getAvailabilityMode();
+        doReturn(partitionHandlingManagerMock).when(componentRegistryMock).getComponent(eq(PartitionHandlingManager.class));
+
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
         HealthStatus status = cacheHealth.getStatus();
@@ -39,11 +44,11 @@ public class CacheHealthImplTest {
     @Test
     public void testUnhealthyStatusWithFailedComponent() {
         //given
-        CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
 
-        doReturn(ComponentStatus.FAILED).when(cache).getStatus();
+        doReturn(ComponentStatus.FAILED).when(componentRegistryMock).getStatus();
 
-        CacheHealth cacheHealth = new CacheHealthImpl(cache);
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
         HealthStatus status = cacheHealth.getStatus();
@@ -55,11 +60,11 @@ public class CacheHealthImplTest {
     @Test
     public void testUnhealthyStatusWithTerminatedComponent() {
         //given
-        CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
 
-        doReturn(ComponentStatus.TERMINATED).when(cache).getStatus();
+        doReturn(ComponentStatus.TERMINATED).when(componentRegistryMock).getStatus();
 
-        CacheHealth cacheHealth = new CacheHealthImpl(cache);
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
         HealthStatus status = cacheHealth.getStatus();
@@ -71,11 +76,11 @@ public class CacheHealthImplTest {
     @Test
     public void testUnhealthyStatusWithStoppingComponent() {
         //given
-        CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
 
-        doReturn(ComponentStatus.STOPPING).when(cache).getStatus();
+        doReturn(ComponentStatus.STOPPING).when(componentRegistryMock).getStatus();
 
-        CacheHealth cacheHealth = new CacheHealthImpl(cache);
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
         HealthStatus status = cacheHealth.getStatus();
@@ -87,12 +92,15 @@ public class CacheHealthImplTest {
     @Test
     public void testUnhealthyStatusWithDegradedPartition() {
         //given
-        CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
 
-        doReturn(ComponentStatus.RUNNING).when(cache).getStatus();
-        doReturn(AvailabilityMode.DEGRADED_MODE).when(cache).getAvailability();
+        doReturn(ComponentStatus.RUNNING).when(componentRegistryMock).getStatus();
 
-        CacheHealth cacheHealth = new CacheHealthImpl(cache);
+        PartitionHandlingManager partitionHandlingManagerMock = mock(PartitionHandlingManager.class);
+        doReturn(AvailabilityMode.DEGRADED_MODE).when(partitionHandlingManagerMock).getAvailabilityMode();
+        doReturn(partitionHandlingManagerMock).when(componentRegistryMock).getComponent(eq(PartitionHandlingManager.class));
+
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
         HealthStatus status = cacheHealth.getStatus();
@@ -104,15 +112,18 @@ public class CacheHealthImplTest {
     @Test
     public void testRebalancingStatusOnRebalance() {
         //given
-        CacheImpl<Object, Object> cache = spy(new CacheImpl<>("test"));
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
         DistributionManager distributionManagerMock = mock(DistributionManager.class);
 
         doReturn(true).when(distributionManagerMock).isRehashInProgress();
-        doReturn(distributionManagerMock).when(cache).getDistributionManager();
-        doReturn(ComponentStatus.RUNNING).when(cache).getStatus();
-        doReturn(AvailabilityMode.AVAILABLE).when(cache).getAvailability();
+        doReturn(distributionManagerMock).when(componentRegistryMock).getDistributionManager();
+        doReturn(ComponentStatus.RUNNING).when(componentRegistryMock).getStatus();
 
-        CacheHealth cacheHealth = new CacheHealthImpl(cache);
+        PartitionHandlingManager partitionHandlingManagerMock = mock(PartitionHandlingManager.class);
+        doReturn(AvailabilityMode.AVAILABLE).when(partitionHandlingManagerMock).getAvailabilityMode();
+        doReturn(partitionHandlingManagerMock).when(componentRegistryMock).getComponent(eq(PartitionHandlingManager.class));
+
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
         HealthStatus status = cacheHealth.getStatus();
@@ -124,10 +135,13 @@ public class CacheHealthImplTest {
     @Test
     public void testReturningName() {
         //given
-        CacheImpl<Object, Object> cache = new CacheImpl<>("test");
+        ComponentRegistry componentRegistryMock = mock(ComponentRegistry.class);
+        doReturn("test").when(componentRegistryMock).getCacheName();
+
+        CacheHealth cacheHealth = new CacheHealthImpl(componentRegistryMock);
 
         //when
-        String name = cache.getName();
+        String name = cacheHealth.getCacheName();
 
         //then
         assertEquals(name, "test");

@@ -143,7 +143,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
 
    @Override
    protected PersistenceMarshaller getMarshaller() {
-      return localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().getPersistenceMarshaller();
+      return TestingUtil.extractPersistenceMarshaller(localCacheManager);
    }
 
    @Override

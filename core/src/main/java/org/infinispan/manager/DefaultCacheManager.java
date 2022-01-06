@@ -42,6 +42,7 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.internal.BlockHoundUtil;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.ConfigurationManager;
@@ -162,6 +163,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    // Keep the transport around so async view listeners can still see the address after stop
    private volatile Transport transport;
+
+   // When enabled, isRunning(name) sets the thread-local value and getCache(name) verifies it
+   private static ThreadLocal<String> getCacheBlockingCheck;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults. See
@@ -518,6 +522,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          throw new NullPointerException("Null arguments not allowed");
 
       assertIsNotTerminated();
+      if (getCacheBlockingCheck != null) {
+         if (cacheName.equals(getCacheBlockingCheck.get())) {
+            // isRunning() was called before getCache(), all good
+            getCacheBlockingCheck.set(null);
+         } else {
+            // isRunning() was not called, let BlockHound know getCache() is potentially blocking
+            BlockHoundUtil.pretendBlock();
+         }
+      }
+
       // No need to block if another thread (or even the current thread) is starting the global components
       // Because each cache component will wait for the global components it depends on
       // And and ComponentRegistry depends on GlobalComponentRegistry.ModuleInitializer
@@ -966,6 +980,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public boolean isRunning(String cacheName) {
+      if (getCacheBlockingCheck != null) {
+         getCacheBlockingCheck.set(cacheName);
+      }
       CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
       boolean started = cacheFuture != null && cacheFuture.isDone() && !cacheFuture.isCompletedExceptionally();
       return started && cacheFuture.join().getStatus() == ComponentStatus.RUNNING;
@@ -1280,5 +1297,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             }
          };
       }
+   }
+
+   static void enableGetCacheBlockingCheck() {
+      getCacheBlockingCheck = new ThreadLocal<>();
    }
 }

@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
@@ -36,8 +37,12 @@ public class HealthImpl implements Health {
 
    private CacheHealth getHealth(String cacheName) {
       try {
-         Cache<?, ?> cache = SecurityActions.getCache(embeddedCacheManager, cacheName);
-         return new CacheHealthImpl(cache);
+         GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager);
+         ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
+         if (cr == null)
+            return new InvalidCacheHealth(cacheName);
+
+         return new CacheHealthImpl(cr);
       } catch (CacheException cacheException) {
          return new InvalidCacheHealth(cacheName);
       }
