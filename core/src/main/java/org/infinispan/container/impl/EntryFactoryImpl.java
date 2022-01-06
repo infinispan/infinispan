@@ -106,10 +106,13 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private void handleExpiredEntryContextAddition(Boolean expired, InvocationContext ctx, InternalCacheEntry readEntry,
          Object key, boolean isOwner) {
-      if (expired == Boolean.FALSE) {
-         addReadEntryToContext(ctx, readEntry, key);
-      } else if (isOwner) {
-         addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
+      // Multi-key commands perform the expiration check in parallel, so they need synchronization
+      synchronized (ctx) {
+         if (expired == Boolean.FALSE) {
+            addReadEntryToContext(ctx, readEntry, key);
+         } else if (isOwner) {
+            addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
+         }
       }
    }
 
@@ -185,13 +188,13 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private void handleWriteExpiredEntryContextAddition(Boolean expired, InvocationContext ctx, InternalCacheEntry ice,
          Object key, boolean isRead) {
-      if (expired == Boolean.FALSE) {
-         addWriteEntryToContext(ctx, ice, key, isRead);
-      } else {
-         if (trace) {
-            log.tracef("Entry retrieved for key %s was expired, returning null entry", key);
+      // Multi-key commands perform the expiration check in parallel, so they need synchronization
+      synchronized (ctx) {
+         if (expired == Boolean.FALSE) {
+            addWriteEntryToContext(ctx, ice, key, isRead);
+         } else {
+            addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
          }
-         addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
       }
    }
 
