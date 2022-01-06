@@ -24,6 +24,7 @@ import org.infinispan.counter.impl.function.ReadFunction;
 import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
+import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
@@ -43,7 +44,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * It register a {@link EmbeddedCounterManager} to each {@link EmbeddedCacheManager} started and starts the cache on it.
+ * It registers a {@link EmbeddedCounterManager} to each {@link EmbeddedCacheManager} started and starts the cache on it.
  *
  * @author Pedro Ruivo
  * @since 9.0
@@ -111,6 +112,10 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
             of(EXCLUSIVE, PERSISTENT));
    }
 
+   private static void registerCounterNotificationManager(BasicComponentRegistry registry) {
+      registry.registerComponent(CounterManagerNotificationManager.class, new CounterManagerNotificationManager(), true);
+   }
+
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       final Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization()
@@ -141,6 +146,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          //local only cache manager.
          registerLocalCounterCache(internalCacheRegistry);
       }
+      registerCounterNotificationManager(bcr);
       registerCounterManager(cacheManager, bcr, globalConfiguration);
    }
 

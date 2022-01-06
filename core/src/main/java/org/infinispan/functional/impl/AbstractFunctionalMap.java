@@ -10,6 +10,7 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
@@ -72,6 +73,11 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    @Override
    public void close() throws Exception {
       fmap.close();
+   }
+
+   @Override
+   public Cache<K, V> cache() {
+      return fmap.cache();
    }
 
    protected InvocationContext getInvocationContext(boolean isWrite, int keyCount) {

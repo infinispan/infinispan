@@ -37,7 +37,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * A {@link CounterManager} implementation for embedded cache manager.
@@ -52,23 +51,21 @@ public class EmbeddedCounterManager implements CounterManager {
    private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
 
    private final Map<String, Object> counters;
-   private final CounterManagerNotificationManager notificationManager;
    private final EmbeddedCacheManager cacheManager;
    private final CounterConfigurationManager configurationManager;
    private volatile AdvancedCache<CounterKey, CounterValue> counterCache;
-   private volatile boolean started = false;
+   private volatile boolean started;
 
-   @Inject BlockingManager blockingManager;
+   @Inject CounterManagerNotificationManager notificationManager;
 
    public EmbeddedCounterManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
-      this.counters = new ConcurrentHashMap<>();
-      this.notificationManager = new CounterManagerNotificationManager();
+      counters = new ConcurrentHashMap<>(32);
       CounterConfigurationStorage storage = isGlobalStateEnabled(cacheManager) ?
             new PersistedCounterConfigurationStorage() :
             new VolatileCounterConfigurationStorage();
       storage.initialize(cacheManager);
-      this.configurationManager = new CounterConfigurationManager(cacheManager, storage);
+      configurationManager = new CounterConfigurationManager(cacheManager, storage);
    }
 
    private static boolean isGlobalStateEnabled(EmbeddedCacheManager cacheManager) {
@@ -80,8 +77,6 @@ public class EmbeddedCounterManager implements CounterManager {
       if (log.isTraceEnabled()) {
          log.trace("Starting EmbeddedCounterManager");
       }
-      notificationManager.useBlockingManager(blockingManager);
-
       configurationManager.start();
       started = true;
    }
@@ -94,7 +89,6 @@ public class EmbeddedCounterManager implements CounterManager {
       started = false;
       counterCache = null;
       configurationManager.stop();
-      notificationManager.stop();
    }
 
    private static <T> T validateCounter(Class<T> tClass, Object retVal) {
@@ -319,15 +313,13 @@ public class EmbeddedCounterManager implements CounterManager {
          throw CONTAINER.undefinedCounter(counterName);
       }
 
-      notificationManager.setCache(cache());
-
       switch (configuration.type()) {
          case WEAK:
             // topology listener is used to compute the keys where this node is the primary owner
             // adds are made on these keys to avoid contention and improve performance
-            notificationManager.registerTopologyListener();
+            notificationManager.registerTopologyListener(cache());
             // the weak counter keeps a local value and, on each event, the local value is updated (reads are always local)
-            notificationManager.registerCounterValueListener();
+            notificationManager.registerCounterValueListener(cache());
             return createWeakCounter(counterName, configuration);
          case BOUNDED_STRONG:
             return createBoundedStrongCounter(counterName, configuration);
