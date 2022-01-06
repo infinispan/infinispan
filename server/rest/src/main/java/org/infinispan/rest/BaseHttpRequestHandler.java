@@ -31,15 +31,17 @@ public abstract class BaseHttpRequestHandler extends SimpleChannelInboundHandler
       NettyRestResponse errorResponse;
       if (cause instanceof RestResponseException) {
          RestResponseException responseException = (RestResponseException) throwable;
-         getLogger().errorWhileResponding(responseException);
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", responseException);
          errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
       } else if (cause instanceof SecurityException) {
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
          errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(cause.getMessage()).build();
       } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException || cause instanceof EncodingException) {
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
          errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(cause.toString()).build();
       } else {
-         Throwable rootCause = Util.getRootCause(throwable);
-         errorResponse = new NettyRestResponse.Builder().status(INTERNAL_SERVER_ERROR).entity(rootCause.getMessage()).build();
+         getLogger().errorWhileResponding(throwable);
+         errorResponse = new NettyRestResponse.Builder().status(INTERNAL_SERVER_ERROR).entity(cause.getMessage()).build();
       }
       sendResponse(ctx, request, errorResponse);
    }

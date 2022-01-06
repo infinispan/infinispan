@@ -14,6 +14,7 @@ import org.infinispan.commons.test.TestSuiteProgress;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
 import org.infinispan.functional.FunctionalTestUtils;
+import org.infinispan.manager.DefaultCacheManagerHelper;
 import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.ReplListener;
@@ -41,6 +42,8 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       } catch (ClassNotFoundException e) {
          throw new AssertionError(e);
       }
+
+      DefaultCacheManagerHelper.enableManagerGetCacheBlockingCheck();
 
       builder.allowBlockingCallsInside(CoreTestBlockHoundIntegration.class.getName(), "writeJUnitReport");
 

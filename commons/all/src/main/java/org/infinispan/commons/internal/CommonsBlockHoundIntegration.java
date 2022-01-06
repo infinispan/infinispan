@@ -19,6 +19,9 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
    public void applyTo(BlockHound.Builder builder) {
       builder.nonBlockingThreadPredicate(current -> current.or(thread -> thread.getThreadGroup() instanceof NonBlockingResource));
 
+      // Pretend to block without the overhead of calling Thread.yield()
+      builder.markAsBlocking(BlockHoundUtil.class, "pretendBlock", "()V");
+
       // This should never block as non blocking thread will run the task if pool was full
       builder.disallowBlockingCallsInside(NonBlockingRejectedExecutionHandler.class.getName(), "rejectedExecution");
 
