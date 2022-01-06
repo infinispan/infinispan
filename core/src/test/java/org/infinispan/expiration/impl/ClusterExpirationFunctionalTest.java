@@ -1,5 +1,6 @@
 package org.infinispan.expiration.impl;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -7,6 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -21,6 +23,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
@@ -357,6 +360,28 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       incrementAllTimeServices(9, TimeUnit.SECONDS);
 
       assertEquals(value, cache0.get(key));
+   }
+
+   public void testPutAllExpiredEntries() {
+      SkipTestNG.skipIf(cacheMode.isDistributed() && transactional,
+                        "Disabled in transactional caches because of ISPN-13618");
+      SkipTestNG.skipIf(cacheMode.isScattered(), "Disabled in scattered caches because of ISPN-13619");
+
+      Map<String, String> v1s = new HashMap<>();
+      // Can reproduce ISPN-13549 with nKey=20_000 and no trace logs (and without the fix)
+      int nKeys = 4;
+      for (int i = 0; i < nKeys; i++) {
+         v1s.put("k" + i, "v1");
+      }
+      Map<String, String> v2s = new HashMap<>();
+      for (int i = 0; i < nKeys; i++) {
+         v2s.put("k" + i, "v2");
+      }
+      cache0.putAll(v1s, -1, SECONDS, 10, SECONDS);
+
+      incrementAllTimeServices(11, SECONDS);
+
+      cache0.putAll(v2s, -1, SECONDS, 10, SECONDS);
    }
 
    @Test(groups = "unstable", description = "https://issues.redhat.com/browse/ISPN-11422")
