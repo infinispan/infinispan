@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -312,6 +314,28 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       incrementAllTimeServices(9, SECONDS);
 
       assertEquals(value, cache0.get(key));
+   }
+
+   public void testPutAllExpiredEntries() {
+      SkipTestNG.skipIf(cacheMode.isDistributed() && transactional,
+                        "Disabled in transactional caches because of ISPN-13618");
+      SkipTestNG.skipIf(cacheMode.isScattered(), "Disabled in scattered caches because of ISPN-13619");
+
+      Map<String, String> v1s = new HashMap<>();
+      // Can reproduce ISPN-13549 with nKey=20_000 and no trace logs (and without the fix)
+      int nKeys = 4;
+      for (int i = 0; i < nKeys; i++) {
+         v1s.put("k" + i, "v1");
+      }
+      Map<String, String> v2s = new HashMap<>();
+      for (int i = 0; i < nKeys; i++) {
+         v2s.put("k" + i, "v2");
+      }
+      cache0.putAll(v1s, -1, SECONDS, 10, SECONDS);
+
+      incrementAllTimeServices(11, SECONDS);
+
+      cache0.putAll(v2s, -1, SECONDS, 10, SECONDS);
    }
 
    private void assertLastUsedUpdate(Object key, long expectedLastUsed, Cache<Object, String> readCache,
