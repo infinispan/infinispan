@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,13 +84,18 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
                .set("sortableStoredField", i % 20)
                .set("sortableNotStoredField", "index_" + i % 20)
                .set("notIndexedField", str).toString();
-         await(indexedCache().put(String.valueOf(i), RestEntity.create(APPLICATION_JSON, value)));
+         RestResponse response = await(indexedCache().put(String.valueOf(i), RestEntity.create(APPLICATION_JSON, value)));
+         assertEquals(204, response.getStatus());
+         assertTrue(response.getBody().isEmpty());
       });
 
       LongStream.range(0, NOT_INDEXED_ENTRIES).forEach(i -> {
          String value = "text " + i;
          Json json = Json.object().set("_type", "NotIndexedEntity").set("field1", value).set("field2", value);
-         await(nonIndexedCache().put(String.valueOf(i), RestEntity.create(APPLICATION_JSON, json.toString())));
+         RestResponse response =
+               await(nonIndexedCache().put(String.valueOf(i), RestEntity.create(APPLICATION_JSON, json.toString())));
+         assertEquals(204, response.getStatus());
+         assertTrue(response.getBody().isEmpty());
       });
    }
 

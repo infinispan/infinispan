@@ -27,8 +27,8 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
    @BeforeClass
    public void prepare() {
       Configuration config = new ConfigurationBuilder().build();
-      cacheManager.defineConfiguration("cache1", config);
-      cacheManager.defineConfiguration("cache2", config);
+      cacheManager.createCache("cache1", config);
+      cacheManager.createCache("cache2", config);
    }
 
    @Test

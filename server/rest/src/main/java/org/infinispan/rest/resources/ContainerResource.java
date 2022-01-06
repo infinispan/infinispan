@@ -25,7 +25,6 @@ import java.io.StringWriter;
 import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -260,16 +258,13 @@ public class ContainerResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
-      Map<String, HealthStatus> cachesHealth = new HashMap<>();
       // Remove internal caches
       Set<String> cacheNames = new HashSet<>(subjectCacheManager.getCacheNames());
       cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
 
 
       Set<String> ignoredCaches = serverStateManager.getIgnoredCaches();
-      for (CacheHealth ch : SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames)) {
-         cachesHealth.put(ch.getCacheName(), ch.getStatus());
-      }
+      List<CacheHealth> cachesHealth = SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames);
 
       LocalTopologyManager localTopologyManager = null;
       Boolean clusterRebalancingEnabled = null;
@@ -285,72 +280,73 @@ public class ContainerResource implements ResourceHandler {
       // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
       LocalTopologyManager finalLocalTopologyManager = localTopologyManager;
       Boolean finalClusterRebalancingEnabled = clusterRebalancingEnabled;
-      return Flowable.fromIterable(cachesHealth.entrySet())
-            .map(chHealth -> {
-               CacheInfo cacheInfo = new CacheInfo();
-               String cacheName = chHealth.getKey();
-               cacheInfo.name = cacheName;
-               HealthStatus cacheHealth = cachesHealth.get(cacheName);
-               cacheInfo.health = cacheHealth;
-               Configuration cacheConfiguration = SecurityActions
-                     .getCacheConfigurationFromManager(subjectCacheManager, cacheName);
-               cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-               boolean isPersistent = false;
-               try {
-                  PersistenceManager pm = SecurityActions.getPersistenceManager(cacheManager, cacheName);
-                  isPersistent = pm.isEnabled();
-               } catch (CacheConfigurationException ignored) {
-               }
-               cacheInfo.simpleCache = cacheConfiguration.simpleCache();
-               cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
-               cacheInfo.persistent = isPersistent;
-               cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
-               cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
-                     cacheConfiguration.expiration().lifespan() != -1;
-               cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
-               cacheInfo.indexed = cacheConfiguration.indexing().enabled();
-               cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
-
-               // If the cache is ignored, status is IGNORED
-               if (ignoredCaches.contains(cacheName)) {
-                  cacheInfo.status = "IGNORED";
-               } else {
-                  if(cacheHealth != HealthStatus.FAILED) {
-                     Cache cache = restCacheManager.getCache(cacheName, request);
-                     cacheInfo.status = cache.getStatus().toString();
-                  } else {
-                     cacheInfo.status = ComponentStatus.FAILED.toString();
-                  }
-               }
-
-               // if any of those are null, don't keep trying to retrieve the rebalancing status
-               if (finalLocalTopologyManager != null && finalClusterRebalancingEnabled != null) {
-                  Boolean perCacheRebalancing = null;
-                  if (finalClusterRebalancingEnabled) {
-                     // if the global rebalancing is enabled, retrieve each cache status
-                     try {
-                        perCacheRebalancing = finalLocalTopologyManager.isCacheRebalancingEnabled(cacheName);
-                     } catch (Exception ex) {
-                        // There was an error retrieving this value. Just ignore
-                     }
-                  } else {
-                     // set all to false. global disabled rebalancing disables all caches rebalancing
-                     perCacheRebalancing = Boolean.FALSE;
-                  }
-
-                  cacheInfo.rebalancing_enabled = perCacheRebalancing;
-               }
-
-               return cacheInfo;
-            })
-            .collectInto(new HashSet<CacheInfo>(), Set::add)
-            .map(cacheInfos -> {
-               List<CacheInfo> sortedCacheInfos = cacheInfos.stream()
-                     .sorted(Comparator.comparing(c -> c.name))
-                     .collect(Collectors.toList());
-               return (RestResponse) addEntityAsJson(Json.make(sortedCacheInfos), responseBuilder).build();
-            })
+      return Flowable.fromIterable(cachesHealth)
+            .map(chHealth -> getCacheInfo(request, cacheManager, subjectCacheManager, ignoredCaches,
+                                          finalLocalTopologyManager, finalClusterRebalancingEnabled, chHealth))
+            .sorted(Comparator.comparing(c -> c.name))
+            .collect(Collectors.toList())
+            .map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder).build())
             .toCompletionStage();
+   }
+
+   private CacheInfo getCacheInfo(RestRequest request, EmbeddedCacheManager cacheManager,
+                                  EmbeddedCacheManager subjectCacheManager, Set<String> ignoredCaches,
+                                  LocalTopologyManager finalLocalTopologyManager,
+                                  Boolean finalClusterRebalancingEnabled, CacheHealth chHealth) {
+      CacheInfo cacheInfo = new CacheInfo();
+      String cacheName = chHealth.getCacheName();
+      cacheInfo.name = cacheName;
+      HealthStatus cacheHealth = chHealth.getStatus();
+      cacheInfo.health = cacheHealth;
+      Configuration cacheConfiguration = SecurityActions
+            .getCacheConfigurationFromManager(subjectCacheManager, cacheName);
+      cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
+      boolean isPersistent = false;
+      if (chHealth.getStatus() != HealthStatus.FAILED) {
+         PersistenceManager pm = SecurityActions.getPersistenceManager(cacheManager, cacheName);
+         isPersistent = pm.isEnabled();
+      }
+      cacheInfo.simpleCache = cacheConfiguration.simpleCache();
+      cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+      cacheInfo.persistent = isPersistent;
+      cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
+      cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
+            cacheConfiguration.expiration().lifespan() != -1;
+      cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
+      cacheInfo.indexed = cacheConfiguration.indexing().enabled();
+      cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
+
+      // If the cache is ignored, status is IGNORED
+      if (ignoredCaches.contains(cacheName)) {
+         cacheInfo.status = "IGNORED";
+      } else {
+         if(cacheHealth != HealthStatus.FAILED) {
+            Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
+            cacheInfo.status = cache.getStatus().toString();
+         } else {
+            cacheInfo.status = ComponentStatus.FAILED.toString();
+         }
+      }
+
+      // if any of those are null, don't keep trying to retrieve the rebalancing status
+      if (finalLocalTopologyManager != null && finalClusterRebalancingEnabled != null) {
+         Boolean perCacheRebalancing = null;
+         if (finalClusterRebalancingEnabled) {
+            // if the global rebalancing is enabled, retrieve each cache status
+            try {
+               perCacheRebalancing = finalLocalTopologyManager.isCacheRebalancingEnabled(cacheName);
+            } catch (Exception ex) {
+               // There was an error retrieving this value. Just ignore
+            }
+         } else {
+            // set all to false. global disabled rebalancing disables all caches rebalancing
+            perCacheRebalancing = Boolean.FALSE;
+         }
+
+         cacheInfo.rebalancing_enabled = perCacheRebalancing;
+      }
+
+      return cacheInfo;
    }
 
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
@@ -545,16 +541,16 @@ public class ContainerResource implements ResourceHandler {
       return cacheManager.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
    }
 
-   private static String serializeConfig(Configuration cacheConfiguration, String name, MediaType mediaType) {
+   private String serializeConfig(Configuration cacheConfiguration, String name, MediaType mediaType) {
       StringWriter sw = new StringWriter();
       try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).build()) {
-         new ParserRegistry().serialize(writer, null, Collections.singletonMap(name, cacheConfiguration));
+         parserRegistry.serialize(writer, null, Collections.singletonMap(name, cacheConfiguration));
       }
       return sw.toString();
    }
 
    @Listener
-   public static class ConfigurationListener {
+   public class ConfigurationListener {
       final EmbeddedCacheManager cacheManager;
       final EventStream eventStream;
       final MediaType mediaType;

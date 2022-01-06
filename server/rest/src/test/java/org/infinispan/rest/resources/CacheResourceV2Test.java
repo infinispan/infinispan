@@ -1154,10 +1154,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       Closeable listen = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap("Accept", "text/plain"), sseListener);
       assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
       putTextEntryInCache("default", "AKey", "AValue");
-      assertEquals("cache-entry-created", sseListener.events.poll(10, TimeUnit.SECONDS));
-      assertEquals("AKey", sseListener.data.removeFirst());
+      sseListener.expectEvent("cache-entry-created", "AKey");
       removeTextEntryFromCache("default", "AKey");
-      assertEquals("cache-entry-removed", sseListener.events.poll(10, TimeUnit.SECONDS));
+      sseListener.expectEvent("cache-entry-removed", "AKey");
       listen.close();
    }
 
