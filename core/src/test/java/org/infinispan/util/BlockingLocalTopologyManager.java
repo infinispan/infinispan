@@ -170,6 +170,8 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public void stopBlocking() {
+      enabled = false;
+
       if (exception != null) {
          throw exception;
       }
@@ -177,7 +179,6 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
          log.error("Stopped blocking topology updates, but there are " + queuedTopologies.size() +
                       " blocked updates in the queue: " + queuedTopologies);
       }
-      enabled = false;
       log.debugf("Stopped blocking topology updates");
    }
 
@@ -211,7 +212,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    @Override
    protected final void beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
-      if (!expectedCacheName.equals(cacheName))
+      if (!enabled || !expectedCacheName.equals(cacheName))
          return;
 
       Event event = new Event(null, topologyId, -1, Type.CONFIRMATION);

@@ -28,6 +28,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.server.Server;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.Test;
@@ -60,6 +61,7 @@ public class ServerConfigurationSerializerTest {
    public void testConfigurationSerialization() throws IOException {
       Properties properties = new Properties();
       properties.put("infinispan.server.config.path", config.getParent().getParent().toString());
+      properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, Paths.get(System.getProperty("build.directory")).toString());
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       ConfigurationBuilderHolder holderBefore = registry.parse(config);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();

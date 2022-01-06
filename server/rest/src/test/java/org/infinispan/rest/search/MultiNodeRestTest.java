@@ -36,7 +36,6 @@ public abstract class MultiNodeRestTest extends MultipleCacheManagersTest {
       createClusteredCaches(getMembers(), GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), true);
 
       cacheManagers.forEach(cm -> {
-         getCacheConfigs().forEach((name, configBuilder) -> cm.defineConfiguration(name, configBuilder.build()));
          RestServerHelper restServer = new RestServerHelper(cm);
          restServer.start(TestResourceTracker.getCurrentTestShortName());
          restServers.add(restServer);
@@ -47,10 +46,14 @@ public abstract class MultiNodeRestTest extends MultipleCacheManagersTest {
 
       this.client = RestClient.forConfiguration(clientConfigurationBuilder.build());
 
-      cacheClients = getCacheConfigs().keySet().stream().collect(Collectors.toMap(Function.identity(), client::cache));
-
+      // Register the proto schema before starting the caches
       String protoFileContents = Util.getResourceAsString(getProtoFile(), getClass().getClassLoader());
       registerProtobuf(protoFileContents);
+
+      cacheManagers.forEach(cm -> {
+         getCacheConfigs().forEach((name, configBuilder) -> cm.createCache(name, configBuilder.build()));
+      });
+      cacheClients = getCacheConfigs().keySet().stream().collect(Collectors.toMap(Function.identity(), client::cache));
    }
 
    @AfterClass(alwaysRun = true)

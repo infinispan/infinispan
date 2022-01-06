@@ -62,7 +62,6 @@ import org.infinispan.server.core.BackupManager;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.function.SerializableFunction;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -135,21 +134,11 @@ public class CacheResource extends AbstractContainerResource {
                log.debugf("Restoring Cache %s: %s", cacheName, config.toXMLString(cacheName));
 
                String configXml = config.toXMLString(cacheName);
-               SerializableFunction<EmbeddedCacheManager, Void> createCacheFunction = m -> {
-                  GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
-
-                  log.debugf("Create cache %s locally. config=%s", cacheName, configXml);
-                  ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);
-                  Configuration configuration = cbh.getNamedConfigurationBuilders().get(cacheName).build(globalConfig);
-                  if (!m.getCacheConfigurationNames().contains(cacheName)) {
-                     m.defineConfiguration(cacheName, configuration);
-                  }
-                  m.getCache(cacheName);
-                  return null;
-               };
                ClusterExecutor executor = SecurityActions.getClusterExecutor(cm);
                final AtomicReference<Throwable> cause = new AtomicReference<>();
-               CompletableFuture<Void> remoteCall = executor.submitConsumer(createCacheFunction, (a, v, t) -> {
+               CompletableFuture<Void> remoteCall = executor.submitConsumer(
+                     m -> createCacheFunction(cacheName, configXml, m),
+                     (a, v, t) -> {
                   if (t != null) {
                      // Log failures for all nodes and return the first received failure
                      log.errorf("%s unable to create cache %s", a, cacheName);
@@ -219,6 +208,19 @@ public class CacheResource extends AbstractContainerResource {
          }, "restore-cache-" + cacheName));
       }
       return stages.freeze();
+   }
+
+   private static Void createCacheFunction(String cacheName, String configXml, EmbeddedCacheManager m) {
+      GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
+
+      log.debugf("Create cache %s locally. config=%s", cacheName, configXml);
+      ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);
+      Configuration configuration = cbh.getNamedConfigurationBuilders().get(cacheName).build(globalConfig);
+      if (!m.getCacheConfigurationNames().contains(cacheName)) {
+         m.defineConfiguration(cacheName, configuration);
+      }
+      m.getCache(cacheName);
+      return null;
    }
 
    private CompletionStage<Void> createCacheBackup(String cacheName) {

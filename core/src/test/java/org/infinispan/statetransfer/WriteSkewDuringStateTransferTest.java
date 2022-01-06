@@ -228,7 +228,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          @Override
          public void after(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             log.tracef("After: command=%s. origin=%s", command, context.getOrigin());
-            if (context.getOrigin().equals(address(cache(0)))) {
+            if (context.getOrigin().equals(address(0))) {
                newNode.commandLatch.countDown();
             }
          }
