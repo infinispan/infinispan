@@ -1,30 +1,32 @@
 package org.infinispan.health.impl;
 
-import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 
 class CacheHealthImpl implements CacheHealth {
 
-   private final Cache<?, ?> cache;
+   private final ComponentRegistry cr;
 
-   CacheHealthImpl(Cache<?, ?> cache) {
-      this.cache = cache;
+   CacheHealthImpl(ComponentRegistry cr) {
+      this.cr = cr;
    }
 
    @Override
    public String getCacheName() {
-      return cache.getName();
+      return cr.getCacheName();
    }
 
    @Override
    public HealthStatus getStatus() {
-      if (!isComponentHealthy() || cache.getAdvancedCache().getAvailability() == AvailabilityMode.DEGRADED_MODE) {
+      PartitionHandlingManager partitionHandlingManager = cr.getComponent(PartitionHandlingManager.class);
+      if (!isComponentHealthy() || partitionHandlingManager.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
          return HealthStatus.DEGRADED;
       }
-      DistributionManager distributionManager = SecurityActions.getDistributionManager(cache);
+      DistributionManager distributionManager = cr.getDistributionManager();
       if (distributionManager != null && distributionManager.isRehashInProgress()) {
          return HealthStatus.HEALTHY_REBALANCING;
       }
@@ -32,7 +34,7 @@ class CacheHealthImpl implements CacheHealth {
    }
 
    private boolean isComponentHealthy() {
-      switch (cache.getStatus()) {
+      switch (cr.getStatus()) {
          case INSTANTIATED:
          case RUNNING:
             return true;

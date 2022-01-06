@@ -68,6 +68,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       if (log.isTraceEnabled())
          log.trace("Starting EmbeddedClusteredLockManager");
 
+      cache = cacheManager.<ClusteredLockKey, ClusteredLockValue>getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME)
+            .getAdvancedCache()
+            .withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
       started = true;
    }
 
@@ -81,13 +84,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
    }
 
    private AdvancedCache<ClusteredLockKey, ClusteredLockValue> cache() {
-      if (!started) {
+      if (!started)
         throw new IllegalStateException("Component not running, cannot request the lock cache");
-      } else if (cache == null) {
-         cache = cacheManager.<ClusteredLockKey, ClusteredLockValue>getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME)
-               .getAdvancedCache()
-               .withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
-      }
+
       return cache;
    }
 

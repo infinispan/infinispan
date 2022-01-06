@@ -72,13 +72,6 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(
-         String host, int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(host, serverPort)
-                  .socketTimeout(1_000);
-   }
-
-   @Override
    protected SerializationContextInitializer contextInitializer() {
       return TestDomainSCI.INSTANCE;
    }

@@ -19,16 +19,16 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -65,6 +65,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
 
    private final EmbeddedCacheManager cacheManager;
+   private final GlobalComponentRegistry gcr;
    private final String cacheName;
    private final AvailabilityStrategy availabilityStrategy;
    private final ClusterTopologyManagerImpl clusterTopologyManager;
@@ -99,13 +100,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private ComponentStatus status;
    private final ConditionFuture<ClusterCacheStatus> hasInitialTopologyFuture;
 
-   public ClusterCacheStatus(EmbeddedCacheManager cacheManager, String cacheName,
+   public ClusterCacheStatus(EmbeddedCacheManager cacheManager, GlobalComponentRegistry gcr, String cacheName,
                              AvailabilityStrategy availabilityStrategy,
                              RebalanceType rebalanceType, ClusterTopologyManagerImpl clusterTopologyManager,
                              Transport transport,
                              PersistentUUIDManager persistentUUIDManager, EventLogManager eventLogManager,
                              Optional<ScopedPersistentState> state, boolean resolveConflictsOnMerge) {
       this.cacheManager = cacheManager;
+      this.gcr = gcr;
       this.cacheName = cacheName;
       this.availabilityStrategy = availabilityStrategy;
       this.clusterTopologyManager = clusterTopologyManager;
@@ -1112,8 +1114,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       volatile Set<Address> preferredNodes;
 
       ConflictResolution() {
-         AdvancedCache<?, ?> cache = cacheManager.getCache(cacheName).getAdvancedCache();
-         this.manager = (InternalConflictManager) ConflictManagerFactory.get(cache);
+         ComponentRegistry componentRegistry = gcr.getNamedComponentRegistry(cacheName);
+         this.manager = componentRegistry.getComponent(InternalConflictManager.class);
       }
 
       synchronized CompletableFuture<Void> queue(CacheTopology topology, Set<Address> preferredNodes) {

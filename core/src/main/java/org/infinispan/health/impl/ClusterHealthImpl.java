@@ -7,9 +7,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.HealthStatus;
@@ -20,10 +21,12 @@ class ClusterHealthImpl implements ClusterHealth {
 
    private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
+   private GlobalComponentRegistry gcr;
 
    ClusterHealthImpl(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
       this.internalCacheRegistry = internalCacheRegistry;
+      gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
    }
 
    @Override
@@ -38,8 +41,14 @@ class ClusterHealthImpl implements ClusterHealth {
 
    private CacheHealth getCacheHealth(String cacheName) {
       try {
-         Cache<?, ?> cache = cacheManager.getCache(cacheName, false);
-         return cache != null ? new CacheHealthImpl(cache) : null;
+         if (!cacheManager.cacheExists(cacheName))
+            return null;
+
+         ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
+         if (cr == null)
+            return new InvalidCacheHealth(cacheName);
+
+         return new CacheHealthImpl(cr);
       } catch (CacheException cacheException) {
          return new InvalidCacheHealth(cacheName);
       }

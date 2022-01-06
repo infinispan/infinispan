@@ -95,12 +95,14 @@ public class RestCacheManager<V> {
    }
 
    private void checkCacheAvailable(String cacheName) {
-      if (!instance.getCacheNames().contains(cacheName))
+      if (!instance.isRunning(cacheName)) {
          throw logger.cacheNotFound(cacheName);
-      if (icr.isPrivateCache(cacheName)) {
-         throw logger.requestNotAllowedToInternalCaches(cacheName);
-      } else if (!allowInternalCacheAccess && icr.isInternalCache(cacheName) && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
-         throw logger.requestNotAllowedToInternalCachesWithoutAuthz(cacheName);
+      } else if (icr.isInternalCache(cacheName)) {
+         if (icr.isPrivateCache(cacheName)) {
+            throw logger.requestNotAllowedToInternalCaches(cacheName);
+         } else if (!allowInternalCacheAccess && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
+            throw logger.requestNotAllowedToInternalCachesWithoutAuthz(cacheName);
+         }
       }
    }
 
@@ -197,11 +199,15 @@ public class RestCacheManager<V> {
       }
    }
 
+   public void resetCacheInfo(String cacheName) {
+      knownCaches.remove(cacheName);
+   }
+
    @Listener
    class RemoveCacheListener {
       @CacheStopped
       public void cacheStopped(CacheStoppedEvent event) {
-         knownCaches.remove(event.getCacheName());
+         resetCacheInfo(event.getCacheName());
       }
    }
 

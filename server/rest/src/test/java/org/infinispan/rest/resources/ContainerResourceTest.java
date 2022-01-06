@@ -329,33 +329,23 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 
          // Assert that all of the existing caches and templates have a corresponding event
-         assertEquals("create-template", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("template"));
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("___protobuf_metadata"));
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("cache2"));
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("invalid"));
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("cache1"));
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("defaultcache"));
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("___script_cache"));
+         sseListener.expectEvent("create-template", "template");
+         sseListener.expectEvent("create-cache", "___protobuf_metadata");
+         sseListener.expectEvent("create-cache", "cache2");
+         sseListener.expectEvent("create-cache", "invalid");
+         sseListener.expectEvent("create-cache", "cache1");
+         sseListener.expectEvent("create-cache", "defaultcache");
+         sseListener.expectEvent("create-cache", "___script_cache");
 
          // Assert that new cache creations create an event
          createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}", "listen1");
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("text/plain"));
+         sseListener.expectEvent("create-cache", "text/plain");
          createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"application/octet-stream\"}}}", "listen2");
-         assertEquals("create-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         AssertJUnit.assertTrue(sseListener.data.removeFirst().contains("application/octet-stream"));
+         sseListener.expectEvent("create-cache", "application/octet-stream");
 
          // Assert that deletions create an event
          assertThat(client.cache("listen1").delete()).isOk();
-         assertEquals("remove-cache", sseListener.events.poll(10, TimeUnit.SECONDS));
-         assertEquals("listen1", sseListener.data.removeFirst());
+         sseListener.expectEvent("remove-cache", "listen1");
       }
    }
 

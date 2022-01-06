@@ -144,10 +144,9 @@ public class ServerResource implements ResourceHandler {
       }
       ServerManagement server = invocationHelper.getServer();
       ServerStateManager ignoreManager = server.getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
-            add ? ignoreManager.ignoreCache(cacheName).thenApply(r -> builder.build()) :
-                  ignoreManager.unignoreCache(cacheName).thenApply(r -> builder.build())
-      );
+      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<Void>>) () ->
+                           add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
+                     .thenApply(r -> builder.build());
    }
 
    private CompletionStage<RestResponse> listIgnored(RestRequest restRequest) {
