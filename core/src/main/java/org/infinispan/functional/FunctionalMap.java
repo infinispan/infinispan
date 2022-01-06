@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -93,6 +94,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
    default boolean isEncoded() {
       return false;
    }
+
+   Cache<K, V> cache();
 
    /**
     * Exposes read-only operations that can be executed against the functional map.

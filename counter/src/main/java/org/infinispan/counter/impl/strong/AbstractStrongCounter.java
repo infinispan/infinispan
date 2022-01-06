@@ -68,10 +68,10 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       this.notificationManager = notificationManager;
       FunctionalMapImpl<StrongCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
             .withParams(getPersistenceMode(configuration.storage()));
-      this.key = new StrongCounterKey(counterName);
-      this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
-      this.weakCounter = null;
+      key = new StrongCounterKey(counterName);
+      readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
+      weakCounter = null;
       this.configuration = configuration;
    }
 
@@ -112,6 +112,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
 
    @Override
    public final <T extends CounterListener> Handle<T> addListener(T listener) {
+      notificationManager.registerCounterValueListener(readWriteMap.cache());
       return notificationManager.registerUserListener(key.getCounterName(), listener);
    }
 
