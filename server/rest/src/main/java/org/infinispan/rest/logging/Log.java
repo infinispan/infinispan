@@ -2,7 +2,6 @@ package org.infinispan.rest.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
-import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -37,9 +36,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unsupported configuration option", id = 12004)
    UnsupportedOperationException unsupportedConfigurationOption();
 
-   @LogMessage(level = TRACE)
+   @LogMessage(level = ERROR)
    @Message(value = "An error occurred while responding to the client", id = 12005)
-   void errorWhileResponding(@Cause Exception e);
+   void errorWhileResponding(@Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Uncaught exception in the pipeline", id = 12006)

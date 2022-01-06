@@ -21,6 +21,7 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.utils.ManageableThreadPoolExecutorService;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -42,6 +43,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private ServerStateManager serverStateManager;
    private ObjectName transportObjName;
    private CacheManagerJmxRegistration jmxRegistration;
+   private BlockingManager blockingManager;
    private ExecutorService executor;
    private ManageableThreadPoolExecutorService manageableThreadPoolExecutorService;
    private ObjectName executorObjName;
@@ -109,6 +111,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       }
       bcr.replaceComponent(getQualifiedName(), this, false);
 
+      blockingManager = bcr.getComponent(BlockingManager.class).running();
       executor = bcr.getComponent(KnownComponentNames.BLOCKING_EXECUTOR, ExecutorService.class).running();
       manageableThreadPoolExecutorService = new ManageableThreadPoolExecutorService(executor);
 
@@ -141,6 +144,10 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       }
 
       registerMetrics();
+   }
+
+   public BlockingManager getBlockingManager() {
+      return blockingManager;
    }
 
    public ExecutorService getExecutor() {

@@ -108,6 +108,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private static final int STREAM_BATCH_SIZE = 1000;
    private static final String MIGRATOR_NAME = "hotrod";
 
+   private ParserRegistry parserRegistry = new ParserRegistry();
+
    public CacheResourceV2(InvocationHelper invocationHelper) {
       super(invocationHelper);
    }
@@ -632,11 +634,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          return notFoundResponseFuture();
 
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
-      ParserRegistry registry = new ParserRegistry();
 
       ByteArrayOutputStream entity = new ByteArrayOutputStream();
       try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(false).build()) {
-         registry.serialize(writer, cacheName, cacheConfiguration);
+         parserRegistry.serialize(writer, cacheName, cacheConfiguration);
       } catch (Exception e) {
          return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).entity(Util.getRootCause(e)).build());
       }
@@ -647,6 +648,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> getCacheAvailability(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       // Use EmbeddedCacheManager directly to allow internal caches to be updated
+      if (!invocationHelper.getRestCacheManager().getInstance().isRunning(cacheName))
+         return notFoundResponseFuture();
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getInstance().getCache(cacheName).getAdvancedCache();
       if (cache == null) {
          return notFoundResponseFuture();
@@ -665,6 +668,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
       String availability = request.getParameter("availability");
       // Use EmbeddedCacheManager directly to allow internal caches to be updated
+      if (!invocationHelper.getRestCacheManager().getInstance().isRunning(cacheName))
+         return notFoundResponseFuture();
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getInstance().getCache(cacheName).getAdvancedCache();
       if (cache == null) {
          return notFoundResponseFuture();

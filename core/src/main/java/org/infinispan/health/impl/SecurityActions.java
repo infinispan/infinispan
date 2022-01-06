@@ -5,10 +5,12 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 final class SecurityActions {
 
@@ -29,4 +31,7 @@ final class SecurityActions {
       return doPrivileged(new GetCacheAction(cacheManager, cacheName));
    }
 
+   static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
+   }
 }

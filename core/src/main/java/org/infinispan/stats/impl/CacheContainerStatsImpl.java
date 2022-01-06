@@ -634,7 +634,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
       List<Stats> stats = new ArrayList<>();
       for (String cn : cm.getCacheNames()) {
-         if (cm.cacheExists(cn)) {
+         if (cm.isRunning(cn)) {
             AdvancedCache<?, ?> cache = getCache(cn);
             if (cache != null) {
                Configuration cfg = cache.getCacheConfiguration();
