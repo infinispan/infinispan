@@ -191,6 +191,14 @@ public class PublisherHandler {
       public int getSegment() {
          return segment;
       }
+
+      @Override
+      public String toString() {
+         return "SegmentResult{" +
+               "segment=" + segment +
+               ", entryCount=" + entryCount +
+               '}';
+      }
    }
 
    /**
