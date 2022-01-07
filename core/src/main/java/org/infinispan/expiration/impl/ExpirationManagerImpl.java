@@ -150,12 +150,6 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    }
 
    @Override
-   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
-      // Just invoke the new method and join
-      entryExpiredInMemory(entry, currentTime, false).join();
-   }
-
-   @Override
    public CompletionStage<Void> handleInStoreExpirationInternal(K key) {
       // Note since this is invoked without the actual key lock it is entirely possible for a remove to occur
       // concurrently before the data container lock is acquired and then the oldEntry below will be null causing an

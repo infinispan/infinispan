@@ -10,7 +10,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Interface describing the internal operations for the the ExpirationManager.
@@ -46,23 +45,13 @@ public interface InternalExpirationManager<K, V> extends ExpirationManager<K, V>
     */
    CompletionStage<Void> handleInStoreExpirationInternal(K key);
 
-   @Override
-   default void handleInStoreExpiration(K key) {
-      CompletionStages.join(handleInStoreExpirationInternal(key));
-   }
-
    /**
-    * This is to be invoked when a store entry expires and the value and/or metadata is available to be used.  This
-    * method is preferred over {@link ExpirationManager#handleInStoreExpiration(Object)} as it allows for more
-    * specific expiration to possibly occur.
+    * This is to be invoked when a store entry expires and the value and/or metadata is available to be used.
+    *
     * @param marshalledEntry the entry that can be unmarshalled as needed
     * This method will be renamed to handleInStoreExpiration when the method can be removed from {@link ExpirationManager}
     */
    CompletionStage<Void> handleInStoreExpirationInternal(MarshallableEntry<K, V> marshalledEntry);
-
-   default void handleInStoreExpiration(MarshallableEntry<K, V> marshalledEntry) {
-      CompletionStages.join(handleInStoreExpirationInternal(marshalledEntry));
-   }
 
    /**
     * Handles processing for an entry that may be expired. This will remove the entry if it is expired, otherwise may
