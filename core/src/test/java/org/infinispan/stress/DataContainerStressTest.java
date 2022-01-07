@@ -79,39 +79,35 @@ public class DataContainerStressTest {
       TestingUtil.inject(dc, (EvictionManager) (evicted, cmd) -> CompletableFutures.completedNull(),
                          new PassivationManagerStub(), entryFactory, new ActivationManagerStub(), null, timeService,
                          null, new InternalExpirationManager() {
-                 @Override
-                 public void processExpiration() {
+               @Override
+               public void processExpiration() {
 
-                 }
-
-                 @Override
-                 public boolean isEnabled() {
-                    return false;
-                 }
-
-                 @Override
-                 public void handleInMemoryExpiration(InternalCacheEntry entry, long currentTime) {
-
-                 }
-
-                 @Override
-                 public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry entry, long currentTime,
-                       boolean writeOperation) {
-                    return null;
-                 }
+               }
 
                @Override
-                 public CompletionStage<Void> handleInStoreExpirationInternal(Object key) {
-                    return null;
-                 }
-
-                 @Override
-                 public CompletionStage<Void> handleInStoreExpirationInternal(MarshallableEntry marshalledEntry) {
-                    return null;
-                 }
+               public boolean isEnabled() {
+                  return false;
+               }
 
                @Override
-               public CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry entry, int segment, boolean isWrite) {
+               public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry entry, long currentTime,
+                                                                      boolean writeOperation) {
+                  return null;
+               }
+
+               @Override
+               public CompletionStage<Void> handleInStoreExpirationInternal(Object key) {
+                  return null;
+               }
+
+               @Override
+               public CompletionStage<Void> handleInStoreExpirationInternal(MarshallableEntry marshalledEntry) {
+                  return null;
+               }
+
+               @Override
+               public CompletionStage<Boolean> handlePossibleExpiration(InternalCacheEntry entry, int segment,
+                                                                        boolean isWrite) {
                   return null;
                }
 
