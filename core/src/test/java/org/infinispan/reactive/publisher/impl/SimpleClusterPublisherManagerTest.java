@@ -1,10 +1,14 @@
 package org.infinispan.reactive.publisher.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,6 +19,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -32,10 +37,12 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.MarshallableFunctions;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
+import org.infinispan.util.function.SerializableBinaryOperator;
 import org.infinispan.util.function.SerializableFunction;
 import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
@@ -64,7 +71,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    }
 
    private Map<Integer, String> insert(Cache<Integer, String> cache) {
-      int amount = 24;
+      int amount = 12;
       Map<Integer, String> values = new HashMap<>(amount);
 
       Map<Integer, IntSet> keysBySegment = log.isTraceEnabled() ? new HashMap<>() : null;
@@ -177,6 +184,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    public void testCountEmptyKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
       Cache<Integer, String> cache = cache(0);
       int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
 
       // This empty set filters everything, but the computation must still complete
       Set<Integer> keysToInclude = new HashSet<>();
@@ -184,17 +192,149 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
       Long actualCount = stageCount.toCompletableFuture().join();
       int expected = 0;
-      assertTrue(insertAmount > 0);
       assertEquals(expected, actualCount.intValue());
+   }
+
+   @Test(dataProvider = "GuaranteeParallelEntry")
+   public void testReduceTransformerOnlyIdentityEntriesFiltered(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
+
+      // The identity element must still be returned, even if only the transformer (but not the finalizer) function takes care of it
+      ClusterPublisherManager<Integer, String> cpm = cpm(cache);
+      int identity = 0;
+      SerializableBinaryOperator<Integer> binOp = Integer::sum;
+      CompletionStage<?> stage;
+      if (isEntry) {
+         stage = cpm.entryReduction(parallel, null, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+               (SerializableFunction<Publisher<CacheEntry<Integer, String>>, CompletionStage<Integer>>) iPublisher -> Flowable.fromPublisher(iPublisher)
+                     .filter(ce -> false)
+                     .map(RxJavaInterop.entryToKeyFunction())
+                     .reduce(identity, binOp::apply)
+                     .toCompletionStage(), PublisherReducers.reduce(binOp));
+      } else {
+         stage = cpm.keyReduction(parallel, null, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+               (SerializableFunction<Publisher<Integer>, CompletionStage<Integer>>) iPublisher -> Flowable.fromPublisher(iPublisher)
+                     .filter(ce -> false)
+                     .reduce(identity, binOp::apply)
+                     .toCompletionStage(), PublisherReducers.reduce(binOp));
+      }
+
+      Object actual = stage.toCompletableFuture().join();
+      Object expected = identity;
+      assertSame(expected, actual);
+   }
+
+   @Test(dataProvider = "GuaranteeParallelEntry")
+   public void testReduceWithoutIdentityEmptyKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
+
+      // This empty set filters everything, but the computation must still complete
+      Set<Integer> keysToInclude = new HashSet<>();
+
+      // Using a reduce function without explicit identity tests the special case where completion-stages terminate with null
+      ClusterPublisherManager<Integer, String> cpm = cpm(cache);
+      CompletionStage<?> stage;
+      if (isEntry) {
+         Function<Publisher<CacheEntry<Integer, String>>, CompletionStage<CacheEntry<Integer, String>>> function =
+               PublisherReducers.reduce((SerializableBinaryOperator<CacheEntry<Integer, String>>) (e1, e2) -> e1); // reduce without identity
+         stage = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+               function, function);
+      } else {
+         Function<Publisher<Integer>, CompletionStage<Integer>> function =
+               PublisherReducers.reduce((SerializableBinaryOperator<Integer>) (k1, k2) -> k1); // reduce without identity
+         stage = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+               function, function);
+      }
+
+      Object result = stage.toCompletableFuture().join();
+      assertNull(result);
+   }
+
+   @Test(dataProvider = "GuaranteeParallelEntry")
+   public void testReduceTransformerOnlyIdentityEmptyKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
+
+      // This empty set filters everything, but the computation must still complete
+      Set<Integer> keysToInclude = Collections.emptySet();
+
+      // The identity element must still be returned, even if only the transformer (but not the finalizer) function takes care of it
+      ClusterPublisherManager<Integer, String> cpm = cpm(cache);
+      Object identity;
+      CompletionStage<?> stage;
+      if (isEntry) {
+         SerializableBinaryOperator<CacheEntry<Integer, String>> binOp = (e1, e2) -> e1;
+         identity = NullCacheEntry.getInstance();
+         stage = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+               PublisherReducers.reduce((CacheEntry<Integer, String>) identity, binOp), PublisherReducers.reduce(binOp));
+      } else {
+         SerializableBinaryOperator<Integer> binOp = (k1, k2) -> k1;
+         identity = 0;
+         stage = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+               PublisherReducers.reduce((Integer) identity, binOp), PublisherReducers.reduce(binOp));
+      }
+
+      Object actual = stage.toCompletableFuture().join();
+      Object expected = identity;
+      assertSame(expected, actual);
+   }
+
+   @Test(dataProvider = "GuaranteeEntry")
+   public void testPublisherEmptyKeys(DeliveryGuarantee deliveryGuarantee, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
+
+      performPublisherOperation(deliveryGuarantee, isEntry, null, Collections.emptySet(), null, Collections.emptyMap());
+   }
+
+   @Test(dataProvider = "GuaranteeEntry")
+   public void testPublisherWithReduce(DeliveryGuarantee deliveryGuarantee, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
+
+      SegmentPublisherSupplier<Integer> publisher;
+      if (isEntry) {
+         publisher = cpm(cache).entryPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
+               deliveryGuarantee, 10, (SerializableFunction<Publisher<CacheEntry<Integer, String>>, Publisher<Integer>>) p -> Flowable.fromPublisher(p)
+                     .map(RxJavaInterop.entryToKeyFunction())
+                     .reduce(0, Integer::sum).toFlowable());
+      } else {
+         publisher = cpm(cache).keyPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
+               deliveryGuarantee, 10, (SerializableFunction<Publisher<Integer>, Publisher<Integer>>) p -> Flowable.fromPublisher(p)
+                     .reduce(0, Integer::sum).toFlowable());
+      }
+
+      List<Integer> results = Flowable.fromPublisher(publisher.publisherWithoutSegments())
+            .toList(1)
+            .blockingGet();
+
+      // We should have gotten a value at least...
+      assertTrue(results.size() > 0);
+
+      int total = 0;
+      for (int value : results) {
+         total += value;
+         if (total < 0) {
+            fail("Integer overflowed with: " + results);
+         }
+      }
+      assertEquals(insertAmount * (insertAmount - 1) / 2, total);
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
@@ -300,7 +440,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    public Object[][] guaranteesEntryType() {
       return Arrays.stream(DeliveryGuarantee.values())
             .flatMap(dg -> Stream.of(Boolean.TRUE, Boolean.FALSE)
-                        .map(entry -> new Object[]{dg, entry}))
+                  .map(entry -> new Object[]{dg, entry}))
             .toArray(Object[][]::new);
    }
 
@@ -324,7 +464,9 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       }
 
       int expectedSize = expectedValues.size();
-      List<?> results = Flowable.fromPublisher(publisher.publisherWithoutSegments()).toList(expectedSize).blockingGet();
+      List<?> results = Flowable.fromPublisher(publisher.publisherWithoutSegments())
+            .toList(Math.max(expectedSize, 1))
+            .blockingGet();
       if (expectedSize != results.size()) {
          log.fatal("SIZE MISMATCH expected: " + expectedValues + " was: " + results);
       }

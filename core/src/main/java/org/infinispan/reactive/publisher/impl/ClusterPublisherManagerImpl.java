@@ -217,22 +217,22 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       localStage.whenComplete(biConsumer);
    }
 
-   private <I, R> void handleEmptyInvocation(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
-         BiConsumer<PublisherResult<R>, Throwable> biConsumer) {
-      CompletionStage<PublisherResult<R>> emptyStage = transformer.apply(Flowable.empty())
-            .thenApply(LocalPublisherManagerImpl.ignoreSegmentsFunction());
-
-      if (log.isTraceEnabled()) {
-         emptyStage = emptyStage.whenComplete((results, t) -> {
-            if (t != null) {
-               log.tracef(t, "Received exception while processing empty invocation");
-            } else {
-               log.tracef("Result was: %s for empty invocation", results.getResult());
+   // Finalizer isn't require as the FlowableProcessor already has that configured upstream
+   private <I, R> void handleNoTargets(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+         FlowableProcessor<R> flowableProcessor) {
+      // Need to do this in case if the transformer or finalizer has additional values such as reduce with identity
+      // or switchIfEmpty etc.
+      CompletionStage<R> transformedStage = transformer.apply(Flowable.empty());
+      transformedStage.whenComplete((value, t) -> {
+         if (t != null) {
+            flowableProcessor.onError(t);
+         } else {
+            if (value != null) {
+               flowableProcessor.onNext(value);
             }
-         });
-      }
-
-      emptyStage.whenComplete(biConsumer);
+            flowableProcessor.onComplete();
+         }
+      });
    }
 
    private <I, R> void startKeyPublisher(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude, InvocationContext ctx,
@@ -245,12 +245,19 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       // This excludes the keys from the various address targets
       Map<Address, Set<K>> keyTargets = determineKeyTargets(topology, keysToInclude, localAddress, segments, ctx);
 
+      int keyTargetSize = keyTargets.size();
+
+      if (keyTargetSize == 0) {
+         handleNoTargets(transformer, flowableProcessor);
+         return;
+      }
+
       AtomicInteger parallelCount;
       boolean useContext = ctx != null && ctx.lookedUpEntriesCount() > 0;
       if (useContext) {
-         parallelCount = new AtomicInteger(keyTargets.size() + 1);
+         parallelCount = new AtomicInteger(keyTargetSize + 1);
       } else {
-         parallelCount = new AtomicInteger(keyTargets.size());
+         parallelCount = new AtomicInteger(keyTargetSize);
       }
 
       // This way we only have to allocate 1 per request chain
@@ -258,14 +265,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             parallelCount, topology.getTopologyId(), parallelPublisher, explicitFlags, deliveryGuarantee,
             composedType, transformer, finalizer);
 
-      // If there is nothing todo we must complete empty to prevent blocking
-      if (parallelCount.get() == 0) {
-         handleEmptyInvocation(transformer, biConsumer);
-         return;
-      }
-
       Set<K> localKeys = keyTargets.remove(localAddress);
-
       // If any targets left, they are all remote
       if (!keyTargets.isEmpty()) {
          // We submit the remote ones first as they will not block at all, just to send remote tasks
@@ -315,16 +315,23 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       Address localAddress = topology.getLocalAddress();
       Map<Address, IntSet> targets = determineSegmentTargets(topology, segments, localAddress);
 
+      int targetSize = targets.size();
+
+      if (targetSize == 0) {
+         handleNoTargets(transformer, flowableProcessor);
+         return;
+      }
+
       // used to determine that last parallel completion, to either complete or retry
       AtomicInteger parallelCount;
       boolean useContext = ctx != null && ctx.lookedUpEntriesCount() > 0;
       Map<Address, Set<K>> keysToExcludeByAddress;
       if (useContext) {
-         parallelCount = new AtomicInteger(targets.size() + 1);
+         parallelCount = new AtomicInteger(targetSize + 1);
          keysToExcludeByAddress = determineKeyTargets(topology, (Set<K>) ctx.getLookedUpEntries().keySet(), localAddress,
                segments, null);
       } else {
-         parallelCount = new AtomicInteger(targets.size());
+         parallelCount = new AtomicInteger(targetSize);
          keysToExcludeByAddress = Collections.emptyMap();
       }
 
@@ -332,12 +339,6 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       BiConsumer<PublisherResult<R>, Throwable> biConsumer = new SegmentSpecificConsumer<>(flowableProcessor,
             parallelCount, topology.getTopologyId(), parallelPublisher, ctx, explicitFlags, deliveryGuarantee,
             composedType, transformer, finalizer);
-
-      // If there is nothing todo we must complete empty to prevent blocking
-      if (parallelCount.get() == 0) {
-         handleEmptyInvocation(transformer, biConsumer);
-         return;
-      }
 
       IntSet localSegments = targets.remove(localAddress);
 
@@ -424,8 +425,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          } else {
             handleResult(resultCollector);
 
-            // There was nothing todo or we were the last one, so we have to complete or resubmit
-            if (parallelCount.get() == 0 || parallelCount.decrementAndGet() == 0) {
+            // We were the last one to complete if zero, so we have to complete or resubmit
+            if (parallelCount.decrementAndGet() == 0) {
                onCompletion();
             }
          }
@@ -507,8 +508,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          } else {
             handleResult(resultCollector);
 
-            // There was nothing todo or we were the last one, so we have to complete or resubmit
-            if (parallelCount.get() == 0 || parallelCount.decrementAndGet() == 0) {
+            // We were the last one to complete if zero, so we have to complete
+            if (parallelCount.decrementAndGet() == 0) {
                onCompletion();
             }
          }
@@ -834,7 +835,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                                                        InvocationContext invocationContext, long explicitFlags,
                                                        DeliveryGuarantee deliveryGuarantee, int batchSize,
                                                        Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
-      if (keysToInclude != null && !keysToInclude.isEmpty()) {
+      if (keysToInclude != null) {
          return new KeyAwarePublisherImpl<>(keysToInclude, keyComposedType(), segments, invocationContext,
                                             explicitFlags, deliveryGuarantee, batchSize, transformer);
       }
@@ -848,7 +849,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                                                          DeliveryGuarantee deliveryGuarantee, int batchSize,
                                                          Function<? super Publisher<CacheEntry<K, V>>, ?
                                                                extends Publisher<R>> transformer) {
-      if (keysToInclude != null && !keysToInclude.isEmpty()) {
+      if (keysToInclude != null) {
          return new KeyAwarePublisherImpl<>(keysToInclude, entryComposedType(), segments, invocationContext,
                                             explicitFlags, deliveryGuarantee, batchSize, transformer);
       }
