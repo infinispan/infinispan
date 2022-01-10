@@ -1,0 +1,52 @@
+{
+  "security": {
+    "security-realms": [
+      {
+        "name": "trust-store-realm",
+        "server-identities": {
+          "ssl": {
+            "keystore": {
+              "path": "server.p12",
+              "relative-to": "infinispan.server.config.path",
+              "keystore-password": "secret",
+              "alias": "server"
+            },
+            "truststore": {
+              "path": "trust.p12",
+              "relative-to": "infinispan.server.config.path",
+              "password": "secret"
+            }
+          }
+        },
+        "truststore-realm": {}
+      }
+    ]
+  },
+  "endpoints": [
+    {
+      "socket-binding": "default",
+      "security-realm": "trust-store-realm",
+      "require-ssl-client-auth": "true",
+      "connectors": {
+        "hotrod": {
+          "hotrod-connector": {
+            "authentication": {
+              "sasl": {
+                "mechanisms": "EXTERNAL",
+                "server-name": "infinispan",
+                "qop": "auth"
+              }
+            }
+          },
+          "rest": {
+            "rest-connector": {
+              "authentication": {
+                "mechanisms": "CLIENT_CERT"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

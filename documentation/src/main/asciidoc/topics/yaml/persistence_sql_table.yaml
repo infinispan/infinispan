@@ -1,10 +1,10 @@
-distributed-cache:
+distributedCache:
   persistence:
-    table-jdbc-store:
+    tableJdbcStore:
       dialect: "H2"
       shared: "true"
-      table-name: "authors"
+      tableName: "authors"
       schema:
-        message-name: "Author"
+        messageName: "Author"
         package: "library"
-        embedded-key: "true"
+        embeddedKey: "true"

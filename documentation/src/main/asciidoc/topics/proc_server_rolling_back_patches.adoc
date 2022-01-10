@@ -1,5 +1,6 @@
-[id='patching_rollback-{context}']
-= Rolling Back Server Patches
+[id='rolling-back-server-patches_{context}']
+= Rolling back patches
+
 Remove patches from {brandname} Server by rolling them back and restoring the previous {brandname} version.
 
 [IMPORTANT]

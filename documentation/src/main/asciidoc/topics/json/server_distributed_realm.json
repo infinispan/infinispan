@@ -1,0 +1,37 @@
+{
+  "security" : {
+    "security-realms" : [ {
+      "name" : "distributed-realm",
+      "ldap-realm" : {
+        "principal" : "uid=admin,ou=People,dc=infinispan,dc=org",
+        "url" : "ldap://my-ldap-server:10389",
+        "credential" : "strongPassword",
+        "identity-mapping" : {
+          "rdn-identifier" : "uid",
+          "search-dn" : "ou=People,dc=infinispan,dc=org",
+          "search-recursive" : false,
+          "attribute-mapping" : {
+            "attribute" : {
+              "filter" : "(&(objectClass=groupOfNames)(member={1}))",
+              "filter-dn" : "ou=Roles,dc=infinispan,dc=org",
+              "from" : "cn",
+              "to" : "Roles"
+            }
+          }
+        }
+      },
+      "properties-realm" : {
+        "groups-attribute" : "Roles",
+        "user-properties" : {
+          "digest-realm-name" : "distributed-realm",
+          "path" : "users.properties"
+        },
+        "group-properties" : {
+          "path" : "groups.properties"
+        }
+      },
+      "distributed-realm" : {
+      }
+    } ]
+  }
+}

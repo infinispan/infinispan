@@ -1,6 +1,7 @@
-[id='enabling_json_logging-{context}']
-= Enabling and Configuring the JSON Log Handler
-{brandname} provides a JSON log handler to write messages in JSON format.
+[id='enabling-json-logging_{context}']
+= Enabling the JSON log handler
+
+{brandname} Server provides a log handler to write messages in JSON format.
 
 .Prerequisites
 
@@ -26,6 +27,5 @@ When you start {brandname}, it writes each log message as a JSON map in the foll
 
 [role="_additional-resources"]
 .Additional resources
-
 * link:https://logging.apache.org/log4j/2.x/manual/appenders.html#RollingFileAppender[RollingFileAppender]
 * link:https://logging.apache.org/log4j/2.x/manual/layouts.html#JSONLayout[ JSONLayout]

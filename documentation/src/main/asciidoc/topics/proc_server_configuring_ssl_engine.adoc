@@ -1,9 +1,11 @@
 [id='configuring-ssl-engine_{context}']
 = Configuring TLS versions and cipher suites
+
 When using SSL/TLS encryption to secure your deployment, you can configure {brandname} Server to use specific versions of the TLS protocol as well as specific cipher suites within the protocol.
 
 .Procedure
 
+. Open your {brandname} Server configuration for editing.
 . Add the `engine` element to the SSL configuration for {brandname} Server.
 . Configure {brandname} to use one or more TLS versions with the `enabled-protocols` attribute.
 +
@@ -26,9 +28,25 @@ Omitting the `enabled-protocols` attribute allows any TLS version.
 . Configure {brandname} to use one or more cipher suites with the `enabled-ciphersuites` attribute.
 +
 You must ensure that you set a cipher suite that supports any protocol features you plan to use; for example `HTTP/2 ALPN`.
+. Save the changes to your configuration.
 
-.SSL engine configuration
+[discrete]
+== SSL engine configuration
+
+.XML
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_ssl_identity_engine.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/server_ssl_identity_engine.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/server_ssl_identity_engine.yaml[]
 ----

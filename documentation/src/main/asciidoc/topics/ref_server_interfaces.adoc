@@ -4,67 +4,128 @@
 {brandname} Server multiplexes endpoints to a single TCP/IP port and automatically detects protocols of inbound client requests.
 You can configure how {brandname} Server binds to network interfaces to listen for client requests.
 
-.Internet Protocol (IP) address
+[discrete]
+== Internet Protocol (IP) address
+
+.XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_network_default.xml[]
 ----
 
-.Loopback address
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_network_default.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_network_default.yaml[]
+----
+
+[discrete]
+== Loopback address
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_network_loopback.xml[]
 ----
 
-.Non-loopback address
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_network_loopback.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_network_loopback.yaml[]
+----
+
+[discrete]
+== Non-loopback address
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_network_nonloopback.xml[]
 ----
 
-.Any address
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_network_nonloopback.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_network_nonloopback.yaml[]
+----
+
+[discrete]
+== Any address
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_network_anyaddress.xml[]
 ----
 
-.Link local
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_network_anyaddress.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_network_anyaddress.yaml[]
+----
+
+[discrete]
+== Link local
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_network_linklocal.xml[]
 ----
 
-.Site local
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_network_linklocal.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_network_linklocal.yaml[]
+----
+
+[discrete]
+== Site local
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_network_sitelocal.xml[]
 ----
 
-[discrete]
-== Match and fallback strategies
-
-{brandname} Server can enumerate all network interfaces on the host system and bind to an interface, host, or IP address that matches a value, which can include regular expressions for additional flexibility.
-
-.Match host
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::xml/server_network_matchhost.xml[]
+include::json/server_network_sitelocal.json[]
 ----
 
-.Match interface
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::xml/server_network_matchinterface.xml[]
-----
-
-.Match address
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
-----
-include::xml/server_network_matchaddress.xml[]
-----
-
-.Fallback
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
-----
-include::xml/server_network_fallback.xml[]
+include::yaml/server_network_sitelocal.yaml[]
 ----

@@ -1,9 +1,8 @@
 [id='endpoint-ip-address-filters_{context}']
-= {brandname} Server endpoint IP address filters
+= Endpoint IP address filtering rules
 
-{brandname} endpoints and connectors can specify one or more IP filtering rules.
-These rules specify the type of action to take when a client which matches a supplied CIDR block connects.
-IP filtering rules are applied in order up until the first one that matches.
+{brandname} Server endpoints can use filtering rules that control whether clients can connect based on their IP addresses.
+{brandname} Server applies filtering rules in order until it finds a match for the client IP address.
 
 A CIDR block is a compact representation of an IP address and its associated network mask.
 CIDR notation specifies an IP address, a slash ('/') character, and a decimal number.
@@ -22,10 +21,26 @@ or equivalently, its subnet mask `255.255.255.0`, which has 24 leading 1-bits.
 `2001:db8:0:ffff:ffff:ffff:ffff:ffff`.
 * `::1/128` represents the IPv6 loopback address. Its prefix length is 128 which is the number of bits in the address.
 
-[source,xml,options="nowrap",subs=attributes+]
+[discrete]
+== IP address filter configuration
+
+In the following configuration, {brandname} Server accepts connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
+{brandname} Server rejects all other connections.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_ipfilter.xml[]
 ----
 
-As a result of the preceding configuration, {brandname} Server accepts connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
-{brandname} Server rejects all other connections.
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_ipfilter.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_ipfilter.yaml[]
+----

@@ -1,16 +1,9 @@
 [id='token-security-realms_{context}']
-= Token security realms
+= Token realms
 
 Token realms use external services to validate tokens and require providers
 that are compatible with RFC-7662 (OAuth2 Token Introspection), such as
 {keycloak}.
-
-.Endpoint authentication mechanisms
-
-When you configure {brandname} Server to use a token realm, you must configure endpoints to use the following authentication mechanisms:
-
-* Hot Rod (SASL): `OAUTHBEARER`
-* REST (HTTP): `Bearer`
 
 [discrete]
 == Token realm configuration

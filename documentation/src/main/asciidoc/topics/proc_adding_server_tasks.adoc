@@ -1,11 +1,13 @@
-[id='server-tasks_{context}']
-= Deploying Server Tasks to {brandname} Servers
-Add your custom server task classes to {brandname} servers.
+[id='adding-server-tasks_{context}']
+= Adding tasks to {brandname} Server deployments
+
+Add your custom server task classes to {brandname} Server.
 
 .Prerequisites
 
-Stop any running {brandname} servers. {brandname} does not support runtime
-deployment of custom classes.
+* Stop {brandname} Server if it is running.
++
+{brandname} Server does not support runtime deployment of custom classes.
 
 .Procedure
 
@@ -18,7 +20,7 @@ example.HelloTask
 ----
 +
 . Package your server task implementation in a JAR file.
-. Copy the JAR file to the `{server_home}/server/lib` directory of your {brandname} server.
+. Copy the JAR file to the `{server_home}/server/lib` directory of your {brandname} Server installation.
 . Add your classes to the deserialization allow list in your {brandname}
 configuration. Alternatively set the allow list using system properties.
 

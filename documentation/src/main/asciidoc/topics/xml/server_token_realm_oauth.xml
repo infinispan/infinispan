@@ -2,7 +2,7 @@
           xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
-      <security-realm name="default">
+      <security-realm name="token-realm">
          <!-- Specifies the URL of the authentication server. -->
          <token-realm name="token"
                       auth-server-url="https://oauth-server/auth/">

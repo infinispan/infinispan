@@ -1,0 +1,53 @@
+[id='server-endpoint-authentication-mechanisms_{context}']
+= {brandname} Server authentication mechanisms
+
+{brandname} Server automatically configures endpoints with authentication mechanisms that match your security realm configuration.
+For example, if you add a Kerberos security realm then {brandname} Server enables the `GSSAPI` and `GS2-KRB5` authentication mechanisms for the Hot Rod endpoint.
+
+.Hot Rod endpoints
+
+{brandname} Server enables the following SASL authentication mechanisms for Hot Rod endpoints when your configuration includes the corresponding security realm:
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Security realm |SASL authentication mechanism
+
+|Property realms and LDAP realms
+|SCRAM-+*+, DIGEST-+*+, `+SCRAM-*+`
+
+|Token realms
+|OAUTHBEARER
+
+|Trust realms
+|EXTERNAL
+
+|Kerberos identities
+|GSSAPI, GS2-KRB5
+
+|SSL/TLS identities
+|PLAIN
+|===
+
+.REST endpoints
+
+{brandname} Server enables the following HTTP authentication mechanisms for REST endpoints when your configuration includes the corresponding security realm:
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Security realm |HTTP authentication mechanism
+
+|Property realms and LDAP realms
+|DIGEST
+
+|Token realms
+|BEARER_TOKEN
+
+|Trust realms
+|CLIENT_CERT
+
+|Kerberos identities
+|SPNEGO
+
+|SSL/TLS identities
+|BASIC
+|===

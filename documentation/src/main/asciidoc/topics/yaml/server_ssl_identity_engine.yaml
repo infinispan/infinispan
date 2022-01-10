@@ -1,0 +1,13 @@
+security:
+  securityRealms:
+    - name: "default"
+      serverIdentities:
+        ssl:
+          keystore:
+            alias: "server"
+            path: "server.p12"
+            password: "secret"
+          engine:
+            enabledProtocols:
+              - "TLSv1.3"
+            enabledCiphersuites: "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"

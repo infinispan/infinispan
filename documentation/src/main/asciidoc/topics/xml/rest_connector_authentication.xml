@@ -1,9 +1,0 @@
-<endpoints>
-  <endpoint socket-binding="default" security-realm="default">
-    <hotrod-connector/>
-    <rest-connector>
-      <!-- Specifies SASL mechanisms to use for authentication. -->
-      <authentication mechanisms="DIGEST BASIC"/>
-    </rest-connector>
-  </endpoint>
-</endpoints>

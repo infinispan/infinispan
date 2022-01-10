@@ -1,0 +1,19 @@
+{
+  "endpoints" : {
+    "endpoint" : {
+      "socket-binding" : "default",
+      "security-realm" : "default",
+      "hotrod-connector" : {
+        "authentication" : {
+          "sasl" : {
+            "server-name" : "infinispan",
+            "mechanisms" : [ "PLAIN","DIGEST-MD5","GSSAPI","EXTERNAL" ],
+            "qop" : [ "auth" ],
+            "policy" : [ "no-active","no-plain-text" ]
+          }
+        }
+      },
+      "rest-connector" : ""
+    }
+  }
+}

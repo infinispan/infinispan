@@ -1,0 +1,4 @@
+distributedCache:
+  security:
+    authorization:
+      enabled: true

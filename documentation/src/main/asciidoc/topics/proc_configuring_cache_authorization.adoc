@@ -1,0 +1,62 @@
+[id='configuring-cache-authorization_{context}']
+= Configuring caches with security authorization
+
+Use authorization in your cache configuration to restrict user access.
+Before they can read or write cache entries, or create and delete caches, users must have a role with a sufficient level of permission.
+
+.Prerequisites
+
+* Ensure the `authorization` element is included in the `security` section of the `cache-container` configuration.
++
+{brandname} enables security authorization in the Cache Manager by default and provides a global set of roles and permissions for caches.
+* If necessary, declare custom roles and permissions in the Cache Manager configuration.
+
+.Procedure
+
+. Open your cache configuration for editing.
+. Add the `authorization` element to caches to restrict user access based on their roles and permissions.
+. Save the changes to your configuration.
+
+[discrete]
+== Authorization configuration
+
+The following configuration shows how to use implicit authorization configuration with default roles and permissions:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/infinispan_authz_default.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/infinispan_authz_default.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/infinispan_authz_default.yaml[]
+----
+
+[discrete]
+== Custom roles and permissions
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/infinispan_authz_custom.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/infinispan_authz_custom.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/infinispan_authz_custom.yaml[]
+----

@@ -1,0 +1,6 @@
+{
+  "interfaces" : [ {
+    "name" : "public",
+    "any_address" : null
+  } ]
+}

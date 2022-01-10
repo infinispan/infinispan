@@ -1,0 +1,54 @@
+[id='server-endpoints_{context}']
+= {brandname} Server endpoints
+
+== Hot Rod
+
+Hot Rod is a binary TCP client-server protocol designed to provide faster data
+access and improved performance in comparison to text-based protocols.
+
+{brandname} provides Hot Rod client libraries in Java, C++, C#, Node.js and other programming languages.
+
+.Topology state transfer
+
+{brandname} uses topology caches to provide clients with cluster views.
+Topology caches contain entries that map internal JGroups transport addresses
+to exposed Hot Rod endpoints.
+
+When client send requests, {brandname} servers compare the topology ID in
+request headers with the topology ID from the cache. {brandname} servers send
+new topology views if client have older topology IDs.
+
+Cluster topology views allow Hot Rod clients to immediately detect when nodes
+join and leave, which enables dynamic load balancing and failover.
+
+In distributed cache modes, the consistent hashing algorithm also makes it
+possible to route Hot Rod client requests directly to primary owners.
+
+== REST
+
+{brandname} exposes a RESTful interface that allows HTTP clients to access
+data, monitor and maintain clusters, and perform administrative operations.
+
+You can use standard HTTP load balancers to provide clients with load
+balancing and failover capabilities. However, HTTP load balancers maintain
+static cluster views and require manual updates when cluster topology changes
+occur.
+
+== Memcached
+
+{brandname} provides an implementation of the Memcached text protocol for
+remote client access.
+
+[IMPORTANT]
+====
+The Memcached endpoint is deprecated and planned for removal in a future
+release.
+====
+
+The {brandname} Memcached endpoint supports clustering with replicated and
+distributed cache modes.
+
+There are some Memcached client implementations, such as the Cache::Memcached
+Perl client, that can offer load balancing and failover detection capabilities
+with static lists of {brandname} server addresses that require manual updates
+when cluster topology changes occur.

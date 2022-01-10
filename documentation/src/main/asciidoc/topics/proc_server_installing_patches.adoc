@@ -1,6 +1,7 @@
-[id='patching_install-{context}']
-= Installing Server Patches
-Apply patches to {brandname} Server to upgrade or downgrade an existing version.
+[id='applying-server-patches_{context}']
+= Applying patches to {brandname} Server installations
+
+Upgrade or downgrade {brandname} Server installation to a {brandname} version by installing patches.
 
 .Prerequisites
 
