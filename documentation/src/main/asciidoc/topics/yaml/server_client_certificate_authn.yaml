@@ -1,0 +1,31 @@
+security:
+  securityRealms:
+    - name: "trust-store-realm"
+      serverIdentities:
+        ssl:
+          keystore:
+            path: "server.p12"
+            relative-to: "infinispan.server.config.path"
+            keystore-password: "secret"
+            alias: "server"
+          truststore:
+            path: "trust.p12"
+            relative-to: "infinispan.server.config.path"
+            password: "secret"
+      truststoreRealm: ~
+endpoints:
+  socketBinding: "default"
+  securityRealm: "trust-store-realm"
+  requireSslClientAuth: "true"
+  connectors:
+    - hotrod:
+        hotrodConnector:
+          authentication:
+            sasl:
+              mechanisms: "EXTERNAL"
+              serverName: "infinispan"
+              qop: "auth"
+    - rest:
+        restConnector:
+          authentication:
+            mechanisms: "CLIENT_CERT"

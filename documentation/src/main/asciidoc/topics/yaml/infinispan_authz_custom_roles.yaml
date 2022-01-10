@@ -1,0 +1,19 @@
+infinispan:
+  cacheContainer:
+    name: "custom-authorization"
+    security:
+      authorization:
+        identityRoleMapper: "null"
+        roles:
+          reader:
+            role:
+              permissions: "READ"
+          admin:
+            role:
+              permissions: "ALL"
+          writer:
+            role:
+              permissions: "WRITE"
+          supervisor:
+            role:
+              permissions: "READ WRITE EXEC"

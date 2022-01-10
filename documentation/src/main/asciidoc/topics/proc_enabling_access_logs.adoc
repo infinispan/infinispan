@@ -1,5 +1,6 @@
 [id='enabling-access-logs_{context}']
-= Enabling Access Logs
+= Enabling access logs
+
 To record Hot Rod and REST endpoint access messages, you need to enable the logging categories in `log4j2.xml`.
 
 .Procedure

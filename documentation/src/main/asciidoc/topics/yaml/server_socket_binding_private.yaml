@@ -1,0 +1,19 @@
+server:
+  interfaces:
+    - name: "private"
+      inetAddress:
+        value: "10.1.2.3"
+    - name: "public"
+      inetAddress:
+        value: "127.0.0.1"
+  socketBindings:
+    portOffset: "0"
+    defaultInterface: "public"
+    socketBinding:
+      - name: "private_binding"
+        port: "49152"
+        interface: "private"
+  endpoints:
+    endpoint:
+      socketBinding: "private_binding"
+      securityRealm: "default"

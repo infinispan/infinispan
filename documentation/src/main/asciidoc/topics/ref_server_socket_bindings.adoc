@@ -1,7 +1,9 @@
 [id='socket-bindings_{context}']
 = Socket bindings
 
-Socket bindings map endpoint connectors to server interfaces and ports.
+Socket bindings map endpoint connectors to network interfaces and ports.
+By default, {brandname} Server includes a socket binding configuration that listens on the localhost interface, `127.0.0.1`, at port `11222` for the REST and Hot Rod endpoints.
+If you enable the Memcached endpoint, the default socket bindings configure {brandname} Server to bind to port `11221`.
 
 .Default socket bindings
 [source,xml,options="nowrap",subs=attributes+]
@@ -11,16 +13,19 @@ include::xml/server_network_socket_bindings.xml[]
 
 [%autowidth,cols="1,1",stripes=even]
 |===
-|Socket binding configuration attribute |Description
+|Configuration element or attribute |Description
 
 |`socket-bindings`
-|Declares the default interface and port offset.
+|Root element that contains all network interfaces and ports to which {brandname} Server endpoints can bind and listen for client connections.
 
-|`default`
-|Binds to Hot Rod and REST connectors to the default port `11222`.
+|`default-interface`
+|Declare the network interface that {brandname} Server listens on by default.
 
-|`memcached`
-|Binds the memcached connector to port `11221` and is disabled by default.
+|`port-offset`
+|Specifies the offset that {brandname} Server applies to port declarations for socket bindings.
+
+|`socket-binding`
+|Configures {brandname} Server to bind to a port on a network interface.
 |===
 
 [discrete]
@@ -28,7 +33,20 @@ include::xml/server_network_socket_bindings.xml[]
 
 The following example configuration adds an `interface` declaration named "private" and a `socket-binding` declaration that binds {brandname} Server to the private IP address:
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_socket_binding_private.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_socket_binding_private.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_socket_binding_private.yaml[]
 ----

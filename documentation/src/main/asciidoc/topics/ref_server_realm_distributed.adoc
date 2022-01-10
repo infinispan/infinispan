@@ -1,16 +1,26 @@
 [id='distributed-security-realms_{context}']
 = Distributed security realms
 
-Distributed realms combine multiple security realms.
-When authenticating users, {brandname} Server uses each security realm in turn until it finds one that can perform the authentication.
+Distributed realms combine multiple different types of security realms.
+When users attempt to access the Hot Rod or REST endpoints, {brandname} Server uses each security realm in turn until it finds one that can perform the authentication.
 
-.Distributed realm configuration
+[discrete]
+== Distributed realm configuration
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_distributed_realm.xml[]
 ----
 
-.Supported authentication mechanisms
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_distributed_realm.json[]
+----
 
-Distributed realms support the authentication mechanisms of the underlying realms.
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_distributed_realm.yaml[]
+----

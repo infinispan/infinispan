@@ -1,0 +1,12 @@
+infinispan:
+  jgroups:
+    transport: "org.infinispan.remoting.transport.jgroups.JGroupsTransport"
+  cacheContainer:
+    name: "default"
+    statistics: "true"
+    transport:
+      cluster: "cluster"
+      nodeName: ""
+      stack: "tcp"
+    security:
+      authorization: ~

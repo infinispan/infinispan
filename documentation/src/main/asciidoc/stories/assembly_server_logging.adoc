@@ -1,7 +1,7 @@
-[id='logs']
-:context: logging
-= Enabling and Customizing Logging
-{brandname} uses Apache Log4j 2 to provide configurable logging mechanisms that capture details about the environment and record cache operations for troubleshooting purposes and root cause analysis.
+[id='configuring-server-logging']
+:context: server-logging
+= Configuring {brandname} Server logging
+{brandname} Server uses Apache Log4j 2 to provide configurable logging mechanisms that capture details about the environment and record cache operations for troubleshooting purposes and root cause analysis.
 
 include::{topics}/con_server_logs.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_log_properties.adoc[leveloffset=+2]

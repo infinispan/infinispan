@@ -1,5 +1,5 @@
-[id='log_levels-{context}']
-= Log Levels
+[id='log-levels_{context}']
+= Log levels
 
 Log levels indicate the nature and severity of messages.
 

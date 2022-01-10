@@ -1,6 +1,7 @@
 [id='audit-logs_{context}']
-= Audit Logs
-Audit logs let you track changes to your {brandname} environment so you know when changes occur and which users make them.
+= Audit logs
+
+Audit logs let you track changes to your {brandname} Server deployment so you know when changes occur and which users make them.
 Enable and configure audit logging to record server configuration events and administrative operations.
 
 `org.infinispan.AUDIT`:: Logging category that writes security audit messages to an `audit.log` file in the `{server_home}/server/log` directory.

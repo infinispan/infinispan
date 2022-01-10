@@ -1,6 +1,7 @@
-= Resource Statistics
-You can inspect server-collected statistics for some of the resources within a
-{brandname} server using the [command]`stats` command.
+[id='gathering-cli-statistics_{context}']
+= Gathering resource statistics from the CLI
+
+You can inspect server-collected statistics for some {brandname} Server resources with the [command]`stats` command.
 
 Use the [command]`stats` command either from the context of a resource which
 collects statistics (containers, caches) or with a path to such a resource:

@@ -1,0 +1,54 @@
+[id='configuring-server-endpoints_{context}']
+= Configuring {brandname} Server endpoints
+
+Control how Hot Rod and REST endpoints bind to sockets and use security realm configuration.
+You can also configure multiple endpoints and disable administrative capabilities.
+
+[NOTE]
+====
+Each unique endpoint configuration must include both a Hot Rod connector and a REST connector.
+{brandname} Server implicitly includes the `hotrod-connector` and `rest-connector` elements, or fields, in an `endpoint` configuration.
+You should only add these elements to custom configuration to specify authentication mechanisms for endpoints.
+====
+
+.Prerequisites
+
+* Add socket bindings and security realms to your {brandname} Server configuration.
+
+.Procedure
+
+. Open your {brandname} Server configuration for editing.
+. Wrap multiple `endpoint` configurations with the `endpoints` element.
+. Specify the socket binding that the endpoint uses with the `socket-binding` attribute.
+. Specify the security realm that the endpoint uses with the `security-realm` attribute.
+. Disable administrator access with the `admin="false"` attribute, if required.
++
+With this configuration users cannot access {brandname} Console or the Command Line Interface (CLI) from the endpoint.
+. Save the changes to your configuration.
+
+[discrete]
+== Multiple endpoint configuration
+
+The following {brandname} Server configuration creates endpoints on separate socket bindings with dedicated security realms:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_endpoints_custom.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_endpoints_custom.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_endpoints_custom.yaml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#server-interfaces[Network interfaces and socket bindings]

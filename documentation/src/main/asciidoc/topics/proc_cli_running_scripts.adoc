@@ -1,6 +1,12 @@
-[id='running_scripts_cli']
-= Running Tasks and Scripts
-Use the command line interface to run tasks and scripts on {brandname} clusters.
+[id='running-scripts-tasks_{context}']
+= Running scripts and tasks
+
+Use the command line interface to run tasks and scripts on {brandname} Server deployments.
+Alternatively you can execute scripts and tasks from Hot Rod clients.
+
+.Prequisites
+
+* Add scripts or tasks to {brandname} Server.
 
 .Procedure
 
@@ -20,3 +26,25 @@ Use the command line interface to run tasks and scripts on {brandname} clusters.
 //containers/default]> task exec @@cache@names
 ["___protobuf_metadata","mycache","___script_cache"]
 ----
+
+[discrete]
+== Programmatic execution
+
+* Call the `execute()` method to run scripts with the Hot Rod `RemoteCache`
+interface, as in the following examples:
+
+.Script execution
+[source,java]
+----
+include::code_examples/ScriptExecute.java[]
+----
+
+.Task execution
+[source,java]
+----
+include::code_examples/TaskExecute.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[org.infinispan.client.hotrod.RemoteCache]

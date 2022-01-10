@@ -1,29 +1,27 @@
 [id='property-security-realms_{context}']
-= Property security realms
+= Property realms
 Property realms use property files to define users and groups.
 
-`users.properties` maps usernames to passwords in plain-text format. Passwords
-can also be pre-digested if you use the `DIGEST-MD5` SASL mechanism or `Digest`
-HTTP mechanism.
+* `users.properties` contains {brandname} user credentials.
+Passwords can be pre-digested with the `DIGEST-MD5` and `DIGEST` authentication mechanisms.
+* `groups.properties` associates users with roles and permissions.
 
+[NOTE]
+====
+Properties files contain headers that associate them with security realms in {brandname} Server configuration.
+====
+
+.users.properties
 [source,options="nowrap",subs=attributes+]
 ----
 include::properties/server_users.properties[]
 ----
 
-`groups.properties` maps users to roles.
-
+.groups.properties
 [source,options="nowrap",subs=attributes+]
 ----
 include::properties/server_groups.properties[]
 ----
-
-.Endpoint authentication mechanisms
-
-When you configure {brandname} Server to use a property realm, you can configure endpoints to use the following authentication mechanisms:
-
-* Hot Rod (SASL): `PLAIN`, `+DIGEST-*+`, and `+SCRAM-*+`
-* REST (HTTP): `Basic` and `Digest`
 
 [discrete]
 == Property realm configuration

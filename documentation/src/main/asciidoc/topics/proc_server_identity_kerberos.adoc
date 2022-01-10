@@ -1,16 +1,20 @@
-[id='kerberos_identity-{context}']
-= Setting Up Kerberos Identities
-Kerberos identities use _keytab_ files that contain service principal names and encrypted keys, derived from Kerberos passwords.
+[id='setting-up-kerberos-identities_{context}']
+= Setting up Kerberos identities
+
+Add Kerberos identities to a security realm in your {brandname} Server configuration to use _keytab_ files that contain service principal names and encrypted keys, derived from Kerberos passwords.
+
+.Prerequisites
+
+* Have Kerberos service account principals.
 
 [NOTE]
 ====
-_keytab_ files can contain both user and service account principals. However,
-{brandname} servers use service account principals only. As a result,
-{brandname} servers can provide identity to clients and allow clients to
-authenticate with Kerberos servers.
+_keytab_ files can contain both user and service account principals.
+However, {brandname} Server uses service account principals only which means it can provide identity to clients and allow clients to authenticate with Kerberos servers.
 ====
 
-In most cases, you create unique principals for the Hot Rod and REST connectors. For example, you have a "datagrid" server in the "INFINISPAN.ORG" domain. In this case you should create the following service principals:
+In most cases, you create unique principals for the Hot Rod and REST endpoints.
+For example, if you have a "datagrid" server in the "INFINISPAN.ORG" domain you should create the following service principals:
 
 * `hotrod/datagrid@INFINISPAN.ORG` identifies the Hot Rod service.
 * `HTTP/datagrid@INFINISPAN.ORG` identifies the REST service.
@@ -33,7 +37,30 @@ Microsoft Windows::
 include::cmd_examples/keytab_win.adoc[]
 ----
 +
-. Copy the keytab files to the `$ISPN_HOME/server/conf` directory.
+. Copy the keytab files to the `server/conf` directory of your {brandname} Server installation.
+. Open your {brandname} Server configuration for editing.
 . Add a `server-identities` definition to the {brandname} server security realm.
 . Specify the location of keytab files that provide service principals to Hot Rod and REST connectors.
 . Name the Kerberos service principals.
+. Save the changes to your configuration.
+
+[discrete]
+== Kerberos identity configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_identities_kerberos.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_identities_kerberos.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_identities_kerberos.yaml[]
+----

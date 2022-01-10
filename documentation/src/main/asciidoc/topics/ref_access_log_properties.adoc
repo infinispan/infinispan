@@ -1,5 +1,5 @@
-[id='access_log_properties-{context}']
-= Access Log Properties
+[id='access-log-properties_{context}']
+= Access log properties
 
 The default format for access logs is as follows:
 
