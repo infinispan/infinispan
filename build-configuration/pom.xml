@@ -181,7 +181,7 @@
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
       <version.org.wildfly.arquillian>3.0.1.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>16.0.1.Final</version.org.wildfly.core>
-      <version.org.wildfly.elytron>1.17.2.Final</version.org.wildfly.elytron>
+      <version.org.wildfly.elytron>1.17.3.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.1.4.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.1.0.Final</version.org.wildfly.openssl.natives>
       <version.picketbox>5.0.3.Final</version.picketbox>
