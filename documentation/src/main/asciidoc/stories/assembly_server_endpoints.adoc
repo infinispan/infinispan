@@ -1,15 +1,13 @@
 [id='server-endpoints']
 :context: server-endpoints
-= Server endpoints
+= {brandname} Server endpoints
 
 {brandname} Server endpoints provide client access to the cache manager over Hot Rod and REST protocols.
 
-include::{topics}/con_endpoints_hotrod.adoc[leveloffset=+1]
-include::{topics}/con_endpoints_rest.adoc[leveloffset=+1]
-include::{topics}/con_endpoints_memcached.adoc[leveloffset=+1]
-include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+1]
+include::{topics}/con_server_endpoints.adoc[leveloffset=+1]
+include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_server_endpoints.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]
-include::{topics}/proc_server_configuring_endpoints.adoc[leveloffset=+1]
 include::{topics}/ref_server_ipfilter.adoc[leveloffset=+1]
 include::{topics}/proc_server_ipfilter_cli.adoc[leveloffset=+1]
 

@@ -7,10 +7,10 @@
             <ssl>
                <!-- Adds a keystore that contains server certificates
                     that provide SSL/TLS identities to clients. -->
-               <keystore path="server.pfx"
+               <keystore path="server.p12"
                          relative-to="infinispan.server.config.path"
                          password="secret"
-                         alias="rhdg-server"/>
+                         alias="my-server"/>
             </ssl>
          </server-identities>
       </security-realm>

@@ -1,9 +1,8 @@
 [id='configuring-server-datasources_{context}']
-= Configuring {brandname} Server with managed datasources
+= Configuring managed datasources
 
 Create managed datasources as part of your {brandname} Server configuration to optimize connection pooling and performance for JDBC database connections.
-You can then use these datasources as part of your JDBC cache store
-configuration.
+You can then specify the JDNI name of the managed datasources in your caches, which centralizes JDBC connection configuration for your deployment.
 
 .Prerequisites
 
@@ -38,6 +37,7 @@ configuration.
 .. Specify credentials with the `username` and `password` attributes or fields.
 .. Provide any other configuration as appropriate.
 . Define how {brandname} Server nodes pool and reuse connections with connection pool tuning properties in the `connection-pool` section.
+. Save the changes to your configuration.
 
 .Verification
 
@@ -64,11 +64,23 @@ $ bin/cli.sh
 [//containers/default]> server datasource test my-datasource
 ----
 
-.Next steps
+[discrete]
+== Managed datasource configuration
 
-Now that you have created a managed datasource in your {brandname} Server configuration, you can reference the JNDI name in cache store configuration as in the following example:
-
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/server_jdbc_cache_stores.xml[]
+include::xml/server_datasources.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_datasources.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_datasources.yaml[]
 ----

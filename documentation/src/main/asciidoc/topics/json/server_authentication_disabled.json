@@ -1,0 +1,7 @@
+{
+  "endpoints" : {
+    "endpoint" : {
+      "socket-binding" : "default"
+    }
+  }
+}

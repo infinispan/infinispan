@@ -1,0 +1,37 @@
+[id='configuring-caches-with-jndi-names_{context}']
+= Configuring caches with JNDI names
+
+When you add a managed datasource to {brandname} Server you can add the JNDI name to a JDBC-based cache store configuration.
+
+.Prerequisites
+
+* Configure {brandname} Server with a managed datasource.
+
+.Procedure
+
+. Open your cache configuration for editing.
+. Add the `data-source` element or field to the JDBC-based cache store configuration.
+. Specify the JNDI name of the managed datasource as the value of the `jndi-url` attribute.
+. Configure the JDBC-based cache stores as appropriate.
+. Save the changes to your configuration.
+
+[discrete]
+== JNDI name in cache configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_jdbc_jndi_name.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_jdbc_jndi_name.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_jdbc_jndi_name.yaml[]
+----

@@ -1,9 +1,0 @@
-[id='kerberos_identity_config-{context}']
-= Kerberos Identity Configuration
-
-The following example configures Kerberos identities for {brandname} Server:
-
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/server_identities_kerberos.xml[]
-----

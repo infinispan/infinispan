@@ -1,0 +1,21 @@
+distributedCache:
+  persistence:
+    stringKeyedJdbcStore:
+      dataSource:
+        jndi-url: "jdbc/postgres"
+      stringKeyedTable:
+        prefix: "TBL"
+        dropOnExit: true
+        createOnStart: true
+        idColumn:
+          name: "ID"
+          type: "VARCHAR(255)"
+        dataColumn:
+          name: "DATA"
+          type: "BYTEA"
+        timestampColumn:
+          name: "TS"
+          type: "BIGINT"
+        segmentColumn:
+          name: "S"
+          type: "INT"

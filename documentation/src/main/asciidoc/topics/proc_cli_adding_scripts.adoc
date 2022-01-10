@@ -1,6 +1,7 @@
 [id='adding-scripts_{context}']
-= Adding Scripts to {brandname} Servers
-Use the command line interface to add scripts to {brandname} servers.
+= Adding scripts to {brandname} Server deployments
+
+Use the command line interface to add scripts to {brandname} Server.
 
 .Prerequisites
 

@@ -1,8 +1,7 @@
 security:
   security-realms:
-    - name: default
+    - name: ldap-realm
       ldap-realm:
-        name: ldap
         url: 'ldap://my-ldap-server:10389'
         principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
         credential: strongPassword

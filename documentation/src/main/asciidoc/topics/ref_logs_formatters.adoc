@@ -1,5 +1,5 @@
-[id='log_pattern_formatters-{context}']
-= Log Patterns
+[id='log-pattern-formatters_{context}']
+= Log pattern formatters
 
 The `CONSOLE` and `FILE` appenders use a
 link:https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout[`PatternLayout`]

@@ -2,10 +2,9 @@
           xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
-      <security-realm name="default">
-        <!-- Names an LDAP realm and specifies connection properties. -->
-        <ldap-realm name="ldap"
-                    url="ldap://my-ldap-server:10389"
+      <security-realm name="ldap-realm">
+        <!-- Specifies connection properties. -->
+        <ldap-realm url="ldap://my-ldap-server:10389"
                     principal="uid=admin,ou=People,dc=infinispan,dc=org"
                     credential="strongPassword"
                     connection-timeout="3000"

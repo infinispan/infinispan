@@ -1,5 +1,6 @@
 [id='access-logs_{context}']
-= Access Logs
+= Access logs
+
 Access logs record all inbound client requests for Hot Rod and REST endpoints to files in the `{server_home}/server/log` directory.
 
 `org.infinispan.HOTROD_ACCESS_LOG`:: Logging category that writes Hot Rod access messages to a `hotrod-access.log` file.

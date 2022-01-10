@@ -1,0 +1,10 @@
+{
+  "endpoints" : [ {
+    "socket-binding" : "private",
+    "security-realm" : "private-realm"
+  },{
+    "socket-binding" : "public",
+    "security-realm" : "default",
+    "admin" : "false"
+  }]
+}

@@ -1,4 +1,6 @@
-= Accessing the Health API via REST
+[id='accessing-health-rest_{context}']
+= Accessing cluster health via REST
+
 Get {brandname} cluster health via the REST API.
 
 .Procedure

@@ -1,11 +1,11 @@
-distributed-cache:
+distributedCache:
   persistence:
-    table-jdbc-store:
+    tableJdbcStore:
       dialect: "H2"
       shared: "true"
-      table-name: "books"
-      connection-pool:
-        connection-url: "jdbc:h2:mem:infinispan"
+      tableName: "books"
+      connectionPool:
+        connectionUrl: "jdbc:h2:mem:infinispan"
         driver: "org.h2.Driver"
         username: "sa"
         password: "changeme"

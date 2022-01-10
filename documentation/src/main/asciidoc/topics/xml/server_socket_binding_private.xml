@@ -1,13 +1,19 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <interfaces>
+    <interface name="public">
+       <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+    </interface>
     <interface name="private">
       <inet-address value="10.1.2.3"/>
     </interface>
   </interfaces>
 
-  <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+  <socket-bindings default-interface="public"
+                   port-offset="${infinispan.socket.binding.port-offset:0}">
     <socket-binding name="private_binding"
                     interface="private"
-                    port="1234"/>
+                    port="49152"/>
   </socket-bindings>
+
+  <endpoints socket-binding="private_binding" security-realm="default" />
 </server>

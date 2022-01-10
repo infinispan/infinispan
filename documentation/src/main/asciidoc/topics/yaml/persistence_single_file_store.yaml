@@ -1,4 +1,4 @@
-distributed-cache:
+distributedCache:
   persistence:
     passivation: "true"
     singleFileStore:

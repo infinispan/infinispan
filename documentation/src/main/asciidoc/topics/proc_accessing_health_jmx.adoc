@@ -1,4 +1,6 @@
-= Accessing the Health API via JMX
+[id='accessing-health-jmx_{context}']
+= Accessing cluster health via JMX
+
 Retrieve {brandname} cluster health statistics via JMX.
 
 .Procedure

@@ -1,18 +1,18 @@
-distributed-cache:
+distributedCache:
   persistence:
-    query-jdbc-store:
+    queryJdbcStore:
       dialect: "POSTGRES"
       shared: "true"
-      key-columns: "isbn"
+      keyColumns: "isbn"
       queries:
-        select-single: "SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name WHERE t1.name = :name"
-        select-all: "SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name"
-        delete-single: "DELETE FROM Person t1 WHERE t1.name = :name; DELETE FROM Address t2 where t2.name = :name"
-        delete-all: "DELETE FROM Person; DELETE FROM Address"
+        selectSingle: "SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name WHERE t1.name = :name"
+        selectAll: "SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name"
+        deleteSingle: "DELETE FROM Person t1 WHERE t1.name = :name; DELETE FROM Address t2 where t2.name = :name"
+        deleteAll: "DELETE FROM Person; DELETE FROM Address"
         upsert: "INSERT INTO Person (name,  picture, sex, birthdate, accepted_tos) VALUES (:name, :picture, :sex, :birthdate, :accepted_tos); INSERT INTO Address(name, street, city, zip) VALUES (:name, :street, :city, :zip)"
         size: "SELECT COUNT(*) FROM Person"
       schema:
-        message-name: "Person"
-        key-message-name: "PersonID"
+        messageName: "Person"
+        keyMessageName: "PersonID"
         package: "com.example"
-        embedded-key: "true"
+        embeddedKey: "true"

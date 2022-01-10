@@ -1,5 +1,6 @@
 [id='customizing-audit-logs_{context}']
-= Using Custom Audit Logging Implementations
+= Using custom audit logging implementations
+
 You can create custom implementations of the `org.infinispan.security.AuditLogger` API if configuring Log4j appenders does not meet your needs.
 
 .Prerequisites
@@ -20,5 +21,4 @@ include::xml/server_audit_custom.xml[]
 
 [role="_additional-resources"]
 .Additional resources
-
 * link:{javadocroot}/org/infinispan/security/AuditLogger.html[`org.infinispan.security.AuditLogger`]

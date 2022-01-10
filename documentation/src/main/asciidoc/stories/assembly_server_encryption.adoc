@@ -1,6 +1,6 @@
-[id='endpoint-encryption']
-:context: server
-= Encrypting {brandname} Server Connections
+[id='configuring-encryption']
+:context: endpoint-security
+= Configuring TLS/SSL encryption
 
 You can secure {brandname} Server connections using SSL/TLS encryption by configuring a keystore that contains public and private keys for {brandname}.
 You can also configure client certificate authentication if you require mutual TLS.

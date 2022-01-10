@@ -1,14 +1,11 @@
-[id='executing_secure_caches-{context}']
-= Code Execution with Secure Caches
-When you configure {brandname} authorization and then construct a
-`DefaultCacheManager`, it returns a `SecureCache` that checks the security
-context before invoking any operations on the underlying caches. A
-`SecureCache` also ensures that applications cannot retrieve lower-level
-insecure objects such as `DataContainer`. For this reason, you must execute
-code with an identity that has the required authorization.
+[id='code-execution-security-authorization_{context}']
+= Code execution with securirty authorization
 
-In Java, executing code with a specific identity usually means wrapping the
-code to be executed within a `PrivilegedAction` as follows:
+When you configure security authorization for embedded caches and then construct a `DefaultCacheManager`, it returns a `SecureCache` that checks the security context before invoking any operations.
+A `SecureCache` also ensures that applications cannot retrieve lower-level insecure objects such as `DataContainer`.
+For this reason, you must execute code with an identity that has the required authorization.
+
+In Java, executing code with a specific identity usually means wrapping the code to be executed within a `PrivilegedAction` as follows:
 
 [source,java]
 ----
@@ -28,12 +25,10 @@ With Java 8, you can simplify the preceding call as follows:
 Security.doAs(mySubject, PrivilegedAction<String>() -> cache.put("key", "value"));
 ----
 
-The preceding call uses the `Security.doAs()` method instead of
-`Subject.doAs()`. You can use either method with {brandname}, however
-`Security.doAs()` provides better performance.
+The preceding call uses the `Security.doAs()` method instead of `Subject.doAs()`.
+You can use either method with {brandname}, however `Security.doAs()` provides better performance.
 
-If you need the current Subject, use the following call to retrieve it from the
-{brandname} context or from the AccessControlContext:
+If you need the current Subject, use the following call to retrieve it from the {brandname} context or from the AccessControlContext:
 
 [source,java]
 ----

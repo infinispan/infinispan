@@ -1,16 +1,30 @@
 [id='customizing-authorization_{context}']
-= Customizing Roles and Permissions
+= Customizing roles and permissions
+
 You can customize authorization settings in your {brandname} configuration to use role mappers with different combinations of roles and permissions.
 
 .Procedure
 
-. Open your `infinispan.xml` configuration for editing.
-. Configure authorization for the `cache-container` by declaring a role mapper and a set of roles and permissions.
+. Declare a role mapper and a set of custom roles and permissions in the Cache Manager configuration.
 . Configure authorization for caches to restrict access based on user roles.
 
-The following configuration example shows how to configure security authorization with roles and permissions:
+[discrete]
+== Custom roles and permissions configuration
 
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/infinispan_authz_custom.xml[]
+include::xml/infinispan_authz_custom_roles.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/infinispan_authz_custom_roles.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/infinispan_authz_custom_roles.yaml[]
 ----

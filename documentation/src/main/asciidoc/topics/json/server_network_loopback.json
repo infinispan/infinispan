@@ -1,0 +1,6 @@
+{
+  "interfaces" : [ {
+    "name" : "public",
+    "loopback" : null
+  } ]
+}

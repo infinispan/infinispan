@@ -1,8 +1,9 @@
 [id='patches-{context}']
-= {brandname} Server Patches
+= {brandname} Server patches
+
 {brandname} Server patches are `.zip` archives that contain artifacts that you can apply to your `{server_home}` directory to fix issues and add new features.
 
-Patches also provide a set of rules for {brandname} to modify your server installation.
+Patches also provide a set of rules for {brandname} Server to modify your installation.
 When you apply patches, {brandname} overwrites some files and removes others, depending on if they are required for the target version.
 
 However, {brandname} does not make any changes to configuration files that you have created or modified when applying a patch.

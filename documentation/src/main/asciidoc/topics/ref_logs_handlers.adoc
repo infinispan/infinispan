@@ -1,7 +1,7 @@
-[id='log_appenders-{context}']
-= Log Appenders
+[id='log-appenders_{context}']
+= Log appenders
 
-Log appenders define how {brandname} records log messages.
+Log appenders define how {brandname} Server records log messages.
 
 CONSOLE::
 Write log messages to the host standard out (`stdout`) or standard error (`stderr`) stream. +

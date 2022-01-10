@@ -1,21 +1,20 @@
 {
-  "security": {
-    "security-realms": [
-      {
-        "name": "default",
-        "properties-realm": {
-          "groups-attribute": "Roles",
-          "user-properties": {
-            "path": "ServerConfigurationParserTest-user.properties",
-            "relative-to": "infinispan.server.config.path",
-            "plain-text": true
-          },
-          "group-properties": {
-            "path": "ServerConfigurationParserTest-group.properties",
-            "relative-to": "infinispan.server.config.path"
-          }
+  "security" : {
+    "security-realms" : [ {
+      "name" : "default",
+      "properties-realm" : {
+        "groups-attribute" : "Roles",
+        "user-properties" : {
+          "digest-realm-name" : "default",
+          "path" : "users.properties",
+          "relative-to": "infinispan.server.config.path",
+          "plain-text" : true
+        },
+        "group-properties" : {
+          "path" : "groups.properties",
+          "relative-to": "infinispan.server.config.path"
         }
       }
-    ]
+    } ]
   }
 }
