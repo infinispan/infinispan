@@ -1,6 +1,7 @@
-[id='configuring_server_logs_cli-{context}']
-= Changing {brandname} Server Logging Configuration at Runtime
-Modify the logging configuration for {brandname} servers at runtime to
+[id='configuring-server-logs-cli_{context}']
+= Changing {brandname} Server logging configuration at runtime
+
+Modify the logging configuration for {brandname} Server at runtime to
 temporarily adjust logging to troubleshoot issues and perform root cause
 analysis.
 
@@ -12,7 +13,7 @@ operation, which means that changes:
 
 .Procedure
 
-. Create a CLI connection to {brandname}.
+. Create a CLI connection to {brandname} Server.
 . Use the [command]`logging` to make the required adjustments.
 
 * List all appenders defined on the server:

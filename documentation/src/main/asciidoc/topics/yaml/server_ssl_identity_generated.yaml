@@ -1,0 +1,10 @@
+security:
+  securityRealms:
+    - name: "generated-keystore"
+      serverIdentities:
+        ssl:
+          keystore:
+            alias: "server"
+            generateSelfSignedCertificateHost: "localhost"
+            path: "server.p12"
+            password: "secret"

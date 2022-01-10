@@ -2,7 +2,7 @@
   "security": {
     "security-realms": [
       {
-        "name": "default",
+        "name": "trust-store-realm",
         "server-identities": {
           "ssl": {
             "keystore": {
@@ -21,32 +21,5 @@
         "truststore-realm": {}
       }
     ]
-  },
-  "endpoints": [
-    {
-      "socket-binding": "default",
-      "security-realm": "default",
-      "require-ssl-client-auth": "true",
-      "connectors": {
-        "hotrod": {
-          "hotrod-connector": {
-            "authentication": {
-              "sasl": {
-                "mechanisms": "EXTERNAL",
-                "server-name": "infinispan",
-                "qop": "auth"
-              }
-            }
-          },
-          "rest": {
-            "rest-connector": {
-              "authentication": {
-                "mechanisms": "CLIENT_CERT"
-              }
-            }
-          }
-        }
-      }
-    }
-  ]
+  }
 }

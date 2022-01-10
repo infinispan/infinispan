@@ -1,6 +1,7 @@
-[id='patching']
-:context: server
-= Patching {brandname} Server Installations
+[id='patching-servers']
+:context: patching-servers
+= Patching {brandname} Server installations
+
 Install and manage patches for {brandname} Server installations.
 
 You can apply patches to multiple {brandname} Server installations with different versions to upgrade to a desired target version.

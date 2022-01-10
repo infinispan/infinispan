@@ -1,5 +1,6 @@
-[id='patching_create-{context}']
-= Creating Server Patches
+[id='creating-server-patches_{context}']
+= Creating {brandname} Server patches
+
 You can create patches for {brandname} Server from an existing installation.
 
 You can create patches for {brandname} Server starting from version 10.1.7.

@@ -1,0 +1,19 @@
+{
+  "infinispan" : {
+    "jgroups" : {
+      "transport" : "org.infinispan.remoting.transport.jgroups.JGroupsTransport"
+    },
+    "cache-container" : {
+      "name" : "default",
+      "statistics" : "true",
+      "transport" : {
+        "cluster" : "cluster",
+        "node-name" : "",
+        "stack" : "tcp"
+      },
+      "security" : {
+        "authorization" : {}
+      }
+    }
+  }
+}

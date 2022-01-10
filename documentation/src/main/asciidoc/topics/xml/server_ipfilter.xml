@@ -5,7 +5,5 @@
       <accept from="10.0.0.0/8"/>
       <reject from="/0"/>
     </ip-filter>
-    <hotrod-connector name="hotrod"/>
-    <rest-connector name="rest"/>
   </endpoint>
 </endpoints>

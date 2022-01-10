@@ -1,0 +1,24 @@
+{
+  "endpoints" : {
+    "endpoint" : {
+      "socket-binding" : "default",
+      "security-realm" : "my-realm",
+      "hotrod-connector" : {
+        "authentication" : {
+          "security-realm" : "default",
+          "sasl" : {
+            "server-name" : "infinispan",
+            "mechanisms" : [ "SCRAM-SHA-512","SCRAM-SHA-384","SCRAM-SHA-256","SCRAM-SHA-1","DIGEST-SHA-512","DIGEST-SHA-384","DIGEST-SHA-256","DIGEST-SHA","DIGEST-MD5","PLAIN" ],
+            "qop" : [ "auth" ]
+          }
+        }
+      },
+      "rest-connector" : {
+        "authentication" : {
+          "mechanisms" : [ "DIGEST","BASIC" ],
+          "security-realm" : "default"
+        }
+      }
+    }
+  }
+}

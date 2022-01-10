@@ -1,5 +1,6 @@
 [id='add_script_hotrod']
 = Programmatically Creating Scripts
+
 Add scripts with the Hot Rod `RemoteCache` interface as in the following
 example:
 

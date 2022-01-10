@@ -1,0 +1,9 @@
+{
+  "distributed-cache": {
+    "security": {
+      "authorization": {
+        "enabled": true
+      }
+    }
+  }
+}

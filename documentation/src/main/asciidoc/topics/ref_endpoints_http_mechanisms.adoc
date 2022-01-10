@@ -1,0 +1,34 @@
+[id='rest-authentication-mechanisms_{context}']
+= HTTP authentication mechanisms
+
+{brandname} Server supports the following HTTP authentication mechanisms with REST endpoints:
+
+[%autowidth,cols="1,1,1,1",stripes=even]
+|===
+| Authentication mechanism | Description | Security realm type | Related details
+
+| `BASIC`
+| Uses credentials in plain-text format. You should use `BASIC` authentication with encrypted connections only.
+| Property realms and LDAP realms
+| Corresponds to the `Basic` HTTP authentication scheme and is similar to the `PLAIN` SASL mechanism.
+
+| `DIGEST`
+| Uses hashing algorithms and nonce values. REST connectors support `SHA-512`, `SHA-256` and `MD5` hashing algorithms.
+| Property realms and LDAP realms
+| Corresponds to the `Digest` HTTP authentication scheme and is similar to `+DIGEST-*+` SASL mechanisms.
+
+| `SPNEGO`
+| Uses Kerberos tickets and requires a Kerberos Domain Controller. You must add a corresponding `kerberos` server identity in the realm configuration. In most cases, you also specify an `ldap-realm` to provide user membership information.
+| Kerberos realms
+| Corresponds to the `Negotiate` HTTP authentication scheme and is similar to the `GSSAPI` and `GS2-KRB5` SASL mechanisms.
+
+| `BEARER_TOKEN`
+| Uses OAuth tokens and requires a `token-realm` configuration.
+| Token realms
+| Corresponds to the `Bearer` HTTP authentication scheme and is similar to `OAUTHBEARER` SASL mechanism.
+
+| `CLIENT_CERT`
+| Uses client certificates.
+| Trust store realms
+| Similar to the `EXTERNAL` SASL mechanism.
+|===

@@ -1,5 +1,6 @@
-[id='configuring_log_properties-{context}']
-= Configuring Server Logs
+[id='configuring-server-logs_{context}']
+= Configuring {brandname} Server logs
+
 {brandname} uses Apache Log4j technology to write server log messages.
 You can configure server logs in the `log4j2.xml` file.
 
@@ -11,5 +12,4 @@ You can configure server logs in the `log4j2.xml` file.
 
 [role="_additional-resources"]
 .Additional resources
-
 * link:https://logging.apache.org/log4j/2.x/manual[Apache Log4j manual]

@@ -1,12 +1,14 @@
 [id='tshoot_server']
 :context: server
-= Troubleshooting {brandname} Servers
-Gather diagnostic information about {brandname} server deployments and perform
+= Troubleshooting {brandname} Server deployments
+Gather diagnostic information about {brandname} Server deployments and perform
 troubleshooting steps to resolve issues.
 
 include::{topics}/proc_cli_getting_server_reports.adoc[leveloffset=+1]
 include::{topics}/proc_cli_logging.adoc[leveloffset=+1]
 include::{topics}/proc_cli_statistics.adoc[leveloffset=+1]
+include::{topics}/proc_accessing_health_rest.adoc[leveloffset=+1]
+include::{topics}/proc_accessing_health_jmx.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

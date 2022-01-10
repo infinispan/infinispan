@@ -1,9 +1,0 @@
-<hotrod-connector name="hotrod">
-  <topology-state-transfer />
-  <authentication>
-    <!-- Hot Rod endpoint authentication configuration. -->
-  </authentication>
-  <encryption>
-    <!-- Hot Rod endpoint SSL/TLS encryption configuration. -->
-  </encryption>
-</hotrod-connector>

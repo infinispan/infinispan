@@ -1,0 +1,39 @@
+{
+  "security" : {
+    "security-realms" : [ {
+      "name" : "kerberos-realm",
+      "server-identities" : [{
+        "kerberos" : {
+          "principal" : "hotrod/datagrid@INFINISPAN.ORG",
+          "keytab-path" : "hotrod.keytab",
+          "required" : true
+        },
+        "kerberos" :{
+          "principal" : "HTTP/localhost@INFINISPAN.ORG",
+          "keytab-path" : "http.keytab",
+          "required" : true
+        }
+      }]
+    } ]
+  },
+  "endpoints" : {
+    "endpoint" : {
+      "socket-binding" : "default",
+      "security-realm" : "kerberos-realm",
+      "hotrod-connector" : {
+        "authentication" : {
+          "security-realm" : "kerberos-realm",
+          "sasl" : {
+            "server-name" : "datagrid",
+            "server-principal" : "hotrod/datagrid@INFINISPAN.ORG"
+          }
+        }
+      },
+      "rest-connector" : {
+        "authentication" : {
+          "server-principal" : "HTTP/localhost@INFINISPAN.ORG"
+        }
+      }
+    }
+  }
+}
