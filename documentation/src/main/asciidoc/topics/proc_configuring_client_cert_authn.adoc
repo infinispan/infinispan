@@ -1,5 +1,6 @@
 [id='configuring-client-certificate-authentication_{context}']
-= Configuring Client Certificate Authentication
+= Configuring client certificate authentication
+
 Configure {brandname} Server to use mutual TLS to secure client connections.
 
 You can configure {brandname} to verify client identities from certificates in a trust store in two ways:
@@ -25,21 +26,38 @@ These trust stores should be configured with an empty password: `password=""`.
 
 .Procedure
 
+. Open your {brandname} Server configuration for editing.
 . Add the `require-ssl-client-auth="true"` parameter to your `endpoints` configuration.
 . Add the client trust store to the `{server_home}/server/conf` directory.
 . Specify the `path` and `password` attributes for the `truststore` element in the {brandname} Server security realm configuration.
 . Add the `<truststore-realm/>` element to the security realm if you want {brandname} Server to authenticate each client certificate.
-
-.{brandname} Server trust store realm configuration
-[source,xml,options="nowrap",subs=attributes+]
-----
-include::xml/server_truststore_realm.xml[]
-----
+. Save the changes to your configuration.
 
 .Next steps
 
 * Set up authorization with client certificates in the {brandname} Server configuration if you control access with security roles and permissions.
 * Configure clients to negotiate SSL/TLS connections with {brandname} Server.
+
+[discrete]
+== Client certificate authentication configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_client_certificate_authn.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_client_certificate_authn.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_client_certificate_authn.yaml[]
+----
 
 [role="_additional-resources"]
 .Additional resources

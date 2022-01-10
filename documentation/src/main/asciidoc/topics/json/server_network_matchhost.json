@@ -1,0 +1,8 @@
+{
+  "interfaces" : [ {
+    "name" : "public",
+    "match-host" : {
+      "value" : "my_host_name"
+    }
+  } ]
+}

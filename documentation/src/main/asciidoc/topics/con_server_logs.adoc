@@ -1,5 +1,6 @@
-[id='server-logs_{context}']
-= Server Logs
+[id='server-log-files_{context}']
+= {brandname} Server log files
+
 {brandname} writes server logs to the following files in the `{server_home}/server/log` directory:
 
 `server.log`::

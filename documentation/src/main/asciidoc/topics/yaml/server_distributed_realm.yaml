@@ -1,0 +1,25 @@
+security:
+  securityRealms:
+    - name: "distributed-realm"
+      ldapRealm:
+        principal: "uid=admin,ou=People,dc=infinispan,dc=org"
+        url: "ldap://my-ldap-server:10389"
+        credential: "strongPassword"
+        identityMapping:
+          rdnIdentifier: "uid"
+          searchDn: "ou=People,dc=infinispan,dc=org"
+          searchRecursive: "false"
+          attributeMapping:
+            attribute:
+              filter: "(&(objectClass=groupOfNames)(member={1}))"
+              filterDn: "ou=Roles,dc=infinispan,dc=org"
+              from: "cn"
+              to: "Roles"
+      propertiesRealm:
+        groupsAttribute: "Roles"
+        userProperties:
+          digestRealmName: "distributed-realm"
+          path: "users.properties"
+        groupProperties:
+          path: "groups.properties"
+      distributedRealm: ~

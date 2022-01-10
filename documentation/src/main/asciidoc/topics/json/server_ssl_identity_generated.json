@@ -1,0 +1,17 @@
+{
+  "security" : {
+    "security-realms" : [ {
+      "name" : "generated-keystore",
+      "server-identities" : {
+        "ssl" : {
+          "keystore" : {
+            "alias" : "server",
+            "generate-self-signed-certificate-host" : "localhost",
+            "path" : "server.p12",
+            "password" : "secret"
+          }
+        }
+      }
+    } ]
+  }
+}

@@ -2,9 +2,8 @@
   "security": {
     "security-realms": [
       {
-        "name": "default",
+        "name": "token-realm",
         "token-realm": {
-          "name": "token",
           "auth-server-url": "https://oauth-server/auth/",
           "oauth2-introspection": {
             "client-id": "infinispan-server",

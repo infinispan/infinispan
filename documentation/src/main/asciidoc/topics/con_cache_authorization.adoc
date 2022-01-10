@@ -1,6 +1,7 @@
-[id='con_authz-{context}']
-= How Security Authorization Works
-{brandname} authorization secures your installation by restricting user access.
+[id='security-authorization_{context}']
+= Security authorization
+
+{brandname} authorization secures your deployment by restricting user access.
 
 User applications or clients must belong to a role that is assigned with sufficient permissions before they can perform operations on Cache Managers or caches.
 

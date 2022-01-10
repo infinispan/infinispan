@@ -1,0 +1,14 @@
+[id='server-authentication_{context}']
+= {brandname} Server authentication
+
+Authentication restricts user access to endpoints as well as the {brandname} Console and Command Line Interface (CLI).
+
+{brandname} Server includes a "default" security realm that enforces user authentication.
+Default authentication uses a property realm with user credentials stored in the `server/conf/users.properties` file.
+{brandname} Server also enables security authorization by default so you must assign users with permissions stored in the `server/conf/groups.properties` file.
+
+[TIP]
+====
+Use the [command]`user create` command with the Command Line Interface (CLI) to add users and assign permissions.
+Run [command]`user create --help` for examples and more information.
+====

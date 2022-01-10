@@ -2,14 +2,19 @@
           xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
-      <security-realm name="default">
-         <ldap-realm>
-            <!-- ... -->
-         </ldap-realm>
-         <properties-realm>
-            <!-- ... -->
-         </properties-realm>
-         <distributed-realm/> <!-- will use both the ldap and properties realms -->
+      <security-realm name="distributed-realm">
+        <ldap-realm url="ldap://my-ldap-server:10389" principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+          <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org" search-recursive="false">
+            <attribute-mapping>
+              <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))" filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+            </attribute-mapping>
+          </identity-mapping>
+        </ldap-realm>
+        <properties-realm groups-attribute="Roles">
+          <user-properties path="users.properties" relative-to="infinispan.server.config.path"/>
+          <group-properties path="groups.properties" relative-to="infinispan.server.config.path"/>
+        </properties-realm>
+        <distributed-realm/>
       </security-realm>
    </security-realms>
 </security>

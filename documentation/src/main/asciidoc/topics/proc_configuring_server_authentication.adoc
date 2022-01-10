@@ -1,0 +1,52 @@
+[id='configuring-server-authentication_{context}']
+= Configuring {brandname} Server authentication mechanisms
+
+You can explicitly configure Hot Rod and REST endpoints to use specific authentication mechanisms.
+Configuring authentication mechanisms is required only if you need to explicitly override the default mechanisms for a security realm.
+
+[NOTE]
+====
+Each `endpoint` section in your configuration must include `hotrod-connector` and `rest-connector` elements or fields.
+For example, if you explicitly declare a `hotrod-connector` you must also declare a `rest-connector` even if it does not configure an authentication mechanism.
+====
+
+.Prerequisites
+
+* Add security realms to your {brandname} Server configuration as required.
+
+.Procedure
+
+. Open your {brandname} Server configuration for editing.
+. Add an `endpoint` element or field and specify the security realm that it uses with the `security-realm` attribute.
+. Add a `hotrod-connector` element or field to configure the Hot Rod endpoint.
+.. Add an `authentication` element or field.
+.. Specify SASL authentication mechanisms for the Hot Rod endpoint to use with the `sasl mechanisms` attribute.
+.. If applicable, specify SASL quality of protection settings with the `qop` attribute.
+.. Specify the {brandname} Server identity with the `server-name` attribute if necessary.
+. Add a `rest-connector` element or field to configure the REST endpoint.
+.. Add an `authentication` element or field.
+.. Specify HTTP authentication mechanisms for the REST endpoint to use with the `mechanisms` attribute.
+. Save the changes to your configuration.
+
+[discrete]
+== Authentication mechanism configuration
+
+The following configuration specifies SASL mechanisms for the Hot Rod endpoint to use for authentication:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_authentication_mechanisms.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_authentication_mechanisms.json[]
+----
+
+.YAML
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_authentication_mechanisms.yaml[]
+----

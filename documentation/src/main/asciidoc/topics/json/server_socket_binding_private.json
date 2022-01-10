@@ -1,0 +1,30 @@
+{
+	"server": {
+		"interfaces": [{
+			"name": "private",
+			"inet-address": {
+				"value": "10.1.2.3"
+			}
+		}, {
+			"name": "public",
+			"inet-address": {
+				"value": "127.0.0.1"
+			}
+		}],
+		"socket-bindings": {
+			"port-offset": "0",
+			"default-interface": "public",
+			"socket-binding": [{
+				"name": "private_binding",
+				"port": "1234",
+				"interface": "private"
+			}]
+		},
+		"endpoints": {
+			"endpoint": {
+				"socket-binding": "private_binding",
+				"security-realm": "default"
+			}
+		}
+	}
+}

@@ -1,9 +1,8 @@
 [id='ldap-realm-principal-rewriting_{context}']
 = LDAP realm principal re-writing
 
-Some SASL authentication mechanisms, such as `GSSAPI`, `GS2-KRB5` and
-`Negotiate`, supply a username that needs to be _cleaned up_ before you can use
-it to search LDAP servers.
+SASL authentication mechanisms such as `GSSAPI`, `GS2-KRB5` and `Negotiate` include a username that needs to be _cleaned up_ before you can use
+it to search LDAP directories.
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]

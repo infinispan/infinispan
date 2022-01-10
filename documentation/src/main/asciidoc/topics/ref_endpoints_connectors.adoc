@@ -1,33 +1,31 @@
 [id='endpoint-connectors_{context}']
 = Endpoint connectors
-Connectors configure {brandname} Server endpoints with socket bindings and security realms
+Connectors configure Hot Rod and REST endpoints to use socket bindings and security realms.
 
-.Default endpoint connector
+.Default endpoint configuration
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/endpoints_connectors.xml[]
+include::xml/server_endpoints_default.xml[]
 ----
-
-The default endpoint connector implicitly configures Hot Rod and REST endpoints with a socket binding and security realm.
 
 [%autowidth,cols="1,1",stripes=even]
 |===
-|Endpoint configuration attribute |Description
+|Configuration element or attribute |Description
 
 |`endpoints`
 |Wraps endpoint connector configuration.
 
 |`endpoint`
-|Declares a {brandname} Server endpoint that configures Hot Rod and REST connectors.
+|Declares a {brandname} Server endpoint that configures Hot Rod and REST connectors to use a socket binding and security realm.
 
 |`hotrod-connector`
-|Configures how clients connect to {brandname} Server over the Hot Rod protocol.
+|Includes the Hot Rod endpoint in the `endpoint` configuration.
 
 |`rest-connector`
-|Configures how clients connect to {brandname} Server over the REST/HTTP protocol.
+|Includes the Hot Rod endpoint in the `endpoint` configuration.
 
 |`memcached-connector`
-|Configures how clients connect to {brandname} Server over Memcached, which is disabled by default.
+|Configures the Memcached endpoint and is disabled by default.
 |===
 
 [role="_additional-resources"]

@@ -1,21 +1,19 @@
-[id='authorization']
-:context: authz
-= Configuring User Authorization
+[id='security-authorization']
+:context: security-authorization
+= Configuring user roles and permissions
+
 Authorization is a security feature that requires users to have certain permissions before they can access caches or interact with {brandname} resources.
 You assign roles to users that provide different levels of permissions, from read-only access to full, super user privileges.
 
-include::{topics}/proc_enabling_default_authorization.adoc[leveloffset=+1]
-include::{topics}/ref_user_roles_permissions.adoc[leveloffset=+1]
 include::{topics}/con_cache_authorization.adoc[leveloffset=+1]
+include::{topics}/ref_user_roles_permissions.adoc[leveloffset=+2]
 include::{topics}/ref_authz_permissions.adoc[leveloffset=+2]
 include::{topics}/ref_authz_role_mappers.adoc[leveloffset=+2]
 include::{topics}/ref_acl_cache.adoc[leveloffset=+1]
-include::{topics}/proc_customizing_authorization.adoc[leveloffset=+1]
-include::{topics}/proc_disabling_authorization.adoc[leveloffset=+1]
 
-ifdef::remote_caches[]
-include::{topics}/proc_configuring_client_cert_authz.adoc[leveloffset=+1]
-ifdef::remote_caches[]
+include::{topics}/proc_customizing_authorization.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_cache_authorization.adoc[leveloffset=+1]
+include::{topics}/proc_disabling_authorization.adoc[leveloffset=+1]
 
 ifdef::embedded_caches[]
 include::{topics}/proc_configuring_authz_programmatic.adoc[leveloffset=+1]

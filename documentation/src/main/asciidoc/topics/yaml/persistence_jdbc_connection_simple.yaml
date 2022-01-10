@@ -1,4 +1,4 @@
-distributed-cache:
+distributedCache:
   persistence:
     simpleConnection:
       connectionUrl: "jdbc:h2://localhost"

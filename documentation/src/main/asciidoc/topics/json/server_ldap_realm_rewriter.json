@@ -1,35 +1,33 @@
 {
-  "security": {
-    "security-realms": [
-      {
-        "name": "default",
-        "ldap-realm": {
-          "url": "ldap://my-ldap-server:10389",
-          "principal": "uid=admin,ou=People,dc=infinispan,dc=org",
-          "credential": "strongPassword",
-          "identity-mapping": {
-            "rdn-identifier": "uid",
-            "search-dn": "ou=People,dc=infinispan,dc=org",
-            "name-rewriter": {
-              "regex-principal-transformer": {
-                "pattern": "(.*)@INFINISPAN\\.ORG",
-                "replacement": "$1"
-              }
-            },
-            "attribute-mapping": [
-              {
-                "from": "cn",
-                "to": "Roles",
-                "filter": "(&(objectClass=groupOfNames)(member={1}))",
-                "filter-dn": "ou=Roles,dc=infinispan,dc=org"
-              }
-            ],
-            "user-password-mapper": {
-              "from": "userPassword"
+  "security" : {
+    "security-realms" : [ {
+      "name" : "ldap-realm",
+      "ldap-realm" : {
+        "principal" : "uid=admin,ou=People,dc=infinispan,dc=org",
+        "url" : "ldap://${org.infinispan.test.host.address}:10389",
+        "credential" : "strongPassword",
+        "name-rewriter" : {
+          "regex-principal-transformer" : {
+            "pattern" : "(.*)@INFINISPAN\\.ORG",
+            "replacement" : "$1"
+          }
+        },
+        "identity-mapping" : {
+          "rdn-identifier" : "uid",
+          "search-dn" : "ou=People,dc=infinispan,dc=org",
+          "attribute-mapping" : {
+            "attribute" : {
+              "filter" : "(&(objectClass=groupOfNames)(member={1}))",
+              "filter-dn" : "ou=Roles,dc=infinispan,dc=org",
+              "from" : "cn",
+              "to" : "Roles"
             }
+          },
+          "user-password-mapper" : {
+            "from" : "userPassword"
           }
         }
       }
-    ]
+    } ]
   }
 }

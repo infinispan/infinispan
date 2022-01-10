@@ -1,14 +1,12 @@
-<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
-          xmlns="urn:infinispan:server:{schemaversion}">
+<security>
    <security-realms>
-      <security-realm name="default">
+      <security-realm name="generated-keystore">
          <server-identities>
             <ssl>
                <!-- Generates a keystore that includes a self-signed certificate with the specified hostname. -->
                <keystore path="server.p12"
                          relative-to="infinispan.server.config.path"
-                         keystore-password="secret"
+                         password="secret"
                          alias="server"
                          generate-self-signed-certificate-host="localhost"/>
             </ssl>

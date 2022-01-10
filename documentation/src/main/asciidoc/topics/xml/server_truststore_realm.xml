@@ -1,6 +1,6 @@
-<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd" xmlns="urn:infinispan:server:{schemaversion}">
+<security>
   <security-realms>
-    <security-realm name="default">
+    <security-realm name="trust-store-realm">
       <server-identities>
         <ssl>
           <!-- Provides an SSL/TLS identity with a keystore that
@@ -21,25 +21,3 @@
     </security-realm>
   </security-realms>
 </security>
-<!-- Configures {brandname} Server to require client certificates
-     with the "require-ssl-client-auth" attribute. -->
-<endpoints>
-  <endpoint socket-binding="default"
-            security-realm="default"
-            require-ssl-client-auth="true">
-    <hotrod-connector>
-      <!-- Configures the Hot Rod endpoint for
-           client certificate authentication. -->
-      <authentication>
-        <sasl mechanisms="EXTERNAL"
-              server-name="infinispan"
-              qop="auth"/>
-      </authentication>
-    </hotrod-connector>
-    <rest-connector>
-      <!-- Configures the REST endpoint for
-           client certificate authentication. -->
-      <authentication mechanisms="CLIENT_CERT"/>
-    </rest-connector>
-  </endpoint>
-</endpoints>

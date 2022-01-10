@@ -1,15 +1,20 @@
-[id='remote_server_execution']
-:context: server
-= Remotely Executing Server-Side Tasks
-Define and add tasks to {brandname} servers that you can invoke from the
-{brandname} command line interface, REST API, or from Hot Rod clients.
+[id='remote-execution']
+:context: remote-execution
+= Running scripts and tasks on {brandname} Server
 
+Add tasks and scripts to {brandname} Server deployments for remote execution from the Command Line Interface (CLI) and Hot Rod or REST clients.
 You can implement tasks as custom Java classes or define scripts in languages
 such as JavaScript.
 
-include::assembly_server_tasks.adoc[leveloffset=+1]
-include::assembly_server_scripts.adoc[leveloffset=+1]
-include::assembly_server_running_tasks.adoc[leveloffset=+1]
+include::{topics}/proc_adding_server_tasks.adoc[leveloffset=+1]
+include::{topics}/ref_tasks.adoc[leveloffset=+2]
+include::{topics}/proc_cli_adding_scripts.adoc[leveloffset=+1]
+include::{topics}/ref_scripts.adoc[leveloffset=+2]
+include::{topics}/ref_script_metadata.adoc[leveloffset=+3]
+include::{topics}/ref_script_bindings.adoc[leveloffset=+3]
+include::{topics}/ref_script_parameters.adoc[leveloffset=+3]
+include::{topics}/ref_script_hotrod_add.adoc[leveloffset=+2]
+include::{topics}/proc_cli_running_scripts.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -1,10 +1,14 @@
 <infinispan>
-  <!-- Creates a cache manager named "default" that exports metrics. -->
+  <!-- Creates a Cache Manager named "default" and enables metrics. -->
   <cache-container name="default"
                    statistics="true">
-    <!-- Adds cluster transport that uses the default JGroups TCP stack. -->
-    <transport cluster="${infinispan.cluster.name:cluster}"
-               stack="${infinispan.cluster.stack:tcp}"
-                 node-name="${infinispan.node.name:}"/>
+     <!-- Adds cluster transport that uses the default JGroups TCP stack. -->
+     <transport cluster="${infinispan.cluster.name:cluster}"
+                stack="${infinispan.cluster.stack:tcp}"
+                node-name="${infinispan.node.name:}"/>
+     <!-- Requires user permission to access caches and perform operations. -->
+     <security>
+        <authorization/>
+     </security>
   </cache-container>
 </infinispan>
