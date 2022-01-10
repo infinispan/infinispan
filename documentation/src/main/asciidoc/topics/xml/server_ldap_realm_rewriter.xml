@@ -2,9 +2,8 @@
           xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
           xmlns="urn:infinispan:server:{schemaversion}">
    <security-realms>
-      <security-realm name="default">
-         <ldap-realm name="ldap"
-                     url="ldap://${org.infinispan.test.host.address}:10389"
+      <security-realm name="ldap-realm">
+         <ldap-realm url="ldap://${org.infinispan.test.host.address}:10389"
                      principal="uid=admin,ou=People,dc=infinispan,dc=org"
                      credential="strongPassword">
             <name-rewriter>

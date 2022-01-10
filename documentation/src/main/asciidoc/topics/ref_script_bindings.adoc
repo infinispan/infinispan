@@ -1,5 +1,6 @@
-[id='server_script_bindings']
-= Script Bindings
+[id='server-script-bindings_{context}']
+= Script bindings
+
 {brandname} exposes internal objects as bindings for script execution.
 
 |===

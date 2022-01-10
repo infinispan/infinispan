@@ -1,5 +1,6 @@
 [id='role-mappers_{context}']
-= Role Mappers
+= Role mappers
+
 {brandname} includes a `PrincipalRoleMapper` API that maps security Principals in a Subject to authorization roles that you can assign to users.
 
 == Cluster role mappers
@@ -34,7 +35,7 @@ Custom role mappers are implementations of `org.infinispan.security.PrincipalRol
 
 * Declarative configuration: `<custom-role-mapper class="my.custom.RoleMapper" />`
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/security/package-summary.html[{brandname} Security API]
 * link:{javadocroot}/org/infinispan/security/PrincipalRoleMapper.html[org.infinispan.security.PrincipalRoleMapper]

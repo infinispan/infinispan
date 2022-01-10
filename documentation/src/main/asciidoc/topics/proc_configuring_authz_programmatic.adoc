@@ -1,8 +1,7 @@
-[id='prog_authz_config-{context}']
-= Programmatically Configuring Authorization
-When using {brandname} as an embedded library, you can configure authorization
-with the `GlobalSecurityConfigurationBuilder` and `ConfigurationBuilder`
-classes.
+[id='configuring-authorization-programmatically_{context}']
+= Programmatically configuring authorization
+
+When using embedded caches, you can configure authorization with the `GlobalSecurityConfigurationBuilder` and `ConfigurationBuilder` classes.
 
 .Procedure
 
@@ -60,7 +59,7 @@ config
 +
 <1> Defines authorized roles for the cache. In this example, users who have the `writer` role only are not authorized for the "secured" cache. {brandname} denies any access requests from those users.
 
-.Reference
-
+[role="_additional-resources"]
+.Additional resources
 * link:{javadocroot}/org/infinispan/configuration/global/GlobalSecurityConfigurationBuilder.html[org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder]
 * link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

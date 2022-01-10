@@ -1,0 +1,17 @@
+<endpoints>
+  <endpoint socket-binding="default"
+            security-realm="my-realm">
+    <hotrod-connector>
+      <authentication>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256
+                           SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384
+                           DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN"
+               server-name="infinispan"
+               qop="auth"/>
+      </authentication>
+    </hotrod-connector>
+    <rest-connector/>
+      <authentication mechanisms="DIGEST BASIC"/>
+    </rest-connector>
+  </endpoint>
+</endpoints>

@@ -1,6 +1,7 @@
-[id='tasks']
-= Server Tasks
-{brandname} server tasks are classes that extend the
+[id='server-tasks_{context}']
+= {brandname} Server tasks
+
+{brandname} Server tasks are classes that extend the
 `org.infinispan.tasks.ServerTask` interface and generally include the following
 method calls:
 

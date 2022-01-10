@@ -1,5 +1,6 @@
 [id='configuring-audit-logs_{context}']
-= Configuring Audit Logging Appenders
+= Configuring audit logging appenders
+
 Apache Log4j provides different appenders that you can use to send audit messages to a destination other than the default log file.
 For instance, if you want to send audit logs to a syslog daemon, JDBC database, or Apache Kafka server, you can configure an appender in `log4j2.xml`.
 
@@ -31,5 +32,4 @@ For example, you could add a logging appender for a Kafka server as follows:
 
 [role="_additional-resources"]
 .Additional resources
-
 * link:https://logging.apache.org/log4j/2.x/manual/appenders.html[Log4j Appenders]

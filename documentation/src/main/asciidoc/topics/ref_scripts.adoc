@@ -1,9 +1,10 @@
-[id='scripts']
-= Server Scripts
-{brandname} server scripting is based on the `javax.script` API and is
+[id='server-scripts_{context}']
+= {brandname} Server scripts
+
+{brandname} Server scripting is based on the `javax.script` API and is
 compatible with any JVM-based ScriptEngine implementation.
 
-.Hello World Script Example
+.Hello world
 
 The following is a simple example that runs on a single {brandname} server, has
 one parameter, and uses JavaScript:

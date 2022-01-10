@@ -1,0 +1,44 @@
+[id='sasl-authentication-mechanisms_{context}']
+= SASL authentication mechanisms
+
+{brandname} Server supports the following SASL authentications mechanisms with Hot Rod endpoints:
+
+[%autowidth,cols="1,1,1,1",stripes=even]
+|===
+| Authentication mechanism | Description | Security realm type | Related details
+
+| `PLAIN`
+| Uses credentials in plain-text format. You should use `PLAIN` authentication with encrypted connections only.
+| Property realms and LDAP realms
+| Similar to the `BASIC` HTTP mechanism.
+
+| `+DIGEST-*+`
+| Uses hashing algorithms and nonce values. Hot Rod connectors support `DIGEST-MD5`, `DIGEST-SHA`, `DIGEST-SHA-256`, `DIGEST-SHA-384`, and `DIGEST-SHA-512` hashing algorithms, in order of strength.
+| Property realms and LDAP realms
+| Similar to the `Digest` HTTP mechanism.
+
+| `+SCRAM-*+`
+| Uses _salt_ values in addition to hashing algorithms and nonce values. Hot Rod connectors support `SCRAM-SHA`, `SCRAM-SHA-256`, `SCRAM-SHA-384`, and `SCRAM-SHA-512` hashing algorithms, in order of strength.
+| Property realms and LDAP realms
+| Similar to the `Digest` HTTP mechanism.
+
+| `GSSAPI`
+| Uses Kerberos tickets and requires a Kerberos Domain Controller. You must add a corresponding `kerberos` server identity in the realm configuration. In most cases, you also specify an `ldap-realm` to provide user membership information.
+| Kerberos realms
+| Similar to the `SPNEGO` HTTP mechanism.
+
+| `GS2-KRB5`
+| Uses Kerberos tickets and requires a Kerberos Domain Controller. You must add a corresponding `kerberos` server identity in the realm configuration. In most cases, you also specify an `ldap-realm` to provide user membership information.
+| Kerberos realms
+| Similar to the `SPNEGO` HTTP mechanism.
+
+| `EXTERNAL`
+| Uses client certificates.
+| Trust store realms
+| Similar to the `CLIENT_CERT` HTTP mechanism.
+
+| `OAUTHBEARER`
+| Uses OAuth tokens and requires a `token-realm` configuration.
+| Token realms
+| Similar to the `BEARER_TOKEN` HTTP mechanism.
+|===

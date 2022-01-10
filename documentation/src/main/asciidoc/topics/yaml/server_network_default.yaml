@@ -1,0 +1,4 @@
+interfaces:
+  - name: "public"
+    inetAddress:
+      value: "127.0.0.1"

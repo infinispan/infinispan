@@ -1,11 +1,11 @@
-distributed-cache:
-  remote-store:
+distributedCache:
+  remoteStore:
     cache: "mycache"
-    raw-values: "true"
-    remote-server:
+    rawValues: "true"
+    remoteServer:
       - host: "one"
         port: "12111"
       - host: "two"
-    connection-pool:
-      max-active: "10"
-      exhausted-action: "CREATE_NEW"
+    connectionPool:
+      maxActive: "10"
+      exhaustedAction: "CREATE_NEW"

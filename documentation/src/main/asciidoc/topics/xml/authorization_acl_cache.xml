@@ -1,3 +1,8 @@
-<security cache-size="1000" cache-timeout="300000">
-  <authorization />
-</security>
+<infinispan>
+  <cache-container name="acl-cache-configuration">
+    <security cache-size="1000"
+              cache-timeout="300000">
+      <authorization/>
+    </security>
+  </cache-container>
+</infinispan>

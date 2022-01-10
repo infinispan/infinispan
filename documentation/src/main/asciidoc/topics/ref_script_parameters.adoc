@@ -1,5 +1,6 @@
-[id='server_script_parameters']
-= Script Parameters
+[id='server-script-parameters_{context}']
+= Script parameters
+
 {brandname} lets you pass named parameters as bindings for running scripts.
 
 Parameters are `name,value` pairs, where `name` is a string and `value` is any

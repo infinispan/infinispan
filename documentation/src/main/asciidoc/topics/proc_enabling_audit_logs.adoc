@@ -1,5 +1,5 @@
 [id='enabling-audit-logs-{context}']
-= Enabling Audit Logging
+= Enabling audit logging
 To record security audit messages, you need to enable the logging category in `log4j2.xml`.
 
 .Procedure

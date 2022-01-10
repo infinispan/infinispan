@@ -1,0 +1,81 @@
+[id='creating-security-realms_{context}']
+= Creating security realms
+
+Add security realms to {brandname} Server configuration to control access to deployments.
+You can add one or more security realm to your configuration.
+
+[NOTE]
+====
+When you add security realms to your configuration, {brandname} Server automatically enables the matching authentication mechanisms for the Hot Rod and REST endpoints.
+====
+
+.Prerequisites
+
+* Add socket bindings to your {brandname} Server configuration as required.
+* Create keystores, or have a PEM file, to configure the security realm with TLS/SSL encryption.
++
+{brandname} Server can also generate keystores at startup.
+* Provision the resources or services that the security realm configuration relies on. +
+For example, if you add a token realm, you need to provision OAuth services.
+
+This procedure demonstrates how to configure multiple property realms.
+Before you begin, you need to create properties files that add users and assign permissions with the Command Line Interface (CLI).
+Use the [command]`user create` commands as follows:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+user create <username> -p <changeme> -g <role> \
+     --users-file=application-users.properties \
+     --groups-file=application-groups.properties
+
+user create <username> -p <changeme> -g <role> \
+     --users-file=management-users.properties \
+     --groups-file=management-groups.properties
+----
+
+[TIP]
+====
+Run [command]`user create --help` for examples and more information.
+====
+
+.Procedure
+
+. Open your {brandname} Server configuration for editing.
+. Use the `security-realms` element in the `security` configuration to contain create multiple security realms.
+. Add a security realm with the `security-realm` element and give it a unique name with the `name` attribute.
++
+To follow the example, create one security realm named `application-realm` and another named `management-realm`.
+. Provide the TLS/SSL identify for {brandname} Server with the `server-identities` element and configure a keystore as required.
+. Specify the type of security realm by adding one the following elements or fields:
++
+* `properties-realm`
+* `ldap-realm`
+* `token-realm`
+* `truststore-realm`
+. Specify properties for the type of security realm you are configuring as appropriate.
++
+To follow the example, specify the `*.properties` files you created with the CLI using the `path` attribute on the `user-properties` and `group-properties` elements or fields.
+. If you add multiple different types of security realm to your configuration, include the `distributed-realm` element or field so that {brandname} Server uses the realms in combination with each other.
+. Configure {brandname} Server endpoints to use the security realm with the with the `security-realm` attribute.
+. Save the changes to your configuration.
+
+[discrete]
+== Multiple property realms
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_multiple_property_realms.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_multiple_property_realms.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_multiple_property_realms.yaml[]
+----

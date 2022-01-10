@@ -1,0 +1,4 @@
+interfaces:
+  - name: "public"
+    matchInterface:
+      value: "eth0"

@@ -1,6 +1,7 @@
-[id='server_script_metdata']
-= Script Metadata
-Metadata provides additional information about scripts that {brandname} servers use when running scripts.
+[id='server-script-metdata_{context}']
+= Script metadata
+
+Metadata provides additional information about scripts that {brandname} Server uses when running scripts.
 
 Script metadata are `property=value` pairs that you add to comments in the
 first lines of scripts, such as the following example:

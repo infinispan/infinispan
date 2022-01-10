@@ -1,8 +1,11 @@
 [id='security-realms']
 :context: security-realms
 = Security realms
-Security realms define identity, encryption, authentication, and authorization configuration for {brandname} Server endpoints.
 
+Security realms integrate {brandname} Server deployments with the network protocols and infrastructure in your environment that control access and verify user identities.
+
+include::{topics}/proc_creating_server_security_realms.adoc[leveloffset=+1]
+include::{topics}/proc_server_identity_kerberos.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_property.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_ldap.adoc[leveloffset=+1]
 include::{topics}/ref_server_realm_ldap_rewrite.adoc[leveloffset=+2]

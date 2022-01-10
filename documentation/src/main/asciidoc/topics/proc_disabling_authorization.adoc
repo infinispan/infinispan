@@ -1,9 +1,12 @@
 [id='disabling-authorization_{context}']
-= Disabling Security Authorization
+= Disabling security authorization
+
 In local development environments you can disable authorization so that users do not need roles and permissions.
 Disabling security authorization means that any user can access data and interact with {brandname} resources.
 
 .Procedure
 
-. Open your `infinispan.xml` configuration for editing.
-. Remove any `authorization` elements from the `security` configuration for the `cache-container` and each cache configuration.
+. Open your {brandname} configuration for editing.
+. Remove any `authorization` elements from the `security` configuration for the Cache Manager.
+. Remove any `authorization` configuration from your caches.
+. Save the changes to your configuration.

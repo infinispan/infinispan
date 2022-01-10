@@ -1,5 +1,6 @@
-[id='patching_download-{context}']
-= Downloading Server Patches
+[id='downloading-server-patches_{context}']
+= Downloading {brandname} Server patches
+
 Download patches that you can apply to {brandname} Server installations.
 
 .Procedure
