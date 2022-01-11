@@ -197,13 +197,14 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
       return actualStack;
    }
 
-   private Map<String, RemoteSite> combineSites(Map<String, RemoteSite> sites) {
+   private void combineSites(Map<String, RemoteSite> sites) {
       JGroupsChannelConfigurator parentConfigurator = jgroupsConfiguration.configurator(parent);
       if (parentConfigurator instanceof EmbeddedJGroupsChannelConfigurator) {
          ((EmbeddedJGroupsChannelConfigurator) parentConfigurator).combineSites(sites);
       }
-      sites.putAll(this.remoteSites.remoteSites);
-      return sites;
+      if (remoteSites != null) {
+         sites.putAll(remoteSites.remoteSites);
+      }
    }
 
    private static void assertNoStackPosition(EmbeddedJGroupsChannelConfigurator.StackCombine mode, String stackAfter) {
