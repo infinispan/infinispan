@@ -149,17 +149,20 @@ public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Act
             }
          }
 
+         ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent = builder.parent;
+         CompletionStage<PublisherResponse> stage;
          Address address = target.getKey();
          IntSet segments = target.getValue();
-
-         ClusterPublisherManagerImpl<K, ?>.SubscriberHandler<I, R> parent = builder.parent;
-
-         CompletionStage<PublisherResponse> stage;
-         if (alreadyCreated) {
-            stage = parent.sendNextCommand(address, builder.topologyId);
-         } else {
-            alreadyCreated = true;
-            stage = parent.sendInitialCommand(address, segments, builder.batchSize, builder.excludedKeys.remove(address), builder.topologyId);
+         try {
+            if (alreadyCreated) {
+               stage = parent.sendNextCommand(address, builder.topologyId);
+            } else {
+               alreadyCreated = true;
+               stage = parent.sendInitialCommand(address, segments, builder.batchSize, builder.excludedKeys.remove(address), builder.topologyId);
+            }
+         } catch (Throwable t) {
+            handleThrowableInResponse(t, address, segments);
+            return;
          }
 
          stage.whenComplete((values, t) -> {
