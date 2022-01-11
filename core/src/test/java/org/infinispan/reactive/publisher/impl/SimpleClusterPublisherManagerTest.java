@@ -191,10 +191,10 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       ClusterPublisherManager<Integer, String> cpm = cpm(cache);
       CompletionStage<Long> stageCount;
       if (isEntry) {
-         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stageCount = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       } else {
-         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stageCount = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
                PublisherReducers.count(), PublisherReducers.add());
       }
 
@@ -215,14 +215,14 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       SerializableBinaryOperator<Integer> binOp = Integer::sum;
       CompletionStage<?> stage;
       if (isEntry) {
-         stage = cpm.entryReduction(parallel, null, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stage = cpm.entryReduction(parallel, null, null, null, false, deliveryGuarantee,
                (SerializableFunction<Publisher<CacheEntry<Integer, String>>, CompletionStage<Integer>>) iPublisher -> Flowable.fromPublisher(iPublisher)
                      .filter(ce -> false)
                      .map(RxJavaInterop.entryToKeyFunction())
                      .reduce(identity, binOp::apply)
                      .toCompletionStage(), PublisherReducers.reduce(binOp));
       } else {
-         stage = cpm.keyReduction(parallel, null, null, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stage = cpm.keyReduction(parallel, null, null, null, false, deliveryGuarantee,
                (SerializableFunction<Publisher<Integer>, CompletionStage<Integer>>) iPublisher -> Flowable.fromPublisher(iPublisher)
                      .filter(ce -> false)
                      .reduce(identity, binOp::apply)
@@ -249,12 +249,12 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       if (isEntry) {
          Function<Publisher<CacheEntry<Integer, String>>, CompletionStage<CacheEntry<Integer, String>>> function =
                PublisherReducers.reduce((SerializableBinaryOperator<CacheEntry<Integer, String>>) (e1, e2) -> e1); // reduce without identity
-         stage = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stage = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
                function, function);
       } else {
          Function<Publisher<Integer>, CompletionStage<Integer>> function =
                PublisherReducers.reduce((SerializableBinaryOperator<Integer>) (k1, k2) -> k1); // reduce without identity
-         stage = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stage = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
                function, function);
       }
 
@@ -278,12 +278,12 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       if (isEntry) {
          SerializableBinaryOperator<CacheEntry<Integer, String>> binOp = (e1, e2) -> e1;
          identity = NullCacheEntry.getInstance();
-         stage = cpm.entryReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stage = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
                PublisherReducers.reduce((CacheEntry<Integer, String>) identity, binOp), PublisherReducers.reduce(binOp));
       } else {
          SerializableBinaryOperator<Integer> binOp = (k1, k2) -> k1;
          identity = 0;
-         stage = cpm.keyReduction(parallel, null, keysToInclude, null, EnumUtil.EMPTY_BIT_SET, deliveryGuarantee,
+         stage = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
                PublisherReducers.reduce((Integer) identity, binOp), PublisherReducers.reduce(binOp));
       }
 
@@ -307,19 +307,19 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
       int insertAmount = insert(cache).size();
       assertTrue(insertAmount > 0);
 
-      SegmentPublisherSupplier<Integer> publisher;
+      SegmentCompletionPublisher<Integer> publisher;
       if (isEntry) {
-         publisher = cpm(cache).entryPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
+         publisher = cpm(cache).entryPublisher(null, null, null, false,
                deliveryGuarantee, 10, (SerializableFunction<Publisher<CacheEntry<Integer, String>>, Publisher<Integer>>) p -> Flowable.fromPublisher(p)
                      .map(RxJavaInterop.entryToKeyFunction())
                      .reduce(0, Integer::sum).toFlowable());
       } else {
-         publisher = cpm(cache).keyPublisher(null, null, null, EnumUtil.EMPTY_BIT_SET,
+         publisher = cpm(cache).keyPublisher(null, null, null, false,
                deliveryGuarantee, 10, (SerializableFunction<Publisher<Integer>, Publisher<Integer>>) p -> Flowable.fromPublisher(p)
                      .reduce(0, Integer::sum).toFlowable());
       }
 
-      List<Integer> results = Flowable.fromPublisher(publisher.publisherWithoutSegments())
+      List<Integer> results = Flowable.fromPublisher(publisher)
             .toList(1)
             .blockingGet();
 

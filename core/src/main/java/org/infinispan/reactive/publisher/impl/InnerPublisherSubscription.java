@@ -124,15 +124,19 @@ public class InnerPublisherSubscription<K, I, R> implements LongConsumer, Action
             }
          }
 
+         CompletionStage<PublisherResponse> stage;
          Address address = target.getKey();
          IntSet segments = target.getValue();
-
-         CompletionStage<PublisherResponse> stage;
-         if (alreadyCreated) {
-            stage = parent.sendNextCommand(address, topologyId);
-         } else {
-            alreadyCreated = true;
-            stage = parent.sendInitialCommand(address, segments, batchSize, excludedKeys.remove(address), topologyId);
+         try {
+            if (alreadyCreated) {
+               stage = parent.sendNextCommand(address, topologyId);
+            } else {
+               alreadyCreated = true;
+               stage = parent.sendInitialCommand(address, segments, batchSize, excludedKeys.remove(address), topologyId);
+            }
+         } catch (Throwable t) {
+            handleThrowableInResponse(t, address, segments);
+            return;
          }
 
          stage.whenComplete((values, t) -> {
