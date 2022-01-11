@@ -20,13 +20,12 @@ Take backup locations offline manually and bring them back online.
 `--site` is an optional argument. If not set, the CLI returns all backup
 locations.
 ====
-
++
 [TIP]
 ====
 Use the `--all-caches` option to get the backup location status for all caches.
 ====
 
-+
 . Manage backup locations as follows:
 +
 * Bring backup locations online with the [command]`bring-online` command:
@@ -47,4 +46,3 @@ Use the `--all-caches` option to bring a backup location online, or take a backu
 ====
 
 For more information and examples, run the [command]`help site` command.
-
