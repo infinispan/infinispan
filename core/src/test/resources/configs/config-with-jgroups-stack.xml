@@ -38,6 +38,7 @@
                     xmit_table_max_compaction_time="30000"
                     xmlns="urn:org:jgroups"/>
             <UNICAST3
+                    conn_close_timeout="5000"
                     xmit_interval="200"
                     xmit_table_num_rows="50"
                     xmit_table_msgs_per_row="1024"
