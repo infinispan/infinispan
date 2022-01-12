@@ -247,7 +247,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                         completedSegments = IntSets.mutableCopyFrom(completedSegments);
                         // Intentional falls through
                      default:
-                        completedSegments.add(segment);
+                        completedSegments.set(segment);
                   }
                }
             }

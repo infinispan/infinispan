@@ -693,10 +693,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             int segment = ((DataCommand) command).getSegment();
             ownersAdded = segmentAddedOwners(commandTopology, currentTopology, segment);
          } else {
-            segments = IntSets.mutableEmptySet();
+            segments = IntSets.mutableEmptySet(currentTopology.getNumSegments());
             for (Object key : command.getAffectedKeys()) {
                int segment = keyPartitioner.getSegment(key);
-               segments.add(segment);
+               segments.set(segment);
             }
             ownersAdded = false;
             for (int segment : segments) {

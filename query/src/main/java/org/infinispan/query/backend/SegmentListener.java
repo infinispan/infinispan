@@ -54,7 +54,7 @@ final class SegmentListener {
 
       for (int i = 0; i < numSegments; ++i) {
          if (!newSegments.contains(i)) {
-            removedSegments.add(i);
+            removedSegments.set(i);
          }
       }
 
