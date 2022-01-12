@@ -555,7 +555,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return cf.thenCompose(ignore -> {
          // TODO Dan: apply the modifications before wrapping the entry in the context
          CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, SegmentSpecificCommand.extractSegment(command, key, keyPartitioner),
-               false, true);
+                                                                        false, true, CompletableFutures.completedNull());
          return stage.thenRun(() -> {
             MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
             for (Mutation mutation : mutationsOnKey) {
@@ -581,8 +581,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Iterator<List<Mutation>> mutationsIterator = mutations.iterator();
       for (; keysIterator.hasNext() && mutationsIterator.hasNext(); ) {
          Object key = keysIterator.next();
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true);
-         // We rely on the fact that when isOwner is false that this never blocks
+         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key), false, true, CompletableFutures.completedNull());
+         // We rely on the fact that when isOwner is false this never blocks
          assert CompletionStages.isCompletedSuccessfully(stage);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
          EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);

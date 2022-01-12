@@ -3,8 +3,8 @@ package org.infinispan.api;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertNull;
@@ -72,7 +72,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
          assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
          return mvccEntry;
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), any(), anyInt(),
-                                                      anyBoolean(), anyBoolean());
+                                                   anyBoolean(), anyBoolean(), any());
 
       Future<?> killMemberResult = fork(() -> killMember(1));
 

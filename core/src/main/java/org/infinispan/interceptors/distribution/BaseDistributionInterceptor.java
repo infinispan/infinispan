@@ -595,7 +595,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             Collection<Address> ignoreForKey = null;
             for (Address address : distributionInfo.readOwners()) {
                if (address.equals(rpcManager.getAddress())) {
-                  throw new IllegalStateException("Entry should be always wrapped!");
+                  throw new IllegalStateException("Entry should already be wrapped on read owners!");
                } else if (ignoredOwners != null) {
                   if (ignoreForKey == null) {
                      ignoreForKey = ignoredOwners.get(key);
