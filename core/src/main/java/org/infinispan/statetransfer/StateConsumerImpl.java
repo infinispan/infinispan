@@ -485,7 +485,7 @@ public class StateConsumerImpl implements StateConsumer {
             IntSet newSegments = getOwnedSegments(newWriteCh);
             for (int i = 0; i < numSegments; ++i) {
                if (!newSegments.contains(i)) {
-                  removedSegments.add(i);
+                  removedSegments.set(i);
                }
             }
 

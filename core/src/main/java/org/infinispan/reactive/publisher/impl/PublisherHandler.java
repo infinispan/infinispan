@@ -338,7 +338,7 @@ public class PublisherHandler {
          if (completedSegments == null) {
             completedSegments = IntSets.mutableEmptySet();
          }
-         completedSegments.add(segment);
+         completedSegments.set(segment);
 
          segmentEntries = 0;
          currentSegment = -1;
@@ -354,7 +354,7 @@ public class PublisherHandler {
          if (lostSegments == null) {
             lostSegments = IntSets.mutableEmptySet();
          }
-         lostSegments.add(segment);
+         lostSegments.set(segment);
 
          // Just reset the pos back to the segment start - ignoring those entries
          // This saves us from sending these entries back and then having to resend the key to the new owner

@@ -524,7 +524,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private <C extends WriteCommand> IntSet extractCommandSegments(C command, LocalizedCacheTopology topology) {
       IntSet keySegments = IntSets.mutableEmptySet(topology.getNumSegments());
       for (Object key : command.getAffectedKeys()) {
-         keySegments.add(keyPartitioner.getSegment(key));
+         keySegments.set(keyPartitioner.getSegment(key));
       }
       return keySegments;
    }
