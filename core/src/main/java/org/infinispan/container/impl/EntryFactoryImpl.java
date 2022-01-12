@@ -70,11 +70,10 @@ public class EntryFactoryImpl implements EntryFactory {
 
    @Override
    public final CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner,
-                                                          boolean hasLock) {
+                                                          boolean hasLock, CompletionStage<Void> previousStage) {
       if (!isOwner && !isL1Enabled) {
          return CompletableFutures.completedNull();
       }
-      CompletionStage<Void> returnedStage = CompletableFutures.completedNull();
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
          InternalCacheEntry readEntry = getFromContainer(key, segment);
@@ -89,9 +88,8 @@ public class EntryFactoryImpl implements EntryFactory {
                   Boolean expired = CompletionStages.join(expiredStage);
                   handleExpiredEntryContextAddition(expired, ctx, readEntry, key, isOwner);
                } else {
-                  returnedStage = expiredStage.thenApply(expired -> {
+                  return expiredStage.thenAcceptBoth(previousStage, (expired, __) -> {
                      handleExpiredEntryContextAddition(expired, ctx, readEntry, key, isOwner);
-                     return null;
                   });
                }
             } else {
@@ -100,18 +98,16 @@ public class EntryFactoryImpl implements EntryFactory {
          }
       }
 
-      return returnedStage;
+      return previousStage;
    }
 
    private void handleExpiredEntryContextAddition(Boolean expired, InvocationContext ctx, InternalCacheEntry readEntry,
          Object key, boolean isOwner) {
       // Multi-key commands perform the expiration check in parallel, so they need synchronization
-      synchronized (ctx) {
-         if (expired == Boolean.FALSE) {
-            addReadEntryToContext(ctx, readEntry, key);
-         } else if (isOwner) {
-            addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
-         }
+      if (expired == Boolean.FALSE) {
+         addReadEntryToContext(ctx, readEntry, key);
+      } else if (isOwner) {
+         addReadEntryToContext(ctx, NullCacheEntry.getInstance(), key);
       }
    }
 
@@ -143,9 +139,9 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public CompletionStage<Void> wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner, boolean isRead) {
+   public CompletionStage<Void> wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner,
+                                                    boolean isRead, CompletionStage<Void> previousStage) {
       CacheEntry contextEntry = getFromContext(ctx, key);
-      CompletionStage<Void> returnedStage = CompletableFutures.completedNull();
       if (contextEntry instanceof MVCCEntry) {
          // Nothing to do, already wrapped.
       } else if (contextEntry != null) {
@@ -168,9 +164,9 @@ public class EntryFactoryImpl implements EntryFactory {
                      Boolean expired = CompletionStages.join(expiredStage);
                      handleWriteExpiredEntryContextAddition(expired, ctx, ice, key, isRead);
                   } else {
-                     returnedStage = expiredStage.thenApply(expired -> {
+                     // Serialize invocation context access
+                     return expiredStage.thenAcceptBoth(previousStage, (expired, __) -> {
                         handleWriteExpiredEntryContextAddition(expired, ctx, ice, key, isRead);
-                        return null;
                      });
                   }
                } else {
@@ -182,18 +178,16 @@ public class EntryFactoryImpl implements EntryFactory {
          }
       }
 
-      return returnedStage;
+      return previousStage;
    }
 
    private void handleWriteExpiredEntryContextAddition(Boolean expired, InvocationContext ctx, InternalCacheEntry ice,
          Object key, boolean isRead) {
       // Multi-key commands perform the expiration check in parallel, so they need synchronization
-      synchronized (ctx) {
-         if (expired == Boolean.FALSE) {
-            addWriteEntryToContext(ctx, ice, key, isRead);
-         } else {
-            addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
-         }
+      if (expired == Boolean.FALSE) {
+         addWriteEntryToContext(ctx, ice, key, isRead);
+      } else {
+         addWriteEntryToContext(ctx, NullCacheEntry.getInstance(), key, isRead);
       }
    }
 
