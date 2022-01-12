@@ -1,10 +1,12 @@
 package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.container.impl.EntryFactory.expirationCheckDelay;
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.AbstractVisitor;
@@ -218,21 +220,22 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       final Object key = command.getKey();
       CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
             ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
-                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)));
+                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)), CompletableFutures.completedNull());
       return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
    }
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getKeys()) {
-         CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), false);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
+                                                         ignoreOwnership || canReadKey(key), false,
+                                                         CompletableFutures.completedNull());
       }
 
-      return makeStage(asyncInvokeNext(ctx, command, aggregatedStageOrCompleted(aggregateCompletionStage)))
+      return makeStage(asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage)))
             .andHandle(ctx, command, getAllHandleFunction);
    }
 
@@ -272,33 +275,18 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) {
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       if (command.getKeys() != null) {
          for (Object key : command.getKeys()) {
             // TODO: move this to distribution interceptors?
             // we need to try to wrap the entry to get it removed
             // for the removal itself, wrapping null would suffice, but listeners need previous value
-            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-                  true, false);
-            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+            currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                                                                           true, false, currentStage);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
-   }
-
-   private CompletionStage<Void> aggregatedStageOrCompleted(AggregateCompletionStage<Void> aggregateCompletionStage) {
-      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
-   }
-
-   private AggregateCompletionStage<Void> accumulateStage(CompletionStage<Void> stage, AggregateCompletionStage<Void> current) {
-      if (!CompletionStages.isCompletedSuccessfully(stage)) {
-         if (current == null) {
-            current = CompletionStages.aggregateCompletionStage();
-         }
-         current.dependsOn(stage);
-      }
-      return current;
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -326,19 +314,18 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) {
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getKeys()) {
          // TODO: move to distribution interceptors?
          // we need to try to wrap the entry to get it removed
          // for the removal itself, wrapping null would suffice, but listeners need previous value
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               false, false);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                                                                        false, false, currentStage);
          if (log.isTraceEnabled())
            log.tracef("Entry to be removed: %s", toStr(key));
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -367,7 +354,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          return CompletableFutures.completedNull();
       }
       return entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), isOwner,
-                                              command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+                                              command.loadType() != VisitableCommand.LoadType.DONT_LOAD,
+                                              CompletableFutures.completedNull());
    }
 
    private void removeFromContextOnRetry(InvocationContext ctx, Object key) {
@@ -445,15 +433,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getMap().keySet()) {
          // as listeners may need the value, we'll load the previous value
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD, currentStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -503,9 +490,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       CompletionStage<Void> stage;
       if (command instanceof TxReadOnlyKeyCommand) {
          // TxReadOnlyKeyCommand may apply some mutations on the entry in context so we need to always wrap it
-         stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), true);
+         stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(),
+                                                  ignoreOwnership(command) || canRead(command), true,
+                                                  CompletableFutures.completedNull());
       } else {
-         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(), ignoreOwnership(command) || canRead(command), false);
+         stage = entryFactory.wrapEntryForReading(ctx, command.getKey(), command.getSegment(),
+                                                  ignoreOwnership(command) || canRead(command), false,
+                                                  CompletableFutures.completedNull());
       }
 
       // Repeatable reads are not achievable with functional commands, as we don't store the value locally
@@ -518,24 +509,23 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       if (command instanceof TxReadOnlyManyCommand) {
          // TxReadOnlyManyCommand may apply some mutations on the entry in context so we need to always wrap it
          for (Object key : command.getKeys()) {
             // TODO: need to handle this
-            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-                  ignoreOwnership(command) || canReadKey(key), true);
-            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+            currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                  ignoreOwnership(command) || canReadKey(key), true, currentStage);
          }
       } else {
          for (Object key : command.getKeys()) {
-            CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
-                  ignoreOwnership || canReadKey(key), false);
-            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+            currentStage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
+                  ignoreOwnership || canReadKey(key), false, currentStage);
          }
       }
       // Repeatable reads are not achievable with functional commands, see visitReadOnlyKeyCommand
-      return asyncInvokeNext(ctx, command, aggregatedStageOrCompleted(aggregateCompletionStage));
+      return asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -563,15 +553,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getArguments().keySet()) {
          //the put map never reads the keys
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), false);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key), false, currentStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -581,14 +570,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getAffectedKeys()) {
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), false);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key), false, currentStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -604,14 +592,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getAffectedKeys()) {
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), true);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key), true, currentStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    @Override
@@ -621,14 +608,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : command.getAffectedKeys()) {
-         CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), true);
-         aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+               ignoreOwnership || canReadKey(key), true, currentStage);
       }
-      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command,
-            aggregatedStageOrCompleted(aggregateCompletionStage));
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }
 
    protected final CompletionStage<Void> commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
@@ -880,19 +866,20 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
       private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
          CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, command.getKey(), command.getSegment(),
-               ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
+               ignoreOwnership(command) || canRead(command), command.loadType() != VisitableCommand.LoadType.DONT_LOAD,
+                                                                        CompletableFutures.completedNull());
          return asyncInvokeNext(ctx, command, stage);
       }
 
       private Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command) {
          boolean ignoreOwnership = ignoreOwnership(command);
-         AggregateCompletionStage<Void> aggregateCompletionStage = null;
+         CompletableFuture<Void> initialStage = new CompletableFuture<>();
+         CompletionStage<Void> currentStage = initialStage;
          for (Object key : command.getAffectedKeys()) {
-            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-                  ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
-            aggregateCompletionStage = accumulateStage(stage, aggregateCompletionStage);
+            currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                  ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD, currentStage);
          }
-         return asyncInvokeNext(ctx, command, aggregatedStageOrCompleted(aggregateCompletionStage));
+         return asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage));
       }
    }
 
