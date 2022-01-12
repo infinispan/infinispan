@@ -11,6 +11,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.
@@ -222,6 +223,9 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
     */
    public final Object asyncInvokeNext(InvocationContext ctx, VisitableCommand command,
                                        CompletionStage<?> delay) {
+      if (CompletionStages.isCompletedSuccessfully(delay))
+         return invokeNext(ctx, command);
+
       return asyncValue(delay).thenApply(ctx, command, invokeNextFunction);
    }
 
