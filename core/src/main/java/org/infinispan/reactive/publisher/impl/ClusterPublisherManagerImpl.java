@@ -632,7 +632,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    private void addToMap(Map<Address, IntSet> map, Address owner, int segment) {
       IntSet set = map.get(owner);
       if (set == null) {
-         set = IntSets.mutableEmptySet();
+         set = IntSets.mutableEmptySet(maxSegment);
          map.put(owner, set);
       }
       set.set(segment);
