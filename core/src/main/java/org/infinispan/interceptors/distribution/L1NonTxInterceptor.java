@@ -52,7 +52,7 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -314,25 +314,20 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command)
          throws Throwable {
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
       for (Object key : invalidateL1Command.getKeys()) {
          abortL1UpdateOrWait(key);
          // If our invalidation was sent when the value wasn't yet cached but is still being requested the context
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
          if (ctx.lookupEntry(key) == null) {
-            CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-                  true, false);
-            if (!CompletionStages.isCompletedSuccessfully(stage)) {
-               if (aggregateCompletionStage == null) {
-                  aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-               }
-               aggregateCompletionStage.dependsOn(stage);
-            }
+            currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
+                                                            true, false, currentStage);
          }
       }
-      return aggregateCompletionStage != null ? asyncInvokeNext(ctx, invalidateL1Command, aggregateCompletionStage.freeze()) :
-            invokeNext(ctx, invalidateL1Command);
+      if (currentStage == initialStage) return invokeNext(ctx, invalidateL1Command);
+      return asyncInvokeNext(ctx, invalidateL1Command, currentStage);
    }
 
    private void abortL1UpdateOrWait(Object key) {
@@ -425,7 +420,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
       abortL1UpdateOrWait(key);
       ctx.removeLookedUpEntry(key);
-      CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, segment, true, false);
+      CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, segment, true, false, CompletableFutures.completedNull());
 
       return stage.thenApply(ignore -> commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
             Collections.singleton(key)));
