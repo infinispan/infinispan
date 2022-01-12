@@ -1,5 +1,6 @@
 package org.infinispan.container.impl;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
@@ -10,6 +11,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A factory for constructing {@link org.infinispan.container.entries.MVCCEntry} instances for use in the {@link org.infinispan.context.InvocationContext}.
@@ -87,6 +89,32 @@ import org.infinispan.topology.CacheTopology;
  */
 public interface EntryFactory {
    /**
+    * Use to synchronize multiple {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, CompletionStage)}
+    * or {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, CompletionStage)} calls.
+    *
+    * The basic pattern is:
+    *
+    * <pre>{@code
+    * CompletableFuture<Void> initialStage = new CompletableFuture<>();
+    * CompletionStage<Void> currentStage = initialStage;
+    * for (Object key : ...) {
+    *    currentStage = entryFactory.wrapEntryForWriting(..., currentStage);
+    * }
+    * return asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage));
+    * }</pre>
+    */
+   static CompletionStage<Void> expirationCheckDelay(CompletionStage<Void> currentStage, CompletableFuture<Void> initialStage) {
+      if (currentStage == initialStage) {
+         // No expiration to process asynchronously, don't bother completing the initial stage
+         return CompletableFutures.completedNull();
+      }
+
+      // Allow the expiration check to modify the invocation context
+      initialStage.complete(null);
+      return currentStage;
+   }
+
+   /**
     * Wraps an entry for reading.  Usually this is just a raw {@link CacheEntry} but certain combinations of isolation
     * levels and the presence of an ongoing JTA transaction may force this to be a proper, wrapped MVCCEntry.  The entry
     * is also typically placed in the invocation context.
@@ -96,10 +124,11 @@ public interface EntryFactory {
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
     * @param hasLock true if the invoker already has the lock for this key
+    * @param previousStage don't access the invocation context from another thread before this stage is complete
     * @return stage that when complete the value should be in the context
     */
    CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner,
-                                             boolean hasLock);
+                                             boolean hasLock, CompletionStage<Void> previousStage);
 
    /**
     * Insert an entry that exists in the data container into the context.
@@ -114,9 +143,10 @@ public interface EntryFactory {
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
     * @param isRead true if this operation is expected to read the value of the entry
+    * @param previousStage don't access the invocation context from another thread before this stage is complete
     * @since 8.1
     */
-   CompletionStage<Void> wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner, boolean isRead);
+   CompletionStage<Void> wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner, boolean isRead, CompletionStage<Void> previousStage);
 
    /**
     * Insert an entry that exists in the data container into the context, even if it is expired
