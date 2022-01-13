@@ -18,11 +18,13 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
@@ -60,9 +62,9 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
    final Collection<IracXSiteBackup> asyncBackups;
 
    public DefaultIracTombstoneManager(Configuration configuration) {
-      this.iracExecutor = new IracExecutor(this::performCleanup);
-      this.asyncBackups = DefaultIracManager.asyncBackups(configuration);
-      this.tombstoneMap = new ConcurrentHashMap<>();
+      iracExecutor = new IracExecutor(this::performCleanup);
+      asyncBackups = DefaultIracManager.asyncBackups(configuration);
+      tombstoneMap = new ConcurrentHashMap<>();
    }
 
    @Inject
@@ -73,6 +75,14 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       iracExecutor.setExecutor(blockingExecutor);
       // TODO configure? https://issues.redhat.com/browse/ISPN-13446
       executorService.scheduleAtFixedRate(iracExecutor::run, 30, 30, TimeUnit.SECONDS);
+   }
+
+   @Start
+   public void start() {
+      Transport transport = rpcManager.getTransport();
+      transport.checkCrossSiteAvailable();
+      String localSiteName = transport.localSiteName();
+      asyncBackups.removeIf(xSiteBackup -> localSiteName.equals(xSiteBackup.getSiteName()));
    }
 
    public void storeTombstone(int segment, Object key, IracMetadata metadata) {
@@ -147,11 +157,11 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       return distributionManager.getCacheTopology().getSegmentDistribution(segment);
    }
 
-   private static class TombstoneData {
+   private static final class TombstoneData {
       private final int segment;
       private final IracMetadata metadata;
 
-      private TombstoneData(int segment, IracMetadata metadata) {
+      TombstoneData(int segment, IracMetadata metadata) {
          this.segment = segment;
          this.metadata = Objects.requireNonNull(metadata);
       }
@@ -178,11 +188,11 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       }
    }
 
-   private class CleanupTask implements Function<Boolean, CompletionStage<Void>>, Runnable {
+   private final class CleanupTask implements Function<Boolean, CompletionStage<Void>>, Runnable {
       private final Object key;
       private final TombstoneData tombstone;
 
-      private CleanupTask(Object key, TombstoneData tombstone) {
+      CleanupTask(Object key, TombstoneData tombstone) {
          this.key = key;
          this.tombstone = tombstone;
       }
