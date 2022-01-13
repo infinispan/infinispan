@@ -58,7 +58,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
 
    public DefaultTakeOfflineManager(String cacheName) {
       this.cacheName = cacheName;
-      this.offlineStatus = new ConcurrentHashMap<>();
+      offlineStatus = new ConcurrentHashMap<>(8);
    }
 
    public static boolean isCommunicationError(Throwable throwable) {
@@ -85,11 +85,14 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
 
    @Start
    public void start() {
-      config.sites().enabledBackupStream().forEach(bc -> {
-         final String siteName = bc.site();
-         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
-         offlineStatus.put(siteName, offline);
-      });
+      String localSiteName = rpcManager.getTransport().localSiteName();
+      config.sites().enabledBackupStream()
+            .filter(bc -> !localSiteName.equals(bc.site()))
+            .forEach(bc -> {
+               String siteName = bc.site();
+               OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
+               offlineStatus.put(siteName, offline);
+            });
    }
 
    @Override
@@ -187,11 +190,11 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
       return eventLogManager.getEventLogger().context(cacheName).scope(rpcManager.getAddress());
    }
 
-   private class Listener implements SiteStatusListener {
+   private final class Listener implements SiteStatusListener {
 
       private final String siteName;
 
-      private Listener(String siteName) {
+      Listener(String siteName) {
          this.siteName = siteName;
       }
 
