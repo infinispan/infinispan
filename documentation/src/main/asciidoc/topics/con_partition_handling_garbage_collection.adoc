@@ -1,0 +1,20 @@
+[id="partition-handling-garbage-collection_{context}"]
+= Garbage collection and partition handling
+
+Long garbage collection (GC) times can increase the amount of time it takes {brandname} to detect network partitions.
+In some cases, GC can cause {brandname} to exceed the maximum time to detect a split.
+
+Additionally, when merging partitions after a split, {brandname} attempts to confirm all nodes are present in the cluster.
+Because no timeout or upper bound applies to the response time from nodes, the operation to merge the cluster view can be delayed.
+This can result from network issues as well as long GC times.
+
+Another scenario in which GC can impact performance through partition handling is when GC suspends the JVM, causing one or more nodes to leave the cluster.
+When this occurs, and suspended nodes resume after GC completes, the nodes can have out of date or conflicting cluster topologies.
+
+If a merge policy is configured, {brandname} attempts to resolve conflicts before merging the nodes.
+However, the merge policy is used only if the nodes have incompatible consistent hashes.
+Two consistent hashes are compatible if they have at least one common owner for each segment or incompatible if they have no common owner for at least one segment.
+
+When nodes have old, but compatible, consistent hashes, {brandname} ignores the out of date cluster topology and does not attempt to resolve conflicts.
+For example, if one node in the cluster is suspended due to garbage collection (GC), other nodes in the cluster remove it from the consistent hash and replace it with new owner nodes.
+If `numOwners > 1`, the old consistent hash and the new consistent hash have a common owner for every key, which makes them compatible and allows {brandname} to skip the conflict resolution process.
