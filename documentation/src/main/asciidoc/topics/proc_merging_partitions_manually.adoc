@@ -1,0 +1,18 @@
+[id="merging-partitions-manually_{context}"]
+= Manually merging partitions in embedded caches
+
+You can manually search for and resolve conflicting entries when merging embedded caches.
+
+.Procedure
+
+* Retrieve the `ConflictManager` from the `EmbeddedCacheManager` to detect and resolve conflicting entries in a cache, as in the following example:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/EmbeddedConflictManager.java[]
+----
+
+[NOTE]
+====
+Although the `ConflictManager::getConflicts` stream is processed per entry, the underlying spliterator lazily loads cache entries on a per segment basis.
+====
