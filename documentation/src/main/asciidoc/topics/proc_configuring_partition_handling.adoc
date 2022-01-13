@@ -1,0 +1,59 @@
+[id="configuring-partition-handling_{context}"]
+= Configuring partition handling
+
+Configure {brandname} to use a partition handling strategy and merge policy so it can resolve split clusters when network issues occur.
+By default {brandname} uses a strategy that provides availability at the cost of lowering consistency guarantees for your data.
+When a cluster splits due to a network partition clients can continue to perform read and write operations on caches.
+
+If you require consistency over availability, you can configure {brandname} to deny read and write operations while the cluster is split into partitions.
+Alternatively you can allow read operations and deny write operations.
+You can also specify custom merge policy implementations that configure {brandname} to resolve splits with custom logic tailored to your requirements.
+
+.Prerequisites
+
+* Have a {brandname} cluster where you can create either a replicated or distributed cache.
++
+[NOTE]
+====
+Partition handling configuration applies only to replicated and distributed caches.
+====
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Add partition handling configuration to your cache with either the `partition-handling` element or `partitionHandling()` method.
+. Specify a strategy for {brandname} to use when the cluster splits into partitions with the `when-split` attribute or `whenSplit()` method.
++
+The default partition handling strategy is `ALLOW_READ_WRITES` so caches remain availabile.
+If your use case requires data consistency over cache availability, specify the `DENY_READ_WRITES` strategy.
+. Specify a policy that {brandname} uses to resolve conflicting entries when merging partitions with the `merge-policy` attribute or `mergePolicy()` method.
++
+By default {brandname} does not resolve conflicts on merge.
+. Save the changes to your {brandname} configuration.
+
+[discrete]
+== Partition handling configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/partition_handling.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/partition_handling.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/partition_handling.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PartitionHandling.java[]
+----

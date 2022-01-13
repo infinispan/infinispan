@@ -1,8 +1,23 @@
 [id='partition-handling']
 :context: partition-handling
-= Setting up partition handling
+= Configuring {brandname} to handle network partitions
+
+{brandname} clusters can split into network partitions in which subsets of nodes become isolated from each other.
+This condition results in loss of availability or consistency for clustered caches.
+To handle network partitions, {brandname} automatically detects crashed nodes and resolves conflicts to merge caches back together.
 
 include::{topics}/con_partition_handling.adoc[leveloffset=+1]
+include::{topics}/con_partition_handling_recovery_example.adoc[leveloffset=+2]
+include::{topics}/con_partition_handling_data_consistency.adoc[leveloffset=+2]
+include::{topics}/con_partition_handling_garbage_collection.adoc[leveloffset=+2]
+include::{topics}/con_partition_handling_degraded_mode.adoc[leveloffset=+1]
+include::{topics}/proc_checking_cache_availability.adoc[leveloffset=+2]
+include::{topics}/proc_changing_cache_availability.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_partition_handling.adoc[leveloffset=+1]
+include::{topics}/ref_partition_handling_strategies.adoc[leveloffset=+1]
+include::{topics}/ref_partition_handling_merge_policies.adoc[leveloffset=+1]
+include::{topics}/proc_implementing_custom_merge_policies.adoc[leveloffset=+1]
+include::{topics}/proc_merging_partitions_manually.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

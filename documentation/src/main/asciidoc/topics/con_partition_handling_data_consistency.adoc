@@ -1,0 +1,18 @@
+[id="partition-handling-data-consistency_{context}"]
+= Data consistency in a split cluster
+
+Network outages or errors that cause {brandname} clusters to split into partitions can result in data loss or consistency issues regardless of any handling strategy or merge policy.
+
+.Between the split and detection
+
+If a write operation takes place on a node that is in a minor partition when a split occurs, and before {brandname} detects the split, that value is lost when {brandname} transfers state to that minor partition during the merge.
+
+In the event that all partitions are in the `DEGRADED` mode that value is not lost because no state transfer occurs but the entry can have an inconsistent value.
+For transactional caches write operations that are in progress when the split occurs can be committed on some nodes and rolled back on other nodes, which also results in inconsistent values.
+
+During the time that a split occurs and the time that {brandname} detects it, it is possible to get stale reads from a cache in a minor partition that has not yet entered `DEGRADED` mode.
+
+.During the merge
+
+When {brandname} starts removing partitions nodes reconnect to the cluster with a series of merge events.
+Before this merge process completes it is possible that write operations on transactional caches succeed on some nodes but not others, which can potentially result in stale reads until the entries are updated.

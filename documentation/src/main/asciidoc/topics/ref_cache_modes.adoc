@@ -5,7 +5,7 @@
 ====
 {brandname} cache managers can create and control multiple caches that use
 different modes. For example, you can use the same cache manager for local
-caches, distributes caches, and caches with invalidation mode.
+caches, distributed caches, and caches with invalidation mode.
 ====
 
 Local:: {brandname} runs as a single node and never replicates read or write operations on cache entries.

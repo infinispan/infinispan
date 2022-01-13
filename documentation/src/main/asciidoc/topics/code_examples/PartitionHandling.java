@@ -1,4 +1,5 @@
-ConfigurationBuilder dcc = new ConfigurationBuilder();
-dcc.clustering().partitionHandling()
-                    .whenSplit(PartitionHandling.ALLOW_READ_WRITES)
-                    .mergePolicy(MergePolicy.PREFERRED_ALWAYS);
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.clustering().cacheMode(CacheMode.DIST_SYNC)
+       .partitionHandling()
+       .whenSplit(PartitionHandling.DENY_READ_WRITES)
+       .mergePolicy(MergePolicy.PREFERRED_NON_NULL);
