@@ -2936,17 +2936,25 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="DENY_READ_WRITES">
         <xs:annotation>
-          <xs:documentation>If the partition does not have all owners for a given segment, both reads and writes are denied for all keys in that segment.</xs:documentation>
+          <xs:documentation>
+            Allow read and write operations only if all replicas of an entry are in the partition.
+            If a partition does not include all replicas of an entry, do not allow cache operations for that entry.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="ALLOW_READS">
         <xs:annotation>
-          <xs:documentation>Allows reads for a given key if it exists in this partition, but only allows writes if this partition contains all owners of a segment.</xs:documentation>
+          <xs:documentation>
+            Allow read operations for entries and deny write operations unless the partition includes all replicas of an entry.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="ALLOW_READ_WRITES">
         <xs:annotation>
-          <xs:documentation>Allow entries on each partition to diverge, with conflicts resolved during merge.</xs:documentation>
+          <xs:documentation>
+            Allow read and write operations on caches while a cluster is split into network partitions.
+            Caches remain available and conflicts are resolved during merge.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
@@ -2960,22 +2968,30 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="NONE">
         <xs:annotation>
-          <xs:documentation>Do not attempt to resolve conflicts on merge.</xs:documentation>
+          <xs:documentation>
+            Do not resolve conflicts when merging split clusters.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="PREFERRED_ALWAYS">
         <xs:annotation>
-          <xs:documentation>Always utilise the entry located in the preferred partition.</xs:documentation>
+          <xs:documentation>
+            Use the value that exists on the majority of nodes in the cluster to resolve conflicts.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="PREFERRED_NON_NULL">
         <xs:annotation>
-          <xs:documentation>Utilise entries from the preferred partition if non-null, otherwise utilise entries from the other partition.</xs:documentation>
+          <xs:documentation>
+            Use the first non-null value on the cluster to resolve conflicts.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="REMOVE_ALL">
         <xs:annotation>
-          <xs:documentation>If a conflict is encountered for a given key, remove all versions of that key.</xs:documentation>
+          <xs:documentation>
+            Delete any conflicting entries from the cache.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
