@@ -188,6 +188,7 @@ public class JGroupsTransport implements Transport {
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
    private final Map<String, SiteUnreachableReason> unreachableSites;
+   private String localSite;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -324,6 +325,7 @@ public class JGroupsTransport implements Transport {
          log.tracef("About to send to backups %s, command %s", backups, command);
       Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls = new HashMap<>(backups.size());
       for (XSiteBackup xsb : backups) {
+         assert !localSite.equals(xsb.getSiteName()) : "sending to local site";
          Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(xsb.getSiteName()));
          long requestId = requests.newRequestId();
          logRequest(requestId, command, recipient, "backup");
@@ -349,6 +351,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+      assert !localSite.equals(backup.getSiteName()) : "sending to local site";
       if (unreachableSites.containsKey(backup.getSiteName())) {
          // fail fast if we have thread handling a SITE_UNREACHABLE event.
          return new SiteUnreachableXSiteResponse<>(backup, timeService);
@@ -432,15 +435,14 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public void checkCrossSiteAvailable() throws CacheConfigurationException {
-      if (findRelay2() == null) {
+      if (localSite == null) {
          throw CLUSTER.crossSiteUnavailable();
       }
    }
 
    @Override
    public String localSiteName() {
-      RELAY2 relay2 = findRelay2();
-      return relay2 == null ? null : relay2.site();
+      return localSite;
    }
 
    @Start
@@ -469,17 +471,21 @@ public class JGroupsTransport implements Transport {
 
       waitForInitialNodes();
       channel.getProtocolStack().getTransport().registerProbeHandler(probeHandler);
+      RELAY2 relay2 = findRelay2();
+      if (relay2 != null) {
+         localSite = relay2.site();
+      }
       running = true;
    }
 
    protected void initChannel() {
-      final TransportConfiguration transportCfg = configuration.transport();
+      TransportConfiguration transportCfg = configuration.transport();
       if (channel == null) {
          buildChannel();
          if (connectChannel) {
             // Cannot change the name if the channelLookup already connected the channel
             String transportNodeName = transportCfg.nodeName();
-            if (transportNodeName != null && transportNodeName.length() > 0) {
+            if (transportNodeName != null && !transportNodeName.isEmpty()) {
                channel.setName(transportNodeName);
             }
          }
