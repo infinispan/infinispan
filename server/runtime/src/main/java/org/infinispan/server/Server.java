@@ -467,10 +467,13 @@ public class Server implements ServerManagement, AutoCloseable {
          this.status = ComponentStatus.RUNNING;
          log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
       } catch (Exception e) {
-         log.serverFailedToStart(Version.getBrandName(), e);
          r.completeExceptionally(e);
       }
-      r = r.whenComplete((status, t) -> localShutdown(status));
+      r = r.handle((status, t) -> {
+         Server.log.serverFailedToStart(Version.getBrandName(), t);
+         localShutdown(status);
+         return null;
+      });
       return r;
    }
 
