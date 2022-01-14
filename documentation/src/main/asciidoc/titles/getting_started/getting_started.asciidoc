@@ -15,7 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Getting Started with {brandname}
+= Getting started with Infinispan
+
+It’s easy to get up and running with Infinispan.
+All you need is Java and a dependency management and build tool such as Maven.
 
 //User stories
 include::stories.adoc[]

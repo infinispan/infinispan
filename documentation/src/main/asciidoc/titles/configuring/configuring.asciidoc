@@ -22,7 +22,11 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :embedded_caches:
 
 //Title
-= Configuring {brandname} Caches
+= Configuring Infinispan caches
+
+Create and configure Infinispan caches with the mode and capabilities that suit your application requirements.
+You can configure caches with expiration to remove stale entries or use eviction to control cache size.
+You can also add persistent storage to caches, enable partition handling for clustered caches, set up transactions, and more.
 
 //User stories
 include::stories.adoc[]

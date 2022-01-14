@@ -1,6 +1,7 @@
-= {brandname} {infinispanversion} Documentation
-Written and maintained by the {brandname} community
-:icons: font
+= Infinispan {infinispanversion} documentation index
+
+User guides and documentation written and maintained by the Infinispan community.
+Visit link:https://infinispan.org/documentation[infinispan.org/documentation] for more guides.
 
 ++++
 <script async src="https://cse.google.com/cse.js?cx=013815398149802919631:_cym2xwxalo"></script>
@@ -8,51 +9,41 @@ Written and maintained by the {brandname} community
 ++++
 
 [discrete]
-== Getting Started
+== Welcome to Infinispan
+
+Infinispan provides distributed, in-memory data storage for modern cloud-native application workloads.
 
 [unstyled]
-* link:titles/getting_started/getting_started.html[Getting Started with {brandname}]
+* link:titles/getting_started/getting_started.html[Getting started with Infinispan]
+* link:titles/contributing/contributing.html[Contributor's guide]
 
 [discrete]
-== {brandname} Server
+== Deploying and operating Infinispan clusters
+
+Plan, configure, deploy, and manage Infinispan clusters.
 
 [unstyled]
-* link:titles/server/server.html[{brandname} Server Guide]
-* link:titles/cli/cli.html[Command Line Interface]
-* link:titles/rest/rest.html[REST API]
+* link:titles/tuning/tuning.html[Performance considerations and tuning guidelines]
+* link:titles/server/server.html[Guide to Infinispan Server]
+* link:titles/cli/cli.html[Using the Command Line Interface (CLI)]
+* link:titles/rest/rest.html[Using the REST API]
+* link:titles/security/security.html[Security guide]
+* link:titles/upgrading/upgrading.html[Upgrading Infinispan deployments]
 
 [discrete]
-== Hot Rod
+== Developing applications with Infinispan
+
+Use Infinispan caching capabilities to boost application performance with a fault-tolerant and elastically scalable data store.
 
 [unstyled]
-* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
-* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
-
-[discrete]
-== Administrator
-
-[unstyled]
-* link:titles/tuning/tuning.html[Planning and Tuning {brandname} Deployments]
-* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
-* link:titles/security/security.html[Security]
-
-[discrete]
-== Developer
-
-[unstyled]
-* link:titles/embedding/embedding.html[Embedding {brandname} in Java Applications]
-* link:titles/configuring/configuring.html[Configuring {brandname} Caches]
-* link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
-* link:titles/query/query.html[Querying {brandname} Caches]
-* link:titles/developing/developing.html[Developer's Guide]
-* link:titles/xsite/xsite.html[{brandname} Cross-Site Replication]
-* link:titles/hibernate/hibernate.html[Hibernate Second-Level Cache (2LC)]
-* link:titles/spring/spring.html[Spring Cache and Spring Sessions]
+* link:titles/configuring/configuring.html[Configuring caches]
+* link:titles/encoding/encoding.html[Encoding caches and marshalling data]
+* link:titles/query/query.html[Querying caches]
+* link:titles/xsite/xsite.html[Cross-site replication]
+* link:titles/embedding/embedding.html[Embedding caches in Java applications]
+* link:titles/hotrod_java/hotrod_java.html[Using Hot Rod Java clients]
+* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod protocol reference]
+* link:titles/hibernate/hibernate.html[Hibernate second-level caching (2LC)]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
-
-[discrete]
-== Additional Resources
-
-Check out our link:titles/contributing/contributing.html[Contributor's Guide] if you want to join our community.
-
-Find the full documentation set for each {brandname} version at link:http://www.infinispan.org/documentation[infinispan.org/documentation].
+* link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
+* link:titles/memcached/memcached.html[Using the Memcached protocol endpoint with Infinispan]

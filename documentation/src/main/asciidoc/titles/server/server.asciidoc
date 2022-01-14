@@ -21,9 +21,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :remote_caches:
 
 //Title
-= {brandname} {infinispanversion} Server Guide
+= Guide to Infinispan Server
 
-{brandname} Server deployments offer distributed remote caches with elastic scalability and high performance access.
+Infinispan Server runs in a dedicated Java Virtual Machine (JVM) and provides client access to remote caches through Hot Rod or REST endpoints.
+Infinispan Server speeds time to deployment by separating caches from application logic and offers built-in capabilities for monitoring and administration.
 
 //User stories
 include::stories.adoc[]
