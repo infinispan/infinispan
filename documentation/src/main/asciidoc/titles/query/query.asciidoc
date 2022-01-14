@@ -15,9 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Querying {brandname} Caches
+= Querying Infinispan caches
 
-{brandname} lets you perform queries with embedded and remote caches to efficiently and quickly look up values in your data set.
+Use the Ickle query language with Infinispan caches to efficiently and quickly gain real-time insights into your data.
+Learn how to configure indexing and perform queries on remote and embedded caches.
 
 //User stories
 include::stories.adoc[]

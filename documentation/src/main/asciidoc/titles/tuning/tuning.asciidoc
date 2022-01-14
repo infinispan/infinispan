@@ -15,7 +15,12 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Planning and Tuning {brandname} Deployments
+= Infinispan performance considerations and tuning guidelines
+
+Deploying an in-memory, distributed data store requires careful planning.
+It also requires you to measure performance over time to learn where boundaries exist and then adjust and tune your deployment.
+The details in this guide help you calculate the size of your data set, figure out what type of clustered cache best suits your requirements, and understand performance trade-offs for various Infinispan capabilities.
+This guide also includes some practical tuning recommendations to optimize Infinispan performance.
 
 //User stories
 include::stories.adoc[]

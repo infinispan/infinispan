@@ -15,10 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Using {brandname} with Spring
+= Spring Cache and Spring Sessions with Infinispan
 
-{brandname} implements the Spring SPI to offer high-performance, in-memory caching capabilities for Spring applications.
-You can use {brandname} as a Spring Cache provider and with the Spring Sessions API.
+Infinispan implements the Spring SPI to offer high-performance, in-memory caching capabilities for Spring applications.
+You can use Infinispan as a Spring Cache provider and with the Spring Sessions API.
 
 //User stories
 include::stories.adoc[]
