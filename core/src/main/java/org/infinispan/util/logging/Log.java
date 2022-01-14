@@ -2238,4 +2238,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Initial state transfer timed out for cache %s on %s", id = 658)
    TimeoutException initialStateTransferTimeout(String cacheName, Address localAddress);
+
+   @Message(value = "Component %s failed to start", id = 659)
+   CacheConfigurationException componentFailedToStart(String componentName, @Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "%s start failed, stopping any running components", id = 660)
+   void startFailure(String registryName, @Cause Throwable t);
 }
