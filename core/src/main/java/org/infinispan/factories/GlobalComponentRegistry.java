@@ -254,6 +254,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
+   protected String getName() {
+      return "DefaultCacheManager";
+   }
+
+   @Override
    protected void preStart() {
       basicComponentRegistry.getComponent(ModuleInitializer.class).running();
 

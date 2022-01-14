@@ -261,6 +261,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
             notifyAll();
          }
 
+         Log.CONFIG.startFailure(getName(), t);
          try {
             stop();
          } catch (Throwable t1) {
@@ -270,6 +271,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
          handleLifecycleTransitionFailure(t);
       }
    }
+
+   protected abstract String getName();
 
    protected abstract void preStart();
 
