@@ -145,6 +145,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          log.infof("Started server %s", name);
          status = ComponentStatus.RUNNING;
       } catch (Throwable t) {
+         log.errorf(t, "Unable to start server %s", name);
          status = ComponentStatus.FAILED;
          throw t;
       }

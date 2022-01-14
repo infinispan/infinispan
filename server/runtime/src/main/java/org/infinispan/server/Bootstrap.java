@@ -162,9 +162,7 @@ public class Bootstrap extends Main {
       Server.log.loggingConfiguration(loggingFile.toString());
       try (Server server = new Server(serverRoot, configurationFiles, properties)) {
          server.setExitHandler(exitHandler);
-         server.run().get();
-      } catch (Exception e) {
-         Server.log.serverFailedToStart(Version.getBrandName(), e);
+         server.run().join();
       }
    }
 
