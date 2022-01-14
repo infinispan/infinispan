@@ -1,0 +1,26 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+
+//Title
+= Infinispan performance and tuning
+
+Successfully deploying an in-memory, distributed data store at scale requires some careful planning.
+It also requires you to measure performance over time so you can learn where boundaries exist and tune your deployment.
+The details in this guide help you calculate the size of your data set, figure out what type of clustered cache best suits your requirements, and understand performance trade-offs for various Infinispan capabilities.
+This guide also includes some practical tuning recommendations to optimize Infinispan performance.
+
+//User stories
+include::stories.adoc[]

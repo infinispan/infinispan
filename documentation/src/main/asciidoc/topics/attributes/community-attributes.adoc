@@ -71,56 +71,41 @@
 //Doc Home
 :doc_home: https://infinispan.org/documentation/
 
-//Migration Guide
-:migration_docs: ../upgrading/upgrading.html
+//CLI
+:cli_docs: ../command-line-interface/command-line-interface.html
+
+//Configuration Guide
+:config_docs: ../configuring-caches/configuring-caches.html
+
+//Cross-Site REPL
+:xsite_docs: ../cross-site-replication/cross-site-replication.html
 
 //Dev
 :dev_docs: ../developing/developing.html
 
-//Query
-:query_docs: ../query/query.html
+//Embedded docs
+:library_docs: ../embedding-caches/embedding-caches.html
 
-//Marshalling and encoding
-:encoding_docs: ../encoding/encoding.html
-
-//Server
-:server_docs: ../server/server.html
-
-//REST
-:rest_docs: ../rest/rest.html
-
-//Query
-:query_docs: ../query/query.html
+//Encoding caches and marshalling
+:encoding_docs: ../encoding-caches/encoding-caches.html
 
 //HotRod Java client
-:hotrod_docs: ../hotrod_java/hotrod_java.html
+:hotrod_docs: ../hotrod-java-client/hotrod-java-client.html
 
-//Operator Getting Started
-:k8s_start: https://infinispan.org/infinispan-operator/main/operator.html#start_operator
-
-//Operator
-:k8s_docs: https://infinispan.org/infinispan-operator/main/operator.html
-
-//Library
-:library_docs: ../embedding/embedding.html
-
-//Configuration Guide
-:config_docs: ../configuring/configuring.html
-
-//REST
-:rest_docs: ../rest/rest.html
-
-//CLI
-:cli_docs: ../cli/cli.html
-
-//Cross-Site REPL
-:xsite_docs: ../xsite/xsite.html
+//Server Guide
+:server_docs: ../infinispan-server/infinispan-server.html
 
 //Memcached
 :memcached_docs: ../memcached/memcached.html
 
+//Query
+:query_docs: ../querying-caches/querying-caches.html
+
+//REST
+:rest_docs: ../rest-api/rest-api.html
+
 //SB Starter
-:sb_starter: ../spring_boot/starter.html
+:sb_starter: ../spring-boot-starter/spring-boot-starter.html
 
 //JGroups
 :jgroups_docs: http://www.jgroups.org/manual4/index.html

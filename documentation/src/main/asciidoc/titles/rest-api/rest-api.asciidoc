@@ -15,7 +15,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Using the {brandname} REST Server
+= Using the Infinispan REST API
+
+Infinispan Server provides a REST endpoint that lets you access data, monitor clusters, and perform administrative operations.
 
 //User stories
 include::stories.adoc[]
