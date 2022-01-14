@@ -582,7 +582,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          throw e;
       } catch (Throwable t) {
          commitWrapperStateChange(wrapper, WrapperState.STARTING, WrapperState.FAILED);
-         throw new CacheConfigurationException("Error starting component " + wrapper.name, t);
+         throw Log.CONFIG.componentFailedToStart(wrapper.name, t);
       }
    }
 

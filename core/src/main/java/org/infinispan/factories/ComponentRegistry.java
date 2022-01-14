@@ -217,6 +217,11 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
+   protected String getName() {
+      return "Cache " + cacheName;
+   }
+
+   @Override
    protected void preStart() {
       // set this up *before* starting the components since some components - specifically state transfer -
       // needs to be able to locate this registry via the InboundInvocationHandler
