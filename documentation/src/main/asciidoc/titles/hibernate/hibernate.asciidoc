@@ -15,9 +15,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Hibernate Second-Level Caching
+= Hibernate second-level caching (2LC)
 
-You can use {brandname} as a second-level cache (2LC) with Hibernate to store all sessions from applications using the same session factory.
+You can use Infinispan as a second-level cache (2LC) with Hibernate to store all sessions from applications using the same session factory.
 
 //User stories
 include::stories.adoc[]

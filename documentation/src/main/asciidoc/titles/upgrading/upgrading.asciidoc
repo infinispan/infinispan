@@ -15,7 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Upgrading {brandname} {infinispanversion}
+= Upgrading Infinispan deployments
+
+Learn how to upgrade and migrate your Infinispan deployments to the latest version or between later versions.
+This guide also explains how to perform rolling upgrades of Infinispan Server deployments and migrate persistent cache stores.
 
 //User stories
 include::stories.adoc[]

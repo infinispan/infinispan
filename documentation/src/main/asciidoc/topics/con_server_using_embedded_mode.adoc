@@ -1,8 +1,0 @@
-[[embedded_mode]]
-= Using the Embedded Mode
-
-Before talking about individual {brandname} server modules, it's worth mentioning that in spite of all the benefits, client-server {brandname}still has disadvantages over p2p. Firstly, p2p deployments are simpler than client-server ones because in p2p, all peers are equals to each other and this simplifies deployment. If this is the first time you are using {brandname}, p2p is likely to be easier for you to get going compared to client-server.
-
-Client-server {brandname} requests are likely to take longer compared to p2p requests, due to the serialization and network cost in remote calls. So, this is an important factor to take in account when designing your application. For example, with replicated {brandname} caches, it might be more performant to have lightweight HTTP clients connecting to a server side application that accesses {brandname} in p2p mode, rather than having more heavyweight client side apps talking to {brandname} in client-server mode, particularly if data size handled is rather large. With distributed caches, the difference might not be so big because even in p2p deployments, you're not guaranteed to have all data available locally.
-
-Environments where application tier elasticity is not important, or where server side applications access state-transfer-disabled, replicated {brandname} cache instances are amongst scenarios where {brandname} p2p deployments can be more suited than client-server ones.

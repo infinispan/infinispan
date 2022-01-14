@@ -15,11 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Contributing to {brandname}
+= Contributor's guide
 
-Feel like contributing to {brandname}?  This guide will help you set up your
-environment, walk you through best practices, and help you debug, improve
-and add features to {brandname}.
+Want to become an Infinispan contributor?
+This guide helps you get set up, walks you through best practices, and explains how to add or improve Infinispan capabilities.
 
 //User stories
 include::stories.adoc[]
