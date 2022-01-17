@@ -21,7 +21,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :remote_caches:
 
 //Title
-= Security Guide for {brandname} {infinispanversion}
+= Infinispan security guide
+
+Securing the environment and restricting access to clusters is of critical importance for any deployment that stores sensitive data.
+This guide provides information and security best practices to help you protect Infinispan caches against network intrusion and unauthorized access.
 
 //User stories
 include::stories.adoc[]

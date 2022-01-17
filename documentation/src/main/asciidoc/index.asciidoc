@@ -1,58 +1,46 @@
-= {brandname} {infinispanversion} Documentation
-Written and maintained by the {brandname} community
-:icons: font
+= Infinispan documentation index
+
+User guides and documentation written and maintained by the Infinispan community. You can find all our docs at link:https://infinispan.org/documentation[infinispan.org/documentation].
 
 ++++
 <script async src="https://cse.google.com/cse.js?cx=013815398149802919631:_cym2xwxalo"></script>
 <div class="gcse-search"></div>
 ++++
 
-[discrete]
-== Getting Started
+== Welcome to Infinispan
+
+Infinispan provides distributed, in-memory data storage for modern application workloads.
 
 [unstyled]
-* link:titles/getting_started/getting_started.html[Getting Started with {brandname}]
+* link:titles/getting-started/getting-started.html[Getting started with Infinispan]
+* link:titles/contributors-guide/contributors-guide.html[Contributor's guide]
 
-[discrete]
-== {brandname} Server
+== Deploying Infinispan clusters
 
-[unstyled]
-* link:titles/server/server.html[{brandname} Server Guide]
-* link:titles/cli/cli.html[Command Line Interface]
-* link:titles/rest/rest.html[REST API]
-
-[discrete]
-== Hot Rod
+Dive into operation guides to plan, deploy, secure, and maintain Infinispan clusters.
 
 [unstyled]
-* link:titles/hotrod_java/hotrod_java.html[Hot Rod Java Client Guide]
-* link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod Protocol Reference]
+* link:titles/performance-tuning/performance-tuning.html[Infinispan performance considerations and tuning guidelines]
+* link:titles/infinispan-server/infinispan-server.html[Guide to Infinispan Server]
+* link:titles/command-line-interface/command-line-interface.html[Using the Infinispan Command Line Interface]
+* link:titles/rest-api/rest-api.html[Using the Infinispan REST API]
+* link:titles/security/security.html[Infinispan security guide]
+* link:titles/upgrading/upgrading.html[Upgrading Infinispan deployments]
 
-[discrete]
-== Administrator
+== Developing applications with Infinispan caches
 
-[unstyled]
-* link:titles/tuning/tuning.html[Planning and Tuning {brandname} Deployments]
-* link:titles/upgrading/upgrading.html[Upgrading {brandname}]
-* link:titles/security/security.html[Security]
-
-[discrete]
-== Developer
+Use Infinispan caching capabilities to boost application performance with a fault-tolerant and elastically scalable data store.
 
 [unstyled]
-* link:titles/embedding/embedding.html[Embedding {brandname} in Java Applications]
-* link:titles/configuring/configuring.html[Configuring {brandname} Caches]
-* link:titles/encoding/encoding.html[Cache Encoding and Marshalling]
-* link:titles/query/query.html[Querying {brandname} Caches]
-* link:titles/developing/developing.html[Developer's Guide]
-* link:titles/xsite/xsite.html[{brandname} Cross-Site Replication]
-* link:titles/hibernate/hibernate.html[Hibernate Second-Level Cache (2LC)]
+* link:titles/configuring-caches/configuring-caches.html[Configuring Infinispan caches]
+* link:titles/encoding-caches/encoding-caches.html[Encoding Infinispan caches and marshalling data]
+* link:titles/querying-caches/querying-caches.html[Querying Infinispan caches]
+* link:titles/cross-site-replication/cross-site-replication.html[Infinispan cross-site replication]
+* link:titles/embedding-caches/embedding-caches.html[Embedding Infinispan caches in Java applications]
+* link:titles/hotrod-java-client/hotrod-java-client.html[Hot Rod Java client guide]
+* link:titles/hotrod-protocol/hotrod-protocol.html[Hot Rod protocol reference guide]
+* link:titles/developing/developing.html[Developer's guide to Infinispan]
+* link:titles/hibernate/hibernate.html[Hibernate second-level caching (2LC)]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions]
-* link:titles/spring_boot/starter.html[Spring Boot Starter]
-
-[discrete]
-== Additional Resources
-
-Check out our link:titles/contributing/contributing.html[Contributor's Guide] if you want to join our community.
-
-Find the full documentation set for each {brandname} version at link:http://www.infinispan.org/documentation[infinispan.org/documentation].
+* link:titles/spring-boot-starter/spring-boot-starter.html[Spring Boot Starter]
+* link:titles/memcached/memcached.html[Infinispan Memcached guide]

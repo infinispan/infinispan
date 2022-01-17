@@ -15,7 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Developing for {brandname} {infinispanversion}
+= Developer's guide to Infinispan
+
+Use Infinispan APIs and code your applications to use high-performance caching capabilities.
+You can also programmatically customize, configure, and extend Infinispan.
 
 //User stories
 include::stories.adoc[]

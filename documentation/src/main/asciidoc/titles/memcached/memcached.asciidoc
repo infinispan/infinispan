@@ -15,7 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= {brandname} Memcached Client Guide
+= Infinispan Memcached guide
+
+Infinispan Server provides a Memcached endpoint that you can enable alongside the Hot Rod and REST endpoints.
+This guide provides details about interacting with remote caches with Memcached clients.
 
 //User stories
 include::stories.adoc[]

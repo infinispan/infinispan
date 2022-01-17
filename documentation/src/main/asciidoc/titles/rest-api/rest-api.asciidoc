@@ -18,6 +18,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 = Using the Infinispan REST API
 
 Infinispan Server provides a REST endpoint that lets you access data, monitor clusters, and perform administrative operations.
+This guide provides details to help you do things like configure the Infinispan REST endpoint to use cross-origin resource sharing (CORS) requests, learn about using different data formats with the REST API, as well as listing and describing REST operations for interacting with Infinispan.
 
 //User stories
 include::stories.adoc[]
