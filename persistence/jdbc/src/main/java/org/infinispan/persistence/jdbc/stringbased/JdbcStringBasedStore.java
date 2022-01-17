@@ -23,6 +23,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -91,6 +92,8 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
    private PersistenceMarshaller marshaller;
    private TimeService timeService;
    private KeyPartitioner keyPartitioner;
+   // All possible segments, when the store is shared, or the segments owned by this node, when the store is private
+   private IntSet sizeSegments;
 
    @Override
    public Set<Characteristic> characteristics() {
@@ -105,6 +108,14 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
       this.marshaller = ctx.getPersistenceMarshaller();
       this.timeService = ctx.getTimeService();
       this.keyPartitioner = configuration.segmented() ? ctx.getKeyPartitioner() : null;
+
+      int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+      if (configuration.shared()) {
+         this.sizeSegments = IntSets.immutableRangeSet(numSegments);
+      } else {
+         this.sizeSegments = IntSets.concurrentSet(numSegments);
+         this.sizeSegments.addAll(IntSets.immutableRangeSet(numSegments));
+      }
 
       String cacheName = ctx.getCache().getName();
       TableManager<K, V> tableManager = TableManagerFactory.getManager(ctx, connectionFactory, configuration,
@@ -128,7 +139,7 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
                      throw log.existingStoreNoSegmentation();
                }
 
-               int configuredSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
+               int configuredSegments = numSegments;
                if (configuration.segmented() && storedSegments != configuredSegments)
                   throw log.existingStoreSegmentMismatch(storedSegments, configuredSegments);
                tableManager.updateMetaTable(connection);
@@ -248,12 +259,25 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
    }
 
    @Override
+   public CompletionStage<Long> approximateSize(IntSet segments) {
+      // The size method ignores segments, see ISPN-13636
+      return size(segments).thenApply(totalSize -> {
+         IntSet matchingSegments = IntSets.mutableCopyFrom(segments);
+         matchingSegments.retainAll(this.sizeSegments);
+         int totalSegments = sizeSegments.size();
+         return totalSize * matchingSegments.size() / totalSegments;
+      });
+   }
+
+   @Override
    public CompletionStage<Void> addSegments(IntSet segments) {
+      this.sizeSegments.addAll(segments);
       return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Void> removeSegments(IntSet segments) {
+      this.sizeSegments.removeAll(segments);
       return CompletableFutures.completedNull();
    }
 
