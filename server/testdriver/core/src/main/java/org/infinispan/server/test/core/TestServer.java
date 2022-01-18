@@ -58,22 +58,23 @@ public class TestServer {
    }
 
    /**
+    * Create a client adding in the initial server list the server address given by the index.
+    * If empty, it will add all servers by default OR those that were configured in the server list
+    * @param index the server index
     * @return a client configured against the Hot Rod endpoint exposed by the server
     */
-   public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder, int port) {
-      if (builder.servers().isEmpty()) {
-         for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+   public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder, int port, int... index) {
+      if (index.length == 0) {
+         if (builder.servers().isEmpty()) {
+            for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+               configureHotRodClient(builder, port, i);
+            }
+         }
+      } else {
+         for (int i : index) {
             configureHotRodClient(builder, port, i);
          }
       }
-      return getDriver().createRemoteCacheManager(builder);
-   }
-
-   /**
-    * @return a client configured against the Hot Server index
-    */
-   public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder, int port, int index) {
-      configureHotRodClient(builder, port, index);
       return getDriver().createRemoteCacheManager(builder);
    }
 
