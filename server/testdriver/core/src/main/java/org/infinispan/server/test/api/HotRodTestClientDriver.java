@@ -70,27 +70,13 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    }
 
    /**
-    * Created a cache with the name of the method where this method is being called from.
-    * If the cache already exists, retrieves the existing cache
-    *
+    * Create a cache adding in the initial server list the server address given by the index.
+    * If empty, it will add all servers by default OR those that were configured in the server list
+    * @param index the server index
     * @return {@link RemoteCache}, the cache
     */
-   public <K, V> RemoteCache<K, V> create() {
-      return create(-1);
-   }
-
-   /**
-    * Create a cache adding in the initial server list the server address given by the index
-    * @param index the server index, -1 for all
-    * @return {@link RemoteCache}, the cache
-    */
-   public <K, V> RemoteCache<K, V> create(int index) {
-      RemoteCacheManager remoteCacheManager;
-      if (index >= 0) {
-         remoteCacheManager = createRemoteCacheManager(index);
-      } else {
-         remoteCacheManager = createRemoteCacheManager();
-      }
+   public <K, V> RemoteCache<K, V> create(int... index) {
+      RemoteCacheManager remoteCacheManager = createRemoteCacheManager(index);
       String name = testClient.getMethodName(qualifier);
       if (serverConfiguration != null) {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
@@ -101,11 +87,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       }
    }
 
-   public RemoteCacheManager createRemoteCacheManager() {
-      return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port));
-   }
-
-   public RemoteCacheManager createRemoteCacheManager(int index) {
+   public RemoteCacheManager createRemoteCacheManager(int... index) {
       return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port, index));
    }
 

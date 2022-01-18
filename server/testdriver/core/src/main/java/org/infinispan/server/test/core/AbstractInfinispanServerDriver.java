@@ -76,6 +76,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    private File confDir;
    private ComponentStatus status;
    private final AtomicLong certSerial = new AtomicLong(1);
+   private String name;
 
    protected AbstractInfinispanServerDriver(InfinispanServerTestConfiguration configuration, InetAddress testHostAddress) {
       this.configuration = configuration;
@@ -138,11 +139,12 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    @Override
    public void start(String name) {
+      this.name = name;
       status = ComponentStatus.INITIALIZING;
       try {
-         log.infof("Starting server %s", name);
+         log.infof("Starting servers %s", name);
          start(name, rootDir, new File(configuration.configurationFile()));
-         log.infof("Started server %s", name);
+         log.infof("Started servers %s", name);
          status = ComponentStatus.RUNNING;
       } catch (Throwable t) {
          log.errorf(t, "Unable to start server %s", name);
@@ -155,9 +157,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public final void stop(String name) {
       if (status != ComponentStatus.INSTANTIATED) {
          status = ComponentStatus.STOPPING;
-         log.infof("Stopping server %s", name);
+         log.infof("Stopping servers %s", name);
          stop();
-         log.infof("Stopped server %s", name);
+         log.infof("Stopped servers %s", name);
       }
       status = ComponentStatus.TERMINATED;
    }
@@ -203,7 +205,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    protected static File createServerHierarchy(File baseDir, String name, BiConsumer<File, String> consumer) {
-      File rootDir = name == null ? baseDir : new File(baseDir, name);
+      File rootDir = serverRoot(baseDir, name);
       for (String dir : Arrays.asList(
             Server.DEFAULT_SERVER_DATA,
             Server.DEFAULT_SERVER_LOG,
@@ -220,6 +222,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          }
       }
       return rootDir;
+   }
+
+   protected static File serverRoot(File baseDir, String name) {
+      return name == null ? baseDir : new File(baseDir, name);
    }
 
    protected void createUserFile(String realm) {
@@ -273,6 +279,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public File getConfDir() {
       return confDir;
+   }
+
+   public String getName() {
+      return name;
    }
 
    /**
