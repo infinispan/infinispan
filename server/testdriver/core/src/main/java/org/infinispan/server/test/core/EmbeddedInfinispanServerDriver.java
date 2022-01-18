@@ -51,23 +51,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       serverFutures = new ArrayList<>();
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
-         Properties properties = new Properties();
-         properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, serverRoot.getAbsolutePath());
-         properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, new File(rootDir, Server.DEFAULT_SERVER_CONFIG).getAbsolutePath());
-         properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(clusterPortOffset() + i * OFFSET_FACTOR));
-         properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
-         properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
-         properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
-         properties.setProperty(Server.INFINISPAN_LOG4J_SHUTDOWN, "false");
-
-         configureSite(properties);
-         configuration.properties().forEach((k, v) -> {
-            String value = StringPropertyReplacer.replaceProperties((String) v, properties);
-            properties.put(k, value);
-            System.setProperty(k.toString(), value);
-         });
-         Server server = new Server(serverRoot, new File(configurationFile.getName()), properties);
-         server.setExitHandler(new DefaultExitHandler());
+         Server server = createServerInstance(name, rootDir, configurationFile, i, serverRoot);
          serverFutures.add(server.run());
          servers.add(server);
       }
@@ -78,17 +62,36 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       }
    }
 
+   private Server createServerInstance(String name, File rootDir, File configurationFile, int serverIndex, File serverRoot) {
+      Properties properties = new Properties();
+      properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, serverRoot.getAbsolutePath());
+      properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, new File(rootDir, Server.DEFAULT_SERVER_CONFIG).getAbsolutePath());
+      properties.setProperty(Server.INFINISPAN_PORT_OFFSET, Integer.toString(clusterPortOffset() + serverIndex * OFFSET_FACTOR));
+      properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
+      properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
+      properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
+      properties.setProperty(Server.INFINISPAN_LOG4J_SHUTDOWN, "false");
+
+      configureSite(properties);
+      configuration.properties().forEach((k, v) -> {
+         String value = StringPropertyReplacer.replaceProperties((String) v, properties);
+         properties.put(k, value);
+         System.setProperty(k.toString(), value);
+      });
+      Server server = new Server(serverRoot, new File(configurationFile.getName()), properties);
+      server.setExitHandler(new DefaultExitHandler());
+      return server;
+   }
+
    @Override
    protected void stop() {
       RuntimeException aggregate = new RuntimeException();
       if (servers != null) {
          for (int i = 0; i < servers.size(); i++) {
-            Server server = servers.get(i);
-            server.getExitHandler().exit(ExitStatus.SERVER_SHUTDOWN);
             try {
-               serverFutures.get(i).get();
-            } catch (Throwable t) {
-               aggregate.addSuppressed(t);
+               stop(i);
+            } catch (Throwable e) {
+               aggregate.addSuppressed(e.getCause());
             }
          }
          if (aggregate.getSuppressed().length > 0) {
@@ -98,38 +101,53 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   public InetSocketAddress getServerSocket(int server, int port) {
-      return new InetSocketAddress(getServerAddress(server), port + clusterPortOffset() + server * OFFSET_FACTOR);
+   public InetSocketAddress getServerSocket(int serverIndex, int port) {
+      return InetSocketAddress.createUnresolved("127.0.0.1", port + clusterPortOffset() + serverIndex * OFFSET_FACTOR);
    }
 
    @Override
-   public InetAddress getServerAddress(int server) {
-      return Exceptions.unchecked(() -> InetAddress.getByName("localhost"));
+   public InetAddress getServerAddress(int serverIndex) {
+      return Exceptions.unchecked(() -> InetAddress.getByName("127.0.0.1"));
    }
 
    @Override
-   public void pause(int server) {
+   public void pause(int serverIndex) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void resume(int server) {
+   public void resume(int serverIndex) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void stop(int server) {
+   public void stop(int serverIndex) {
+      try {
+         Server server = servers.get(serverIndex);
+         if (server == null)
+            return;
+         server.getExitHandler().exit(ExitStatus.SERVER_SHUTDOWN);
+         serverFutures.get(serverIndex).get();
+         serverFutures.set(serverIndex, null);
+         servers.set(serverIndex, null);
+      } catch (Throwable t) {
+         throw new RuntimeException("Cannot stop the server: " + serverIndex, t);
+      }
+   }
+
+   @Override
+   public void kill(int serverIndex) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void kill(int server) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void restart(int server) {
-      throw new UnsupportedOperationException();
+   public void restart(int serverIndex) {
+      assert !isRunning(serverIndex);
+      File serverRoot = serverRoot(getRootDir(), Integer.toString(serverIndex));
+      Server server = createServerInstance(getName(), getRootDir(), new File(configuration.configurationFile()),
+                                           serverIndex, serverRoot);
+      servers.set(serverIndex, server);
+      serverFutures.set(serverIndex, server.run());
    }
 
    @Override
@@ -138,8 +156,9 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   public boolean isRunning(int server) {
-      return servers.get(server).getStatus().allowInvocations();
+   public boolean isRunning(int serverIndex) {
+      Server server = servers.get(serverIndex);
+      return server != null && server.getStatus().allowInvocations();
    }
 
    @Override

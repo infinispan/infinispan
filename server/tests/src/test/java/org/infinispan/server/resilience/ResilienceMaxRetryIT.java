@@ -1,9 +1,11 @@
 package org.infinispan.server.resilience;
 
-import java.net.InetAddress;
+import static org.junit.Assert.assertEquals;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.UUID;
+import java.util.Collections;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -19,13 +21,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+/**
+ * Test that a client can reset to the initial server list
+ * even when it is configured with max_retries=0 and the current server topology
+ * contains more than one server.
+ */
 @Category(Resilience.class)
 public class ResilienceMaxRetryIT {
 
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
-               .runMode(ServerRunMode.CONTAINER)
+               .runMode(ServerRunMode.EMBEDDED)
                .numServers(3)
                .build();
 
@@ -34,78 +41,65 @@ public class ResilienceMaxRetryIT {
 
    @Test
    public void testMaxRetries0() {
-      // 1 -> configure max-retries="0" and initial_server_list=localhost:port1
-      // 2 -> start 3 servers, localhost:port1, localhost:port2 and localhost:port3
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.maxRetries(0);
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.REPL_SYNC).create(0);
+      // Start the client with initial_server_list=server0 and max_retries=0
+      RemoteCache<Integer, String> cache = SERVER_TEST.hotrod()
+            .withClientConfiguration(new ConfigurationBuilder().maxRetries(0).connectionTimeout(500))
+            .withCacheMode(CacheMode.REPL_SYNC)
+            .create(0);
 
-      // 3 -> start the client and do some operations
-      for (int i = 0; i < 100; i++) {
-         String random = UUID.randomUUID().toString();
-         cache.put(random, random);
-      }
+      // Perform an operation so the client receives a topology update with server0, server1, and server2
+      cache.get(ThreadLocalRandom.current().nextInt());
 
-      // 4 -> kill localhost:port1
-      InetAddress killedServer = SERVERS.getServerDriver().getServerAddress(0);
-      SERVERS.getServerDriver().kill(0);
+      // Stop server0
+      InetSocketAddress stoppedServerAddress = SERVERS.getServerDriver().getServerSocket(0, SERVERS.getTestServer().getDefaultPortNumber());
+      SERVERS.getServerDriver().stop(0);
 
-      // 5 -> do more operations, check that it's only connected to port2 and port3
-      // thinking one failure would be enough, but the topology is actually updated only when the client connects to one of the live servers
-      // you could have the first 2 connections to port1 and they'd both fail
-      // more than 2 is highly unlikely, but it might happen because the probability is not 0
-      for (int i = 0; i < 100; i++) {
-         String random = UUID.randomUUID().toString();
+      // Execute cache operations so the client connects to server1 or server2 and receives a topology update
+      // The client keeps trying to connect to failed servers for each new operation,
+      // so the number of operations we need depends on which server owns each key
+      byte[] cacheNameBytes = cache.getName().getBytes();
+      for (int i = 0; i < 10; i++) {
          try {
-            cache.put(random, random);
+            cache.get(ThreadLocalRandom.current().nextInt());
+            break;
          } catch (TransportException e) {
-            // if you do 10 operations after you kill port1, the first 0 or 1 or 2 operations might fail.
-            // But if the 3rd operation is successful, then operations 4-10 should be successful as well
-            assert i == 0 || i == 1 || i == 2;
-            // assert that the failed server is the one that we killed
-            assert e.getMessage().contains(killedServer.toString());
+            // Assert that the failed server is the one that we killed
+            assert e.getMessage().contains(stoppedServerAddress.toString()) : e.getMessage();
          }
       }
 
-      // double check that the killed server was properly removed from the list
-      Collection<InetSocketAddress> currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cache.getName().getBytes());
-      assert currentServers.size() == 2;
+      // Check that the stopped server was properly removed from the list
+      Collection<InetSocketAddress> currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
+      assertEquals(2, currentServers.size());
       for (InetSocketAddress currentServer : currentServers) {
-         if (currentServer.getHostString().equals(killedServer.getHostAddress())) {
-            throw new IllegalStateException("The removed server should not be present in the list");
+         if (currentServer.equals(stoppedServerAddress)) {
+            throw new IllegalStateException(stoppedServerAddress + " should not be present in the list: " + currentServers);
          }
       }
 
-      // 6 -> kill port2 and port3, start port1
-      SERVERS.getServerDriver().kill(1);
-      SERVERS.getServerDriver().kill(2);
+      // Stop server1 and server2, start server0
+      SERVERS.getServerDriver().stop(1);
+      SERVERS.getServerDriver().stop(2);
       SERVERS.getServerDriver().restart(0);
 
-      // 7 -> do one operation, it should fail
-      // 8 -> do one more operation, it should also fail
-      // switching might require more than 2 failed requests
-      // because we track the failed servers globally when we decide whether to switch, but we don't use that information to decide where a request should go
-      // if both requests might hit the same server, the client will think the other server is still alive and won't switch yet
-      boolean itWorked = false;
-      // with 10 requests, one must work
+      // Execute cache operations until the client resets to the initial server list (server0)
+      // The reset happens when all current servers (server1 and server2) are marked failed
+      // But the client keeps trying to connect to failed servers for each new operation,
+      // so the number of operations we need depends on which server owns each key
       for (int i = 0; i < 10; i++) {
-         String random = UUID.randomUUID().toString();
          try {
-            cache.put(random, random);
-            itWorked = true;
+            cache.get(ThreadLocalRandom.current().nextInt());
             break;
          } catch (Exception e) {
             // the failure is expected
          }
       }
-      assert itWorked;
 
-      // 9 -> check that the client switched to the initial server list
-      currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cache.getName().getBytes());
-      assert currentServers.iterator().next().getHostString().equals(killedServer.getHostAddress());
+      // Check that the client switched to the initial server list
+      currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
+      assertEquals(Collections.singletonList(stoppedServerAddress), currentServers);
 
-      // 10 -> do another operation, it should succeed
-      String random = UUID.randomUUID().toString();
-      cache.put(random, random);
+      // Do another operation, it should succeed
+      cache.get(ThreadLocalRandom.current().nextInt());
    }
 }
