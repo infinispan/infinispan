@@ -1,0 +1,18 @@
+[id="degraded-mode-example_{context}"]
+= Degraded cache recovery example
+
+This topic illustrates how {brandname} recovers from split clusters with caches that use the `DENY_READ_WRITES` partition handling strategy.
+
+As an example, a {brandname} cluster has four nodes and includes a distributed cache with two replicas for each entry (`owners=2`).
+There are four entries in the cache, `k1`, `k2`, `k3` and `k4`.
+
+With the `DENY_READ_WRITES` strategy, if the cluster splits into partitions, {brandname} allows cache operations only if all replicas of an entry are in the same partition.
+
+In the following diagram, while the cache is split into partitions, {brandname} allows read and write operations for `k1` on partition 1 and `k4` on partition 2.
+Because there is only one replica for `k2` and `k3` on either partition 1 or partition 2, {brandname} denies read and write operations for those entries.
+
+image::partition-handling-partitioning.png[Distributed cache enters network partition]
+
+When network conditions allow the nodes to re-join the same cluster view, {brandname} merges the partitions without state transfer and restores normal cache operations.
+
+image::partition-handling-merging.png[Distributed cache after partitions are merged]
