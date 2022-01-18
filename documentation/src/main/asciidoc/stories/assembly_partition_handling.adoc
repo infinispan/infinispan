@@ -7,10 +7,9 @@ This condition results in loss of availability or consistency for clustered cach
 To handle network partitions, {brandname} automatically detects crashed nodes and resolves conflicts to merge caches back together.
 
 include::{topics}/con_partition_handling.adoc[leveloffset=+1]
-include::{topics}/con_partition_handling_recovery_example.adoc[leveloffset=+2]
 include::{topics}/con_partition_handling_data_consistency.adoc[leveloffset=+2]
-include::{topics}/con_partition_handling_garbage_collection.adoc[leveloffset=+2]
 include::{topics}/con_partition_handling_degraded_mode.adoc[leveloffset=+1]
+include::{topics}/con_partition_handling_degraded_example.adoc[leveloffset=+2]
 include::{topics}/proc_checking_cache_availability.adoc[leveloffset=+2]
 include::{topics}/proc_changing_cache_availability.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_partition_handling.adoc[leveloffset=+1]
