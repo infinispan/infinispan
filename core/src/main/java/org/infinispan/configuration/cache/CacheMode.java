@@ -64,7 +64,10 @@ public enum CacheMode {
 
    /**
     * Synchronous scattered cache
+    *
+    * @deprecated Since 14.0, will be removed in 16.0. Please use {@link #DIST_SYNC} instead.
     */
+   @Deprecated
    @ProtoEnumValue(number = 7)
    SCATTERED_SYNC;
 
@@ -97,6 +100,10 @@ public enum CacheMode {
       return this == REPL_SYNC || this == REPL_ASYNC;
    }
 
+   /**
+    * @deprecated Since 14.0, will be removed in 16.0.
+    */
+   @Deprecated
    public boolean isScattered() { return this == SCATTERED_SYNC; }
 
    public boolean needsStateTransfer() {
