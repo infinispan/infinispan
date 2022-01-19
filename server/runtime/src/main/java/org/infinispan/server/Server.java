@@ -470,7 +470,9 @@ public class Server implements ServerManagement, AutoCloseable {
          r.completeExceptionally(e);
       }
       r = r.handle((status, t) -> {
-         Server.log.serverFailedToStart(Version.getBrandName(), t);
+         if (t != null) {
+            Server.log.serverFailedToStart(Version.getBrandName(), t);
+         }
          localShutdown(status);
          return null;
       });
