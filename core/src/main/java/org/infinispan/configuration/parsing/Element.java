@@ -99,7 +99,9 @@ public enum Element {
     ROLE,
     ROLES,
     ROOT,
+    @Deprecated
     SCATTERED_CACHE,
+    @Deprecated
     SCATTERED_CACHE_CONFIGURATION,
     SERIALIZATION_CONTEXT_INITIALIZER("context-initializer"),
     SERIALIZATION_CONTEXT_INITIALIZERS("context-initializers"),
