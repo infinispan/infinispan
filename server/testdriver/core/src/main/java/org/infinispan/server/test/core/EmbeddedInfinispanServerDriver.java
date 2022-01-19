@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import javax.management.MBeanServerConnection;
 
@@ -31,7 +30,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    public static final int OFFSET_FACTOR = 100;
    private static final int TIMEOUT_SECONDS = Integer.getInteger(INFINISPAN_TEST_SERVER_EMBEDDED_TIMEOUT_SECONDS, 30);
    List<Server> servers;
-   List<CompletableFuture<ExitStatus>> serverFutures;
+   CompletableFuture<ExitStatus>[] serverFutures;
 
    protected EmbeddedInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(configuration, InetAddress.getLoopbackAddress());
@@ -48,7 +47,8 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          throw new IllegalArgumentException("EmbeddedInfinispanServerDriver doesn't support server artifacts.");
       }
       servers = new ArrayList<>();
-      serverFutures = new ArrayList<>();
+      serverFutures = new CompletableFuture[configuration.numServers()];
+      List<EmbeddedCacheManager> cacheManagers = new ArrayList<>();
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
          Properties properties = new Properties();
@@ -68,11 +68,11 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          });
          Server server = new Server(serverRoot, new File(configurationFile.getName()), properties);
          server.setExitHandler(new DefaultExitHandler());
-         serverFutures.add(server.run());
+         serverFutures[i] = server.run();
          servers.add(server);
+         cacheManagers.add(server.getCacheManager());
       }
       // Ensure that the cluster has formed if we start more than one server
-      List<EmbeddedCacheManager> cacheManagers = servers.stream().map(Server::getCacheManager).collect(Collectors.toList());
       if(cacheManagers.size() > 1) {
          blockUntilViewsReceived(cacheManagers);
       }
@@ -83,12 +83,10 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       RuntimeException aggregate = new RuntimeException();
       if (servers != null) {
          for (int i = 0; i < servers.size(); i++) {
-            Server server = servers.get(i);
-            server.getExitHandler().exit(ExitStatus.SERVER_SHUTDOWN);
             try {
-               serverFutures.get(i).get();
-            } catch (Throwable t) {
-               aggregate.addSuppressed(t);
+               stop(i);
+            } catch (RuntimeException e) {
+               aggregate.addSuppressed(e.getCause());
             }
          }
          if (aggregate.getSuppressed().length > 0) {
@@ -118,8 +116,19 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   public void stop(int server) {
-      throw new UnsupportedOperationException();
+   public void stop(int i) {
+      try {
+         Server server = servers.get(i);
+         server.getExitHandler().exit(ExitStatus.SERVER_SHUTDOWN);
+         CompletableFuture<ExitStatus> future = serverFutures[i];
+         // previously stopped
+         if (future != null) {
+            serverFutures[i] = null;
+            future.get();
+         }
+      } catch (Throwable t) {
+         throw new RuntimeException("Cannot stop the server: " + i, t);
+      }
    }
 
    @Override
@@ -128,8 +137,9 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   public void restart(int server) {
-      throw new UnsupportedOperationException();
+   public void restart(int i) {
+      Server server = servers.get(i);
+      serverFutures[i] = server.run();
    }
 
    @Override

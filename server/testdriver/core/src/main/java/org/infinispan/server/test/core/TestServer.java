@@ -54,7 +54,7 @@ public class TestServer {
    }
 
    public RemoteCacheManager newHotRodClient(ConfigurationBuilder builder) {
-      return newHotRodClient(builder, 11222);
+      return newHotRodClient(builder, getDefaultPortNumber());
    }
 
    /**
@@ -90,7 +90,7 @@ public class TestServer {
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {
-      return newRestClient(builder, 11222);
+      return newRestClient(builder, getDefaultPortNumber());
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder, int port) {
@@ -173,5 +173,9 @@ public class TestServer {
 
    public String getSiteName() {
       return configuration.site();
+   }
+
+   public int getDefaultPortNumber() {
+      return 11222;
    }
 }
