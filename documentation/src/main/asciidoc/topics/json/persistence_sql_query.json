@@ -14,9 +14,9 @@
           "size": "SELECT COUNT(*) FROM Person"
         },
         "schema": {
-          "message-name": "Books",
-          "key-message-name": "BooksID",
-          "package": "library",
+          "message-name": "Person",
+          "key-message-name": "PersonID",
+          "package": "com.example",
           "embedded-key": "true"
         }
       }
