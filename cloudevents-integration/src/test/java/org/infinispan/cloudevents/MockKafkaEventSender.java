@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.infinispan.cloudevents.impl.KafkaEventSender;
 import org.infinispan.cloudevents.impl.Log;
 import org.infinispan.test.TestingUtil;
@@ -15,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public class MockKafkaEventSender implements KafkaEventSender {
    private static final Log log = LogFactory.getLog(MockKafkaEventSender.class, Log.class);
-   MockProducer<byte[], byte[]> producer = new MockProducer<>();
+   MockProducer<byte[], byte[]> producer = new MockProducer<>(false, new ByteArraySerializer(), new ByteArraySerializer());
 
    @Override
    public CompletionStage<Void> send(ProducerRecord<byte[], byte[]> record) {
