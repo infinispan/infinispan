@@ -9,6 +9,11 @@
         <delete includeemptydirs="true" verbose="true">
             <fileset dir="${output.dir}" includesfile="trim-delete.txt" excludesfile="trim-keep.txt"/>
         </delete>
+        <echo message="${output.dir}"/>
+        <replace dir="${output.dir}/modules">
+            <include name="**/module.xml"/>
+            <replacetoken><![CDATA[<module name="org.apache.log4j"/>]]></replacetoken>
+        </replace>
     </target>
 
     <target name="post-process-distribution" depends="trim-server, rename-init"/>
