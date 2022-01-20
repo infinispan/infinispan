@@ -20,6 +20,7 @@
                 <property name="javaVmArguments">
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
+                    -Djgroups.bind.address=localhost
                 </property>
             </configuration>
         </container>
@@ -38,6 +39,7 @@
                 <property name="javaVmArguments">
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
+                    -Djgroups.bind.address=localhost
                 </property>
             </configuration>
         </container>
