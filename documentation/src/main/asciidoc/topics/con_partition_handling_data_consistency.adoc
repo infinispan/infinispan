@@ -10,7 +10,7 @@ If a write operation takes place on a node that is in a minor partition when a s
 In the event that all partitions are in the `DEGRADED` mode that value is not lost because no state transfer occurs but the entry can have an inconsistent value.
 For transactional caches write operations that are in progress when the split occurs can be committed on some nodes and rolled back on other nodes, which also results in inconsistent values.
 
-During the time that a split occurs and the time that {brandname} detects it, it is possible to get stale reads from a cache in a minor partition that has not yet entered `DEGRADED` mode.
+During the split and the time that {brandname} detects it, it is possible to get stale reads from a cache in a minor partition that has not yet entered `DEGRADED` mode.
 
 .During the merge
 

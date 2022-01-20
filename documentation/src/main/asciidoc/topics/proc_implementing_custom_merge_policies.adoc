@@ -5,7 +5,7 @@ You can create implementations of the `EntryMergePolicy` API to use custom merge
 
 .Procedure
 
-. Create an implementation of the `EntryMergePolicy` API.
+* Create an implementation of the `EntryMergePolicy` API.
 +
 [source,java,options="nowrap",subs=attributes+]
 ----
