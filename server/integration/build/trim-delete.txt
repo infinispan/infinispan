@@ -33,6 +33,7 @@ modules/system/layers/base/org/apache/commons/collections/main/**
 modules/system/layers/base/org/apache/commons/lang/**
 modules/system/layers/base/org/apache/commons/lang3/**
 modules/system/layers/base/org/apache/cxf/**
+modules/system/layers/base/org/apache/log4j/**
 modules/system/layers/base/org/apache/lucene/main/**
 modules/system/layers/base/org/apache/neethi/**
 modules/system/layers/base/org/apache/openjpa/**
@@ -91,6 +92,7 @@ modules/system/layers/base/org/jboss/as/weld/**
 modules/system/layers/base/org/jboss/as/xts/**
 modules/system/layers/base/org/jboss/ejb3/**
 modules/system/layers/base/org/jboss/genericjms/**
+modules/system/layers/base/org/jboss/log4j/logmanager/**
 modules/system/layers/base/org/jboss/metadata/appclient/main/**
 modules/system/layers/base/org/jboss/mod_cluster/**
 modules/system/layers/base/org/jboss/resteasy/jose-jwt/**
