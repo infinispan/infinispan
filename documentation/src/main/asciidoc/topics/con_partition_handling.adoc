@@ -2,7 +2,7 @@
 = Split clusters and network partitions
 
 Network partitions are the result of error conditions in the running environment, such as when a network router crashes.
-When a cluster splits into separate partitions, nodes create a JGroups cluster view that includes only the nodes in that partition.
+When a cluster splits into partitions, nodes create a JGroups cluster view that includes only the nodes in that partition.
 This condition means that nodes in one partition can operate independently of nodes in the other partition.
 
 .Detecting a split

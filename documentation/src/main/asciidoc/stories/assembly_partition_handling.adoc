@@ -4,7 +4,7 @@
 
 {brandname} clusters can split into network partitions in which subsets of nodes become isolated from each other.
 This condition results in loss of availability or consistency for clustered caches.
-To handle network partitions, {brandname} automatically detects crashed nodes and resolves conflicts to merge caches back together.
+{brandname} automatically detects crashed nodes and resolves conflicts to merge caches back together.
 
 include::{topics}/con_partition_handling.adoc[leveloffset=+1]
 include::{topics}/con_partition_handling_data_consistency.adoc[leveloffset=+2]
