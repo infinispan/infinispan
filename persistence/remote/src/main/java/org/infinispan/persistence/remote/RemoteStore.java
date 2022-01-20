@@ -202,7 +202,12 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Void> stop() {
-      return blockingManager.runBlocking(() -> remoteCacheManager.stop(), "RemoteStore-stop");
+      return blockingManager.runBlocking(() -> {
+         // when it failed to start
+         if (remoteCacheManager != null) {
+            remoteCacheManager.stop();
+         }
+      }, "RemoteStore-stop");
    }
 
    @Override
