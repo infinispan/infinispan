@@ -60,14 +60,16 @@ public class ClusterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
-      List<String> servers = restRequest.parameters().get("server");
+      return CompletableFuture.supplyAsync(() -> {
+         List<String> servers = restRequest.parameters().get("server");
 
-      if (servers != null && !servers.isEmpty()) {
-         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
-      } else {
-         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().clusterStop());
-      }
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
+         if (servers != null && !servers.isEmpty()) {
+            Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
+         } else {
+            Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().clusterStop());
+         }
+         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
