@@ -9,13 +9,13 @@ When this happens, {brandname} caches in minority partitions enter **DEGRADED** 
 Garbage collection (GC) pauses are the most common cause of network partitions.
 When GC pauses result in nodes becoming unresponsive, {brandname} clusters can start operating in a split brain network.
 
-Rather than dealing with network partitions you should try to avoid GC pauses by controlling JVM heap usage and by using a modern, low-pause GC implementation such as Shenandoah with OpenJDK.
+Rather than dealing with network partitions, try to avoid GC pauses by controlling JVM heap usage and by using a modern, low-pause GC implementation such as Shenandoah with OpenJDK.
 ====
 
 .CAP theorem and partition handling strategies
 
-CAP theorem expresses a limitation of distributed, key/value datastores, such as {brandname}.
-You cannot avoid the possibility of network partitions so can have either consistency or availability while {brandname} heals the partition and resolves any conflicting entries.
+CAP theorem expresses a limitation of distributed, key/value data stores, such as {brandname}.
+When network partition events happen, you must choose between consistency or availability while {brandname} heals the partition and resolves any conflicting entries.
 
 Availability:: Allow read and write operations.
 Consistency:: Deny read and write operations.
