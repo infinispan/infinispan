@@ -102,7 +102,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
       }
 
       List<String> resolvedAlias = resolveAlias(propertyPath);
-      TypeDescriptor<TypeMetadata> sourceType = propertyPath.getFirst().getTypeDescriptor();
+      TypeDescriptor<TypeMetadata> sourceType = propertyPath.getFirstTypeDescriptor();
 
       EmbeddedEntityTypeDescriptor<TypeMetadata> type = new EmbeddedEntityTypeDescriptor<>(sourceType.getTypeName(), sourceType.getTypeMetadata(), resolvedAlias);
       return new PropertyPath.PropertyReference<>(alias, type, true);
@@ -132,20 +132,21 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
    @Override
    public PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>> normalizePropertyPathIntermediary(PropertyPath<TypeDescriptor<TypeMetadata>> path, Tree propertyNameTree) {
       String propertyName = propertyNameTree.getText();
-      TypeDescriptor<TypeMetadata> sourceType = path.getLast().getTypeDescriptor();
+      TypeDescriptor<TypeMetadata> sourceType = path.getLastTypeDescriptor();
       if (!propertyHelper.hasProperty(sourceType.getTypeMetadata(), sourceType.makePath(propertyName))) {
          throw log.getNoSuchPropertyException(sourceType.getTypeName(), propertyName);
       }
 
-      List<String> newPath = resolveAlias(path);
-      newPath.add(propertyName);
-      EmbeddedEntityTypeDescriptor<TypeMetadata> type = new EmbeddedEntityTypeDescriptor<>(sourceType.getTypeName(), sourceType.getTypeMetadata(), newPath);
+      List<String> resolvedAlias = resolveAlias(path);
+      resolvedAlias.add(propertyName);
+
+      EmbeddedEntityTypeDescriptor<TypeMetadata> type = new EmbeddedEntityTypeDescriptor<>(sourceType.getTypeName(), sourceType.getTypeMetadata(), resolvedAlias);
       return new PropertyPath.PropertyReference<>(propertyName, type, false);
    }
 
    private List<String> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       if (path.isAlias()) {
-         String alias = path.getFirst().getPropertyName();
+         String alias = path.getAlias();
          if (aliasToEntityType.containsKey(alias)) {
             // Alias for entity
             return path.getNodeNamesWithoutAlias();
@@ -182,7 +183,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
    @Override
    public PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>> normalizePropertyPathTerminus(PropertyPath<TypeDescriptor<TypeMetadata>> path, Tree propertyNameTree) {
       // receives the property name on a specific entity reference _source_
-      return normalizeProperty(path.getLast().getTypeDescriptor(), path.getNodeNamesWithoutAlias(), propertyNameTree.getText());
+      return normalizeProperty(path.getLastTypeDescriptor(), path.getNodeNamesWithoutAlias(), propertyNameTree.getText());
    }
 
    private PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>> normalizeProperty(TypeDescriptor<TypeMetadata> type, List<String> path, String propertyName) {
@@ -224,7 +225,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
    @Override
    public void propertyPathCompleted(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       if (phase == Phase.SELECT) {
-         TypeDescriptor<TypeMetadata> type = path.getLast().getTypeDescriptor();
+         TypeDescriptor<TypeMetadata> type = path.getLastTypeDescriptor();
          if (type instanceof EmbeddedEntityTypeDescriptor<?>) {
             throw log.getProjectionOfCompleteEmbeddedEntitiesNotSupportedException(type.getTypeName(), path.asStringPathWithoutAlias());
          }

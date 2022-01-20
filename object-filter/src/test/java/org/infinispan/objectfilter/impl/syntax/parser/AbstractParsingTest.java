@@ -103,4 +103,14 @@ public abstract class AbstractParsingTest<TypeMetadata> {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name : 'Joe'";
       IckleParser.parse(queryString, propertyHelper);
    }
+
+   @Test
+   public void testSpatial() {
+      expectedException.expect(ParsingException.class);
+      expectedException.expectMessage("ISPN028530");
+      String queryString = "FROM org.infinispan.objectfilter.test.model.Person p where p.location within circle(44, 55, 66)";
+
+      // Must observe a parsing exception caused by spatial queries referencing a non-spatial property
+      IckleParser.parse(queryString, propertyHelper);
+   }
 }

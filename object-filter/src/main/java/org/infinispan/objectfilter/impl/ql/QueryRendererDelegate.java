@@ -60,6 +60,12 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void deactivateBoolean();
 
+   void activateFunction(Function function);
+
+   void deactivateFunction();
+
+   void spatialDistance(String lat, String lon);
+
    void predicateLess(String value);
 
    void predicateLessOrEqual(String value);
@@ -87,6 +93,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
    void predicateFullTextRegexp(String term);
 
    void predicateFullTextRange(boolean includeLower, String lower, String upper, boolean includeUpper);
+
+   void predicateSpatialWithinCircle(String lat, String lon, String radius);
+
+   void predicateSpatialNotWithinCircle(String lat, String lon, String radius);
 
    enum Occur {
       MUST("+"),

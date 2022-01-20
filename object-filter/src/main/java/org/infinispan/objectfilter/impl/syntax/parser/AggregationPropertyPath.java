@@ -30,7 +30,7 @@ public final class AggregationPropertyPath<TypeMetadata> extends PropertyPath<Ty
          case COUNT:
             break;
          default:
-            throw log.getAggregationTypeNotSupportedException(aggregationFunction.name());
+            throw log.aggregationTypeNotSupportedException(aggregationFunction.name());
       }
       this.aggregationFunction = aggregationFunction;
    }

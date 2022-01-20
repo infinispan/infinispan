@@ -52,7 +52,7 @@ public interface Log extends BasicLogger {
    IllegalArgumentException getNamedParametersCannotBeNull();
 
    @Message(id = 28512, value = "Aggregation %s is not supported")
-   IllegalStateException getAggregationTypeNotSupportedException(String aggregationType);
+   IllegalStateException aggregationTypeNotSupportedException(String aggregationType);
 
    @Message(id = 28513, value = "Aggregation AVG cannot be applied to property of type %s")
    IllegalStateException getAVGCannotBeAppliedToPropertyOfType(String typeName);
@@ -84,8 +84,8 @@ public interface Log extends BasicLogger {
    @Message(id = 28522, value = "No relational queries can be applied to property '%2$s' in type %1$s since the property is analyzed.")
    ParsingException getQueryOnAnalyzedPropertyNotSupportedException(String typeName, String propertyName);
 
-   @Message(id = 28523, value = "Filters cannot use full-text searches")
-   ParsingException getFiltersCannotUseFullTextSearchException();
+   @Message(id = 28523, value = "Filters cannot use full-text or spatial queries")
+   ParsingException filtersCannotUseFullTextOrSpatialSearchException();
 
    @Message(id = 28524, value = "Left side argument must be a property path")
    ParsingException getLeftSideMustBeAPropertyPath();
@@ -101,4 +101,10 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28528, value = "Error parsing content. Data not stored as protobuf?")
    ParsingException errorParsingProtobuf(@Cause Exception e);
+
+   @Message(id = 28529, value = "Function %s is not supported")
+   ParsingException functionNotSupportedException(String functionName);
+
+   @Message(id = 28530, value = "Spatial queries cannot be applied to property '%2$s' in type %1$s unless it is indexed as a spatial property.")
+   ParsingException spatialQueryOnNotIndexedPropertyNotSupportedException(String typeName, String propertyName);
 }

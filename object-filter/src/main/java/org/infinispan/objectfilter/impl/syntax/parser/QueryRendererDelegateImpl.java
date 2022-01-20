@@ -11,6 +11,7 @@ import org.antlr.runtime.tree.Tree;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.ql.AggregationFunction;
+import org.infinispan.objectfilter.impl.ql.Function;
 import org.infinispan.objectfilter.impl.ql.JoinType;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.ql.QueryRendererDelegate;
@@ -60,6 +61,10 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    private PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath;
 
    private AggregationFunction aggregationFunction;
+
+   private Function function;
+
+   private List<Object> functionArgs;
 
    private final ExpressionBuilder<TypeMetadata> whereBuilder;
 
@@ -182,6 +187,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       alias = null;
       propertyPath = null;
       aggregationFunction = null;
+      function = null;
+      functionArgs = null;
    }
 
    @Override
@@ -412,6 +419,30 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
    }
 
+   @Override
+   public void predicateSpatialWithinCircle(String lat, String lon, String radius) {
+      ensureLeftSideIsAPropertyPath();
+      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
+      }
+      checkSpatial(property);
+      Object latValue = parameterValue(Double.class, lat);
+      Object lonValue = parameterValue(Double.class, lon);
+      Object radiusValue = parameterValue(Double.class, radius);
+      if (phase == Phase.WHERE) {
+         whereBuilder.addSpatialWithinCircle(property, latValue, lonValue, radiusValue);
+      } else {
+         throw new IllegalStateException();
+      }
+   }
+
+   @Override
+   public void predicateSpatialNotWithinCircle(String lat, String lon, String radius) {
+      whereBuilder.pushNot();
+      predicateSpatialWithinCircle(lat, lon, radius);
+   }
+
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
       if (fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath())) {
          if (!expectAnalyzed) {
@@ -427,6 +458,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    private void checkIndexed(PropertyPath<?> propertyPath) {
       if (!fieldIndexingMetadata.isIndexed(propertyPath.asArrayPath())) {
          throw log.getFullTextQueryOnNotIndexedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
+      }
+   }
+
+   private void checkSpatial(PropertyPath<?> propertyPath) {
+      if (!fieldIndexingMetadata.isSpatial(propertyPath.asArrayPath())) {
+         throw log.spatialQueryOnNotIndexedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
       }
    }
 
@@ -481,6 +518,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
     */
    @Override
    public void setPropertyPath(PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath) {
+      if (function != null) {
+         propertyPath = new FunctionPropertyPath<>(propertyPath.getNodes(), function, functionArgs);
+      }
       if (aggregationFunction != null) {
          if (propertyPath == null && aggregationFunction != AggregationFunction.COUNT && aggregationFunction != AggregationFunction.COUNT_DISTINCT) {
             throw log.getAggregationCanOnlyBeAppliedToPropertyReferencesException(aggregationFunction.name());
@@ -497,12 +537,17 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          Class<?> propertyType;
          Object nullMarker;
          if (propertyPath.getLength() == 1 && propertyPath.isAlias()) {
-            projection = new PropertyPath<>(Collections.singletonList(new PropertyPath.PropertyReference<>("__HSearch_This", null, true))); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
+            projection = new PropertyPath<>(Collections.singletonList(new PropertyPath.PropertyReference<>("__HSearch_This", propertyPath.getFirstTypeDescriptor(), true))); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
             propertyType = null;
             nullMarker = null;
          } else {
-            projection = resolveAlias(propertyPath);
-            propertyType = propertyHelper.getPrimitivePropertyType(targetEntityMetadata, projection.asArrayPath());
+            if (function == Function.DISTANCE) {
+               projection = new FunctionPropertyPath<>(resolveAlias(propertyPath).getNodes(), Function.DISTANCE, functionArgs);
+               propertyType = Double.class;
+            } else {
+               projection = resolveAlias(propertyPath);
+               propertyType = propertyHelper.getPrimitivePropertyType(targetEntityMetadata, projection.asArrayPath());
+            }
             nullMarker = fieldIndexingMetadata.getNullMarker(projection.asArrayPath());
          }
          projections.add(projection);
@@ -578,7 +623,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          // create the complete path in case it's a join
          PropertyPath<TypeDescriptor<TypeMetadata>> fullPath = propertyPath;
          while (fullPath.isAlias()) {
-            PropertyPath<TypeDescriptor<TypeMetadata>> resolved = aliasToPropertyPath.get(fullPath.getFirst().getPropertyName());
+            PropertyPath<TypeDescriptor<TypeMetadata>> resolved = aliasToPropertyPath.get(fullPath.getAlias());
             if (resolved == null) {
                break;
             }
@@ -587,6 +632,22 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          }
 
          return propertyHelper.convertToPropertyType(targetEntityMetadata, path.toArray(new String[path.size()]), value);
+      }
+   }
+
+   private Object parameterValue(Class<?> type, String value) {
+      if (value.startsWith(":")) {
+         // it's a named parameter
+         String paramName = value.substring(1).trim();  //todo [anistor] trim should not be required!
+         ConstantValueExpr.ParamPlaceholder namedParam = (ConstantValueExpr.ParamPlaceholder) namedParameters.get(paramName);
+         if (namedParam == null) {
+            namedParam = new ConstantValueExpr.ParamPlaceholder(paramName);
+            namedParameters.put(paramName, namedParam);
+         }
+         return namedParam;
+      } else {
+         // it's a literal value given in the query string
+         return propertyHelper.convertToPropertyType(type, value);
       }
    }
 
@@ -601,15 +662,40 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
    }
 
+   @Override
+   public void activateFunction(Function function) {
+      this.function = function;
+      functionArgs = new ArrayList<>();
+      propertyPath = null;
+   }
+
+   @Override
+   public void deactivateFunction() {
+      function = null;
+      functionArgs = null;
+   }
+
+   @Override
+   public void spatialDistance(String lat, String lon) {
+      functionArgs.add(Double.parseDouble(lat));
+      functionArgs.add(Double.parseDouble(lon));
+   }
+
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       List<PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>>> resolved = resolveAliasPath(path);
-      return path instanceof AggregationPropertyPath ?
-            new AggregationPropertyPath<>(((AggregationPropertyPath) path).getAggregationFunction(), resolved) : new PropertyPath<>(resolved);
+      if (path instanceof AggregationPropertyPath) {
+         return new AggregationPropertyPath<>(((AggregationPropertyPath<TypeMetadata>) path).getAggregationFunction(), resolved);
+      }
+      if (path instanceof FunctionPropertyPath) {
+         return new FunctionPropertyPath<>(resolved, ((FunctionPropertyPath<TypeMetadata>) path).getFunction(),
+               ((FunctionPropertyPath<TypeMetadata>) path).getArgs());
+      }
+      return new PropertyPath<>(resolved);
    }
 
    private List<PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>>> resolveAliasPath(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       if (path.isAlias()) {
-         String alias = path.getFirst().getPropertyName();
+         String alias = path.getAlias();
          if (aliasToEntityType.containsKey(alias)) {
             // Alias for entity
             return path.getNodesWithoutAlias();

@@ -36,6 +36,14 @@ public interface IndexedFieldProvider<TypeMetadata> {
       boolean isStored(String[] propertyPath);
 
       Object getNullMarker(String[] propertyPath);
+
+      /**
+       * Checks if the property of the indexed entity is a spatial property.
+       *
+       * @param propertyPath the path of the property
+       * @return {@code true} if the property is spatial, {@code false} otherwise.
+       */
+      boolean isSpatial(String[] propertyPath);
    }
 
    FieldIndexingMetadata NO_INDEXING = new FieldIndexingMetadata() {
@@ -57,6 +65,11 @@ public interface IndexedFieldProvider<TypeMetadata> {
       @Override
       public Object getNullMarker(String[] propertyPath) {
          return null;
+      }
+
+      @Override
+      public boolean isSpatial(String[] propertyPath) {
+         return false;
       }
    };
 }

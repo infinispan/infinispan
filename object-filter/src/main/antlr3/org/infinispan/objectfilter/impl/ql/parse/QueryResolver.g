@@ -162,6 +162,8 @@ predicate
 	|	^( NOT_MEMBER_OF rowValueConstructor rowValueConstructor  )
 	|	^( IS_EMPTY rowValueConstructor )
 	|	^( IS_NOT_EMPTY rowValueConstructor )
+	|	^( WITHIN rowValueConstructor ^( CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor ) )
+	|	^( NOT_WITHIN rowValueConstructor ^( CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor ) )
 	|	rowValueConstructor
 	;
 
@@ -226,8 +228,13 @@ propertyReferenceExpression
 
 function
 	: setFunction
+	| distanceFunction
 	| standardFunction
 	;
+
+distanceFunction
+   : ^(DISTANCE propertyReferenceExpression numericValueExpression numericValueExpression)
+   ;
 
 setFunction
 	:	^(SUM numericValueExpression)

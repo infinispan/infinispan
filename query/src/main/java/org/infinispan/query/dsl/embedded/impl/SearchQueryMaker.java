@@ -1,9 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.KEY;
-import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
-import static org.infinispan.query.logging.Log.CONTAINER;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
@@ -19,7 +15,6 @@ import org.apache.lucene.search.RegexpQuery;
 import org.hibernate.search.backend.lucene.LuceneBackend;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.predicate.dsl.LuceneSearchPredicateFactory;
-import org.hibernate.search.engine.backend.common.spi.FieldPaths;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
@@ -30,14 +25,18 @@ import org.hibernate.search.engine.search.predicate.dsl.PhrasePredicateOptionsSt
 import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateScoreStep;
 import org.hibernate.search.engine.search.predicate.dsl.RangePredicateFieldMoreStep;
+import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.predicate.dsl.SimpleQueryFlag;
 import org.hibernate.search.engine.search.projection.SearchProjection;
+import org.hibernate.search.engine.search.projection.dsl.DistanceToFieldProjectionValueStep;
 import org.hibernate.search.engine.search.projection.dsl.FieldProjectionValueStep;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.sort.SearchSort;
 import org.hibernate.search.engine.search.sort.dsl.CompositeSortComponentsStep;
+import org.hibernate.search.engine.search.sort.dsl.DistanceSortOptionsStep;
 import org.hibernate.search.engine.search.sort.dsl.FieldSortOptionsStep;
 import org.hibernate.search.engine.search.sort.dsl.SearchSortFactory;
+import org.hibernate.search.engine.spatial.GeoPoint;
 import org.hibernate.search.util.common.data.RangeBoundInclusion;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
@@ -58,7 +57,9 @@ import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
+import org.infinispan.objectfilter.impl.syntax.parser.FunctionPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.logging.Log;
@@ -68,6 +69,10 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.jboss.logging.Logger;
+
+import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.KEY;
+import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
+import static org.infinispan.query.logging.Log.CONTAINER;
 
 /**
  * An *Expr {@link Visitor} that transforms a {@link IckleParsingResult} into a {@link SearchQueryParsingResult}.
@@ -116,7 +121,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
             searchMapping.indexedEntity(targetedTypeName);
 
       SearchPredicate predicate = makePredicate(parsingResult.getWhereClause()).toPredicate();
-      SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjections(),
+      SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjectedPaths(),
             parsingResult.getProjectedTypes());
       SearchSort sort = makeSort(scope.sort(), parsingResult.getSortFields());
 
@@ -124,36 +129,71 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    }
 
    private SearchProjectionInfo makeProjection(TypeMetadata typeMetadata, SearchProjectionFactory<EntityReference, ?> projectionFactory,
-                                               String[] projections, Class<?>[] projectedTypes) {
+                                               PropertyPath<?>[] projections, Class<?>[] projectedTypes) {
       if (projections == null || projections.length == 0) {
          return SearchProjectionInfo.entity(projectionFactory);
       }
 
       if (projections.length == 1) {
-         if (VALUE.equals(projections[0])) {
+         String projection = projections[0].asStringPath();
+         if (VALUE.equals(projection)) {
             return SearchProjectionInfo.entity(projectionFactory);
          }
-         if (KEY.equals(projections[0])) {
+         if (KEY.equals(projection)) {
             return SearchProjectionInfo.entityReference(projectionFactory);
          }
-         boolean isRepeatedProperty = propertyHelper.isRepeatedProperty(typeMetadata, FieldPaths.split(projections[0]));
+         boolean isRepeatedProperty = propertyHelper.isRepeatedProperty(typeMetadata, projections[0].asArrayPath());
+         if (projections[0] instanceof FunctionPropertyPath) {
+            FunctionPropertyPath<TypeMetadata> distance = (FunctionPropertyPath<TypeMetadata>) projections[0];
+            DistanceToFieldProjectionValueStep<?, Double> projectionStep = projectionFactory.distance(projection, new GeoPoint() {
+               @Override
+               public double latitude() {
+                  return (Double) distance.getArgs().get(0);
+               }
+
+               @Override
+               public double longitude() {
+                  return (Double) distance.getArgs().get(1);
+               }
+            });
+            return SearchProjectionInfo.composite(projectionFactory, new SearchProjection[]{
+                  isRepeatedProperty ? projectionStep.multi().toProjection() : projectionStep.toProjection()
+            });
+         }
          if (isRepeatedProperty) {
-            return SearchProjectionInfo.multiField(projectionFactory, projections[0], projectedTypes[0]);
+            return SearchProjectionInfo.multiField(projectionFactory, projection, projectedTypes[0]);
          } else {
-            return SearchProjectionInfo.field(projectionFactory, projections[0], projectedTypes[0]);
+            return SearchProjectionInfo.field(projectionFactory, projection, projectedTypes[0]);
          }
       }
 
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[projections.length];
       for (int i = 0; i < projections.length; i++) {
-         if (VALUE.equals(projections[i])) {
+         String projection = projections[i].asStringPath();
+         if (VALUE.equals(projection)) {
             searchProjections[i] = projectionFactory.entity().toProjection();
-         } else if (KEY.equals(projections[i])) {
+         } else if (KEY.equals(projection)) {
             searchProjections[i] = projectionFactory.entityReference().toProjection();
          } else {
-            boolean isMultiField = propertyHelper.isRepeatedProperty(typeMetadata, FieldPaths.split(projections[i]));
-            FieldProjectionValueStep<?, ?> projectionStep = projectionFactory.field(projections[i], projectedTypes[i]);
-            searchProjections[i] = isMultiField ? projectionStep.multi().toProjection() : projectionStep.toProjection();
+            boolean isMultiField = propertyHelper.isRepeatedProperty(typeMetadata, projections[i].asArrayPath());
+            if (projections[i] instanceof FunctionPropertyPath) {
+               FunctionPropertyPath<TypeMetadata> distance = (FunctionPropertyPath<TypeMetadata>) projections[i];
+               DistanceToFieldProjectionValueStep<?, Double> projectionStep = projectionFactory.distance(projection, new GeoPoint() {
+                  @Override
+                  public double latitude() {
+                     return (Double) distance.getArgs().get(0);
+                  }
+
+                  @Override
+                  public double longitude() {
+                     return (Double) distance.getArgs().get(1);
+                  }
+               });
+               searchProjections[i] = isMultiField ? projectionStep.multi().toProjection() : projectionStep.toProjection();
+            } else {
+               FieldProjectionValueStep<?, ?> projectionStep = projectionFactory.field(projection, projectedTypes[i]);
+               searchProjections[i] = isMultiField ? projectionStep.multi().toProjection() : projectionStep.toProjection();
+            }
          }
       }
       return SearchProjectionInfo.composite(projectionFactory, searchProjections);
@@ -174,13 +214,16 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    }
 
    private SearchSort makeSort(SearchSortFactory sortFactory, SortField sortField) {
-      FieldSortOptionsStep<?, ?> optionsStep = sortFactory.field(sortField.getPath().asStringPathWithoutAlias());
-      if (sortField.isAscending()) {
-         optionsStep.asc();
-      } else {
-         optionsStep.desc();
+      PropertyPath<?> path = sortField.getPath();
+      if (path instanceof FunctionPropertyPath) {
+         FunctionPropertyPath<?> functionPath = (FunctionPropertyPath<?>) path;
+         Double lat = (Double) functionPath.getArgs().get(0);
+         Double lon = (Double) functionPath.getArgs().get(1);
+         DistanceSortOptionsStep<?, ? extends SearchPredicateFactory> optionsStep = sortFactory.distance(functionPath.asStringPathWithoutAlias(), lat, lon);
+         return (sortField.isAscending() ? optionsStep.asc() : optionsStep.desc()).toSort();
       }
-      return optionsStep.toSort();
+      FieldSortOptionsStep<?, ? extends SearchPredicateFactory> optionsStep = sortFactory.field(path.asStringPathWithoutAlias());
+      return (sortField.isAscending() ? optionsStep.asc() : optionsStep.desc()).toSort();
    }
 
    private PredicateFinalStep makePredicate(BooleanExpr expr) {
@@ -352,6 +395,22 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       return range.between(
             lower, includeLower ? RangeBoundInclusion.INCLUDED : RangeBoundInclusion.EXCLUDED,
             upper, includeUpper ? RangeBoundInclusion.INCLUDED : RangeBoundInclusion.EXCLUDED);
+   }
+
+   @Override
+   public PredicateFinalStep visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
+      PropertyValueExpr propertyValueExpr = (PropertyValueExpr) spatialWithinCircleExpr.getLeftChild();
+      String path = propertyValueExpr.getPropertyPath().asStringPath();
+
+      ConstantValueExpr latValueExpr = (ConstantValueExpr) spatialWithinCircleExpr.getLatChild();
+      ConstantValueExpr lonValueExpr = (ConstantValueExpr) spatialWithinCircleExpr.getLonChild();
+      ConstantValueExpr radiusValueExpr = (ConstantValueExpr) spatialWithinCircleExpr.getRadiusChild();
+
+      Double latValue = (Double) latValueExpr.getConstantValueAs(Double.class, namedParameters);
+      Double lonValue = (Double) lonValueExpr.getConstantValueAs(Double.class, namedParameters);
+      Double radiusValue = (Double) radiusValueExpr.getConstantValueAs(Double.class, namedParameters);
+
+      return predicateFactory.spatial().within().field(path).circle(latValue, lonValue, radiusValue);
    }
 
    @Override

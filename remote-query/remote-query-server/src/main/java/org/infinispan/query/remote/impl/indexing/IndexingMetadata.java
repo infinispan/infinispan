@@ -1,7 +1,9 @@
 package org.infinispan.query.remote.impl.indexing;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,6 +120,27 @@ public final class IndexingMetadata {
    public static final String STORE_NO = "Store.NO";
 
    /**
+    * Similar to org.hibernate.search.annotations.Spatials/Spatial.
+    */
+   public static final String SPATIALS_ANNOTATION = "Spatials";
+   public static final String SPATIAL_ANNOTATION = "Spatial";
+   public static final String SPATIAL_FIELDNAME_ATTRIBUTE = "fieldName";
+   public static final String SPATIAL_MARKERSET_ATTRIBUTE = "markerSet";
+   public static final String SPATIAL_STORE_ATTRIBUTE = "store";
+
+   /**
+    * Similar to org.hibernate.search.annotations.Latitude.
+    */
+   public static final String LATITUDE_ANNOTATION = "Latitude";
+   public static final String LATITUDE_MARKERSET_ATTRIBUTE = "markerSet";
+
+   /**
+    * Similar to org.hibernate.search.annotations.Longitude.
+    */
+   public static final String LONGITUDE_ANNOTATION = "Longitude";
+   public static final String LONGITUDE_MARKERSET_ATTRIBUTE = "markerSet";
+
+   /**
     * A marker value that indicates nulls should not be indexed.
     */
    public static final String DO_NOT_INDEX_NULL = "__DO_NOT_INDEX_NULL__";
@@ -128,6 +151,9 @@ public final class IndexingMetadata {
    public static final String ANALYZER_ANNOTATION = "Analyzer";
    public static final String ANALYZER_DEFINITION_ATTRIBUTE = "definition";
 
+   /**
+    * Similar to org.hibernate.search.annotations.SortableField/SortableFields.
+    */
    public static final String SORTABLE_FIELD_ANNOTATION = "SortableField";
    public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
 
@@ -150,17 +176,15 @@ public final class IndexingMetadata {
     * Field mappings. This is null if indexing is disabled.
     */
    private final Map<String, FieldMapping> fields;
-
-   /**
-    * The collection of sortable field names. Cab be empty but never {@code null}.
-    */
+   private final List<SpatialFieldMapping> spatialFields;
    private final Set<String> sortableFields;
 
-   IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields) {
+   IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields, List<SpatialFieldMapping> spatialFields) {
       this.isIndexed = isIndexed;
       this.indexName = indexName;
       this.analyzer = analyzer;
       this.fields = fields;
+      this.spatialFields = spatialFields;
       this.sortableFields = fields == null ? Collections.emptySet() : fields.values().stream()
             .filter(FieldMapping::sortable)
             .map(FieldMapping::name)
@@ -194,6 +218,18 @@ public final class IndexingMetadata {
       }
       FieldMapping fieldMapping = fields.get(fieldName);
       return fieldMapping != null && fieldMapping.analyze();
+   }
+
+   public boolean isFieldSpatial(String fieldName) {
+      if (spatialFields == null) {
+         return false;
+      }
+      for (SpatialFieldMapping sf : spatialFields) {
+         if (Objects.equals(sf.name(), fieldName)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    public boolean isFieldStored(String fieldName) {
@@ -270,6 +306,25 @@ public final class IndexingMetadata {
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue(DO_NOT_INDEX_NULL)
             .annotation(SORTABLE_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
-               .repeatable(SORTABLE_FIELDS_ANNOTATION);
+               .repeatable(SORTABLE_FIELDS_ANNOTATION)
+            .annotation(SPATIAL_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
+               .repeatable(SPATIALS_ANNOTATION)
+               .attribute(SPATIAL_FIELDNAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_MARKERSET_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_STORE_ATTRIBUTE)
+                  .allowedValues(STORE_YES, STORE_NO)
+                  .defaultValue(STORE_NO)
+            .annotation(LATITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LATITUDE_MARKERSET_ATTRIBUTE)
+               .type(AnnotationElement.AttributeType.STRING)
+               .defaultValue("")
+            .annotation(LONGITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LONGITUDE_MARKERSET_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("");
    }
 }

@@ -5,17 +5,24 @@ import java.util.List;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
+import org.hibernate.search.annotations.SortableField;
+import org.hibernate.search.annotations.Store;
+import org.hibernate.search.engine.backend.types.Projectable;
+import org.hibernate.search.engine.backend.types.Sortable;
+import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.GeoPointBinding;
+import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Latitude;
+import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Longitude;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 
 /**
  * @author anistor@redhat.com
  * @since 9.0
  */
 @Indexed
+@GeoPointBinding(fieldName = "location", markerSet = "location", projectable = Projectable.YES, sortable = Sortable.YES)
+@GeoPointBinding(fieldName = "officeLocation", markerSet = "officeLocation", projectable = Projectable.YES, sortable = Sortable.YES)
 public class Employee {
 
    public String id;
@@ -37,6 +44,18 @@ public class Employee {
    public List<ContactDetails> contactDetails = new ArrayList<>();
 
    public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
+
+   @Latitude(markerSet = "location")
+   private Double locationLat;
+
+   @Longitude(markerSet = "location")
+   private Double locationLon;
+
+   @Latitude(markerSet = "officeLocation")
+   private Double officeLocationLat;
+
+   @Longitude(markerSet = "officeLocation")
+   private Double officeLocationLon;
 
    @DocumentId
    @Field(analyze = Analyze.NO, store = Store.YES)

@@ -124,6 +124,17 @@ public class Person {
       this._deleted = deleted;
    }
 
+   // Not an actual spatial property! Just makes the test fail with a meaningful message.
+   private int _location;
+
+   public int getLocation() {
+      return _location;
+   }
+
+   public void setLocation(int location) {
+      this._location = location;
+   }
+
    @Override
    public String toString() {
       return "Person{" +
@@ -138,6 +149,7 @@ public class Person {
             ", gender=" + _gender +
             ", lastUpdate=" + _lastUpdate +
             ", deleted=" + _deleted +
+            ", location=" + _location +
             '}';
    }
 }

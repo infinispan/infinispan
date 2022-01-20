@@ -33,6 +33,11 @@ public class BooleShannonExpansionTest {
       }
 
       @Override
+      public boolean isSpatial(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
       public boolean isStored(String[] propertyPath) {
          return isIndexed(propertyPath);
       }

@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.marshall;
 
-import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 
@@ -11,7 +11,7 @@ import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
       schemaFilePath = "/",
       service = false
 )
-public interface NotIndexedSCI extends SerializationContextInitializer {
+public interface NotIndexedSchema extends GeneratedSchema {
 
-   SerializationContextInitializer INSTANCE = new NotIndexedSCIImpl();
+   GeneratedSchema INSTANCE = new NotIndexedSchemaImpl();
 }

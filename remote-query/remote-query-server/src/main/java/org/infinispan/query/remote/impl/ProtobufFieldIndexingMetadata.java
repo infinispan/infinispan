@@ -41,6 +41,11 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean isSpatial(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isFieldSpatial);
+   }
+
+   @Override
    public Object getNullMarker(String[] propertyPath) {
       Descriptor md = messageDescriptor;
       int i = 0;

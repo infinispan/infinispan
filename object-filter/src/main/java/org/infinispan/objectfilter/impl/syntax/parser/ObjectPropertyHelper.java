@@ -76,7 +76,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> {
          // not a primitive, then it is an embedded entity, need to signal an invalid query
          throw log.getPredicatesOnCompleteEmbeddedEntitiesNotAllowedException(StringHelper.join(propertyPath));
       }
+      return convertToPropertyType(propertyType, value);
+   }
 
+   public Object convertToPropertyType(Class<?> propertyType, String value) {
       if (Date.class.isAssignableFrom(propertyType)) {
          try {
             return DateHelper.getJpaDateFormat().parse(value);

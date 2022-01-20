@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.FlightRoute;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -41,7 +42,8 @@ public class QueryStringTest extends AbstractQueryDslTest {
          .storage(LOCAL_HEAP)
          .addIndexedEntity(getModelFactory().getUserImplClass())
          .addIndexedEntity(getModelFactory().getAccountImplClass())
-         .addIndexedEntity(getModelFactory().getTransactionImplClass());
+         .addIndexedEntity(getModelFactory().getTransactionImplClass())
+         .addIndexedEntity(FlightRoute.class);
       createClusteredCaches(1, cfg);
    }
 
@@ -179,6 +181,9 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
       getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
+
+      getCacheForWrite().put("flightA", new FlightRoute("A", 46.7716, 23.5895, 37.7608, 140.4748));
+      getCacheForWrite().put("flightB", new FlightRoute("B", 43.7716, 20.5895, 34.7608, 137.4748));
    }
 
    public void testParam() {
@@ -487,6 +492,22 @@ public class QueryStringTest extends AbstractQueryDslTest {
       Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus'");
       delete.maxResults(5);
       delete.executeStatement();
+   }
+
+   public void testSpatialPredicate() {
+      Query<FlightRoute> q = createQueryFromString("SELECT r.name" +
+            " FROM org.infinispan.query.dsl.embedded.testdomain.FlightRoute r" +
+            " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100)");
+
+      List<FlightRoute> list = q.execute().list();
+      assertEquals(1, list.size());
+
+      q = createQueryFromString("SELECT r.name" +
+            " FROM org.infinispan.query.dsl.embedded.testdomain.FlightRoute r" +
+            " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100) AND r.start NOT WITHIN CIRCLE(46.7716, 23.5895, 10)");
+
+      list = q.execute().list();
+      assertEquals(0, list.size());
    }
 
    protected final <T> Query<T> createQueryFromString(String queryString) {

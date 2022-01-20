@@ -1,7 +1,11 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
@@ -34,6 +38,20 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
          indexName = null;
       }
 
+      List<SpatialFieldMapping> spatialFields = new ArrayList<>();
+      AnnotationElement.Annotation spatialAnnotation = descriptor.getAnnotations().get(IndexingMetadata.SPATIAL_ANNOTATION);
+      if (spatialAnnotation != null) {
+         processSpatial(spatialAnnotation, spatialFields);
+      }
+      AnnotationElement.Annotation spatialsAnnotation = descriptor.getAnnotations().get(IndexingMetadata.SPATIALS_ANNOTATION);
+      if (spatialsAnnotation != null) {
+         for (AnnotationElement.Value v : ((AnnotationElement.Array) spatialsAnnotation.getDefaultAttributeValue()).getValues()) {
+            processSpatial((AnnotationElement.Annotation) v, spatialFields);
+         }
+      }
+      //todo [anistor] if indexed==false we do not accept Spatial annotation
+      //todo [anistor] if indexed==false do we accept Analyzer ??
+
       String entityAnalyzer = null;
       AnnotationElement.Annotation entityAnalyzerAnnotation = descriptor.getAnnotations().get(IndexingMetadata.ANALYZER_ANNOTATION);
       if (entityAnalyzerAnnotation != null) {
@@ -45,6 +63,20 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
 
       Map<String, FieldMapping> fields = new HashMap<>(descriptor.getFields().size());
       for (FieldDescriptor fd : descriptor.getFields()) {
+         AnnotationElement.Annotation longitudeAnnotation = fd.getAnnotations().get(IndexingMetadata.LONGITUDE_ANNOTATION);
+         if (longitudeAnnotation != null) {
+            processLongitude(fd, longitudeAnnotation, spatialFields);
+            //todo [anistor] do we accept other annotations?
+            continue;
+         }
+
+         AnnotationElement.Annotation latitudeAnnotation = fd.getAnnotations().get(IndexingMetadata.LATITUDE_ANNOTATION);
+         if (latitudeAnnotation != null) {
+            processLatitude(fd, latitudeAnnotation, spatialFields);
+            //todo [anistor] do we accept other annotations?
+            continue;
+         }
+
          String fieldLevelAnalyzer = null;
          AnnotationElement.Annotation fieldAnalyzerAnnotation = fd.getAnnotations().get(IndexingMetadata.ANALYZER_ANNOTATION);
          if (fieldAnalyzerAnnotation != null) {
@@ -105,10 +137,50 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
          }
       }
 
-      IndexingMetadata indexingMetadata = new IndexingMetadata(true, indexName, entityAnalyzer, fields);
+      IndexingMetadata indexingMetadata = new IndexingMetadata(true, indexName, entityAnalyzer, fields, spatialFields);
       if (log.isDebugEnabled()) {
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
       return indexingMetadata;
+   }
+
+   private void processSpatial(AnnotationElement.Annotation spatialAnnotation, List<SpatialFieldMapping> spatialFields) {
+      String spatialName = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_FIELDNAME_ATTRIBUTE).getValue();
+      if (spatialName.isEmpty()) {
+         spatialName = null;
+      }
+      String markerSetStr = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_MARKERSET_ATTRIBUTE).getValue();
+      if (markerSetStr.isEmpty()) {
+         markerSetStr = null;
+      }
+      String spatialStoreStr = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_STORE_ATTRIBUTE).getValue();
+      boolean spatialStore = spatialStoreStr.equals(IndexingMetadata.STORE_YES);
+      spatialFields.add(new SpatialFieldMapping(spatialName, markerSetStr, spatialStore));
+   }
+
+   private void processLatitude(FieldDescriptor fd, AnnotationElement.Annotation latitudeAnnotation, List<SpatialFieldMapping> spatialFields) {
+      String markerSet = (String) latitudeAnnotation.getAttributeValue(IndexingMetadata.LATITUDE_MARKERSET_ATTRIBUTE).getValue();
+      if (markerSet.isEmpty()) {
+         markerSet = null;
+      }
+      for (SpatialFieldMapping sf : spatialFields) {
+         if (Objects.equals(sf.name(), markerSet)) {
+            sf.setLatitude(fd.getName());
+            break;
+         }
+      }
+   }
+
+   private void processLongitude(FieldDescriptor fd, AnnotationElement.Annotation longitudeAnnotation, List<SpatialFieldMapping> spatialFields) {
+      String markerSet = (String) longitudeAnnotation.getAttributeValue(IndexingMetadata.LONGITUDE_MARKERSET_ATTRIBUTE).getValue();
+      if (markerSet.isEmpty()) {
+         markerSet = null;
+      }
+      for (SpatialFieldMapping sf : spatialFields) {
+         if (Objects.equals(sf.name(), markerSet)) {
+            sf.setLongitude(fd.getName());
+            break;
+         }
+      }
    }
 }

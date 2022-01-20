@@ -140,4 +140,11 @@ public class NonIndexedQueryStringTest extends QueryStringTest {
    public void testFullTextRegexp2() {
       super.testFullTextRegexp2();
    }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028501: The type org.infinispan.query.dsl.embedded.testdomain.FlightRoute does not have an accessible property named 'start'.")
+   @Override
+   public void testSpatialPredicate() {
+      // This fails (expectedly) because the spatial property is not even found. If it would be found, it would still fail because spatial search is not allowed in non-indexed mode.
+      super.testSpatialPredicate();
+   }
 }

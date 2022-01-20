@@ -160,6 +160,8 @@ predicate
 	|	^( NOT_MEMBER_OF rowValueConstructor rowValueConstructor  )
 	|	^( IS_EMPTY rowValueConstructor )
 	|	^( IS_NOT_EMPTY rowValueConstructor )
+	|	^( WITHIN rowValueConstructor ^( CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor { delegate.predicateSpatialWithinCircle( $lat.text, $lon.text, $radius.text ); } ) )
+	|	^( NOT_WITHIN rowValueConstructor ^( CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor { delegate.predicateSpatialNotWithinCircle( $lat.text, $lon.text, $radius.text ); } ) )
 	|	rowValueConstructor
 	;
 
@@ -225,8 +227,14 @@ propertyReferenceExpression
 
 function
 	: setFunction
+	| distanceFunction
 	| standardFunction
 	;
+
+distanceFunction
+@after { delegate.deactivateFunction(); }
+   : ^(DISTANCE { delegate.activateFunction(Function.DISTANCE); } propertyReferenceExpression lat=numericValueExpression lon=numericValueExpression { delegate.spatialDistance( $lat.text, $lon.text ); })
+   ;
 
 setFunction
 @after { delegate.deactivateAggregation(); }

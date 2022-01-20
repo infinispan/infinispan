@@ -80,7 +80,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
-            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE);
+            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSchema.INSTANCE);
 
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
@@ -525,7 +525,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       @Override
       public void registerSchema(SerializationContext ctx) {
          super.registerSchema(ctx);
-         NotIndexedSCI.INSTANCE.registerSchema(ctx);
+         NotIndexedSchema.INSTANCE.registerSchema(ctx);
       }
 
       @Override
@@ -536,7 +536,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
          ctx.registerMarshaller(new EmbeddedUserMarshaller());
          ctx.registerMarshaller(new GenderMarshaller());
          ctx.registerMarshaller(new EmbeddedTransactionMarshaller());
-         NotIndexedSCI.INSTANCE.registerMarshallers(ctx);
+         NotIndexedSchema.INSTANCE.registerMarshallers(ctx);
       }
    }
 }

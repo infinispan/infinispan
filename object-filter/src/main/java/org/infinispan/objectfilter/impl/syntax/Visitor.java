@@ -21,6 +21,8 @@ public interface Visitor<BE, VE> {
 
    BE visit(FullTextRangeExpr fullTextRangeExpr);
 
+   BE visit(SpatialWithinCircleExpr spatialWithinCircleExpr);
+
    BE visit(NotExpr notExpr);
 
    BE visit(OrExpr orExpr);

@@ -32,10 +32,19 @@ public final class BooleShannonExpansion {
       this.fieldIndexingMetadata = fieldIndexingMetadata;
    }
 
-   private class Collector extends ExprVisitor {
+   /**
+    * Checks if predicates refer to indexed fields and collects the ones that are not.
+    */
+   private final class UnindexedPredicateCollector extends ExprVisitor {
 
+      /**
+       * Indicates if at least one predicate referencing and indexed field was seen.
+       */
       private boolean foundIndexed = false;
 
+      /**
+       * Predicates referring to fields that are not indexed.
+       */
       private final Set<PrimaryPredicateExpr> predicatesToRemove = new LinkedHashSet<>();
 
       @Override
@@ -52,35 +61,26 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(FullTextTermExpr fullTextTermExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextTermExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(fullTextTermExpr);
-         }
+         collect(fullTextTermExpr);
          return fullTextTermExpr;
       }
 
       @Override
       public BooleanExpr visit(FullTextRegexpExpr fullTextRegexpExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(fullTextRegexpExpr);
-         }
+         collect(fullTextRegexpExpr);
          return fullTextRegexpExpr;
       }
 
       @Override
       public BooleanExpr visit(FullTextRangeExpr fullTextRangeExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRangeExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(fullTextRangeExpr);
-         }
+         collect(fullTextRangeExpr);
          return fullTextRangeExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
+         collect(spatialWithinCircleExpr);
+         return spatialWithinCircleExpr;
       }
 
       @Override
@@ -112,35 +112,26 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(IsNullExpr isNullExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(isNullExpr);
-         }
+         collect(isNullExpr);
          return isNullExpr;
       }
 
       @Override
       public BooleanExpr visit(ComparisonExpr comparisonExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) comparisonExpr.getLeftChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(comparisonExpr);
-         }
+         collect(comparisonExpr);
          return comparisonExpr;
       }
 
       @Override
       public BooleanExpr visit(LikeExpr likeExpr) {
-         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
-            foundIndexed = true;
-         } else {
-            predicatesToRemove.add(likeExpr);
-         }
+         collect(likeExpr);
          return likeExpr;
+      }
+
+      @Override
+      public BooleanExpr visit(BetweenExpr betweenExpr) {
+         collect(betweenExpr);
+         return betweenExpr;
       }
 
       @Override
@@ -155,17 +146,27 @@ public final class BooleShannonExpansion {
 
       @Override
       public ValueExpr visit(AggregationExpr aggregationExpr) {
+         // We should NEVER encounter this case!
          return aggregationExpr;
+      }
+
+      private void collect(PrimaryPredicateExpr primaryPredicateExpr) {
+         PropertyValueExpr propertyValueExpr = (PropertyValueExpr) primaryPredicateExpr.getChild();
+         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+            foundIndexed = true;
+         } else {
+            predicatesToRemove.add(primaryPredicateExpr);
+         }
       }
    }
 
-   private static class Replacer extends ExprVisitor {
+   private static final class PredicateReplacer extends ExprVisitor {
 
       private final PrimaryPredicateExpr toReplace;
       private final ConstantBooleanExpr with;
       private boolean found = false;
 
-      private Replacer(PrimaryPredicateExpr toReplace, ConstantBooleanExpr with) {
+      private PredicateReplacer(PrimaryPredicateExpr toReplace, ConstantBooleanExpr with) {
          this.toReplace = toReplace;
          this.with = with;
       }
@@ -173,6 +174,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(NotExpr notExpr) {
          BooleanExpr transformedChild = notExpr.getChild().acceptVisitor(this);
+         // simplify negated constants on the spot
          if (transformedChild instanceof ConstantBooleanExpr) {
             return ((ConstantBooleanExpr) transformedChild).negate();
          }
@@ -234,17 +236,22 @@ public final class BooleShannonExpansion {
 
       @Override
       public BooleanExpr visit(IsNullExpr isNullExpr) {
-         return replacePredicate(isNullExpr);
+         return replace(isNullExpr);
       }
 
       @Override
       public BooleanExpr visit(ComparisonExpr comparisonExpr) {
-         return replacePredicate(comparisonExpr);
+         return replace(comparisonExpr);
       }
 
       @Override
       public BooleanExpr visit(LikeExpr likeExpr) {
-         return replacePredicate(likeExpr);
+         return replace(likeExpr);
+      }
+
+      @Override
+      public BooleanExpr visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
+         return replace(spatialWithinCircleExpr);
       }
 
       @Override
@@ -262,12 +269,12 @@ public final class BooleShannonExpansion {
          return aggregationExpr;
       }
 
-      private BooleanExpr replacePredicate(PrimaryPredicateExpr primaryPredicateExpr) {
+      private BooleanExpr replace(PrimaryPredicateExpr primaryPredicateExpr) {
          switch (PredicateOptimisations.comparePrimaryPredicates(false, primaryPredicateExpr, false, toReplace)) {
-            case 0:
+            case IDENTICAL:
                found = true;
                return with;
-            case 1:
+            case OPPOSITE:
                found = true;
                return with.negate();
             default:
@@ -292,7 +299,7 @@ public final class BooleShannonExpansion {
          return booleanExpr;
       }
 
-      Collector collector = new Collector();
+      UnindexedPredicateCollector collector = new UnindexedPredicateCollector();
       booleanExpr.acceptVisitor(collector);
 
       if (!collector.foundIndexed) {
@@ -302,7 +309,7 @@ public final class BooleShannonExpansion {
       if (!collector.predicatesToRemove.isEmpty()) {
          int numCofactors = 1;
          for (PrimaryPredicateExpr e : collector.predicatesToRemove) {
-            Replacer replacer1 = new Replacer(e, ConstantBooleanExpr.TRUE);
+            PredicateReplacer replacer1 = new PredicateReplacer(e, ConstantBooleanExpr.TRUE);
             BooleanExpr e1 = booleanExpr.acceptVisitor(replacer1);
             if (!replacer1.found) {
                continue;
@@ -310,7 +317,7 @@ public final class BooleShannonExpansion {
             if (e1 == ConstantBooleanExpr.TRUE) {
                return ConstantBooleanExpr.TRUE;
             }
-            Replacer replacer2 = new Replacer(e, ConstantBooleanExpr.FALSE);
+            PredicateReplacer replacer2 = new PredicateReplacer(e, ConstantBooleanExpr.FALSE);
             BooleanExpr e2 = booleanExpr.acceptVisitor(replacer2);
             if (e2 == ConstantBooleanExpr.TRUE) {
                return ConstantBooleanExpr.TRUE;

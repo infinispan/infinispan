@@ -24,7 +24,7 @@ import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.ExprVisitor;
-import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
+import org.infinispan.objectfilter.impl.syntax.IndexedSearchPredicateDetector;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
@@ -443,9 +443,8 @@ public class QueryEngine<TypeMetadata> {
       }
 
       if (parsingResult.getWhereClause() != null) {
-         boolean isFullTextQuery = parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE);
-         if (isFullTextQuery) {
-            throw new IllegalStateException("The cache must be indexed in order to use full-text queries.");
+         if (IndexedSearchPredicateDetector.checkIndexingRequired(parsingResult.getWhereClause())) {
+            throw new IllegalStateException("The cache must be indexed in order to use full-text or spatial queries.");
          }
       }
 
