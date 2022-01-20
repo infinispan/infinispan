@@ -328,13 +328,15 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
-      Security.doAs(restRequest.getSubject(), (PrivilegedAction) () -> {
-         invocationHelper.getServer().serverStop(Collections.emptyList());
-         return null;
-      });
+      return CompletableFuture.supplyAsync(() -> {
+         Security.doAs(restRequest.getSubject(), (PrivilegedAction<?>) () -> {
+            invocationHelper.getServer().serverStop(Collections.emptyList());
+            return null;
+         });
 
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder()
-            .status(NO_CONTENT).build());
+         return new NettyRestResponse.Builder()
+               .status(NO_CONTENT).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> config(RestRequest request) {
