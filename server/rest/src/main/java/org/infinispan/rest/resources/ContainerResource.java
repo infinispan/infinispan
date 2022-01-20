@@ -527,8 +527,10 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> shutdown(RestRequest restRequest) {
-      Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().containerStop());
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(NO_CONTENT).build());
+      return CompletableFuture.supplyAsync(() -> {
+         Security.doAs(restRequest.getSubject(), invocationHelper.getServer()::containerStop);
+         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> listenConfig(RestRequest request) {
