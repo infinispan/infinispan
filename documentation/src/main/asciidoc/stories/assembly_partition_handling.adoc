@@ -15,7 +15,7 @@ include::{topics}/proc_changing_cache_availability.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_partition_handling.adoc[leveloffset=+1]
 include::{topics}/ref_partition_handling_strategies.adoc[leveloffset=+1]
 include::{topics}/ref_partition_handling_merge_policies.adoc[leveloffset=+1]
-include::{topics}/proc_implementing_custom_merge_policies.adoc[leveloffset=+1]
+include::{topics}/proc_configuring_custom_merge_policies.adoc[leveloffset=+1]
 include::{topics}/proc_merging_partitions_manually.adoc[leveloffset=+1]
 
 // Restore the parent context.

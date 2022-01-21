@@ -1,0 +1,68 @@
+[id="configuring-custom-merge-policies_{context}"]
+= Configuring custom merge policies
+
+If you implement the `EntryMergePolicy` API to create a custom merge policy to handle network partitions.
+
+.Prerequisites
+
+* Implement the `EntryMergePolicy` API.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/CustomMergePolicyEntryMerge.java[]
+----
+
+.Procedure
+
+. Deploy your merge policy implementation to {brandname} Server if you use remote caches.
+.. Package your classes as a JAR file that includes a `META-INF/services/org.infinispan.conflict.EntryMergePolicy` file that contains the fully qualified class name of your merge policy.
++
+----
+# List implementations of EntryMergePolicy with the full qualified class name
+org.example.CustomMergePolicy
+----
+.. Add the JAR file to the `server/lib` directory.
++
+[TIP]
+====
+Use the `install` command with the {brandname} Command Line Interface (CLI) to download the JAR to the `server/lib` directory.
+====
+. Open your {brandname} configuration for editing.
+. Configure cache encoding with the `encoding` element or `encoding()` method as appropriate.
++
+For remote caches, if you use only object metadata for comparison when merging entries then you can use `application/x-protostream` as the media type. In this case {brandname} returns entries to the `EntryMergePolicy` as `byte[]`.
++
+If you require the object itself when merging conflicts then you should configure caches with the `application/x-java-object` media type. In this case you must deploy the relevant ProtoStream marshallers to {brandname} Server so it can perform `byte[]` to object transformations if clients use Protobuf encoding.
+. Specify your custom merge policy with the `merge-policy` attribute or `mergePolicy()` method as part of the partition handling configuration.
+. Save your changes.
+
+[discrete]
+== Custom merge policy configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/custom_merge_policy.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/custom_merge_policy.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/custom_merge_policy.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/CustomMergePolicy.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/conflict/EntryMergePolicy.html[org.infinispan.conflict.EntryMergePolicy]
