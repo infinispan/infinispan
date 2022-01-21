@@ -321,8 +321,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                                                             true, false, currentStage);
          }
       }
-      if (currentStage == initialStage) return invokeNext(ctx, invalidateL1Command);
-      return asyncInvokeNext(ctx, invalidateL1Command, currentStage);
+      return asyncInvokeNext(ctx, invalidateL1Command, EntryFactory.expirationCheckDelay(currentStage, initialStage));
    }
 
    private void abortL1UpdateOrWait(Object key) {
