@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -380,6 +381,22 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
          v2s.put("k" + i, "v2");
       }
       cache0.putAll(v2s, -1, SECONDS, 10, SECONDS);
+   }
+
+   public void testGetAllExpiredEntries() {
+      // Can reproduce ISPN-13549 with nKey=20_000 and no trace logs (and without the fix)
+      int nKeys = 4;
+      for (int i = 0; i < nKeys * 3 / 4; i++) {
+         cache0.put("k" + i, "v1", -1, SECONDS, 10, SECONDS);
+      }
+
+      incrementAllTimeServices(11, SECONDS);
+
+      Map<String, String> v1s = new HashMap<>();
+      for (int i = 0; i < nKeys; i++) {
+         v1s.put("k" + i, "v1");
+      }
+      assertEquals(Collections.emptyMap(), cache0.getAdvancedCache().getAll(v1s.keySet()));
    }
 
    @Test(groups = "unstable", description = "https://issues.redhat.com/browse/ISPN-11422")
