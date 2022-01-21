@@ -1,4 +1,4 @@
 distributedCache:
   partitionHandling:
     whenSplit: DENY_READ_WRITES
-    mergePolicy: PREFERRED_ALWAYS
+    mergePolicy: org.example.CustomMergePolicy
