@@ -89,10 +89,10 @@ import org.infinispan.util.concurrent.CompletableFutures;
  */
 public interface EntryFactory {
    /**
-    * Use to synchronize multiple {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, CompletionStage)}
-    * or {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, CompletionStage)} calls.
+    * Use to synchronize multiple {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, boolean, CompletionStage)}
+    * or {@link #wrapEntryForWriting(InvocationContext, Object, int, boolean, boolean, CompletionStage)} calls.
     *
-    * The basic pattern is:
+    * <p>The basic pattern is:</p>
     *
     * <pre>{@code
     * CompletableFuture<Void> initialStage = new CompletableFuture<>();
@@ -102,6 +102,10 @@ public interface EntryFactory {
     * }
     * return asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage));
     * }</pre>
+    *
+    * <p>The effect {@code expirationCheckDelay(currentStage, initialStage)} call is equivalent to completing the
+    * {@code initialStage} and returning {@code currentStage}, but it optimizes the common case where
+    * {@code currentStage} and {@code initialStage} are the same.</p>
     */
    static CompletionStage<Void> expirationCheckDelay(CompletionStage<Void> currentStage, CompletableFuture<Void> initialStage) {
       if (currentStage == initialStage) {
@@ -123,7 +127,8 @@ public interface EntryFactory {
     * @param key key to look up and wrap
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
-    * @param previousStage don't access the invocation context from another thread before this stage is complete
+    * @param previousStage if wrapping can't be performed synchronously, only access the invocation context
+    *                      from another thread after this stage is complete
     * @return stage that when complete the value should be in the context
     */
    CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner, CompletionStage<Void> previousStage);
@@ -141,7 +146,8 @@ public interface EntryFactory {
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
     * @param isRead true if this operation is expected to read the value of the entry
-    * @param previousStage don't access the invocation context from another thread before this stage is complete
+    * @param previousStage if wrapping can't be performed synchronously, only access the invocation context
+    *                      from another thread after this stage is complete
     * @since 8.1
     */
    CompletionStage<Void> wrapEntryForWriting(InvocationContext ctx, Object key, int segment, boolean isOwner, boolean isRead, CompletionStage<Void> previousStage);

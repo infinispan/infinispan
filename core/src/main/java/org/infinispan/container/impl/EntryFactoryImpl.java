@@ -22,7 +22,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -65,7 +64,7 @@ public class EntryFactoryImpl implements EntryFactory {
    @Override
    public final CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner, CompletionStage<Void> previousStage) {
       if (!isOwner && !isL1Enabled) {
-         return CompletableFutures.completedNull();
+         return previousStage;
       }
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
