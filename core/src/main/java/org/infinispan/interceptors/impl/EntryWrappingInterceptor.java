@@ -232,7 +232,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getKeys()) {
          currentStage = entryFactory.wrapEntryForReading(ctx, key, keyPartitioner.getSegment(key),
                                                          ignoreOwnership || canReadKey(key), false,
-                                                         CompletableFutures.completedNull());
+                                                         currentStage);
       }
 
       return makeStage(asyncInvokeNext(ctx, command, expirationCheckDelay(currentStage, initialStage)))
