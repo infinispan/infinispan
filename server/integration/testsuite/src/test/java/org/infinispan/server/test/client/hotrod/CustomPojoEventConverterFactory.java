@@ -7,7 +7,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheIT.Person;
 
 @NamedFactory(name = "pojo-converter-factory")
 public class CustomPojoEventConverterFactory implements CacheEventConverterFactory {

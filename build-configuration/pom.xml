@@ -164,7 +164,7 @@
       <version.jaxb>2.3.0</version.jaxb>
       <version.jboss.logging>3.4.1.Final</version.jboss.logging>
       <version.jboss.metadata>13.0.0.Final</version.jboss.metadata>
-      <version.jboss.marshalling>2.0.9.Final</version.jboss.marshalling>
+      <version.jboss.marshalling>2.0.12.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>5.9.9.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
