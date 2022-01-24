@@ -1,0 +1,31 @@
+[id="partition-handling-degraded-mode_{context}"]
+= Cache availability and degraded mode
+
+To preserve data consistency, {brandname} can put caches into `DEGRADED` mode if you configure them to use either the `DENY_READ_WRITES` or `ALLOW_READS` partition handling strategy.
+
+{brandname} puts caches in a partition into `DEGRADED` mode when the following conditions are true:
+
+* At least one segment has lost all owners. +
+This happens when a number of nodes equal to or greater than the number of owners for a distributed cache have left the cluster.
+* There is not a majority of nodes in the partition. +
+A majority of nodes is any number greater than half the total number of nodes in the cluster from the most recent stable topology, which was the last time a cluster rebalancing operation completed successfully.
+
+When caches are in `DEGRADED` mode, {brandname}:
+
+* Allows read and write operations only if all replicas of an entry reside in the same partition.
+* Denies read and write operations and throws an `AvailabilityException` if the partition does not include all replicas of an entry.
++
+[NOTE]
+====
+With the `ALLOW_READS` strategy, {brandname} allows read operations on caches in `DEGRADED` mode.
+====
+
+`DEGRADED` mode guarantees consistency by ensuring that write operations do not take place for the same key in different partitions.
+Additionally `DEGRADED` mode prevents stale read operations that happen when a key is updated in one partition but read in another partition.
+
+If all partitions are in `DEGRADED` mode then the cache becomes available again after merge only if the cluster contains a majority of nodes from the most recent stable topology and there is at least one replica of each entry.
+When the cluster has at least one replica of each entry, no keys are lost and {brandname} can create new replicas based on the number of owners during cluster rebalancing.
+
+In some cases a cache in one partition can remain available while entering `DEGRADED` mode in another partition.
+When this happens the available partition continues cache operations as normal and {brandname} attempts to rebalance data across those nodes.
+To merge the cache together {brandname} always transfers state from the available partition to the partition in `DEGRADED` mode.

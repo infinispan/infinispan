@@ -1,0 +1,27 @@
+[id="partition-handling-merge-policies_{context}"]
+= Merge policies
+
+Merge policies control how {brandname} resolves conflicts between replicas when bringing cluster partitions together.
+You can use one of the merge policies that {brandname} provides or you can create a custom implementation of the `EntryMergePolicy` API.
+
+.{brandname} merge policies
+[%autowidth,cols="1,1,1",stripes=even]
+|===
+| Merge policy | Description | Considerations
+
+| `NONE`
+| {brandname} does not resolve conflicts when merging split clusters. This is the default merge policy.
+| Nodes drop segments for which they are not the primary owner, which can result in data loss.
+
+| `PREFERRED_ALWAYS`
+| {brandname} finds the value that exists on the majority of nodes in the cluster and uses it to resolve conflicts.
+| {brandname} could use stale values to resolve conflicts. Even if an entry is available the majority of nodes, the last update could happen on the minority partition.
+
+| `PREFERRED_NON_NULL`
+| {brandname} uses the first non-null value that it finds on the cluster to resolve conflicts.
+| {brandname} could restore deleted entries.
+
+| `REMOVE_ALL`
+| {brandname} removes any conflicting entries from the cache.
+| Results in loss of any entries that have different values when merging split clusters.
+|===
