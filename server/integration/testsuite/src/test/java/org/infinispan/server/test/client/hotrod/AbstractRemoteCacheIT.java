@@ -15,7 +15,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1219,61 +1218,7 @@ public abstract class AbstractRemoteCacheIT {
     @ClientListener(filterFactoryName = "pojo-filter-converter-factory", converterFactoryName = "pojo-filter-converter-factory")
     public static class CustomPojoFilterCustomEventLogListener extends CustomEventLogListener {}
 
-    public static class Person implements Serializable {
-
-        final String name;
-
-        public Person(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Person person = (Person) o;
-
-            if (!name.equals(person.name)) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
-    }
-
-    public static class Id implements Serializable {
-        final byte id;
-        public Id(int id) {
-            this.id = (byte) id;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Id id1 = (Id) o;
-
-            if (id != id1.id) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            return id;
-        }
-    }
-
-    protected <T extends Map<String, String>> void fill(T map, int entryCount) {
+   protected <T extends Map<String, String>> void fill(T map, int entryCount) {
         for (int i = 0; i != entryCount; i++) {
             map.put("key" + i, "value" + i);
         }

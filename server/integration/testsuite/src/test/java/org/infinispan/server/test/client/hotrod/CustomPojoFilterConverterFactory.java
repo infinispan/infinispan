@@ -8,8 +8,6 @@ import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilte
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheIT.Id;
-import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheIT.Person;
 
 @NamedFactory(name = "pojo-filter-converter-factory")
 public class CustomPojoFilterConverterFactory implements CacheEventFilterConverterFactory {
