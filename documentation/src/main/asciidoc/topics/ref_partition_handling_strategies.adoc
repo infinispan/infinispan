@@ -1,0 +1,27 @@
+[id="partition-handling-strategies_{context}"]
+= Partition handling strategies
+
+Partition handling strategies control if {brandname} allows read and write operations when a cluster is split.
+The strategy you configure determines whether you get cache availability or data consistency.
+
+.Partition handling strategies
+[%autowidth,cols="1,1,1",stripes=even]
+|===
+| Strategy | Description | Availability or consistency
+
+| `ALLOW_READ_WRITES`
+| {brandname} allows read and write operations on caches while a cluster is split into network partitions.
+Nodes in each partition remain available and function independently of each other.
+This is the default partition handling strategy.
+| Availability
+
+| `DENY_READ_WRITES`
+| {brandname} allows read and write operations only if all replicas of an entry are in the partition.
+If a partition does not include all replicas of an entry, {brandname} prevents cache operations for that entry.
+| Consistency
+
+| `ALLOW_READS`
+| {brandname} allows read operations for entries and prevents write operations unless the partition includes all replicas of an entry.
+| Consistency with read availability
+
+|===

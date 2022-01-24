@@ -9,13 +9,13 @@ When this happens, {brandname} caches in minority partitions enter **DEGRADED** 
 Garbage collection (GC) pauses are the most common cause of network partitions.
 When GC pauses result in nodes becoming unresponsive, {brandname} clusters can start operating in a split brain network.
 
-Rather than dealing with network partitions you should try to avoid GC pauses by controlling JVM heap usage and by using a more modern, low-pause GC implementation such as Shenandoah with OpenJDK.
+Rather than dealing with network partitions, try to avoid GC pauses by controlling JVM heap usage and by using a modern, low-pause GC implementation such as Shenandoah with OpenJDK.
 ====
 
 .CAP theorem and partition handling strategies
 
-CAP theorem expresses a limitation of distributed, key/value datastores, such as {brandname}.
-You cannot avoid the possibility of network partitions so can have either consistency or availability while {brandname} heals the partition and resolves any conflicting entries.
+CAP theorem expresses a limitation of distributed, key/value data stores, such as {brandname}.
+When network partition events happen, you must choose between consistency or availability while {brandname} heals the partition and resolves any conflicting entries.
 
 Availability:: Allow read and write operations.
 Consistency:: Deny read and write operations.
@@ -44,23 +44,3 @@ Configuring a merge policy results in {brandname} retrieving every version of an
 |`REMOVE_ALL`
 |{brandname} removes any entries that have conflicting values.
 |===
-
-.Garbage collection during partition handling
-
-Long garbage collection (GC) times can increase the amount of time it takes {brandname} to detect network partitions.
-In some cases, GC can cause {brandname} to exceed the maximum time to detect a split.
-
-Additionally, when merging partitions after a split, {brandname} attempts to confirm all nodes are present in the cluster.
-Because no timeout or upper bound applies to the response time from nodes, the operation to merge the cluster view can be delayed.
-This can result from network issues as well as long GC times.
-
-Another scenario in which GC can impact performance through partition handling is when GC suspends the JVM, causing one or more nodes to leave the cluster.
-When this occurs, and suspended nodes resume after GC completes, the nodes can have out of date or conflicting cluster topologies.
-
-If a merge policy is configured, {brandname} attempts to resolve conflicts before merging the nodes.
-However, the merge policy is used only if the nodes have incompatible consistent hashes.
-Two consistent hashes are compatible if they have at least one common owner for each segment or incompatible if they have no common owner for at least one segment.
-
-When node have old, but compatible, consistent hashes, {brandname} ignores the out of date cluster topology and does not attempt to resolve conflicts.
-For example, if one node in the cluster is suspended due to garbage collection (GC), other nodes in the cluster remove it from the consistent hash and replace it with new owner nodes.
-If `numOwners > 1`, the old consistent hash and the new consistent hash have a common owner for every key, which makes them compatible and allows {brandname} to skip the conflict resolution process.

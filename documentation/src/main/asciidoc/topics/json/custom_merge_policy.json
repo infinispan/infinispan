@@ -1,0 +1,8 @@
+{
+  "distributed-cache": {
+    "partition-handling" : {
+      "when-split": "DENY_READ_WRITES",
+      "merge-policy": "org.example.CustomMergePolicy"
+    }
+  }
+}

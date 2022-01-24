@@ -1,9 +1,7 @@
 AdvancedCache ac = cache.getAdvancedCache();
-
-// Read the availability
+// Retrieve cache availability
 boolean available = ac.getAvailability() == AvailabilityMode.AVAILABLE;
-
-// Change the availability
+// Make the cache available
 if (!available) {
    ac.setAvailability(AvailabilityMode.AVAILABLE);
 }

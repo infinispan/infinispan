@@ -1,0 +1,30 @@
+[id="checking-cache-availability_{context}"]
+= Verifying cache availability during network partitions
+
+Determine if caches on {brandname} clusters are in `AVAILABLE` mode or `DEGRADED` mode during a network partition.
+
+When {brandname} clusters split into partitions, nodes in those partitions can enter `DEGRADED` mode to guarantee data consistency.
+In `DEGRADED` mode clusters do not allow cache operations resulting in loss of availability.
+
+.Procedure
+
+Verify availability of clustered caches in network partitions in one of the following ways:
+
+* Check {brandname} logs for `ISPN100011` messages that indicate if the cluster is available or if at least one cache is in `DEGRADED` mode.
+
+* Get the availability of remote caches through the {brandname} Console or with the REST API.
+** Open the {brandname} Console in any browser, select the **Data Container** tab, and then locate the availability status in the **Health** column.
+** Retrieve cache health from the REST API.
++
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cache-managers/<cacheManagerName>/health
+----
+
+* Programmatically retrieve the availability of embedded caches with the `getAvailability()` method in the `AdvancedCache` API.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{rest_docs}#rest_v2_cache_manager_health[REST API: Getting cluster health]
+* link:{javadocroot}/org/infinispan/AdvancedCache.html#getAvailability()[org.infinispan.AdvancedCache.getAvailability]
+* link:{javadocroot}/org/infinispan/partitionhandling/AvailabilityMode.html[Enum AvailabilityMode]

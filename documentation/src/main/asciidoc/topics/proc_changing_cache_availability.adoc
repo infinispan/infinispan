@@ -1,0 +1,33 @@
+[id="changing-cache-availability_{context}"]
+= Changing cache availability mode
+
+You can change the availability mode of clustered caches and force them out of `DEGRADED` mode.
+This makes the caches available for read and write operations during a network partition.
+
+[IMPORTANT]
+====
+You should force clusters out of `DEGRADED` mode only if your deployment can tolerate data loss and inconsistency.
+====
+
+.Prerequisites
+
+Force clustered caches out of `DEGRADED` mode in one of the following ways:
+
+* Change the availability of remote caches with the REST API.
++
+[source,options="nowrap",subs=attributes+]
+----
+POST /v2/caches/<cacheName>?action=set-availability&availability=AVAILABLE
+----
+
+* Programmatically change the availability of embedded caches with the `AdvancedCache` API.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/AdvancedCacheAvailibilityMode.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{rest_docs}#rest_v2_caches_set_availability[REST API: Setting cache availability]
+* link:{javadocroot}/org/infinispan/AdvancedCache.html[org.infinispan.AdvancedCache]
