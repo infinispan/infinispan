@@ -49,7 +49,7 @@ public class ClusteredCacheAuthExternalIT {
     private static final String ARQ_NODE_1_ID = "hotrodAuthExternalClustered";
 
     @ArquillianResource
-    public ContainerController controller;
+    public static ContainerController controller;
 
     @InfinispanResource("hotrodAuthExternalClustered")
     RemoteInfinispanServer server1;
@@ -65,7 +65,6 @@ public class ClusteredCacheAuthExternalIT {
         final SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
         cb.security().ssl().keyAlias("client1");
         rcm = new RemoteCacheManager(cb.forExternalAuth().build(), true);
-        controller.stop(ARQ_NODE_1_ID);
         isInitialized = true;
     }
 
@@ -73,6 +72,9 @@ public class ClusteredCacheAuthExternalIT {
     public static void release() {
         if(rcm != null) {
             rcm.stop();
+        }
+        if (isInitialized) {
+            controller.stop(ARQ_NODE_1_ID);
         }
     }
 

@@ -60,7 +60,7 @@ public class ClusteredCacheAuthMd5IT {
    private static final String ARQ_NODE_1_ID = "hotrodAuthClustered";
 
    @ArquillianResource
-   public ContainerController controller;
+   public static ContainerController controller;
 
    @InfinispanResource("hotrodAuthClustered")
    RemoteInfinispanServer server1;
@@ -79,7 +79,6 @@ public class ClusteredCacheAuthMd5IT {
       rcms.put(WRITER_LOGIN, new RemoteCacheManager(cb.forCredentials(WRITER_LOGIN, WRITER_PASSWD).build(), true));
       rcms.put(READER_LOGIN, new RemoteCacheManager(cb.forCredentials(READER_LOGIN, READER_PASSWD).build(), true));
       rcms.put(SUPERVISOR_LOGIN, new RemoteCacheManager(cb.forCredentials(SUPERVISOR_LOGIN, SUPERVISOR_PASSWD).build(), true));
-      controller.stop(ARQ_NODE_1_ID);
       isInitialized = true;
    }
 
@@ -90,6 +89,9 @@ public class ClusteredCacheAuthMd5IT {
          if(rcm != null) {
             rcm.stop();
          }
+      }
+      if (isInitialized) {
+         controller.stop(ARQ_NODE_1_ID);
       }
    }
 

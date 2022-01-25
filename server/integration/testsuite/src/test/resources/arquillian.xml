@@ -911,6 +911,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
