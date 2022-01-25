@@ -1,18 +1,17 @@
-<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
-          xmlns="urn:infinispan:server:{schemaversion}">
-  <security-realms>
-    <security-realm name="cluster-transport">
-      <server-identities>
-        <ssl>
-          <!-- Adds a keystore that contains a certificate that provides
-               SSL/TLS identity to encrypt cluster transport. -->
-          <keystore path="server.pfx"
-                    relative-to="infinispan.server.config.path"
-                    password="secret"
-                    alias="server"/>
-        </ssl>
-      </server-identities>
-    </security-realm>
-  </security-realms>
-</security>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
+      <security-realm name="cluster-transport">
+        <server-identities>
+          <ssl>
+            <!-- Adds a keystore that contains a certificate that provides SSL/TLS identity to encrypt cluster transport. -->
+            <keystore path="server.pfx"
+                      relative-to="infinispan.server.config.path"
+                      password="secret"
+                      alias="server"/>
+          </ssl>
+        </server-identities>
+      </security-realm>
+    </security-realms>
+  </security>
+</server>

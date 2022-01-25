@@ -1,14 +1,16 @@
-<endpoints>
-  <endpoint socket-binding="default"
-            security-realm="default">
-    <hotrod-connector>
-      <authentication>
-         <sasl mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL"
-               server-name="infinispan"
-               qop="auth"
-               policy="no-active no-plain-text"/>
-      </authentication>
-    </hotrod-connector>
-    <rest-connector />
-  </endpoint>
-</endpoints>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <endpoints>
+    <endpoint socket-binding="default"
+              security-realm="default">
+      <hotrod-connector>
+        <authentication>
+          <sasl mechanisms="PLAIN DIGEST-MD5 GSSAPI EXTERNAL"
+                server-name="infinispan"
+                qop="auth"
+                policy="no-active no-plain-text"/>
+        </authentication>
+      </hotrod-connector>
+      <rest-connector/>
+    </endpoint>
+  </endpoints>
+</server>

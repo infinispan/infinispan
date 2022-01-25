@@ -1,16 +1,19 @@
-<security>
-  <security-realms>
-    <security-realm name="default">
-      <server-identities>
-        <ssl>
-          <keystore path="server.p12"
-                    relative-to="infinispan.server.config.path"
-                    password="secret" alias="server"/>
-          <!-- Configures {brandname} Server to use specific TLS versions and cipher suites. -->
-          <engine enabled-protocols="TLSv1.3"
-                  enabled-ciphersuites="TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"/>
-        </ssl>
-      </server-identities>
-    </security-realm>
-  </security-realms>
-</security>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
+      <security-realm name="default">
+        <server-identities>
+          <ssl>
+            <keystore path="server.p12"
+                      relative-to="infinispan.server.config.path"
+                      password="secret"
+                      alias="server"/>
+            <!-- Configures {brandname} Server to use specific TLS versions and cipher suites. -->
+            <engine enabled-protocols="TLSv1.3"
+                    enabled-ciphersuites="TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"/>
+          </ssl>
+        </server-identities>
+      </security-realm>
+    </security-realms>
+  </security>
+</server>

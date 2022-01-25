@@ -1,9 +1,10 @@
-<!-- Includes multiple strategies that {brandname} Server tries in the
-     declared order until it finds a match. -->
-<interfaces>
-  <interface name="public">
-    <match-host value="my_host_name"/>
-    <match-address value="132\..*"/>
-    <any-address/>
-  </interface>
-</interfaces>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <!-- Includes multiple strategies that {brandname} Server tries in the declared order until it finds a match. -->
+  <interfaces>
+    <interface name="public">
+      <match-host value="my_host_name"/>
+      <match-address value="132\..*"/>
+      <any-address/>
+    </interface>
+  </interfaces>
+</server>
