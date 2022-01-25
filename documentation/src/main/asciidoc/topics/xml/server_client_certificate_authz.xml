@@ -1,12 +1,12 @@
-<cache-container name="certificate-authentication" statistics="true">
-   <security>
-     <authorization>
-       <!-- Declare a role mapper that associates the common name (CN) field
-            in client certificate trust stores with authorization roles. -->
-       <common-name-role-mapper/>
-       <!-- In this example, if a client certificate contains `CN=Client1` then
-            clients with matching certificates get ALL permissions. -->
-       <role name="Client1" permissions="ALL"/>
-     </authorization>
-   </security>
-</cache-container>
+<infinispan>
+  <cache-container name="certificate-authentication" statistics="true">
+    <security>
+      <authorization>
+        <!-- Declare a role mapper that associates the common name (CN) field in client certificate trust stores with authorization roles. -->
+        <common-name-role-mapper/>
+        <!-- In this example, if a client certificate contains `CN=Client1` then clients with matching certificates get ALL permissions. -->
+        <role name="Client1" permissions="ALL"/>
+      </authorization>
+    </security>
+  </cache-container>
+</infinispan>

@@ -1,7 +1,7 @@
 [id="merging-partitions-manually_{context}"]
 = Manually merging partitions in embedded caches
 
-You can manually search for and resolve conflicting entries when merging embedded caches.
+Detect and resolve conflicting entries to manually merge embedded caches after network partitions occur.
 
 .Procedure
 

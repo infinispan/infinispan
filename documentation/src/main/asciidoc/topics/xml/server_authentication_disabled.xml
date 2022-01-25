@@ -1,1 +1,3 @@
-<endpoints socket-binding="default" />
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <endpoints socket-binding="default"/>
+</server>

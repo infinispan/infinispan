@@ -1,4 +1,4 @@
-cache-container:
+cacheContainer:
   transport:
     cluster: "MyCluster"
     machine: "LinuxServer01"

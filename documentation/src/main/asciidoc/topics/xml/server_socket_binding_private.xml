@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <interfaces>
     <interface name="public">
-       <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+      <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
     </interface>
     <interface name="private">
       <inet-address value="10.1.2.3"/>
@@ -15,5 +15,6 @@
                     port="49152"/>
   </socket-bindings>
 
-  <endpoints socket-binding="private_binding" security-realm="default" />
+  <endpoints socket-binding="private_binding"
+             security-realm="default"/>
 </server>

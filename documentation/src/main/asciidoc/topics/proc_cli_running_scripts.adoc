@@ -4,7 +4,7 @@
 Use the command line interface to run tasks and scripts on {brandname} Server deployments.
 Alternatively you can execute scripts and tasks from Hot Rod clients.
 
-.Prequisites
+.Prerequisites
 
 * Add scripts or tasks to {brandname} Server.
 
@@ -13,10 +13,10 @@ Alternatively you can execute scripts and tasks from Hot Rod clients.
 . Create a CLI connection to {brandname}.
 . Use the [command]`task` command to run tasks and scripts, as in the following examples:
 
-* Execute a script named `multipler.js` and specify two parameters:
+* Execute a script named `multiplier.js` and specify two parameters:
 +
 ----
-[//containers/default]> task exec multipler.js -Pmultiplicand=10 -Pmultiplier=20
+[//containers/default]> task exec multiplier.js -Pmultiplicand=10 -Pmultiplier=20
 200.0
 ----
 

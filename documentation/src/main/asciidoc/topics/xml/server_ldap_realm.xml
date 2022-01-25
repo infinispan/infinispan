@@ -1,7 +1,6 @@
-<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
-          xmlns="urn:infinispan:server:{schemaversion}">
-   <security-realms>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
       <security-realm name="ldap-realm">
         <!-- Specifies connection properties. -->
         <ldap-realm url="ldap://my-ldap-server:10389"
@@ -13,19 +12,19 @@
                     referral-mode="ignore"
                     page-size="30"
                     direct-verification="true">
-            <!-- Defines how principals are mapped to LDAP entries. -->
-            <identity-mapping rdn-identifier="uid"
-                              search-dn="ou=People,dc=infinispan,dc=org"
-                              search-recursive="false">
-               <!-- Retrieves all the groups of which the user is a member. -->
-               <attribute-mapping>
-                  <attribute from="cn"
-                             to="Roles"
-                             filter="(&amp;(objectClass=groupOfNames)(member={1}))"
-                             filter-dn="ou=Roles,dc=infinispan,dc=org"/>
-               </attribute-mapping>
-            </identity-mapping>
-         </ldap-realm>
+          <!-- Defines how principals are mapped to LDAP entries. -->
+          <identity-mapping rdn-identifier="uid"
+                            search-dn="ou=People,dc=infinispan,dc=org"
+                            search-recursive="false">
+            <!-- Retrieves all the groups of which the user is a member. -->
+            <attribute-mapping>
+              <attribute from="cn" to="Roles"
+                         filter="(&amp;(objectClass=groupOfNames)(member={1}))"
+                         filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+            </attribute-mapping>
+          </identity-mapping>
+        </ldap-realm>
       </security-realm>
-   </security-realms>
-</security>
+    </security-realms>
+  </security>
+</server>

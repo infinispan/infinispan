@@ -1,4 +1,5 @@
-interfaces:
-  - name: "public"
-    matchAddress:
-      value: "127\\..*"
+server:
+  interfaces:
+    - name: "public"
+      matchAddress:
+        value: "127\\..*"

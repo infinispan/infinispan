@@ -1,16 +1,18 @@
 {
-  "security" : {
-    "security-realms" : [ {
-      "name" : "default",
-      "server-identities" : {
-        "ssl" : {
-          "keystore" : {
-            "alias" : "my-server",
-            "path" : "server.p12",
-            "password" : "secret"
+  "server": {
+    "security": {
+      "security-realms": [{
+        "name": "default",
+        "server-identities": {
+          "ssl": {
+            "keystore": {
+              "alias": "my-server",
+              "path": "server.p12",
+              "password": "secret"
+            }
           }
         }
-      }
-    } ]
+      }]
+    }
   }
 }

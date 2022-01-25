@@ -1,3 +1,4 @@
-interfaces:
-  - name: "public"
-    nonLoopback: ~
+server:
+  interfaces:
+    - name: "public"
+      nonLoopback: ~

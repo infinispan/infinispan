@@ -1,6 +1,8 @@
 {
-  "interfaces" : [ {
-    "name" : "public",
-    "non_loopback" : null
-  } ]
+  "server": {
+    "interfaces": [{
+      "name": "public",
+      "non_loopback": null
+    }]
+  }
 }

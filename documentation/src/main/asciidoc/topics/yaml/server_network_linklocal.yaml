@@ -1,3 +1,4 @@
-interfaces:
-  - name: "public"
-    linkLocal: ~
+server:
+  interfaces:
+    - name: "public"
+      linkLocal: ~

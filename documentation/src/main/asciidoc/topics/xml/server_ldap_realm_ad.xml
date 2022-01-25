@@ -1,17 +1,20 @@
-<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
-          xmlns="urn:infinispan:server:{schemaversion}">
-   <security-realms>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
       <security-realm name="default">
-         <ldap-realm name="ldap" url="ldap://my-ldap-server:10389"
-                     principal="CN=LdapAdmin,CN=Users,DC=INFINISPAN,DC=ORG" credential="strongPassword"
-                     direct-verification="true">
-            <identity-mapping rdn-identifier="sAMAccountName" search-dn="cn=Users,dc=INFINISPAN,dc=ORG">
-               <attribute-mapping>
-                  <attribute-reference reference="memberOf" from="cn" to="Roles"/>
-               </attribute-mapping>
-            </identity-mapping>
-         </ldap-realm>
+        <ldap-realm name="ldap"
+                    url="ldap://my-ldap-server:10389"
+                    principal="CN=LdapAdmin,CN=Users,DC=INFINISPAN,DC=ORG"
+                    credential="strongPassword"
+                    direct-verification="true">
+          <identity-mapping rdn-identifier="sAMAccountName"
+                            search-dn="cn=Users,dc=INFINISPAN,dc=ORG">
+            <attribute-mapping>
+              <attribute-reference reference="memberOf" from="cn" to="Roles"/>
+            </attribute-mapping>
+          </identity-mapping>
+        </ldap-realm>
       </security-realm>
-   </security-realms>
-</security>
+    </security-realms>
+  </security>
+</server>
