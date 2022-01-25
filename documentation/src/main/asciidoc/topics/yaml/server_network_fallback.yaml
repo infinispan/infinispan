@@ -1,7 +1,8 @@
-interfaces:
-  - name: "public"
-    matchHost:
-      value: "my_host_name"
-    matchAddress:
-      value: "132\\..*"
-    anyAddress: ~
+server:
+  interfaces:
+    - name: "public"
+      matchHost:
+        value: "my_host_name"
+      matchAddress:
+        value: "132\\..*"
+      anyAddress: ~

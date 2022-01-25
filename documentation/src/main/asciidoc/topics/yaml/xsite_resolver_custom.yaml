@@ -1,4 +1,4 @@
-distributed-cache:
+distributedCache:
   backups:
     mergePolicy: "org.mycompany.MyCustomXSiteEntryMergePolicy"
     LON:

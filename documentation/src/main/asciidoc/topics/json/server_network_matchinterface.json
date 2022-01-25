@@ -1,8 +1,10 @@
 {
-  "interfaces" : [ {
-    "name" : "public",
-    "match-interface" : {
-      "value" : "eth0"
-    }
-  } ]
+  "server": {
+    "interfaces": [{
+      "name": "public",
+      "match-interface": {
+        "value": "eth0"
+      }
+    }]
+  }
 }

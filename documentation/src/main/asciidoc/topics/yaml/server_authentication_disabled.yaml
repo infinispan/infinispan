@@ -1,3 +1,4 @@
-endpoints:
-  endpoint:
-    socketBinding: "default"
+server:
+  endpoints:
+    endpoint:
+      socketBinding: "default"

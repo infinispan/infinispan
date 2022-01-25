@@ -1,6 +1,8 @@
-<!-- Selects a site-local (private) IP address in an IPv4 or IPv6 address block. -->
-<interfaces>
-  <interface name="public">
-    <site-local/>
-  </interface>
-</interfaces>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <!-- Selects a site-local (private) IP address in an IPv4 or IPv6 address block. -->
+  <interfaces>
+    <interface name="public">
+      <site-local/>
+    </interface>
+  </interfaces>
+</server>

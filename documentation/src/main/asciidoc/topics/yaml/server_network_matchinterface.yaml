@@ -1,4 +1,5 @@
-interfaces:
-  - name: "public"
-    matchInterface:
-      value: "eth0"
+server:
+  interfaces:
+    - name: "public"
+      matchInterface:
+        value: "eth0"

@@ -1,5 +1,7 @@
-<cache-container statistics="true">
-  <jmx enabled="true"
-       domain="example.com"
-       mbean-server-lookup="com.example.MyMBeanServerLookup" />
-</cache-container>
+<infinispan>
+  <cache-container statistics="true">
+    <jmx enabled="true"
+         domain="example.com"
+         mbean-server-lookup="com.example.MyMBeanServerLookup"/>
+  </cache-container>
+</infinispan>

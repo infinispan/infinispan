@@ -1,9 +1,10 @@
-cacheContainer:
-  name: "certificate-authentication"
-  security:
-    authorization:
-      commonNameRoleMapper: ~
-      roles:
-        Client1:
-          role:
-            permissions: "ALL"
+infinispan:
+  cacheContainer:
+    name: "certificate-authentication"
+    security:
+      authorization:
+        commonNameRoleMapper: ~
+        roles:
+          Client1:
+            role:
+              permissions: "ALL"

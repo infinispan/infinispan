@@ -1,3 +1,4 @@
-interfaces:
-  - name: "public"
-    anyAddress: ~
+server:
+  interfaces:
+    - name: "public"
+      anyAddress: ~

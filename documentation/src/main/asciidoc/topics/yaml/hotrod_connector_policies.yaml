@@ -1,19 +1,20 @@
-endpoints:
-  endpoint:
-    socketBinding: "default"
-    securityRealm: "default"
-    hotrodConnector:
-      authentication:
-        sasl:
-          serverName: "infinispan"
-          mechanisms:
-            - "PLAIN"
-            - "DIGEST-MD5"
-            - "GSSAPI"
-            - "EXTERNAL"
-          qop:
-            - "auth"
-          policy:
-            - "no-active"
-            - "no-plain-text"
-    restConnector: ~
+server:
+  endpoints:
+    endpoint:
+      socketBinding: "default"
+      securityRealm: "default"
+      hotrodConnector:
+        authentication:
+          sasl:
+            serverName: "infinispan"
+            mechanisms:
+              - "PLAIN"
+              - "DIGEST-MD5"
+              - "GSSAPI"
+              - "EXTERNAL"
+            qop:
+              - "auth"
+            policy:
+              - "no-active"
+              - "no-plain-text"
+      restConnector: ~

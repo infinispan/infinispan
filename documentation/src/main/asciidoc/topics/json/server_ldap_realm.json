@@ -1,7 +1,7 @@
 {
-  "security": {
-    "security-realms": [
-      {
+  "server": {
+    "security": {
+      "security-realms": [{
         "name": "ldap-realm",
         "ldap-realm": {
           "url": "ldap://my-ldap-server:10389",
@@ -17,17 +17,15 @@
             "rdn-identifier": "uid",
             "search-dn": "ou=People,dc=infinispan,dc=org",
             "search-recursive": "false",
-            "attribute-mapping": [
-              {
-                "from": "cn",
-                "to": "Roles",
-                "filter": "(&(objectClass=groupOfNames)(member={1}))",
-                "filter-dn": "ou=Roles,dc=infinispan,dc=org"
-              }
-            ]
+            "attribute-mapping": [{
+              "from": "cn",
+              "to": "Roles",
+              "filter": "(&(objectClass=groupOfNames)(member={1}))",
+              "filter-dn": "ou=Roles,dc=infinispan,dc=org"
+            }]
           }
         }
-      }
-    ]
+      }]
+    }
   }
 }

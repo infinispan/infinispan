@@ -1,22 +1,23 @@
-security: 
-  securityRealms:
-    - name: "ldap-realm"
-      ldapRealm:
-        principal: "uid=admin,ou=People,dc=infinispan,dc=org"
-        url: "ldap://${org.infinispan.test.host.address}:10389"
-        credential: "strongPassword"
-        nameRewriter:
-          regexPrincipalTransformer:
-            pattern: (.*)@INFINISPAN\.ORG
-            replacement: "$1"
-        identityMapping:
-          rdnIdentifier: "uid"
-          searchDn: "ou=People,dc=infinispan,dc=org"
-          attributeMapping:
-            attribute:
-              filter: "(&(objectClass=groupOfNames)(member={1}))"
-              filterDn: "ou=Roles,dc=infinispan,dc=org"
-              from: "cn"
-              to: "Roles"
-          userPasswordMapper:
-            from: "userPassword"
+server:
+  security:
+    securityRealms:
+      - name: "ldap-realm"
+        ldapRealm:
+          principal: "uid=admin,ou=People,dc=infinispan,dc=org"
+          url: "ldap://${org.infinispan.test.host.address}:10389"
+          credential: "strongPassword"
+          nameRewriter:
+            regexPrincipalTransformer:
+              pattern: (.*)@INFINISPAN\.ORG
+              replacement: "$1"
+          identityMapping:
+            rdnIdentifier: "uid"
+            searchDn: "ou=People,dc=infinispan,dc=org"
+            attributeMapping:
+              attribute:
+                filter: "(&(objectClass=groupOfNames)(member={1}))"
+                filterDn: "ou=Roles,dc=infinispan,dc=org"
+                from: "cn"
+                to: "Roles"
+            userPasswordMapper:
+              from: "userPassword"
