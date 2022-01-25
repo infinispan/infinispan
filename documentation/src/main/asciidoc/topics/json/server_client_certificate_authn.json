@@ -1,7 +1,7 @@
 {
-  "security": {
-    "security-realms": [
-      {
+  "server": {
+    "security": {
+      "security-realms": [{
         "name": "trust-store-realm",
         "server-identities": {
           "ssl": {
@@ -19,11 +19,9 @@
           }
         },
         "truststore-realm": {}
-      }
-    ]
-  },
-  "endpoints": [
-    {
+      }]
+    },
+    "endpoints": [{
       "socket-binding": "default",
       "security-realm": "trust-store-realm",
       "require-ssl-client-auth": "true",
@@ -47,6 +45,6 @@
           }
         }
       }
-    }
-  ]
+    }]
+  }
 }

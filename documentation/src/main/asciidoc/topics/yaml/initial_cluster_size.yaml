@@ -1,5 +1,5 @@
 infinispan:
-  cache-container:
+  cacheContainer:
     transport:
-      initial-cluster-size: "4"
-      initial-cluster-timeout: "30000"
+      initialClusterSize: "4"
+      initialClusterTimeout: "30000"

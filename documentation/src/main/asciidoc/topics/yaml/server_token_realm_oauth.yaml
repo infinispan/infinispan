@@ -1,9 +1,10 @@
-security:
-  securityRealms:
-    - name: token-realm
-      tokenRealm:
-        authServerUrl: 'https://oauth-server/auth/'
-        oauth2Introspection:
-          clientId: infinispan-server
-          clientSecret: '1fdca4ec-c416-47e0-867a-3d471af7050f'
-          introspectionUrl: 'https://oauth-server/auth/realms/infinispan/protocol/openid-connect/token/introspect'
+server:
+  security:
+    securityRealms:
+      - name: token-realm
+        tokenRealm:
+          authServerUrl: 'https://oauth-server/auth/'
+          oauth2Introspection:
+            clientId: infinispan-server
+            clientSecret: '1fdca4ec-c416-47e0-867a-3d471af7050f'
+            introspectionUrl: 'https://oauth-server/auth/realms/infinispan/protocol/openid-connect/token/introspect'

@@ -1,29 +1,32 @@
-<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
-          xmlns="urn:infinispan:server:{schemaversion}">
-   <security-realms>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
       <security-realm name="default">
-         <ldap-realm name="ldap" url="ldap://my-ldap-server:10389"
-                     principal="uid=admin,ou=People,dc=infinispan,dc=org"
-                     credential="strongPassword"
-                     connection-timeout="3000" read-timeout="30000"
-                     connection-pooling="true" referral-mode="ignore"
-                     page-size="30">
-            <name-rewriter>
-               <regex-principal-transformer name="domain-remover"
-                                            pattern="(.*)@INFINISPAN\.ORG"
-                                            replacement="$1"/>
-            </name-rewriter>
-            <identity-mapping rdn-identifier="uid"
-                              search-dn="ou=People,dc=infinispan,dc=org">
-               <attribute-mapping>
-                  <attribute from="cn" to="Roles"
-                             filter="(&amp;(objectClass=groupOfNames)(member={1}))"
-                             filter-dn="ou=Roles,dc=infinispan,dc=org"/>
-               </attribute-mapping>
-               <user-password-mapper from="userPassword"/>
-            </identity-mapping>
-         </ldap-realm>
+        <ldap-realm name="ldap"
+                    url="ldap://my-ldap-server:10389"
+                    principal="uid=admin,ou=People,dc=infinispan,dc=org"
+                    credential="strongPassword"
+                    connection-timeout="3000"
+                    read-timeout="30000"
+                    connection-pooling="true"
+                    referral-mode="ignore"
+                    page-size="30">
+          <name-rewriter>
+            <regex-principal-transformer name="domain-remover"
+                                         pattern="(.*)@INFINISPAN\.ORG"
+                                         replacement="$1"/>
+          </name-rewriter>
+          <identity-mapping rdn-identifier="uid"
+                            search-dn="ou=People,dc=infinispan,dc=org">
+            <attribute-mapping>
+              <attribute from="cn" to="Roles"
+                         filter="(&amp;(objectClass=groupOfNames)(member={1}))"
+                         filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+            </attribute-mapping>
+            <user-password-mapper from="userPassword"/>
+          </identity-mapping>
+        </ldap-realm>
       </security-realm>
-   </security-realms>
-</security>
+    </security-realms>
+  </security>
+</server>

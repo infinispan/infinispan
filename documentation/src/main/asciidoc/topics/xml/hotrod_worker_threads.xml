@@ -1,3 +1,9 @@
-<hotrod-connector socket-binding="hotrod" cache-container="local" worker-threads="200">
-   <!-- Additional configuration here -->
-</hotrod-connector>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <endpoints>
+    <endpoint socket-binding="default"
+              security-realm="default">
+      <hotrod-connector worker-threads="200" />
+      <rest-connector/>
+    </endpoint>
+  </endpoints>
+</server>

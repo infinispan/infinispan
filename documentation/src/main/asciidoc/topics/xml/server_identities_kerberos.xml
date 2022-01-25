@@ -1,32 +1,34 @@
-<security>
-  <security-realms>
-    <security-realm name="kerberos-realm">
-      <server-identities>
-        <!-- Specifies a keytab file that provides a Kerberos identity. -->
-        <!-- Names the Kerberos service principal for the Hot Rod endpoint. -->
-        <!-- The required="true" attribute specifies that the keytab file must be present when the server starts. -->
-        <kerberos keytab-path="hotrod.keytab"
-                  principal="hotrod/datagrid@INFINISPAN.ORG"
-                  required="true"/>
-        <!-- Specifies a keytab file and names the Kerberos service principal for the REST endpoint. -->
-        <kerberos keytab-path="http.keytab"
-                  principal="HTTP/localhost@INFINISPAN.ORG"
-                  required="true"/>
-      </server-identities>
-    </security-realm>
-  </security-realms>
-</security>
-<endpoints>
-  <endpoint socket-binding="default"
-            security-realm="kerberos-realm">
-   <hotrod-connector>
-      <authentication>
-         <sasl server-name="datagrid"
-               server-principal="hotrod/datagrid@INFINISPAN.ORG"/>
-      </authentication>
-   </hotrod-connector>
-   <rest-connector>
-     <authentication server-principal="HTTP/localhost@INFINISPAN.ORG"/>
-   </rest-connector>
- </endpoint>
-</endpoints>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
+      <security-realm name="kerberos-realm">
+        <server-identities>
+          <!-- Specifies a keytab file that provides a Kerberos identity. -->
+          <!-- Names the Kerberos service principal for the Hot Rod endpoint. -->
+          <!-- The required="true" attribute specifies that the keytab file must be present when the server starts. -->
+          <kerberos keytab-path="hotrod.keytab"
+                    principal="hotrod/datagrid@INFINISPAN.ORG"
+                    required="true"/>
+          <!-- Specifies a keytab file and names the Kerberos service principal for the REST endpoint. -->
+          <kerberos keytab-path="http.keytab"
+                    principal="HTTP/localhost@INFINISPAN.ORG"
+                    required="true"/>
+        </server-identities>
+      </security-realm>
+    </security-realms>
+  </security>
+  <endpoints>
+    <endpoint socket-binding="default"
+              security-realm="kerberos-realm">
+     <hotrod-connector>
+        <authentication>
+           <sasl server-name="datagrid"
+                 server-principal="hotrod/datagrid@INFINISPAN.ORG"/>
+        </authentication>
+     </hotrod-connector>
+     <rest-connector>
+       <authentication server-principal="HTTP/localhost@INFINISPAN.ORG"/>
+     </rest-connector>
+   </endpoint>
+  </endpoints>
+</server>
