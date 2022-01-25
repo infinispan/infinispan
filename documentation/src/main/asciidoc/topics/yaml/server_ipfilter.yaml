@@ -1,7 +1,8 @@
-endpoints:
-  endpoint:
-    socketBinding: "default"
-    securityRealm: "default"
-    ipFilter:
-      acceptFrom: ["192.168.0.0/16","10.0.0.0/8"]
-      rejectFrom: "/0"
+server:
+  endpoints:
+    endpoint:
+      socketBinding: "default"
+      securityRealm: "default"
+      ipFilter:
+        acceptFrom: ["192.168.0.0/16","10.0.0.0/8"]
+        rejectFrom: "/0"

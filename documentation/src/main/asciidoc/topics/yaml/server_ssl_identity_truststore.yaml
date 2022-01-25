@@ -1,9 +1,10 @@
-security:
-  securityRealms:
-    - name: "default"
-      serverIdentities:
-        ssl:
-          keystore:
-            alias: "my-server"
-            path: "server.p12"
-            password: "secret"
+server:
+  security:
+    securityRealms:
+      - name: "default"
+        serverIdentities:
+          ssl:
+            keystore:
+              alias: "my-server"
+              path: "server.p12"
+              password: "secret"

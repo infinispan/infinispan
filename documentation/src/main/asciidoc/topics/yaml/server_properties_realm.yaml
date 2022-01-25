@@ -1,15 +1,16 @@
-security:
-  securityRealms:
-    - name: "default"
-      propertiesRealm:
-        # groupsAttribute configures the "groups.properties" file
-        # to contain security authorization roles.
-        groupsAttribute: "Roles"
-        userProperties:
-          digestRealmName: "default"
-          path: "users.properties"
-          relative-to: 'infinispan.server.config.path'
-          plainText: "true"
-        groupProperties:
-          path: "groups.properties"
-          relative-to: 'infinispan.server.config.path'
+server:
+  security:
+    securityRealms:
+      - name: "default"
+        propertiesRealm:
+          # groupsAttribute configures the "groups.properties" file
+          # to contain security authorization roles.
+          groupsAttribute: "Roles"
+          userProperties:
+            digestRealmName: "default"
+            path: "users.properties"
+            relative-to: 'infinispan.server.config.path'
+            plainText: "true"
+          groupProperties:
+            path: "groups.properties"
+            relative-to: 'infinispan.server.config.path'
