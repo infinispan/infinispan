@@ -49,7 +49,6 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
       nyc.sites().addBackup()
             .site(NYC)
             .strategy(nycBackupStrategy);
-      nyc.sites().addInUseBackupSite(LON).addInUseBackupSite(NYC);
 
       createSite(LON, initialClusterSize, globalConfigurationBuilderForSite(LON), lon);
       createSite(NYC, initialClusterSize, globalConfigurationBuilderForSite(NYC), nyc);
@@ -80,7 +79,6 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
       adaptLONConfiguration(lonBackupConfigurationBuilder);
       // it shouldn't backup to itself
       lon.sites().addBackup().site(LON).strategy(lonBackupStrategy);
-      lon.sites().addInUseBackupSite(LON).addInUseBackupSite(NYC);
       return lon;
    }
 

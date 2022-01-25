@@ -608,7 +608,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.persistent = persistenceManager.isEnabled();
       fullDetail.bounded = configuration.memory().whenFull().isEnabled();
       fullDetail.indexed = indexed;
-      fullDetail.hasRemoteBackup = configuration.sites().hasEnabledBackups();
+      fullDetail.hasRemoteBackup = configuration.sites().hasBackups();
       fullDetail.secured = configuration.security().authorization().enabled();
       fullDetail.transactional = configuration.transaction().transactionMode().isTransactional();
       fullDetail.statistics = statistics;

@@ -2245,4 +2245,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "%s start failed, stopping any running components", id = 660)
    void startFailure(String registryName, @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "'%s' has been deprecated with no replacement.", id = 661)
+   void configDeprecated(Enum<?> element);
 }

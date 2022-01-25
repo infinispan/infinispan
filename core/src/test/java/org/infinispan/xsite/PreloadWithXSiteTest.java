@@ -68,8 +68,7 @@ public class PreloadWithXSiteTest extends AbstractTwoSitesTest {
       ConfigurationBuilder nyc = getNycActiveConfig();
       nyc.sites().addBackup()
             .site(LON)
-            .strategy(BackupConfiguration.BackupStrategy.SYNC)
-            .sites().addInUseBackupSite(LON);
+            .strategy(BackupConfiguration.BackupStrategy.SYNC);
       createSite(NYC, initialClusterSize, globalConfigurationBuilderForSite(NYC), nyc);
    }
 

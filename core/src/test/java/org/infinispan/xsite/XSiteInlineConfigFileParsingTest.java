@@ -44,11 +44,11 @@ public class XSiteInlineConfigFileParsingTest extends SingleCacheManagerTest {
       assertEquals(dcc.sites().allBackups().size(), 2);
       BackupConfigurationBuilder nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
       assertTrue(dcc.sites().allBackups().contains(nyc.create()));
       BackupConfigurationBuilder sfo = new BackupConfigurationBuilder(null).site("SFO").strategy(BackupStrategy.ASYNC)
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
       assertTrue(dcc.sites().allBackups().contains(sfo.create()));
    }
 }

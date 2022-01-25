@@ -25,7 +25,7 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    public XSiteStateTransferConfigurationBuilder(ConfigurationBuilder builder,
                                                  BackupConfigurationBuilder backupConfigurationBuilder) {
       super(builder);
-      this.attributes = XSiteStateTransferConfiguration.attributeDefinitionSet();
+      attributes = XSiteStateTransferConfiguration.attributeDefinitionSet();
       this.backupConfigurationBuilder = backupConfigurationBuilder;
    }
 
@@ -52,6 +52,7 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      validate();
    }
 
    /**

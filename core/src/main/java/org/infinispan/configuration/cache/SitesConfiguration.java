@@ -1,13 +1,11 @@
 package org.infinispan.configuration.cache;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeCopier;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -22,9 +20,6 @@ import org.infinispan.xsite.spi.XSiteMergePolicy;
  * @since 5.2
  */
 public class SitesConfiguration extends ConfigurationElement<SitesConfiguration> {
-   public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disable", false).immutable().build();
-   @SuppressWarnings("unchecked")
-   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>) (Class<?>) Set.class).initializer(() -> new HashSet<>(2)).immutable().build();
    @SuppressWarnings("rawtypes")
    public static final AttributeDefinition<XSiteEntryMergePolicy> MERGE_POLICY = AttributeDefinition
          .builder(org.infinispan.configuration.parsing.Attribute.MERGE_POLICY, XSiteMergePolicy.DEFAULT, XSiteEntryMergePolicy.class)
@@ -33,31 +28,27 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
          .build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SitesConfiguration.class, DISABLE_BACKUPS, IN_USE_BACKUP_SITES, MERGE_POLICY);
+      return new AttributeSet(SitesConfiguration.class, MERGE_POLICY);
    }
 
    private final BackupForConfiguration backupFor;
    private final List<BackupConfiguration> allBackups;
-   private final Attribute<Boolean> disableBackups;
-   @SuppressWarnings("rawtypes")
-   private final Attribute<XSiteEntryMergePolicy> mergePolicy;
-   private final Attribute<Set<String>> inUseBackupSites;
 
    public SitesConfiguration(AttributeSet attributes, List<BackupConfiguration> allBackups, BackupForConfiguration backupFor) {
       super(Element.SITES, attributes, ConfigurationElement.list(Element.BACKUPS, allBackups), backupFor);
       this.allBackups = Collections.unmodifiableList(allBackups);
-      this.disableBackups = attributes.attribute(DISABLE_BACKUPS);
-      this.inUseBackupSites = attributes.attribute(IN_USE_BACKUP_SITES);
-      this.mergePolicy = attributes.attribute(MERGE_POLICY);
       this.backupFor = backupFor;
    }
 
    /**
-    * Returns true if this cache won't backup its data remotely.
-    * It would still accept other sites backing up data on this site.
+    * Returns true if this cache won't backup its data remotely. It would still accept other sites backing up data on
+    * this site.
+    *
+    * @deprecated since 14.0. To be removed without replacement.
     */
+   @Deprecated
    public boolean disableBackups() {
-      return disableBackups.get();
+      return false;
    }
 
    /**
@@ -68,15 +59,25 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
       return allBackups;
    }
 
-   /**
-    * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.
-    */
-   public List<BackupConfiguration> enabledBackups() {
-      return enabledBackupStream().collect(Collectors.toList());
+   public Stream<BackupConfiguration> allBackupsStream() {
+      return allBackups.stream();
    }
 
+   /**
+    * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.
+    * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
+    */
+   @Deprecated
+   public List<BackupConfiguration> enabledBackups() {
+      return allBackups();
+   }
+
+   /**
+    * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
+    */
+   @Deprecated
    public Stream<BackupConfiguration> enabledBackupStream() {
-      return allBackups.stream().filter(BackupConfiguration::enabled);
+      return allBackupsStream();
    }
 
    /**
@@ -95,37 +96,48 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
       throw new IllegalStateException("There must be a site configured for " + siteName);
    }
 
+   /**
+    * @deprecated since 14.0. To be removed without replacement
+    */
+   @Deprecated
    public boolean hasInUseBackup(String siteName) {
-      for (BackupConfiguration bc : allBackups) {
-         if (bc.site().equals(siteName)) {
-            return bc.enabled();
-         }
-      }
-      return false;
+      return allBackups.stream().anyMatch(bc -> bc.site().equals(siteName));
    }
 
+   /**
+    * @deprecated since 14.0. To be removed without replacement. Use {@link #hasBackups()} instead.
+    */
+   @Deprecated
    public boolean hasEnabledBackups() {
-      return allBackups.stream().anyMatch(BackupConfiguration::enabled);
+      return hasBackups();
+   }
+
+   public boolean hasBackups() {
+      return !allBackups.isEmpty();
    }
 
    public boolean hasSyncEnabledBackups() {
-      return enabledBackupStream().anyMatch(BackupConfiguration::isSyncBackup);
+      return allBackupsStream().anyMatch(BackupConfiguration::isSyncBackup);
    }
 
    public Stream<BackupConfiguration> syncBackupsStream() {
-      return enabledBackupStream().filter(BackupConfiguration::isSyncBackup);
+      return allBackupsStream().filter(BackupConfiguration::isSyncBackup);
    }
 
    public boolean hasAsyncEnabledBackups() {
-      return enabledBackupStream().anyMatch(BackupConfiguration::isAsyncBackup);
+      return allBackupsStream().anyMatch(BackupConfiguration::isAsyncBackup);
    }
 
    public Stream<BackupConfiguration> asyncBackupsStream() {
-      return enabledBackupStream().filter(BackupConfiguration::isAsyncBackup);
+      return allBackupsStream().filter(BackupConfiguration::isAsyncBackup);
    }
 
+   /**
+    * @deprecated since 14.0. To be removed without replacement.
+    */
+   @Deprecated
    public Set<String> inUseBackupSites() {
-      return inUseBackupSites.get();
+      return allBackups.stream().map(BackupConfiguration::site).collect(Collectors.toSet());
    }
 
    /**
@@ -134,7 +146,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     * @see SitesConfigurationBuilder#mergePolicy(XSiteEntryMergePolicy)
     */
    public XSiteEntryMergePolicy<?, ?> mergePolicy() {
-      return mergePolicy.get();
+      return attributes.attribute(MERGE_POLICY).get();
    }
 
    @SuppressWarnings("rawtypes")

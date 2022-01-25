@@ -294,8 +294,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
       BackupConfigurationBuilder lonBackupConfigurationBuilder = builder.sites().addBackup();
       lonBackupConfigurationBuilder
             .site(NYC)
-            .strategy(BackupConfiguration.BackupStrategy.ASYNC)
-            .sites().addInUseBackupSite(NYC);
+            .strategy(BackupConfiguration.BackupStrategy.ASYNC);
       return builder;
    }
 
