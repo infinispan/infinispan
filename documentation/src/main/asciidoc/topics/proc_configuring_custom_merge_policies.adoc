@@ -1,7 +1,7 @@
 [id="configuring-custom-merge-policies_{context}"]
 = Configuring custom merge policies
 
-If you implement the `EntryMergePolicy` API to create a custom merge policy to handle network partitions.
+Configure {brandname} to use custom implementations of the `EntryMergePolicy` API when handling network partitions.
 
 .Prerequisites
 
