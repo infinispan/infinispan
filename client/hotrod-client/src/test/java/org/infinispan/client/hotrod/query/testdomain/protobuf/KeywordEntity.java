@@ -1,39 +1,22 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
+import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
-import java.io.IOException;
-
-import org.infinispan.protostream.MessageMarshaller;
-
+@ProtoDoc("@Indexed")
 public class KeywordEntity {
 
    private final String keyword;
 
+   @ProtoFactory
    public KeywordEntity(String keyword) {
       this.keyword = keyword;
    }
 
-   public static class Marshaller implements MessageMarshaller<KeywordEntity> {
-
-      @Override
-      public KeywordEntity readFrom(ProtoStreamReader reader) throws IOException {
-         String keyword = reader.readString("keyword");
-         return new KeywordEntity(keyword);
-      }
-
-      @Override
-      public void writeTo(ProtoStreamWriter writer, KeywordEntity entity) throws IOException {
-         writer.writeString("keyword", entity.keyword);
-      }
-
-      @Override
-      public Class<KeywordEntity> getJavaClass() {
-         return KeywordEntity.class;
-      }
-
-      @Override
-      public String getTypeName() {
-         return "KeywordEntity";
-      }
+   @ProtoField(value = 1, required = true)
+   @ProtoDoc("@Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"keyword\"))")
+   public String getKeyword() {
+      return keyword;
    }
 }

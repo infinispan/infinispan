@@ -17,10 +17,10 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.KeywordEntity;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,8 +41,7 @@ public class LargeTermTest extends SingleHotRodServerTest {
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
       Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      String protoFile = Util.getResourceAsString("/keyword.proto", getClass().getClassLoader());
-      metadataCache.put("keyword.proto", protoFile);
+      metadataCache.put(KeywordSchema.INSTANCE.getProtoFileName(), KeywordSchema.INSTANCE.getProtoFile());
       RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       manager.defineConfiguration("keyword", builder.build());
@@ -50,11 +49,10 @@ public class LargeTermTest extends SingleHotRodServerTest {
    }
 
    @BeforeClass
-   protected void registerProtobufSchema() throws Exception {
-      String protoFile = Util.getResourceAsString("/keyword.proto", getClass().getClassLoader());
+   protected void registerProtobufSchema() {
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("keyword.proto", protoFile));
-      serCtx.registerMarshaller(new KeywordEntity.Marshaller());
+      KeywordSchema.INSTANCE.registerSchema(serCtx);
+      KeywordSchema.INSTANCE.registerMarshallers(serCtx);
    }
 
    @Test
@@ -83,5 +81,10 @@ public class LargeTermTest extends SingleHotRodServerTest {
          }
       }
       return builder.toString();
+   }
+
+   @AutoProtoSchemaBuilder(includeClasses = KeywordEntity.class)
+   public interface KeywordSchema extends GeneratedSchema {
+      KeywordSchema INSTANCE = new KeywordSchemaImpl();
    }
 }
