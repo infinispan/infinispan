@@ -1,6 +1,8 @@
-<!-- Selects an IP address that is assigned to a matching host name. -->
-<interfaces>
-  <interface name="public">
-    <match-host value="my_host_name"/>
-  </interface>
-</interfaces>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <!-- Selects an IP address that is assigned to a matching host name. -->
+  <interfaces>
+    <interface name="public">
+      <match-host value="my_host_name"/>
+    </interface>
+  </interfaces>
+</server>

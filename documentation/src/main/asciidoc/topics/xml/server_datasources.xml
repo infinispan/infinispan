@@ -1,25 +1,27 @@
-<data-sources>
-   <!-- Defines a unique name for the datasource and JNDI name that you
-        reference in JDBC cache store configuration.
-        Enables statistics for the datasource, if required. -->
-   <data-source name="ds"
-                jndi-name="jdbc/postgres"
-                statistics="true">
-      <!-- Specifies the JDBC driver that creates connections. -->
-      <connection-factory driver="org.postgresql.Driver"
-                          url="jdbc:postgresql://localhost:5432/postgres"
-                          username="postgres"
-                          password="changeme">
-         <!-- Sets optional JDBC driver-specific connection properties. -->
-         <connection-property name="name">value</connection-property>
-      </connection-factory>
-      <!-- Defines connection pool tuning properties. -->
-      <connection-pool initial-size="1"
-                       max-size="10"
-                       min-size="3"
-                       background-validation="1000"
-                       idle-removal="1"
-                       blocking-timeout="1000"
-                       leak-detection="10000"/>
-   </data-source>
-</data-sources>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <data-sources>
+     <!-- Defines a unique name for the datasource and JNDI name that you
+          reference in JDBC cache store configuration.
+          Enables statistics for the datasource, if required. -->
+     <data-source name="ds"
+                  jndi-name="jdbc/postgres"
+                  statistics="true">
+        <!-- Specifies the JDBC driver that creates connections. -->
+        <connection-factory driver="org.postgresql.Driver"
+                            url="jdbc:postgresql://localhost:5432/postgres"
+                            username="postgres"
+                            password="changeme">
+           <!-- Sets optional JDBC driver-specific connection properties. -->
+           <connection-property name="name">value</connection-property>
+        </connection-factory>
+        <!-- Defines connection pool tuning properties. -->
+        <connection-pool initial-size="1"
+                         max-size="10"
+                         min-size="3"
+                         background-validation="1000"
+                         idle-removal="1"
+                         blocking-timeout="1000"
+                         leak-detection="10000"/>
+     </data-source>
+  </data-sources>
+</server>

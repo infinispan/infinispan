@@ -1,6 +1,8 @@
-<!--Selects an IP address assigned to a matching network interface. -->
-<interfaces>
-  <interface name="public">
-    <match-interface value="eth0"/>
-  </interface>
-</interfaces>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <!--Selects an IP address assigned to a matching network interface. -->
+  <interfaces>
+    <interface name="public">
+      <match-interface value="eth0"/>
+    </interface>
+  </interfaces>
+</server>

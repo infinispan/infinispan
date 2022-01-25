@@ -1,9 +1,11 @@
-<endpoints>
-  <endpoint socket-binding="public"
-            security-realm="application-realm"
-            admin="false">
-  </endpoint>
-  <endpoint socket-binding="private"
-            security-realm="management-realm">
-  </endpoint>
-</endpoints>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <endpoints>
+    <endpoint socket-binding="public"
+              security-realm="application-realm"
+              admin="false">
+    </endpoint>
+    <endpoint socket-binding="private"
+              security-realm="management-realm">
+    </endpoint>
+  </endpoints>
+</server>
