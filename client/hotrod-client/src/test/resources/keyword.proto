@@ -1,0 +1,7 @@
+/* @Indexed */
+message KeywordEntity {
+
+    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "keyword")) */
+    optional string keyword = 1;
+
+}
