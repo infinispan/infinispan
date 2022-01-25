@@ -1,6 +1,6 @@
 {
-  "data-sources": [
-    {
+  "server": {
+    "data-sources": [{
       "name": "ds",
       "jndi-name": "jdbc/postgres",
       "statistics": true,
@@ -22,6 +22,6 @@
         "blocking-timeout": 1000,
         "leak-detection": 10000
       }
-    }
-  ]
+    }]
+  }
 }

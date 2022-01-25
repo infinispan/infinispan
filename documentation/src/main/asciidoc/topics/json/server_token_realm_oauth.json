@@ -1,7 +1,7 @@
 {
-  "security": {
-    "security-realms": [
-      {
+  "server": {
+    "security": {
+      "security-realms": [{
         "name": "token-realm",
         "token-realm": {
           "auth-server-url": "https://oauth-server/auth/",
@@ -11,7 +11,7 @@
             "introspection-url": "https://oauth-server/auth/realms/infinispan/protocol/openid-connect/token/introspect"
           }
         }
-      }
-    ]
+      }]
+    }
   }
 }
