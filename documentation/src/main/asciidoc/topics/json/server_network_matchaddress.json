@@ -1,8 +1,10 @@
 {
-  "interfaces" : [ {
-    "name" : "public",
-    "match-address" : {
-      "value" : "132\\..*"
-    }
-  } ]
+  "server": {
+    "interfaces": [{
+      "name": "public",
+      "match-address": {
+        "value": "132\\..*"
+      }
+    }]
+  }
 }

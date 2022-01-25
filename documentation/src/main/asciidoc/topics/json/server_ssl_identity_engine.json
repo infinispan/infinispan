@@ -1,20 +1,22 @@
 {
-  "security" : {
-    "security-realms" : [ {
-      "name" : "default",
-      "server-identities" : {
-        "ssl" : {
-          "keystore" : {
-            "alias" : "server",
-            "path" : "server.p12",
-            "password" : "secret"
-          },
-          "engine" : {
-            "enabled-protocols" : [ "TLSv1.3" ],
-            "enabled-ciphersuites" : "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
+  "server": {
+    "security": {
+      "security-realms": [{
+        "name": "default",
+        "server-identities": {
+          "ssl": {
+            "keystore": {
+              "alias": "server",
+              "path": "server.p12",
+              "password": "secret"
+            },
+            "engine": {
+              "enabled-protocols": ["TLSv1.3"],
+              "enabled-ciphersuites": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
+            }
           }
         }
-      }
-    } ]
+      }]
+    }
   }
 }

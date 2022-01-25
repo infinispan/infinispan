@@ -1,8 +1,10 @@
 {
-  "interfaces" : [ {
-  "name" : "public",
-  "inet-address" : {
-    "value" : "127.0.0.1"
+  "server": {
+    "interfaces": [{
+      "name": "public",
+      "inet-address": {
+        "value": "127.0.0.1"
+      }
+    }]
   }
-  } ]
 }

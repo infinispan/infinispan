@@ -1,29 +1,31 @@
 {
-  "security" : {
-    "security-realms" : [ {
-      "name" : "management-realm",
-      "properties-realm" : {
-        "groups-attribute" : "Roles",
-        "user-properties" : {
-          "digest-realm-name" : "management-realm",
-          "path" : "management-users.properties"
-        },
-        "group-properties" : {
-          "path" : "management-groups.properties"
+  "server": {
+    "security": {
+      "security-realms": [{
+        "name": "management-realm",
+        "properties-realm": {
+          "groups-attribute": "Roles",
+          "user-properties": {
+            "digest-realm-name": "management-realm",
+            "path": "management-users.properties"
+          },
+          "group-properties": {
+            "path": "management-groups.properties"
+          }
         }
-      }
-    },{
-      "name" : "application-realm",
-      "properties-realm" : {
-        "groups-attribute" : "Roles",
-        "user-properties" : {
-          "digest-realm-name" : "application-realm",
-          "path" : "application-users.properties"
-        },
-        "group-properties" : {
-          "path" : "application-groups.properties"
+      }, {
+        "name": "application-realm",
+        "properties-realm": {
+          "groups-attribute": "Roles",
+          "user-properties": {
+            "digest-realm-name": "application-realm",
+            "path": "application-users.properties"
+          },
+          "group-properties": {
+            "path": "application-groups.properties"
+          }
         }
-      }
-    } ]
+      }]
+    }
   }
 }

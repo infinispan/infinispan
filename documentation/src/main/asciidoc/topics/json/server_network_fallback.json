@@ -1,12 +1,14 @@
 {
-  "interfaces" : [ {
-    "name" : "public",
-    "match-host" : {
-      "value" : "my_host_name"
-    },
-    "match-address" : {
-      "value" : "132\\..*"
-    },
-    "any_address" : null
-  } ]
+  "server": {
+    "interfaces": [{
+      "name": "public",
+      "match-host": {
+        "value": "my_host_name"
+      },
+      "match-address": {
+        "value": "132\\..*"
+      },
+      "any_address": null
+    }]
+  }
 }
