@@ -17,6 +17,6 @@ try {
       // maximum rate. discard operation
       return;
    } else {
-      // unexpected error, handling propertly
+      // unexpected error, handling property
    }
 }
