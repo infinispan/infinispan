@@ -31,7 +31,6 @@ public abstract class BaseSiteUnreachableTest extends AbstractXSiteTest {
             backup()
                .strategy(lonBackupStrategy)
                .failurePolicyClass(lonCustomFailurePolicyClass);
-      lon.sites().addInUseBackupSite(NYC);
 
       createSite(LON, 2, lonGc, lon);
    }

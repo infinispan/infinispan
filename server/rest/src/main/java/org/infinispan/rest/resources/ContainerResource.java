@@ -314,7 +314,7 @@ public class ContainerResource implements ResourceHandler {
             cacheConfiguration.expiration().lifespan() != -1;
       cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
       cacheInfo.indexed = cacheConfiguration.indexing().enabled();
-      cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
+      cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasBackups();
 
       // If the cache is ignored, status is IGNORED
       if (ignoredCaches.contains(cacheName)) {

@@ -173,7 +173,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
       }
 
-      if (configuration.sites().hasEnabledBackups() && !configuration.sites().disableBackups()) {
+      if (configuration.sites().hasBackups()) {
          if (transactionMode == TransactionMode.TRANSACTIONAL) {
             if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
                interceptorChain.appendInterceptor(createInterceptor(new OptimisticBackupInterceptor(), OptimisticBackupInterceptor.class), false);

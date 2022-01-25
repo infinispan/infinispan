@@ -106,7 +106,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       // When cross-site replication is enabled, we need to retrieve the previous value from remote node
       // even for functional commands; we will need to send the modified value to backup sites and therefore
       // we need it in the context.
-      forceRemoteReadForFunctionalCommands = cacheConfiguration.sites().hasEnabledBackups();
+      forceRemoteReadForFunctionalCommands = cacheConfiguration.sites().hasBackups();
    }
 
    @Override

@@ -166,12 +166,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(CommitManager.class.getName())) {
          return new CommitManager();
       } else if (componentName.equals(XSiteStateTransferManager.class.getName())) {
-         return configuration.sites().hasEnabledBackups() ? new XSiteStateTransferManagerImpl(configuration)
+         return configuration.sites().hasBackups() ? new XSiteStateTransferManagerImpl(configuration)
                                                           : new NoOpXSiteStateTransferManager();
       } else if (componentName.equals(XSiteStateConsumer.class.getName())) {
          return new XSiteStateConsumerImpl(configuration);
       } else if (componentName.equals(XSiteStateProvider.class.getName())) {
-         return configuration.sites().hasEnabledBackups() ? new XSiteStateProviderImpl(configuration)
+         return configuration.sites().hasBackups() ? new XSiteStateProviderImpl(configuration)
                                                           : NoOpXSiteStateProvider.getInstance();
       } else if (componentName.equals(FunctionalNotifier.class.getName())) {
          return new FunctionalNotifierImpl<>();
@@ -224,7 +224,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(InvocationHelper.class.getName())) {
          return new InvocationHelper();
       } else if (componentName.equals(TakeOfflineManager.class.getName())) {
-         return configuration.sites().hasEnabledBackups() ?
+         return configuration.sites().hasBackups() ?
                new DefaultTakeOfflineManager(componentRegistry.getCacheName()) :
                NoOpTakeOfflineManager.getInstance();
       } else if (componentName.equals(IracManager.class.getName())) {
@@ -242,7 +242,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(StorageConfigurationManager.class.getName())) {
          return new StorageConfigurationManager();
       } else if (componentName.equals(XSiteMetricsCollector.class.getName())) {
-         return configuration.sites().hasEnabledBackups() ?
+         return configuration.sites().hasBackups() ?
                 new DefaultXSiteMetricsCollector(configuration) :
                 NoOpXSiteMetricsCollector.getInstance();
       } else if (componentName.equals(IracTombstoneManager.class.getName())) {

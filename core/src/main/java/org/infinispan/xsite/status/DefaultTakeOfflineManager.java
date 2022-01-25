@@ -86,13 +86,13 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    @Start
    public void start() {
       String localSiteName = rpcManager.getTransport().localSiteName();
-      config.sites().enabledBackupStream()
+      config.sites().allBackupsStream()
             .filter(bc -> !localSiteName.equals(bc.site()))
             .forEach(bc -> {
                String siteName = bc.site();
-               OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
-               offlineStatus.put(siteName, offline);
-            });
+         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
+         offlineStatus.put(siteName, offline);
+      });
    }
 
    @Override

@@ -2372,7 +2372,7 @@
     <xs:attribute name="enabled" type="xs:boolean" default="${Backup.enabled}">
       <xs:annotation>
         <xs:documentation>
-          Enables backup locations. Set the value to "false" to disable backups.
+          DEPRECATED: Enables backup locations. Set the value to "false" to disable backups.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

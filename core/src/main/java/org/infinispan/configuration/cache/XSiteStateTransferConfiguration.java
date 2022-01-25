@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -30,33 +29,24 @@ public class XSiteStateTransferConfiguration extends ConfigurationElement<XSiteS
       return new AttributeSet(XSiteStateTransferConfiguration.class, CHUNK_SIZE, TIMEOUT, MAX_RETRIES, WAIT_TIME, MODE);
    }
 
-   private final Attribute<Integer> chunkSize;
-   private final Attribute<Long> timeout;
-   private final Attribute<Integer> maxRetries;
-   private final Attribute<Long> waitTime;
-
    public XSiteStateTransferConfiguration(AttributeSet attributes) {
       super(Element.STATE_TRANSFER, attributes);
-      chunkSize = attributes.attribute(CHUNK_SIZE);
-      timeout = attributes.attribute(TIMEOUT);
-      maxRetries = attributes.attribute(MAX_RETRIES);
-      waitTime = attributes.attribute(WAIT_TIME);
    }
 
    public int chunkSize() {
-      return chunkSize.get();
+      return attributes.attribute(CHUNK_SIZE).get();
    }
 
    public long timeout() {
-      return timeout.get();
+      return attributes.attribute(TIMEOUT).get();
    }
 
    public int maxRetries() {
-      return maxRetries.get();
+      return attributes.attribute(MAX_RETRIES).get();
    }
 
    public long waitTime() {
-      return waitTime.get();
+      return attributes.attribute(WAIT_TIME).get();
    }
 
    public XSiteStateTransferMode mode() {

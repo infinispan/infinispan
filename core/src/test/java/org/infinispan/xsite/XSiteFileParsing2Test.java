@@ -1,7 +1,6 @@
 package org.infinispan.xsite;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -33,7 +32,6 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
    public void testDefaultCache() {
       Configuration dcc = cacheManager.getDefaultCacheConfiguration();
       assertEquals(dcc.sites().allBackups().size(), 3);
-      assertEquals(dcc.sites().enabledBackups().size(), 2);
       testDefault(dcc);
    }
 
@@ -47,7 +45,7 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
       assertEquals(1, dcc.sites().allBackups().size());
       BackupConfiguration nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true).create();
+            .useTwoPhaseCommit(false).create();
       assertTrue(dcc.sites().allBackups().contains(nyc));
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
@@ -61,19 +59,16 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
    private void testDefault(Configuration dcc) {
       BackupConfiguration nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true).create();
+            .useTwoPhaseCommit(false).create();
       BackupConfiguration sfo = new BackupConfigurationBuilder(null).site("SFO").strategy(BackupStrategy.ASYNC)
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
-            .useTwoPhaseCommit(false).enabled(true).create();
+            .useTwoPhaseCommit(false).create();
       BackupConfiguration lon = new BackupConfigurationBuilder(null).site("LON").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
-            .useTwoPhaseCommit(false).enabled(false).create();
+            .useTwoPhaseCommit(false).create();
       assertTrue(dcc.sites().allBackups().contains(nyc));
       assertTrue(dcc.sites().allBackups().contains(sfo));
       assertTrue(dcc.sites().allBackups().contains(lon));
-      assertTrue(dcc.sites().enabledBackups().contains(nyc));
-      assertTrue(dcc.sites().enabledBackups().contains(sfo));
-      assertFalse(dcc.sites().enabledBackups().contains(lon));
       assertEquals("someCache", dcc.sites().backupFor().remoteCache());
       assertEquals("SFO", dcc.sites().backupFor().remoteSite());
    }

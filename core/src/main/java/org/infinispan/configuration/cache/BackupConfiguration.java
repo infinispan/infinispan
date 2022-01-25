@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -17,49 +16,32 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    public static final AttributeDefinition<BackupFailurePolicy> FAILURE_POLICY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BACKUP_FAILURE_POLICY, BackupFailurePolicy.WARN).build();
    public static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FAILURE_POLICY_CLASS, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.USE_TWO_PHASE_COMMIT, false).immutable().build();
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(BackupConfiguration.class, SITE, STRATEGY, REPLICATION_TIMEOUT, FAILURE_POLICY,  FAILURE_POLICY_CLASS, USE_TWO_PHASE_COMMIT, ENABLED);
+      return new AttributeSet(BackupConfiguration.class, SITE, STRATEGY, REPLICATION_TIMEOUT, FAILURE_POLICY,  FAILURE_POLICY_CLASS, USE_TWO_PHASE_COMMIT);
    }
 
-   private final Attribute<String> site;
-   private final Attribute<BackupConfiguration.BackupStrategy> strategy;
-   private final Attribute<Long> replicationTimeout;
-   private final Attribute<BackupFailurePolicy> backupFailurePolicy;
-   private final Attribute<String> failurePolicyClass;
-   private final Attribute<Boolean> useTwoPhaseCommit;
-   private final Attribute<Boolean> enabled;
-   private final AttributeSet attributes;
    private final TakeOfflineConfiguration takeOfflineConfiguration;
    private final XSiteStateTransferConfiguration xSiteStateTransferConfiguration ;
 
    public BackupConfiguration(AttributeSet attributes, TakeOfflineConfiguration takeOfflineConfiguration, XSiteStateTransferConfiguration xSiteStateTransferConfiguration) {
       super(Element.BACKUP, attributes, takeOfflineConfiguration, xSiteStateTransferConfiguration);
-      this.attributes = attributes.checkProtection();
       this.takeOfflineConfiguration = takeOfflineConfiguration;
       this.xSiteStateTransferConfiguration = xSiteStateTransferConfiguration;
-      this.site = attributes.attribute(SITE);
-      this.strategy = attributes.attribute(STRATEGY);
-      this.replicationTimeout = attributes.attribute(REPLICATION_TIMEOUT);
-      this.backupFailurePolicy = attributes.attribute(FAILURE_POLICY);
-      this.failurePolicyClass = attributes.attribute(FAILURE_POLICY_CLASS);
-      this.useTwoPhaseCommit = attributes.attribute(USE_TWO_PHASE_COMMIT);
-      this.enabled = attributes.attribute(ENABLED);
    }
 
    /**
     * Returns the name of the site where this cache backups its data.
     */
    public String site() {
-      return site.get();
+      return attributes.attribute(SITE).get();
    }
 
    /**
     * How does the backup happen: sync or async.
     */
    public BackupStrategy strategy() {
-      return strategy.get();
+      return attributes.attribute(STRATEGY).get();
    }
 
    public TakeOfflineConfiguration takeOffline() {
@@ -71,7 +53,7 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
     * should return the fully qualified name of a class implementing {@link CustomFailurePolicy}
     */
    public String failurePolicyClass() {
-      return failurePolicyClass.get();
+      return attributes.attribute(FAILURE_POLICY_CLASS).get();
    }
 
    public boolean isAsyncBackup() {
@@ -83,16 +65,19 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    }
 
    public long replicationTimeout() {
-      return replicationTimeout.get();
+      return attributes.attribute(REPLICATION_TIMEOUT).get();
    }
 
+   /**
+    * @deprecated Since 14.0. To be removed without replacement
+    */
+   @Deprecated
    public BackupConfiguration replicationTimeout(long timeout) {
-      replicationTimeout.set(timeout);
       return this;
    }
 
    public BackupFailurePolicy backupFailurePolicy() {
-      return backupFailurePolicy.get();
+      return attributes.attribute(FAILURE_POLICY).get();
    }
 
    public enum BackupStrategy {
@@ -100,14 +85,16 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    }
 
    public boolean isTwoPhaseCommit() {
-      return useTwoPhaseCommit.get();
+      return attributes.attribute(USE_TWO_PHASE_COMMIT).get();
    }
 
    /**
     * @see BackupConfigurationBuilder#enabled(boolean).
+    * @deprecated Since 14.0. To be removed without replacement.
     */
+   @Deprecated
    public boolean enabled() {
-      return enabled.get();
+      return true;
    }
 
    public XSiteStateTransferConfiguration stateTransfer() {

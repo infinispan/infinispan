@@ -138,7 +138,6 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
             .minTimeToWait(MIN_WAIT_TIME_MILLIS)
             .backup()
             .strategy(BackupConfiguration.BackupStrategy.SYNC);
-      builder.sites().addInUseBackupSite(NYC);
 
       builder.sites().addBackup()
             .site(SFO)
@@ -149,7 +148,6 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
             .minTimeToWait(MIN_WAIT_TIME_MILLIS)
             .backup()
             .strategy(BackupConfiguration.BackupStrategy.ASYNC);
-      builder.sites().addInUseBackupSite(SFO);
 
       return builder.build();
    }

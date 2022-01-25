@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.SitesConfiguration.DISABLE_BACKUPS;
-import static org.infinispan.configuration.cache.SitesConfiguration.IN_USE_BACKUP_SITES;
 import static org.infinispan.configuration.cache.SitesConfiguration.MERGE_POLICY;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -45,20 +43,21 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
    /**
     * Returns true if this cache won't backup its data remotely.
     * It would still accept other sites backing up data on this site.
+    * @deprecated Since 14.0. To be removed without replacement.
     */
+   @Deprecated
    public SitesConfigurationBuilder disableBackups(boolean disable) {
-      attributes.attribute(DISABLE_BACKUPS).set(disable);
+      //no-op
       return this;
    }
 
    /**
     * Defines the site names, from the list of sites names defined within 'backups' element, to
     * which this cache backups its data.
+    * @deprecated Since 14.0. To be removed without replacement.
     */
+   @Deprecated
    public SitesConfigurationBuilder addInUseBackupSite(String site) {
-      Set<String> sites = attributes.attribute(IN_USE_BACKUP_SITES).get();
-      sites.add(site);
-      attributes.attribute(IN_USE_BACKUP_SITES).set(sites);
       return this;
    }
 
@@ -106,16 +105,6 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
       if (attributes.attribute(MERGE_POLICY).get() == null) {
          throw CONFIG.missingXSiteEntryMergePolicy();
       }
-
-      for (String site : attributes.attribute(IN_USE_BACKUP_SITES).get()) {
-         boolean found = false;
-         for (BackupConfigurationBuilder bcb : backups) {
-            if (bcb.site().equals(site)) found = true;
-         }
-         if (!found) {
-            throw CONFIG.siteMustBeInBackups(site);
-         }
-      }
    }
 
    @Override
@@ -138,9 +127,8 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
 
    @Override
    public SitesConfigurationBuilder read(SitesConfiguration template) {
-      this.attributes.read(template.attributes());
+      attributes.read(template.attributes());
       backupForBuilder.read(template.backupFor());
-      //backups.clear();
       for (BackupConfiguration bc : template.allBackups()) {
          BackupConfigurationBuilder bcb = new BackupConfigurationBuilder(getBuilder());
          bcb.read(bc);

@@ -44,7 +44,7 @@ public class XSiteFileParsing3Test extends SingleCacheManagerTest {
       assertEquals(1, dcc.sites().allBackups().size());
       BackupConfiguration nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true).create();
+            .useTwoPhaseCommit(false).create();
       assertTrue(dcc.sites().allBackups().contains(nyc));
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
@@ -54,7 +54,7 @@ public class XSiteFileParsing3Test extends SingleCacheManagerTest {
       assertEquals(1, dcc.sites().allBackups().size());
       BackupConfigurationBuilder nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
       nyc.takeOffline().afterFailures(321).minTimeToWait(3765);
       assertTrue(dcc.sites().allBackups().contains(nyc.create()));
 
@@ -63,7 +63,7 @@ public class XSiteFileParsing3Test extends SingleCacheManagerTest {
    private void testDefault(Configuration dcc) {
       BackupConfigurationBuilder nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
       nyc.takeOffline().afterFailures(123).minTimeToWait(5673);
       assertTrue(dcc.sites().allBackups().contains(nyc.create()));
       assertEquals("someCache", dcc.sites().backupFor().remoteCache());
