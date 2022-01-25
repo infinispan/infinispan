@@ -1,19 +1,20 @@
-dataSources:
-  - name: ds
-    jndiName: 'jdbc/postgres'
-    statistics: true
-    connectionFactory:
-      driver: "org.postgresql.Driver"
-      url: "jdbc:postgresql://localhost:5432/postgres"
-      username: "postgres"
-      password: "changeme"
-      connectionProperties:
-        name: value
-    connectionPool:
-      initialSize: 1
-      maxSize: 10
-      minSize: 3
-      backgroundValidation: 1000
-      idleRemoval: 1
-      blockingTimeout: 1000
-      leakDetection: 10000
+server:
+  dataSources:
+    - name: ds
+      jndiName: 'jdbc/postgres'
+      statistics: true
+      connectionFactory:
+        driver: "org.postgresql.Driver"
+        url: "jdbc:postgresql://localhost:5432/postgres"
+        username: "postgres"
+        password: "changeme"
+        connectionProperties:
+          name: value
+      connectionPool:
+        initialSize: 1
+        maxSize: 10
+        minSize: 3
+        backgroundValidation: 1000
+        idleRemoval: 1
+        blockingTimeout: 1000
+        leakDetection: 10000

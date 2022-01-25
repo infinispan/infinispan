@@ -1,6 +1,7 @@
-endpoints:
- - socketBinding: public
-   securityRealm: application-realm
-   admin: false
- - socketBinding: private
-   securityRealm: management-realm
+server:
+  endpoints:
+   - socketBinding: public
+     securityRealm: application-realm
+     admin: false
+   - socketBinding: private
+     securityRealm: management-realm

@@ -1,25 +1,26 @@
-security:
-  securityRealms:
-    - name: "kerberos-realm"
-      serverIdentities:
-        - kerberos:
-            principal: "hotrod/datagrid@INFINISPAN.ORG"
-            keytabPath: "hotrod.keytab"
-            required: "true"
-        - kerberos:
-            principal: "HTTP/localhost@INFINISPAN.ORG"
-            keytabPath: "http.keytab"
-            required: "true"
-endpoints:
-  endpoint:
-    socketBinding: "default"
-    securityRealm: "kerberos-realm"
-    hotrodConnector:
-      authentication:
-        sasl:
-          serverName: "datagrid"
-          serverPrincipal: "hotrod/datagrid@INFINISPAN.ORG"
-    restConnector:
-      authentication:
-        securityRealm: "kerberos-realm"
-        serverPrincipal" : "HTTP/localhost@INFINISPAN.ORG"
+server:
+  security:
+    securityRealms:
+      - name: "kerberos-realm"
+        serverIdentities:
+          - kerberos:
+              principal: "hotrod/datagrid@INFINISPAN.ORG"
+              keytabPath: "hotrod.keytab"
+              required: "true"
+          - kerberos:
+              principal: "HTTP/localhost@INFINISPAN.ORG"
+              keytabPath: "http.keytab"
+              required: "true"
+  endpoints:
+    endpoint:
+      socketBinding: "default"
+      securityRealm: "kerberos-realm"
+      hotrodConnector:
+        authentication:
+          sasl:
+            serverName: "datagrid"
+            serverPrincipal: "hotrod/datagrid@INFINISPAN.ORG"
+      restConnector:
+        authentication:
+          securityRealm: "kerberos-realm"
+          serverPrincipal" : "HTTP/localhost@INFINISPAN.ORG"
