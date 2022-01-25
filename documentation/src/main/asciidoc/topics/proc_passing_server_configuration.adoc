@@ -1,0 +1,39 @@
+[id='passing-server-configuration-startup_{context}']
+= Passing {brandname} Server configuration at startup
+Specify custom configuration when you start {brandname} Server.
+
+{brandname} Server can parse multiple configuration files that you overlay on startup with the `--server-config` argument.
+You can use as many configuration overlay files as required, in any order.
+Configuration overlay files:
+
+* Must be valid {brandname} configuration and contain the root `server` element or field.
+* Do not need to be full configuration as long as your combination of overlay files results in a full configuration.
+
+[IMPORTANT]
+====
+{brandname} Server does not detect conflicting configuration between overlay files.
+Each overlay file overwrites any conflicting configuration in the preceding configuration.
+====
+
+[NOTE]
+====
+If you pass cache configuration to {brandname} Server on startup it does not dynamically create those cache across the cluster.
+You must manually propagate caches to each node.
+
+Additionally, cache configuration that you pass to {brandname} Server on startup must include the `infinispan` and `cache-container` elements.
+====
+
+.Prerequisites
+
+* Download and install the server distribution.
+* Add custom server configuration to the `server/conf` directory of your {brandname} Server installation.
+
+.Procedure
+
+. Open a terminal in `{server_home}`.
+. Specify one or more configuration files with the `--server-config=` or `-c` argument, for example:
++
+[source,bash,options="nowrap",subs=attributes+]
+----
+$ bin/server.sh -c infinispan.xml -c datasources.yaml -c security-realms.json
+----
