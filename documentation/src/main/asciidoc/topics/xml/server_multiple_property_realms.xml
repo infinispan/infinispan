@@ -1,16 +1,18 @@
-<security>
-   <security-realms>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
       <security-realm name="application-realm">
-         <properties-realm groups-attribute="Roles">
-            <user-properties path="application-users.properties"/>
-            <group-properties path="application-groups.properties"/>
-         </properties-realm>
+        <properties-realm groups-attribute="Roles">
+          <user-properties path="application-users.properties"/>
+          <group-properties path="application-groups.properties"/>
+        </properties-realm>
       </security-realm>
       <security-realm name="management-realm">
-         <properties-realm groups-attribute="Roles">
-            <user-properties path="management-users.properties"/>
-            <group-properties path="management-groups.properties"/>
-         </properties-realm>
+        <properties-realm groups-attribute="Roles">
+          <user-properties path="management-users.properties"/>
+          <group-properties path="management-groups.properties"/>
+        </properties-realm>
       </security-realm>
-   </security-realms>
-</security>
+    </security-realms>
+  </security>
+</server>

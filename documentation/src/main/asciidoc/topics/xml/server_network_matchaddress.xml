@@ -1,6 +1,8 @@
-<!-- Selects an IP address that matches a regular expression. -->
-<interfaces>
-  <interface name="public">
-    <match-address value="132\..*"/>
-  </interface>
-</interfaces>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <!-- Selects an IP address that matches a regular expression. -->
+  <interfaces>
+    <interface name="public">
+      <match-address value="132\..*"/>
+    </interface>
+  </interfaces>
+</server>

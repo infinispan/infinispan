@@ -1,16 +1,18 @@
-<security>
-   <security-realms>
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
       <security-realm name="generated-keystore">
-         <server-identities>
-            <ssl>
-               <!-- Generates a keystore that includes a self-signed certificate with the specified hostname. -->
-               <keystore path="server.p12"
-                         relative-to="infinispan.server.config.path"
-                         password="secret"
-                         alias="server"
-                         generate-self-signed-certificate-host="localhost"/>
-            </ssl>
-         </server-identities>
+        <server-identities>
+          <ssl>
+            <!-- Generates a keystore that includes a self-signed certificate with the specified hostname. -->
+            <keystore path="server.p12"
+                      relative-to="infinispan.server.config.path"
+                      password="secret"
+                      alias="server"
+                      generate-self-signed-certificate-host="localhost"/>
+          </ssl>
+        </server-identities>
       </security-realm>
-   </security-realms>
-</security>
+    </security-realms>
+  </security>
+</server>
