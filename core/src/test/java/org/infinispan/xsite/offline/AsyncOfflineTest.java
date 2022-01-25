@@ -225,7 +225,6 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
             .afterFailures(NUM_FAILURES)
             .backup()
             .strategy(BackupConfiguration.BackupStrategy.SYNC);
-      builder.sites().addInUseBackupSite(NYC);
 
       builder.sites().addBackup()
             .site(SFO)
@@ -234,7 +233,6 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
             .afterFailures(NUM_FAILURES)
             .backup()
             .strategy(BackupConfiguration.BackupStrategy.ASYNC);
-      builder.sites().addInUseBackupSite(SFO);
 
       return builder.build();
    }

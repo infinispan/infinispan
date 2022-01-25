@@ -176,7 +176,7 @@ public class InternalCacheFactory<K, V> {
       if (configuration.transaction().recovery().enabled()) {
          componentRegistry.registerComponent(new RecoveryAdminOperations(), RecoveryAdminOperations.class.getName(), true);
       }
-      if (configuration.sites().hasEnabledBackups()) {
+      if (configuration.sites().hasBackups()) {
          componentRegistry.registerComponent(new XSiteAdminOperations(), XSiteAdminOperations.class.getName(), true);
       }
       // The RollingUpgradeManager should always be added so it is registered in JMX.

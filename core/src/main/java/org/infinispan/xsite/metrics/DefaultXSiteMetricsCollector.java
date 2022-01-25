@@ -30,7 +30,7 @@ public class DefaultXSiteMetricsCollector implements XSiteMetricsCollector {
 
    public DefaultXSiteMetricsCollector(Configuration configuration) {
       siteMetricMap = new ConcurrentHashMap<>();
-      configuration.sites().enabledBackupStream().forEach(c -> siteMetricMap.put(c.site(), new SiteMetric()));
+      configuration.sites().allBackupsStream().forEach(c -> siteMetricMap.put(c.site(), new SiteMetric()));
       globalRequestsSent = new SimpleStateWithTimer();
    }
 

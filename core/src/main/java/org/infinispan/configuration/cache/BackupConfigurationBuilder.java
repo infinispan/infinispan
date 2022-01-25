@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.BackupConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.BackupConfiguration.FAILURE_POLICY;
 import static org.infinispan.configuration.cache.BackupConfiguration.FAILURE_POLICY_CLASS;
 import static org.infinispan.configuration.cache.BackupConfiguration.REPLICATION_TIMEOUT;
@@ -109,9 +108,10 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Configures whether this site is used for backing up data or not (defaults to true).
+    * @deprecated Since 14.0. To be removed without replacement.
     */
+   @Deprecated
    public BackupConfigurationBuilder enabled(boolean isEnabled) {
-      attributes.attribute(ENABLED).set(isEnabled);
       return this;
    }
 

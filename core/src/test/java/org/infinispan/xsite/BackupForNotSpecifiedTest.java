@@ -27,19 +27,16 @@ public class BackupForNotSpecifiedTest extends AbstractXSiteTest {
       lonDefault.sites().addBackup()
             .site(NYC)
             .backupFailurePolicy(BackupFailurePolicy.FAIL)
-            .strategy(BackupConfiguration.BackupStrategy.SYNC)
-            .sites().addInUseBackupSite(NYC);
+            .strategy(BackupConfiguration.BackupStrategy.SYNC);
       ConfigurationBuilder someCache = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
 
       GlobalConfigurationBuilder nycGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
       ConfigurationBuilder nycDefault = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       nycDefault.sites().addBackup()
             .site(LON)
-            .strategy(BackupConfiguration.BackupStrategy.SYNC)
-            .sites().addInUseBackupSite(LON);
+            .strategy(BackupConfiguration.BackupStrategy.SYNC);
       ConfigurationBuilder someCacheBackup = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       someCacheBackup.sites().backupFor().remoteCache("someCache").remoteSite(LON);
-      someCacheBackup.sites().disableBackups(true);
 
       createSite(LON, 2, lonGc, lonDefault);
       createSite(NYC, 2, nycGc, nycDefault);

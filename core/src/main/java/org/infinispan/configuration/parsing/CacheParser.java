@@ -301,7 +301,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case ENABLED: {
-               backup.enabled(Boolean.parseBoolean(value));
+               CONFIG.configDeprecated(attribute);
                break;
             }
             case USE_TWO_PHASE_COMMIT: {
@@ -326,11 +326,11 @@ public class CacheParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case TAKE_OFFLINE: {
-               this.parseTakeOffline(reader, backup);
+               parseTakeOffline(reader, backup);
                break;
             }
             case STATE_TRANSFER: {
-               this.parseXSiteStateTransfer(reader, backup);
+               parseXSiteStateTransfer(reader, backup);
                break;
             }
             default: {

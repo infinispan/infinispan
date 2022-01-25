@@ -72,7 +72,7 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
       BackupConfigurationBuilder nyc2 = new BackupConfigurationBuilder(null).site("NYC2").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.CUSTOM)
             .failurePolicyClass(CountingCustomFailurePolicy.class.getName()).replicationTimeout(160000)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
 
       assertTrue(dcc.sites().allBackups().contains(nyc2.create()));
       assertNull(dcc.sites().backupFor().remoteCache());
@@ -117,11 +117,11 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
       assertEquals(DefaultXSiteEntryMergePolicy.getInstance(), dcc.sites().mergePolicy());
       BackupConfigurationBuilder nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
       assertTrue(dcc.sites().allBackups().contains(nyc.create()));
       BackupConfigurationBuilder sfo = new BackupConfigurationBuilder(null).site("SFO").strategy(BackupStrategy.ASYNC)
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(15000)
-            .useTwoPhaseCommit(false).enabled(true);
+            .useTwoPhaseCommit(false);
       assertTrue(dcc.sites().allBackups().contains(sfo.create()));
    }
 }

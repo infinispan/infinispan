@@ -120,7 +120,7 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
    private static BackupConfiguration create(int chunkSize, long timeout, int maxRetries, long waitingTimeBetweenRetries) {
       BackupConfigurationBuilder builder = new BackupConfigurationBuilder(null).site("NYC")
             .strategy(BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null)
-            .replicationTimeout(12003).useTwoPhaseCommit(false).enabled(true);
+            .replicationTimeout(12003).useTwoPhaseCommit(false);
       builder.stateTransfer().chunkSize(chunkSize).timeout(timeout).maxRetries(maxRetries)
             .waitTime(waitingTimeBetweenRetries);
       return builder.create();
@@ -129,7 +129,7 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
    private static BackupConfiguration createDefault() {
       BackupConfigurationBuilder builder = new BackupConfigurationBuilder(null).site("NYC")
             .strategy(BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null)
-            .replicationTimeout(12003).useTwoPhaseCommit(false).enabled(true);
+            .replicationTimeout(12003).useTwoPhaseCommit(false);
       return builder.create();
    }
 

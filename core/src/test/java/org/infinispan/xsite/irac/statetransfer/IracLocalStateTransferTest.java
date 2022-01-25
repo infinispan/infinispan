@@ -369,8 +369,7 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
       BackupConfigurationBuilder lonBackupConfigurationBuilder = builder.sites().addBackup();
       lonBackupConfigurationBuilder
             .site(NYC)
-            .strategy(BackupConfiguration.BackupStrategy.ASYNC)
-            .sites().addInUseBackupSite(NYC);
+            .strategy(BackupConfiguration.BackupStrategy.ASYNC);
       builder.clustering().hash()
             .consistentHashFactory(lonCHF)
             .numSegments(1);
