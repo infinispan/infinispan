@@ -68,6 +68,8 @@ include::topics/jgroups/dns_ping.adoc[]
 
 The value of the `dns_query` property is the DNS query that returns the cluster members. See link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods] for information about Kubernetes DNS naming.
 
+//Community only, relates to ISPN-13663 
+ifndef::productized[]
 ==== Cluster authentication and authorization
 
 The JGroups subsystem can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and integrates with the security realms.
@@ -80,6 +82,7 @@ The +client_password+ property contains the password of the node. It is recommen
 When using the GSSAPI mech, +client_name+ will be used as the name of a Kerberos-enabled login module defined within the security domain subsystem:
 
 include::topics/jgroups/jgroups_kerberos_login.adoc[]
+endif::productized[]
 
 === {brandname} subsystem configuration
 The {brandname} subsystem configures the cache containers and caches.
