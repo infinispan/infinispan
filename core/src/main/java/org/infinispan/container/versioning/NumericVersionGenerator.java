@@ -2,23 +2,13 @@ package org.infinispan.container.versioning;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Generates unique numeric versions for both local and clustered environments.
@@ -36,35 +26,18 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class NumericVersionGenerator implements VersionGenerator {
-
-   private static final Log log = LogFactory.getLog(NumericVersionGenerator.class);
-
    // TODO: Possibly seed version counter on capped System.currentTimeMillis, to avoid issues with clients holding to versions in between restarts
    final AtomicInteger versionCounter = new AtomicInteger();
-   final AtomicLong versionPrefix = new AtomicLong();
    private static final NumericVersion NON_EXISTING = new NumericVersion(0);
 
    @Inject Configuration configuration;
-   @Inject CacheManagerNotifier cacheManagerNotifier;
-   @Inject Transport transport;
+   @Inject RankCalculator rankCalculator;
 
    private boolean isClustered;
 
-   @Start(priority = 11) // after Transport
+   @Start
    public void start() {
-      cacheManagerNotifier.addListener(new RankCalculator());
-
       isClustered = configuration.clustering().cacheMode().isClustered();
-
-      if (isClustered) {
-         // Use component registry to avoid keeping an instance ref simply used on start
-         calculateRank(transport.getAddress(), transport.getMembers(), transport.getViewId());
-      }
-   }
-
-   public NumericVersionGenerator clustered(boolean clustered) {
-      isClustered = clustered;
-      return this;
    }
 
    @Override
@@ -77,7 +50,7 @@ public class NumericVersionGenerator implements VersionGenerator {
    private IncrementableEntryVersion createNumericVersion(long counter) {
       // Version counter occupies the least significant 4 bytes of the version
       return isClustered
-            ? new NumericVersion(versionPrefix.get() | counter)
+            ? new NumericVersion(rankCalculator.getVersionPrefix() | counter)
             : new NumericVersion(counter);
    }
 
@@ -97,37 +70,7 @@ public class NumericVersionGenerator implements VersionGenerator {
       return NON_EXISTING;
    }
 
-   long calculateRank(Address address, List<Address> members, long viewId) {
-      long rank = findAddressRank(address, members, 1);
-      // Version is composed of: <view id (2 bytes)><rank (2 bytes)><version counter (4 bytes)>
-      // View id and rank form the prefix which is updated on a view change.
-      long newVersionPrefix = (viewId << 48) | (rank << 32);
-      // TODO: Deal with compareAndSet failures?
-      versionPrefix.compareAndSet(versionPrefix.get(), newVersionPrefix);
-      return versionPrefix.get();
-   }
-
    void resetCounter() {
       versionCounter.set(0);
    }
-
-   private int findAddressRank(Address address, List<Address> members, int rank) {
-      if (address.equals(members.get(0))) return rank;
-      else return findAddressRank(address, members.subList(1, members.size()), rank + 1);
-   }
-
-   @Listener
-   public class RankCalculator {
-
-      @ViewChanged
-      @SuppressWarnings("unused")
-      public void calculateRank(ViewChangedEvent e) {
-         long rank = NumericVersionGenerator.this
-               .calculateRank(e.getLocalAddress(), e.getNewMembers(), e.getViewId());
-         if (log.isTraceEnabled())
-            log.tracef("Calculated rank based on view %s and result was %d", e, rank);
-      }
-
-   }
-
 }

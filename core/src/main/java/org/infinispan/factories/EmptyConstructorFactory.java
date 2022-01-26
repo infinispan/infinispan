@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.container.versioning.RankCalculator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -38,7 +39,8 @@ import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
       InboundInvocationHandler.class, PersistentUUIDManager.class,
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
-      SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class
+      SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
+      RankCalculator.class
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -67,6 +69,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new BlockingManagerImpl();
       else if (componentName.equals(NonBlockingManager.class.getName()))
          return new NonBlockingManagerImpl();
+      else if (componentName.equals(RankCalculator.class.getName()))
+         return new RankCalculator();
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }
