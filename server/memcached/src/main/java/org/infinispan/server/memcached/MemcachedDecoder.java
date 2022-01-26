@@ -46,7 +46,6 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -67,7 +66,6 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.stats.Stats;
@@ -521,8 +519,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       ComponentRegistry registry = getCacheRegistry();
       VersionGenerator cacheVersionGenerator = registry.getComponent(VersionGenerator.class);
       if (cacheVersionGenerator == null) {
-         NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
-               .clustered(registry.getComponent(RpcManager.class) != null);
+         NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator();
          registry.registerComponent(newVersionGenerator, VersionGenerator.class);
          return newVersionGenerator.generateNew();
       } else {
@@ -715,12 +712,11 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
    private void flushAll(ByteBuf b, Channel ch, boolean isReadParams) throws IOException {
       if (isReadParams) readParameters(ch, b);
-      Consumer<Cache<?, ?>> consumer = c -> c.clear();
       int flushDelay = params == null ? 0 : params.flushDelay;
       if (flushDelay == 0)
-         consumer.accept(cache);
+         cache.clear();
       else
-         scheduler.schedule(() -> consumer.accept(cache), toMillis(flushDelay), TimeUnit.MILLISECONDS);
+         scheduler.schedule(cache::clear, toMillis(flushDelay), TimeUnit.MILLISECONDS);
       Object ret = params == null || !params.noReply ? OK : null;
       writeResponse(ch, ret);
    }
