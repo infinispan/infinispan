@@ -22,11 +22,14 @@ include::code_examples/CustomMergePolicyEntryMerge.java[]
 org.example.CustomMergePolicy
 ----
 .. Add the JAR file to the `server/lib` directory.
+//Community content
+ifdef::community[]
 +
 [TIP]
 ====
 Use the `install` command with the {brandname} Command Line Interface (CLI) to download the JAR to the `server/lib` directory.
 ====
+endif::community[]
 . Open your {brandname} configuration for editing.
 . Configure cache encoding with the `encoding` element or `encoding()` method as appropriate.
 +
