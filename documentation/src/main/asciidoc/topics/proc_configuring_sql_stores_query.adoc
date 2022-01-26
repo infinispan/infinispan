@@ -9,6 +9,8 @@ SQL query cache stores let you load caches from multiple database tables, includ
 You can add JDBC connection factories directly to your cache configuration. +
 For remote caches in production environments, you should add managed datasources to {brandname} Server configuration and specify the JNDI name in the cache configuration.
 * Remote caches: Copy database drivers to the `server/lib` directory in your {brandname} Server installation.
+//Community content
+ifdef::community[]
 +
 [TIP]
 ====
@@ -19,6 +21,7 @@ Use the [command]`install` command with the {brandname} Command Line Interface (
 install org.postgresql:postgresql:42.1.3
 ----
 ====
+endif::community[]
 * Embedded caches: Add the `infinispan-cachestore-sql` dependency to your `pom` file and make sure database drivers are on your application classpath.
 +
 [source,xml,options="nowrap",subs=attributes+]
