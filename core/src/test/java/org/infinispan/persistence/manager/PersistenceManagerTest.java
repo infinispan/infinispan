@@ -17,6 +17,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -53,9 +56,13 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
 
       persistenceManager.stop();
 
+      ByRef<Throwable> tRef = new ByRef<>(null);
       // The stopped PersistenceManager should never pass the request to the store
       Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
-              .blockingSubscribe(ignore -> fail("shouldn't run"));
+            .blockingSubscribe(ignore -> fail("shouldn't run"), tRef::set);
+
+      Throwable t = tRef.get();
+      Exceptions.assertException(IllegalLifecycleStateException.class, t);
    }
 
    /**
