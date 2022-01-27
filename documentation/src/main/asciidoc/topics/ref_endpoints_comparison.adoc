@@ -1,22 +1,22 @@
 [id='endpoint-protocol-comparison_{context}']
 = Comparison of endpoint protocols
 
-//Community includes Memcached
+//Community includes Memcached and RESP
 ifdef::community[]
 [cols="20,^20,^20,^20",options="header"]
 |============================================================
-|                    | Hot Rod    | HTTP / REST     | Memcached
-| Topology-aware     | [green]*Y* | [red]*N*        | [red]*N*
-| Hash-aware         | [green]*Y* | [red]*N*        | [red]*N*
-| Encryption         | [green]*Y* | [green]*Y*      | [red]*N*
-| Authentication     | [green]*Y* | [green]*Y*      | [red]*N*
-| Conditional ops    | [green]*Y* | [green]*Y*      | [green]*Y*
-| Bulk ops           | [green]*Y* | [red]*N*        | [red]*N*
-| Transactions       | [green]*Y* | [red]*N*        | [red]*N*
-| Listeners          | [green]*Y* | [red]*N*        | [red]*N*
-| Query              | [green]*Y* | [green]*Y*      | [red]*N*
-| Execution          | [green]*Y* | [red]*N*        | [red]*N*
-| Cross-site failover| [green]*Y* | [red]*N*        | [red]*N*
+|                    | Hot Rod    | HTTP / REST     | Memcached   | RESP
+| Topology-aware     | [green]*Y* | [red]*N*        | [red]*N*    | [red]*N*
+| Hash-aware         | [green]*Y* | [red]*N*        | [red]*N*    | [red]*N*
+| Encryption         | [green]*Y* | [green]*Y*      | [red]*N*    | [green]*Y*
+| Authentication     | [green]*Y* | [green]*Y*      | [red]*N*    | [green]*Y*
+| Conditional ops    | [green]*Y* | [green]*Y*      | [green]*Y*  | [red]*N*
+| Bulk ops           | [green]*Y* | [red]*N*        | [red]*N*    | [green]*Y*
+| Transactions       | [green]*Y* | [red]*N*        | [red]*N*    | [red]*N*
+| Listeners          | [green]*Y* | [red]*N*        | [red]*N*    | [green]*Y*
+| Query              | [green]*Y* | [green]*Y*      | [red]*N*    | [red]*N*
+| Execution          | [green]*Y* | [red]*N*        | [red]*N*    | [red]*N*
+| Cross-site failover| [green]*Y* | [red]*N*        | [red]*N*    | [red]*N*
 |============================================================
 endif::community[]
 

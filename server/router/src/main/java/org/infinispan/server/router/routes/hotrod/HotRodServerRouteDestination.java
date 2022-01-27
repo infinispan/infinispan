@@ -30,7 +30,7 @@ public class HotRodServerRouteDestination implements RouteDestination<HotRodServ
          throw new IllegalArgumentException("Name can not be null");
       }
       if (hotrodServer == null) {
-         throw new IllegalArgumentException("Channels can not be null");
+         throw new IllegalArgumentException("Server can not be null");
       }
    }
 }
