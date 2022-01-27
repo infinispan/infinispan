@@ -32,6 +32,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.time.TimeService;
@@ -144,7 +145,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private int segmentCount;
 
    @GuardedBy("lock")
-   private final List<StoreStatus> stores = new ArrayList<>(4);
+   private List<StoreStatus> stores = null;
 
    private <K, V> NonBlockingStore<K, V> getStore(Predicate<StoreStatus> predicate) {
       // We almost always will be doing reads, so optimistic should be faster
@@ -186,7 +187,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       long stamp = lock.writeLock();
       try {
-         Completable storeStartup = Flowable.fromIterable(configuration.persistence().stores())
+         List<StoreConfiguration> configuredStores = configuration.persistence().stores();
+         stores = new ArrayList<>(configuredStores.size());
+         Completable storeStartup = Flowable.fromIterable(configuredStores)
                // We have to ensure stores are started in configured order to ensure the stores map retains that order
                .concatMapSingle(storeConfiguration -> {
                   NonBlockingStore<?, ?> actualStore = storeFromConfiguration(storeConfiguration);
@@ -347,10 +350,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    @Stop
    public void stop() {
+      AggregateCompletionStage<Void> allStage = CompletionStages.aggregateCompletionStage();
       long stamp = lock.writeLock();
       try {
          stopAvailabilityTask();
-         AggregateCompletionStage<Void> allStage = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores) {
             NonBlockingStore<Object, Object> store = storeStatus.store();
             CompletionStage<Void> storeStage;
@@ -362,14 +365,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
             allStage.dependsOn(storeStage);
          }
-
-         // Wait until it completes
-         CompletionStages.join(allStage.freeze());
-         stores.clear();
+         stores = null;
          preloaded = false;
       } finally {
          lock.unlockWrite(stamp);
       }
+      // Wait until it completes
+      CompletionStages.join(allStage.freeze());
    }
 
    private void stopAvailabilityTask() {
@@ -1345,6 +1347,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
       String message = unavailableExceptionMessage;
       if (message != null) {
          throw new StoreUnavailableException(message);
+      }
+
+      // Stores will be null if this is not started or was stopped and not restarted.
+      if (stores == null) {
+         throw new IllegalLifecycleStateException();
       }
    }
 
