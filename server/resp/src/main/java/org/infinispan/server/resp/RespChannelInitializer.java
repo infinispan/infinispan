@@ -24,8 +24,8 @@ public class RespChannelInitializer implements NettyInitializer {
    }
 
    @Override
-   public void initializeChannel(Channel ch) throws Exception {
+   public void initializeChannel(Channel ch) {
       ChannelPipeline pipeline = ch.pipeline();
-      pipeline.addLast(new RespLettuceHandler(respServer.getCache()));
+      pipeline.addLast(new RespLettuceHandler(respServer));
    }
 }

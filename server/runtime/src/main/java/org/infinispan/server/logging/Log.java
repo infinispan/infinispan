@@ -248,4 +248,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "KeyStore definitions without a path must specify a type.", id = 80066)
    CacheConfigurationException filelessKeyStoreRequiresType();
+
+   @Message(value = "The RESP endpoint requires a security realm which supports passwords.", id = 80067)
+   CacheConfigurationException respEndpointRequiresRealmWithPassword();
 }

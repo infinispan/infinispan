@@ -1,0 +1,29 @@
+[id='resp_server']
+:context: resp
+
+= RESP Server
+
+The {brandname} server distribution contains an experimental server module that implements the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3 Protocol]. This allows Redis clients to talk to one or several {brandname} backed RESP servers. These servers can be standalone just like Redis, where each server acts independently and does not communicate with the rest. They can also be clustered, where the servers replicate or distribute their contents to other {brandname} backed RESP servers, providing clients with failover capabilities.
+
+
+== Command Clarification
+
+The RESP Server implements a subset of the Redis commands.
+
+* link:https://redis.io/commands/auth[AUTH]
+* link:https://redis.io/commands/del[DEL]
+* link:https://redis.io/commands/echo[ECHO]
+* link:https://redis.io/commands/get[GET]
+* link:https://redis.io/commands/hello[HELLO]
+* link:https://redis.io/commands/hello[INCR]
+* link:https://redis.io/commands/mget[MGET]
+* link:https://redis.io/commands/mset[MSET]
+* link:https://redis.io/commands/ping[PING]
+* link:https://redis.io/commands/publish[PUBLISH]
+* link:https://redis.io/commands/set[SET]
+* link:https://redis.io/commands/subscribe[SUBSCRIBE]
+
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

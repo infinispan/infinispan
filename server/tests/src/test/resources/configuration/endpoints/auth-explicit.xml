@@ -10,4 +10,7 @@
    <rest-connector>
       <authentication mechanisms="DIGEST BASIC"/>
    </rest-connector>
+   <resp-connector>
+      <authentication security-realm="default"/>
+   </resp-connector>
 </endpoint>

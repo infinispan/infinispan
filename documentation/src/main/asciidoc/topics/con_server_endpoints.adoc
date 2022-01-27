@@ -34,6 +34,15 @@ balancing and failover capabilities. However, HTTP load balancers maintain
 static cluster views and require manual updates when cluster topology changes
 occur.
 
+ifdef::community[]
+== RESP
+
+{brandname} provides an implementation of the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3] protocol.
+
+The RESP connector supports a subset of the Redis commands.
+
+endif::community[]
+
 == Memcached
 
 {brandname} provides an implementation of the Memcached text protocol for

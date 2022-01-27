@@ -330,6 +330,7 @@
                <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element type="tns:resp-connector" name="resp-connector" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="socket-binding" type="xs:string" use="required">
                <xs:annotation>
@@ -469,6 +470,28 @@
             <xs:attribute name="compression-level" type="xs:int" use="optional">
                <xs:annotation>
                   <xs:documentation>Sets the level for compressed requests and responses.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="security-realm" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="resp-connector">
+      <xs:complexContent>
+         <xs:extension base="tns:named-protocol-connector">
+            <xs:all>
+               <xs:element name="authentication" type="tns:resp-authentication" minOccurs="0"/>
+               <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
+            </xs:all>
+            <xs:attribute name="cache" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>Names the cache that the RESP connector exposes. Defaults to respCache.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
@@ -695,6 +718,16 @@
          </xs:simpleType>
       </xs:list>
    </xs:simpleType>
+
+   <xs:complexType name="resp-authentication">
+      <xs:attribute name="security-realm" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>The security realm to use for authentication/authorization purposes. Defaults to none (no
+               authentication).  Deprecated since 12.1. Use the security-realm attribute on the connector instead.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
 
    <xs:complexType name="rest-authentication">
       <xs:attribute name="security-realm" type="xs:string">

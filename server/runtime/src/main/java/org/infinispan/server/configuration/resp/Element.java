@@ -12,7 +12,8 @@ public enum Element {
    UNKNOWN(null),
 
    RESP_CONNECTOR,
-   ;
+   AUTHENTICATION,
+   ENCRYPTION;
 
    private static final Map<String, Element> ELEMENTS;
 

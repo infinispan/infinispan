@@ -3,6 +3,7 @@ package org.infinispan.server.resp.configuration;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.core.configuration.EncryptionConfiguration;
 import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
@@ -25,12 +26,21 @@ public class RespServerConfiguration extends ProtocolServerConfiguration<RespSer
       return new AttributeSet(RespServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet());
    }
 
-   RespServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {
+   private final AuthenticationConfiguration authentication;
+   private final EncryptionConfiguration encryption;
+
+   RespServerConfiguration(AttributeSet attributes, IpFilterConfiguration ipRules, SslConfiguration ssl,
+                           AuthenticationConfiguration authentication, EncryptionConfiguration encryption) {
       super("resp-connector", attributes, ssl, ipRules);
+      this.authentication = authentication;
+      this.encryption = encryption;
    }
 
-   @Override
-   public String toString() {
-      return "RespServerConfiguration [" + attributes + "]";
+   public AuthenticationConfiguration authentication() {
+      return authentication;
+   }
+
+   public EncryptionConfiguration encryption() {
+      return encryption;
    }
 }

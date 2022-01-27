@@ -20,13 +20,15 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
 
    private static final ByteBufAllocator ALLOCATOR = ByteBufAllocator.DEFAULT;
    private final RedisStateMachine stateMachine = new RedisStateMachine(ALLOCATOR);
-
-   private RespRequestHandler requestHandler = Resp3Handler.getInstance();
+   private final RespServer respServer;
+   private RespRequestHandler requestHandler;
 
    private final Cache<byte[], byte[]> cache;
 
-   public RespLettuceHandler(Cache<byte[], byte[]> cache) {
-      this.cache = cache;
+   public RespLettuceHandler(RespServer respServer) {
+      this.respServer = respServer;
+      this.cache = respServer.getCache();
+      this.requestHandler = respServer.getHandler();
    }
 
    @Override
@@ -35,14 +37,13 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
       if (stateMachine.decode(in, pushOutput)) {
          String type = pushOutput.getType();
          List content = pushOutput.getContent();
-         requestHandler = requestHandler.handleRequest(ctx, cache, type, content.subList(1, content.size()));
+         requestHandler = requestHandler.handleRequest(ctx, type, content.subList(1, content.size()));
       }
    }
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      System.err.print("exceptionCaught: ");
-      cause.printStackTrace(System.err);
+      log.error("Exception", cause);
       ctx.writeAndFlush(requestHandler.stringToByteBuf("-ERR Server Error Encountered: " + cause.getMessage() + "\r\n", ctx.alloc()));
       ctx.close();
    }

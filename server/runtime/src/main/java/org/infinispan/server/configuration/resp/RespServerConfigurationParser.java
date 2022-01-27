@@ -9,10 +9,14 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
+import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
+import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
+import org.infinispan.server.resp.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
@@ -62,6 +66,7 @@ public class RespServerConfigurationParser implements ConfigurationParser {
 
    private void parseResp(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder) {
       boolean dedicatedSocketBinding = false;
+      String securityRealm = null;
       EndpointConfigurationBuilder endpoint = serverBuilder.endpoints().current();
       RespServerConfigurationBuilder builder = endpoint.addConnector(RespServerConfigurationBuilder.class);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -83,6 +88,9 @@ public class RespServerConfigurationParser implements ConfigurationParser {
                dedicatedSocketBinding = true;
                break;
             }
+            case SECURITY_REALM: {
+               securityRealm = value;
+            }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }
@@ -91,6 +99,80 @@ public class RespServerConfigurationParser implements ConfigurationParser {
       if (!dedicatedSocketBinding) {
          builder.socketBinding(endpoint.singlePort().socketBinding()).startTransport(false);
       }
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case AUTHENTICATION: {
+               parseAuthentication(reader, serverBuilder, builder.authentication().enable(), securityRealm);
+               break;
+            }
+            case ENCRYPTION: {
+               if (!dedicatedSocketBinding) {
+                  throw Server.log.cannotConfigureProtocolEncryptionUnderSinglePort();
+               }
+               parseEncryption(reader, serverBuilder, builder.encryption(), securityRealm);
+               break;
+            }
+            default: {
+               ServerConfigurationParser.parseCommonConnectorElements(reader, builder);
+            }
+         }
+      }
+   }
+
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, String securityRealmName) {
+      if (securityRealmName == null) {
+         securityRealmName = serverBuilder.endpoints().current().securityRealm();
+      }
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case SECURITY_REALM: {
+               builder.securityRealm(value);
+               securityRealmName = value;
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      ParseUtils.requireNoContent(reader);
+      if (securityRealmName == null) {
+         throw Server.log.authenticationWithoutSecurityRealm();
+      }
+      builder.authenticator(new ElytronRESPAuthenticator(securityRealmName));
+   }
+
+   private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, String securityRealmName) {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         org.infinispan.server.configuration.rest.Attribute attribute = org.infinispan.server.configuration.rest.Attribute.forName(reader.getAttributeName(i));
+         String value = reader.getAttributeValue(i);
+         switch (attribute) {
+            case REQUIRE_SSL_CLIENT_AUTH: {
+               encryption.requireClientAuth(Boolean.parseBoolean(value));
+               break;
+            }
+            case SECURITY_REALM: {
+               securityRealmName = value;
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      if (securityRealmName == null) {
+         throw Server.log.encryptionWithoutSecurityRealm();
+      } else {
+         encryption.realm(securityRealmName).sslContext(serverBuilder.serverSSLContextSupplier(securityRealmName));
+      }
+
       ParseUtils.requireNoContent(reader);
    }
 

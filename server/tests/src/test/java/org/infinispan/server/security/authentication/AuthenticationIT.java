@@ -1,8 +1,8 @@
 package org.infinispan.server.security.authentication;
 
+import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.core.category.Security;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -13,7 +13,7 @@ import org.junit.runners.Suite;
  * @since 10.0
  **/
 @RunWith(Suite.class)
-@Suite.SuiteClasses({HotRodAuthentication.class, RestAuthentication.class})
+@Suite.SuiteClasses({HotRodAuthentication.class, RestAuthentication.class, RespAuthentication.class})
 @Category(Security.class)
 public class AuthenticationIT {
 
