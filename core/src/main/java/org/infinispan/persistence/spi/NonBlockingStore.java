@@ -45,7 +45,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * <p>
  * Although recommended, segmentation support in store implementations is optional. Segment parameters are provided
  * for all methods where segment information is required, for example {@link #load(int, Object)} and
- * {@link #publishEntries(IntSet, Predicate, boolean). If your store implementation does not support segmentation,
+ * {@link #publishEntries(IntSet, Predicate, boolean)}. If your store implementation does not support segmentation,
  * you can ignore these parameters. However, you should note that segmented stores allow Infinispan caches to more
  * efficiently perform bulk operations such as {@code Cache.size()} or {@code Cache.entrySet().stream()}. Segmentation
  * also decreases the duration of state transfers when {@link PersistenceConfiguration#fetchPersistentState()} is enabled,
@@ -54,14 +54,14 @@ import io.reactivex.rxjava3.core.Flowable;
  * implementations can determine if stores are configured to be segmented if {@link StoreConfiguration#segmented()} is
  * enabled, which is available from the {@code InitializationContext}.
  * <p>
- * Store implementations might need to interact with blocking APIs to perform their required operations. However the invoking
+ * Store implementations might need to interact with blocking APIs to perform their required operations. However, the invoking
  * thread must never be blocked, so Infinispan provides a {@link org.infinispan.util.concurrent.BlockingManager} utility class
  * that handles blocking operations to ensure that they do not leak into the internal system. {@code BlockingManager} does this
  * by running any blocking operations on blocking threads, while any stages continue on non-blocking threads.
  * <p>
  * This utility class provides different methods that range from equivalents for commonly used methods, such as
  * {@link java.util.concurrent.CompletableFuture#supplyAsync(Supplier, Executor)}, to a wrapper around a {@link Publisher} that
- * ensures it is subscribed and obversed on the correct threads. To obtain a {@code BlockingManager}, invoke the
+ * ensures it is subscribed and observed on the correct threads. To obtain a {@code BlockingManager}, invoke the
  * {@link InitializationContext#getBlockingManager()} method on the provided context in the start method.
  * <p>
  * Implementations of this store must be thread safe if concurrent operations are performed on it. The one exception
@@ -221,9 +221,9 @@ public interface NonBlockingStore<K, V> {
     * that may become unreachable. This can reduce sending requests to a store that is not available, as subsequent cache
     * requests will result in a {@link StoreUnavailableException} being thrown until the store becomes available again.
     * <p>
-    * Store availability is is polled periodically to update the status of stores if their availability changes. This method
+    * Store availability is polled periodically to update the status of stores if their availability changes. This method
     * is not invoked concurrently with itself. In other words, this method is not invoked until after the previous stage
-    * has completed. However this method is invoked concurrently with other operations, except for
+    * has completed. However, this method is invoked concurrently with other operations, except for
     * {@link #start(InitializationContext)} and {@link #stop()}.
     * <p>
     If a store is configured to be {@link StoreConfiguration#async()} and the store becomes unavailable, then it is
@@ -241,8 +241,8 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Returns a stage that will contain the value loaded from the store. If a {@link MarshallableEntry} needs to be
-    * created here, {@link InitializationContext#getMarshallableEntryFactory()} ()} and {@link
-    * InitializationContext#getByteBufferFactory()} should be used.
+    * created here, {@link InitializationContext#getMarshallableEntryFactory()} and
+    * {@link InitializationContext#getByteBufferFactory()} should be used.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -478,8 +478,8 @@ public interface NonBlockingStore<K, V> {
     * deadlock. Many reactive tools have methods such as {@code flatMap} that take an argument of how many concurrent
     * subscriptions it manages, which is perfectly matched with this argument.
     * <p>
-    * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both the write
-    * and remove Publisher are subscribed to. These Publishers should also be only subscribed to once.
+    * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both write
+    * and remove Publishers are subscribed to. These Publishers should also be only subscribed once.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -605,7 +605,7 @@ public interface NonBlockingStore<K, V> {
     * Publishes entries from this store that are in one of the provided segments and also pass the provided filter.
     * The returned publisher must support being subscribed to any number of times. That is subsequent invocations of
     * {@link Publisher#subscribe(Subscriber)} should provide independent views of the underlying entries to the Subscribers.
-    * Entries should not retrieved until a given Subscriber requests them via the
+    * Entries should not be retrieved until a given Subscriber requests them via the
     * {@link org.reactivestreams.Subscription#request(long)} method.
     * <p>
     * Subscribing to the returned {@link Publisher} should not block the invoking thread. It is the responsibility of
@@ -635,8 +635,8 @@ public interface NonBlockingStore<K, V> {
     *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
-    * @param segments a set of segments to filter entries by. This will always be non null.
-    * @param filter a filter to filter they keys by. If this is null then no additional filtering should be done after segments.
+    * @param segments a set of segments to filter entries by. This will always be non-null.
+    * @param filter a filter to filter the keys by. If this is null then no additional filtering should be done after segments.
     * @return a publisher that provides the keys from the store.
     */
    default Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
@@ -647,14 +647,14 @@ public interface NonBlockingStore<K, V> {
     * Publishes keys from this store that are in one of the provided segments and also pass the provided filter.
     * The returned publisher must support being subscribed to any number of times. That is subsequent invocations of
     * {@link Publisher#subscribe(Subscriber)} should provide independent views of the underlying keys to the Subscribers.
-    * Keys should not retrieved until a given Subscriber requests them via the
+    * Keys should not be retrieved until a given Subscriber requests them via the
     * {@link org.reactivestreams.Subscription#request(long)} method.
     * <p>
     * Subscribing to the returned {@link Publisher} should not block the invoking thread. It is the responsibility of
     * the store implementation to ensure this occurs. If however the store must block to perform an operation it
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
-    * subscription and observation on the blocking and non blocking executors respectively.
+    * subscription and observation on the blocking and non-blocking executors respectively.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -682,8 +682,8 @@ public interface NonBlockingStore<K, V> {
     * A default implementation is provided that invokes {@link #publishEntries(IntSet, Predicate, boolean)} and
     * maps the {@link MarshallableEntry} to its key.
     * </pre>
-    * @param segments a set of segments to filter keys by. This will always be non null.
-    * @param filter a filter to filter they keys by. If this is null then no additional filtering should be done after segments.
+    * @param segments a set of segments to filter keys by. This will always be non-null.
+    * @param filter a filter to filter the keys by. If this is null then no additional filtering should be done after segments.
     * @return a publisher that provides the keys from the store.
     */
    default Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
@@ -702,7 +702,7 @@ public interface NonBlockingStore<K, V> {
     * the store implementation to ensure this occurs. If however the store must block to perform an operation it
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
-    * subscription and observation on the blocking and non blocking executors respectively.
+    * subscription and observation on the blocking and non-blocking executors respectively.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
@@ -734,8 +734,8 @@ public interface NonBlockingStore<K, V> {
     * deadlock. Many reactive tools have methods such as {@code flatMap} that take an argument of how many concurrent
     * subscriptions it manages, which is perfectly matched with this argument.
     * <p>
-    * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both the write
-    * and remove Publisher are subscribed to. These Publishers should also be only subscribed to once.
+    * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both write
+    * and remove Publishers are subscribed to. These Publishers should also be only subscribed once.
     * <p>
     * <h4>Summary of Characteristics Effects</h4>
     * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
