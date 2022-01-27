@@ -48,7 +48,6 @@ import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -272,7 +271,6 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          local.administration().removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
          assertFalse(passivate.get());
-         assertEquals(-1, CompletionStages.join(actual.size()).intValue());
       } finally {
          TestingUtil.killCacheManagers(local);
       }
