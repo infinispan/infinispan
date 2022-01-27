@@ -72,6 +72,11 @@
          <artifactId>antlr-runtime</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>io.lettuce</groupId>
+         <artifactId>lettuce-core</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <!-- Database test dependencies -->
       <dependency>

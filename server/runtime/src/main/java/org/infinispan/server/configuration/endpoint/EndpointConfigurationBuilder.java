@@ -18,7 +18,9 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -116,6 +118,8 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                enableImplicitAuthentication(securityConfiguration, securityRealm(), (HotRodServerConfigurationBuilder) builder);
             } else if (builder instanceof RestServerConfigurationBuilder) {
                enableImplicitAuthentication(securityConfiguration, securityRealm(), (RestServerConfigurationBuilder) builder);
+            } else if (builder instanceof RespServerConfigurationBuilder) {
+               enableImplicitAuthentication(securityConfiguration, securityRealm(), (RespServerConfigurationBuilder) builder);
             }
          }
          connectors.add(builder.create());
@@ -244,6 +248,20 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             }
          }
          authentication.authenticator(new ElytronHTTPAuthenticator(authentication.securityRealm(), serverPrincipal, authentication.mechanisms()));
+      }
+   }
+
+   private void enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RespServerConfigurationBuilder builder) {
+      // Set the security realm only if it has not been set already
+      org.infinispan.server.resp.configuration.AuthenticationConfigurationBuilder authentication = builder.authentication();
+      if (!authentication.hasSecurityRealm()) {
+         authentication.securityRealm(securityRealmName);
+      }
+      ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
+      if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD)) {
+         authentication.authenticator(new ElytronRESPAuthenticator(authentication.securityRealm()));
+      } else {
+         throw Server.log.respEndpointRequiresRealmWithPassword();
       }
    }
 }

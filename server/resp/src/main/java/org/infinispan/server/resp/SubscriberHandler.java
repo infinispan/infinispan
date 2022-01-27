@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.notifications.Listener;
@@ -26,6 +25,13 @@ import io.netty.util.CharsetUtil;
 public class SubscriberHandler implements RespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    public static final byte[] PREFIX_CHANNEL_BYTES = new byte[]{-114, 16, 78, -3, 127};
+   private final Resp3Handler handler;
+   private final RespServer respServer;
+
+   public SubscriberHandler(RespServer respServer) {
+      this.respServer = respServer;
+      this.handler = respServer.getHandler();
+   }
 
    public static byte[] keyToChannel(byte[] keyBytes) {
       byte[] result = new byte[keyBytes.length + PREFIX_CHANNEL_BYTES.length];
@@ -70,8 +76,9 @@ public class SubscriberHandler implements RespRequestHandler {
    Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
 
    @Override
-   public RespRequestHandler handleRequest(ChannelHandlerContext ctx, Cache<byte[], byte[]> cache, String type,
-         List<byte[]> arguments) {
+   public RespRequestHandler handleRequest(ChannelHandlerContext ctx, String type,
+                                       List<byte[]> arguments) {
+
       switch (type) {
          case "SUBSCRIBE":
             for (byte[] keyChannel : arguments) {
@@ -83,7 +90,7 @@ public class SubscriberHandler implements RespRequestHandler {
                   PubSubListener pubSubListener = new PubSubListener(ctx.channel());
                   specificChannelSubscribers.put(wrappedByteArray, pubSubListener);
                   byte[] channel = keyToChannel(keyChannel);
-                  cache.addListenerAsync(pubSubListener, (key, prevValue, prevMetadata, value, metadata, eventType) ->
+                  respServer.getCache().addListenerAsync(pubSubListener, (key, prevValue, prevMetadata, value, metadata, eventType) ->
                      Arrays.equals((key), channel), null)
                         .whenComplete((ignore, t) -> {
                            if (t != null) {
@@ -104,14 +111,14 @@ public class SubscriberHandler implements RespRequestHandler {
          case "UNSUBSCRIBE":
             if (arguments.size() == 0) {
                for (PubSubListener listener : specificChannelSubscribers.values()) {
-                  cache.removeListenerAsync(listener);
+                  respServer.getCache().removeListenerAsync(listener);
                }
             } else {
                for (byte[] keyChannel : arguments) {
                   WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
                   PubSubListener listener = specificChannelSubscribers.remove(wrappedByteArray);
                   if (listener != null) {
-                     cache.removeListenerAsync(listener)
+                     respServer.getCache().removeListenerAsync(listener)
                            .whenComplete((ignore, t) -> {
                               if (t != null) {
                                  log.warnf("There was an error removing listener for channel %s",
@@ -129,13 +136,13 @@ public class SubscriberHandler implements RespRequestHandler {
             break;
          case "PING":
             // Note we don't return the handler and just use it to handle the ping
-            Resp3Handler.getInstance().handleRequest(ctx, cache, type, arguments);
+            handler.handleRequest(ctx, type, arguments);
             break;
          case "RESET":
             for (PubSubListener listener : specificChannelSubscribers.values()) {
-               cache.removeListenerAsync(listener);
+               respServer.getCache().removeListenerAsync(listener);
             }
-            return Resp3Handler.getInstance().handleRequest(ctx, cache, type, arguments);
+            return handler.handleRequest(ctx, type, arguments);
          case "QUIT":
             ctx.close();
             break;
@@ -144,7 +151,7 @@ public class SubscriberHandler implements RespRequestHandler {
             ctx.writeAndFlush(stringToByteBuf("-ERR not implemented yet" + "\r\n", ctx.alloc()));
             break;
          default:
-            return RespRequestHandler.super.handleRequest(ctx, cache, type, arguments);
+            return RespRequestHandler.super.handleRequest(ctx, type, arguments);
       }
       return this;
    }

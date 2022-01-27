@@ -2,7 +2,10 @@ package org.infinispan.server.resp.configuration;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
+import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.resp.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * RespServerConfigurationBuilder.
@@ -12,6 +15,10 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  */
 public class RespServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RespServerConfiguration, RespServerConfigurationBuilder> implements
       Builder<RespServerConfiguration> {
+   final static Log logger = LogFactory.getLog(RespServerConfigurationBuilder.class, Log.class);
+
+   private final AuthenticationConfigurationBuilder authentication =  new AuthenticationConfigurationBuilder(this);
+   private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
    public RespServerConfigurationBuilder() {
       super(RespServerConfiguration.DEFAULT_RESP_PORT, RespServerConfiguration.attributeDefinitionSet());
@@ -38,9 +45,17 @@ public class RespServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   public AuthenticationConfigurationBuilder authentication() {
+      return authentication;
+   }
+
+   public EncryptionConfigurationBuilder encryption() {
+      return encryption;
+   }
+
    @Override
    public RespServerConfiguration create() {
-      return new RespServerConfiguration(attributes.protect(), ssl.create(), ipFilter.create());
+      return new RespServerConfiguration(attributes.protect(), ipFilter.create(), ssl.create(), authentication.create(), encryption.create());
    }
 
    public RespServerConfiguration build(boolean validate) {
@@ -58,6 +73,8 @@ public class RespServerConfigurationBuilder extends ProtocolServerConfigurationB
    @Override
    public Builder<?> read(RespServerConfiguration template) {
       super.read(template);
+      this.authentication.read(template.authentication());
+      this.encryption.read(template.encryption());
       return this;
    }
 }

@@ -85,6 +85,8 @@ import org.infinispan.server.datasource.DataSourceFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.logging.Log;
+import org.infinispan.server.resp.RespServer;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.infinispan.server.router.router.impl.singleport.SinglePortEndpointRouter;
@@ -92,9 +94,11 @@ import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
+import org.infinispan.server.router.routes.resp.RespServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
@@ -431,6 +435,8 @@ public class Server implements ServerManagement, AutoCloseable {
                      ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                   } else if (configuration instanceof RestServerConfiguration) {
                      ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
+                  } else if (configuration instanceof RespServerConfiguration) {
+                     ElytronRESPAuthenticator.init((RespServerConfiguration)configuration, serverConfiguration, blockingManager);
                   }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cacheManager);
@@ -443,6 +449,8 @@ public class Server implements ServerManagement, AutoCloseable {
                         extensions.apply((HotRodServer) protocolServer);
                      } else if (protocolServer instanceof RestServer) {
                         routes.add(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)));
+                     } else if (protocolServer instanceof RespServer) {
+                        routes.add(new Route<>(routeSource, new RespServerRouteDestination(protocolServer.getName(), (RespServer) protocolServer)));
                      }
                      log.protocolStarted(protocolServer.getName());
                   }

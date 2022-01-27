@@ -20,6 +20,7 @@ import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.router.EndpointRouter;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
+import org.infinispan.server.router.routes.resp.RespServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 
@@ -108,6 +109,10 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
       routingTable.streamRoutes(SinglePortRouteSource.class, HotRodServerRouteDestination.class)
             .findFirst()
             .ifPresent(r -> upgradeServers.put("HR", r.getRouteDestination().getProtocolServer()));
+
+      routingTable.streamRoutes(SinglePortRouteSource.class, RespServerRouteDestination.class)
+            .findFirst()
+            .ifPresent(r -> upgradeServers.put("RP", r.getRouteDestination().getProtocolServer()));
 
       SinglePortChannelInitializer restChannelInitializer = new SinglePortChannelInitializer(this, transport, restServer, upgradeServers);
       return new NettyInitializers(restChannelInitializer);

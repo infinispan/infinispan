@@ -12,6 +12,7 @@ public enum Attribute {
 
    CACHE,
    NAME,
+   SECURITY_REALM,
    SOCKET_BINDING;
 
    private static final Map<String, Attribute> ATTRIBUTES;
