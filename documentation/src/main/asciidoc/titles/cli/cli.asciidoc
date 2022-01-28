@@ -16,7 +16,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: cli
 
 //Title
-= Using the {brandname} Command Line Interface
+= Using the Infinispan Command Line Interface
+
+Connect to Infinispan Server with the Command Line Interface (CLI) to access data and perform administrative operations such as creating users, installing dependencies, and more.
 
 //User stories
 include::stories.adoc[]
