@@ -15,7 +15,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= {brandname} Hot Rod Protocol Reference
+= Hot Rod protocol reference
+
+Review the Hot Rod reference for detailed information about each version of the binary TCP protocol.
 
 //User stories
 include::stories.adoc[]
