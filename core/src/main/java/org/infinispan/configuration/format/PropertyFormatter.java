@@ -60,7 +60,7 @@ public final class PropertyFormatter {
          for (Method m : c.getDeclaredMethods()) {
             if (Modifier.isPublic(m.getModifiers())
                   && !Modifier.isStatic(m.getModifiers())
-                  && m.getParameters().length == 0
+                  && m.getParameterCount() == 0
                   && !m.isAnnotationPresent(Deprecated.class)
                   && !"hashCode".equals(m.getName())
                   && !"toString".equals(m.getName())
