@@ -1,0 +1,18 @@
+[id='distributed-memory_{context}']
+= Distributed memory
+
+{brandname} uses consistent hashing techniques to store a fixed number of copies of each entry in the cache across the cluster.
+Distributed caches allow you to scale the data layer linearly, increasing capacity as nodes join.
+
+Distributed caches add redundancy to {brandname} clusters to provide fault tolerance and durability guarantees.
+{brandname} deployments typically configure integration with persistent storage to preserve cluster state for graceful shutdowns and restore from backup.
+
+.Distributed caches
+//Community content
+ifdef::community[]
+image::distributed-cache.svg[{brandname} cluster of three nodes that replicates entries across nodes in a distributed way.]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+image::distributed-cache.png[{brandname} cluster of three nodes that replicates entries across nodes in a distributed way.]
+endif::downstream[]
