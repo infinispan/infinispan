@@ -1,0 +1,16 @@
+//This topic is intended as downstream only content.
+[id='platform-automation_{context}']
+= Platforms and automation tooling
+
+Achieving the desired quality of service means providing {brandname} with optimal CPU and RAM resources.
+Too few resources downgrades {brandname} performance while using excessive amounts of host resources can quickly increase costs.
+
+While you benchmark and tune {brandname} clusters to find the right allocation of CPU or RAM, you should also consider which host platform provides the right kind of automation tooling to scale clusters and manage resources efficiently.
+
+.{openshift}
+
+Take advantage of Kubernetes orchestration to automatically provision pods, impose limits on resources, and automatically scale {brandname} clusters to meet workload demands.
+
+.{rhel-long}
+
+Couple {rhel-short}, or Microsoft Windows, with Red Hat Ansible to manage {brandname} configuration and poll services to ensure availability and achieve optimal resource usage.

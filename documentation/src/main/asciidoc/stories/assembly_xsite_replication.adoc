@@ -2,12 +2,9 @@
 :context: cross-site-replication
 = Cross-site replication
 
-Replicate data across {brandname} clusters in multiple geographic regions to:
+This section explains {brandname} cross-site replication capabilities, including details about relay nodes, state transfer, and client connections for remote caches.
 
-* Ensure service continuity in the event of data center outages.
-* Present a single, unified caching service to client applications that consists of different clusters across multiple host platforms.
-
-include::{topics}/con_xsite_replication.adoc[leveloffset=+1]
+include::{topics}/con_cross_site_replication.adoc[leveloffset=+1]
 include::{topics}/con_xsite_relay_nodes.adoc[leveloffset=+1]
 include::{topics}/con_xsite_backup_locations.adoc[leveloffset=+1]
 include::{topics}/con_xsite_backup_strategies.adoc[leveloffset=+1]

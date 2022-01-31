@@ -58,6 +58,8 @@
 
 :keycloak: KeyCloak
 :wildflybrandname: WildFly
+:tomcatbrandname: Apache Tomcat
+:quarkusbrandname: Quarkus
 
 //
 // Path to CLI Help
