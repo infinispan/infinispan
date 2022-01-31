@@ -1,0 +1,18 @@
+[id='cross-site-replication_{context}']
+= Cross-site replication
+
+{brandname} can back up data between clusters running in geographically dispersed data centers and across different cloud providers.
+Cross-site replication provides {brandname} with a global cluster view and:
+
+* Guarantees service continuity in the event of outages or disasters.
+* Presents client applications with a single point of access to data in globally distributed caches.
+
+.Cross-site replication
+//Community content
+ifdef::community[]
+image::cross-site-replication.svg[Cross-site replication with a {brandname} deployment.]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+image::cross-site-replication.png[Cross-site replication with a {brandname} deployment.]
+endif::downstream[]

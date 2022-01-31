@@ -1,0 +1,20 @@
+[id='session-externalization_{context}']
+= Session externalization
+
+{brandname} can provide external caches for applications built on {quarkusbrandname}, {wildflybrandname}, {tomcatbrandname}, and Spring.
+These external caches store HTTP sessions and other data independently of the application layer.
+
+Externalizing sessions to {brandname} gives you the following benefits:
+
+Elasticity:: Eliminate the need for rebalancing operations when scaling applications.
+Smaller memory footprints:: Storing session data in external caches reduces overall memory requirements for applications.
+
+.Session externalization
+//Community content
+ifdef::community[]
+image::session-externalization.svg[{brandname} cluster that offloads session data from applications.]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+image::session-externalization.png[{brandname} cluster that offloads session data from applications.]
+endif::downstream[]
