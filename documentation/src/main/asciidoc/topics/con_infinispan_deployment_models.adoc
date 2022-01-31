@@ -1,0 +1,31 @@
+[id='deployment-models_{context}']
+= {brandname} deployment models
+
+{brandname} has two deployment models for caches, remote and embedded.
+Both deployment models allow applications to access data with significantly lower latency for read operations and higher throughput for write operations in comparison with traditional database systems.
+
+Remote caches:: {brandname} Server nodes run in a dedicated Java Virtual Machine (JVM). Clients access remote caches using either Hot Rod, a binary TCP protocol, or REST over HTTP.
+
+Embedded caches:: {brandname} runs in the same JVM as your Java application, meaning that data is stored in the memory space where code is executed.
+
+//Downstream content
+ifdef::downstream[]
+Red Hat recommends a server/client architecture for the majority of deployments.
+Time to deployment is much faster with remote caches because the data layer is separated from business logic.
+{brandname} Server also provides monitoring and observability and other built-in capabilities to help you lower development costs.
+endif::downstream[]
+
+.Near-caching
+
+Near-caching capabilities allow remote clients to store data locally, which means read-intensive applications do not need to traverse the network with each call.
+Near-caching significantly increases speed of read operations and achieves the same performance as an embedded cache.
+
+.Remote cache deployment model
+//Community content
+ifdef::community[]
+image::remote-caches.svg[A {brandname} cluster of four server nodes with remote caches that allow applications to perform read and write operations through remote clients.]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+image::remote-caches.png[A {brandname} cluster of four server nodes with remote caches that allow applications to perform read and write operations through remote clients.]
+endif::downstream[]
