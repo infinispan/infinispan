@@ -1,0 +1,19 @@
+[id='in-line-caching_{context}']
+= In-line caching
+
+{brandname} handles all application requests for data that resides in persistent storage.
+
+With in-line caches, {brandname} uses cache loaders and cache stores to operate on data in persistent storage.
+
+* Cache loaders provide read-only access to persistent storage.
+* Cache stores provide read and write access to persistent storage.
+
+.In-line caches
+//Community content
+ifdef::community[]
+image::in-line-cache.svg[{brandname} clusters that use cache loaders and cache stores to handle all application requests for data in persistent storage.]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+image::in-line-cache.png[{brandname} clusters that use cache loaders and cache stores to handle all application requests for data in persistent storage.]
+endif::downstream[]

@@ -1,0 +1,22 @@
+[id='side-caching_{context}']
+= Side caching
+
+{brandname} stores data that applications retrieve from persistent storage, which reduces the number of read operations to persistent storage and increases response times for subsequent reads.
+
+.Side caches
+//Community content
+ifdef::community[]
+image::side-cache.svg[{brandname} side cache to which applications write to avoid repeatedly reading the same entries from persistent storage.]
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+image::side-cache.png[{brandname} side cache to which applications write to avoid repeatedly reading the same entries from persistent storage.]
+endif::downstream[]
+
+With side caches, applications control how data is added to {brandname} clusters from persistent storage.
+When an application requests an entry, the following occurs:
+
+. The read request goes to {brandname}.
+. If the entry is not in the cache, the application requests it from persistent storage.
+. The application puts the entry in the cache.
+. The application retrieves the entry from {brandname} on the next read.
