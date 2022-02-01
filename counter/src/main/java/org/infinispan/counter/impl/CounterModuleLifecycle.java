@@ -84,13 +84,14 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       return config == null ? CounterManagerConfigurationBuilder.defaultConfiguration() : config;
    }
 
-   private static void registerCounterManager(EmbeddedCacheManager cacheManager, BasicComponentRegistry registry) {
+   private static void registerCounterManager(EmbeddedCacheManager cacheManager, BasicComponentRegistry registry,
+                                              GlobalConfiguration globalConfiguration) {
       if (log.isTraceEnabled())
          log.tracef("Registering counter manager.");
       EmbeddedCounterManager counterManager = new EmbeddedCounterManager(cacheManager);
       // This must happen before CacheManagerJmxRegistration starts
       registry.registerComponent(CounterManager.class, counterManager, true);
-      if (cacheManager.getCacheManagerConfiguration().jmx().enabled()) {
+      if (globalConfiguration.jmx().enabled()) {
          try {
             CacheManagerJmxRegistration jmxRegistration = registry.getComponent(CacheManagerJmxRegistration.class).running();
             jmxRegistration.registerMBean(counterManager);
@@ -140,7 +141,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          //local only cache manager.
          registerLocalCounterCache(internalCacheRegistry);
       }
-      registerCounterManager(cacheManager, bcr);
+      registerCounterManager(cacheManager, bcr, globalConfiguration);
    }
 
    @Override
