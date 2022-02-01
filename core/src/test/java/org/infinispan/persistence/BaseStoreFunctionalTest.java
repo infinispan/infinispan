@@ -378,6 +378,11 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       }
 
       @Override
+      public void start() {
+         // Do nothing, the actual PersistenceManager is already started when it is wrapped
+      }
+
+      @Override
       public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
             Predicate<? super StoreConfiguration> predicate) {
          passivate.set(true);
