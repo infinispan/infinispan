@@ -65,6 +65,11 @@
 :cli_help: ../../../../../cli/src/main/resources/help/
 
 //
+// Simple tutorial root
+//
+:code_tutorials_root: https://github.com/infinispan/infinispan-simple-tutorials/tree/main
+
+//
 // Titles
 //
 
