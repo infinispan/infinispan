@@ -39,6 +39,7 @@ import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryCon
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.sql.configuration.AbstractSchemaJdbcConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
@@ -156,7 +157,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       String cacheName = "testRollback";
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), cacheName, false);
-      cacheManager.defineConfiguration(cacheName, cb.build());
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
 
       Cache<String, Object> cache = cacheManager.getCache(cacheName);
 
@@ -264,7 +265,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    private void testSimpleGetAndPut(String cacheName, Object key, Object value) {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), cacheName, false);
-      cacheManager.defineConfiguration(cacheName, cb.build());
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
 
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
 

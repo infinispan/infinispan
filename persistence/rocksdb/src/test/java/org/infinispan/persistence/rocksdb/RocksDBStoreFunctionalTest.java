@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
-import org.rocksdb.RocksDBException;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -40,14 +40,13 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    }
 
    public void testUnknownProperties() {
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.read(cacheManager.getDefaultCacheConfiguration());
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
       new File(tmpDirectory).mkdirs();
       RocksDBStoreConfigurationBuilder storeConfigurationBuilder = createStoreBuilder(cb.persistence());
       storeConfigurationBuilder.addProperty(RocksDBStore.DATABASE_PROPERTY_NAME_WITH_SUFFIX + "unknown", "some_value");
       Configuration c = cb.build();
       String cacheName = "rocksdb-unknown-properties";
-      cacheManager.defineConfiguration(cacheName, c);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, c);
 
       try {
          cacheManager.getCache(cacheName);
@@ -60,12 +59,11 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
       }
 
       // Stop the cache manager early, otherwise cleanup won't work properly
-      cacheManager.stop();
+      TestingUtil.killCacheManagers(cacheManager);
    }
 
-   public void testKnownProperties() throws RocksDBException {
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.read(cacheManager.getDefaultCacheConfiguration());
+   public void testKnownProperties() {
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
       new File(tmpDirectory).mkdirs();
       RocksDBStoreConfigurationBuilder storeConfigurationBuilder = createStoreBuilder(cb.persistence());
       String dbOptionName = "max_background_compactions";
@@ -78,7 +76,7 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
       Configuration c = cb.build();
       String cacheName = "rocksdb-known-properties";
-      cacheManager.defineConfiguration(cacheName, c);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, c);
 
       // No easy way to ascertain if options are set, however if cache starts up it must have applied them,
       // since otherwise this will fail like the unkonwn properties method
