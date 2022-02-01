@@ -12,7 +12,6 @@
         <size>SELECT COUNT(*) FROM Person</size>
       </queries>
       <schema message-name="Person"
-              key-message-name="PersonID"
               package="com.example"
               embedded-key="true"/>
     </query-jdbc-store>
