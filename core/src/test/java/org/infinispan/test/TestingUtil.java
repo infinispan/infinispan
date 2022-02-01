@@ -1978,4 +1978,8 @@ public class TestingUtil {
             .groupBy(e -> keyPartitioner.getSegment(toKeyFunction.apply(e)))
             .map(SegmentPublisherWrapper::wrap);
    }
+
+   public static void defineConfiguration(EmbeddedCacheManager cacheManager, String cacheName, Configuration configuration) {
+      SecurityActions.defineConfiguration(cacheManager, cacheName, configuration);
+   }
 }
