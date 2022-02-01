@@ -54,7 +54,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @Start
    void start() {
-      setStatisticsEnabled(cm.getCacheManagerConfiguration().statistics());
+      setStatisticsEnabled(SecurityActions.getCacheManagerConfiguration(cm).statistics());
    }
 
    @Override
