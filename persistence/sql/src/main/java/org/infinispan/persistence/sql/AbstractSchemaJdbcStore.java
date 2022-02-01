@@ -64,8 +64,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       assert Arrays.stream(primaryParameters).allMatch(Parameter::isPrimaryIdentifier);
 
       // We have to use the user serialization context as it will have the schemas they registered
-      ImmutableSerializationContext serializationContext = ctx.getCache().getCacheManager().getGlobalComponentRegistry()
-            .getComponent(SerializationContextRegistry.class).getUserCtx();
+      ImmutableSerializationContext serializationContext = componentRegistry.getComponent(SerializationContextRegistry.class).getUserCtx();
 
       ProtoSchemaOptions<K, V, C> options = verifySchemaAndCreateOptions(serializationContext,
             config.getSchemaJdbcConfiguration(), parameters, primaryParameters, keyDataConversion, valueDataConversion,
