@@ -23,13 +23,13 @@ import org.reactivestreams.Publisher;
 import io.reactivex.rxjava3.core.Flowable;
 
 public class PassivationPersistenceManager extends DelegatingPersistenceManager {
-   public PassivationPersistenceManager(PersistenceManager persistenceManager) {
-      super(persistenceManager);
-   }
-
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final ConcurrentMap<Object, MarshallableEntry> map = new ConcurrentHashMap<>();
+
+   public PassivationPersistenceManager(PersistenceManager persistenceManager) {
+      super(persistenceManager);
+   }
 
    public CompletionStage<Void> passivate(MarshallableEntry marshallableEntry, int segment) {
       Object key = marshallableEntry.getKey();
