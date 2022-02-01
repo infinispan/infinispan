@@ -31,17 +31,19 @@ import io.reactivex.rxjava3.core.Flowable;
 public class DelegatingPersistenceManager implements PersistenceManager, Lifecycle {
    protected final PersistenceManager persistenceManager;
 
-   @Inject
-   protected ComponentRegistry componentRegistry;
-
    public DelegatingPersistenceManager(PersistenceManager persistenceManager) {
       this.persistenceManager = persistenceManager;
+   }
+
+
+   @Inject
+   void inject (ComponentRegistry componentRegistry) {
+      componentRegistry.wireDependencies(persistenceManager, false);
    }
 
    @Start
    @Override
    public void start() {
-      componentRegistry.wireDependencies(persistenceManager);
       persistenceManager.start();
    }
 
@@ -50,7 +52,6 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    public void stop() {
       persistenceManager.stop();
    }
-
 
    public PersistenceManager getActual() {
       return persistenceManager;
