@@ -4,11 +4,13 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.DefineConfigurationAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
@@ -47,5 +49,9 @@ final class SecurityActions {
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
+   }
+
+   static void defineConfiguration(final EmbeddedCacheManager cacheManager, final String cacheName, final Configuration configurationOverride) {
+      doPrivileged(new DefineConfigurationAction(cacheManager, cacheName, configurationOverride));
    }
 }
