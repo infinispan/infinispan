@@ -22,6 +22,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.dataconversion.xml.XStreamEngine;
 import org.infinispan.server.core.logging.Log;
 
+import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
 import com.thoughtworks.xstream.security.ForbiddenClassException;
 import com.thoughtworks.xstream.security.NoTypePermission;
@@ -35,7 +36,7 @@ public class XMLTranscoder extends OneToManyTranscoder {
 
    private static final Log logger = LogFactory.getLog(XMLTranscoder.class, Log.class);
 
-   private final XStreamEngine xstream = new XStreamEngine();
+   private final XStreamEngine xstream;
 
    public XMLTranscoder() {
       this(XMLTranscoder.class.getClassLoader(), new ClassAllowList(Collections.emptyList()));
@@ -47,9 +48,11 @@ public class XMLTranscoder extends OneToManyTranscoder {
 
    public XMLTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
       super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
+      xstream = new XStreamEngine();
       xstream.addPermission(NoTypePermission.NONE);
       xstream.addPermission(type -> allowList.isSafeClass(type.getName()));
       xstream.setClassLoader(classLoader);
+      xstream.setMode(XStream.NO_REFERENCES);
    }
 
    @Override
