@@ -1,27 +1,40 @@
 [id='registering-sci-remote-caches_{context}']
 = Registering Protobuf schemas with {brandname} Server
 
-You must register Protobuf schemas with {brandname} Server if you want to perform Ickle queries or convert from `application/x-protostream` to other media types such as `application/json`.
+Register Protobuf schemas with {brandname} Server to perform Ickle queries or convert from `application/x-protostream` to other media types such as `application/json`.
 
 .Prerequisites
 
-* Generate a `SerializationContextInitializer` implementation with the ProtoStream processor.
+* Generate Protobuf schema with the ProtoStream processor.
 +
-After the build completes, you can find generated Protobuf schema in the `target/<schemaFilePath>/` directory.
-
-.Procedure
-
-Do one of the following to register your generated Protobuf schema with {brandname} Server:
-
-* Add the generated Protobuf schema to the dedicated `___protobuf_metadata` cache with the {brandname} command line interface (CLI), REST interface, or `ProtobufMetadataManager` JMX MBean.
-+
-This method ensures that {brandname} automatically distributes your schema across the cluster.
+You can find generated Protobuf schema in the `target/<schemaFilePath>/` directory.
+* Have a user with `CREATE` permissions.
 +
 [NOTE]
 ====
-If you enable security authorization for caches, users must have the `CREATE` permission to add schemas to the `___protobuf_metadata` cache.
-Assign users the `deployer` role at minimum if you use default authorization settings.
+Security authorization requires `CREATE` permissions to add schemas.
+With the default settings, you need the `deployer` role at minimum.
 ====
+
+.Procedure
+
+Add Protobuf schema to {brandname} Server in one of the following ways:
+
+* Open the {brandname} Console in any browser, select the **Schema** tab and then **Add Protobuf schema**.
+
+* Use the [command]`schema` command with the `--upload=` argument from the {brandname} command line interface (CLI).
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> schema --upload=person.proto person
+----
+
+* Include the Protobuf schema in the payload of a `POST` request with the REST API.
++
+[source,options="nowrap",subs=attributes+]
+----
+POST/rest/v2/schemas/<schema_name>
+----
 
 * Use the generated `SerializationContextInitializer` implementation with a Hot Rod client to register the Protobuf schema, as in the following example:
 +
@@ -47,8 +60,3 @@ Register the `SerializationContextInitializer` with your Hot Rod clients, as in 
 ----
 include::code_examples/LibraryInitializerClient.java[]
 ----
-
-[role="_additional-resources"]
-.Additional resources
-* link:{cli_docs}#registering_protobuf_schemas[CLI: Registering Protobuf schemas]
-* link:{rest_docs}#rest_v2_create_protobuf[REST API: Creating Protobuf schemas]

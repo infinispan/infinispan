@@ -3,10 +3,9 @@
     <table-jdbc-store xmlns="urn:infinispan:config:store:sql:{schemaversion}"
                       dialect="H2"
                       shared="true"
-                      table-name="authors">
-      <schema message-name="Author"
-              package="library"
-              embedded-key="true"/>
+                      table-name="books">
+      <schema message-name="books_value"
+              package="library"/>
     </table-jdbc-store>
   </persistence>
 </distributed-cache>

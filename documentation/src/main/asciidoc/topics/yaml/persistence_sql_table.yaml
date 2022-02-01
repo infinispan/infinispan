@@ -3,8 +3,7 @@ distributedCache:
     tableJdbcStore:
       dialect: "H2"
       shared: "true"
-      tableName: "authors"
+      tableName: "books"
       schema:
-        messageName: "Author"
+        messageName: "books_value"
         package: "library"
-        embeddedKey: "true"

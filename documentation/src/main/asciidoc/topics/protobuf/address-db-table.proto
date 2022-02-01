@@ -1,0 +1,7 @@
+package com.example
+
+message Address {
+   optional string street = 1;
+   optional string city = 2 [default = "San Jose"];
+   optional int32 zip = 3 [default = 0];
+}

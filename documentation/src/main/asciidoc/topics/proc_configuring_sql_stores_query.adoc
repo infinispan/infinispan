@@ -1,5 +1,5 @@
 [id='configuring-sql-cache-stores-query_{context}']
-= Using SQL queries to load data and manipulate persistent storage
+= Using SQL queries to load data and perform operations
 
 SQL query cache stores let you load caches from multiple database tables, including from sub-columns in database tables, and perform insert, update, and delete operations.
 
@@ -8,6 +8,18 @@ SQL query cache stores let you load caches from multiple database tables, includ
 * Have JDBC connection details. +
 You can add JDBC connection factories directly to your cache configuration. +
 For remote caches in production environments, you should add managed datasources to {brandname} Server configuration and specify the JNDI name in the cache configuration.
+* Generate Protobuf schema for any composite keys or composite values and register your schemas with {brandname}.
++
+[TIP]
+====
+{brandname} recommends generating Protobuf schema with the ProtoStream processor.
+For remote caches, you can register your schemas by adding them through the {brandname} Console, CLI, or REST API.
+====
+
+.Procedure
+
+. Add database drivers to your {brandname} deployment.
++
 * Remote caches: Copy database drivers to the `server/lib` directory in your {brandname} Server installation.
 +
 [TIP]
@@ -19,6 +31,7 @@ Use the [command]`install` command with the {brandname} Command Line Interface (
 install org.postgresql:postgresql:42.1.3
 ----
 ====
++
 * Embedded caches: Add the `infinispan-cachestore-sql` dependency to your `pom` file and make sure database drivers are on your application classpath.
 +
 [source,xml,options="nowrap",subs=attributes+]
@@ -26,9 +39,8 @@ install org.postgresql:postgresql:42.1.3
 include::dependencies_maven/persistence_sql_store.xml[]
 ----
 
-.Procedure
-
-. Create a cache store configuration that uses SQL queries.
+. Open your {brandname} configuration for editing.
+. Add a SQL query cache store.
 +
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
@@ -91,10 +103,18 @@ However you can apply the same named variable more than once in a statement.
 
 SQL queries can include `JOIN`, `ON`, and any other clauses that the database supports.
 ====
-. Add the `schema` element or the `.schemaJdbcConfigurationBuilder()` method and provide your Protobuf schema details if your database tables contain composite keys or values.
+. Add the `schema` element or the `.schemaJdbcConfigurationBuilder()` method and add Protobuf schema configuration for composite keys or values.
+.. Specify the package name with the `package` attribute or `package()` method.
+.. Specify composite values with the `message-name` attribute or `messageName()` method.
+.. Specify composite keys with the `key-message-name` attribute or `keyMessageName()` method.
+.. Set a value of `true` for the `embedded-key` attribute or `embeddedKey()` method if your schema includes keys within values.
+
+. Save the changes to your configuration.
 
 [role="_additional-resources"]
 .Additional resources
+* link:{encoding_docs}[Cache encoding and marshalling: Generate Protobuf schema and register them with {brandname}]
+* link:{code_tutorials_root}/infinispan-remote/persistence[Persistence code tutorial with remote caches]
 * link:{config_docs}#jdbc-connection-factories_persistence[JDBC connection factories]
 * link:{javadocroot}/org/infinispan/persistence/jdbc/common/DatabaseType.html[DatabaseType Enum lists supported database dialects]
 * link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

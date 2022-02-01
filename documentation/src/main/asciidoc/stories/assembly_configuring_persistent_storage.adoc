@@ -38,10 +38,13 @@ include::{topics}/proc_configuring_jdbc_agroal_properties.adoc[leveloffset=+2]
 
 //SQL cache stores
 include::{topics}/con_cache_store_sql.adoc[leveloffset=+1]
+include::{topics}/con_cache_store_sql_data_types.adoc[leveloffset=+2]
+include::{topics}/con_cache_store_sql_composites.adoc[leveloffset=+3]
+include::{topics}/con_cache_store_sql_embedded_keys.adoc[leveloffset=+3]
+include::{topics}/ref_cache_store_sql_protobuf_types.adoc[leveloffset=+3]
 include::{topics}/proc_configuring_sql_stores_table.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_sql_stores_query.adoc[leveloffset=+2]
-include::{topics}/ref_cache_store_sql_protobuf_schema.adoc[leveloffset=+2]
-include::{topics}/ref_sql_store_configuration_examples.adoc[leveloffset=+2]
+include::{topics}/ref_sql_store_query_configuration.adoc[leveloffset=+3]
 include::{topics}/ref_sql_store_troubleshooting.adoc[leveloffset=+2]
 
 //JDBC string based cache stores
