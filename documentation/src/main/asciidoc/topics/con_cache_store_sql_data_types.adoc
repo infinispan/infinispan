@@ -1,0 +1,17 @@
+[id='sql-store-data-types_{context}']
+= Data types for keys and values
+
+{brandname} loads keys and values from columns in database tables via SQL cache stores, automatically using the appropriate data types.
+The following `CREATE` statement adds a table named "books" that has two columns, `isbn` and `title`:
+
+.Database table with two columns
+[source,sql,options="nowrap",subs=attributes+]
+----
+include::sql/books_simple.sql[]
+----
+
+When you use this table with a SQL cache store, {brandname} adds an entry to the cache using the `isbn` column as the key and the `title` column as the value.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

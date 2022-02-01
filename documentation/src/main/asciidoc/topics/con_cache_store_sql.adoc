@@ -7,6 +7,12 @@ SQL cache stores let you load {brandname} caches from existing database tables.
 Table:: {brandname} loads entries from a single database table.
 Query:: {brandname} uses SQL queries to load entries from single or multiple database tables, including from sub-columns within those tables, and perform insert, update, and delete operations.
 
+[TIP]
+====
+Visit the code tutorials to try a SQL cache store in action.
+See the link:{code_tutorials_root}/infinispan-remote/persistence[Persistence code tutorial with remote caches].
+====
+
 Both SQL table and query stores:
 
 * Allow read and write operations to persistent storage.

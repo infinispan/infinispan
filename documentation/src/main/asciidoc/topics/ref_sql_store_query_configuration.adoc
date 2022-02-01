@@ -1,0 +1,71 @@
+[id='sql-store-query-configuration_{context}']
+= SQL query store configuration
+
+This section provides an example configuration for a SQL query cache store that loads a distributed cache with data from two database tables: "person" and "address".
+
+[discrete]
+== SQL statements
+
+SQL data definition language (DDL) statements for the "person" and "address" tables are as follows:
+
+.SQL statement for the "person" table
+[source,proto,options="nowrap",subs=attributes+,role="primary"]
+----
+include::sql/person.sql[]
+----
+
+.SQL statement for the "address" table
+[source,proto,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::sql/address.sql[]
+----
+
+[discrete]
+== Protobuf schemas
+
+Protobuf schema for the "person" and "address" tables are as follows:
+
+.Protobuf schema for the "person" table
+[source,proto,options="nowrap",subs=attributes+,role="primary"]
+----
+include::protobuf/person-db-table.proto[]
+----
+
+.Protobuf schema for the "address" table
+[source,proto,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::protobuf/address-db-table.proto[]
+----
+
+[discrete]
+== Cache configuration
+
+The following example loads a distributed cache from the "person" and "address" tables using a SQL query that includes a `JOIN` clause:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_sql_query.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_sql_query.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_sql_query.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/PersistenceSqlQuery.java[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

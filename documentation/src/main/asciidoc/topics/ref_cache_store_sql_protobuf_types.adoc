@@ -1,0 +1,44 @@
+[id='sql-store-protobuf-types_{context}']
+= SQL types to Protobuf types
+
+The following table contains default mappings of SQL data types to Protobuf data types:
+
+[%header%autowidth,cols="1,1",stripes=even]
+|===
+|SQL type |Protobuf type
+
+|`int4`
+|`int32`
+
+|`int8`
+|`int64`
+
+|`float4`
+|`float`
+
+|`float8`
+|`double`
+
+|`numeric`
+|`double`
+
+|`bool`
+|`bool`
+
+|`char`
+|`string`
+
+|`varchar`
+|`string`
+
+|`text`, `tinytext`, `mediumtext`, `longtext`
+|`string`
+
+|`bytea`, `tinyblob`, `blob`, `mediumblob`, `longblob`
+|`bytes`
+
+|===
+
+[role="_additional-resources"]
+.Additional resources
+* link:{encoding_docs}[Cache encoding and marshalling]

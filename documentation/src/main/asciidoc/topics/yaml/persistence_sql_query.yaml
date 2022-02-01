@@ -13,6 +13,5 @@ distributedCache:
         size: "SELECT COUNT(*) FROM Person"
       schema:
         messageName: "Person"
-        keyMessageName: "PersonID"
         package: "com.example"
         embeddedKey: "true"
