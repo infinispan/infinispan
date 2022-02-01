@@ -4,11 +4,10 @@
       "table-jdbc-store": {
         "dialect": "H2",
         "shared": "true",
-        "table-name": "authors",
+        "table-name": "books",
         "schema": {
-          "message-name": "Author",
-          "package": "library",
-          "embedded-key": "true"
+          "message-name": "books_value",
+          "package": "library"
         }
       }
     }
