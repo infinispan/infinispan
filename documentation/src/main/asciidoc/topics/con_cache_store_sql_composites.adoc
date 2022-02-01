@@ -1,0 +1,53 @@
+[id='sql-store-composite-keys-values_{context}']
+= Composite keys and values
+
+You can use SQL stores with database tables that contain composite primary keys or composite values.
+
+To use composite keys or values, you must provide {brandname} with Protobuf schema that describe the data types.
+You must also add `schema` configuration to your SQL store and specify the message names for keys and values.
+
+[TIP]
+====
+{brandname} recommends generating Protobuf schema with the ProtoStream processor.
+You can then upload your Protobuf schema for remote caches through the {brandname} Console, CLI, or REST API.
+====
+
+[discrete]
+== Composite values
+
+The following database table holds a composite value of the `title` and `author` columns:
+
+[source,sql,options="nowrap",subs=attributes+]
+----
+include::sql/books_composite_values.sql[]
+----
+
+{brandname} adds an entry to the cache using the `isbn` column as the key.
+For the value, {brandname} requires a Protobuf schema that maps the `title` column and the `author` columns:
+
+[source,protobuf,options="nowrap",subs=attributes+]
+----
+include::protobuf/books_composite_values.protobuf[]
+----
+
+[discrete]
+== Composite keys and values
+
+The following database table holds a composite primary key and a composite value, with two columns each:
+
+[source,sql,options="nowrap",subs=attributes+]
+----
+include::sql/books_composite_keys_values.sql[]
+----
+
+For both the key and the value, {brandname} requires a Protobuf schema that maps the columns to keys and values:
+
+[source,protobuf,options="nowrap",subs=attributes+]
+----
+include::protobuf/books_composite_keys_values.protobuf[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{encoding_docs}[Cache encoding and marshalling: Generate Protobuf schema and register them with {brandname}]
+* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

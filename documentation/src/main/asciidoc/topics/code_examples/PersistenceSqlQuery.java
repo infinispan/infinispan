@@ -12,6 +12,5 @@ builder.persistence().addStore(QueriesJdbcStoreConfigurationBuilder.class)
          .size("SELECT COUNT(*) FROM Person")
       .schemaJdbcConfigurationBuilder()
          .messageName("Person")
-         .keyMessageName("PersonID")
          .packageName("com.example")
          .embeddedKey(true);

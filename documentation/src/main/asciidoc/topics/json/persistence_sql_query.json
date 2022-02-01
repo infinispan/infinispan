@@ -15,7 +15,6 @@
         },
         "schema": {
           "message-name": "Person",
-          "key-message-name": "PersonID",
           "package": "com.example",
           "embedded-key": "true"
         }

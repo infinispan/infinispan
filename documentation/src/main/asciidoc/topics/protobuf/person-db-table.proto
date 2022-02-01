@@ -1,0 +1,15 @@
+package com.example
+
+enum Sex {
+   FEMALE = 1;
+   MALE = 2;
+}
+
+message Person {
+   optional string name = 1;
+   optional Address address = 2;
+   optional bytes picture = 3;
+   optional Sex sex = 4;
+   optional fixed64 birthDate = 5 [default = 0];
+   optional bool accepted_tos = 6 [default = false];
+}
