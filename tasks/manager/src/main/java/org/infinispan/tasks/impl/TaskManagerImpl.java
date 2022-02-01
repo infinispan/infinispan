@@ -66,7 +66,7 @@ public class TaskManagerImpl implements TaskManager {
 
    @Start
    public void start() {
-      this.useSecurity = cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
+      this.useSecurity = SecurityActions.getCacheManagerConfiguration(cacheManager).security().authorization().enabled();
    }
 
    @Override
