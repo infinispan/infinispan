@@ -20,6 +20,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Factory;
@@ -115,7 +116,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
       ConfigurationBuilder base = getDefaultCacheConfiguration();
       base.persistence().passivation(true);
 
-      ExceptionRunnable runnable = () -> cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, m.getName(), false).build());
+      ExceptionRunnable runnable = () -> TestingUtil.defineConfiguration(cacheManager, m.getName(), configureCacheLoader(base, m.getName(), false).build());
       // transactional and shared don't mix with passivation
       if (transactionalConfig || sharedConfig) {
          Exceptions.expectException(CacheConfigurationException.class, runnable);
@@ -127,7 +128,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
    public void testWithPurgeOnStartup(Method m) throws Exception {
       ConfigurationBuilder base = getDefaultCacheConfiguration();
 
-      ExceptionRunnable runnable = () -> cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, m.getName(), true).build());
+      ExceptionRunnable runnable = () -> TestingUtil.defineConfiguration(cacheManager, m.getName(), configureCacheLoader(base, m.getName(), true).build());
       // shared doesn't mix with purgeOnStartup
       if (sharedConfig) {
          Exceptions.expectException(CacheConfigurationException.class, runnable);
@@ -140,7 +141,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
       String cacheName = "testRollback";
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), cacheName, false);
-      cacheManager.defineConfiguration(cacheName, cb.build());
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
 
       Cache<String, Object> cache = cacheManager.getCache(cacheName);
 
