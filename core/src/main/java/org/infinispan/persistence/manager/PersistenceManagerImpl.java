@@ -184,16 +184,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       long stamp = lock.writeLock();
       try {
-         Completable storeStartup = startNewStores(configuration.persistence().stores());
+         // Wait for the stores to start
+         startNewStores(configuration.persistence().stores()).blockingAwait();
 
          long interval = configuration.persistence().availabilityInterval();
          if (interval > 0) {
-            storeStartup = storeStartup.doOnComplete(() ->
-                  availabilityTask = nonBlockingManager.scheduleWithFixedDelay(this::pollStoreAvailability, interval, interval, MILLISECONDS));
+            availabilityTask = nonBlockingManager.scheduleWithFixedDelay(this::pollStoreAvailability, interval, interval, MILLISECONDS);
          }
 
-         // Blocks here waiting for stores and availability task to start if needed
-         storeStartup.blockingAwait();
          // If a store is not writeable, then max idle works fine as it only expires in memory, thus refreshing
          // the value that can be read from the store
          // Max idle is not currently supported with stores, it sorta works with passivation though
