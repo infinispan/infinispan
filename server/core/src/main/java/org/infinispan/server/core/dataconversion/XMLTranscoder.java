@@ -70,43 +70,48 @@ public class XMLTranscoder extends OneToManyTranscoder {
    private static final Log logger = LogFactory.getLog(XMLTranscoder.class, Log.class);
 
    private static class XStreamHolder {
-      static final XStream XStream = new XStream(new MXParserDriver()) {
-         @Override
-         protected void setupConverters() {
-            registerConverter(new ReflectionConverter(getMapper(), getReflectionProvider()), PRIORITY_VERY_LOW);
-            registerConverter(new SerializableConverter(getMapper(), getReflectionProvider(), getClassLoaderReference()), PRIORITY_LOW);
-            registerConverter(new ExternalizableConverter(getMapper(), getClassLoaderReference()), PRIORITY_LOW);
-            registerConverter(new NullConverter(), PRIORITY_VERY_HIGH);
-            registerConverter(new IntConverter(), PRIORITY_NORMAL);
-            registerConverter(new FloatConverter(), PRIORITY_NORMAL);
-            registerConverter(new DoubleConverter(), PRIORITY_NORMAL);
-            registerConverter(new LongConverter(), PRIORITY_NORMAL);
-            registerConverter(new ShortConverter(), PRIORITY_NORMAL);
-            registerConverter((Converter) new CharConverter(), PRIORITY_NORMAL);
-            registerConverter(new BooleanConverter(), PRIORITY_NORMAL);
-            registerConverter(new ByteConverter(), PRIORITY_NORMAL);
-            registerConverter(new StringConverter(), PRIORITY_NORMAL);
-            registerConverter(new DateConverter(), PRIORITY_NORMAL);
-            registerConverter(new BitSetConverter(), PRIORITY_NORMAL);
-            registerConverter(new URIConverter(), PRIORITY_NORMAL);
-            registerConverter(new URLConverter(), PRIORITY_NORMAL);
-            registerConverter(new BigIntegerConverter(), PRIORITY_NORMAL);
-            registerConverter(new BigDecimalConverter(), PRIORITY_NORMAL);
-            registerConverter(new ArrayConverter(getMapper()), PRIORITY_NORMAL);
-            registerConverter(new CharArrayConverter(), PRIORITY_NORMAL);
-            registerConverter(new CollectionConverter(getMapper()), PRIORITY_NORMAL);
-            registerConverter(new MapConverter(getMapper()), PRIORITY_NORMAL);
-            registerConverter(new SingletonCollectionConverter(getMapper()), PRIORITY_NORMAL);
-            registerConverter(new SingletonMapConverter(getMapper()), PRIORITY_NORMAL);
-            registerConverter((Converter) new EncodedByteArrayConverter(), PRIORITY_NORMAL);
-            registerConverter(new FileConverter(), PRIORITY_NORMAL);
-            registerConverter(new JavaClassConverter(getClassLoaderReference()), PRIORITY_NORMAL);
-            registerConverter(new JavaMethodConverter(getClassLoaderReference()), PRIORITY_NORMAL);
-            registerConverter(new JavaFieldConverter(getClassLoaderReference()), PRIORITY_NORMAL);
-            registerConverter(new LocaleConverter(), PRIORITY_NORMAL);
-            registerConverter(new GregorianCalendarConverter(), PRIORITY_NORMAL);
-         }
-      };
+      static final XStream XStream;
+
+      static {
+         XStream = new XStream(new MXParserDriver()) {
+            @Override
+            protected void setupConverters() {
+               registerConverter(new ReflectionConverter(getMapper(), getReflectionProvider()), PRIORITY_VERY_LOW);
+               registerConverter(new SerializableConverter(getMapper(), getReflectionProvider(), getClassLoaderReference()), PRIORITY_LOW);
+               registerConverter(new ExternalizableConverter(getMapper(), getClassLoaderReference()), PRIORITY_LOW);
+               registerConverter(new NullConverter(), PRIORITY_VERY_HIGH);
+               registerConverter(new IntConverter(), PRIORITY_NORMAL);
+               registerConverter(new FloatConverter(), PRIORITY_NORMAL);
+               registerConverter(new DoubleConverter(), PRIORITY_NORMAL);
+               registerConverter(new LongConverter(), PRIORITY_NORMAL);
+               registerConverter(new ShortConverter(), PRIORITY_NORMAL);
+               registerConverter((Converter) new CharConverter(), PRIORITY_NORMAL);
+               registerConverter(new BooleanConverter(), PRIORITY_NORMAL);
+               registerConverter(new ByteConverter(), PRIORITY_NORMAL);
+               registerConverter(new StringConverter(), PRIORITY_NORMAL);
+               registerConverter(new DateConverter(), PRIORITY_NORMAL);
+               registerConverter(new BitSetConverter(), PRIORITY_NORMAL);
+               registerConverter(new URIConverter(), PRIORITY_NORMAL);
+               registerConverter(new URLConverter(), PRIORITY_NORMAL);
+               registerConverter(new BigIntegerConverter(), PRIORITY_NORMAL);
+               registerConverter(new BigDecimalConverter(), PRIORITY_NORMAL);
+               registerConverter(new ArrayConverter(getMapper()), PRIORITY_NORMAL);
+               registerConverter(new CharArrayConverter(), PRIORITY_NORMAL);
+               registerConverter(new CollectionConverter(getMapper()), PRIORITY_NORMAL);
+               registerConverter(new MapConverter(getMapper()), PRIORITY_NORMAL);
+               registerConverter(new SingletonCollectionConverter(getMapper()), PRIORITY_NORMAL);
+               registerConverter(new SingletonMapConverter(getMapper()), PRIORITY_NORMAL);
+               registerConverter((Converter) new EncodedByteArrayConverter(), PRIORITY_NORMAL);
+               registerConverter(new FileConverter(), PRIORITY_NORMAL);
+               registerConverter(new JavaClassConverter(getClassLoaderReference()), PRIORITY_NORMAL);
+               registerConverter(new JavaMethodConverter(getClassLoaderReference()), PRIORITY_NORMAL);
+               registerConverter(new JavaFieldConverter(getClassLoaderReference()), PRIORITY_NORMAL);
+               registerConverter(new LocaleConverter(), PRIORITY_NORMAL);
+               registerConverter(new GregorianCalendarConverter(), PRIORITY_NORMAL);
+            }
+         };
+         XStream.setMode(com.thoughtworks.xstream.XStream.NO_REFERENCES);
+      }
    }
 
    public XMLTranscoder() {
