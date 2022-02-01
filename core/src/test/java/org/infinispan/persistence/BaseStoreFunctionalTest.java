@@ -92,6 +92,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
+      global.cacheContainer().security().authorization().enable();
       return createCacheManager(false, global, new ConfigurationBuilder());
    }
 
@@ -105,11 +106,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testTwoCachesSameCacheStore() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      cb.read(cacheManager.getDefaultCacheConfiguration());
       createCacheStoreConfig(cb.persistence(), "testTwoCachesSameCacheStore", false);
       Configuration c = cb.build();
-      cacheManager.defineConfiguration("testTwoCachesSameCacheStore-1", c);
-      cacheManager.defineConfiguration("testTwoCachesSameCacheStore-2", c);
+      TestingUtil.defineConfiguration(cacheManager, "testTwoCachesSameCacheStore-1", c);
+      TestingUtil.defineConfiguration(cacheManager, "testTwoCachesSameCacheStore-2", c);
 
       Cache<String, Object> first = cacheManager.getCache("testTwoCachesSameCacheStore-1");
       Cache<String, Object> second = cacheManager.getCache("testTwoCachesSameCacheStore-2");
@@ -129,7 +129,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    public void testPreloadAndExpiry() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), "testPreloadAndExpiry", true);
-      cacheManager.defineConfiguration("testPreloadAndExpiry", cb.build());
+      TestingUtil.defineConfiguration(cacheManager, "testPreloadAndExpiry", cb.build());
       Cache<String, Object> cache = cacheManager.getCache("testPreloadAndExpiry");
       cache.start();
 
@@ -157,7 +157,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    public void testPreloadStoredAsBinary() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), "testPreloadStoredAsBinary", true).memory().storageType(StorageType.BINARY);
-      cacheManager.defineConfiguration("testPreloadStoredAsBinary", cb.build());
+      TestingUtil.defineConfiguration(cacheManager, "testPreloadStoredAsBinary", cb.build());
       Cache<String, Person> cache = cacheManager.getCache("testPreloadStoredAsBinary");
       cache.start();
 
@@ -214,7 +214,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       // we need to purge the container when loading, because we could try to compare
       // some old entry using ByteArrayEquivalence and this throws ClassCastException
       // for non-byte[] arguments
-      cacheManager.defineConfiguration(m.getName(), configureCacheLoader(base, m.getName(), true).build());
+      TestingUtil.defineConfiguration(cacheManager, m.getName(), configureCacheLoader(base, m.getName(), true).build());
       Cache<byte[], byte[]> cache = cacheManager.getCache(m.getName());
       byte[] key = {1, 2, 3};
       byte[] value = {4, 5, 6};
@@ -284,7 +284,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       String cacheName = "testPutAllBatch";
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), cacheName, false);
-      cacheManager.defineConfiguration(cacheName, cb.build());
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
 
       Cache<String, Object> cache = cacheManager.getCache(cacheName);
       Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
@@ -315,7 +315,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), "testLoadEntrySet", true);
       Configuration configuration = cb.build();
-      cacheManager.defineConfiguration("testLoadEntrySet", configuration);
+      TestingUtil.defineConfiguration(cacheManager, "testLoadEntrySet", configuration);
       Cache<String, Object> cache = cacheManager.getCache("testLoadEntrySet");
 
       Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
@@ -335,7 +335,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       int numberOfEntries = 10;
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), "testReloadWithEviction", false).memory().size(numberOfEntries / 2).evictionType(EvictionType.COUNT);
-      cacheManager.defineConfiguration("testReloadWithEviction", cb.build());
+      TestingUtil.defineConfiguration(cacheManager, "testReloadWithEviction", cb.build());
       Cache<String, Object> cache = cacheManager.getCache("testReloadWithEviction");
 
       Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
