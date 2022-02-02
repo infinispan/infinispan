@@ -14,7 +14,7 @@ file.
 source.type=SOFT_INDEX_FILE_STORE
 source.cache_name=myCache
 source.location=/path/to/source/sifs
-source.version=12
+source.version=<version>
 ----
 +
 . Configure the target cache store in `migrator.properties`.
