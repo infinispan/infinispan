@@ -64,15 +64,16 @@ same, {brandname} cannot read data from the cache store.
 |`version`
 |Specifies the marshaller version for source cache stores. +
 ifdef::community[]
-Set the value that matches the {brandname} major version of the source cluster. For example; set a value of `12` for {brandname} 12.x.
+Set the value that matches the {brandname} major version of the source cluster. For example; set a value of `13` for {brandname} 13.x.
 endif::community[]
 ifdef::downstream[]
+Set one of the following values:
+
 include::attributes/store_migrator_source_versions.adoc[]
 endif::downstream[]
 
 |Required for source stores only.
 
-For example: `source.version=12`
 
 |`marshaller.class`
 |Specifies a custom marshaller class.
