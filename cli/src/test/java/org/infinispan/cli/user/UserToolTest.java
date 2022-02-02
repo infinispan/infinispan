@@ -42,16 +42,22 @@ public class UserToolTest {
       confDirectory.mkdirs();
    }
 
+   private static Properties loadProperties(String filename) throws IOException {
+      Properties users = new Properties();
+      try (FileReader r = new FileReader(new File(confDirectory, filename))) {
+         users.load(r);
+         return users;
+      }
+   }
+
    @Test
    public void testUserToolClearText() throws IOException {
       UserTool userTool = new UserTool(serverDirectory.getAbsolutePath());
       userTool.createUser("user", "password", UserTool.DEFAULT_REALM_NAME, UserTool.Encryption.CLEAR, Collections.singletonList("admin"), null);
-      Properties users = new Properties();
-      users.load(new FileReader(new File(confDirectory, "users.properties")));
+      Properties users = loadProperties("users.properties");
       assertEquals(1, users.size());
       assertEquals("password", users.getProperty("user"));
-      Properties groups = new Properties();
-      groups.load(new FileReader(new File(confDirectory, "groups.properties")));
+      Properties groups = loadProperties("groups.properties");
       assertEquals(1, groups.size());
       assertEquals("admin", groups.getProperty("user"));
    }
@@ -60,12 +66,10 @@ public class UserToolTest {
    public void testUserToolEncrypted() throws Exception {
       UserTool userTool = new UserTool(serverDirectory.getAbsolutePath());
       userTool.createUser("user", "password", UserTool.DEFAULT_REALM_NAME, UserTool.Encryption.ENCRYPTED, Collections.singletonList("admin"), null);
-      Properties users = new Properties();
-      users.load(new FileReader(new File(confDirectory, "users.properties")));
+      Properties users = loadProperties("users.properties");
       assertEquals(1, users.size());
       assertPassword("password", users.getProperty("user"));
-      Properties groups = new Properties();
-      groups.load(new FileReader(new File(confDirectory, "groups.properties")));
+      Properties groups = loadProperties("groups.properties");
       assertEquals(1, groups.size());
       assertEquals("admin", groups.getProperty("user"));
    }
@@ -91,16 +95,14 @@ public class UserToolTest {
       UserTool userTool = new UserTool(serverDirectory.getAbsolutePath());
       userTool.createUser("user1", "password1", UserTool.DEFAULT_REALM_NAME, UserTool.Encryption.CLEAR, Arrays.asList("admin", "other"), null);
       userTool.createUser("user2", "password2", UserTool.DEFAULT_REALM_NAME, UserTool.Encryption.CLEAR, Arrays.asList("yetanother", "something"), null);
-      Properties users = new Properties();
-      users.load(new FileReader(new File(confDirectory, "users.properties")));
+      Properties users = loadProperties("users.properties");
       assertEquals(2, users.size());
       assertEquals("password1", users.getProperty("user1"));
       assertEquals("password2", users.getProperty("user2"));
       userTool.reload();
       userTool.encryptAll(null);
       userTool.reload();
-      users = new Properties();
-      users.load(new FileReader(new File(confDirectory, "users.properties")));
+      users = loadProperties("users.properties");
       assertEquals(2, users.size());
       assertPassword("password1", users.getProperty("user1"));
       assertPassword("password2", users.getProperty("user2"));
