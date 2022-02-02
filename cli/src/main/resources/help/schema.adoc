@@ -5,23 +5,52 @@ SCHEMA(1)
 
 NAME
 ----
-schema - uploads and registers protobuf schemas.
+schema - manipulates Protobuf schemas.
 
 
 SYNOPSIS
 --------
-*schema* ['OPTIONS'] `SCHEMA_NAME`
+
+*schema ls*
+
+*schema upload --file=/path/to/schema.proto schema.proto*
+
+*schema remove schema.proto*
+
+*schema get schema.proto*
 
 
-OPTIONS
--------
-*-u, --upload*='FILE'::
+DESCRIPTION
+-----------
+
+Manage schemas with the `ls`, `upload`, `get`, `remove` subcommands.
+
+
+COMMAND SYNOPSIS
+----------------
+
+*schema ls*::
+Lists the schemas installed in the server.
+
+*schema upload* --file='/path/to/schema.proto' 'schema.proto'::
+Uploads a ProtoBuf schema file to the server.
+
+*schema get* 'schema.proto'::
+Shows the content of the specified schema.
+
+*schema remove* 'schema.proto'::
+Removes the specified schema from the server.
+
+
+UPLOAD OPTIONS
+--------------
+*-f, --file*='FILE'::
 Uploads a file as a protobuf schema with the given name.
 
 
 EXAMPLE
 --------
-`schema --upload=person.proto person.proto` +
+`schema upload --file=person.proto person.proto` +
 Registers a `person.proto` Protobuf schema.
 
 
