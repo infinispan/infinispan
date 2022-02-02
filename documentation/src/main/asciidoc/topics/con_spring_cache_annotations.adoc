@@ -1,36 +1,39 @@
 [id='spring-cache-annotations_{context}']
 = Spring Cache annotations
-Annotation application code with the `@Cacheable` and `@CacheEvict` annotations.
+The `@Cacheable` and `@CacheEvict` annotations add cache capabilities to methods.
 
-.`@Cacheable`
+`@Cacheable`:: Stores return values in a cache.
+`@CacheEvict`:: Controls cache size by removing old entries.
 
-The `@Cacheable` annotation adds returned values to a defined cache.
+[discrete]
+== `@Cacheable`
 
-For instance, you have a data access object (DAO) for books. You want book instances to be cached after they have been loaded from the underlying database using `BookDao#findBook(Integer bookId)`.
-
-Annotate the `findBook(Integer bookId)` method with `@Cacheable` as follows:
+Taking `Book` objects as an example, if you want to cache each instance after loading it from a database with a method such as `BookDao#findBook(Integer bookId)`, you could add the `@Cacheable` annotation as follows:
 
 [source,java,options=nowrap]
 ----
 include::code_examples/SpringCachableExample.java[]
 ----
 
-Any `Book` instances returned from `findBook(Integer bookId)` are stored in a cache named `books`, using `bookId` as the key.
+With the preceding example, when `findBook(Integer bookId)` returns a `Book` instance it gets stored in the cache named `books`.
 
-Note that "#bookId" is an expression in the link:http://static.springsource.org/spring/docs/current/spring-framework-reference/html/expressions.html[Spring Expression Language] that evaluates the `bookId` argument.
+[discrete]
+== `@CacheEvict`
 
-[IMPORTANT]
-====
-If your application needs to reference entries in the cache directly, you should include the `key` attribute.
-For more information, see link:https://docs.spring.io/spring-framework/docs/current/reference/html/integration.html#cache-annotations-cacheable-default-key[Default Key Generation] in the Spring documentation.
-====
+With the `@CacheEvict` annotation, you can specify if you want to evict the entire `books` cache or only the entries that match a specific #bookId.
 
-.`@CacheEvict`
-The `@CacheEvict` annotation deletes entries from a defined cache.
-
-Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` as follows:
+.Entire cache eviction
+Annotate the `deleteAllBookEntries()` method with `@CacheEvict` and add the `allEntries` parameter as follows:
 
 [source,java,options=nowrap]
 ----
-include::code_examples/SpringCacheEvictExample.java[]
+include::code_examples/SpringCacheEvictAllEntriesExample.java[]
+----
+
+.Entry based eviction
+Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` and specify the key associated to the entry as follows:
+
+[source,java,options=nowrap]
+----
+include::code_examples/SpringCacheEvictEntryExample.java[]
 ----
