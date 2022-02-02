@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.test.Eventually;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
@@ -145,7 +147,8 @@ public class JdbcStringBasedCacheStorePassivation {
             cache.put("k3", "v3");
             //now some key is evicted and stored in store
             assertEquals(2, getNumberOfEntriesInMemory(cache));
-            assertEquals(1, table.countAllRows());
+            //the passivation is asynchronous
+            Eventually.eventuallyEquals(1, () -> Exceptions.unchecked(table::countAllRows));
 
             SERVERS.getServerDriver().stop(0);
             SERVERS.getServerDriver().restart(0); //soft stop should store all entries from cache to store
