@@ -89,7 +89,7 @@ public class CliIT {
          terminal.assertContains("\"timetoliveseconds\" : [ \"10\" ]");
 
          terminal.readln("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
-         terminal.readln("schema -u=" + getCliResource("person.proto").getPath() + " person.proto");
+         terminal.readln("schema upload -f=" + getCliResource("person.proto").getPath() + " person.proto");
          terminal.clear();
          terminal.readln("cd /containers/default/schemas");
          terminal.readln("ls");
@@ -226,11 +226,21 @@ public class CliIT {
          connect(terminal);
 
          // upload
-         terminal.readln("schema --upload=" + getCliResource("person.proto").getPath() + " person.proto");
+         terminal.readln("schema upload --file=" + getCliResource("person.proto").getPath() + " person.proto");
+         terminal.assertContains("\"error\" : null");
          terminal.clear();
          terminal.readln("cd /containers/default/schemas");
          terminal.readln("ls");
          terminal.assertContains("person.proto");
+         terminal.clear();
+         terminal.readln("schema ls");
+         terminal.assertContains("person.proto");
+         terminal.readln("schema get person.proto");
+         terminal.assertContains("PhoneNumber");
+         terminal.readln("schema remove person.proto");
+         terminal.clear();
+         terminal.readln("schema ls");
+         terminal.assertContains("[]");
       }
    }
 
