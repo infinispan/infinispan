@@ -1,0 +1,41 @@
+[id='setting-up-spring-cache_{context}']
+= Setting up Spring caching with {brandname}
+
+Add the {brandname} dependencies to your Spring application project.
+If you use remote caches in a {brandname} Server deployment, you should also configure your Hot Rod client properties.
+
+.Procedure
+. Add {brandname} and the Spring integration module to your `pom.xml`.
++
+* Remote caches: `infinispan-spring5-remote`
+* Embedded caches: `infinispan-spring5-embedded`
++
+[TIP]
+====
+Spring Boot users can add the `infinispan-spring-boot-starter-embedded` instead of the `infinispan-spring5-embedded` artifact.
+====
+. Configure your Hot Rod client to connect to your {brandname} Server deployment in the `hotrod-client.properties` file.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::properties/hotrod-client-remote.properties[]
+----
+
+[discrete]
+== Spring Cache dependencies
+
+.Remote caches
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::dependencies_maven/spring_cache_remote.xml[]
+----
+
+.Embedded caches
+[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::dependencies_maven/spring_cache_embedded.xml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{hotrod_docs}#configuring-hotrod-java-clients_hotrod-client-configuration[Configuring Hot Rod Client connections]

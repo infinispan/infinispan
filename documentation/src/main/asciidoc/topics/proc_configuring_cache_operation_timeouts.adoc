@@ -1,7 +1,7 @@
 [id='configuring-cache-operation-timeouts_{context}']
-= Configuring Timeouts for Cache Operations
+= Configuring timeouts for cache operations
 
-The {brandname} Spring cache provider defaults to blocking behaviour when performing read and write operations.
+The {brandname} Spring Cache provider defaults to blocking behaviour when performing read and write operations.
 Cache operations are synchronous and do not time out.
 
 If necessary you can configure a maximum time to wait for operations to complete before they time out.

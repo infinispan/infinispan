@@ -17,7 +17,8 @@ include::../{topics}/attributes/community-attributes.adoc[]
 //Title
 = Using {brandname} with Spring
 
-{brandname} integrates with the Spring Framework to make it easy to add caching capabilities to your applications.
+{brandname} implements the Spring SPI to offer high-performance, in-memory caching capabilities for Spring applications.
+You can use {brandname} as a Spring Cache provider and with the Spring Sessions API.
 
 //User stories
 include::stories.adoc[]
