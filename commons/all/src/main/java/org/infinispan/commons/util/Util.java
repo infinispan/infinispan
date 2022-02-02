@@ -24,6 +24,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.NumberFormat;
@@ -31,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -900,10 +900,23 @@ public final class Util {
 
    private static void recursiveDelete(File f) {
       try {
-         Files.walk(f.toPath())
-               .sorted(Comparator.reverseOrder())
-               .map(Path::toFile)
-               .forEach(File::delete);
+         Files.walkFileTree(f.toPath(), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+               Files.delete(file);
+               return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+               if (e == null) {
+                  Files.delete(dir);
+                  return FileVisitResult.CONTINUE;
+               } else {
+                  throw e;
+               }
+            }
+         });
       } catch (Exception e) {
          throw new IllegalStateException(e);
       }
