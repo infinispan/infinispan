@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.IntSet;
@@ -36,7 +37,7 @@ final class QueryPartitioner {
       Map<Address, BitSet> segmentsPerMember = new LinkedHashMap<>(members.size());
 
       IntSet localSegments = cacheTopology.getLocalReadSegments();
-      localSegments.stream().forEach(bitSet::set);
+      localSegments.forEach((IntConsumer) bitSet::set);
       segmentsPerMember.put(localAddress, bitSet);
       for (int s = 0; s < numSegments; s++) {
          if (!bitSet.get(s)) {
