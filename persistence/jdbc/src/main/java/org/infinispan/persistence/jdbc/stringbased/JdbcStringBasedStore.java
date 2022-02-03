@@ -259,14 +259,19 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
    }
 
    @Override
-   public CompletionStage<Long> approximateSize(IntSet segments) {
-      // The size method ignores segments, see ISPN-13636
-      return size(segments).thenApply(totalSize -> {
+   public CompletionStage<Long> size(IntSet segments) {
+      return super.size(segments).thenApply(totalSize -> {
+         // Temporary workaround until we add a new query to compute the size of a set of segments
          IntSet matchingSegments = IntSets.mutableCopyFrom(segments);
          matchingSegments.retainAll(this.sizeSegments);
          int totalSegments = sizeSegments.size();
          return totalSize * matchingSegments.size() / totalSegments;
       });
+   }
+
+   @Override
+   public CompletionStage<Long> approximateSize(IntSet segments) {
+      return size(segments);
    }
 
    @Override
