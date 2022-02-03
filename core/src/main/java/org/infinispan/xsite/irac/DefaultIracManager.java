@@ -184,7 +184,10 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
          log.tracef("Tracking clear request. Replicate to backup sites? %s", sendClear);
       }
       hasClear = sendClear;
-      updatedKeys.values().forEach(IracManagerKeyState::discard);
+      updatedKeys.values().removeIf(state -> {
+         state.discard();
+         return true;
+      });
       if (sendClear) {
          iracExecutor.run();
       }
