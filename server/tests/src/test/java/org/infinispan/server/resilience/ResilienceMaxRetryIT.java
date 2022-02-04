@@ -1,10 +1,13 @@
 package org.infinispan.server.resilience;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -51,7 +54,9 @@ public class ResilienceMaxRetryIT {
       cache.get(ThreadLocalRandom.current().nextInt());
 
       // Stop server0
-      InetSocketAddress stoppedServerAddress = SERVERS.getServerDriver().getServerSocket(0, SERVERS.getTestServer().getDefaultPortNumber());
+      InetSocketAddress serverAddress0 = SERVERS.getServerDriver().getServerSocket(0, SERVERS.getTestServer().getDefaultPortNumber());
+      InetSocketAddress serverAddress1 = SERVERS.getServerDriver().getServerSocket(1, SERVERS.getTestServer().getDefaultPortNumber());
+      InetSocketAddress serverAddress2 = SERVERS.getServerDriver().getServerSocket(2, SERVERS.getTestServer().getDefaultPortNumber());
       SERVERS.getServerDriver().stop(0);
 
       // Execute cache operations so the client connects to server1 or server2 and receives a topology update
@@ -64,18 +69,13 @@ public class ResilienceMaxRetryIT {
             break;
          } catch (TransportException e) {
             // Assert that the failed server is the one that we killed
-            assert e.getMessage().contains(stoppedServerAddress.toString()) : e.getMessage();
+            assertTrue(serverAddress0.toString() + " not found in " + e.getMessage(), e.getMessage().contains(serverAddress0.toString()));
          }
       }
 
       // Check that the stopped server was properly removed from the list
       Collection<InetSocketAddress> currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
-      assertEquals(2, currentServers.size());
-      for (InetSocketAddress currentServer : currentServers) {
-         if (currentServer.equals(stoppedServerAddress)) {
-            throw new IllegalStateException(stoppedServerAddress + " should not be present in the list: " + currentServers);
-         }
-      }
+      assertEquals(new HashSet<>(unresolveAddresses(serverAddress1, serverAddress2)), new HashSet<>(currentServers));
 
       // Stop server1 and server2, start server0
       SERVERS.getServerDriver().stop(1);
@@ -90,16 +90,28 @@ public class ResilienceMaxRetryIT {
          try {
             cache.get(ThreadLocalRandom.current().nextInt());
             break;
-         } catch (Exception e) {
-            // the failure is expected
+         } catch (TransportException e) {
+            // Expected to fail to connect to server1 or server2, not server0
+            assertTrue(e.getMessage(), e.getMessage().contains(serverAddress1.toString()) || e.getMessage().contains(serverAddress2.toString()));
          }
       }
 
       // Check that the client switched to the initial server list
       currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
-      assertEquals(Collections.singletonList(stoppedServerAddress), currentServers);
+      assertEquals(unresolveAddresses(serverAddress0), currentServers);
 
       // Do another operation, it should succeed
       cache.get(ThreadLocalRandom.current().nextInt());
+   }
+
+   /**
+    * ChannelFactory keeps the addresses unresolved, so we must convert the addresses to unresolved if we want them to match
+    */
+   private Collection<InetSocketAddress> unresolveAddresses(InetSocketAddress... serverAddresses) {
+      List<InetSocketAddress> list = new ArrayList<>(serverAddresses.length);
+      for (InetSocketAddress serverAddress : serverAddresses) {
+         list.add(InetSocketAddress.createUnresolved(serverAddress.getHostString(), serverAddress.getPort()));
+      }
+      return list;
    }
 }
