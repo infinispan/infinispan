@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.attributes.AttributeValidator.greaterThanZero;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -24,16 +26,24 @@ import org.infinispan.xsite.spi.XSiteMergePolicy;
 public class SitesConfiguration extends ConfigurationElement<SitesConfiguration> {
    public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disable", false).immutable().build();
    @SuppressWarnings("unchecked")
-   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>) (Class<?>) Set.class).initializer(() -> new HashSet<>(2)).immutable().build();
+   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>) (Class<?>) Set.class).initializer(() -> new HashSet<>(2)).autoPersist(false).immutable().build();
    @SuppressWarnings("rawtypes")
    public static final AttributeDefinition<XSiteEntryMergePolicy> MERGE_POLICY = AttributeDefinition
          .builder(org.infinispan.configuration.parsing.Attribute.MERGE_POLICY, XSiteMergePolicy.DEFAULT, XSiteEntryMergePolicy.class)
          .copier(new MergePolicyAttributeCopier())
          .immutable()
          .build();
+   public static final AttributeDefinition<Long> MAX_CLEANUP_DELAY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY, 30000L)
+         .validator(greaterThanZero(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY))
+         .immutable()
+         .build();
+   public static final AttributeDefinition<Integer> TOMBSTONE_MAP_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TOMBSTONE_MAP_SIZE, 512000)
+         .validator(greaterThanZero(org.infinispan.configuration.parsing.Attribute.TOMBSTONE_MAP_SIZE))
+         .immutable()
+         .build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SitesConfiguration.class, DISABLE_BACKUPS, IN_USE_BACKUP_SITES, MERGE_POLICY);
+      return new AttributeSet(SitesConfiguration.class, DISABLE_BACKUPS, IN_USE_BACKUP_SITES, MERGE_POLICY, MAX_CLEANUP_DELAY, TOMBSTONE_MAP_SIZE);
    }
 
    private final BackupForConfiguration backupFor;
@@ -135,6 +145,20 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     */
    public XSiteEntryMergePolicy<?, ?> mergePolicy() {
       return mergePolicy.get();
+   }
+
+   /**
+    * @return The maximum delay, in milliseconds, between which tombstone cleanup tasks run.
+    */
+   public long maxTombstoneCleanupDelay() {
+      return attributes.attribute(MAX_CLEANUP_DELAY).get();
+   }
+
+   /**
+    * @return The target tombstone map size.
+    */
+   public int tombstoneMapSize() {
+      return attributes.attribute(TOMBSTONE_MAP_SIZE).get();
    }
 
    @SuppressWarnings("rawtypes")

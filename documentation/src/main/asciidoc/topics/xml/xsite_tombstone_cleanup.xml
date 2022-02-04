@@ -1,0 +1,5 @@
+<distributed-cache>
+   <backups tombstone-map-size="512000" max-cleanup-delay="30000">
+      <backup site="LON" strategy="ASYNC"/>
+   </backups>
+</distributed-cache>

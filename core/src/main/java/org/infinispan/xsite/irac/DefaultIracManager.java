@@ -37,6 +37,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.jmx.JmxStatisticsExposer;
+import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -641,6 +642,20 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictsMerged() {
       return getStatisticsEnabled() ? conflictMergedCount.longValue() : -1;
+   }
+
+   @ManagedAttribute(description = "Is tombstone cleanup task running?",
+         displayName = "Tombstone cleanup task running",
+         dataType = DataType.TRAIT)
+   public boolean isTombstoneCleanupTaskRunning() {
+      return iracTombstoneManager.isTaskRunning();
+   }
+
+   @ManagedAttribute(description = "Current delay in milliseconds between tombstone cleanup tasks",
+         displayName = "Delay between tombstone cleanup tasks",
+         measurementType = MeasurementType.DYNAMIC)
+   public long getTombstoneCleanupTaskCurrentDelay() {
+      return iracTombstoneManager.getCurrentDelayMillis();
    }
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)

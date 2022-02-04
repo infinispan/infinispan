@@ -56,6 +56,9 @@
             </backup>
          </backups>
       </distributed-cache>
+      <distributed-cache name="tombstoneCleanup" configuration="base">
+         <backups max-cleanup-delay="3000" tombstone-map-size="4000"/>
+      </distributed-cache>
    </cache-container>
 
 </infinispan>
