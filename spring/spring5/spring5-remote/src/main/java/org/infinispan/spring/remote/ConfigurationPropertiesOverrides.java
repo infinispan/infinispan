@@ -61,7 +61,7 @@ public class ConfigurationPropertiesOverrides {
    public void setServerList(final Collection<InetSocketAddress> serverList) {
       final StringBuilder serverListStr = new StringBuilder();
       for (final InetSocketAddress server : serverList) {
-         serverListStr.append(server.getHostName()).append(":").append(server.getPort())
+         serverListStr.append(server.getHostString()).append(":").append(server.getPort())
                .append(";");
       }
       serverListStr.deleteCharAt(serverListStr.length() - 1);

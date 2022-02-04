@@ -113,6 +113,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
     */
    @Override
    public void prepare(String name) {
+      this.name = name;
       if (configuration.getFeatures() != null) {
          // if the feature isn't enabled, the test will be skipped
          Features features = new Features(this.getClass().getClassLoader());
@@ -139,7 +140,6 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    @Override
    public void start(String name) {
-      this.name = name;
       status = ComponentStatus.INITIALIZING;
       try {
          log.infof("Starting servers %s", name);
