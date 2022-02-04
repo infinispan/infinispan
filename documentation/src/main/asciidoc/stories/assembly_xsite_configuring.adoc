@@ -11,6 +11,7 @@ include::{topics}/proc_xsite_configuring_backups.adoc[leveloffset=+1]
 include::{topics}/proc_xsite_configuring_backupfor.adoc[leveloffset=+1]
 include::{topics}/proc_xsite_configuring_state_transfer.adoc[leveloffset=+1]
 include::{topics}/proc_xsite_configuring_conflict_resolution.adoc[leveloffset=+1]
+include::{topics}/proc_xsite_cleaning_tombstones.adoc[leveloffset=+1]
 include::{topics}/proc_xsite_verifying.adoc[leveloffset=+1]
 include::{topics}/proc_xsite_configuring_clients.adoc[leveloffset=+1]
 
