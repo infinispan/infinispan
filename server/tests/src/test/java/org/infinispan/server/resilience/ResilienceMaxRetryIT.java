@@ -1,5 +1,7 @@
 package org.infinispan.server.resilience;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -75,7 +77,7 @@ public class ResilienceMaxRetryIT {
 
       // Check that the stopped server was properly removed from the list
       Collection<InetSocketAddress> currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
-      assertEquals(new HashSet<>(unresolveAddresses(serverAddress1, serverAddress2)), new HashSet<>(currentServers));
+      assertEquals(new HashSet<>(asList(serverAddress1, serverAddress2)), new HashSet<>(resolveAddresses(currentServers)));
 
       // Stop server1 and server2, start server0
       SERVERS.getServerDriver().stop(1);
@@ -98,7 +100,7 @@ public class ResilienceMaxRetryIT {
 
       // Check that the client switched to the initial server list
       currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
-      assertEquals(unresolveAddresses(serverAddress0), currentServers);
+      assertEquals(singletonList(serverAddress0), resolveAddresses(currentServers));
 
       // Do another operation, it should succeed
       cache.get(ThreadLocalRandom.current().nextInt());
@@ -107,10 +109,10 @@ public class ResilienceMaxRetryIT {
    /**
     * ChannelFactory keeps the addresses unresolved, so we must convert the addresses to unresolved if we want them to match
     */
-   private Collection<InetSocketAddress> unresolveAddresses(InetSocketAddress... serverAddresses) {
-      List<InetSocketAddress> list = new ArrayList<>(serverAddresses.length);
+   private Collection<InetSocketAddress> resolveAddresses(Collection<InetSocketAddress> serverAddresses) {
+      List<InetSocketAddress> list = new ArrayList<>(serverAddresses.size());
       for (InetSocketAddress serverAddress : serverAddresses) {
-         list.add(InetSocketAddress.createUnresolved(serverAddress.getHostString(), serverAddress.getPort()));
+         list.add(new InetSocketAddress(serverAddress.getHostString(), serverAddress.getPort()));
       }
       return list;
    }
