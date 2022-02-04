@@ -1,0 +1,7 @@
+distributedCache:
+  backups:
+    tombstoneMapSize: 512000
+    maxCleanupDelay: 30000
+    LON:
+      backup:
+        strategy: "ASYNC"

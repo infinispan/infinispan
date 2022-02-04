@@ -54,4 +54,14 @@ public final class NoOpIracTombstoneManager implements IracTombstoneManager {
    public int size() {
       return 0;
    }
+
+   @Override
+   public boolean isTaskRunning() {
+      return false;
+   }
+
+   @Override
+   public long getCurrentDelayMillis() {
+      return 0;
+   }
 }
