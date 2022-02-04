@@ -261,6 +261,13 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       }
    }
 
+   /**
+    * Validates the {@link Attribute} values.
+    */
+   public void validate() {
+      attributes.values().forEach(Attribute::validate);
+   }
+
    @Override
    public int hashCode() {
       final int prime = 31;

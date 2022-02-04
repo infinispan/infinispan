@@ -229,10 +229,18 @@ public class CacheParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         if (attribute == Attribute.MERGE_POLICY) {
-            builder.sites().mergePolicy(XSiteMergePolicy.instanceFromString(value, holder.getClassLoader()));
-         } else {
-            throw ParseUtils.unexpectedAttribute(reader, i);
+         switch (attribute) {
+            case MAX_CLEANUP_DELAY:
+               builder.sites().maxTombstoneCleanupDelay(Long.parseLong(value));
+               break;
+            case TOMBSTONE_MAP_SIZE:
+               builder.sites().tombstoneMapSize(Integer.parseInt(value));
+               break;
+            case MERGE_POLICY:
+               builder.sites().mergePolicy(XSiteMergePolicy.instanceFromString(value, holder.getClassLoader()));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
       while (reader.inTag()) {

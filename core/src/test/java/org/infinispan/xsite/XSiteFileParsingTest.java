@@ -111,6 +111,12 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
       assertEquals(dcc.sites().allBackups().get(0).stateTransfer().mode(), XSiteStateTransferMode.AUTO);
    }
 
+   public void testTombstoneConfiguration() {
+      Configuration dcc = cacheManager.getCacheConfiguration("tombstoneCleanup");
+      assertEquals(dcc.sites().maxTombstoneCleanupDelay(), 3000);
+      assertEquals(dcc.sites().tombstoneMapSize(), 4000);
+   }
+
 
    private void testDefault(Configuration dcc) {
       assertEquals(dcc.sites().allBackups().size(), 2);
