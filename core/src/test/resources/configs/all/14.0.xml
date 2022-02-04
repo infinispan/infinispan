@@ -217,7 +217,7 @@
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
-         <backups>
+         <backups max-cleanup-delay="60000" tombstone-map-size="128000">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
                <state-transfer chunk-size="600" timeout="2400000"/>
             </backup>

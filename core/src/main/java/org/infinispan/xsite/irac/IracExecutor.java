@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 12
  */
-public class IracExecutor implements Function<Void, CompletionStage<Void>> {
+public class IracExecutor implements Function<Void, CompletionStage<Void>>, Runnable {
 
    private static final Log log = LogFactory.getLog(IracExecutor.class);
 
@@ -56,6 +56,7 @@ public class IracExecutor implements Function<Void, CompletionStage<Void>> {
    /**
     * Executes, in a new thread, or queues the task.
     */
+   @Override
    public void run() {
       if (hasPendingRunnable.compareAndSet(false, true)) {
          if (backOffEnabled) {

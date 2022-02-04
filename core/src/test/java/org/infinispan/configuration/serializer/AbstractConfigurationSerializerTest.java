@@ -38,8 +38,8 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional")
 public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
-   public static List<MediaType> ALL = Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON);
-   public static List<MediaType> XML = Collections.singletonList(MediaType.APPLICATION_XML);
+   public static final List<MediaType> ALL = Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON);
+   public static final List<MediaType> XML = Collections.singletonList(MediaType.APPLICATION_XML);
 
    public static class Parameter {
       final Path config;

@@ -1,0 +1,41 @@
+[id='cleaning-irac-tombstones_{context}']
+= Cleaning tombstones for asynchronous backups
+
+With the asynchronous backup strategy {brandname} stores metadata, known as tombstones, when it removes keys.
+{brandname} periodically runs a task to remove these tombstones and reduce excessive memory usage when backup locations no longer require the metadata.
+You can configure the frequency for this task by defining a target size for tombstone maps as well as the maximum delay between task runs.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Specify the number of tombstones to store with the `tombstone-map-size` attribute.
++
+If the number of tombstones increases beyond this number then {brandname} runs the cleanup task more frequently.
+Likewise, if the number of tombstones is less than this number then {brandname} does not run the cleanup task as frequently.
+. Add the `max-cleanup-delay` attribute and specify the maximum delay, in milliseconds, between tombstone cleanup tasks.
+. Save the changes to your configuration.
+
+[discrete]
+== Tombstone cleanup task configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/xsite_tombstone_cleanup.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/xsite_tombstone_cleanup.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/xsite_tombstone_cleanup.yaml[]
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{configdocroot}[{brandname} configuration schema reference]
