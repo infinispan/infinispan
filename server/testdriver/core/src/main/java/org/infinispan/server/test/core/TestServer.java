@@ -78,14 +78,8 @@ public class TestServer {
    }
 
    private void configureHotRodClient(ConfigurationBuilder builder, int port, int i) {
-      if (getDriver().getConfiguration().runMode() == ServerRunMode.CONTAINER) {
-         ContainerInfinispanServerDriver containerDriver = (ContainerInfinispanServerDriver) serverDriver;
-         InfinispanGenericContainer container = containerDriver.getContainer(i);
-         builder.addServer().host(container.getIpAddress().getHostAddress()).port(port);
-      } else {
-         InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
-      }
+      InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
+      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {

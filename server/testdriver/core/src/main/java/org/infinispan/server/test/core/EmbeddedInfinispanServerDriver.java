@@ -102,7 +102,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
 
    @Override
    public InetSocketAddress getServerSocket(int serverIndex, int port) {
-      return InetSocketAddress.createUnresolved("127.0.0.1", port + clusterPortOffset() + serverIndex * OFFSET_FACTOR);
+      return new InetSocketAddress("127.0.0.1", port + clusterPortOffset() + serverIndex * OFFSET_FACTOR);
    }
 
    @Override
