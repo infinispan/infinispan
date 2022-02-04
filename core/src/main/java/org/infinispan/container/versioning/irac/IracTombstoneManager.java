@@ -66,4 +66,14 @@ public interface IracTombstoneManager {
     * @return the number of tombstones stored.
     */
    int size();
+
+   /**
+    * @return {@code true} if the cleanup task is currently running.
+    */
+   boolean isTaskRunning();
+
+   /**
+    * @return The current delay between cleanup task in milliseconds.
+    */
+   long getCurrentDelayMillis();
 }

@@ -809,27 +809,29 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
 
    private void writeBackup(ConfigurationWriter writer, Configuration configuration) {
       SitesConfiguration sites = configuration.sites();
-      if (sites.allBackups().size() > 0) {
-         writer.writeStartMap(Element.BACKUPS);
-         for (BackupConfiguration backup : sites.allBackups()) {
-            writer.writeMapItem(Element.BACKUP, Attribute.SITE, backup.site());
-            backup.attributes().write(writer);
-            AttributeSet stateTransfer = backup.stateTransfer().attributes();
-            if (stateTransfer.isModified()) {
-               writer.writeStartElement(Element.STATE_TRANSFER);
-               stateTransfer.write(writer);
-               writer.writeEndElement();
-            }
-            AttributeSet takeOffline = backup.takeOffline().attributes();
-            if (takeOffline.isModified()) {
-               writer.writeStartElement(Element.TAKE_OFFLINE);
-               takeOffline.write(writer);
-               writer.writeEndElement();
-            }
-            writer.writeEndMapItem();
-         }
-         writer.writeEndMap();
+      if (sites.allBackups().isEmpty()) {
+         return;
       }
+      writer.writeStartMap(Element.BACKUPS);
+      sites.attributes().write(writer);
+      for (BackupConfiguration backup : sites.allBackups()) {
+         writer.writeMapItem(Element.BACKUP, Attribute.SITE, backup.site());
+         backup.attributes().write(writer);
+         AttributeSet stateTransfer = backup.stateTransfer().attributes();
+         if (stateTransfer.isModified()) {
+            writer.writeStartElement(Element.STATE_TRANSFER);
+            stateTransfer.write(writer);
+            writer.writeEndElement();
+         }
+         AttributeSet takeOffline = backup.takeOffline().attributes();
+         if (takeOffline.isModified()) {
+            writer.writeStartElement(Element.TAKE_OFFLINE);
+            takeOffline.write(writer);
+            writer.writeEndElement();
+         }
+         writer.writeEndMapItem();
+      }
+      writer.writeEndMap();
    }
 
    private void writeCollectionAsAttribute(ConfigurationWriter writer, Attribute attribute, Collection<?> collection) {

@@ -2284,6 +2284,24 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="max-cleanup-delay" type="xs:positiveInteger" default="${Sites.max-cleanup-interval}">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the maximum delay, in milliseconds, between which tombstone cleanup tasks run.
+          This attribute applies to the asynchronous backup strategy only.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="tombstone-map-size" type="xs:positiveInteger" default="${Sites.tombstone-map-size}">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the target number of tombstones to store.
+          If the current size of the tombstone map is greater than the target size, then cleanup tasks run more frequently.
+          If the current size of the tombstone map is less than the target size, then cleanup tasks run less frequently.
+          This attribute applies to the asynchronous backup strategy only.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="backup">

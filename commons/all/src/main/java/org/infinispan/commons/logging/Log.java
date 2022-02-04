@@ -228,6 +228,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Encoding '%s' is not supported", id = 950)
    EncodingException encodingNotSupported(String enc);
 
+   @Message(value = "Invalid value %s for attribute %s: must be a number greater than zero", id = 951)
+   CacheConfigurationException attributeMustBeGreaterThanZero(Number value, Enum<?> attribute);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

@@ -23,7 +23,6 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
    private final List<BackupConfigurationBuilder> backups = new ArrayList<>(2);
    private final BackupForBuilder backupForBuilder;
 
-
    public SitesConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = SitesConfiguration.attributeDefinitionSet();
@@ -83,9 +82,36 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
       return this;
    }
 
+
+   /**
+    * Sets the maximum delay, in milliseconds, between which the tombstone cleanup task runs.
+    *
+    * @param value The maximum delay in milliseconds.
+    * @return {@code this}.
+    */
+   public SitesConfigurationBuilder maxTombstoneCleanupDelay(long value) {
+      attributes.attribute(SitesConfiguration.MAX_CLEANUP_DELAY).set(value);
+      return this;
+   }
+
+   /**
+    * Sets the target tombstone map size.
+    * <p>
+    * The cleanup task checks the current size of the tombstone map before starting, and increases the delay of the next
+    * run if the size is less than the target size, or reduces the delay if the size is greater than the target size.
+    *
+    * @param value The target tombstone map size.
+    * @return {@code this}.
+    */
+   public SitesConfigurationBuilder tombstoneMapSize(int value) {
+      attributes.attribute(SitesConfiguration.TOMBSTONE_MAP_SIZE).set(value);
+      return this;
+   }
+
    @Override
    public void validate() {
       backupForBuilder.validate();
+      attributes.validate();
 
       //don't allow two backups with the same name
       Set<String> backupNames = new HashSet<>(backups.size());
@@ -110,6 +136,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       backupForBuilder.validate(globalConfig);
+      attributes.validate();
 
       for (BackupConfigurationBuilder bcb : backups) {
          bcb.validate(globalConfig);
