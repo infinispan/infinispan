@@ -6,7 +6,6 @@ import org.kohsuke.MetaInfServices;
 
 import com.arjuna.ats.internal.arjuna.coordinator.ReaperThread;
 import com.arjuna.ats.internal.arjuna.coordinator.ReaperWorkerThread;
-
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -21,5 +20,8 @@ public class ServerHotRodTestBlockHoundIntegration implements BlockHoundIntegrat
       builder.allowBlockingCallsInside(ReaperWorkerThread.class.getName(), "run");
 
       builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onCreated");
+      builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onModified");
+      builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onRemoved");
+      builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onCustom");
    }
 }
