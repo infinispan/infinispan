@@ -4,8 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Properties;
-
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
@@ -88,16 +86,12 @@ public class ConfigurationTest {
    }
 
    public void testTableProperties() {
-      Properties props = new Properties();
-      props.put("createOnStart", "false");
-      props.put("dropOnExit", "true");
-
       ConfigurationBuilder b = new ConfigurationBuilder();
       JdbcStringBasedStoreConfigurationBuilder jdbc = b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
       UnitTestDatabaseManager.buildTableManipulation(jdbc.table());
       jdbc
-         .connectionPool().connectionUrl(JDBC_URL)
-         .withProperties(props);
+            .table().createOnStart(false).dropOnExit(true)
+            .connectionPool().connectionUrl(JDBC_URL);
       Configuration stringConfiguration = b.build();
 
       JdbcStringBasedStoreConfiguration stringStoreConfiguration = (JdbcStringBasedStoreConfiguration) stringConfiguration.persistence().stores().get(0);
