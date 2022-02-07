@@ -49,12 +49,11 @@
             <configuration>
                 <property name="jbossHome">${jbossHome1}</property>
                 <property name="javaHome">${server.jvm}</property>
-                <!--
+                <!-- org.wildfly.clustering.marshalling.protostream.util.EnumMapMarshaller uses setAccessible -->
+                <!-- org.infinispan.protostream.annotations.impl.MarshallerByteCodeGenerator uses setAccessible via javassist -->
                 <property name="javaVmArguments">
-                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
-                </property>
-                -->
-                <property name="javaVmArguments">
+                    --add-opens=java.base/java.util=ALL-UNNAMED
+                   --add-opens=java.base/java.lang=ALL-UNNAMED
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
                 </property>
@@ -64,12 +63,11 @@
             <configuration>
                 <property name="jbossHome">${jbossHome2}</property>
                 <property name="javaHome">${server.jvm}</property>
-                <!--
+                <!-- org.wildfly.clustering.marshalling.protostream.util.EnumMapMarshaller uses setAccessible -->
+                <!-- org.infinispan.protostream.annotations.impl.MarshallerByteCodeGenerator uses setAccessible via javassist -->
                 <property name="javaVmArguments">
-                    -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y
-                </property>
-                -->
-                <property name="javaVmArguments">
+                   --add-opens=java.base/java.util=ALL-UNNAMED
+                   --add-opens=java.base/java.lang=ALL-UNNAMED
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
                     -Djboss.socket.binding.port-offset=100
