@@ -918,11 +918,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          if (log.isTraceEnabled()) {
             log.tracef("Obtaining approximate size from store %s", firstStoreStatus.store);
          }
+         CompletionStage<Long> stage;
          if (firstStoreStatus.hasCharacteristic(Characteristic.SEGMENTABLE)) {
-            return firstStoreStatus.store.approximateSize(segments)
-                                         .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
+            stage = firstStoreStatus.store.approximateSize(segments);
          } else {
-            return firstStoreStatus.store.approximateSize(IntSets.immutableRangeSet(segmentCount))
+            stage = firstStoreStatus.store.approximateSize(IntSets.immutableRangeSet(segmentCount))
                   .thenApply(size -> {
                      // Counting only the keys in the given segments would be expensive,
                      // so we compute an estimate assuming that each segment has a similar number of entries
@@ -932,6 +932,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      return size * segments.size() / storeSegments;
                   });
          }
+         return stage.whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
       } catch (Throwable t) {
          releaseReadLock(stamp);
          throw t;
