@@ -419,7 +419,8 @@
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.2.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.natives>
-      <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${version.org.wildfly.openssl.natives.linux_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
+      <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${version.org.wildfly.openssl.natives.linux_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${versionx.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
       <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
