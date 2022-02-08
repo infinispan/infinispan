@@ -57,8 +57,12 @@ class OracleTableManager extends AbstractTableManager {
    protected boolean indexExists(String indexName, Connection conn) throws PersistenceException {
       ResultSet rs = null;
       try {
-         DatabaseMetaData meta = conn.getMetaData();
-         rs = meta.getIndexInfo(null, null, dataTableName.toString(), false, false);
+         DatabaseMetaData metaData = conn.getMetaData();
+         String schemaPattern = dataTableName.getSchema() == null ? metaData.getUserName() : dataTableName.getSchema();
+         rs = metaData.getIndexInfo(null,
+                 String.format("%1$s%2$s%1$s", identifierQuoteString, schemaPattern),
+                 String.format("%1$s%2$s%1$s", identifierQuoteString, dataTableName.getName()),
+                 false, false);
          while (rs.next()) {
             String index = rs.getString("INDEX_NAME");
             if (indexName.equalsIgnoreCase(index)) {
@@ -79,7 +83,7 @@ class OracleTableManager extends AbstractTableManager {
          // Timestamp for Oracle began with IDX, to keep backwards compatible we have to keep using that
          indexExt = TIMESTAMP_INDEX_PREFIX;
       }
-      String plainTableName = dataTableName.toString().replace(identifierQuoteString, "");
+      String plainTableName = dataTableName.getName();
       /*  Oracle version 12.1 and below supports index names only 30 characters long.
           If cache names have length greater that 15 and have the same prefix it is possible to have the same index names timestamp and segments.
       */
