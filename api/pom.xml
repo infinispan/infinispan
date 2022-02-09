@@ -17,6 +17,15 @@
          <artifactId>mutiny</artifactId>
          <optional>true</optional>
       </dependency>
+
+      <!-- Theoretically we shouldn't have any Hibernate Search 6 dependencies from our own Infinispan annotations.
+           At the moment the only way to get the annotations processed by Hibernate Search is to annotate them with @PropertyMapping or @TypeMapping or ...
+           When Hibernate Search is ready, we could remove the following dependency: -->
+      <dependency>
+         <groupId>org.hibernate.search</groupId>
+         <artifactId>hibernate-search-mapper-pojo-base</artifactId>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
    <properties>
       <maven.compiler.source>11</maven.compiler.source>
