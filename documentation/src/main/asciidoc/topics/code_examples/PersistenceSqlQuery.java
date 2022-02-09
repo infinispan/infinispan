@@ -2,7 +2,7 @@ ConfigurationBuilder builder = new ConfigurationBuilder();
 builder.persistence().addStore(QueriesJdbcStoreConfigurationBuilder.class)
       .dialect(DatabaseType.POSTGRES)
       .shared("true")
-      .keyColumns("isbn")
+      .keyColumns("name")
       .queriesJdbcConfigurationBuilder()
          .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name WHERE t1.name = :name")
          .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name")
