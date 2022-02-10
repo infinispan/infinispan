@@ -63,6 +63,7 @@
       <artifact name="${org.hibernate.search:hibernate-search-engine}"/>
       <artifact name="${org.hibernate.search:hibernate-search-mapper-pojo-base}"/>
       <artifact name="${org.hibernate.search:hibernate-search-util-common}"/>
+      <artifact name="${org.hibernate.search:hibernate-search-backend-lucene}"/>
       <artifact name="${org.apache.lucene:lucene-core}"/>
       <artifact name="${org.apache.lucene:lucene-analyzers-common}"/>
       <artifact name="${org.apache.lucene:lucene-queryparser}"/>
@@ -83,20 +84,21 @@
 
       <module name="org.apache.xerces" services="import"/>
 
-      <module name="org.eclipse.microprofile.config.api" export="true"/>
-      <module name="org.eclipse.microprofile.metrics.api" export="true"/>
-      <module name="io.smallrye.config" services="export" export="true"/>
-      <module name="io.smallrye.metrics" services="import" export="true"/>
+      <module name="org.eclipse.microprofile.config.api" export="true" optional="true"/>
+      <module name="org.eclipse.microprofile.metrics.api" export="true" optional="true"/>
+      <module name="io.smallrye.config" services="export" export="true" optional="true"/>
+      <module name="io.smallrye.metrics" services="import" export="true" optional="true"/>
 
       <module name="org.jboss.jandex"/>
       <module name="org.jboss.logging"/>
-      <module name="org.jboss.weld.core" />
-      <module name="org.jboss.weld.spi" />
+      <module name="org.jboss.weld.core"/>
+      <module name="org.jboss.weld.spi"/>
       <module name="org.wildfly.security.elytron" services="import"/>
       <module name="org.hibernate"/>
+      <module name="org.hibernate.commons-annotations"/>
 
       <!-- jgroups-azure dependency -->
-      <module name="com.microsoft.azure:azure-storage" optional="true"/>
+      <module name="com.microsoft.azure.storage" optional="true"/>
       <!-- jgroups native-s3 dependency -->
       <module name="com.amazonaws.aws-java-sdk" slot="@infinispan.module.slot@" optional="true"/>
    </dependencies>
