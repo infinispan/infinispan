@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
@@ -94,6 +95,15 @@ final class Mutations {
       public ReadWrite(DataConversion keyDataConversion, DataConversion valueDataConversion, Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
          super(keyDataConversion, valueDataConversion);
          this.f = f;
+      }
+
+      @Override
+      public void inject(ComponentRegistry registry) {
+         super.inject(registry);
+
+         if(f instanceof InjectableComponent)         {
+            ((InjectableComponent) f).inject(registry);
+         }
       }
 
       @Override
