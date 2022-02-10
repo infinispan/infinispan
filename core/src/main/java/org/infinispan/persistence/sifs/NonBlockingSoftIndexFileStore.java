@@ -157,7 +157,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public Set<Characteristic> characteristics() {
-      // Does not support segmented or expiration yet
       return EnumSet.of(Characteristic.BULK_READ, Characteristic.SEGMENTABLE, Characteristic.EXPIRATION);
    }
 
@@ -190,7 +189,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
 
       Configuration cacheConfig = ctx.getCache().getCacheConfiguration();
-      temporaryTable = new TemporaryTable(cacheConfig.clustering().hash().numSegments());
+      int cacheSegments = cacheConfig.clustering().hash().numSegments();
+      temporaryTable = new TemporaryTable(cacheSegments);
       temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
 
       fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
@@ -200,8 +200,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             blockingManager.asExecutor("sifs-compactor"));
       try {
          index = new Index(ctx.getNonBlockingManager(), fileProvider, getIndexLocation(), configuration.indexSegments(),
-               configuration.minNodeSize(), configuration.maxNodeSize(),
-               temporaryTable, compactor, timeService);
+               cacheSegments, configuration.minNodeSize(), configuration.maxNodeSize(), temporaryTable, compactor,
+               timeService);
       } catch (IOException e) {
          throw log.cannotOpenIndex(configuration.indexLocation(), e);
       }
@@ -503,8 +503,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    public CompletionStage<Long> size(IntSet segments) {
       return sizeAndClearSequencer.orderOnKey(this, () ->
             logAppender.pause()
-                  .thenCompose(ignore -> index.size())
-                  .thenCompose(v -> logAppender.resume().thenApply(ignore -> v))
+                  .thenCompose(v -> {
+                     // Since this is invoked with the logAppender paused it is an exact size
+                     long size = index.approximateSize(segments);
+                     return logAppender.resume().thenApply(ignore -> size);
+                  })
       );
    }
 

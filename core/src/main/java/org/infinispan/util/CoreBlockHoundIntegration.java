@@ -76,7 +76,7 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(EnhancedQueueExecutorFactory.class.getName(), "createExecutor");
 
       // Reads from a file during initialization which is during store startup
-      builder.allowBlockingCallsInside("org.infinispan.persistence.sifs.Index$Segment", "readUnsignedLong");
+      builder.allowBlockingCallsInside("org.infinispan.persistence.sifs.Index", "checkForExistingIndexSizeFile");
 
       methodsToBeRemoved(builder);
 

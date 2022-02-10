@@ -5,11 +5,11 @@ package org.infinispan.persistence.sifs;
  */
 public class EntryInfo extends EntryPosition {
    public final short numRecords;
-   public final int segment;
+   public final int cacheSegment;
 
-   public EntryInfo(int file, int offset, short numRecords, int segment) {
+   public EntryInfo(int file, int offset, short numRecords, int cacheSegment) {
       super(file, offset);
       this.numRecords = numRecords;
-      this.segment = segment;
+      this.cacheSegment = cacheSegment;
    }
 }
