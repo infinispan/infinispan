@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -27,6 +26,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
@@ -67,12 +67,14 @@ class Index {
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private final Segment[] segments;
    private final TimeService timeService;
+   private final File indexSizeFile;
+   public final AtomicLongArray sizePerSegment;
 
    private final FlowableProcessor<IndexRequest>[] flowableProcessors;
 
    public Index(NonBlockingManager nonBlockingManager, FileProvider fileProvider, Path indexDir, int segments,
-                int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
-                TimeService timeService) throws IOException {
+         int cacheSegments, int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
+         TimeService timeService) throws IOException {
       this.nonBlockingManager = nonBlockingManager;
       this.fileProvider = fileProvider;
       this.compactor = compactor;
@@ -80,16 +82,17 @@ class Index {
       this.indexDir = indexDir;
       this.minNodeSize = minNodeSize;
       this.maxNodeSize = maxNodeSize;
+      this.sizePerSegment = new AtomicLongArray(cacheSegments);
       indexDir.toFile().mkdirs();
+      this.indexSizeFile = new File(indexDir.toFile(), "index-count");
 
-      // If there are more index files than our segments, that means we can't load them
-      boolean hasExtraIndexFile = fileExists(segments);
+      boolean validCount = checkForExistingIndexSizeFile(segments, cacheSegments);
 
       this.segments = new Segment[segments];
       this.flowableProcessors = new FlowableProcessor[segments];
       for (int i = 0; i < segments; ++i) {
          UnicastProcessor<IndexRequest> flowableProcessor = UnicastProcessor.create();
-         Segment segment = new Segment(i, temporaryTable, !hasExtraIndexFile);
+         Segment segment = new Segment(this, i, temporaryTable, validCount);
 
          this.segments[i] = segment;
          // It is possible to write from multiple threads
@@ -97,25 +100,46 @@ class Index {
       }
    }
 
-   boolean fileExists(int id) {
-      File indexFileFile = new File(indexDir.toFile(), "index." + id);
-      return indexFileFile.exists();
+   // This method is here for blockhound
+   private boolean checkForExistingIndexSizeFile(int storeSegments, int cacheSegments) {
+      boolean validCount = false;
+      try (RandomAccessFile indexCount = new RandomAccessFile(indexSizeFile, "r")) {
+         int storeSegmentsCount = UnsignedNumeric.readUnsignedInt(indexCount);
+         int cacheSegmentsCount = UnsignedNumeric.readUnsignedInt(indexCount);
+         if (storeSegmentsCount == storeSegments && cacheSegmentsCount == cacheSegments) {
+            for (int i = 0; i < sizePerSegment.length(); ++i) {
+               long value = UnsignedNumeric.readUnsignedLong(indexCount);
+               sizePerSegment.set(i, value);
+            }
+
+            validCount = true;
+         } else {
+            log.tracef("Previous index file store segments " + storeSegmentsCount + " doesn't match configured" +
+                  " store segments " + storeSegments + " or index file cache segments " + cacheSegmentsCount + " doesn't match configured" +
+                  " cache segments " + cacheSegments);
+         }
+      } catch (IOException e) {
+         log.tracef("Encountered IOException %s while reading index count file, assuming index dirty", e.getMessage());
+      }
+
+      // Delete this so the file doesn't exist and will be written at stop. If the file isn't present it is considered dirty
+      indexSizeFile.delete();
+      return validCount;
    }
 
    public static byte[] toIndexKey(int cacheSegment, org.infinispan.commons.io.ByteBuffer buffer) {
-      int segmentBytes = UnsignedNumeric.sizeUnsignedInt(cacheSegment);
-      byte[] indexKey = new byte[buffer.getLength() + segmentBytes];
-      UnsignedNumeric.writeUnsignedInt(indexKey, 0, cacheSegment);
-      System.arraycopy(buffer.getBuf(), buffer.getOffset(), indexKey, segmentBytes, buffer.getLength());
-
-      return indexKey;
+      return toIndexKey(cacheSegment, buffer.getBuf(), buffer.getOffset(), buffer.getLength());
    }
 
    static byte[] toIndexKey(int cacheSegment, byte[] bytes) {
+      return toIndexKey(cacheSegment, bytes, 0, bytes.length);
+   }
+
+   static byte[] toIndexKey(int cacheSegment, byte[] bytes, int offset, int length) {
       int segmentBytes = UnsignedNumeric.sizeUnsignedInt(cacheSegment);
-      byte[] indexKey = new byte[bytes.length + segmentBytes];
+      byte[] indexKey = new byte[length + segmentBytes];
       UnsignedNumeric.writeUnsignedInt(indexKey, 0, cacheSegment);
-      System.arraycopy(bytes, 0, indexKey, segmentBytes, bytes.length);
+      System.arraycopy(bytes, 0, indexKey, segmentBytes + offset, length);
 
       return indexKey;
    }
@@ -189,6 +213,9 @@ class Index {
             processor.onNext(clearRequest);
             stage.dependsOn(clearRequest);
          }
+         for (int i = 0; i < sizePerSegment.length(); ++i) {
+            sizePerSegment.set(i, 0);
+         }
          return stage.freeze();
       } finally {
          lock.writeLock().unlock();
@@ -226,29 +253,32 @@ class Index {
       for (Segment segment : segments) {
          aggregateCompletionStage.dependsOn(segment);
       }
-      return aggregateCompletionStage.freeze();
-   }
 
-   public CompletionStage<Long> size() {
-      AtomicLong size = new AtomicLong();
-      AggregateCompletionStage<AtomicLong> aggregateCompletionStage = CompletionStages.aggregateCompletionStage(size);
-      for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
-         IndexRequest request = IndexRequest.sizeRequest();
-         flowableProcessor.onNext(request);
-         aggregateCompletionStage.dependsOn(request.thenAccept(count -> size.addAndGet((long) count)));
+      try {
+         // Create the file first as it should not be present as we deleted during startup
+         indexSizeFile.createNewFile();
+         try (FileOutputStream indexCountStream = new FileOutputStream(indexSizeFile)) {
+            UnsignedNumeric.writeUnsignedInt(indexCountStream, segments.length);
+            UnsignedNumeric.writeUnsignedInt(indexCountStream, this.sizePerSegment.length());
+            for (int i = 0; i < sizePerSegment.length(); ++i) {
+               UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
+            }
+         }
+      } catch (IOException e) {
+         aggregateCompletionStage.dependsOn(CompletableFutures.completedExceptionFuture(e));
       }
-      return aggregateCompletionStage.freeze().thenApply(AtomicLong::get);
+
+
+      return aggregateCompletionStage.freeze();
    }
 
    public long approximateSize(IntSet cacheSegments) {
       long size = 0;
       for (PrimitiveIterator.OfInt segIter = cacheSegments.iterator(); segIter.hasNext(); ) {
          int cacheSegment = segIter.nextInt();
-         for (Segment seg : segments) {
-            size += seg.sizePerSegment.get(cacheSegment);
-            if (size < 0) {
-               return Long.MAX_VALUE;
-            }
+         size += sizePerSegment.get(cacheSegment);
+         if (size < 0) {
+            return Long.MAX_VALUE;
          }
       }
 
@@ -270,10 +300,6 @@ class Index {
 
    public void start(Executor executor) {
 
-      // Now that all index segment files are created and marked as dirty we can delete the excess index file if present
-      // If this file was present we assume all indexes are dirty since the number of indexes was reduced
-      new File(indexDir.toFile(), "index." + segments.length).delete();
-
       for (int i = 0; i < segments.length; ++i) {
          Segment segment = segments[i];
          flowableProcessors[i]
@@ -282,27 +308,24 @@ class Index {
       }
    }
 
-   class Segment extends CompletableFuture<Void> implements Consumer<IndexRequest>, Action {
+   static class Segment extends CompletableFuture<Void> implements Consumer<IndexRequest>, Action {
+      final Index index;
       private final TemporaryTable temporaryTable;
       private final TreeMap<Short, List<IndexSpace>> freeBlocks = new TreeMap<>();
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
       private final boolean loaded;
       private final FileChannel indexFile;
-      private final File indexCountFile;
       private long indexFileSize;
-      final AtomicLongArray sizePerSegment;
 
       private volatile IndexNode root;
 
-
-      private Segment(int id, TemporaryTable temporaryTable, boolean attemptLoad) throws IOException {
+      private Segment(Index index, int id, TemporaryTable temporaryTable, boolean attemptLoad) throws IOException {
+         this.index = index;
          this.temporaryTable = temporaryTable;
-         this.sizePerSegment = new AtomicLongArray(temporaryTable.getSegmentMax());
 
          int segmentMax = temporaryTable.getSegmentMax();
-         File indexFileFile = new File(indexDir.toFile(), "index." + id);
+         File indexFileFile = new File(index.indexDir.toFile(), "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
-         this.indexCountFile = new File(indexDir.toFile(), "index-count." + id);
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
          int gracefulValue = -1, segmentValue = -1;
@@ -310,16 +333,7 @@ class Index {
          if (attemptLoad && indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
                && (gracefulValue = buffer.getInt(0)) == GRACEFULLY
                && (segmentValue = buffer.getInt(4)) == segmentMax) {
-            try (RandomAccessFile indexCount = new RandomAccessFile(indexCountFile, "r")) {
-               for (int i = 0; i < sizePerSegment.length(); ++i) {
-                  long value = readUnsignedLong(indexCount);
-                  sizePerSegment.set(i, value);
-               }
-
                validIndex = true;
-            } catch (IOException e) {
-               log.tracef("Encountered IOException %s while reading index count file, assuming index dirty", e.getMessage());
-            }
          } else {
             log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d attemptLoad=%s", id, gracefulValue, segmentValue, attemptLoad);
          }
@@ -338,7 +352,6 @@ class Index {
             // reserve space for shutdown
             indexFileSize = INDEX_FILE_HEADER_SIZE;
          }
-         this.indexCountFile.delete();
          buffer.putInt(0, DIRTY);
          buffer.position(0);
          buffer.limit(4);
@@ -382,15 +395,12 @@ class Index {
                indexFile.truncate(0);
                indexFileSize = INDEX_FILE_HEADER_SIZE;
                freeBlocks.clear();
-               for (int i = 0; i < sizePerSegment.length(); ++i) {
-                  sizePerSegment.set(i, 0);
-               }
-               nonBlockingManager.complete(request, null);
+               index.nonBlockingManager.complete(request, null);
                return;
             case SYNC_REQUEST:
                Runnable runnable = (Runnable) request.getKey();
                runnable.run();
-               nonBlockingManager.complete(request, null);
+               index.nonBlockingManager.complete(request, null);
                return;
             case MOVED:
                recordChange = IndexNode.RecordChange.MOVE;
@@ -403,7 +413,7 @@ class Index {
                   @Override
                   public void setOverwritten(int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
                      if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-                        sizePerSegment.incrementAndGet(cacheSegment);
+                        index.sizePerSegment.decrementAndGet(cacheSegment);
                      }
                   }
                };
@@ -411,11 +421,11 @@ class Index {
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
                overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
-                  nonBlockingManager.complete(request, overwritten);
+                  index.nonBlockingManager.complete(request, overwritten);
                   if (request.getOffset() >= 0 && prevOffset < 0) {
-                     sizePerSegment.incrementAndGet(cacheSegment);
+                     index.sizePerSegment.incrementAndGet(cacheSegment);
                   } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                     sizePerSegment.decrementAndGet(cacheSegment);
+                     index.sizePerSegment.decrementAndGet(cacheSegment);
                   }
                };
                break;
@@ -423,7 +433,7 @@ class Index {
                recordChange = IndexNode.RecordChange.DECREASE;
                overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
                   if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-                     sizePerSegment.decrementAndGet(cacheSegment);
+                     index.sizePerSegment.decrementAndGet(cacheSegment);
                   }
                };
                break;
@@ -431,17 +441,6 @@ class Index {
                recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
                overwriteHook = IndexNode.NOOP_HOOK;
                break;
-            case SIZE:
-               long size = 0;
-               for (int i = 0; i < sizePerSegment.length(); ++i) {
-                  size += sizePerSegment.get(i);
-                  if (size < 0) {
-                     size = Long.MAX_VALUE;
-                     break;
-                  }
-               }
-               nonBlockingManager.complete(request, size);
-               return;
             default:
                throw new IllegalArgumentException(request.toString());
          }
@@ -454,7 +453,7 @@ class Index {
          temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
          if (request.getType() != IndexRequest.Type.UPDATE) {
             // The update type will complete it in the switch statement above
-            nonBlockingManager.complete(request, null);
+            index.nonBlockingManager.complete(request, null);
          }
       }
 
@@ -501,14 +500,6 @@ class Index {
             indexFile.position(0);
             write(indexFile, buffer);
 
-            // Create the file first as it should not be present as we deleted during startup
-            this.indexCountFile.createNewFile();
-            try (FileOutputStream indexCountStream = new FileOutputStream(indexCountFile)) {
-               for (int i = 0; i < sizePerSegment.length(); ++i) {
-                  UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
-               }
-            }
-
             complete(null);
          } catch (Throwable t) {
             completeExceptionally(t);
@@ -554,11 +545,11 @@ class Index {
       }
 
       public FileProvider getFileProvider() {
-         return fileProvider;
+         return index.fileProvider;
       }
 
       public Compactor getCompactor() {
-         return compactor;
+         return index.compactor;
       }
 
       public IndexNode getRoot() {
@@ -573,11 +564,11 @@ class Index {
       }
 
       public int getMaxNodeSize() {
-         return maxNodeSize;
+         return index.maxNodeSize;
       }
 
       public int getMinNodeSize() {
-         return minNodeSize;
+         return index.minNodeSize;
       }
 
       // this should be accessed only from the updater thread
@@ -614,7 +605,7 @@ class Index {
       }
 
       public TimeService getTimeService() {
-         return timeService;
+         return index.timeService;
       }
    }
 

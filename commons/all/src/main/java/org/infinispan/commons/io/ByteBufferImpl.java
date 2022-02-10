@@ -79,7 +79,7 @@ public class ByteBufferImpl implements ByteBuffer {
 
    @Override
    public String toString() {
-      return String.format("ByteBufferImpl{length=%d, offset=%d, bytes=%s}", length, offset, Util.hexDump(buf, offset + length));
+      return String.format("ByteBufferImpl{length=%d, offset=%d, bytes=%s}", length, offset, Util.hexDump(buf, offset, length));
    }
 
    @Override

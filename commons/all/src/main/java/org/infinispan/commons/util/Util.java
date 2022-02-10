@@ -629,20 +629,21 @@ public final class Util {
    }
 
    public static String hexDump(byte[] data) {
-      return hexDump(data, data.length);
+      return hexDump(data, 0, data.length);
    }
 
    public static String hexDump(ByteBuffer buffer) {
       return hexDump(buffer::get, buffer.position(), buffer.remaining());
    }
 
-   public static String hexDump(byte[] buffer, int actualLength) {
-      int dumpLength = Math.min(Math.min(buffer.length, HEX_DUMP_LIMIT), actualLength);
+   public static String hexDump(byte[] buffer, int offset, int actualLength) {
+      assert actualLength + offset <= buffer.length;
+      int dumpLength = Math.min(actualLength, HEX_DUMP_LIMIT);
       StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
       for (int i = 0; i < dumpLength; ++i) {
-         addHexByte(sb, buffer[i]);
+         addHexByte(sb, buffer[offset + i]);
       }
-      if (dumpLength < HEX_DUMP_LIMIT) {
+      if (dumpLength < actualLength) {
          sb.append("...");
       }
       sb.append(" (").append(actualLength).append(" bytes)");

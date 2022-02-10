@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.util.Util;
 
 /**
  * Request for some change to be persisted in the Index or operation executed by index updater thread.
@@ -18,7 +19,6 @@ class IndexRequest extends CompletableFuture<Object> {
       FOUND_OLD,
       CLEAR,
       SYNC_REQUEST,
-      SIZE
    }
 
    private final Type type;
@@ -74,11 +74,6 @@ class IndexRequest extends CompletableFuture<Object> {
       return new IndexRequest(Type.SYNC_REQUEST, -1, runnable, null, -1, -1, -1, -1, -1);
    }
 
-   public static IndexRequest sizeRequest() {
-      return new IndexRequest(Type.SIZE, -1,null, null, -1, -1, -1, -1, -1);
-   }
-
-
    public Type getType() {
       return type;
    }
@@ -118,7 +113,7 @@ class IndexRequest extends CompletableFuture<Object> {
    @Override
    public String toString() {
       return "IndexRequest{" +
-            "key=" + key +
+            "key=" + Util.toStr(key) +
             ", serializedKey=" + serializedKey +
             ", cacheSegment=" + segment +
             ", file=" + file +

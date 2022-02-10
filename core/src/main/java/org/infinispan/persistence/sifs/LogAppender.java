@@ -286,16 +286,6 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       }
    }
 
-   private byte[] raw(ByteBuffer buffer) {
-      if (buffer.getBuf().length == buffer.getLength()) {
-         return buffer.getBuf();
-      } else {
-         byte[] bytes = new byte[buffer.getLength()];
-         System.arraycopy(buffer.getBuf(), buffer.getOffset(), bytes, 0, buffer.getLength());
-         return bytes;
-      }
-   }
-
    public void setSeqId(long seqId) {
       this.seqId = seqId;
    }
