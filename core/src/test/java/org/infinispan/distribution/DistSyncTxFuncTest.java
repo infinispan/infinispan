@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -296,6 +297,18 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
       assertIsNotInL1(c3, k1);
 
       checkOwnership(k1, k2, "value1", "value2");
+   }
+
+   public void testMergeFromNonOwner() {
+      initAndTest();
+
+
+      // merge function applied
+      Object retval = getFirstNonOwner("k1").merge("k1", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
+      asyncWait("k1", ReadWriteKeyCommand.class);
+      if (testRetVals) assertEquals("merged_value_value2", retval);
+      assertOnAllCachesAndOwnership("k1", "merged_value_value2");
+
    }
 
    @Override
