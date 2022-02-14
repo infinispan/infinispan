@@ -84,7 +84,8 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
                } catch (Throwable t) {
                   throw CompletableFutures.asCompletionException(t);
                }
-            }, command.getCommandId());
+            }, command.getCommandId())
+                  .thenCompose(Function.identity());
          } else {
             stage = command.invokeAsync(componentRegistry);
          }

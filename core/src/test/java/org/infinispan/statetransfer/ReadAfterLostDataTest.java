@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import static org.infinispan.test.TestingUtil.crashCacheManagers;
 import static org.infinispan.test.TestingUtil.installNewView;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,10 +12,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,7 +31,6 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -36,6 +38,8 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.HeartBeatCommand;
+import org.infinispan.util.ControlledTransport;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -46,7 +50,7 @@ import org.testng.annotations.Test;
 @InCacheMode(CacheMode.DIST_SYNC)
 @CleanupAfterMethod
 public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
-   private List<Runnable> cleanup = new ArrayList<>();
+   private final List<Runnable> cleanup = new ArrayList<>();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -144,20 +148,40 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
          cache(0).put(keys.get(i), "value" + i);
       }
 
-      for (Cache<?, ?> c : Arrays.asList(cache(0), cache(1))) {
-         ClusterTopologyManager clusterTopologyManager = TestingUtil.extractComponent(c, ClusterTopologyManager.class);
-         clusterTopologyManager.setRebalancingEnabled(false);
-         if (blockUpdates) {
-            ControlledTransport blockedTopologyUpdates = ControlledTransport.replace(c);
-            blockedTopologyUpdates.blockBefore(TopologyUpdateCommand.class);
+      AdvancedCache<Object, Object> coordCache = advancedCache(0);
+      assertTrue(coordCache.getCacheManager().isCoordinator());
+      ClusterTopologyManager clusterTopologyManager = TestingUtil.extractComponent(coordCache, ClusterTopologyManager.class);
+      clusterTopologyManager.setRebalancingEnabled(false);
+
+      if (blockUpdates) {
+         ControlledTransport controlledTransport = ControlledTransport.replace(coordCache);
+         controlledTransport.excludeCacheCommands();
+         controlledTransport.excludeCommands(HeartBeatCommand.class);
+         cleanup.add(controlledTransport::stopBlocking);
+
+         // Block the sending of the TopologyUpdateCommand until a command asks for the transaction data future
+         CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>> topologyUpdateRequest1 =
+               controlledTransport.expectCommandAsync(TopologyUpdateCommand.class);
+         CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>> topologyUpdateRequest2 =
+               controlledTransport.expectCommandAsync(TopologyUpdateCommand.class);
+
+         CompletableFuture<Void> firstTransactionDataRequest = new CompletableFuture<>();
+         for (Cache<?, ?> c : Arrays.asList(cache(0), cache(1))) {
             int currentTopology = c.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
-            cleanup.add(blockedTopologyUpdates::stopBlocking);
             // Because all responses are CacheNotFoundResponses, retries will block to wait for a new topology
             // Even reads block, because in general the values might have been copied to the write-only owners
-            TestingUtil.wrapComponent(cache(0), StateTransferLock.class,
-                  stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, blockedTopologyUpdates::stopBlocking));
+            TestingUtil.wrapComponent(c, StateTransferLock.class,
+                  stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, firstTransactionDataRequest));
          }
+         firstTransactionDataRequest.thenAccept(__ -> {
+            // One for the default cache, one for the CONFIG cache
+            topologyUpdateRequest1.thenAccept(
+                  topologyUpdateCommandBlockedRequest -> topologyUpdateCommandBlockedRequest.send());
+            topologyUpdateRequest2.thenAccept(
+                  topologyUpdateCommandBlockedRequest -> topologyUpdateCommandBlockedRequest.send());
+         });
       }
+
       crashCacheManagers(manager(2), manager(3));
       installNewView(manager(0), manager(1));
 
@@ -270,18 +294,20 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
 
    private static class UnblockingStateTransferLock extends DelegatingStateTransferLock {
       private final int topologyId;
-      private final Runnable runnable;
+      private final CompletableFuture<Void> transactionDataRequestFuture;
 
-      public UnblockingStateTransferLock(StateTransferLock delegate, int topologyId, Runnable runnable) {
+      public UnblockingStateTransferLock(StateTransferLock delegate, int topologyId,
+                                         CompletableFuture<Void> transactionDataRequestFuture) {
          super(delegate);
          this.topologyId = topologyId;
-         this.runnable = runnable;
+         this.transactionDataRequestFuture = transactionDataRequestFuture;
       }
 
       @Override
       public CompletionStage<Void> transactionDataFuture(int expectedTopologyId) {
          if (expectedTopologyId >= topologyId) {
-            runnable.run();
+            log.tracef("Completing future for transaction data request with topology %d", expectedTopologyId);
+            transactionDataRequestFuture.complete(null);
          }
          return super.transactionDataFuture(expectedTopologyId);
       }

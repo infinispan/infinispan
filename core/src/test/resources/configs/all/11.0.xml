@@ -62,7 +62,7 @@
       <!-- Use the "tcp" stack but replace the discovery -->
       <stack name="tcpgossip" extends="tcp-test">
          <MPING ispn:stack.combine="REMOVE" xmlns="urn:org:jgroups"/>
-         <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}" ispn:stack.combine="INSERT_ABOVE" ispn:stack.position="TCP" xmlns="urn:org:jgroups"/>
+         <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}" ispn:stack.combine="INSERT_ABOVE" ispn:stack.position="RED" xmlns="urn:org:jgroups"/>
       </stack>
       <!-- Use the "tcp" stack but replace the discovery -->
       <stack name="tcpfdhost" extends="tcp">

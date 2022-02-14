@@ -22,7 +22,7 @@
                 xmlns="urn:org:jgroups"/>
          <MERGE3 xmlns="urn:org:jgroups"/>
          <FD_SOCK xmlns="urn:org:jgroups"/>
-         <FD_ALL2 timeout="3000"
+         <FD_ALL3 timeout="3000"
                   interval="1000"
                   xmlns="urn:org:jgroups"
          />

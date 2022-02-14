@@ -3,11 +3,10 @@ package org.infinispan.util;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
@@ -32,28 +31,47 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.SiteAddress;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
+import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -62,45 +80,41 @@ import net.jcip.annotations.GuardedBy;
  * @author Dan Berindei
  * @since 4.2
  */
-@Scope(Scopes.NAMED_CACHE)
-public class ControlledRpcManager extends AbstractDelegatingRpcManager {
-   private static final Log log = LogFactory.getLog(ControlledRpcManager.class);
+@Scope(Scopes.GLOBAL)
+public class ControlledTransport extends AbstractDelegatingTransport {
+   private static final Log log = LogFactory.getLog(ControlledTransport.class);
    private static final int TIMEOUT_SECONDS = 10;
 
-   @Inject Cache<?, ?> cache;
+   @Inject EmbeddedCacheManager manager;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
    @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
+   @Inject TimeService timeService;
 
    private volatile boolean stopped = false;
+   private volatile boolean excludeAllCacheCommands;
    private final Set<Class<? extends ReplicableCommand>> excludedCommands =
-      Collections.synchronizedSet(new HashSet<>());
+         Collections.synchronizedSet(new HashSet<>());
    private final BlockingQueue<CompletableFuture<ControlledRequest<?>>> waiters = new LinkedBlockingDeque<>();
    private RuntimeException globalError;
 
-   protected ControlledRpcManager(RpcManager realOne, Cache<?, ?> cache) {
+   protected ControlledTransport(Transport realOne) {
       super(realOne);
-      this.cache = cache;
    }
 
-   public static ControlledRpcManager replaceRpcManager(Cache<?, ?> cache) {
-      RpcManager rpcManager = extractComponent(cache, RpcManager.class);
-      if (rpcManager instanceof ControlledRpcManager) {
-         throw new IllegalStateException("One ControlledRpcManager per cache should be enough");
+   public static ControlledTransport replace(Cache<?, ?> cache) {
+      return replace(cache.getCacheManager());
+   }
+   public static ControlledTransport replace(EmbeddedCacheManager manager) {
+      Transport transport = extractGlobalComponent(manager, Transport.class);
+      if (transport instanceof ControlledTransport) {
+         throw new IllegalStateException("One ControlledTransport per cache should be enough");
       }
-      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager, cache);
-      log.tracef("Installing ControlledRpcManager on %s", controlledRpcManager.getAddress());
-      TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
-      return controlledRpcManager;
-   }
-
-   public void revertRpcManager() {
-      stopBlocking();
-      log.tracef("Restoring regular RpcManager on %s", getAddress());
-      RpcManager rpcManager = extractComponent(cache, RpcManager.class);
-      assertSame(this, rpcManager);
-      TestingUtil.replaceComponent(cache, RpcManager.class, realOne, true);
+      ControlledTransport controlledTransport = new ControlledTransport(transport);
+      log.tracef("Installing ControlledTransport on %s", controlledTransport.getAddress());
+      TestingUtil.replaceComponent(manager, Transport.class, controlledTransport, true);
+      return controlledTransport;
    }
 
    @SafeVarargs
@@ -112,12 +126,19 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       excludedCommands.addAll(Arrays.asList(excluded));
    }
 
+   public final void excludeCacheCommands() {
+      if (stopped) {
+         throw new IllegalStateException("Trying to exclude cache commands but we already stopped intercepting");
+      }
+      excludeAllCacheCommands = true;
+   }
+
    public void stopBlocking() {
-      log.debugf("Stopping intercepting RPC calls on %s", realOne.getAddress());
+      log.debugf("Stopping intercepting RPC calls on %s", actual.getAddress());
       stopped = true;
       throwGlobalError();
       if (!waiters.isEmpty()) {
-         fail("Stopped intercepting RPCs on " + realOne.getAddress() + ", but there are " + waiters.size() + " waiters in the queue");
+         fail("Stopped intercepting RPCs on " + actual.getAddress() + ", but there are " + waiters.size() + " waiters in the queue");
       }
    }
 
@@ -125,7 +146,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
    public <T extends ReplicableCommand> BlockedRequest<T> expectCommand(Class<T> expectedCommandClass) {
-      return uncheckedGet(expectCommandAsync(expectedCommandClass));
+      return uncheckedGet(expectCommandAsync(expectedCommandClass), expectedCommandClass);
    }
 
    /**
@@ -133,7 +154,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
     */
    public <T extends ReplicableCommand>
    BlockedRequest<T> expectCommand(Class<T> expectedCommandClass, Consumer<T> checker) {
-      BlockedRequest<T> blockedRequest = uncheckedGet(expectCommandAsync(expectedCommandClass));
+      BlockedRequest<T> blockedRequest = uncheckedGet(expectCommandAsync(expectedCommandClass), this);
       T command = expectedCommandClass.cast(blockedRequest.request.getCommand());
       checker.accept(command);
       return blockedRequest;
@@ -183,10 +204,164 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    @Override
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
+                                                ResponseMode mode, long timeout, ResponseFilter responseFilter,
+                                                DeliverOrder deliverOrder, boolean anycast) throws Exception {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
+                                                long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
+                                                boolean totalOrder, boolean anycast) throws Exception {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
+                                                long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
+                                                boolean anycast) throws Exception {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                        ReplicableCommand rpcCommand, ResponseMode mode,
+                                                                        long timeout, ResponseFilter responseFilter,
+                                                                        DeliverOrder deliverOrder, boolean anycast)
+         throws Exception {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+      performSend(Collections.singletonList(destination), rpcCommand, c -> {
+         try {
+            actual.sendTo(destination, rpcCommand, deliverOrder);
+         } catch (Exception e) {
+            return CompletableFutures.completedExceptionFuture(e);
+         }
+         return null;
+      });
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder)
+         throws Exception {
+      performSend(destinations, rpcCommand, c -> {
+         try {
+            actual.sendToMany(destinations, rpcCommand, deliverOrder);
+         } catch (Exception e) {
+            return CompletableFutures.completedExceptionFuture(e);
+         }
+         return null;
+      });
+   }
+
+   @Override
+   public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+      performSend(actual.getMembers(), rpcCommand, c -> {
+         try {
+            actual.sendToAll(rpcCommand, deliverOrder);
+         } catch (Exception e) {
+            return CompletableFutures.completedExceptionFuture(e);
+         }
+         return null;
+      });
+   }
+
+   @Override
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand)
+         throws Exception {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+      XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
+      SiteAddress address = new SiteAddress(backup.getSiteName());
+      CompletionStage<ValidResponse> request =
+            performRequest(Collections.singletonList(address), rpcCommand, SingleResponseCollector.validOnly(), c -> {
+               try {
+                  return actual.backupRemotely(backup, rpcCommand).handle(
+                        (rv, t) -> {
+                           // backupRemotely parses the response, here we turn the value/exception back into a response
+                           ValidResponse cv;
+                           if (t == null) {
+                              cv = c.addResponse(address, SuccessfulResponse.create(rv));
+                           } else if (t instanceof Exception) {
+                              cv = c.addResponse(address, new ExceptionResponse((Exception) t));
+                           } else {
+                              cv = c.addResponse(address, new ExceptionResponse(new TestException(t)));
+                           }
+                           if (cv == null) {
+                              cv = c.finish();
+                           }
+
+                           return cv;
+                        });
+               } catch (Exception e) {
+                  return CompletableFutures.completedExceptionFuture(e);
+               }
+            });
+      request.whenComplete(xSiteResponse);
+      return xSiteResponse;
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                               ResponseCollector<T> collector, DeliverOrder deliverOrder, long timeout,
+                                               TimeUnit unit) {
+      return performRequest(Collections.singletonList(target), command, collector,
+                            c -> actual.invokeCommand(target, command, c, deliverOrder, timeout, unit));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                               ResponseCollector<T> collector, DeliverOrder deliverOrder, long timeout,
+                                               TimeUnit unit) {
+      return performRequest(targets, command, collector,
+                            c -> actual.invokeCommand(targets, command, c, deliverOrder, timeout, unit));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                    DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      return performRequest(actual.getMembers(), command, collector,
+                            c -> actual.invokeCommandOnAll(command, c, deliverOrder, timeout, unit));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        long timeout, TimeUnit unit) {
+      return performRequest(actual.getMembers(), command, collector,
+                            c -> actual.invokeCommandStaggered(targets, command, c, deliverOrder, timeout,
+                                                               unit));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                ResponseCollector<T> collector, DeliverOrder deliverOrder, long timeout,
+                                                TimeUnit timeUnit) {
+      // Split the invocation into multiple unicast requests
+      AbstractDelegatingRpcManager.CommandsRequest<T>
+            action = new AbstractDelegatingRpcManager.CommandsRequest<>(targets, collector);
+      for (Address target : targets) {
+         if (target.equals(actual.getAddress()))
+            continue;
+
+         invokeCommand(target, commandGenerator.apply(target), SingletonMapResponseCollector.ignoreLeavers(),
+                       deliverOrder, timeout, timeUnit)
+            .whenComplete(action);
+      }
+      return action.resultFuture;
+   }
+
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
                                                    ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker,
-                                                   RpcOptions rpcOptions) {
+                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
       if (stopped || isCommandExcluded(command)) {
          log.tracef("Not blocking excluded command %s", command);
          return invoker.apply(collector);
@@ -196,7 +371,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       if (command instanceof SingleRpcCommand) {
          command = ((SingleRpcCommand) command).getCommand();
       }
-      Address excluded = realOne.getAddress();
+      Address excluded = actual.getAddress();
       ControlledRequest<T> controlledRequest =
          new ControlledRequest<>(command, targets, collector, invoker, nonBlockingExecutor, excluded);
       try {
@@ -234,19 +409,25 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
    }
 
-   @Override
    protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
-      performRequest(targets, command, null, invoker, null);
+      performRequest(targets, command, null, invoker);
    }
 
-   @Stop
-   void stop() {
+   @Override
+   public void start() {
+      // Do nothing, the wrapped transport is already started
+   }
+
+   public void stop() {
       stopBlocking();
-      TestingUtil.stopComponent(realOne);
+      super.stop();
    }
 
    private boolean isCommandExcluded(ReplicableCommand command) {
+      if (excludeAllCacheCommands && command instanceof CacheRpcCommand)
+         return true;
+
       for (Class<? extends ReplicableCommand> excludedCommand : excludedCommands) {
          if (excludedCommand.isInstance(command))
             return true;
@@ -260,11 +441,11 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
    }
 
-   static <T> T uncheckedGet(CompletionStage<T> stage) {
+   static <T> T uncheckedGet(CompletionStage<T> stage, Object request) {
       try {
          return stage.toCompletableFuture().get(TIMEOUT_SECONDS, SECONDS);
       } catch (Exception e) {
-         throw new TestException(e);
+         throw new TestException(String.valueOf(request), e);
       }
    }
 
@@ -340,7 +521,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
 
       void awaitSend() {
-         uncheckedGet(sendFuture);
+         uncheckedGet(sendFuture, this);
       }
 
       private void queueResponse(Address sender, Response response) {
@@ -360,7 +541,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
             CompletableFuture<Response> responseFuture = entry.getValue();
             // Don't wait for all responses in case this is a staggered request
             if (responseFuture.isDone()) {
-               responseMap.put(sender, uncheckedGet(responseFuture));
+               responseMap.put(sender, uncheckedGet(responseFuture, this));
             } else {
                responseFuture.complete(null);
             }
@@ -460,6 +641,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       CompletableFuture<Map<Address, Response>> finishFuture() {
          return finishFuture;
       }
+
+      @Override
+      public String toString() {
+         return "ControlledRequest{" +
+                "command=" + command +
+                ", targets=" + targets +
+                '}';
+      }
    }
 
    /**
@@ -480,6 +669,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * It will block again when waiting for responses.
        */
       public SentRequest send() {
+         assert !request.isDone();
          log.tracef("Sending command %s", request.getCommand());
          request.send();
 
@@ -494,6 +684,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * Avoid sending the request, and finish it with the given responses instead.
        */
       public FakeResponses skipSend() {
+         assert !request.isDone();
          log.tracef("Not sending request %s", request.getCommand());
          request.skipSend();
 
@@ -525,6 +716,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          assertEquals(1, targets.size());
          return targets.iterator().next();
       }
+
+      @Override
+      public String toString() {
+         return "BlockedRequest{" +
+                "command=" + request.command +
+                ", targets=" + request.targets +
+                '}';
+      }
    }
 
    public static class SentRequest {
@@ -546,7 +745,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * Wait for a response from {@code sender}, but keep the request blocked.
        */
       public BlockedResponse expectResponse(Address sender, Consumer<Response> checker) {
-         BlockedResponse br = uncheckedGet(expectResponseAsync(sender));
+         BlockedResponse br = uncheckedGet(expectResponseAsync(sender), this);
          checker.accept(br.response);
          return br;
       }
@@ -555,7 +754,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * Wait for a response from {@code sender}, but keep the request blocked.
        */
       public BlockedResponse expectResponse(Address sender) {
-         return uncheckedGet(expectResponseAsync(sender));
+         return uncheckedGet(expectResponseAsync(sender), this);
       }
 
       /**
@@ -586,14 +785,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * Wait for all the responses.
        */
       public BlockedResponseMap expectAllResponses() {
-         return uncheckedGet(expectAllResponsesAsync());
+         return uncheckedGet(expectAllResponsesAsync(), this);
       }
 
       /**
        * Wait for all the responses.
        */
       public BlockedResponseMap expectAllResponses(BiConsumer<Address, Response> checker) {
-         BlockedResponseMap blockedResponseMap = uncheckedGet(expectAllResponsesAsync());
+         BlockedResponseMap blockedResponseMap = uncheckedGet(expectAllResponsesAsync(), this);
          blockedResponseMap.responseMap.forEach(checker);
          return blockedResponseMap;
       }
@@ -617,7 +816,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * to the original response collector (it only calls {@link ResponseCollector#finish()}).
        */
       public void finish() {
-         uncheckedGet(request.finishFuture());
+         uncheckedGet(request.finishFuture(), this);
          request.collectFinish();
       }
 
@@ -641,6 +840,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
          return request.finishFuture()
                        .thenApply(responseMap -> new BlockedResponseMap(request, responseMap));
+      }
+
+      @Override
+      public String toString() {
+         return "BlockedRequest{" +
+                "command=" + request.command +
+                ", targets=" + request.targets +
+                '}';
       }
    }
 
@@ -694,6 +901,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       public Response getResponse() {
          return response;
       }
+
+      @Override
+      public String toString() {
+         return "BlockedResponse{" +
+                "command=" + request.command +
+                ", response={" + sender + "=" + response + '}' +
+                '}';
+      }
    }
 
    public static class BlockedResponseMap {
@@ -712,7 +927,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          log.tracef("Unblocking responses for %s: %s", request.getCommand(), responseMap);
          responseMap.forEach(request::collectResponse);
          if (!request.isDone()) {
-            uncheckedGet(request.finishFuture());
+            uncheckedGet(request.finishFuture(), this);
             request.collectFinish();
          }
       }
@@ -723,7 +938,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          log.tracef("Replacing responses for %s: %s (was %s)", request.getCommand(), newResponses, responseMap);
          newResponses.forEach(request::collectResponse);
          if (!request.isDone()) {
-            uncheckedGet(request.finishFuture());
+            uncheckedGet(request.finishFuture(), this);
             request.collectFinish();
          }
       }
@@ -738,6 +953,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
       public Map<Address, Response> getResponses() {
          return responseMap;
+      }
+
+      @Override
+      public String toString() {
+         return "BlockedResponseMap{" +
+                "command=" + request.command +
+                ", responses=" + responseMap +
+                '}';
       }
    }
 
@@ -820,6 +1043,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          assertEquals(1, targets.size());
          return targets.iterator().next();
       }
+
+      @Override
+      public String toString() {
+         return "FakeResponses{" +
+                "command=" + request.command +
+                ", targets=" + request.targets +
+                '}';
+      }
    }
 
    /**
@@ -855,6 +1086,16 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
       public void skipSendAndReceiveAsync(Address target, Response fakeResponse) {
          requests.get(target).skipSend().receiveAsync(target, fakeResponse);
+      }
+
+      @Override
+      public String toString() {
+         Map<Address, ReplicableCommand> commandMap =
+               requests.entrySet().stream()
+                       .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().request.command));
+         return "BlockedRequests{" +
+                "requests=" + commandMap +
+                '}';
       }
    }
 }
