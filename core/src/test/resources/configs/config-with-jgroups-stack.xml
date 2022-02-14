@@ -13,7 +13,8 @@
               thread_pool.min_threads="0" thread_pool.max_threads="25" thread_pool.keep_alive_time="5000"
               thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
               xmlns="urn:org:jgroups"/>
-         <MPING break_on_coord_rsp="true"
+         <RED/>
+            <MPING break_on_coord_rsp="true"
                 mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
                 mcast_port="${jgroups.mping.mcast_port:43366}"
                 num_discovery_runs="3"
@@ -56,5 +57,4 @@
    <cache-container name="default" statistics="true">
       <transport cluster="inline-jgroups-stack" stack="cluster"/>
    </cache-container>
-
 </infinispan>

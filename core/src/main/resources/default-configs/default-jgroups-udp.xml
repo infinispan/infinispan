@@ -23,6 +23,7 @@
 
         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
    <PING num_discovery_runs="3"/>
    <MERGE3 min_interval="10000"
            max_interval="30000"

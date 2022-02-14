@@ -19,6 +19,7 @@
 
          thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
          />
+   <RED/>
 
    <LOCAL_PING/>
 
