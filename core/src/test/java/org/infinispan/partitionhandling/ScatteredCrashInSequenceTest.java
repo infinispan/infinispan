@@ -7,14 +7,15 @@ import static org.testng.Assert.assertNotNull;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.topology.CacheStatusRequestCommand;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
 import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
+import org.infinispan.commands.topology.TopologyUpdateStableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -23,9 +24,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.topology.HeartBeatCommand;
+import org.infinispan.util.ControlledTransport;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
@@ -111,16 +113,10 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
                                             true);
       blockedRebalanceConfirmations.blockBefore(RebalancePhaseConfirmCommand.class, c -> c.getCacheName().equals(getDefaultCacheName()));
 
-      // Block rebalance start commands from the coordinator
-      ControlledTransport blockedRebalanceStart = ControlledTransport.replace(coordinator);
-      blockedRebalanceStart.blockAfter(RebalanceStartCommand.class, c -> c.getCacheName().equals(getDefaultCacheName()));
-
-      // Block topology updates from a1, but when the flag is set
-      ControlledTransport blockedTopologyUpdatesA1 = ControlledTransport.replace(cache(a1));
-      AtomicBoolean shouldBlockTopologyUpdatesOnA1 = new AtomicBoolean(false);
-      blockedTopologyUpdatesA1.blockBefore(TopologyUpdateCommand.class,
-                                           c -> c.getCacheName().equals(getDefaultCacheName()) &&
-                                                shouldBlockTopologyUpdatesOnA1.get());
+      ControlledTransport controlledTransportCoord = ControlledTransport.replace(coordinator);
+      controlledTransportCoord.excludeCacheCommands();
+      controlledTransportCoord.excludeCommands(CacheStatusRequestCommand.class, TopologyUpdateCommand.class,
+                                               TopologyUpdateStableCommand.class, HeartBeatCommand.class);
 
       try {
          // Isolate c1, install view [c2, a1, a2] on the other nodes
@@ -131,39 +127,41 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
          TestingUtil.installNewView(newMembers1, manager(c2), manager(a1), manager(a2));
          TestingUtil.installNewView(manager(c1));
 
-         // Wait for rebalance to start (confirmations are blocked)
-         blockedRebalanceStart.waitForCommandToBlock();
-         blockedRebalanceStart.stopBlocking();
+         // Wait for the coordinator to start the rebalance for both the default cache and the CONFIG cache
+         // The confirmation commands will be blocked on the coordinator
+         ControlledTransport.BlockedRequest<RebalanceStartCommand> rebalanceStart1 =
+               controlledTransportCoord.expectCommand(RebalanceStartCommand.class);
+         ControlledTransport.BlockedRequest<RebalanceStartCommand> rebalanceStart2 =
+               controlledTransportCoord.expectCommand(RebalanceStartCommand.class);
+         controlledTransportCoord.stopBlocking();
+         rebalanceStart1.send();
+         rebalanceStart2.send();
 
          assertKeysAvailableForRead(cache(c2), keys);
          assertKeysAvailableForRead(cache(a1), keys);
          assertKeysAvailableForRead(cache(a2), keys);
 
-         // The cache does not become degraded immediatelly, therefore if it was primary owner in previous
+         // The cache does not become degraded immediately, therefore if it was primary owner in previous
          // topology and it did not install new one/became degraded, it's still serving the old value
          eventuallyDegraded(cache(c1));
          assertKeysNotAvailableForRead(cache(c1), keys);
 
          // Isolate c2, install view [a1, a2] on the remaining nodes
-         // That will make a1 send out a topology update, but we block it
-         shouldBlockTopologyUpdatesOnA1.set(true);
+         // After that, the default cache should become degraded on all nodes
          discard2.setDiscardAll(true);
-         Stream<Address> newMembers2 = manager(a1).getTransport().getMembers().stream().filter(
-               n -> !n.equals(manager(c2).getAddress()));
+         Stream<Address> newMembers2 = manager(a1).getTransport().getMembers().stream()
+                                                  .filter(n -> !n.equals(manager(c2).getAddress()));
          TestingUtil.installNewView(newMembers2, manager(a1), manager(a2));
          TestingUtil.installNewView(manager(c2));
 
-         blockedTopologyUpdatesA1.waitForCommandToBlock();
-         blockedTopologyUpdatesA1.stopBlocking();
-
+         // Wait for and unblock 2 topology updates for both the default cache and the CONFIG cache
          eventuallyDegraded(cache(a1));
          eventuallyDegraded(cache(a2));
          eventuallyDegraded(cache(c2));
       } finally {
          blockedRebalanceConfirmations.stopBlocking();
 
-         blockedRebalanceStart.stopBlocking();
-         blockedTopologyUpdatesA1.stopBlocking();
+         controlledTransportCoord.stopBlocking();
       }
       assertKeysNotAvailableForRead(cache(a1), keys);
       assertKeysNotAvailableForRead(cache(a2), keys);

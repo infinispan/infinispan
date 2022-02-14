@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -17,8 +17,8 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
-import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,8 +27,6 @@ import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ControlledTransport;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TopologyChangeListener;
@@ -39,12 +37,13 @@ import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.BlockingLocalTopologyManager.BlockedTopology;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.ControlledRpcManager;
+import org.infinispan.util.ControlledTransport;
 import org.testng.annotations.Test;
 
 @Test(groups = "unstable", testName = "scattered.statetransfer.CoordinatorStopTest", description = "ISPN-9940")
 @CleanupAfterMethod
 public class CoordinatorStopTest extends MultipleCacheManagersTest {
-   private CountDownLatch viewLatch;
+   private CompletableFuture<Void> viewLatch;
    private ControlledConsistentHashFactory.Scattered chf;
 
    @Override
@@ -67,7 +66,7 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(cb);
       // If the updated topologies from old coord come when it's no longer in the view these are ignored.
       // Therefore we have to delay the view.
-      viewLatch = new CountDownLatch(1);
+      viewLatch = new CompletableFuture<>();
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().transport(new DelayedViewJGroupsTransport(viewLatch));
       addClusterEnabledCacheManager(gcb, cb);
@@ -94,11 +93,11 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       ControlledTransport transport0 = ControlledTransport.replace(cache(0));
       ControlledTransport transport1 = ControlledTransport.replace(cache(1));
       // Block sending REBALANCE_START until the CH_UPDATE is delivered to make the test deterministic
-      transport0.blockBefore(RebalanceStartCommand.class,
-            command -> command.getCacheName().equals(cacheName) && command.getTopologyId() == stableTopologyId + 2);
+//      transport0.blockBefore(RebalanceStartCommand.class,
+//            command -> command.getCacheName().equals(cacheName) && command.getTopologyId() == stableTopologyId + 2);
       // Also block rebalance initiated by the new coord until we test with topology + 3
-      transport1.blockBefore(RebalanceStartCommand.class,
-            command -> command.getCacheName().equals(cacheName) && command.getTopologyId() == stableTopologyId + 4);
+//      transport1.blockBefore(RebalanceStartCommand.class,
+//            command -> command.getCacheName().equals(cacheName) && command.getTopologyId() == stableTopologyId + 4);
 
       ControlledRpcManager rpcManager2 = ControlledRpcManager.replaceRpcManager(cache(2));
       // Ignore push transfer of segment 2
@@ -144,7 +143,7 @@ public class CoordinatorStopTest extends MultipleCacheManagersTest {
       // Allow both nodes to receive the view. If we did not block (1), too, topology + 2 could be ignored
       // on cache(1) and the CONFIRM_REVOKED_SEGMENTS would get blocked until topology + 3 arrives - and this
       // does not happen before the test times out.
-      viewLatch.countDown();
+      viewLatch.complete(null);
 
       ControlledRpcManager.BlockedRequest<ScatteredStateGetKeysCommand> keyTransferRequest = rpcManager2.expectCommand(ScatteredStateGetKeysCommand.class);
 
