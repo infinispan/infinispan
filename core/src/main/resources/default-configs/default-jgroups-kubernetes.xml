@@ -23,6 +23,7 @@
 
         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
    <dns.DNS_PING dns_query="${jgroups.dns.query}"
                  num_discovery_runs="3"
    />

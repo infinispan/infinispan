@@ -21,6 +21,7 @@
 
         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
    <org.jgroups.protocols.google.GOOGLE_PING2
       location="${jgroups.google.bucket_name}"
       num_discovery_runs="3"

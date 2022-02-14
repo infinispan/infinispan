@@ -291,6 +291,7 @@ public class JGroupsConfigBuilder {
 
    enum ProtocolType {
       TCP, TCP_NIO2, UDP, SHARED_LOOPBACK,
+      RED,
       MPING, PING, TCPPING, LOCAL_PING, SHARED_LOOPBACK_PING,
       MERGE2, MERGE3,
       FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2, FD_ALL3,
