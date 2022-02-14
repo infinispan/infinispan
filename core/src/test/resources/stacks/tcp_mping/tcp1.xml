@@ -15,6 +15,7 @@
 
         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
 
    <!--<TCPPING timeout="3000"-->
    <!--initial_hosts="localhost[7800],localhost[7801]}"-->

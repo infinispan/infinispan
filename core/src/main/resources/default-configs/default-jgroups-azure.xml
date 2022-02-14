@@ -20,6 +20,7 @@
 
         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
    <azure.AZURE_PING
            storage_account_name="${jboss.jgroups.azure_ping.storage_account_name}"
            storage_access_key="${jboss.jgroups.azure_ping.storage_access_key}"
