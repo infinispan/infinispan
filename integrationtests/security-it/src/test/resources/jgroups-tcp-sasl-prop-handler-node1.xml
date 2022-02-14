@@ -16,6 +16,7 @@
 
          thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
 
    <MPING mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
           mcast_port="${jgroups.mping.mcast_port:43366}"

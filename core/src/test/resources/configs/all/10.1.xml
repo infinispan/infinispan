@@ -14,6 +14,7 @@
               sock_conn_timeout="300" bundler_type="transfer-queue"
               thread_pool.min_threads="0" thread_pool.max_threads="25" thread_pool.keep_alive_time="5000"
               xmlns="urn:org:jgroups"/>
+         <RED/>
          <MPING break_on_coord_rsp="true"
                 mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
                 mcast_port="${jgroups.mping.mcast_port:43366}"

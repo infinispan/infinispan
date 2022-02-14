@@ -21,6 +21,7 @@
 
               thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
          />
+         <RED/>
          <LOCAL_PING/>
          <MERGE3 max_interval="5000"
                  min_interval="3000"/>

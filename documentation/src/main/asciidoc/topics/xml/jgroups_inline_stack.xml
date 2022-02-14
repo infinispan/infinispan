@@ -4,6 +4,7 @@
     <!-- Defines a custom JGroups stack named "prod". -->
     <stack name="prod">
       <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
+      <RED/>
       <MPING break_on_coord_rsp="true"
              mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
              mcast_port="${jgroups.mping.mcast_port:43366}"
@@ -24,10 +25,10 @@
       <FRAG3 />
     </stack>
   </jgroups>
-  <cache-container default-cache="replicatedCache">
-    <!-- Uses "prod" for cluster transport. -->
-    <transport cluster="${infinispan.cluster.name}"
+  <cache-container default-cache="replicatedCache">
+    <!-- Uses "prod" for cluster transport. -->
+    <transport cluster="${infinispan.cluster.name}"
            stack="prod"
            node-name="${infinispan.node.name:}"/>
-  </cache-container>
+  </cache-container>
 </infinispan>

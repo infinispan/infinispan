@@ -24,6 +24,7 @@
 
          thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
 
    <!--<PING timeout="3000" num_initial_members="3"/>-->
    <LOCAL_PING/>

@@ -20,6 +20,7 @@
 
         thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
+   <RED/>
    <org.jgroups.aws.s3.NATIVE_S3_PING
       region_name="${jgroups.s3.region_name}"
       bucket_name="${jgroups.s3.bucket_name}"
