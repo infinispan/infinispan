@@ -32,6 +32,7 @@ import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CacheEntryDelegator;
@@ -237,7 +238,8 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          int topologyId = (Integer) arguments[2];
          if (rebalanceTopologyId == topologyId) {
             checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            return checkPoint.future("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS, testExecutor())
+                  .thenCompose(__ -> Mocks.callAnotherAnswer(forwardedAnswer, invocation));
          }
          return forwardedAnswer.answer(invocation);
       }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());

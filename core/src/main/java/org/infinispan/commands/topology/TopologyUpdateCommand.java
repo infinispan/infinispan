@@ -81,6 +81,10 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
       return phase;
    }
 
+   public AvailabilityMode getAvailabilityMode() {
+      return availabilityMode;
+   }
+
    public int getTopologyId() {
       return topologyId;
    }
@@ -115,7 +119,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
 
    @Override
    public String toString() {
-      return "ConsistentHashUpdateCommand{" +
+      return "TopologyUpdateCommand{" +
             "cacheName='" + cacheName + '\'' +
             ", origin=" + origin +
             ", currentCH=" + currentCH +
