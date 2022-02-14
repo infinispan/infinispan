@@ -61,7 +61,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    public final <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
-                            c -> realOne.invokeCommand(targets, command, c, rpcOptions), rpcOptions);
+                            c -> realOne.invokeCommandStaggered(targets, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
@@ -178,7 +178,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
       invoker.apply(null);
    }
 
-   private static class CommandsRequest<T> implements BiConsumer<Map<Address, Response>, Throwable> {
+   public static class CommandsRequest<T> implements BiConsumer<Map<Address, Response>, Throwable> {
       private final ResponseCollector<T> collector;
       CompletableFuture<T> resultFuture;
       int missingResponses;

@@ -96,7 +96,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
 
    @Override
    public String toString() {
-      return "StableTopologyUpdateCommand{" +
+      return "TopologyUpdateStableCommand{" +
             "cacheName='" + cacheName + '\'' +
             ", origin=" + origin +
             ", currentCH=" + currentCH +

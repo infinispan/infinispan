@@ -65,7 +65,7 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
 
    @Override
    public String toString() {
-      return "ConfirmRebalancePhaseCommand{" +
+      return "RebalancePhaseConfirmCommand{" +
             "cacheName='" + cacheName + '\'' +
             ", origin=" + origin +
             ", throwable=" + throwable +

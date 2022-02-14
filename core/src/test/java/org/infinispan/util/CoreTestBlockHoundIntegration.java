@@ -95,6 +95,9 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ControlledRpcManager.class.getName(), "performRequest");
       builder.allowBlockingCallsInside(ControlledRpcManager.class.getName(), "expectCommandAsync");
 
+      builder.allowBlockingCallsInside(ControlledTransport.class.getName(), "performRequest");
+      builder.allowBlockingCallsInside(ControlledTransport.class.getName(), "expectCommandAsync");
+
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, StateSequencer.class);
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, NotifierLatch.class);
 

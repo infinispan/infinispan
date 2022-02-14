@@ -47,7 +47,7 @@ public class CacheStatusRequestCommand extends AbstractCacheControlCommand {
 
    @Override
    public String toString() {
-      return "CacheStatusCommand{" +
+      return "CacheStatusRequestCommand{" +
             "viewId=" + viewId +
             '}';
    }

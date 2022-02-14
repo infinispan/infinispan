@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +61,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
    private static final Integer REPLACING_VALUE = 1;
    private static final String TEST_CACHE = "test_cache";
 
-   private CountDownLatch viewLatch;
+   private CompletableFuture<Void> viewLatch;
 
    public void killedNodeDoesNotBreakReplaceCommand() throws Exception {
       defineConfigurationOnAllManagers(TEST_CACHE, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
@@ -104,7 +105,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
             cache(0, TEST_CACHE).put(putKey, "some-value");
 
             // apply new view
-            viewLatch.countDown();
+            viewLatch.complete(null);
 
             tm(0, TEST_CACHE).commit();
             return result;
@@ -154,7 +155,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
             .stateTransfer()
             .fetchInMemoryState(false);
 
-      viewLatch = new CountDownLatch(1);
+      viewLatch = new CompletableFuture<>();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.transport().transport(new DelayedViewJGroupsTransport(viewLatch));
       global.serialization().addContextInitializer(TestDataSCI.INSTANCE);

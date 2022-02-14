@@ -39,12 +39,18 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.util.ControlledTransport;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
+import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
+import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.testng.annotations.Test;
 
 /**
@@ -98,15 +104,23 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       //check if NYC is empty
       assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
 
-      ControlledTransport controllerTransport = ControlledTransport.replace(cache(LON, 0));
-      controllerTransport.blockBefore(XSiteStatePushCommand.class);
+      ControlledTransport controlledTransport = ControlledTransport.replace(cache(LON, 0));
+      controlledTransport.excludeCommands(XSiteBringOnlineCommand.class, XSiteStateTransferStartReceiveCommand.class,
+                                          XSiteStateTransferStartSendCommand.class,
+                                          XSiteStateTransferCancelSendCommand.class,
+                                          XSiteStateTransferFinishReceiveCommand.class,
+                                          XSiteStateTransferStatusRequestCommand.class);
 
       startStateTransfer();
 
-      controllerTransport.waitForCommandToBlock();
+      // Wait for a push command and block it
+      ControlledTransport.BlockedRequest<XSiteStatePushCommand> pushRequest =
+            controlledTransport.expectCommand(XSiteStatePushCommand.class);
+
       assertEquals(SUCCESS, adminOperations().cancelPushState(NYC));
 
-      controllerTransport.stopBlocking();
+      // Unblock the push command
+      pushRequest.send().receiveAll();
 
       assertEventuallyStateTransferNotRunning();
 
@@ -115,13 +129,17 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       assertEquals(STATUS_CANCELED, adminOperations().getPushStateStatus().get(NYC));
 
-      controllerTransport.blockBefore(XSiteStatePushCommand.class);
 
       startStateTransfer();
 
-      controllerTransport.waitForCommandToBlock();
+      // Wait for a push command and block it
+      ControlledTransport.BlockedRequest<XSiteStatePushCommand> pushRequest2 =
+            controlledTransport.expectCommand(XSiteStatePushCommand.class);
+
       assertEquals(STATUS_SENDING, adminOperations().getPushStateStatus().get(NYC));
-      controllerTransport.stopBlocking();
+
+      // Unblock the push command
+      pushRequest2.send().receiveAll();
 
       assertEventuallyStateTransferNotRunning();
 
@@ -134,6 +152,8 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
             assertEquals(VALUE, cache.get(k(method, i1)));
          }
       });
+
+      controlledTransport.stopBlocking();
    }
 
    @Test(groups = "xsite")
