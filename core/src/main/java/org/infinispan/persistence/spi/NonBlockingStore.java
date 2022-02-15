@@ -601,7 +601,7 @@ public interface NonBlockingStore<K, V> {
     * {@link PersistenceException} and the stage be completed exceptionally.
     * <p>
     * @implSpec
-    * A default implementation is provided that always returns {@code -1}.
+    * The default implementation always returns {@code -1}.
     * @param segments the segments for which the entries are counted.
     * @return a stage that, when complete, contains the approximate count of the entries in the given segments,
     * or {@code -1L} if an approximate count cannot be provided.
