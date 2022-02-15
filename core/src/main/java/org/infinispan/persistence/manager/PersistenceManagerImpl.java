@@ -382,6 +382,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          stopAvailabilityTask();
 
+         if (stores == null)
+            return;
+
          for (StoreStatus storeStatus : stores) {
             NonBlockingStore<Object, Object> store = storeStatus.store();
             CompletionStage<Void> storeStage;
