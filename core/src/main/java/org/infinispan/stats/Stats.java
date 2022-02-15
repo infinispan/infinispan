@@ -21,12 +21,12 @@ public interface Stats extends JsonSerialization {
    long getTimeSinceReset();
 
    /**
-    * Returns the approximate number of entries (in memory or in persistence) in this cache.
+    * Returns the approximate number of entries in this cache that exist in memory or persistent storage.
     *
     * When the cache is configured with distribution, this method only returns the
     * number of entries in the local cache instance. In other words, it does
-    * not attempt to communicate with other nodes to find out about the data
-    * stored in other nodes in the cluster that is not available locally.
+    * not communicate with other nodes to find out about data
+    * stored in the cluster and not available locally.
     *
     * @return Number of entries currently in the cache, including passivated entries.
     */
