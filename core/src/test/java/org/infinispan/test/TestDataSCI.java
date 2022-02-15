@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.expiration.impl.ExpirationFunctionalTest;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.test.data.Address;
@@ -26,6 +27,7 @@ import org.infinispan.xsite.irac.IracCustomConflictTest;
             Sex.class,
             Value.class,
             IracCustomConflictTest.MySortedSet.class,
+            ExpirationFunctionalTest.NoEquals.class,
       },
       schemaFileName = "test.core.proto",
       schemaFilePath = "proto/generated",
