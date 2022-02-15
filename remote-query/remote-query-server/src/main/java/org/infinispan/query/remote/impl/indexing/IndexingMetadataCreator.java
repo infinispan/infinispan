@@ -31,6 +31,9 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
    // @Analyzer (definition = "<definition name>")
    // @Field (name optional string, index = true/false, defaults to true, analyze = true/false, defaults to true, store = true/false, defaults to false, analyzer = @Analyzer(definition = "<definition name>"))
    // @SortableField
+   // @GeoPointBinding
+   // @Latitude
+   // @Longitude
    @Override
    public IndexingMetadata create(Descriptor descriptor, AnnotationElement.Annotation annotation) {
       String indexName = (String) annotation.getAttributeValue(IndexingMetadata.INDEXED_INDEX_ATTRIBUTE).getValue();
@@ -49,8 +52,8 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
             processSpatial((AnnotationElement.Annotation) v, spatialFields);
          }
       }
-      //todo [anistor] if indexed==false we do not accept Spatial annotation
-      //todo [anistor] if indexed==false do we accept Analyzer ??
+      //todo [anistor] more validation, if indexed==false do we accept Spatial annotation?
+      //todo [anistor] more validation, if indexed==false do we accept Analyzer annotation?
 
       String entityAnalyzer = null;
       AnnotationElement.Annotation entityAnalyzerAnnotation = descriptor.getAnnotations().get(IndexingMetadata.ANALYZER_ANNOTATION);
@@ -145,17 +148,20 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
    }
 
    private void processSpatial(AnnotationElement.Annotation spatialAnnotation, List<SpatialFieldMapping> spatialFields) {
-      String spatialName = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_FIELDNAME_ATTRIBUTE).getValue();
-      if (spatialName.isEmpty()) {
-         spatialName = null;
+      String fieldName = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_FIELD_NAME_ATTRIBUTE).getValue();
+      if (fieldName.isEmpty()) {
+         fieldName = null;
       }
-      String markerSetStr = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_MARKERSET_ATTRIBUTE).getValue();
-      if (markerSetStr.isEmpty()) {
-         markerSetStr = null;
+      String markerSet = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_MARKER_SET_ATTRIBUTE).getValue();
+      if (markerSet.isEmpty()) {
+         markerSet = null;
       }
-      String spatialStoreStr = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_STORE_ATTRIBUTE).getValue();
-      boolean spatialStore = spatialStoreStr.equals(IndexingMetadata.STORE_YES);
-      spatialFields.add(new SpatialFieldMapping(spatialName, markerSetStr, spatialStore));
+      //todo [anistor] consider also the DEFAULT values
+      String projectableStr = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_PROJECTABLE_ATTRIBUTE).getValue();
+      boolean projectable = projectableStr.equals(IndexingMetadata.PROJECTABLE_YES);
+      String sortableStr = (String) spatialAnnotation.getAttributeValue(IndexingMetadata.SPATIAL_PROJECTABLE_ATTRIBUTE).getValue();
+      boolean sortable = sortableStr.equals(IndexingMetadata.SORTABLE_YES);
+      spatialFields.add(new SpatialFieldMapping(fieldName, markerSet, projectable, sortable));
    }
 
    private void processLatitude(FieldDescriptor fd, AnnotationElement.Annotation latitudeAnnotation, List<SpatialFieldMapping> spatialFields) {
@@ -163,12 +169,19 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
       if (markerSet.isEmpty()) {
          markerSet = null;
       }
+      SpatialFieldMapping found = null;
       for (SpatialFieldMapping sf : spatialFields) {
-         if (Objects.equals(sf.name(), markerSet)) {
-            sf.setLatitude(fd.getName());
-            break;
+         if (Objects.equals(sf.markerSet(), markerSet)) {
+            if (found != null) {
+               throw new IllegalStateException("Found multiple latitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+            }
+            found = sf;
          }
       }
+      if (found == null) {
+         throw new IllegalStateException("No latitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+      }
+      found.setLatitude(fd.getName());
    }
 
    private void processLongitude(FieldDescriptor fd, AnnotationElement.Annotation longitudeAnnotation, List<SpatialFieldMapping> spatialFields) {
@@ -176,11 +189,18 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
       if (markerSet.isEmpty()) {
          markerSet = null;
       }
+      SpatialFieldMapping found = null;
       for (SpatialFieldMapping sf : spatialFields) {
-         if (Objects.equals(sf.name(), markerSet)) {
-            sf.setLongitude(fd.getName());
-            break;
+         if (Objects.equals(sf.markerSet(), markerSet)) {
+            if (found != null) {
+               throw new IllegalStateException("Found multiple longitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+            }
+            found = sf;
          }
       }
+      if (found == null) {
+         throw new IllegalStateException("No longitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+      }
+      found.setLongitude(fd.getName());
    }
 }

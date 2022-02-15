@@ -101,7 +101,7 @@ public final class IndexingMetadata {
    /**
     * Similar to org.hibernate.search.annotations.Fields/Field.
     */
-   public static final String FIELDS_ANNOTATION = "Fields";
+   public static final String FIELDS_ANNOTATION = "Fields"; // the Repeatable container annotation for Field
    public static final String FIELD_ANNOTATION = "Field";
    public static final String FIELD_NAME_ATTRIBUTE = "name";
    public static final String FIELD_INDEX_ATTRIBUTE = "index";
@@ -119,23 +119,32 @@ public final class IndexingMetadata {
    public static final String STORE_YES = "Store.YES";
    public static final String STORE_NO = "Store.NO";
 
-   /**
-    * Similar to org.hibernate.search.annotations.Spatials/Spatial.
-    */
-   public static final String SPATIALS_ANNOTATION = "Spatials";
-   public static final String SPATIAL_ANNOTATION = "Spatial";
-   public static final String SPATIAL_FIELDNAME_ATTRIBUTE = "fieldName";
-   public static final String SPATIAL_MARKERSET_ATTRIBUTE = "markerSet";
-   public static final String SPATIAL_STORE_ATTRIBUTE = "store";
+   public static final String PROJECTABLE_DEFAULT = "Projectable.DEFAULT";  // translates to either YES or NO depending on the indexing backend
+   public static final String PROJECTABLE_NO = "Projectable.NO";
+   public static final String PROJECTABLE_YES = "Projectable.YES";
+
+   public static final String SORTABLE_DEFAULT = "Sortable.DEFAULT";  // translates to either YES or NO depending on the indexing backend
+   public static final String SORTABLE_NO = "Sortable.NO";
+   public static final String SORTABLE_YES = "Sortable.YES";
 
    /**
-    * Similar to org.hibernate.search.annotations.Latitude.
+    * Similar to org.hibernate.search.mapper.pojo.bridge.builtin.annotation.GeoPointBinding.
+    */
+   public static final String SPATIALS_ANNOTATION = "GeoPointBindings"; // the Repeatable for GeoPointBinding
+   public static final String SPATIAL_ANNOTATION = "GeoPointBinding";
+   public static final String SPATIAL_FIELD_NAME_ATTRIBUTE = "fieldName";
+   public static final String SPATIAL_MARKER_SET_ATTRIBUTE = "markerSet";
+   public static final String SPATIAL_PROJECTABLE_ATTRIBUTE = "projectable";
+   public static final String SPATIAL_SORTABLE_ATTRIBUTE = "sortable";
+
+   /**
+    * Similar to org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Latitude.
     */
    public static final String LATITUDE_ANNOTATION = "Latitude";
    public static final String LATITUDE_MARKERSET_ATTRIBUTE = "markerSet";
 
    /**
-    * Similar to org.hibernate.search.annotations.Longitude.
+    * Similar to org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Longitude.
     */
    public static final String LONGITUDE_ANNOTATION = "Longitude";
    public static final String LONGITUDE_MARKERSET_ATTRIBUTE = "markerSet";
@@ -155,7 +164,7 @@ public final class IndexingMetadata {
     * Similar to org.hibernate.search.annotations.SortableField/SortableFields.
     */
    public static final String SORTABLE_FIELD_ANNOTATION = "SortableField";
-   public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
+   public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields"; // the Repeatable container annotation for SortableField
 
    /**
     * Indicates if the type is indexed.
@@ -176,7 +185,12 @@ public final class IndexingMetadata {
     * Field mappings. This is null if indexing is disabled.
     */
    private final Map<String, FieldMapping> fields;
+
    private final List<SpatialFieldMapping> spatialFields;
+
+   /**
+    * The collection of sortable field names. Cab be empty but never {@code null}.
+    */
    private final Set<String> sortableFields;
 
    IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields, List<SpatialFieldMapping> spatialFields) {
@@ -225,7 +239,7 @@ public final class IndexingMetadata {
          return false;
       }
       for (SpatialFieldMapping sf : spatialFields) {
-         if (Objects.equals(sf.name(), fieldName)) {
+         if (Objects.equals(sf.fieldName(), fieldName)) {
             return true;
          }
       }
@@ -309,22 +323,27 @@ public final class IndexingMetadata {
                .repeatable(SORTABLE_FIELDS_ANNOTATION)
             .annotation(SPATIAL_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
                .repeatable(SPATIALS_ANNOTATION)
-               .attribute(SPATIAL_FIELDNAME_ATTRIBUTE)
+               .attribute(SPATIAL_FIELD_NAME_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
-               .attribute(SPATIAL_MARKERSET_ATTRIBUTE)
+               .attribute(SPATIAL_MARKER_SET_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
-               .attribute(SPATIAL_STORE_ATTRIBUTE)
-                  .allowedValues(STORE_YES, STORE_NO)
-                  .defaultValue(STORE_NO)
+               .attribute(SPATIAL_PROJECTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.IDENTIFIER)
+                  .allowedValues(PROJECTABLE_DEFAULT, PROJECTABLE_NO, PROJECTABLE_YES)
+                  .defaultValue(PROJECTABLE_DEFAULT)
+               .attribute(SPATIAL_SORTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.IDENTIFIER)
+                  .allowedValues(SORTABLE_DEFAULT, SORTABLE_NO, SORTABLE_YES)
+                  .defaultValue(SORTABLE_DEFAULT)
             .annotation(LATITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(LATITUDE_MARKERSET_ATTRIBUTE)
                .type(AnnotationElement.AttributeType.STRING)
                .defaultValue("")
             .annotation(LONGITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(LONGITUDE_MARKERSET_ATTRIBUTE)
-                  .type(AnnotationElement.AttributeType.STRING)
-                  .defaultValue("");
+               .type(AnnotationElement.AttributeType.STRING)
+               .defaultValue("");
    }
 }

@@ -15,11 +15,11 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed
-@ProtoDoc("@Indexed")
-@ProtoDoc("@Spatial(fieldName=\"start\", markerSet = \"start\")")
-@ProtoDoc("@Spatial(fieldName=\"end\", markerSet = \"end\")")
 @GeoPointBinding(fieldName = "start", markerSet = "start", projectable = Projectable.YES, sortable = Sortable.YES)
 @GeoPointBinding(fieldName = "end", markerSet = "end", projectable = Projectable.YES, sortable = Sortable.YES)
+@ProtoDoc("@Indexed")
+@ProtoDoc("@GeoPointBinding(fieldName = \"start\", markerSet = \"start\", projectable = Projectable.YES, sortable = Sortable.YES)")
+@ProtoDoc("@GeoPointBinding(fieldName = \"end\", markerSet = \"end\", projectable = Projectable.YES, sortable = Sortable.YES)")
 public class FlightRoute {
 
    @Field(analyze = Analyze.NO, store = Store.YES)
