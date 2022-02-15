@@ -24,29 +24,28 @@ public interface ServerStatistics {
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**
-    * Number of entries stored in Hot Rod server
-    * since the server started running.
+    * Number of entries stored in the cache by the server that receives the request since the cache started running.
     * @deprecated Since 13.0, please use {@link #STORES} instead.
     */
    @Deprecated
    String TOTAL_NR_OF_ENTRIES = "totalNumberOfEntries";
 
    /**
-    * Approximate number of entry copies currently in the server cache, including persistence.
+    * Approximate current number of entry replicas in the cache on the server that receives the request.
     *
-    * Only entries local to the server receiving the request are included.
+    * <p>Includes both entries in memory and in persistent storage.</p>
     */
    String APPROXIMATE_ENTRIES = "approximateEntries";
 
    /**
-    * Number of unique entries currently stored in server cache, including persistence.
+    * Approximate current number of entries for which the server that receives the request is the primary owner.
     *
-    * Only entries primary-owned by the server receiving the request are included.
+    * <p>Includes both entries in memory and in persistent storage.</p>
     */
    String APPROXIMATE_ENTRIES_UNIQUE = "approximateEntriesUnique";
 
    /**
-    * Number of entries ever stored.
+    * Number of entries stored in the cache by the server that receives the request since the cache started running.
     */
    String STORES = "stores";
 
@@ -78,16 +77,17 @@ public interface ServerStatistics {
    String REMOVE_MISSES = "removeMisses";
 
    /**
-    * Approximate number of entry copies currently in the server cache cluster-wide, including persistence.
+    * Approximate current number of entry replicas currently in the cache cluster-wide.
     *
-    * Entries owned by multiple nodes are counted once for each owner.
+    * <p>Includes both entries in memory and in persistent storage.</p>
     */
    String CLUSTER_APPROXIMATE_ENTRIES = "globalApproximateEntries";
 
    /**
-    * Number of unique entries currently stored in server cache cluster-wide, including persistence.
+    * Approximate current number of unique entries in the cache cluster-wide.
     *
-    * Entries owned by multiple nodes are counted only once.
+    * <p>Includes both entries in memory and in persistent storage.
+    * Entries owned by multiple nodes are counted only once.</p>
     */
    String CLUSTER_APPROXIMATE_ENTRIES_UNIQUE = "globalApproximateEntriesUnique";
 
