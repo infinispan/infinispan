@@ -13,6 +13,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
@@ -66,7 +67,6 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
             config.persistence().addSoftIndexFileStore();
             break;
       }
-
    }
 
    @AfterClass(alwaysRun = true)
@@ -99,6 +99,7 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
    @Override
    protected EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configure(globalBuilder);
 
       // Make sure each cache writes to a different location
       globalBuilder.globalState().enable().persistentLocation(EXTRA_MANAGER_LOCATION);
@@ -109,6 +110,8 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       extraCache = extraManager.getCache();
 
       globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      configure(globalBuilder);
+
       // Make sure each cache writes to a different location
       globalBuilder.globalState().enable().persistentLocation(PERSISTENT_LOCATION);
       EmbeddedCacheManager returned = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
@@ -119,5 +122,10 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       Cache<Object, Object> checkCache = returned.getCache();
       TestingUtil.blockUntilViewReceived(checkCache, 2, TimeUnit.SECONDS.toMillis(10));
       return returned;
+   }
+
+   @Override
+   protected Object keyToUseWithExpiration() {
+      return new MagicKey(cache);
    }
 }

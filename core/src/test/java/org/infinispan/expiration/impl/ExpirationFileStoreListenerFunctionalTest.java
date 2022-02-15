@@ -43,6 +43,7 @@ public class ExpirationFileStoreListenerFunctionalTest extends ExpirationStoreLi
 
    @Override
    protected void configure(GlobalConfigurationBuilder globalBuilder) {
+      super.configure(globalBuilder);
       globalBuilder.globalState().enable().persistentLocation(location);
    }
 

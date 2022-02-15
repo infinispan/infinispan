@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,7 +18,10 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -81,7 +85,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    }
 
    protected void configure(GlobalConfigurationBuilder globalBuilder) {
-      // no-op
+      globalBuilder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
    }
 
    protected void configure(ConfigurationBuilder config) {
@@ -173,6 +177,21 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       checkOddExist(SIZE);
    }
 
+   protected Object keyToUseWithExpiration() {
+      return "key";
+   }
+
+   public void testRemoveExpiredValueWithNoEquals() {
+      Object keyToUseForExpiration = keyToUseWithExpiration();
+      cache.put(keyToUseForExpiration, new NoEquals("value"), 3, TimeUnit.MILLISECONDS);
+
+      timeService.advance(5);
+
+      expirationManager.processExpiration();
+
+      assertEquals(0, cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+   }
+
    protected void checkOddExist(int SIZE) {
       for (int i = 0; i < SIZE; i++) {
          if (i % 2 == 0) {
@@ -236,5 +255,19 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
       cache.clear();
       assertEquals(0, cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+   }
+
+   public static class NoEquals implements Serializable {
+      private final String value;
+
+      @ProtoFactory
+      public NoEquals(String value) {
+         this.value = value;
+      }
+
+      @ProtoField(number = 1)
+      public String getValue() {
+         return value;
+      }
    }
 }
