@@ -1,11 +1,13 @@
 package org.infinispan.expiration.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,10 +19,13 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
@@ -50,9 +55,9 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
    protected ControlledTimeService ts1;
    protected ControlledTimeService ts2;
 
-   protected Cache<Object, String> cache0;
-   protected Cache<Object, String> cache1;
-   protected Cache<Object, String> cache2;
+   protected Cache<Object, Object> cache0;
+   protected Cache<Object, Object> cache1;
+   protected Cache<Object, Object> cache2;
 
    protected ConfigurationBuilder configurationBuilder;
 
@@ -90,6 +95,15 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
       cache2 = cache(2);
    }
 
+   @Override
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder globalConfigurationBuilder = super.defaultGlobalConfigurationBuilder();
+      globalConfigurationBuilder
+            .serialization().marshaller(new JavaSerializationMarshaller())
+            .allowList().addClasses(ExpirationFunctionalTest.NoEquals.class, MagicKey.class);
+      return globalConfigurationBuilder;
+   }
+
    protected void injectTimeServices() {
       ts0 = new ControlledTimeService();
       TestingUtil.replaceComponent(manager(0), TimeService.class, ts0, true);
@@ -107,8 +121,8 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
       testLifespanExpiredEntryRetrieval(cache0, cache1, ts1, false);
    }
 
-   private void testLifespanExpiredEntryRetrieval(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner,
-           ControlledTimeService timeService, boolean expireOnPrimary) throws Exception {
+   private void testLifespanExpiredEntryRetrieval(Cache<Object, Object> primaryOwner, Cache<Object, Object> backupOwner,
+         ControlledTimeService timeService, boolean expireOnPrimary) throws Exception {
       Object key = createKey(primaryOwner, backupOwner);
       primaryOwner.put(key, key.toString(), 10, TimeUnit.MILLISECONDS);
 
@@ -151,7 +165,7 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
       }
    }
 
-   private Object createKey(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner) {
+   private Object createKey(Cache<Object, ?> primaryOwner, Cache<Object, ?> backupOwner) {
       if (storageType == StorageType.OBJECT) {
          if (cacheMode.isScattered()) {
             return new MagicKey(primaryOwner);
@@ -211,7 +225,7 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
       String value = "value";
 
       for (int i = 0; i < 100; ++i) {
-         Cache<Object, String> cache = cache0;
+         Cache<Object, Object> cache = cache0;
          Object prev = cache.get(key);
          if (prev == null) {
             prev = cache.putIfAbsent(key, value, 1, TimeUnit.SECONDS);
@@ -269,7 +283,7 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
       }
 
       try {
-         Future<String> result = fork(() -> cache0.put(key, value + "-expire-backup"));
+         Future<Object> result = fork(() -> cache0.put(key, value + "-expire-backup"));
 
          ControlledRpcManager.BlockedRequest<? extends ReplicableCommand> blockedRequest = controlledRpcManager.expectCommand(commandToExpect);
 
@@ -288,5 +302,38 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
       assertEquals(value + "-expire-backup", cache0.get(key));
       assertEquals(value + "-expire-backup", cache1.get(key));
       assertEquals(value + "-expire-backup", cache2.get(key));
+   }
+
+   public void testExpirationWithNoValueEquals() {
+      Object key = createKey(cache0, cache1);
+      cache0.put(key, new ExpirationFunctionalTest.NoEquals("value"), 10, TimeUnit.MINUTES);
+
+      assertEquals(1, cache0.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+      assertEquals(1, cache1.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+
+      // Now we expire on cache0, it should still exist on cache1
+      ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+      ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+
+      assertEquals(1, cache0.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+      assertEquals(1, cache1.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+
+      cache0.getAdvancedCache().getExpirationManager().processExpiration();
+
+      // Both should be empty
+      if (cacheMode != CacheMode.SCATTERED_SYNC) {
+         assertEquals(0, cache0.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+         assertEquals(0, cache1.getAdvancedCache().getDataContainer().sizeIncludingExpired());
+      } else {
+         verifyNoValue(cache0.getAdvancedCache().getDataContainer().iteratorIncludingExpired());
+         verifyNoValue(cache1.getAdvancedCache().getDataContainer().iteratorIncludingExpired());
+      }
+   }
+
+   private void verifyNoValue(Iterator<InternalCacheEntry<Object, Object>> iter) {
+      if (iter.hasNext()) {
+         assertNull(iter.next().getValue());
+      }
+      assertFalse(iter.hasNext());
    }
 }
