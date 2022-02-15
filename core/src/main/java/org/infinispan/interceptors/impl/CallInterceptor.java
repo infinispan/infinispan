@@ -536,6 +536,15 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object key = command.getKey();
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       Metadata metadata = command.getMetadata();
+      // When it isn't the primary owner, just accept the removal as is, trusting the primary did the appropriate checks
+      if (command.hasAnyFlag(FlagBitSets.BACKUP_WRITE)) {
+         if (log.isTraceEnabled()) {
+            log.trace("Removing expired entry without checks as we are backup as primary already performed them");
+         }
+         e.setExpired(true);
+         return performRemove(e, ctx, ValueMatcher.MATCH_ALWAYS, key,
+               e.getValue() != null ? e.getValue() : null, command.getValue(), metadata, false, command);
+      }
       if (e != null && !e.isRemoved()) {
          Object prevValue = e.getValue();
          Object optionalValue = command.getValue();
