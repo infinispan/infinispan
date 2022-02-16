@@ -262,7 +262,7 @@
       <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysqldatabase.mysql>8.0.16</versionx.com.mysqldatabase.mysql>
-      <versionx.com.postgresqldatabase.postgresql>42.2.5</versionx.com.postgresqldatabase.postgresql>
+      <versionx.com.postgresqldatabase.postgresql>42.3.3</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.sun.tools>1.8.0_161</versionx.com.sun.tools>
@@ -386,7 +386,7 @@
       <versionx.org.openjdk.jmh.jmh-core>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-core>
       <versionx.org.openjdk.jmh.jmh-generator-annprocess>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-generator-annprocess>
       <versionx.org.openjdk.nashorn>${version.nashorn}</versionx.org.openjdk.nashorn>
-      <versionx.org.postgresql>42.2.18</versionx.org.postgresql>
+      <versionx.org.postgresql>42.3.3</versionx.org.postgresql>
       <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
       <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>
       <versionx.org.rocksdb.rocksdbjni>${version.rocksdb}</versionx.org.rocksdb.rocksdbjni>
