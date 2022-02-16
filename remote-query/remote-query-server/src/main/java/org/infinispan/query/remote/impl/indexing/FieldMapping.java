@@ -106,7 +106,7 @@ public final class FieldMapping {
       if (!isInitialized) {
          if (fieldDescriptor.getType() == null) {
             // this could only happen due to a programming error
-            throw new IllegalStateException("FieldDescriptors are not fully initialised!");
+            throw new IllegalStateException("FieldDescriptor not fully initialised!");
          }
          indexNullAsObj = parseIndexNullAs();
          isInitialized = true;
@@ -143,6 +143,10 @@ public final class FieldMapping {
          }
       }
       return indexNullAs;
+   }
+
+   public FieldDescriptor getFieldDescriptor() {
+      return fieldDescriptor;
    }
 
    @Override

@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -129,11 +130,14 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
 
             // field level analyzer should not be specified unless the field is analyzed
             if (!isAnalyzed && (fieldLevelAnalyzer != null || fieldLevelAnalyzerAttribute != null)) {
-               throw new IllegalStateException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
+               throw new AnnotationParserException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
             }
 
             FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, fd);
-            fields.put(fieldName, fieldMapping);
+            FieldMapping existingFieldMapping = fields.put(fieldName, fieldMapping);
+            if (existingFieldMapping != null) {
+               throw new AnnotationParserException("The index field " + fieldName + " was already declared by field " + existingFieldMapping.getFieldDescriptor().getFullName());
+            }
             if (log.isDebugEnabled()) {
                log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);
             }
@@ -173,13 +177,13 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
       for (SpatialFieldMapping sf : spatialFields) {
          if (Objects.equals(sf.markerSet(), markerSet)) {
             if (found != null) {
-               throw new IllegalStateException("Found multiple latitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+               throw new AnnotationParserException("Found multiple latitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
             }
             found = sf;
          }
       }
       if (found == null) {
-         throw new IllegalStateException("No latitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+         throw new AnnotationParserException("No latitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
       }
       found.setLatitude(fd.getName());
    }
@@ -193,13 +197,13 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
       for (SpatialFieldMapping sf : spatialFields) {
          if (Objects.equals(sf.markerSet(), markerSet)) {
             if (found != null) {
-               throw new IllegalStateException("Found multiple longitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+               throw new AnnotationParserException("Found multiple longitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
             }
             found = sf;
          }
       }
       if (found == null) {
-         throw new IllegalStateException("No longitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+         throw new AnnotationParserException("No longitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
       }
       found.setLongitude(fd.getName());
    }

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -89,26 +89,28 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    };
 
    private final static class ProgressCallback implements FileDescriptorSource.ProgressCallback {
-      private final Map<String, DescriptorParserException> errorFiles = new TreeMap<>();
-      private final Set<String> successFiles = new TreeSet<>();
+      // keep them sorted by file name
+      private final Map<String, DescriptorParserException> fileStatus = new TreeMap<>();
 
       Map<String, DescriptorParserException> getErrorFiles() {
-         return errorFiles;
+         return fileStatus.entrySet().stream().filter(e -> e.getValue() != null)
+               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       }
 
-      public Set<String> getSuccessFiles() {
-         return successFiles;
+      Set<String> getSuccessFiles() {
+         return fileStatus.entrySet().stream().filter(e -> e.getValue() == null).map(Map.Entry::getKey)
+               .collect(Collectors.toSet());
       }
 
       @Override
       public void handleError(String fileName, DescriptorParserException exception) {
-         // handle first error per file, ignore the rest if any
-         errorFiles.putIfAbsent(fileName, exception);
+         // keep the first error per file, ignore all following errors as they are most likely consequences of the first
+         fileStatus.put(fileName, exception);
       }
 
       @Override
       public void handleSuccess(String fileName) {
-         successFiles.add(fileName);
+         fileStatus.putIfAbsent(fileName, null);
       }
    }
 
