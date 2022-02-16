@@ -298,7 +298,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    @ManagedAttribute(
-         description = "Approximate number of entries currently in the cache, including persisted and expired entries",
+         description = "Approximate current number of entries in the cache, including persisted and expired entries.",
          displayName = "Approximate number of entries"
    )
    public long getApproximateEntries() {
@@ -306,7 +306,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    @ManagedAttribute(
-         description = "Approximate number of entries currently in memory, including expired entries",
+         description = "Approximate current number of entries in memory, including expired entries.",
          displayName = "Approximate number of cache entries in memory"
    )
    public long getApproximateEntriesInMemory() {
@@ -314,7 +314,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    }
 
    @ManagedAttribute(
-         description = "Approximate number of entries currently in the cache, including persisted and expired entries.",
+         description = "Approximate current number of entries in the cache, including persisted and expired entries.",
          displayName = "Approximate number of entries"
    )
    public long getApproximateEntriesUnique() {
