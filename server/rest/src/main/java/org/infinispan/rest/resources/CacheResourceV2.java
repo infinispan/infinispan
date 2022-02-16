@@ -58,6 +58,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -92,6 +93,7 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
@@ -187,9 +189,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
-      PersistenceManager persistenceManager =
-            SecurityActions.getPersistenceManager(invocationHelper.getRestCacheManager().getInstance(), cache.getName());
-
+      ComponentRegistry componentRegistry = SecurityActions.getComponentRegistry(cache);
+      PersistenceManager persistenceManager = componentRegistry.getComponent(PersistenceManager.class);
       List<RemoteStore> remoteStores = new ArrayList<>(persistenceManager.getStores(RemoteStore.class));
 
       if (remoteStores.isEmpty()) {
@@ -552,25 +553,28 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      PersistenceManager persistenceManager = SecurityActions.getPersistenceManager(cacheManager, cache.getName());
+      ComponentRegistry componentRegistry = SecurityActions.getComponentRegistry(cache);
+      PersistenceManager persistenceManager = componentRegistry.getComponent(PersistenceManager.class);
+      DistributionManager distributionManager = componentRegistry.getDistributionManager();
+      boolean rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
+
+      ClusterCacheStats clusterCacheStats = null;
       Stats stats = null;
-      Boolean rehashInProgress = null;
       Boolean indexingInProgress = null;
       Boolean queryable = null;
 
       try {
          // TODO Shouldn't we return the clustered stats, like Hot Rod does?
          stats = cache.getAdvancedCache().getStats();
-         DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
-         rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
+         // Only fetch the cluster cache stats if the stats are accessible
+         clusterCacheStats = componentRegistry.getComponent(ClusterCacheStats.class);
       } catch (SecurityException ex) {
          // Admin is needed
       }
 
       Boolean rebalancingEnabled = null;
       try {
-         LocalTopologyManager localTopologyManager = SecurityActions.getComponentRegistry(cache.getAdvancedCache())
-               .getComponent(LocalTopologyManager.class);
+         LocalTopologyManager localTopologyManager = componentRegistry.getComponent(LocalTopologyManager.class);
          if (localTopologyManager != null) {
             rebalancingEnabled = localTopologyManager.isCacheRebalancingEnabled(cache.getName());
          }
@@ -584,6 +588,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             size = cache.size();
          } catch (SecurityException ex) {
             // Bulk Read is needed
+         }
+      } else {
+         if (clusterCacheStats != null) {
+            long longSize = clusterCacheStats.getApproximateEntriesUnique();
+            size = longSize <= Integer.MAX_VALUE ? (int) longSize : Integer.MAX_VALUE;
          }
       }
 

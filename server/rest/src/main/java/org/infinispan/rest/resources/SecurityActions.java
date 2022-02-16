@@ -4,6 +4,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -69,8 +70,8 @@ final class SecurityActions {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
    }
 
-   static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
-      return doPrivileged(new GetCacheComponentRegistryAction(cache));
+   static <K, V> ComponentRegistry getComponentRegistry(Cache<K, V> cache) {
+      return doPrivileged(new GetCacheComponentRegistryAction(cache.getAdvancedCache()));
    }
 
    static void checkPermission(InvocationHelper invocationHelper, RestRequest request, AuthorizationPermission permission) {

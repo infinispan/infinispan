@@ -23,6 +23,8 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.RequestTracer;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
@@ -38,11 +40,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
 
    private final ClientListenerRegistry listenerRegistry;
+   private final Authorizer authz;
 
    private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
+      this.authz = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(Authorizer.class);
       listenerRegistry = server.getClientListenerRegistry();
    }
 
@@ -56,6 +60,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void stats(HotRodHeader header, Subject subject) {
+      // Need an explicit check, similar to SecureCacheImpl.stats()
+      // because the clustered cache stats are obtained through the component registry
+      authz.checkPermission(subject, AuthorizationPermission.MONITOR);
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       executor.execute(() -> blockingStats(header, cache));
    }

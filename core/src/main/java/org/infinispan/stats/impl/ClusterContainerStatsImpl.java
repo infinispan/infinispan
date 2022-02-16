@@ -58,7 +58,7 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
    void updateStats() throws Exception {
       List<Map<String, Number>> memoryMap = getClusterStatMaps();
       for (String att : LONG_ATTRIBUTES)
-         putLongAttributes(memoryMap, att);
+         putLongAttributesSum(memoryMap, att);
    }
 
    private List<Map<String, Number>> getClusterStatMaps() throws Exception {

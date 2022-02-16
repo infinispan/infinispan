@@ -755,21 +755,28 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Number of entries in the cache including passivated entries",
+         description = "Number of entries in the cache including passivated entries. If accurate size is disabled, it is an approximation and it includes expired entries.",
          displayName = "Number of current cache entries"
    )
    @Deprecated
    public int getNumberOfEntries() {
-      return globalConfiguration.metrics().accurateSize() ? cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size() : -1;
+      if (globalConfiguration.metrics().accurateSize()) {
+         return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
+      }
+      long approximateSize = getApproximateEntries();
+      return approximateSize <= Integer.MAX_VALUE ? (int) approximateSize : Integer.MAX_VALUE;
    }
 
    @ManagedAttribute(
-         description = "Number of entries currently in-memory excluding expired entries",
+         description = "Number of entries currently in-memory. If accurate size is disabled, it includes expired entries.",
          displayName = "Number of in-memory cache entries"
    )
    @Deprecated
    public int getNumberOfEntriesInMemory() {
-      return globalConfiguration.metrics().accurateSize() ? dataContainer.size() : -1;
+      if (globalConfiguration.metrics().accurateSize()) {
+         return dataContainer.size();
+      }
+      return dataContainer.sizeIncludingExpired();
    }
 
    @ManagedAttribute(

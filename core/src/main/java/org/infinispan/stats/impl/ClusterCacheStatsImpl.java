@@ -53,6 +53,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
@@ -91,6 +92,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    @Inject AdvancedCache<?, ?> cache;
    @Inject Configuration cacheConfiguration;
    @Inject GlobalConfiguration globalConfiguration;
+   @Inject DistributionManager distributionManager;
 
    ClusterExecutor clusterExecutor;
 
@@ -132,7 +134,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       Collection<Map<String, Number>> responseList = resultMap.values();
 
       for (String att : LONG_ATTRIBUTES)
-         putLongAttributes(responseList, att);
+         putLongAttributesSum(responseList, att);
 
       putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME);
       putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME_NANOS);
@@ -142,13 +144,13 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME_NANOS);
       putLongAttributesAverage(responseList, OFF_HEAP_MEMORY_USED);
 
-      putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
-      putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
+      putIntAttributesSum(responseList, NUMBER_OF_LOCKS_HELD);
+      putIntAttributesSum(responseList, NUMBER_OF_LOCKS_AVAILABLE);
       putIntAttributesMax(responseList, REQUIRED_MIN_NODES);
 
-      putLongAttributes(responseList, APPROXIMATE_ENTRIES);
-      putLongAttributes(responseList, APPROXIMATE_ENTRIES_IN_MEMORY);
-      putLongAttributes(responseList, APPROXIMATE_ENTRIES_UNIQUE);
+      putLongAttributesSum(responseList, APPROXIMATE_ENTRIES);
+      putLongAttributesSum(responseList, APPROXIMATE_ENTRIES_IN_MEMORY);
+      putLongAttributesSum(responseList, APPROXIMATE_ENTRIES_UNIQUE);
 
       if (accurateSize) {
          // Count each entry only once
@@ -157,8 +159,17 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          int numberOfEntries = cache.size();
          statsMap.put(NUMBER_OF_ENTRIES, (long) numberOfEntries);
       } else {
-         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, -1L);
-         statsMap.put(NUMBER_OF_ENTRIES, -1L);
+         // We don't have an approximate stat for unique in-memory entries, but we can estimate it
+         int segmentReplicas = 0;
+         int numSegments = cacheConfiguration.clustering().hash().numSegments();
+         for (int segment = 0; segment < numSegments; segment++) {
+            segmentReplicas += distributionManager.getCacheTopology().getSegmentDistribution(segment).writeOwners().size();
+         }
+         long entryReplicasInMemory = statsMap.get(APPROXIMATE_ENTRIES_IN_MEMORY).longValue();
+         long uniqueEntriesInMemory = entryReplicasInMemory * numSegments / segmentReplicas;
+         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, uniqueEntriesInMemory);
+         long uniqueEntries = statsMap.get(APPROXIMATE_ENTRIES_UNIQUE).longValue();
+         statsMap.put(NUMBER_OF_ENTRIES, uniqueEntries);
       }
 
       updateTimeSinceStart(responseList);
