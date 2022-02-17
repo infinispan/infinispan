@@ -71,7 +71,7 @@ public class ForkedServer {
       commands.add(serverHome + File.separator + "bin" + File.separator + "server" + extension);
 
       // Append random UUID for this server to be used in the case of forceful shutdown.
-      addVmArgument(this.getClass().getName() + "-pid", this.serverId);
+      addSystemProperty(this.getClass().getName() + "-pid", this.serverId);
    }
 
    public ForkedServer setServerConfiguration(String serverConfiguration) {
@@ -107,6 +107,7 @@ public class ForkedServer {
 
       pb.redirectErrorStream(true);
       try {
+         log.infof("Starting forked server %s", commands);
          process = pb.start();
 
          // Start a server monitoring thread which
@@ -207,7 +208,7 @@ public class ForkedServer {
       return serverConfiguration;
    }
 
-   public void addVmArgument(String key, Object value) {
+   public void addSystemProperty(String key, Object value) {
       commands.add(String.format("-D%s=%s", key, value));
    }
 }
