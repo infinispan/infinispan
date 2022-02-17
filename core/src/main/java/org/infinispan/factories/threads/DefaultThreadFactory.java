@@ -28,7 +28,7 @@ public class DefaultThreadFactory implements ThreadFactory {
    private static final AtomicLong factoryIndexSequence = new AtomicLong(1L);
    private String node;
    private String component;
-
+   private ClassLoader classLoader;
 
    /**
     * Construct a new instance.  The access control context of the calling thread will be the one used to create
@@ -54,6 +54,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     */
    public DefaultThreadFactory(String name, ThreadGroup threadGroup, int initialPriority, String threadNamePattern,
          String node, String component) {
+      this.classLoader = Thread.currentThread().getContextClassLoader();
       this.name = name;
       if (threadGroup == null) {
          final SecurityManager sm = System.getSecurityManager();
@@ -106,8 +107,7 @@ public class DefaultThreadFactory implements ThreadFactory {
       thread.setName(nameInfo.format(thread, threadNamePattern));
       thread.setPriority(initialPriority);
       thread.setDaemon(true);
-      // Do not use the context classloader of the thread that submitted the task to the executor
-      SecurityActions.setContextClassLoader(thread, DefaultThreadFactory.class.getClassLoader());
+      SecurityActions.setContextClassLoader(thread, classLoader);
       return thread;
    }
 
