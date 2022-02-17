@@ -295,11 +295,9 @@ public class Server implements ServerManagement, AutoCloseable {
          defaultsHolder.getGlobalConfigurationBuilder().security().authorization().auditLogger(new LoggingAuditLogger());
 
          // base the global configuration to the default
-         configurationBuilderHolder = new ConfigurationBuilderHolder();
+         configurationBuilderHolder = new ConfigurationBuilderHolder(classLoader);
          GlobalConfigurationBuilder global = configurationBuilderHolder.getGlobalConfigurationBuilder();
-         global
-               .read(defaultsHolder.getGlobalConfigurationBuilder().build())
-               .classLoader(classLoader);
+         global.read(defaultsHolder.getGlobalConfigurationBuilder().build());
 
          // Copy all default templates
          for (Map.Entry<String, ConfigurationBuilder> entry : defaultsHolder.getNamedConfigurationBuilders().entrySet()) {

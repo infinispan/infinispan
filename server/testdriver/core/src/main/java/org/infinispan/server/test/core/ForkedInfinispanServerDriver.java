@@ -89,7 +89,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
             createServerStructure(serverHome, serverRootPath);
             destConfDir = getServerConfDir(serverRootPath.getAbsolutePath());
             server = new ForkedServer(serverHome);
-            server.addVmArgument(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
+            server.addSystemProperty(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
          } else {
             String serverHome = serverHomes.get(i).toString();
             destConfDir = getServerConfDir(serverHome);
@@ -98,7 +98,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          server
                .setServerConfiguration(configurationFile.getPath())
                .setPortsOffset(i);
-         server.addVmArgument(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
+         server.addSystemProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
          try {
             File sourceServerConfiguration = new File(server.getServerConfiguration());
             FileUtils.copyFile(sourceServerConfiguration, destConfDir.resolve(sourceServerConfiguration.getName()).toFile());
@@ -132,8 +132,8 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    protected void stop() {
       try {
          // check if the server is running
-         try {
-            RestResponse response = sync(getRestClient(0).cluster().stop());
+         try (RestClient restClient = getRestClient(0)) {
+            RestResponse response = sync(restClient.cluster().stop());
             // Ensure non-error response code from the REST endpoint.
             if (response.getStatus() >= 400) {
                throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus()));
