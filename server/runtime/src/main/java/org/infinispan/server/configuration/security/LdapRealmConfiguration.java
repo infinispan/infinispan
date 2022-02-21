@@ -17,6 +17,7 @@ import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @since 10.0
@@ -24,7 +25,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 @BuiltBy(LdapRealmConfigurationBuilder.class)
 public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfiguration> implements RealmProvider {
 
-   static final AttributeDefinition<Supplier<char[]>> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, (Class<Supplier<char[]>>) (Class<?>) char[].class)
+   static final AttributeDefinition<Supplier<CredentialSource>> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, (Class<Supplier<CredentialSource>>) (Class<?>) char[].class)
          .serializer(ServerConfigurationSerializer.CREDENTIAL)
          .immutable()
          .build();
@@ -75,7 +76,7 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
       SimpleDirContextFactoryBuilder dirContextBuilder = SimpleDirContextFactoryBuilder.builder();
       dirContextBuilder.setProviderUrl(attributes.attribute(URL).get());
       dirContextBuilder.setSecurityPrincipal(attributes.attribute(PRINCIPAL).get());
-      dirContextBuilder.setSecurityCredential(new String(attributes.attribute(CREDENTIAL).get().get()));
+      dirContextBuilder.setCredentialSource(attributes.attribute(CREDENTIAL).get().get());
       dirContextBuilder
             .setConnectTimeout(attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).get())
             .setReadTimeout(attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).get());
@@ -89,4 +90,5 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
       realm.addFeature(ServerSecurityRealm.Feature.PASSWORD);
       return ldapRealmBuilder.build();
    }
+
 }

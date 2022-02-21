@@ -6,7 +6,8 @@ import java.util.function.Supplier;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.InstanceSupplier;
+import org.infinispan.server.security.PasswordCredentialSource;
+import org.wildfly.security.credential.source.CredentialSource;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 
@@ -42,11 +43,11 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
    }
 
    public DataSourceConfigurationBuilder password(char[] password) {
-      attributes.attribute(DataSourceConfiguration.PASSWORD).set(new InstanceSupplier<>(password));
+      attributes.attribute(DataSourceConfiguration.PASSWORD).set(new PasswordCredentialSource(password));
       return this;
    }
 
-   public DataSourceConfigurationBuilder password(Supplier<char[]> password) {
+   public DataSourceConfigurationBuilder password(Supplier<CredentialSource> password) {
       attributes.attribute(DataSourceConfiguration.PASSWORD).set(password);
       return this;
    }

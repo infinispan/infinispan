@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
@@ -19,7 +20,6 @@ import javax.net.ssl.X509ExtendedKeyManager;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
-import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.configuration.parsing.ParseUtils;
@@ -29,6 +29,7 @@ import org.infinispan.server.configuration.Element;
 import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.server.security.ServerSecurityRealm;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.KeyStoreUtil;
@@ -40,9 +41,10 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfiguration> {
    static final AttributeDefinition<String> ALIAS = AttributeDefinition.builder(Attribute.ALIAS, null, String.class).build();
    static final AttributeDefinition<String> GENERATE_SELF_SIGNED_CERTIFICATE_HOST = AttributeDefinition.builder(Attribute.GENERATE_SELF_SIGNED_CERTIFICATE_HOST, null, String.class).build();
-   static final AttributeDefinition<Supplier<char[]>> KEY_PASSWORD = AttributeDefinition.builder(Attribute.KEY_PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
-         .serializer(AttributeSerializer.SECRET).build();
-   static final AttributeDefinition<Supplier<char[]>> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
+   @Deprecated
+   static final AttributeDefinition<Supplier<CredentialSource>> KEY_PASSWORD = AttributeDefinition.builder(Attribute.KEY_PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
+         .serializer(ServerConfigurationSerializer.CREDENTIAL).build();
+   static final AttributeDefinition<Supplier<CredentialSource>> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
          .serializer(ServerConfigurationSerializer.CREDENTIAL).build();
    static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
@@ -67,9 +69,9 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
                keyStore = buildKeyStore(properties);
             }
             String provider = attributes.attribute(PROVIDER).get();
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            char[] keyStorePassword = attributes.attribute(KEYSTORE_PASSWORD).isNull() ? null : attributes.attribute(KEYSTORE_PASSWORD).get().get();
-            char[] keyPassword = attributes.attribute(KEY_PASSWORD).isNull() ? null : attributes.attribute(KEY_PASSWORD).get().get();
+            KeyManagerFactory keyManagerFactory = provider != null ? KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm(), provider) : KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            char[] keyStorePassword = resolvePassword(attributes.attribute(KEYSTORE_PASSWORD));
+            char[] keyPassword = resolvePassword(attributes.attribute(KEY_PASSWORD));
             keyManagerFactory.init(keyStore, keyPassword != null ? keyPassword : keyStorePassword);
             for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
                if (keyManager instanceof X509ExtendedKeyManager) {
@@ -90,8 +92,8 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
             properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
       String generateSelfSignedHost = attributes.attribute(GENERATE_SELF_SIGNED_CERTIFICATE_HOST).get();
       String provider = attributes.attribute(PROVIDER).get();
-      char[] keyStorePassword = attributes.attribute(KEYSTORE_PASSWORD).get().get();
-      char[] keyPassword = attributes.attribute(KEY_PASSWORD).isNull() ? null : attributes.attribute(KEY_PASSWORD).get().get();
+      char[] keyStorePassword = resolvePassword(attributes.attribute(KEYSTORE_PASSWORD));
+      char[] keyPassword = resolvePassword(attributes.attribute(KEY_PASSWORD));
       String keyAlias = attributes.attribute(ALIAS).get();
       if (!new File(keyStoreFileName).exists() && generateSelfSignedHost != null) {
          KeyStoreUtils.generateSelfSignedCertificate(keyStoreFileName, provider, keyStorePassword,

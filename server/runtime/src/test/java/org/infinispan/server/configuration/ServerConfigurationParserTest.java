@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration;
 
+import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.Supplier;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
@@ -148,9 +148,11 @@ public class ServerConfigurationParserTest {
       assertEquals(socketBindings.get("default").port(), singlePortRouter.port());
       assertEquals(socketBindings.get("memcached").port(), configuration.endpoints().endpoints().get(0).connectors().get(2).port());
 
-      assertEquals("strongPassword", new String(((Supplier<char[]>) realmProvider(realmConfiguration, LdapRealmConfiguration.class).attributes().attribute(Attribute.CREDENTIAL).get()).get()));
-      assertEquals("secret", new String(((Supplier<char[]>) realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().trustStore().attributes().attribute(Attribute.PASSWORD).get()).get()));
-      assertEquals("1fdca4ec-c416-47e0-867a-3d471af7050f", new String(((Supplier<char[]>) realmProvider(realmConfiguration, TokenRealmConfiguration.class).oauth2Configuration().attributes().attribute(Attribute.CLIENT_SECRET).get()).get()));
+      assertEquals("strongPassword", new String(resolvePassword(realmProvider(realmConfiguration, LdapRealmConfiguration.class).attributes().attribute(Attribute.CREDENTIAL))));
+      assertEquals("secret", new String(resolvePassword(realmConfiguration.serverIdentitiesConfiguration().sslConfiguration().trustStore().attributes().attribute(Attribute.PASSWORD))));
+      assertEquals("1fdca4ec-c416-47e0-867a-3d471af7050f", new String(resolvePassword(realmProvider(realmConfiguration, TokenRealmConfiguration.class).oauth2Configuration().attributes().attribute(Attribute.CLIENT_SECRET))));
+
+      assertEquals(3, configuration.security.credentialStores().credentialStores().size());
    }
 
    <T extends RealmProvider> T realmProvider(RealmConfiguration realm, Class<T> providerClass) {

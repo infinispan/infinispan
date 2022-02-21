@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
-import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -25,6 +24,7 @@ import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
+import org.infinispan.server.configuration.security.CredentialStoreConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoreConfigurationBuilder;
 import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
 import org.infinispan.server.configuration.security.DistributedRealmConfigurationBuilder;
@@ -52,9 +52,11 @@ import org.infinispan.server.configuration.security.UserPropertiesConfigurationB
 import org.infinispan.server.core.configuration.IpFilterConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.security.PasswordCredentialSource;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.credential.source.CredentialSource;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 
@@ -73,6 +75,7 @@ import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 public class ServerConfigurationParser implements ConfigurationParser {
    private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
    static final String NAMESPACE = "urn:infinispan:server:";
+   public static final EnumSet<Element> CREDENTIAL_TYPES = EnumSet.of(Element.CREDENTIAL_REFERENCE, Element.CLEAR_TEXT_CREDENTIAL, Element.MASKED_CREDENTIAL, Element.COMMAND_CREDENTIAL);
    public static String ENDPOINTS_SCOPE = "ENDPOINTS";
 
    @Override
@@ -350,7 +353,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
          }
       }
       Element element = nextElement(reader);
-      if (element == Element.CREDENTIAL_REFERENCE || element == Element.CLEAR_TEXT_CREDENTIAL) {
+      if (CREDENTIAL_TYPES.contains(element)) {
          credentialStoreBuilder.credential(parseCredentialReference(reader, builder));
          element = nextElement(reader);
       }
@@ -359,7 +362,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private Supplier<char[]> parseCredentialReference(ConfigurationReader reader, ServerConfigurationBuilder builder) {
+   private Supplier<CredentialSource> parseCredentialReference(ConfigurationReader reader, ServerConfigurationBuilder builder) {
       switch (Element.forName(reader.getLocalName())) {
          case CREDENTIAL_REFERENCE: {
             String store = null;
@@ -385,7 +388,17 @@ public class ServerConfigurationParser implements ConfigurationParser {
          case CLEAR_TEXT_CREDENTIAL: {
             String credential = ParseUtils.requireSingleAttribute(reader, Attribute.CLEAR_TEXT);
             ParseUtils.requireNoContent(reader);
-            return new InstanceSupplier<>(credential.toCharArray());
+            return new CredentialStoreConfiguration.ClearTextCredentialSupplier(credential.toCharArray());
+         }
+         case MASKED_CREDENTIAL: {
+            String masked = ParseUtils.requireSingleAttribute(reader, Attribute.MASKED);
+            ParseUtils.requireNoContent(reader);
+            return new CredentialStoreConfiguration.MaskedCredentialSupplier(masked);
+         }
+         case COMMAND_CREDENTIAL: {
+            String command = ParseUtils.requireSingleAttribute(reader, Attribute.COMMAND);
+            ParseUtils.requireNoContent(reader);
+            return new CredentialStoreConfiguration.CommandCredentialSupplier(command);
          }
          default:
             throw ParseUtils.unexpectedElement(reader);
@@ -1081,6 +1094,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                keyStoreBuilder.alias(value);
                break;
             case KEY_PASSWORD:
+               CONFIG.configDeprecated(Attribute.KEY_PASSWORD);
                keyStoreBuilder.keyPassword(value.toCharArray());
                break;
             case GENERATE_SELF_SIGNED_CERTIFICATE_HOST:
@@ -1174,7 +1188,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       String path = attributes[0];
       String relativeTo = (String) reader.getProperty(Server.INFINISPAN_SERVER_CONFIG_PATH);
       String keyStoreProvider = null;
-      Supplier<char[]> keyStorePassword = null;
+      Supplier<CredentialSource> keyStorePassword = null;
       boolean credentialSet = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -1191,7 +1205,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                keyStoreProvider = value;
                break;
             case KEYSTORE_PASSWORD:
-               keyStorePassword = new InstanceSupplier<>(value.toCharArray());
+               keyStorePassword = new PasswordCredentialSource(value.toCharArray());
                credentialSet = true;
                break;
             case RELATIVE_TO:

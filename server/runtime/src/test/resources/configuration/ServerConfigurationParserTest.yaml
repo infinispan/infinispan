@@ -31,6 +31,14 @@ infinispan:
           path: credentials.pfx
           clearTextCredential:
             clearText: secret
+        - name: masked
+          path: credentials.pfx
+          maskedCredential:
+            masked: "1Hc4Feq2wJs;pepper99;100"
+        - name: command
+          path: credentials.pfx
+          commandCredential:
+            command: "${build.directory}/test-classes/bin/credential.sh"
       securityRealms:
         - name: default
           serverIdentities:

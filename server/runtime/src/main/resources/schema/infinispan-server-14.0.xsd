@@ -956,6 +956,36 @@
       </xs:attribute>
    </xs:complexType>
 
+   <xs:complexType name="masked-credential">
+      <xs:annotation>
+         <xs:documentation>
+            A masked credential using the format `MASKED_VALUE;SALT;ITERATION`
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="masked" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The masked credential.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="command-credential">
+      <xs:annotation>
+         <xs:documentation>
+            A credential supplied by executing an external command.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="command" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               An external command, including arguments, that when executed returns the credential on the standard output.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
    <xs:complexType name="credential-store">
       <xs:annotation>
          <xs:documentation>
@@ -966,7 +996,21 @@
          <xs:element name="clear-text-credential" type="tns:clear-text-credential">
             <xs:annotation>
                <xs:documentation>
-                  Credential to be used by as protection parameter for the Credential Store.
+                  Credential to be used as protection parameter for the Credential Store.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="masked-credential" type="tns:masked-credential">
+            <xs:annotation>
+               <xs:documentation>
+                  Masked credential to be used as protection parameter for the Credential Store.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="command-credential" type="tns:command-credential">
+            <xs:annotation>
+               <xs:documentation>
+                  Command credential to be used as protection parameter for the Credential Store.
                </xs:documentation>
             </xs:annotation>
          </xs:element>

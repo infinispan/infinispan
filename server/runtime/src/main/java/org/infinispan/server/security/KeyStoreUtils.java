@@ -24,8 +24,8 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  * @since 10.0
  **/
 public class KeyStoreUtils {
-   public static void generateSelfSignedCertificate(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias, String host) throws IOException, GeneralSecurityException {
-      KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+   public static void generateSelfSignedCertificate(String keyStoreFileName, String provider, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias, String host) throws IOException, GeneralSecurityException {
+      KeyPairGenerator keyGen = provider != null ? KeyPairGenerator.getInstance("RSA", provider) : KeyPairGenerator.getInstance("RSA");
       keyGen.initialize(2048, new SecureRandom());
       KeyPair pair = keyGen.generateKeyPair();
 
