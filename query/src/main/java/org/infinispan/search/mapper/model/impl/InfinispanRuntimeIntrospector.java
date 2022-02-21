@@ -19,4 +19,10 @@ public class InfinispanRuntimeIntrospector implements PojoRuntimeIntrospector {
    public Object unproxy(Object value) {
       return delegate.unproxy(value);
    }
+
+   @Override
+   public boolean isIgnorableDataAccessThrowable(Throwable throwable) {
+      // Don't ignore any throwable by default.
+      return false;
+   }
 }
