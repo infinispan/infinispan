@@ -18,15 +18,11 @@ class InfinispanEntityTypeContributor implements PojoTypeMetadataContributor {
 
    @Override
    public void contributeAdditionalMetadata(PojoAdditionalMetadataCollectorTypeNode collector) {
-      try {
-         if (!typeIdentifier.equals(collector.typeIdentifier())) {
-            // Entity metadata is not inherited; only contribute it to the exact type.
-            return;
-         }
-         collector.markAsEntity(entityName, new InfinispanSimpleStringSetPojoPathFilterFactory());
-      } catch (RuntimeException e) {
-         collector.failureCollector().add(e);
+      if (!typeIdentifier.equals(collector.typeIdentifier())) {
+         // Entity metadata is not inherited; only contribute it to the exact type.
+         return;
       }
+      collector.markAsEntity(entityName, new InfinispanSimpleStringSetPojoPathFilterFactory());
    }
 
    @Override
