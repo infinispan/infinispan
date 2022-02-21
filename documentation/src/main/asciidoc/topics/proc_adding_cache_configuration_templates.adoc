@@ -7,7 +7,7 @@ You can then create caches on demand, using the same configuration multiple time
 .Procedure
 
 . Open your {brandname} configuration for editing.
-. Add the cache configuration with the appropriate `*-cache-configuration` element or object to the cache manager.
+. Add the cache configuration with the appropriate `*-cache-configuration` element or object to the Cache Manager.
 . Save and close your {brandname} configuration.
 
 [discrete]

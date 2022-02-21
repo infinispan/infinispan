@@ -146,6 +146,5 @@ You should not add this annotation to classes because {brandname} uses it intern
 [role="_additional-resources"]
 .Additional resources
 * link:{protostreamdocroot}/org/infinispan/protostream/annotations/package-summary.html[org.infinispan.protostream.annotations]
-* link:{dev_docs}#search_api[Querying values in caches]
 * link:https://developers.google.com/protocol-buffers/docs/proto#reserved[Protocol Buffers Language Guide - Reserved Fields]
 * link:https://developers.google.com/protocol-buffers/docs/proto#reserved_values[Protocol Buffers Language Guide - Reserved Values]

@@ -221,17 +221,17 @@ If you have not enabled (2), or your eviction thread wakeup interval is large an
 You can be assured that if you tried to _retrieve_ the entry via a get() or containsKey() though, you won't see the entry (and the entry will be removed).
 
 === Cache Manager questions
-==== Can I create caches using different cache modes using the same cache manager?
-Yes.  You can create caches using different cache modes, both synchronous and asynchronous, using the same cache manager.
+==== Can I create caches using different cache modes using the same Cache Manager?
+Yes.  You can create caches using different cache modes, both synchronous and asynchronous, using the same Cache Manager.
 
-==== Can transactions span different Cache instances from the same cache manager?
+==== Can transactions span different Cache instances from the same Cache Manager?
 Yes.  Each cache behaves as a separate, standalone JTA resource.  Internally though, components may be shared as an optimization but this in no way affects how the caches interact with a JTA manager.
 
 ==== How does multi-tenancy work?
 Multi-tenancy is achieved by namespacing.  A single {brandname} cluster can have several named caches (attached to the same CacheManager), and different named caches can have duplicate keys.  So this is, in effect, multi-tenancy for your key/value store.
 
 ==== {brandname} allows me to create several Caches from a single CacheManager.  Are there any reasons to create separate CacheManagers?
-As far as possible, internal components are shared between Cache instances.  Notably, RPC and networking components are shared.  If you need caches that have different network characteristics - such as one cache using TCP while another uses UDP - we recommend you create these using different cache managers.
+As far as possible, internal components are shared between Cache instances.  Notably, RPC and networking components are shared.  If you need caches that have different network characteristics - such as one cache using TCP while another uses UDP - we recommend you create these using different Cache Managers.
 
 === Cache Mode questions
 
@@ -328,7 +328,7 @@ However, we do plan to fix this - if you wish to track the progress of {brandnam
 
 ==== When running on Glassfish or Apache, creating a cache throws an exception saying "Unable to construct a GlobalComponentRegistry", what is it wrong?
 It appears that this happens due to some classloading issue.
-A workaround that is know to work is to call the following before creating the cache manager or container:
+A workaround that is know to work is to call the following before creating the Cache Manager or container:
 
 [source,java]
 ----

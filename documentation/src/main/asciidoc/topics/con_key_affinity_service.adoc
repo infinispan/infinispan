@@ -33,7 +33,7 @@ It is the user's responsibility to handle the shutdown of this `Executor`.
 The `KeyAffinityService`, once started, needs to be explicitly stopped.
 This stops the background key generation and releases other held resources.
 
-The only situation in which `KeyAffinityService` stops by itself is when the cache manager with which it was registered is shutdown.
+The only situation in which `KeyAffinityService` stops by itself is when the Cache Manager with which it was registered is shutdown.
 
 [discrete]
 == Topology changes

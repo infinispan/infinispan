@@ -10,7 +10,7 @@ If your applications require a specific number of nodes in the cluster before ca
 
 . Open your {brandname} configuration for editing.
 . Set the minimum number of nodes required before caches start with the `initial-cluster-size` attribute or `initialClusterSize()` method.
-. Set the timeout, in milliseconds, after which the cache manager does not start with the `initial-cluster-timeout` attribute or `initialClusterTimeout()` method.
+. Set the timeout, in milliseconds, after which the Cache Manager does not start with the `initial-cluster-timeout` attribute or `initialClusterTimeout()` method.
 . Save and close your {brandname} configuration.
 
 [discrete]

@@ -1,9 +1,5 @@
-[[functional_map_api]]
-= Functional Map API
-
-{brandname} provides an experimental API for interacting with your
-data which takes advantage of the functional programming additions and
-improved asynchronous programming capabilities available in Java 8.
+[id='using-functional-map-api']
+= Using the Functional Map API
 
 {brandname}'s link:{javadocroot}/org/infinispan/functional/FunctionalMap.html[Functional Map API]
 is a distilled map-like asynchronous API which uses functions to interact with data.

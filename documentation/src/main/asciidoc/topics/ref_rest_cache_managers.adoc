@@ -16,20 +16,20 @@ include::json/rest_cache_manager_response.json[]
 ----
 
 * `version` contains the {brandname} version
-* `name` contains the name of the cache manager as defined in the configuration
-* `coordinator` is true if the cache manager is the coordinator of the cluster
-* `cache_configuration_names` contains an array of all caches configurations defined in the cache manager
+* `name` contains the name of the Cache Manager as defined in the configuration
+* `coordinator` is true if the Cache Manager is the coordinator of the cluster
+* `cache_configuration_names` contains an array of all caches configurations defined in the Cache Manager
 * `cluster_name` contains the name of the cluster as defined in the configuration
-* `physical_addresses` contains the physical network addresses associated with the cache manager
+* `physical_addresses` contains the physical network addresses associated with the Cache Manager
 * `coordinator_address` contains the physical network addresses of the coordinator of the cluster
-* `cache_manager_status` the lifecycle status of the cache manager.
+* `cache_manager_status` the lifecycle status of the Cache Manager.
 For possible values, check the https://docs.jboss.org/infinispan/9.4/apidocs/org/infinispan/lifecycle/ComponentStatus.html[`org.infinispan.lifecycle.ComponentStatus`] documentation
 * `created_cache_count` number of created caches, excludes all internal and private caches
 * `running_cache_count` number of created caches that are running
-* `node_address` contains the logical address of the cache manager
+* `node_address` contains the logical address of the Cache Manager
 * `cluster_members` and `cluster_members_physical_addresses` an array of logical and physical addresses of the members of the cluster
 * `cluster_size` number of members in the cluster
-* `defined_caches` A list of all caches defined in the cache manager, excluding private caches but including internal caches that are accessible
+* `defined_caches` A list of all caches defined in the Cache Manager, excluding private caches but including internal caches that are accessible
 * `local_site` The name of the local site. +
 If cross-site replication is not configured, {brandname} returns "local".
 * `relay_node` is true if the node handles RELAY messages between clusters.
@@ -255,7 +255,7 @@ POST /rest/v2/cache-managers/{cacheManagerName}?action=disable-rebalancing
 = Backing Up {brandname} Cache Managers
 Create backup archives, `application/zip`, that contain resources (caches, cache
 templates, counters, Protobuf schemas, server tasks, and so on) currently
-stored in the cache manager.
+stored in the Cache Manager.
 
 [source,options="nowrap",subs=attributes+]
 ----

@@ -3,7 +3,7 @@
 {brandname} exposes JMX MBeans that represent manageable resources.
 
 `org.infinispan:type=Cache`:: Attributes and operations available for cache instances.
-`org.infinispan:type=CacheManager`:: Attributes and operations available for cache managers, including {brandname} cache and cluster health statistics.
+`org.infinispan:type=CacheManager`:: Attributes and operations available for Cache Managers, including {brandname} cache and cluster health statistics.
 
 For a complete list of available JMX MBeans along with descriptions and
 available operations and attributes, see the _{brandname} JMX Components_

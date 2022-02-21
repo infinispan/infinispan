@@ -1,8 +1,9 @@
 [id='getting_started']
 :context: start
+= Getting starting with {brandname}
 
-include::{topics}/ref_quick_start.adoc[leveloffset=+0]
-include::{topics}/proc_using_mvn_archetypes.adoc[leveloffset=+0]
+include::{topics}/ref_quick_start.adoc[leveloffset=+1]
+include::{topics}/proc_using_mvn_archetypes.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

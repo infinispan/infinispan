@@ -3,7 +3,7 @@
 Configure your application to use remote caches on {brandname} clusters.
 
 . Provide the addresses where {brandname} Server listens for client connections so the starter can create the `RemoteCacheManager` bean.
-. Use the Spring `@Autowired` annotation to include your own custom cache manager class in your application:
+. Use the Spring `@Autowired` annotation to include your own custom Cache Manager class in your application:
 +
 [source,java,options="nowrap"]
 ----

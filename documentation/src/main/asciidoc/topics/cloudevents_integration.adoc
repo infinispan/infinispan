@@ -93,7 +93,7 @@ The `data` field is the new entry value (or the old value, for remove events).
 If the value is Protostream-encoded, a Java object that can be marshalled
 to Protostream, or a Java primitive wrapper, it is converted to JSON.
 If the value is not encoded with Protostream or it is a Java object
-and the cache manager is configured to use another marshaller,
+and the Cache Manager is configured to use another marshaller,
 the marshalled value is written as a string.
 If the marshalled value is not a valid UTF-8 string, it is first Base64-encoded.
 

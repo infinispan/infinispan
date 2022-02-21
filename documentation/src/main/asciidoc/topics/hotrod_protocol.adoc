@@ -1183,7 +1183,7 @@ it means that the node that responded had an issue sending an operation to a
 third node, which was suspected. Generally, requests that return this error
 should be failed-over to other nodes.
 * +0x88+ = Illegal lifecycle state. When a client receives this error as response,
-it means that the server-side cache or cache manager are not available
+it means that the server-side cache or Cache Manager are not available
 for requests because either stopped, they're stopping or similar situation.
 Generally, requests that return this error should be failed-over to other nodes.
 

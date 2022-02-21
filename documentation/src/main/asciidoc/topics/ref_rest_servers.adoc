@@ -18,26 +18,26 @@ include::json/rest_server_response.json[]
 
 [id='rest_v2_server_cm']
 = Getting Cache Managers
-Retrieve lists of cache managers for {brandname} servers with `GET` requests.
+Retrieve lists of Cache Managers for {brandname} servers with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/server/cache-managers
 ----
 
-{brandname} responds with an array of the cache manager names configured for
+{brandname} responds with an array of the Cache Manager names configured for
 the server.
 
 [NOTE]
 ====
-{brandname} currently supports one cache manager per server only.
+{brandname} currently supports one Cache Manager per server only.
 ====
 
 
 [id='rest_v2_cache_ignore']
 = Adding Caches to Ignore Lists
 Configure {brandname} to temporarily exclude specific caches from client
-requests. Send empty `POST` requests that include the names of the cache manager
+requests. Send empty `POST` requests that include the names of the Cache Manager
 name and the cache.
 
 [source,options="nowrap",subs=attributes+]
@@ -45,12 +45,12 @@ name and the cache.
 POST /v2/server/ignored-caches/{cache-manager}/{cache}
 ----
 
-{brandname} responds with `204 (No Content)` if the cache is successfully added to the ignore list or `404 (Not Found)` if the cache or cache manager are not found.
+{brandname} responds with `204 (No Content)` if the cache is successfully added to the ignore list or `404 (Not Found)` if the cache or Cache Manager are not found.
 
 [NOTE]
 ====
-{brandname} currently supports one cache manager per server only. For future
-compatibility you must provide the cache manager name in the requests.
+{brandname} currently supports one Cache Manager per server only. For future
+compatibility you must provide the Cache Manager name in the requests.
 ====
 
 
@@ -63,7 +63,7 @@ Remove caches from the ignore list with `DELETE` requests.
 DELETE /v2/server/ignored-caches/{cache-manager}/{cache}
 ----
 
-{brandname} responds with `204 (No Content)` if the cache is successfully removed from ignore list or `404 (Not Found)` if the cache or cache manager are not found.
+{brandname} responds with `204 (No Content)` if the cache is successfully removed from ignore list or `404 (Not Found)` if the cache or Cache Manager are not found.
 
 [id='rest_v2_cache_ignore_confirm']
 = Confirming Ignored Caches

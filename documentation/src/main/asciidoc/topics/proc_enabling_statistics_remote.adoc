@@ -1,7 +1,7 @@
 [id='enabling-statistics-remote_{context}']
 = Enabling statistics in remote caches
 
-{brandname} Server automatically enables statistics for the default cache manager.
+{brandname} Server automatically enables statistics for the default Cache Manager.
 However, you must explicitly enable statistics for your caches.
 
 .Procedure

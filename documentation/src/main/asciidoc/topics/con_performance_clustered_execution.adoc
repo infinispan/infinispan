@@ -18,7 +18,7 @@ So it is imperative that you monitor your deployment over time and continually a
 
 With embedded caches, {brandname} provides two APIs that let you execute code in the same memory space as your data.
 
-`ClusterExecutor` API:: Lets you perform any operation with the cache manager, including iterating over the entries of one or more caches, and gives you processing based on {brandname} nodes.
+`ClusterExecutor` API:: Lets you perform any operation with the Cache Manager, including iterating over the entries of one or more caches, and gives you processing based on {brandname} nodes.
 `CacheStream` API:: Lets you perform operations on collections and gives you processing based on data.
 
 If you want to run an operation on a single node, a group of nodes, or all nodes in a certain geographic region, then you should use clustered execution.

@@ -1,0 +1,15 @@
+[id='transactions']
+:context: transactions
+= Configuring transactions
+
+Data that resides on a distributed system is vulnerable to errors that can arise from temporary network outages, system failures, or just simple human error.
+These external factors are uncontrollable but can have serious consequences for quality of your data.
+The effects of data corruption range from lower customer satisfaction to costly system reconciliation that results in service unavailability.
+
+{brandname} can carry out ACID (atomicity, consistency, isolation, durability) transactions to ensure the cache state is consistent.
+
+include::{topics}/transactions.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

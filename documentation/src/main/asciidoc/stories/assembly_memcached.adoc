@@ -1,18 +1,13 @@
 [id='memcached_server']
 :context: memcached
-
 = Memcached Server
 
 The {brandname} server distribution contains a server module that implements the link:http://github.com/memcached/memcached/blob/master/doc/protocol.txt[Memcached text protocol]. This allows Memcached clients to talk to one or several {brandname} backed Memcached servers. These servers can be standalone just like Memcached, where each server acts independently and does not communicate with the rest. They can also be clustered, where the servers replicate or distribute their contents to other {brandname} backed Memcached servers, providing clients with failover capabilities.
 
 
 include::{topics}/con_memcached_client_encoding.adoc[leveloffset=+1]
-
-== Command Clarification
-
 include::{topics}/ref_memcached_flush_all.adoc[leveloffset=+2]
 include::{topics}/ref_memcached_unsupported.adoc[leveloffset=+2]
-include::{topics}/proc_memcached_multi_clustered_server_tutorial.adoc[leveloffset+=2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

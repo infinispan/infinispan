@@ -1,6 +1,6 @@
 [id='cache_events']
 = Receiving Cache and Cache Manager Events
-You can use CDI Events to receive Cache and cache manager level events.
+You can use CDI Events to receive Cache and Cache Manager level events.
 
 * Use the `@Observes` annotation as in the following example:
 
