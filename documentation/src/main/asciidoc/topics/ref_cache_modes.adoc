@@ -3,8 +3,8 @@
 
 [TIP]
 ====
-{brandname} cache managers can create and control multiple caches that use
-different modes. For example, you can use the same cache manager for local
+{brandname} Cache Managers can create and control multiple caches that use
+different modes. For example, you can use the same Cache Manager for local
 caches, distributed caches, and caches with invalidation mode.
 ====
 

@@ -1,7 +1,7 @@
 [id='embedded-custom-beans_{context}']
 = Cache Manager Configuration Beans
 
-You can customize the cache manager with the following configuration beans:
+You can customize the Cache Manager with the following configuration beans:
 
 * `InfinispanGlobalConfigurer`
 * `InfinispanCacheConfigurer`

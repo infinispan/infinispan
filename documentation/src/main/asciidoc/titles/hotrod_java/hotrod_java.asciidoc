@@ -14,6 +14,11 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :sectanchors:
 :stem: asciimath
 
+//
+// Conditional statements
+//
+:remote_caches:
+
 //Title
 = Hot Rod Java Client Guide
 

@@ -1,0 +1,17 @@
+[id='listeners-and-notifications_{context}']
+= Listeners and notifications
+
+{brandname} offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and Cache Manager level events.
+
+Events trigger a notification which is dispatched to listeners.   Listeners are simple link:http://en.wikipedia.org/wiki/Plain_Old_Java_Object[POJO]s annotated with link:{javadocroot}/org/infinispan/notifications/Listener.html[@Listener] and registered using the methods defined in the link:{javadocroot}/org/infinispan/notifications/Listenable.html[Listenable] interface.
+
+Both Cache and CacheManager implement Listenable, which means you can attach listeners to either a cache or a Cache Manager, to receive either cache-level or Cache Manager-level notifications.
+
+For example, the following class defines a listener to print out some information every time a new entry is added to the cache, in a non blocking fashion:
+
+[source,java]
+----
+include::code_examples/ListenerPrintWhenAdded.java[]
+----
+
+For more comprehensive examples, please see the link:{javadocroot}/org/infinispan/notifications/Listener.html[Javadocs for @Listener].

@@ -1,7 +1,7 @@
 [id='remote-custom-beans_{context}']
 = Cache Manager Configuration Beans
 
-Customize the cache manager with the following configuration beans:
+Customize the Cache Manager with the following configuration beans:
 
 * `InfinispanRemoteConfigurer`
 * `Configuration`

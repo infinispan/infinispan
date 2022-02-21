@@ -1,7 +1,6 @@
 [id='cache-interface_{context}']
 = Cache API
+
 `Cache<K,V>` is the central interface for {brandname} and extends `java.util.concurrent.ConcurrentMap`.
 
-Cache entries are highly concurrent data structures in `key:value` format that
-support a wide and configurable range of data types, from simple strings to
-much more complex objects.
+Cache entries are highly concurrent data structures in `key:value` format that support a wide and configurable range of data types, from simple strings to much more complex objects.

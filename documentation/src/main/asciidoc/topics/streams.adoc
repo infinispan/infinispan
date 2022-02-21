@@ -1,4 +1,4 @@
-[[streams]]
+[id='streams_{context}']
 = Streams
 
 You may want to process a subset or all data in the cache to produce a result.

@@ -1,7 +1,7 @@
 [id='configuring-embedded-caches_{context}']
-= Configuring embedded caches
+= Creating and using embedded caches
 
-{brandname} provides a `GlobalConfigurationBuilder` API that controls the cache manager and a `ConfigurationBuilder` API that configures embedded caches.
+{brandname} provides a `GlobalConfigurationBuilder` API that controls the Cache Manager and a `ConfigurationBuilder` API that configures caches.
 
 .Prerequisites
 
@@ -9,14 +9,65 @@
 
 .Procedure
 
-. Initialize the default cache manager so you can add embedded caches.
-. Add at least one embedded cache with the `ConfigurationBuilder` API.
-. Invoke the `getOrCreateCache()` method that either creates embedded caches on all nodes in the cluster or returns caches that already exist.
+. Initialize a `CacheManager`.
++
+[NOTE]
+====
+You must always call the `cacheManager.start()` method to initialize a `CacheManager` before you can create caches.
+Default constructors do this for you but there are overloaded versions of the constructors that do not.
+
+Cache Managers are also heavyweight objects and {brandname} recommends instantiating only one instance per JVM.
+====
+. Use the `ConfigurationBuilder` API to define cache configuration.
+. Obtain caches with `getCache()`, `createCache()`, or `getOrCreateCache()` methods.
++
+{brandname} recommends using the `getOrCreateCache()` method because it either creates a cache on all nodes or returns an existing cache.
+. If necessary use the `PERMANENT` flag for caches to survive restarts.
+. Stop the `CacheManager` by calling the `cacheManager.stop()` method to release JVM resources and gracefully shutdown any caches.
 
 [source,java,options="nowrap"]
 ----
 include::code_examples/EmbeddedCacheConfiguration.java[]
 ----
+
+.`getCache()` method
+
+Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCache(java.lang.String)[`getCache(String)`] method to obtain caches, as follows:
+
+[source,java,options="nowrap"]
+----
+include::code_examples/GetCache.java[]
+----
+
+The preceding operation creates a cache named `myCache`, if it does not already exist, and returns it.
+
+Using the `getCache()` method creates the cache only on the node where you invoke the method. In other words, it performs a local operation that must be invoked on each node across the cluster. Typically, applications deployed across multiple nodes obtain caches during initialization to ensure that caches are _symmetric_ and exist on each node.
+
+.`createCache()` method
+
+Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManagerAdmin.html#createCache(java.lang.String,java.lang.String)[`createCache()`] method to create caches dynamically across the entire cluster.
+
+[source,java]
+----
+include::code_examples/CreateCache.java[]
+----
+
+The preceding operation also automatically creates caches on any nodes that subsequently join the cluster.
+
+Caches that you create with the `createCache()` method are ephemeral by default. If the entire cluster shuts down, the cache is not automatically created again when it restarts.
+
+.`PERMANENT` flag
+
+Use the +PERMANENT+ flag to ensure that caches can survive restarts.
+
+[source,java,options="nowrap"]
+----
+include::code_examples/CreateCacheWithFlagsPermanent.java[]
+----
+
+For the +PERMANENT+ flag to take effect, you must enable global state and set a configuration storage provider.
+
+For more information about configuration storage providers, see link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage(org.infinispan.globalstate.ConfigurationStorage)[GlobalStateConfigurationBuilder#configurationStorage()].
 
 [role="_additional-resources"]
 .Additional resources

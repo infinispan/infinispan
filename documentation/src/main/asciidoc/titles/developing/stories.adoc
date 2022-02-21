@@ -1,8 +1,2 @@
 //Reference user stories or topics.
 //Please review authoring guidelines in the Contributors Guide.
-
-include::{stories}/assembly_configuring_maven_repository.adoc[leveloffset=+1]
-include::{stories}/assembly_developing.adoc[leveloffset=+1]
-include::{stories}/assembly_wildfly_modules.adoc[leveloffset=+1]
-include::{stories}/assembly_custom_interceptors.adoc[leveloffset=+1]
-include::{stories}/assembly_extending.adoc[leveloffset=+1]

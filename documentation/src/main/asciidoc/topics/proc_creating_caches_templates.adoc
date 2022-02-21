@@ -10,7 +10,7 @@ Templates for remote caches are available from the **Cache templates** menu in {
 
 .Prerequisites
 
-* Add at least one cache template to the cache manager.
+* Add at least one cache template to the Cache Manager.
 
 .Procedure
 

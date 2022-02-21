@@ -1,0 +1,45 @@
+[id='jcache-creating-embedded-caches_{context}']
+= Creating embedded caches
+
+.Prerequisites
+
+. Ensure that `cache-api` is on your classpath.
+. Add the following dependency to your `pom.xml`:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/jcache.xml[]
+----
+
+.Procedure
+
+* Create embedded caches that use the default JCache API configuration as follows:
+
+[source,java]
+----
+include::code_examples/JCacheCreateCache.java[]
+----
+
+== Configuring embedded caches
+
+* Pass the URI for custom {brandname} configuration to the `CachingProvider.getCacheManager(URI)` call as follows:
+
+[source,java]
+----
+include::code_examples/JCacheCreateCacheCustomConfig.java[]
+----
+
+WARNING: By default, the JCache API specifies that data should be stored as
+`storeByValue`, so that object state mutations outside of operations to the
+cache, won't have an impact in the objects stored in the cache. {brandname}
+has so far implemented this using serialization/marshalling to make copies to
+store in the cache, and that way adhere to the spec. Hence, if using default
+JCache configuration with {brandname}, data stored must be marshallable.
+
+Alternatively, JCache can be configured to store data by reference
+(just like {brandname} or JDK Collections work). To do that, simply call:
+
+[source,java]
+----
+include::code_examples/CreateCacheMutableConfiguration.java[]
+----

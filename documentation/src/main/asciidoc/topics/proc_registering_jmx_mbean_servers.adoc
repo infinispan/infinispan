@@ -11,7 +11,7 @@ register MBeans in custom MBeanServer instances.
 .Procedure
 
 . Open your {brandname} configuration for editing.
-. Add the `mbean-server-lookup` attribute or field to the JMX configuration for the cache manager.
+. Add the `mbean-server-lookup` attribute or field to the JMX configuration for the Cache Manager.
 . Specify fully qualified name (FQN) of your `MBeanServerLookup` implementation.
 . Save and close your client configuration.
 

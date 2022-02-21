@@ -8,8 +8,6 @@ include::{topics}/con_hotrod.adoc[leveloffset=+1]
 include::{topics}/con_hotrod_client_intelligence.adoc[leveloffset=+2]
 include::{topics}/con_hotrod_request_balancing.adoc[leveloffset=+2]
 include::{topics}/con_hotrod_failover.adoc[leveloffset=+2]
-include::assembly_configuring_maven_repository.adoc[leveloffset=+1]
-include::{topics}/proc_adding_hotrod_client_dependencies.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

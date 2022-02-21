@@ -53,7 +53,7 @@ public class GreetingService {
 ----
 
 
-* If you have more than one {brandname} cluster, you can create separate remote cache manager producers for each cluster.
+* If you have more than one {brandname} cluster, you can create separate remote Cache Manager producers for each cluster.
 +
 [source,java]
 ----
@@ -72,5 +72,5 @@ public class Config {
 }
 ----
 +
-<1> creates the bean once for the application. Producers that create cache managers should always include the `@ApplicationScoped` annotation to avoid creating multiple cache managers, which are heavy weight objects.
+<1> creates the bean once for the application. Producers that create Cache Managers should always include the `@ApplicationScoped` annotation to avoid creating multiple Cache Managers, which are heavy weight objects.
 <2> creates a new `RemoteCacheManager` instance that is bound to the `@RemoteGreetingCache` qualifier.

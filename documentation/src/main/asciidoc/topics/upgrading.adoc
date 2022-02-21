@@ -1480,7 +1480,7 @@ The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has bee
 =  Upgrading from 5.0 to 5.1
 == API
 
-The cache and cache manager hierarchies have changed slightly in 5.1 with the introduction of
+The cache and Cache Manager hierarchies have changed slightly in 5.1 with the introduction of
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html[`BasicCache`]
 and
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCacheContainer.html[`BasicCacheContainer`]

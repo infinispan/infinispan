@@ -4,6 +4,7 @@
 
 {brandname} provides a Hot Rod Java client configuration API that exposes configuration properties.
 
+include::{topics}/proc_adding_hotrod_client_dependencies.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_hotrod_java_clients.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_hotrod_clusters.adoc[leveloffset=+2]
 include::{topics}/proc_switching_hotrod_clusters.adoc[leveloffset=+2]

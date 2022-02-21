@@ -1,0 +1,87 @@
+[id='jcache-api-comparison_{context}']
+= Comparing java.util.concurrent.ConcurrentMap and javax.cache.Cache APIs
+
+Here's a brief comparison of the data manipulation APIs provided by
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap]
+and link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java[javax.cache.Cache] APIs.
+
+[options="header"]
+|===
+|Operation |java.util.concurrent.ConcurrentMap<K, V> |javax.cache.Cache<K, V>
+
+|store and no return
+| N/A 
+| `void put(K key)`
+
+|store and return previous value
+| `V put(K key)`
+| `V getAndPut(K key)`
+
+|store if not present
+| `V putIfAbsent(K key, V value)`
+| `boolean putIfAbsent(K key, V value)`
+
+|retrieve
+| `V get(Object key)`
+| `V get(K key)`
+
+|delete if present
+| `V remove(Object key)`
+| `boolean remove(K key)`
+
+|delete and return previous value
+| `V remove(Object key)`
+| `V getAndRemove(K key)`
+
+|delete conditional
+| `boolean remove(Object key, Object value)`
+| `boolean remove(K key, V oldValue)`
+
+|replace if present
+| `V replace(K key, V value)`
+| `boolean replace(K key, V value)`
+
+|replace and return previous value
+| `V replace(K key, V value)`
+| `V getAndReplace(K key, V value)`
+
+|replace conditional
+| `boolean replace(K key, V oldValue, V newValue)`
+| `boolean replace(K key, V oldValue, V newValue)`
+
+|===
+
+Comparing the two APIs, it's obvious to see that, where possible, JCache
+avoids returning the previous value to avoid operations doing expensive
+network or IO operations. This is an overriding principle in the design of
+JCache API. In fact, there's a set of operations that are present in
+link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[java.util.concurrent.ConcurrentMap] ,
+but are not present in the link:https://github.com/jsr107/jsr107spec/blob/v1.0.0-RC1/src/main/java/javax/cache/Cache.java[javax.cache.Cache]
+because they could be expensive to compute in a distributed cache.
+The only exception is iterating over the contents of the cache:
+
+[options="header"]
+|===
+|Operation |java.util.concurrent.ConcurrentMap<K, V> |javax.cache.Cache<K, V>
+
+|calculate size of cache
+| `int size()`
+| N/A
+
+|return all keys in the cache
+| `Set<K> keySet()`
+| N/A
+
+|return all values in the cache
+| `Collection<V> values()`
+| N/A
+
+|return all entries in the cache
+| `Set<Map.Entry<K, V>> entrySet()`
+| N/A
+
+|iterate over the cache
+| use `iterator()` method on keySet, values or entrySet
+| `Iterator<Cache.Entry<K, V>> iterator()`
+
+|===

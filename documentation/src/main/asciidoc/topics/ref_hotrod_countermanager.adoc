@@ -8,7 +8,3 @@ Hot Rod clients can retrieve the `CounterManager` interface as in the following 
 ----
 include::code_examples/CounterManagerRemote.java[]
 ----
-
-.Reference
-
-* link:{dev_docs}#clustered_counters[Clustered Counters]

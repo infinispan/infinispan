@@ -48,7 +48,7 @@ public class Config {
 <1> Names the cache to inject.
 <2> Adds the cache qualifier.
 +
-. Add a producer method that creates a clustered cache manager, if required
+. Add a producer method that creates a clustered Cache Manager, if required
 +
 [source,java]
 ----
@@ -68,14 +68,14 @@ public class Config {
 ----
 +
 <1> Adds the cache qualifier.
-<2> Creates the bean once for the application. Producers that create cache managers should always include the `@ApplicationScoped` annotation to avoid creating multiple cache managers.
+<2> Creates the bean once for the application. Producers that create Cache Managers should always include the `@ApplicationScoped` annotation to avoid creating multiple Cache Managers.
 <3> Creates a new `DefaultCacheManager` instance that is bound to the `@GreetingCache` qualifier.
 +
 [NOTE]
 ====
-Cache managers are heavy weight objects. Having more than one cache manager
+Cache managers are heavy weight objects. Having more than one Cache Manager
 running in your application can degrade performance. When injecting multiple
-caches, either add the qualifier of each cache to the cache manager producer
+caches, either add the qualifier of each cache to the Cache Manager producer
 method or do not add any qualifier.
 ====
 . Add the `@GreetingCache` qualifier to your cache injection point.

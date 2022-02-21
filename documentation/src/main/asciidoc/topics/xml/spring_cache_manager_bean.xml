@@ -1,4 +1,4 @@
-<!-- Infinispan cache manager -->
+<!-- Infinispan Cache Manager -->
 <bean id="cacheManager"
           class="org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean"
           p:configurationFileLocation="classpath:/org/infinispan/spring/embedded/provider/sample/books-infinispan-config.xml" />

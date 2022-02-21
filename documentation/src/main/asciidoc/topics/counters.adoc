@@ -1,4 +1,4 @@
-[id='clustered_counters']
+[id='clustered-counters_{context}']
 = Clustered Counters
 
 _Clustered counters_ are counters which are distributed and shared among all nodes in the {brandname} cluster.

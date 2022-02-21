@@ -1,4 +1,4 @@
-[[multimap_cache]]
+[id='using-multimap-cache_{context}']
 = Multimap Cache
 
 MutimapCache is a type of {brandname} Cache that maps keys to values in which each key can contain multiple values.
@@ -81,9 +81,6 @@ See how to configure a regular Cache in the section link to [configure a cache].
 ----
 include::code_examples/MultiMapCacheEmbedded.java[]
 ----
-
-//TODO
-//=== Server mode
 
 [[multimap_limitations]]
 == Limitations
