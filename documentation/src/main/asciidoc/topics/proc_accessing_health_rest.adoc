@@ -20,7 +20,7 @@ include::json/rest_cache_health_response.json[]
 
 [TIP]
 ====
-Get cache manager status as follows:
+Get Cache Manager status as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----

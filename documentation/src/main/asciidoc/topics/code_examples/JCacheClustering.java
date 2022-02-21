@@ -1,7 +1,7 @@
 import javax.cache.*;
 import java.net.URI;
 
-// For multiple cache managers to be constructed with the standard JCache API
+// For multiple Cache Managers to be constructed with the standard JCache API
 // and live in the same JVM, either their names, or their classloaders, must
 // be different.
 // This example shows how to force their classloaders to be different.

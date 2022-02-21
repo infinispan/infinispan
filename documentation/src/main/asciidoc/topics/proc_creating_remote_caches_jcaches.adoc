@@ -1,0 +1,33 @@
+[id='jcache-creating-remote-caches_{context}']
+= Creating remote caches
+
+.Prerequisites
+
+. Ensure that `cache-api` is on your classpath.
+. Add the following dependency to your `pom.xml`:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/jcache-remote.xml[]
+----
+
+.Procedure
+
+* Create caches on remote {brandname} servers and use the default JCache API configuration as follows:
+
+[source,java]
+----
+include::code_examples/JCacheCreateRemoteCache.java[]
+----
+
+== Configuring remote caches
+
+Hot Rod configuration files include `infinispan.client.hotrod.cache.*`
+properties that you can use to customize remote caches.
+
+* Pass the URI for your `hotrod-client.properties` file to the `CachingProvider.getCacheManager(URI)` call as follows:
+
+[source,java]
+----
+include::code_examples/JCacheCreateRemoteCacheCustomConfig.java[]
+----

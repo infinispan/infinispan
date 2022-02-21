@@ -1,6 +1,6 @@
 [id='setting-up-project']
 :context: starter
-= Setting Up Your Project
+= Setting up the Spring Boot Starter
 
 Add dependencies for the {brandname} Spring Boot Starter to your project.
 

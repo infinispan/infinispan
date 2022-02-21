@@ -79,9 +79,6 @@
 //Migration Guide
 :migration_docs: ../upgrading/upgrading.html
 
-//Dev
-:dev_docs: ../developing/developing.html
-
 //Query
 :query_docs: ../query/query.html
 

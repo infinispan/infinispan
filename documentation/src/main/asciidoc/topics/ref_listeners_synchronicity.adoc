@@ -1,0 +1,30 @@
+[id='event-synchronicity_{context}']
+= Synchronicity of events
+
+By default, all async notifications are dispatched in the notification thread pool.
+Sync notifications will delay the operation from continuing until the listener method completes or the CompletionStage
+completes (the former causing the thread to block). Alternatively, you could annotate your listener as _asynchronous_ in
+which case the operation will continue immediately, while the notification is completed asynchronously on the notification thread pool.
+To do this, simply annotate your listener such:
+
+.Asynchronous Listener
+[source,java]
+----
+include::code_examples/ListenerMyAsync.java[]
+----
+
+.Blocking Synchronous Listener
+[source,java]
+----
+include::code_examples/ListenerMySync.java[]
+----
+
+.Non-Blocking Listener
+[source,java]
+----
+include::code_examples/ListenerMyNonBlocking.java[]
+----
+
+[discrete]
+== Asynchronous thread pool
+To tune the thread pool used to dispatch such asynchronous notifications, use the link:{configdocroot}/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.

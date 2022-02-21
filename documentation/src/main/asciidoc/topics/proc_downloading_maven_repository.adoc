@@ -1,5 +1,6 @@
 [id='download-maven-repository_{context}']
-= Downloading the {brandname} Maven repository
+= Downloading the Maven repository
+
 Download and install the {brandname} Maven repository to a local file system,
 Apache HTTP server, or Maven repository manager if you do not want to use the
 public {RedHat} Enterprise Maven repository.

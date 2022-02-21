@@ -1,20 +1,9 @@
-[[execute_code_grid]]
-= Executing Code in the Grid
-The main benefit of a Cache is the ability to very quickly lookup a value
-by its key, even across machines. In fact this use alone is probably the reason
-many users use {brandname}. However {brandname} can provide many more benefits
-that aren't immediately apparent. Since {brandname} is usually used in
-a cluster of machines we also have features available that can help utilize
-the entire cluster for performing the user's desired workload.
-
-NOTE: This section covers only executing code in the grid using an embedded cache,
-if you are using a remote cache you should review details about executing code in the remote grid.
-
-== Cluster Executor
+[id='executing-code-grid_{context}']
+= Cluster Executor
 
 Since you have a group of machines, it makes sense to leverage their combined
 computing power for executing code on all of them them.
-The cache manager comes with a nice utility that allows you to
+The Cache Manager comes with a nice utility that allows you to
 execute arbitrary code in the cluster. Note this feature requires no Cache to be used.  This
 link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[Cluster Executor]
 can be retrieved by calling +executor()+ on the `EmbeddedCacheManager`. This executor is retrievable
@@ -35,7 +24,7 @@ The manager by default will submit a given command to all nodes in the cluster i
 where it was submitted from. You can control on which nodes the task is executed on
 by using the `filterTargets` methods as is explained in the section.
 
-=== Filtering execution nodes
+== Filtering execution nodes
 
 It is possible to limit on which nodes the command will be ran. For example you may
 want to only run a computation on machines in the same rack. Or you may want to perform an operation
@@ -64,17 +53,17 @@ is executed within the cluster.
 include::code_examples/Predicate.java[]
 ----
 
-=== Timeout
+== Timeout
 
 Cluster Executor allows for a timeout to be set per invocation. This defaults to the distributed sync timeout
 as configured on the Transport Configuration. This timeout works in both a clustered and non clustered
-cache manager. The executor may or may not interrupt the threads executing a task when the timeout expires. However
+Cache Manager. The executor may or may not interrupt the threads executing a task when the timeout expires. However
 when the timeout occurs any `Consumer` or `Future` will be completed passing back a `TimeoutException`.
 This value can be overridden by ivoking the
 link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
 method and supplying the desired duration.
 
-=== Single Node Submission
+== Single Node Submission
 
 Cluster Executor can also run in single node submission mode instead of submitting the command
 to all nodes it will instead pick one of the nodes that would have normally received the command
@@ -88,7 +77,7 @@ execute the task on. This can be very useful to use the ClusterExecutor as a
 include::code_examples/SingleNode.java[]
 ----
 
-==== Failover
+=== Failover
 
 When running in single node submission it may be desirable to also allow the Cluster Executor
 handle cases where an exception occurred during the processing of a given command by retrying
@@ -101,7 +90,7 @@ method. The given command will be resubmitted again to a single node until eithe
 the command completes without exception or the total submission amount is equal to the provided
 failover count.
 
-=== Example: PI Approximation
+== Example: PI Approximation
 This example shows how you can use the ClusterExecutor to estimate the value of PI.
 
 Pi approximation can greatly benefit from parallel distributed execution via

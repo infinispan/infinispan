@@ -1,7 +1,7 @@
 [id='enabling-statistics-embedded_{context}']
 = Enabling statistics in embedded caches
 
-Configure {brandname} to export statistics for the cache manager and embedded caches.
+Configure {brandname} to export statistics for the Cache Manager and embedded caches.
 
 .Procedure
 

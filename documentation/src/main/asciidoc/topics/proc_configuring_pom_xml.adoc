@@ -1,9 +1,7 @@
 [id='configuring-pom-xml_{context}']
-= Configuring your {brandname} POM
-Maven uses configuration files called Project Object Model (POM) files to
-define projects and manage builds. POM files are in XML format and describe the
-module and component dependencies, build order, and targets for the resulting
-project packaging and output.
+= Configuring your project POM
+
+Configure Project Object Model (POM) files in your project to use {brandname} dependencies for embedded caches, Hot Rod clients, and other capabilities.
 
 .Procedure
 

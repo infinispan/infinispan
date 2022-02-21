@@ -1,13 +1,11 @@
-[[cache_api]]
-= Cache Interface
+[id='cache-modes_{context}']
+= Cache API
 
 {brandname} provides a link:{javadocroot}/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
-== Cache API
-
 For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
 
-=== Performance Concerns of Certain Map Methods
+.Performance Concerns of Certain Map Methods
 Certain methods exposed in Map have certain performance consequences when used with {brandname}, such as
 link:{javadocroot}/org/infinispan/Cache.html#size()[size()] ,
 link:{javadocroot}/org/infinispan/Cache.html#values()[values()] ,
@@ -19,12 +17,12 @@ Attempting to perform these operations globally would have large performance imp
 
 It should be noted that using certain flags with the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[withFlags()] method can mitigate some of these concerns, please check each method's documentation for more details.
 
-=== Mortal and Immortal Data
+.Mortal and Immortal Data
 Further to simply storing entries, {brandname}'s cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:{javadocroot}/org/infinispan/commons/api/BasicCache.html#put(K,V,long,java.util.concurrent.TimeUnit)[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
 
 In addition to _lifespan_ , {brandname} also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
 
-=== putForExternalRead operation
+.`putForExternalRead` operation
 {brandname}'s link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
 
 To achieve this, `putForExternalRead()` acts as a put call that only operates if the key is not present in the cache, and fails fast and silently if another thread is trying to store the same key at the same time. In this particular scenario, caching data is a way to optimise the system and it's not desirable that a failure in caching affects the on-going transaction, hence why failure is handled differently. `putForExternalRead()` is considered to be a fast operation because regardless of whether it's successful or not, it doesn't wait for any locks, and so returns to the caller promptly.
@@ -53,117 +51,6 @@ Flags are applied to regular cache methods to alter the behavior of certain meth
 ----
 include::code_examples/AdvancedCacheWithFlags.java[]
 ----
-
-[[listeners_and_notifications]]
-== Listeners and Notifications
-
-{brandname} offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
-
-Events trigger a notification which is dispatched to listeners.   Listeners are simple link:http://en.wikipedia.org/wiki/Plain_Old_Java_Object[POJO]s annotated with link:{javadocroot}/org/infinispan/notifications/Listener.html[@Listener] and registered using the methods defined in the link:{javadocroot}/org/infinispan/notifications/Listenable.html[Listenable] interface.
-
-NOTE: Both Cache and CacheManager implement Listenable, which means you can attach listeners to either a cache or a cache manager, to receive either cache-level or cache manager-level notifications.
-
-For example, the following class defines a listener to print out some information every time a new entry is added to the cache, in a non blocking fashion:
-
-[source,java]
-----
-include::code_examples/ListenerPrintWhenAdded.java[]
-----
-
-For more comprehensive examples, please see the link:{javadocroot}/org/infinispan/notifications/Listener.html[Javadocs for @Listener].
-
-=== Cache-level notifications
-Cache-level events occur on a per-cache basis, and by default are only raised on nodes where the events occur.  Note in a distributed cache these events are only raised on the owners of data being affected.  Examples of cache-level events are entries being added, removed, modified, etc.  These events trigger notifications to listeners registered to a specific cache.
-
-Please see the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for a comprehensive list of all cache-level notifications, and their respective method-level annotations.
-
-NOTE: Please refer to the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in {brandname}.
-
-==== Cluster Listeners
-The cluster listeners should be used when it is desirable to listen to the cache events on a single node.
-
-To do so all that is required is set to annotate your listener as being clustered.
-
-[source,java]
-----
-include::code_examples/ListenerMyCluster.java[]
-----
-
-There are some limitations to cluster listeners from a non clustered listener.
-
-. A cluster listener can only listen to `@CacheEntryModified`, `@CacheEntryCreated`, `@CacheEntryRemoved` and `@CacheEntryExpired` events.  Note this means any other type of event will not be listened to for this listener.
-. Only the post event is sent to a cluster listener, the pre event is ignored.
-
-==== Event filtering and conversion
-All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:{javadocroot}/org/infinispan/filter/KeyFilter.html[KeyFilter] (only allows filtering on keys) or link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/CacheEventFilter.html[CacheEventFilter] (used to filter for keys, old value, old metadata, new value, new metadata, whether command was retried, if the event is before the event (ie. isPre) and also the command type).
-
-The example here shows a simple `KeyFilter` that will only allow events to be raised when an event modified the entry for the key `Only Me`.
-
-[source,java]
-----
-include::code_examples/ListenerKeyFilter.java[]
-----
-
-This can be useful when you want to limit what events you receive in a more efficient manner.
-
-There is also a link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/CacheEventConverter.html[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
-
-NOTE: The mentioned filters and converters are especially beneficial when used in conjunction with a Cluster Listener.  This is because the filtering and conversion is done on the node where the event originated and not on the node where event is listened to.  This can provide benefits of not having to replicate events across the cluster (filter) or even have reduced payloads (converter).
-
-==== Initial State Events
-When a listener is installed it will only be notified of events after it is fully installed.
-
-It may be desirable to get the current state of the cache contents upon first registration of listener by having an event generated of type `@CacheEntryCreated` for each element in the cache.  Any additionally generated events during this initial phase will be queued until appropriate events have been raised.
-
-NOTE: This only works for clustered listeners at this time.  link:https://issues.jboss.org/browse/ISPN-4608[ISPN-4608] covers adding this for non clustered listeners.
-
-==== Duplicate Events
-
-It is possible in a non transactional cache to receive duplicate events.  This is possible when the primary owner of a key goes down while trying to perform a write operation such as a put.
-
-{brandname} internally will rectify the put operation by sending it to the new primary owner for the given key automatically, however there are no guarantees in regards to if the write was first replicated to backups.  Thus more than 1 of the following write events (`CacheEntryCreatedEvent`, `CacheEntryModifiedEvent` & `CacheEntryRemovedEvent`) may be sent on a single operation.
-
-If more than one event is generated {brandname} will mark the event that it was generated by a retried command to help the user to know when this occurs without having to pay attention to view changes.
-
-[source,java]
-----
-include::code_examples/ListenerMyRetry.java[]
-----
-
-Also when using a `CacheEventFilter` or `CacheEventConverter` the link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/EventType.html[EventType] contains a method `isRetry` to tell if the event was generated due to retry.
-
-=== Cache manager-level notifications
-Cache manager-level events occur on a cache manager.  These too are global and  cluster-wide, but involve events that affect all caches created by a single cache manager.  Examples of cache manager-level events are nodes joining or leaving a cluster, or caches starting or stopping.
-
-See the link:{javadocroot}/org/infinispan/notifications/cachemanagerlistener/annotation/package-summary.html[org.infinispan.notifications.cachemanagerlistener.annotation package] for a comprehensive list of all cache manager-level notifications,  and their respective method-level annotations.
-
-=== Synchronicity of events
-By default, all async notifications are dispatched in the notification thread pool.
-Sync notifications will delay the operation from continuing until the listener method completes or the CompletionStage
-completes (the former causing the thread to block). Alternatively, you could annotate your listener as _asynchronous_ in
-which case the operation will continue immediately, while the notification is completed asynchronously on the notification thread pool.
-To do this, simply annotate your listener such:
-
-Asynchronous Listener
-[source,java]
-----
-include::code_examples/ListenerMyAsync.java[]
-----
-
-Blocking Synchronous Listener
-[source,java]
-----
-include::code_examples/ListenerMySync.java[]
-----
-
-Non-Blocking Listener
-[source,java]
-----
-include::code_examples/ListenerMyNonBlocking.java[]
-----
-
-==== Asynchronous thread pool
-To tune the thread pool used to dispatch such asynchronous notifications, use the link:{configdocroot}/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.
 
 [[cache_asynchronous_api]]
 ==  Asynchronous API

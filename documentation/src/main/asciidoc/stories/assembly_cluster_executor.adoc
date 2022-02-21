@@ -1,0 +1,15 @@
+[id='cluster-executor']
+:context: cluster-executor
+= Executing code in the grid
+
+The main benefit of a cache is the ability to very quickly lookup a value
+by its key, even across machines.
+In fact this use alone is probably the reason many users use {brandname}.
+However {brandname} can provide many more benefits that aren't immediately apparent.
+Since {brandname} is usually used in a cluster of machines we also have features available that can help utilize the entire cluster for performing the user's desired workload.
+
+include::{topics}/execute_grid.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

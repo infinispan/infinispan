@@ -12,3 +12,10 @@ include::{stories}/assembly_configuring_persistent_storage.adoc[leveloffset=+1]
 include::{stories}/assembly_creating_custom_cache_stores.adoc[leveloffset=+2]
 include::{stories}/assembly_migrating_cache_stores.adoc[leveloffset=+2]
 include::{stories}/assembly_partition_handling.adoc[leveloffset=+1]
+//Transactions and locking
+include::{stories}/assembly_transactions.adoc[leveloffset=+1]
+include::{stories}/assembly_locking.adoc[leveloffset=+1]
+//Counters
+include::{stories}/assembly_counters.adoc[leveloffset=+1]
+//Listeners and notifications
+include::{stories}/assembly_listeners_notifications.adoc[leveloffset=+1]

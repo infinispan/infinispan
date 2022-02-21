@@ -1,5 +1,6 @@
 [id='mvn_archetypes']
-= Creating {brandname} Projects
+= Generating projects from Maven archetypes
+
 {brandname} provides a set of Maven archetypes that you can use to generate
 skeleton projects with sample code and `pom.xml` files. You can then import
 these projects into your IDE and start building and running applications with
@@ -8,7 +9,14 @@ these projects into your IDE and start building and running applications with
 .Prerequisites
 
 * Maven 3.2 or later.
-* Ensure the JBoss GA repository, `jboss-ga-repository`, is included in your Maven settings.
+//Community content
+ifdef::community[]
+* Configure Maven settings to include the link:https://search.maven.org/search?q=g:org.infinispan.archetypes[`org.infinispan.archetypes`] artifacts.
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+* Ensure the {RedHat} GA repository, `redhat-ga-repository`, is included in your Maven settings.
+endif::downstream[]
 
 .Procedure
 
@@ -47,5 +55,4 @@ The `store` and `server-task` archetype does not include a project application,
 ====
 
 .Reference
-
 * link:https://maven.apache.org/guides/introduction/introduction-to-archetypes.html[Introduction to Maven Archetypes]

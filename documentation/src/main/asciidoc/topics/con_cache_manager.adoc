@@ -1,8 +1,9 @@
 [id='cache-managers_{context}']
-= Cache managers
+= Cache Managers
 
-The `CacheManager` API is the starting point for interacting with {brandname} caches.
-Cache managers control cache lifecycle; creating, modifying, and deleting cache instances.
+The `CacheManager` API is the entry point for interacting with {brandname}.
+Cache Managers control cache lifecycle; creating, modifying, and deleting cache instances.
+Cache Managers also provide cluster management and monitoring along with the ability to execute code across nodes.
 
 {brandname} provides two `CacheManager` implementations:
 

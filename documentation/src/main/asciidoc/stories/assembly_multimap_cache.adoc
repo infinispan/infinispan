@@ -1,0 +1,11 @@
+[id='multimap-cache']
+:context: multimap-cache
+= Multimap cache
+
+MutimapCache is a type of {brandname} Cache that maps keys to values in which each key can contain multiple values.
+
+include::{topics}/multimapcache.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

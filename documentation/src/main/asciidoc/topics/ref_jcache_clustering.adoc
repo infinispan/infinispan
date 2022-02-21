@@ -1,0 +1,19 @@
+[id='jcache-clustering_{context}']
+= Clustering JCache instances
+
+{brandname} JCache implementation goes beyond the specification in order to
+provide the possibility to cluster caches using the standard API. Given a
+{brandname} configuration file configured to replicate caches like this:
+
+.infinispan.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/jcache_clustering.xml[]
+----
+
+You can create a cluster of caches using this code:
+
+[source,java]
+----
+include::code_examples/JCacheClustering.java[]
+----

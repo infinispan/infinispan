@@ -14,8 +14,17 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :sectanchors:
 :stem: asciimath
 
+//
+// Conditional statements
+//
+:embedded_caches:
+:remote_caches:
+
 //Title
-= Developing for {brandname} {infinispanversion}
+= Infinispan Developer Guide
+
+This guide is no longer maintained.
+Please visit the link:../../index.html[Infinispan documentation index].
 
 //User stories
-include::stories.adoc[]
+//include::stories.adoc[]

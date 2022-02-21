@@ -6,6 +6,7 @@
 
 include::{topics}/proc_installing_embedded.adoc[leveloffset=+1]
 include::{topics}/proc_creating_caches_embedded.adoc[leveloffset=+1]
+include::{topics}/cache_api.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

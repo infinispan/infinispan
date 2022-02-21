@@ -1,14 +1,9 @@
-[[locking_concurrency]]
-= Locking and Concurrency
-{brandname} makes use of multi-versioned concurrency control (link:http://en.wikipedia.org/wiki/Multiversion_concurrency_control[MVCC]) - a concurrency scheme popular with relational databases and other data stores.
-MVCC offers many advantages over coarse-grained Java synchronization and even JDK Locks for access to shared data, including:
+[id='locking-concurrency_{context}']
+= Locking and concurrency
 
-* allowing concurrent readers and writers
-* readers and writers do not block one another
-* write skews can be detected and handled
-* internal locks can be striped
+Multi-versioned concurrency control (MVCC) is a concurrency scheme popular with relational databases and other data stores.
+MVCC offers many advantages over coarse-grained Java synchronization and even JDK Locks for access to shared data.
 
-== Locking implementation details
 {brandname}'s MVCC implementation makes use of minimal locks and synchronizations, leaning heavily towards lock-free techniques such as link:http://en.wikipedia.org/wiki/Compare-and-swap[compare-and-swap] and lock-free data structures wherever possible, which helps optimize for multi-CPU and multi-core environments.
 
 In particular, {brandname}'s MVCC implementation is heavily optimized for readers.
@@ -21,7 +16,7 @@ To allow concurrent reads, writers make a copy of the entry they intend to modif
 This copy isolates concurrent readers from seeing partially modified state.
 Once a write has completed, `MVCCEntry.commit()` will flush changes to the data container and subsequent readers will see the changes written.
 
-=== Clustered caches and locks
+== Clustered caches and locks
 
 In {brandname} clusters, primary owner nodes are responsible for locking keys.
 
@@ -36,12 +31,12 @@ If the operation is conditional and fails on the primary owner, {brandname} does
 For transactional caches, primary owners can lock keys with optimistic and pessimistic locking modes.
 {brandname} also supports different isolation levels to control concurrent reads between transactions.
 
-=== The LockManager
+== The LockManager
 The `LockManager` is a component that is responsible for locking an entry for writing.
 The `LockManager` makes use of a `LockContainer` to locate/hold/create locks.
 `LockContainers` come in two broad flavours, with support for lock striping and with support for one lock per entry.
 
-=== Lock striping
+== Lock striping
 Lock striping entails the use of a fixed-size, shared collection of locks for the entire cache, with locks being allocated to entries based on the entry's key's hash code.
 Similar to the way the JDK's `ConcurrentHashMap` allocates locks, this allows for a highly scalable, fixed-overhead locking mechanism in exchange for potentially unrelated entries being blocked by the same lock.
 
@@ -67,7 +62,7 @@ Or
 new ConfigurationBuilder().locking().useLockStriping(false|true);
 ----
 
-=== Concurrency levels
+== Concurrency levels
 In addition to determining the size of the striped lock container, this concurrency level is also used to tune any JDK `ConcurrentHashMap` based collections where related, such as internal to ``DataContainer``s.
 Please refer to the JDK `ConcurrentHashMap` Javadocs for a detailed discussion of concurrency levels, as this parameter is used in exactly the same way in {brandname}.
 
@@ -85,7 +80,7 @@ Or
 new ConfigurationBuilder().locking().concurrencyLevel(32);
 ----
 
-=== Lock timeout
+== Lock timeout
 
 The lock timeout specifies the amount of time, in milliseconds, to wait for a contented lock.
 
@@ -105,7 +100,7 @@ new ConfigurationBuilder().locking().lockAcquisitionTimeout(10000);
 new ConfigurationBuilder().locking().lockAcquisitionTimeout(10, TimeUnit.SECONDS);
 ----
 
-=== Consistency
+== Consistency
 The fact that a single owner is locked (as opposed to all owners being locked) does not break the following consistency guarantee:
 if key `K` is hashed to nodes `{A, B}` and transaction `TX1` acquires a lock for `K`, let's say on `A`.
 If another transaction, `TX2`, is started on `B` (or any other node) and `TX2` tries to lock `K` then it will fail with a timeout as the lock is already held by `TX1`.
