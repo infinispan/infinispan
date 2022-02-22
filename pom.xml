@@ -88,6 +88,7 @@
       <module>build/component-processor</module>
       <module>build/logging-annotations</module>
       <module>build/logging-processor</module>
+      <module>api</module>
       <module>commons</module>
       <module>commons-test</module>
       <module>build/infinispan-defaults-maven-plugin</module>
@@ -156,7 +157,6 @@
       <module>integrationtests/server-integration/third-party-server</module>
       <module>client/marshaller</module>
       <module>hibernate</module>
-      <module>api</module>
       <module>anchored-keys</module>
       <module>cloudevents-integration</module>
    </modules>
@@ -671,6 +671,11 @@
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-metrics</artifactId>
             <version>${version.smallrye-metrics}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>mutiny</artifactId>
+            <version>${version.smallrye-mutiny}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
