@@ -1,0 +1,125 @@
+== Naming conventions
+
+Should we use plain names for classes/interfaces, using the package name to namespace them, or should we prefix them.
+
+`SyncCache`
+
+vs
+
+`org.infinispan.api.sync.SyncCache`
+
+== API dependencies
+
+The sync and async API must depend only on core JDK classes.
+The mutiny API has an optional dependency on mutiny.
+
+Should we depend on `javax.transaction` for the Transaction class or should we provide our own interface and a way to
+convert ?
+
+== API traversal
+
+The API is structured like a tree as follows:
+
+ infinispan->[sync,async,mutiny]->[caches,...]->[cache,...]
+      ^                  ^               ^            ^
+  container           variant         groups      construct
+
+Most of the constructs exist in multiple variants
+
+* do we want to be able to "jump" between different variants of the same construct ? `cache.mutiny()`
+* do we allow "climbing up" the API hierarchy step-by-step ? `cache.caches().container()`
+* do we allow "jumping up" the API hierarchy  ? `cache.container()`
+
+
+== Cache
+
+Should we have a `truncate()` method that acts as a `removeAll()` without firing notifications?
+
+
+== Listeners
+
+Handle sync listeners with callbacks and async/mutiny listeners with subscriptions.
+
+=== Sync API
+
+==== Single instance callback
+
+Event depends on the interface implemented by the listener instance. Using functional interfaces allows simple lambda
+callbacks:
+
+```java
+cache.listen((KeyValueCreatedListener<String, String>) event -> {/* Handler */});
+```
+
+For handling multiple events with a single instance, implement multiple interfaces:
+
+```java
+public static class AListener implements KeyValueUpdatedListener, KeyValueRemovedListener {
+  @Override
+  public void onRemove(KeyValueEvent event) {/* Handler */}
+
+  @Override
+  public void onUpdate(KeyValueEvent event) {/* Handler */}
+}
+```
+
+==== Builder-style
+
+```java
+cache.listen()
+    .includeCurrentState()
+    .observation(Observation.POST)
+    .onCreate(event -> {/* Handler */});
+```
+
+==== Listener removal
+
+Registering a listener in the sync API returns a handle to the listener which can be used for removal:
+
+```java
+Handle<KeyValueListener> handle = cache.listen(mylistener);
+/*
+ ...
+*/
+handle.remove();
+
+```
+
+=== Async/Mutiny API
+
+Listeners return `Flow.Publisher`/`Multi`:
+
+```java
+cache.listen()
+    .includeCurrentState()
+    .observation(Observation.POST)
+    .onCreate().subscribe(/* Subscriber */);
+```
+
+== Querying
+
+Simple form: `cache.find("query")`
+Builder form: `cache.query("query").param("P", "V").limit(100).find()`
+
+The builder form also allows for `remove()` and `process()` (see below) to manipulate entries remotely.
+
+== Code execution
+
+We should provide a common way to execute code which works both for embedded and client/server. The API should clearly
+indicate when code will be executed locally or remotely. For example:
+
+`cache.entries().forEach()` would pull entries locally.
+
+whereas
+
+`cache.process()` would execute code remotely.
+
+=== `cache.compute(K, F)`, `cache.computeIfAbsent(K, F)`
+
+Execution of these methods should happen locally, so there is no need for remote execution.
+
+
+
+
+
+
