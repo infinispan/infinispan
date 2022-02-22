@@ -191,6 +191,7 @@
       <version.rxjava>3.1.3</version.rxjava>
       <version.smallrye-config>2.0.2</version.smallrye-config>
       <version.smallrye-metrics>3.0.1</version.smallrye-metrics>
+      <version.smallrye-mutiny>1.3.1</version.smallrye-mutiny>
       <version.microprofile-config-api>2.0</version.microprofile-config-api>
       <version.microprofile-metrics-api>3.0</version.microprofile-metrics-api>
       <version.spring.boot>2.5.4</version.spring.boot>
