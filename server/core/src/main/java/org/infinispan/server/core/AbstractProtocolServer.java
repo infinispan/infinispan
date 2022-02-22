@@ -179,11 +179,16 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    }
 
    protected void registerMetrics() {
+      if (cacheManager == null) {
+         return;
+      }
       metricsRegistration = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(CacheManagerMetricsRegistration.class);
       if (metricsRegistration.metricsEnabled()) {
          String protocol = "server_" + getQualifiedName() + '_' + configuration.port();
          metricIds = Collections.synchronizedSet(metricsRegistration.registerExternalMetrics(transport, protocol));
-         metricIds.addAll(metricsRegistration.registerExternalMetrics(manageableThreadPoolExecutorService, protocol));
+         if (manageableThreadPoolExecutorService != null) {
+            metricIds.addAll(metricsRegistration.registerExternalMetrics(manageableThreadPoolExecutorService, protocol));
+         }
       }
    }
 
