@@ -6,7 +6,7 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-build-configuration-parent</artifactId>
       <version>14.0.0-SNAPSHOT</version>
-      <relativePath>build-configuration/pom.xml</relativePath>
+      <relativePath>build/configuration/pom.xml</relativePath>
    </parent>
 
    <groupId>org.infinispan</groupId>
@@ -81,15 +81,16 @@
       </snapshotRepository>
    </distributionManagement>
    <modules>
-      <module>build-configuration</module>
-      <module>checkstyle</module>
-      <module>component-annotations</module>
-      <module>component-processor</module>
-      <module>logging/logging-annotations</module>
-      <module>logging/logging-processor</module>
+      <module>build/configuration</module>
+      <module>build/bom</module>
+      <module>build/checkstyle</module>
+      <module>build/component-annotations</module>
+      <module>build/component-processor</module>
+      <module>build/logging-annotations</module>
+      <module>build/logging-processor</module>
       <module>commons</module>
       <module>commons-test</module>
-      <module>plugins/infinispan-defaults-maven-plugin</module>
+      <module>build/infinispan-defaults-maven-plugin</module>
       <module>core</module>
       <module>jboss-marshalling</module>
       <module>extended-statistics</module>
