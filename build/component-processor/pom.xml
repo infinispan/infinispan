@@ -4,7 +4,7 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
       <version>14.0.0-SNAPSHOT</version>
-      <relativePath>../pom.xml</relativePath>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -18,6 +18,11 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-annotations</artifactId>
          <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups</groupId>
+         <artifactId>jgroups</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
