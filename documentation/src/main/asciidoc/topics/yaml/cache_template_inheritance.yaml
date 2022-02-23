@@ -1,13 +1,15 @@
 infinispan:
   cacheContainer:
-    - distributedCacheConfiguration:
-      name: "base-template"
-      encoding:
-        mediaType: "application/x-protostream"
-      expiration:
-        lifespan: "5000"
-        maxIdle: "1000"
-    - distributedCacheConfiguration:
-      name: "extended-template"
-      expiration:
-        lifespan: "10000"
+    caches:
+      base-template:
+        distributedCacheConfiguration:
+          mode: "SYNC"
+          encoding:
+            mediaType: "application/x-protostream"
+          expiration:
+            lifespan: "5000"
+            maxIdle: "1000"
+      extended-template:
+        distributedCacheConfiguration:
+          expiration:
+            lifespan: "10000"
