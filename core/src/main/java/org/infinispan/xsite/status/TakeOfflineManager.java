@@ -1,9 +1,13 @@
 package org.infinispan.xsite.status;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
+import org.infinispan.factories.impl.MBeanMetadata;
+import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.remoting.transport.XSiteResponse;
 
 /**
@@ -14,7 +18,7 @@ import org.infinispan.remoting.transport.XSiteResponse;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public interface TakeOfflineManager {
+public interface TakeOfflineManager extends CustomMetricsSupplier {
 
    /**
     * Registers a cross-site request made.
@@ -88,4 +92,8 @@ public interface TakeOfflineManager {
     */
    TakeSiteOfflineResponse takeSiteOffline(String siteName);
 
+   @Override
+   default Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics() {
+      return Collections.emptyList();
+   }
 }
