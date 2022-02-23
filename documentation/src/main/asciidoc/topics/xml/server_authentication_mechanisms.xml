@@ -11,7 +11,7 @@
                  qop="auth"/>
         </authentication>
       </hotrod-connector>
-      <rest-connector/>
+      <rest-connector>
         <authentication mechanisms="DIGEST BASIC"/>
       </rest-connector>
     </endpoint>
