@@ -213,7 +213,6 @@ infinispan:
               tcpKeepalive: false
               ioThreads: '23'
               socketBinding: hotrod
-              workerThreads: '20'
               externalHost: external
               externalPort: '12345'
               topologyStateTransfer:
@@ -257,7 +256,6 @@ infinispan:
             restConnector:
               ioThreads: '11'
               socketBinding: rest
-              workerThreads: '3'
               extendedHeaders: NEVER
               contextPath: rest
               maxContentLength: '3'
@@ -305,5 +303,4 @@ infinispan:
               tcpKeepalive: true
               ioThreads: '1'
               socketBinding: memcached
-              workerThreads: '160'
               clientEncoding: application/json

@@ -32,7 +32,7 @@ public class MemcachedServerConfiguration extends ProtocolServerConfiguration<Me
    private final Attribute<MediaType> clientEncoding;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(MemcachedServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS, CLIENT_ENCODING);
+      return new AttributeSet(MemcachedServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), CLIENT_ENCODING);
    }
 
    MemcachedServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {

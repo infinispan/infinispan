@@ -83,12 +83,6 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
-   public S workerThreads(int workerThreads) {
-      builder.workerThreads(workerThreads);
-      return self();
-   }
-
-   @Override
    public S startTransport(boolean startTransport) {
       builder.startTransport(startTransport);
       return self();

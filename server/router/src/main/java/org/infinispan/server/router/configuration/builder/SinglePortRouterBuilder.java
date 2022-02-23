@@ -54,7 +54,6 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             attributes.attribute(ProtocolServerConfiguration.IDLE_TIMEOUT).set(100);
             attributes.attribute(ProtocolServerConfiguration.RECV_BUF_SIZE).set(receiveBufferSize);
             attributes.attribute(ProtocolServerConfiguration.SEND_BUF_SIZE).set(sendBufferSize);
-            attributes.attribute(ProtocolServerConfiguration.WORKER_THREADS).set(1);
             return new SinglePortRouterConfiguration(attributes.protect(), sslConfigurationBuilder.create(), new IpFilterConfiguration(Collections.emptyList()));
         }
         return null;
