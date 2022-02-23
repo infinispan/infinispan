@@ -2,7 +2,10 @@ package org.infinispan.xsite.status;
 
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,8 +20,10 @@ import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -79,8 +84,8 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
          error = throwable.getCause();
       }
       return error instanceof CacheConfigurationException ? //incorrect cache configuration in remote site?
-             Optional.of((CacheConfigurationException) error) :
-             Optional.empty();
+            Optional.of((CacheConfigurationException) error) :
+            Optional.empty();
    }
 
    @Start
@@ -90,9 +95,9 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
             .filter(bc -> !localSiteName.equals(bc.site()))
             .forEach(bc -> {
                String siteName = bc.site();
-         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
-         offlineStatus.put(siteName, offline);
-      });
+               OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
+               offlineStatus.put(siteName, offline);
+            });
    }
 
    @Override
@@ -153,6 +158,20 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
          return status.forceOffline() ? TakeSiteOfflineResponse.TAKEN_OFFLINE
                : TakeSiteOfflineResponse.ALREADY_OFFLINE;
       }
+   }
+
+   @Override
+   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics() {
+      List<MBeanMetadata.AttributeMetadata> attributes = new ArrayList<>(offlineStatus.size() * 3);
+      for (Map.Entry<String, OfflineStatus> entry : offlineStatus.entrySet()) {
+         String lowerCaseSite = entry.getKey().toLowerCase();
+         OfflineStatus status = entry.getValue();
+
+         attributes.add(MetricUtils.createGauge(lowerCaseSite + "_status", entry.getKey() + " status. 1=online, 0=offline", o -> status.isOffline() ? 0 : 1));
+         attributes.add(MetricUtils.createGauge(lowerCaseSite + "_failures_count", "Number of consecutive failures to " + entry.getKey(), o -> status.getFailureCount()));
+         attributes.add(MetricUtils.createGauge(lowerCaseSite + "_millis_since_first_failure", "Milliseconds from first consecutive failure to " + entry.getKey(), o -> status.millisSinceFirstFailure()));
+      }
+      return attributes;
    }
 
    @Override
