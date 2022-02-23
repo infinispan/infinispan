@@ -32,7 +32,7 @@ public class RestServerConfiguration extends ProtocolServerConfiguration<RestSer
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RestServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            WORKER_THREADS, EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, COMPRESSION_LEVEL);
+            EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, COMPRESSION_LEVEL);
    }
 
    private final AuthenticationConfiguration authentication;

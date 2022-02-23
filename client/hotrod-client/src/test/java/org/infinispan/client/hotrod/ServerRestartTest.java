@@ -65,7 +65,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.name(ServerRestartTest.class.getSimpleName());
-      builder.host("127.0.0.1").port(port).workerThreads(2).idleTimeout(20000).tcpNoDelay(true).sendBufSize(15000).recvBufSize(25000);
+      builder.host("127.0.0.1").port(port).idleTimeout(20000).tcpNoDelay(true).sendBufSize(15000).recvBufSize(25000);
       hotrodServer.start(builder.build(), cacheManager);
 
       assert defaultRemote.get("k").equals("v");

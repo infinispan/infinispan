@@ -267,12 +267,9 @@
       </xs:attribute>
       <xs:attribute name="io-threads" type="xs:int">
          <xs:annotation>
-            <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="worker-threads" type="xs:int">
-         <xs:annotation>
-            <xs:documentation>Sets the number of worker threads. Defaults to 160.</xs:documentation>
+            <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores. This configuration is ignored
+               when using single port.
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="idle-timeout" type="xs:int">

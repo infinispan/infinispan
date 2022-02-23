@@ -301,7 +301,6 @@
                 "tcp-keepalive": false,
                 "io-threads": "23",
                 "socket-binding": "hotrod",
-                "worker-threads": "20",
                 "external-host": "external",
                 "external-port": "12345",
                 "topology-state-transfer": {
@@ -361,7 +360,6 @@
               "rest-connector": {
                 "io-threads": "11",
                 "socket-binding": "rest",
-                "worker-threads": "3",
                 "extended-headers": "NEVER",
                 "context-path": "rest",
                 "max-content-length": "3",
@@ -431,7 +429,6 @@
                 "tcp-keepalive": true,
                 "io-threads": "1",
                 "socket-binding": "memcached",
-                "worker-threads": "160",
                 "client-encoding": "application/json"
               }
             }
