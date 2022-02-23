@@ -1607,7 +1607,11 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case WORKER_THREADS: {
-               builder.workerThreads(Integer.parseInt(value));
+               if (reader.getSchema().since(14, 0)) {
+                  throw ParseUtils.attributeRemoved(reader, index);
+               } else {
+                  CONFIG.ignoredAttribute(attribute.toString(), "14.0", attribute.name(), reader.getLocation().getLineNumber());
+               }
                break;
             }
             default:

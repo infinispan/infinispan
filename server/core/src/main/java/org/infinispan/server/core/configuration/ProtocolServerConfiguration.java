@@ -35,8 +35,6 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
    public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR = AttributeDefinition.builder("implicit-connector", false).immutable().autoPersist(false).build();
 
-   // The default value can be overridden so it is the responsibility of each protocol to add it to the set
-   public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 1).immutable().build();
    private volatile boolean enabled = true;
 
    public static AttributeSet attributeDefinitionSet() {
@@ -56,7 +54,6 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
    private final Attribute<Boolean> tcpNoDelay;
    private final Attribute<Boolean> tcpKeepAlive;
    private final Attribute<Integer> ioThreads;
-   private final Attribute<Integer> workerThreads;
    private final Attribute<Boolean> startTransport;
    private final Attribute<AdminOperationsHandler> adminOperationsHandler;
    private final Attribute<Boolean> zeroCapacityNode;
@@ -86,7 +83,6 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
       tcpNoDelay = attributes.attribute(TCP_NODELAY);
       tcpKeepAlive = attributes.attribute(TCP_KEEPALIVE);
       ioThreads = attributes.attribute(IO_THREADS);
-      workerThreads = attributes.attribute(WORKER_THREADS);
       adminOperationsHandler = attributes.attribute(ADMIN_OPERATION_HANDLER);
       socketBinding = attributes.attribute(SOCKET_BINDING);
    }
@@ -137,10 +133,6 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
 
    public int ioThreads() {
       return ioThreads.get();
-   }
-
-   public int workerThreads() {
-      return workerThreads.get();
    }
 
    public boolean startTransport() {

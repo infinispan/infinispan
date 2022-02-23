@@ -17,7 +17,7 @@ import org.infinispan.server.router.router.impl.singleport.SinglePortEndpointRou
 public class SinglePortRouterConfiguration extends ProtocolServerConfiguration {
 
     public static AttributeSet attributeDefinitionSet() {
-        return new AttributeSet(SinglePortRouterConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), WORKER_THREADS);
+        return new AttributeSet(SinglePortRouterConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet());
     }
 
     /**

@@ -76,11 +76,6 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S ioThreads(int ioThreads);
 
    /**
-    * Sets the number of worker threads
-    */
-   S workerThreads(int workerThreads);
-
-   /**
     * Indicates whether transport implementation should or should not be started.
     */
    S startTransport(boolean startTransport);

@@ -24,12 +24,6 @@ import io.netty.channel.group.ChannelMatcher;
 @Test(groups = "functional", testName = "server.core.AbstractProtocolServerTest")
 public class AbstractProtocolServerTest extends AbstractInfinispanTest {
 
-   public void testValidateNegativeWorkerThreads() {
-      MockServerConfigurationBuilder b = new MockServerConfigurationBuilder();
-      b.workerThreads(-1);
-      expectIllegalArgument(b, new MockProtocolServer());
-   }
-
    public void testValidateNegativeIdleTimeout() {
       MockServerConfigurationBuilder b = new MockServerConfigurationBuilder();
       b.idleTimeout(-2);
