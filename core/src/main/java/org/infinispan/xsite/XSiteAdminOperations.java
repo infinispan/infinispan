@@ -1,6 +1,7 @@
 package org.infinispan.xsite;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -20,11 +21,13 @@ import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -57,7 +60,7 @@ import org.infinispan.xsite.status.TakeSiteOfflineResponse;
 @Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 @MBean(objectName = "XSiteAdmin", description = "Exposes tooling for handling backing up data to remote sites.")
-public class XSiteAdminOperations {
+public class XSiteAdminOperations implements CustomMetricsSupplier {
 
    public static final String ONLINE = "online";
    public static final String FAILED = "failed";
@@ -415,6 +418,11 @@ public class XSiteAdminOperations {
 
    private int clusterSize() {
       return rpcManager.getTransport().getMembers().size();
+   }
+
+   @Override
+   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics() {
+      return takeOfflineManager.getCustomMetrics();
    }
 
    private interface Operation {

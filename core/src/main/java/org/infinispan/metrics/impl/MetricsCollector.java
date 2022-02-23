@@ -109,30 +109,40 @@ public class MetricsCollector implements Constants {
    }
 
    public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
-      Set<Object> metricIds = new HashSet<>();
+      return registerMetrics(instance, attributes, namePrefix, cacheName, nodeTag);
+   }
+
+   public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName, String nodeName) {
+      return registerMetrics(instance, attributes, namePrefix, cacheName, nodeName == null ? null : new Tag(NODE_TAG_NAME, nodeName));
+   }
+
+   private Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName, Tag nodeTag) {
+      Set<Object> metricIds = new HashSet<>(attributes.size());
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
+
+      int numTags = 1;
+      if (cacheManagerTag != null) {
+         numTags++;
+         if (cacheName != null) {
+            numTags++;
+         }
+      }
+      Tag[] tags = new Tag[numTags];
+      tags[0] = nodeTag;
+      if (cacheManagerTag != null) {
+         tags[1] = cacheManagerTag;
+         if (cacheName != null) {
+            tags[2] = new Tag(CACHE_TAG_NAME, cacheName);
+         }
+      }
+
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
          Supplier<?> getter = attr.getter(instance);
          Consumer<Metric> setter = (Consumer<Metric>) attr.setter(instance);
 
          if (getter != null || setter != null) {
             String metricName = namePrefix + NameUtils.decamelize(attr.getName());
-            int numTags = 1;
-            if (cacheManagerTag != null) {
-               numTags++;
-               if (cacheName != null) {
-                  numTags++;
-               }
-            }
-            Tag[] tags = new Tag[numTags];
-            tags[0] = nodeTag;
-            if (cacheManagerTag != null) {
-               tags[1] = cacheManagerTag;
-               if (cacheName != null) {
-                  tags[2] = new Tag(CACHE_TAG_NAME, cacheName);
-               }
-            }
             MetricID metricId = new MetricID(metricName, tags);
 
             if (getter != null) {
