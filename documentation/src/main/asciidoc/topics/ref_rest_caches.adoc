@@ -108,6 +108,17 @@ configuration in the type specified by the `Accept` header.
 POST /rest/v2/caches?action=convert
 ----
 
+To convert cache configuration you must specify the input format for the configuration with the `Content-Type` header and the desired output format with the `Accept` header.
+For example, the following command converts the replicated cache configuration from XML to YAML:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+$ curl localhost:11222/rest/v2/caches?action=convert \
+--digest -u username:password \
+-X POST -H "Accept: application/yaml" -H "Content-Type: application/xml" \
+-d '<replicated-cache mode="SYNC" statistics="false"><encoding media-type="application/x-protostream"/><expiration lifespan="300000" /><memory max-size="400MB" when-full="REMOVE"/></replicated-cache>'
+----
+
 [id='rest_v2_cache_detail']
 = Retrieving All Cache Details
 Invoke a `GET` request to retrieve all details for {brandname} caches.
