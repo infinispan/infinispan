@@ -1,20 +1,25 @@
 {
   "infinispan" : {
     "cache-container" : {
-      "distributed-cache-configuration" : {
-        "name" : "base-template",
-        "encoding": {
-          "media-type": "application/x-protostream"
+      "caches" : {
+        "base-template" : {
+          "distributed-cache-configuration" : {
+            "encoding": {
+              "media-type": "application/x-protostream"
+            },
+            "expiration" : {
+              "lifespan" : "5000",
+              "max-idle" : "1000"
+            }
+          }
         },
-        "expiration" : {
-          "lifespan" : "5000",
-          "max-idle" : "1000"
-        }
-      },
-      "distributed-cache-configuration" : {
-        "name" : "extended-template",
-        "expiration" : {
-          "lifespan" : "10000"
+        "extended-template" : {
+          "distributed-cache-configuration" : {
+            "configuration" : "base-template",
+            "expiration" : {
+              "lifespan" : "10000"
+            }
+          }
         }
       }
     }
