@@ -1508,9 +1508,16 @@ public class JGroupsTransport implements Transport, ChannelListener {
          MetricsCollector mc = metricsCollector.wired();
          clusters.computeIfAbsent(channel, c -> {
             String name = c.clusterName();
-            Set<Object> metrics = new HashSet<>();
+            String nodeName;
+         org.jgroups.Address addr = c.getAddress();
+         if (addr != null) {
+            nodeName = addr.toString();
+         } else {
+            nodeName = c.getName();
+         }
+         Set<Object> metrics = new HashSet<>();
          for (Protocol protocol : c.getProtocolStack().getProtocols()) {
-            metrics.addAll(mc.registerMetrics(protocol, JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass()), METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null));
+            metrics.addAll(mc.registerMetrics(protocol, JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass()), METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null, nodeName));
             }
             return metrics;
          });
