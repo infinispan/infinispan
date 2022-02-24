@@ -46,7 +46,7 @@ public class FileJGroupsChannelConfigurator extends AbstractJGroupsChannelConfig
 
    @Override
    public JChannel createChannel(String name) throws Exception {
-      return applySocketFactory(new JChannel(this));
+      return amendChannel(new JChannel(this));
    }
 
    public String getPath() {

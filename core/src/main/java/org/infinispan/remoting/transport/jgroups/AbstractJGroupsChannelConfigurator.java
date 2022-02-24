@@ -1,6 +1,10 @@
 package org.infinispan.remoting.transport.jgroups;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.stack.Protocol;
 import org.jgroups.util.SocketFactory;
@@ -11,6 +15,7 @@ import org.jgroups.util.SocketFactory;
  **/
 public abstract class AbstractJGroupsChannelConfigurator implements JGroupsChannelConfigurator {
    private SocketFactory socketFactory;
+   protected List<ChannelListener> channelListeners = new ArrayList<>(2);
 
    @Override
    public void setSocketFactory(SocketFactory socketFactory) {
@@ -21,11 +26,18 @@ public abstract class AbstractJGroupsChannelConfigurator implements JGroupsChann
       return socketFactory;
    }
 
-   protected JChannel applySocketFactory(JChannel channel) {
+   protected JChannel amendChannel(JChannel channel) {
       if (socketFactory != null) {
          Protocol protocol = channel.getProtocolStack().getTopProtocol();
          protocol.setSocketFactory(socketFactory);
       }
+      for(ChannelListener listener : channelListeners) {
+         channel.addChannelListener(listener);
+      }
       return channel;
+   }
+
+   public void addChannelListener(ChannelListener channelListener) {
+      channelListeners.add(channelListener);
    }
 }
