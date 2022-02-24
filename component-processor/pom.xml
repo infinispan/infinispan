@@ -23,6 +23,11 @@
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>
+      <dependency>
+         <groupId>org.jgroups</groupId>
+         <artifactId>jgroups</artifactId>
+         <optional>true</optional>
+      </dependency>
 
       <dependency>
          <groupId>junit</groupId>
