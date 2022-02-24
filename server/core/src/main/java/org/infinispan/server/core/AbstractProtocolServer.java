@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 
 import javax.management.ObjectName;
 
-import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.factories.KnownComponentNames;
@@ -48,7 +47,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    private ManageableThreadPoolExecutorService manageableThreadPoolExecutorService;
    private ObjectName executorObjName;
    private CacheManagerMetricsRegistration metricsRegistration;
-   private Set<MetricID> metricIds;
+   private Set<Object> metricIds;
    private ProtocolServer<?> enclosingProtocolServer;
    protected boolean adminEndpoint = false;
 
