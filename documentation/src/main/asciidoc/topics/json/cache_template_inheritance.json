@@ -4,20 +4,20 @@
       "caches" : {
         "base-template" : {
           "distributed-cache-configuration" : {
-            "encoding": {
-              "media-type": "application/x-protostream"
-            },
             "expiration" : {
-              "lifespan" : "5000",
-              "max-idle" : "1000"
+              "lifespan" : "5000"
             }
           }
         },
         "extended-template" : {
           "distributed-cache-configuration" : {
             "configuration" : "base-template",
+            "encoding": {
+              "media-type": "application/x-protostream"
+              },
             "expiration" : {
-              "lifespan" : "10000"
+              "lifespan" : "10000",
+              "max-idle" : "1000"
             }
           }
         }
