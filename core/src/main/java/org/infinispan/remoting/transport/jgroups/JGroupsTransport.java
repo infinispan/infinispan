@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -52,15 +53,18 @@ import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
+import org.infinispan.external.JGroupsProtocolComponent;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.ObjectNameKeys;
+import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -96,6 +100,7 @@ import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
+import org.jgroups.ChannelListener;
 import org.jgroups.Event;
 import org.jgroups.Header;
 import org.jgroups.JChannel;
@@ -117,8 +122,8 @@ import org.jgroups.util.MessageBatch;
 import org.jgroups.util.SocketFactory;
 
 /**
- * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
- * methods, usually by passing in one of the following properties:
+ * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of methods, usually by
+ * passing in one of the following properties:
  * <ul>
  * <li><tt>configurationString</tt> - a JGroups configuration String</li>
  * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
@@ -135,20 +140,22 @@ import org.jgroups.util.SocketFactory;
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-public class JGroupsTransport implements Transport {
+@JGroupsProtocolComponent("JGroupsMetricsMetadata")
+public class JGroupsTransport implements Transport, ChannelListener {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
    public static final String SOCKET_FACTORY = "socketFactory";
+   private static final String METRICS_PREFIX = "jgroups_";
    public static final short REQUEST_FLAGS_UNORDERED =
          (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value() |
-                  Message.Flag.DONT_BUNDLE.value());
+               Message.Flag.DONT_BUNDLE.value());
    public static final short REQUEST_FLAGS_PER_SENDER = Message.Flag.NO_TOTAL_ORDER.value();
    public static final short REPLY_FLAGS =
          (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() |
-                  Message.Flag.NO_TOTAL_ORDER.value() | Message.Flag.DONT_BUNDLE.value());
+               Message.Flag.NO_TOTAL_ORDER.value() | Message.Flag.DONT_BUNDLE.value());
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
    public static final Log log = LogFactory.getLog(JGroupsTransport.class);
    private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
@@ -171,11 +178,13 @@ public class JGroupsTransport implements Transport {
    protected ExecutorService nonBlockingExecutor;
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
    @Inject protected GlobalXSiteAdminOperations globalXSiteAdminOperations;
+   @Inject protected ComponentRef<MetricsCollector> metricsCollector;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
    private final ThreadPoolProbeHandler probeHandler;
    private final ChannelCallbacks channelCallbacks = new ChannelCallbacks();
+   private final Map<JChannel, Set<Object>> clusters = new HashMap<>();
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
    protected TypedProperties props;
    protected JChannel channel;
@@ -195,8 +204,7 @@ public class JGroupsTransport implements Transport {
    private boolean running;
 
    /**
-    * This form is used when the transport is created by an external source and passed in to the
-    * GlobalConfiguration.
+    * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
     *
     * @param channel created and running channel to use
     */
@@ -259,11 +267,11 @@ public class JGroupsTransport implements Transport {
 
       Collection<Address> actualTargets = broadcast ? localMembers : recipients;
       return performSyncRemoteInvocation(actualTargets, command, mode, timeout, responseFilter, deliverOrder,
-                                         ignoreLeavers, sendStaggeredRequest, broadcast, singleTarget);
+            ignoreLeavers, sendStaggeredRequest, broadcast, singleTarget);
    }
 
    @Override
-   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder)   {
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
       if (destination.equals(address)) { //removed requireNonNull. this will throw a NPE in that case
          if (log.isTraceEnabled())
             log.tracef("%s not sending command to self: %s", address, command);
@@ -415,8 +423,8 @@ public class JGroupsTransport implements Transport {
          View v = channel.getView();
          org.jgroups.Address[] rawMembers = v.getMembersRaw();
          List<Address> addresses = new ArrayList<>(rawMembers.length);
-         for(org.jgroups.Address rawMember : rawMembers) {
-            PhysicalAddress physical_addr = (PhysicalAddress)channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, rawMember));
+         for (org.jgroups.Address rawMember : rawMembers) {
+            PhysicalAddress physical_addr = (PhysicalAddress) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, rawMember));
             addresses.add(new JGroupsAddress(physical_addr));
          }
          return addresses;
@@ -497,7 +505,7 @@ public class JGroupsTransport implements Transport {
          if (connectChannel) {
             channel.addAddressGenerator(() -> JGroupsTopologyAwareAddress
                   .randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
-                              transportCfg.machineId()));
+                        transportCfg.machineId()));
          } else {
             org.jgroups.Address jgroupsAddress = channel.getAddress();
             if (jgroupsAddress instanceof ExtendedUUID) {
@@ -527,8 +535,8 @@ public class JGroupsTransport implements Transport {
    }
 
    /**
-    * When overwriting this method, it allows third-party libraries to create a new behavior like:
-    * After {@link JChannel} has been created and before it is connected.
+    * When overwriting this method, it allows third-party libraries to create a new behavior like: After {@link
+    * JChannel} has been created and before it is connected.
     */
    protected void startJGroupsChannelIfNeeded() {
       String clusterName = configuration.transport().clusterName();
@@ -577,7 +585,7 @@ public class JGroupsTransport implements Transport {
          while (channel != null && channel.getView().getMembers().size() < initialClusterSize &&
                remainingNanos > 0) {
             log.debugf("Waiting for %d nodes, current view has %d", initialClusterSize,
-                       channel.getView().getMembers().size());
+                  channel.getView().getMembers().size());
             remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
          }
       } catch (InterruptedException e) {
@@ -686,10 +694,11 @@ public class JGroupsTransport implements Transport {
       if (props.containsKey(SOCKET_FACTORY)) {
          SocketFactory socketFactory = (SocketFactory) props.get(SOCKET_FACTORY);
          if (socketFactory instanceof NamedSocketFactory) {
-            ((NamedSocketFactory)socketFactory).setName(configuration.transport().clusterName());
+            ((NamedSocketFactory) socketFactory).setName(configuration.transport().clusterName());
          }
          configurator.setSocketFactory(socketFactory);
       }
+      configurator.addChannelListener(this);
       try {
          channel = configurator.createChannel(configuration.transport().clusterName());
       } catch (Exception e) {
@@ -705,7 +714,7 @@ public class JGroupsTransport implements Transport {
          this.address = fromJGroupsAddress(jgroupsAddress);
          if (log.isTraceEnabled()) {
             String uuid = (jgroupsAddress instanceof org.jgroups.util.UUID) ?
-                          ((org.jgroups.util.UUID) jgroupsAddress).toStringLong() : "N/A";
+                  ((org.jgroups.util.UUID) jgroupsAddress).toStringLong() : "N/A";
             log.tracef("Local address %s, uuid %s", jgroupsAddress, uuid);
          }
       }
@@ -786,8 +795,8 @@ public class JGroupsTransport implements Transport {
 
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       return Collections.unmodifiableList(list.stream()
-                                              .map(JGroupsAddressCache::fromJGroupsAddress)
-                                              .collect(Collectors.toList()));
+            .map(JGroupsAddressCache::fromJGroupsAddress)
+            .collect(Collectors.toList()));
    }
 
    @Stop
@@ -909,7 +918,7 @@ public class JGroupsTransport implements Transport {
          return null;
       }
       List<String> sites = relay2.getCurrentSites();
-      return sites ==null ? Collections.emptySet() : new TreeSet<>(sites);
+      return sites == null ? Collections.emptySet() : new TreeSet<>(sites);
    }
 
    @Override
@@ -925,8 +934,8 @@ public class JGroupsTransport implements Transport {
          return Collections.emptyList();
       }
       return relay2.siteMasters().stream()
-                   .map(JGroupsAddressCache::fromJGroupsAddress)
-                   .collect(Collectors.toList());
+            .map(JGroupsAddressCache::fromJGroupsAddress)
+            .collect(Collectors.toList());
    }
 
    @Override
@@ -1014,7 +1023,7 @@ public class JGroupsTransport implements Transport {
       logRequest(requestId, command, requiredTargets, "broadcast");
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
-         new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
+            new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
       if (request.isDone()) {
          return request;
@@ -1041,7 +1050,7 @@ public class JGroupsTransport implements Transport {
       logRequest(requestId, command, targets, "staggered");
       StaggeredRequest<T> request =
             new StaggeredRequest<>(collector, requestId, requests, targets, getAddress(), command, deliverOrder,
-                                   timeout, unit, this);
+                  timeout, unit, this);
       try {
          addRequest(request);
          request.onNewView(clusterView.getMembersSet());
@@ -1177,7 +1186,7 @@ public class JGroupsTransport implements Transport {
     * @return The single target's address, or {@code null} if there are multiple targets.
     */
    private Address computeSingleTarget(Collection<Address> targets, List<Address> localMembers, int membersSize,
-         boolean broadcast) {
+                                       boolean broadcast) {
       Address singleTarget;
       if (broadcast) {
          singleTarget = null;
@@ -1224,7 +1233,7 @@ public class JGroupsTransport implements Transport {
       } else {
          if (singleTarget != null) {
             ResponseCollector<Map<Address, Response>> collector =
-               ignoreLeavers ? SingletonMapResponseCollector.ignoreLeavers() : SingletonMapResponseCollector.validOnly();
+                  ignoreLeavers ? SingletonMapResponseCollector.ignoreLeavers() : SingletonMapResponseCollector.validOnly();
             request = invokeCommand(singleTarget, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
          } else {
             ResponseCollector<Map<Address, Response>> collector;
@@ -1415,7 +1424,7 @@ public class JGroupsTransport implements Transport {
          Message message = new Message(target).setFlag(REPLY_FLAGS);
          message.setBuffer(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
          RequestCorrelator.Header header = new RequestCorrelator.Header(RESPONSE, requestId,
-                                                                        CORRELATOR_ID);
+               CORRELATOR_ID);
          message.putHeader(HEADER_ID, header);
 
          channel.send(message);
@@ -1491,6 +1500,35 @@ public class JGroupsTransport implements Transport {
 
    private RELAY2 findRelay2() {
       return channel.getProtocolStack().findProtocol(RELAY2.class);
+   }
+
+   @Override
+   public void channelConnected(JChannel channel) {
+      MetricsCollector mc = metricsCollector.wired();
+      clusters.computeIfAbsent(channel, c -> {
+         String name = c.clusterName();
+         Set<Object> metrics = new HashSet<>();
+         for (Protocol protocol : c.getProtocolStack().getProtocols()) {
+            metrics.addAll(mc.registerMetrics(protocol, JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass()), METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null));
+         }
+         return metrics;
+      });
+   }
+
+   @Override
+   public void channelDisconnected(JChannel channel) {
+      MetricsCollector mc = metricsCollector.wired();
+      Set<Object> metrics = clusters.remove(channel);
+      if (metrics != null) {
+         for (Object metric : metrics) {
+            mc.unregisterMetric(metric);
+         }
+      }
+   }
+
+   @Override
+   public void channelClosed(JChannel channel) {
+      // NO-OP
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {

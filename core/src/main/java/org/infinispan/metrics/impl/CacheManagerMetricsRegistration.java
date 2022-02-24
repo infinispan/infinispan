@@ -3,7 +3,6 @@ package org.infinispan.metrics.impl;
 import java.util.Collection;
 import java.util.Set;
 
-import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
@@ -25,7 +24,7 @@ public final class CacheManagerMetricsRegistration extends AbstractMetricsRegist
    }
 
    @Override
-   protected Set<MetricID> internalRegisterMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String metricPrefix) {
+   protected Set<Object> internalRegisterMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String metricPrefix) {
       return metricsCollector.registerMetrics(instance, attributes, metricPrefix, null);
    }
 }

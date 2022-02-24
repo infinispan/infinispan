@@ -221,7 +221,7 @@
          <plugin>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-defaults-maven-plugin</artifactId>
-             <version>${project.version}</version>
+            <version>${project.version}</version>
             <executions>
                <execution>
                   <id>extract-defaults</id>

@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.JGroupsConfiguration;
+import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -106,6 +107,9 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
                      socketFactory = new NamedSocketFactory((NamedSocketFactory) socketFactory, remoteCluster);
                   }
                   configurator.setSocketFactory(socketFactory);
+                  for(ChannelListener listener : channelListeners) {
+                     configurator.addChannelListener(listener);
+                  }
                   RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(remoteSite.getKey());
                   siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteCluster) {
                      @Override
@@ -125,7 +129,7 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
          }
       }
 
-      return applySocketFactory(new JChannel(protocols));
+      return amendChannel(new JChannel(protocols));
    }
 
    public static List<ProtocolConfiguration> combineStack(JGroupsChannelConfigurator baseStack, List<ProtocolConfiguration> stack) {
