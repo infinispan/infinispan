@@ -108,8 +108,8 @@ public class MetricsCollector implements Constants {
       return hostName + '-' + rand;
    }
 
-   public Set<MetricID> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
-      Set<MetricID> metricIds = new HashSet<>();
+   public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
+      Set<Object> metricIds = new HashSet<>();
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
@@ -181,8 +181,8 @@ public class MetricsCollector implements Constants {
       return metricIds;
    }
 
-   public void unregisterMetric(MetricID metricId) {
-      boolean removed = registry.remove(metricId);
+   public void unregisterMetric(Object metricId) {
+      boolean removed = registry.remove((MetricID) metricId);
       if (log.isTraceEnabled()) {
          if (removed) {
             log.tracef("Unregistered metric \"%s\". Metric registry @%x contains %d metrics.",
