@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.microprofile.metrics.MetricID;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -40,7 +39,7 @@ abstract class AbstractMetricsRegistration {
 
    private String namePrefix;
 
-   private Set<MetricID> metricIds;
+   private Set<Object> metricIds;
 
    @Start
    protected void start() {
@@ -83,7 +82,7 @@ abstract class AbstractMetricsRegistration {
             if (instance != null) {
                MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
                if (beanMetadata != null) {
-                  Set<MetricID> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, component.getName(), null);
+                  Set<Object> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, component.getName(), null);
                   metricIds.addAll(ids);
                   if (instance instanceof CustomMetricsSupplier) {
                      metricIds.addAll(registerMetrics(instance, beanMetadata.getJmxObjectName(), ((CustomMetricsSupplier) instance).getCustomMetrics(), null, component.getName(), null));
@@ -94,7 +93,7 @@ abstract class AbstractMetricsRegistration {
       }
    }
 
-   private Set<MetricID> registerMetrics(Object instance, String jmxObjectName, Collection<AttributeMetadata> attributes,  String type, String componentName, String prefix) {
+   private Set<Object> registerMetrics(Object instance, String jmxObjectName, Collection<AttributeMetadata> attributes,  String type, String componentName, String prefix) {
       if (jmxObjectName == null) {
          jmxObjectName = componentName;
       }
@@ -114,7 +113,7 @@ abstract class AbstractMetricsRegistration {
       return internalRegisterMetrics(instance, attributes, metricPrefix);
    }
 
-   protected abstract Set<MetricID> internalRegisterMetrics(Object instance, Collection<AttributeMetadata> attributes, String metricPrefix);
+   protected abstract Set<Object> internalRegisterMetrics(Object instance, Collection<AttributeMetadata> attributes, String metricPrefix);
 
    /**
     * Register metrics for a component that was manually registered later, after component registry startup. The metric
@@ -128,7 +127,7 @@ abstract class AbstractMetricsRegistration {
       if (beanMetadata == null) {
          throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
       }
-      Set<MetricID> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), type, componentName, null);
+      Set<Object> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), type, componentName, null);
       metricIds.addAll(ids);
    }
 
@@ -136,7 +135,7 @@ abstract class AbstractMetricsRegistration {
     * Register metrics for a component that was manually registered later, after component registry startup. The metric
     * ids will <b>NOT</b> be tracked and unregistration will <b>NOT</b> be performed automatically on stop.
     */
-   public Set<MetricID> registerExternalMetrics(Object instance, String prefix) {
+   public Set<Object> registerExternalMetrics(Object instance, String prefix) {
       if (metricsCollector == null) {
          throw new IllegalStateException("Microprofile metrics are not initialized");
       }
@@ -147,12 +146,12 @@ abstract class AbstractMetricsRegistration {
       return registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, null, prefix);
    }
 
-   public void unregisterMetrics(Set<MetricID> metricIds) {
+   public void unregisterMetrics(Set<Object> metricIds) {
       if (metricsCollector == null) {
          throw new IllegalStateException("Microprofile metrics are not initialized");
       }
       try {
-         for (MetricID metricId : metricIds) {
+         for (Object metricId : metricIds) {
             metricsCollector.unregisterMetric(metricId);
          }
       } catch (Exception e) {
