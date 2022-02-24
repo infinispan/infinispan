@@ -1,11 +1,14 @@
 package org.infinispan.server.router.router.impl.singleport;
 
+import static org.infinispan.server.router.router.impl.singleport.SecurityActions.getGlobalComponentRegistry;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -43,6 +46,11 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
+
+      if (cacheManager != null) {
+         BasicComponentRegistry bcr = getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class);
+         bcr.replaceComponent(getQualifiedName(), this, false);
+      }
 
       registerServerMBeans();
       try {
