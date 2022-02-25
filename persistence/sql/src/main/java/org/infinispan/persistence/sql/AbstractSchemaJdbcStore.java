@@ -353,6 +353,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          switch (sqlType) {
             case Types.INTEGER:
             case Types.NUMERIC:
+            case Types.BIT:
                return INT_32;
             case Types.BIGINT:
                return INT_64;
@@ -374,6 +375,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
             case Types.LONGVARBINARY:
                return BYTES;
             case Types.DATE:
+            case Types.TIME:
             case Types.TIMESTAMP:
             case Types.TIMESTAMP_WITH_TIMEZONE:
                return DATE;
