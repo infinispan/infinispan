@@ -1011,11 +1011,6 @@
             </exclusions>
          </dependency>
          <dependency>
-            <groupId>org.eclipse.transformer</groupId>
-            <artifactId>org.eclipse.transformer.maven</artifactId>
-            <version>${versionx.org.eclipse.transformer}</version>
-         </dependency>
-         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
             <version>${versionx.org.glassfish.jaxb.jaxb-runtime}</version>
@@ -2423,6 +2418,7 @@
             <plugin>
                <groupId>org.eclipse.transformer</groupId>
                <artifactId>org.eclipse.transformer.maven</artifactId>
+               <version>${versionx.org.eclipse.transformer}</version>
                <executions>
                   <execution>
                      <goals>
