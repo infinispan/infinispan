@@ -218,7 +218,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    // Finalizer isn't require as the FlowableProcessor already has that configured upstream
-   private <I, R> void handleNoTargets(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
+   private static <I, R> void handleNoTargets(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
          FlowableProcessor<R> flowableProcessor) {
       // Need to do this in case if the transformer or finalizer has additional values such as reduce with identity
       // or switchIfEmpty etc.
