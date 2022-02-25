@@ -36,12 +36,8 @@ public interface ClusterPublisherManager<K, V> {
     * are then fed into the <b>finalizer</b> to produce a final result. If publisher is parallel the <b>finalizer</b>
     * will be invoked on each node to ensure there is only a single result per node.
     * <p>
-    * The provided <b>transformer</b> must be able to be run multiple times on any number of sub groups of elements in the cache.
-    * This is because we may need to perform the transformation on each segment within the cache which hold distinct data.
-    * <p>
-    * Due to the reduction nature of this method it is possible to add arbitrary values as a value to returned
-    * {@link CompletionStage} in a <b>transformer</b> but if done so they must be an identity value. This is the same
-    * idea as can be seen at {@link java.util.stream.Stream#reduce(Object, BinaryOperator)}.
+    * If the provided <b>transformer</b> internally uses a reduction with a default value, that value must be its identity value.
+    * This is the same as can be seen at {@link java.util.stream.Stream#reduce(Object, BinaryOperator)}.
     * Then as long as the <b>finalizer</b> can handle the identity value it will be properly reduced.
     * @param <R> return value type
     * @param parallelPublisher Whether on each node the publisher should be parallelized remotely and locally
@@ -75,11 +71,6 @@ public interface ClusterPublisherManager<K, V> {
     * instead as it can optimize some things. Depending on the <b>deliveryGuarantee</b> the <b>transformer</b> may be
     * invoked <b>1..numSegments</b> times per node. Results from a given node will retrieve values up to
     * {@code batchSize} values until some are consumed.
-    * <p>
-    * The provided <b>transformer</b> must be able to be run multiple times on any number of sub groups of elements in the cache.
-    * This is because we may need to perform the transformation on each segment within the cache which hold distinct data.
-    * Therefore, a user should not return a Publisher that appends arbitrary data unless the caller can properly handle
-    * possibly retrieving this arbitrary data many times.
     * <p>
     * For example when using RxJava and using an intermediate operation such as
     * {@link io.reactivex.rxjava3.core.Flowable#switchIfEmpty(Publisher)} this can add elements if the given Publisher
