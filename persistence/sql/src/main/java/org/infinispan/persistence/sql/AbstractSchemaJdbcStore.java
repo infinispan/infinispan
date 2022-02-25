@@ -353,7 +353,6 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          switch (sqlType) {
             case Types.INTEGER:
             case Types.NUMERIC:
-            case Types.BIT:
                return INT_32;
             case Types.BIGINT:
                return INT_64;
