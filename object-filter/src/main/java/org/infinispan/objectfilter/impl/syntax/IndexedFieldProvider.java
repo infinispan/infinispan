@@ -11,6 +11,8 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
    interface FieldIndexingMetadata {
 
+      boolean hasProperty(String[] propertyPath);
+
       /**
        * Checks if the property of the indexed entity is indexed.
        *
@@ -47,6 +49,12 @@ public interface IndexedFieldProvider<TypeMetadata> {
    }
 
    FieldIndexingMetadata NO_INDEXING = new FieldIndexingMetadata() {
+
+      @Override
+      public boolean hasProperty(String[] propertyPath) {
+         return false;
+      }
+
       @Override
       public boolean isIndexed(String[] propertyPath) {
          return false;

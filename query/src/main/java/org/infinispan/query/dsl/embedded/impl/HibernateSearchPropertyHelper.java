@@ -138,12 +138,17 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       return indexedEntity.indexManager().descriptor();
    }
 
-   private static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
+   private static final class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
 
       private final IndexDescriptor indexDescriptor;
 
       public SearchFieldIndexingMetadata(IndexDescriptor indexDescriptor) {
          this.indexDescriptor = indexDescriptor;
+      }
+
+      @Override
+      public boolean hasProperty(String[] propertyPath) {
+         return getField(propertyPath) != null;
       }
 
       @Override

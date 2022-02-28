@@ -20,7 +20,7 @@ import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
  *
  * @since 12.0
  */
-public class MessageReferenceProvider {
+public final class MessageReferenceProvider {
 
    private final List<FieldReferenceProvider> fields;
    private final List<Embedded> embedded;
@@ -87,12 +87,12 @@ public class MessageReferenceProvider {
       return embedded;
    }
 
-   public static class Embedded {
+   public static final class Embedded {
       private final String fieldName;
       private final String typeFullName;
       private final boolean repeated;
 
-      public Embedded(String fieldName, String typeFullName, boolean repeated) {
+      private Embedded(String fieldName, String typeFullName, boolean repeated) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
          this.repeated = repeated;

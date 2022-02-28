@@ -159,6 +159,7 @@ public final class FieldMapping {
             ", sortable=" + sortable +
             ", analyzer='" + analyzer + '\'' +
             ", indexNullAs=" + indexNullAs +
+            ", fieldDescriptor=" + fieldDescriptor +
             '}';
    }
 }

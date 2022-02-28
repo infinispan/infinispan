@@ -94,9 +94,9 @@ public class SearchIndexerImpl implements SearchIndexer {
       return new ConvertedValue(typeContext, converted.value());
    }
 
-   private static class ConvertedValue {
-      private PojoRawTypeIdentifier<?> typeIdentifier;
-      private Object value;
+   private static final class ConvertedValue {
+      private final PojoRawTypeIdentifier<?> typeIdentifier;
+      private final Object value;
 
       public ConvertedValue(InfinispanIndexedTypeContext<?> typeContext, Object value) {
          this.typeIdentifier = typeContext.typeIdentifier();

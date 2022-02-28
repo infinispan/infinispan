@@ -1,9 +1,8 @@
 package org.infinispan.query.remote.impl.indexing;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -186,23 +185,29 @@ public final class IndexingMetadata {
     */
    private final Map<String, FieldMapping> fields;
 
-   private final List<SpatialFieldMapping> spatialFields;
+   private final Map<String, SpatialFieldMapping> spatialFields;
 
    /**
-    * The collection of sortable field names. Cab be empty but never {@code null}.
+    * The collection of sortable field names. Can be empty but never {@code null}.
     */
    private final Set<String> sortableFields;
 
-   IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields, List<SpatialFieldMapping> spatialFields) {
+   IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields, Map<String, SpatialFieldMapping> spatialFields) {
       this.isIndexed = isIndexed;
       this.indexName = indexName;
       this.analyzer = analyzer;
       this.fields = fields;
       this.spatialFields = spatialFields;
-      this.sortableFields = fields == null ? Collections.emptySet() : fields.values().stream()
+      Set<String> sortableFields = fields == null ? Collections.emptySet() : fields.values().stream()
             .filter(FieldMapping::sortable)
             .map(FieldMapping::name)
             .collect(Collectors.toSet());
+      Set<String> sortableSpatialFields = spatialFields == null ? Collections.emptySet() : spatialFields.values().stream()
+            .filter(SpatialFieldMapping::sortable)
+            .map(SpatialFieldMapping::fieldName)
+            .collect(Collectors.toSet());
+      this.sortableFields = new HashSet<>(sortableFields);
+      this.sortableFields.addAll(sortableSpatialFields);
    }
 
    public boolean isIndexed() {
@@ -223,7 +228,11 @@ public final class IndexingMetadata {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.index();
+      if (fieldMapping != null) {
+         return fieldMapping.index();
+      }
+      SpatialFieldMapping spatialField = spatialFields.get(fieldName);
+      return spatialField != null;
    }
 
    public boolean isFieldAnalyzed(String fieldName) {
@@ -238,12 +247,7 @@ public final class IndexingMetadata {
       if (spatialFields == null) {
          return false;
       }
-      for (SpatialFieldMapping sf : spatialFields) {
-         if (Objects.equals(sf.fieldName(), fieldName)) {
-            return true;
-         }
-      }
-      return false;
+      return spatialFields.containsKey(fieldName);
    }
 
    public boolean isFieldStored(String fieldName) {
@@ -251,7 +255,11 @@ public final class IndexingMetadata {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.store();
+      if (fieldMapping != null) {
+         return fieldMapping.store();
+      }
+      SpatialFieldMapping spatialField = spatialFields.get(fieldName);
+      return spatialField != null && spatialField.projectable();
    }
 
    public Object getNullMarker(String fieldName) {

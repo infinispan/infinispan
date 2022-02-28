@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+
 /**
  * @author anistor@redhat.com
  * @since 14
@@ -14,9 +16,9 @@ public final class SpatialFieldMapping {
 
    private final boolean sortable;
 
-   private String latitude;
+   private FieldDescriptor latitude;
 
-   private String longitude;
+   private FieldDescriptor longitude;
 
    SpatialFieldMapping(String fieldName, String markerSet, boolean projectable, boolean sortable) {
       this.fieldName = fieldName;
@@ -41,19 +43,19 @@ public final class SpatialFieldMapping {
       return sortable;
    }
 
-   public String latitude() {
+   public FieldDescriptor getLatitude() {
       return latitude;
    }
 
-   void setLatitude(String latitude) {
+   void setLatitude(FieldDescriptor latitude) {
       this.latitude = latitude;
    }
 
-   public String longitude() {
+   public FieldDescriptor getLongitude() {
       return longitude;
    }
 
-   void setLongitude(String longitude) {
+   void setLongitude(FieldDescriptor longitude) {
       this.longitude = longitude;
    }
 

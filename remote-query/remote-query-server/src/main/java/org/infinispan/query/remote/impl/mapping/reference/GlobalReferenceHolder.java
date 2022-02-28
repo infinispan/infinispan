@@ -10,15 +10,15 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 
-public class GlobalReferenceHolder {
+public final class GlobalReferenceHolder {
 
    private final Map<String, MessageReferenceProvider> messageReferenceProviders = new HashMap<>();
    private final Set<RootMessageInfo> rootMessages = new LinkedHashSet<>();
    private final Map<String, Descriptor> rootDescriptors = new HashMap<>();
 
    public GlobalReferenceHolder(Map<String, GenericDescriptor> descriptors) {
-      HashSet<Descriptor> messageTypes = new HashSet<>();
-      HashSet<Descriptor> nestedDescriptors = new HashSet<>();
+      Set<Descriptor> messageTypes = new HashSet<>();
+      Set<Descriptor> nestedDescriptors = new HashSet<>();
 
       for (Map.Entry<String, GenericDescriptor> entry : descriptors.entrySet()) {
          GenericDescriptor genericDescriptor = entry.getValue();
@@ -63,14 +63,14 @@ public class GlobalReferenceHolder {
       return messageReferenceProviders.toString();
    }
 
-   public static class RootMessageInfo {
+   public static final class RootMessageInfo {
       private final String fullName;
       private final String indexName;
 
       private RootMessageInfo(Descriptor descriptor) {
          IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          this.fullName = descriptor.getFullName();
-         this.indexName = (indexingMetadata.indexName() != null) ? indexingMetadata.indexName() : fullName;
+         this.indexName = indexingMetadata.indexName() != null ? indexingMetadata.indexName() : fullName;
       }
 
       public String getFullName() {
