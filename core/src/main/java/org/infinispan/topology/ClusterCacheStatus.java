@@ -758,7 +758,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    CompletionStage<Void> nodeCanJoinFuture(CacheJoinInfo joinInfo) {
-      if (joinInfo.getCapacityFactor() != 0f)
+      if (joinInfo.getCapacityFactor() != 0f || getCurrentTopology() != null)
          return CompletableFutures.completedNull();
 
       // Creating the initial topology requires at least one node with a non-zero capacity factor
