@@ -58,6 +58,7 @@ import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -188,6 +189,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             log.debugf("Join request received CacheNotFoundResponse for cache %s, retrying", cacheName);
          } else {
             log.debugf(t, "Join request failed for cache %s", cacheName);
+            if (t instanceof TimeoutException) {
+               throw (TimeoutException) t;
+            }
             throw (CacheJoinException) t.getCause();
          }
 
