@@ -31,6 +31,35 @@ $ asciidoctor user_guide.asciidoc
 - The `pom.xml` for documentation is _*experimental*_ and is not
 currently functional.
 
+## Generating log reports
+
+Use `import org.infinispan.logging.annotations.Description;` annotations to provide additional detail about Infinispan log messages.
+Descriptions should help users identify and resolve errors.
+
+1. Add the logging dependency to the respective `pom.xml`:
+```xml
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-logging-processor</artifactId>
+</dependency>
+```
+
+2. Include `@Description` annotations in `Log.java` files.
+```
+@Description("Provide a more detailed description of the causes and conditions that lead to the error as well as an actionable resolution.")
+```
+
+3. Build the distribution.
+```
+mvn clean install -s maven-settings.xml -Pdistribution -DskipTests
+```
+
+4. Check the generated HTML at:
+```
+documentation/target/generated/$version/html/logging/logs.html
+```
+
+
 ## Publishing Documentation
 
 The [Infinispan Website](https://github.com/infinispan/infinispan.github.io)
