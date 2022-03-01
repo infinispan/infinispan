@@ -54,7 +54,7 @@ public class XmlReportWriter implements AutoCloseable {
          writeCharacters("id", prjCode.toString());
          writeCharacters("message", message.value());
          writeCharacters("description", description.value());
-         writeCharacters("level", logMessage.level().name());
+         writeCharacters("level", logMessage == null ? "EXCEPTION" : logMessage.level().name());
          xmlWriter.writeEndElement();
    }
 
