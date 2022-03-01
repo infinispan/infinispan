@@ -128,7 +128,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
       EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
       persistedCaches.forEach((name, configuration) -> {
-         ensurePersistenceCompatibility(name, configuration, persistedCaches);
+         ensurePersistenceCompatibility(name, configuration);
          // First create the cache locally to ensure that it's available on startup
          createCacheLocally(name, null, configuration, adminFlags);
          // The cache configuration was permanent, it still needs to be
@@ -136,7 +136,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       });
 
       persistedTemplates.forEach((name, configuration) -> {
-         ensurePersistenceCompatibility(name, configuration, persistedTemplates);
+         ensurePersistenceCompatibility(name, configuration);
          // First create the cache locally to ensure that it's available on startup
          createTemplateLocally(name, configuration, adminFlags);
          // The template was permanent, it still needs to be
@@ -149,24 +149,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       if (persisted != null) {
          // Template value is not serialized, so buildConfiguration param is irrelevant
          Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
-         if (!persisted.matches(configuration)) {
+         if (!persisted.matches(configuration))
             throw CONFIG.incompatibleClusterConfiguration(name, configuration, persisted);
-         } else {
-            // The configuration matches, we can skip it when iterating the ones from the local state
-            configs.remove(name);
-         }
       }
    }
 
-   private void ensurePersistenceCompatibility(String name, Configuration configuration, Map<String, Configuration> configs) {
+   private void ensurePersistenceCompatibility(String name, Configuration configuration) {
       Configuration staticConfiguration = cacheManager.getCacheConfiguration(name);
-      if (staticConfiguration != null) {
-         if (!staticConfiguration.matches(configuration)) {
-            throw CONFIG.incompatiblePersistedConfiguration(name, configuration, staticConfiguration);
-         } else {
-            configs.remove(name);
-         }
-      }
+      if (staticConfiguration != null && !staticConfiguration.matches(configuration))
+         throw CONFIG.incompatiblePersistedConfiguration(name, configuration, staticConfiguration);
    }
 
    @Override
