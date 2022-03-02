@@ -1,0 +1,9 @@
+server:
+  security:
+    securityRealms:
+      - name: "default"
+        serverIdentities:
+          ssl:
+            keystore:
+              provider: "SunPKCS11-NSS-FIPS"
+              type: "PKCS11"

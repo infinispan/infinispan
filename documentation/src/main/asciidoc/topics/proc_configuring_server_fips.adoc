@@ -1,0 +1,45 @@
+[id='configuring-server-fips_{context}']
+= Configuring {brandname} Server on a system with FIPS 140-2 compliant cryptography
+It is possible to configure {brandname} Server to present SSL/TLS certificates that verify its identity to clients.
+If a security realm contains TLS/SSL identities, it encrypts any connections to {brandname} Server endpoints that use that security realm.
+
+.Prerequisites
+
+* A system in FIPS mode. Execute `fips-mode-setup --check` to ensure it is enabled.
+* A correctly initialized NSS database.
+* A JDK installation with the `java.security` file configured to enable the `SunPKCS11` provider pointing to the NSS database and the SSL provider initialized with the `SunPKCS11-nss-fips` argument.
+* A certificate installed in the NSS database.
+
+[NOTE]
+====
+The OpenSSL provider requires a private key, but it is not possible to retrieve a private key from the PKCS11 store. FIPS does not allow the export of unencrypted keys from FIPS compliant cryptographic module. Therefore it is not possible to use the OpenSSL provider for TLS when in FIPS mode. Start the server with the `-Dorg.infinispan.openssl=false` argument to disable OpenSSL.
+====
+
+.Procedure
+
+. Open your {brandname} Server configuration for editing.
+. Add a `server-identities` definition to the {brandname} Server security realm.
+. Specify the PKCS11 keystore with the `SunPKCS11-NSS-FIPS` provider.
+. Save the changes to your configuration.
+
+
+[discrete]
+== Keystore configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_ssl_identity_fips.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/server_ssl_identity_fips.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/server_ssl_identity_fips.yaml[]
+----

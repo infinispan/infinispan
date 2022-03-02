@@ -1,0 +1,17 @@
+{
+  "server": {
+    "security": {
+      "security-realms": [{
+        "name": "default",
+        "server-identities": {
+          "ssl": {
+            "keystore": {
+              "provider": "SunPKCS11-NSS-FIPS",
+              "type": "PKCS11"
+            }
+          }
+        }
+      }]
+    }
+  }
+}

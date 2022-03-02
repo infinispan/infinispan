@@ -1,0 +1,14 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+   <security>
+      <security-realms>
+         <security-realm name="default">
+            <server-identities>
+               <ssl>
+                  <!-- Adds a keystore that reads certificates from the NSS database. -->
+                  <keystore provider="SunPKCS11-NSS-FIPS" type="PKCS11"/>
+               </ssl>
+            </server-identities>
+         </security-realm>
+      </security-realms>
+   </security>
+</server>
