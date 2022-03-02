@@ -1,0 +1,35 @@
+name: Update dev docs
+
+on:
+  push:
+    branches: [ main ]
+    
+env:
+  target: git@github.com:infinispan/infinispan.github.io.git
+  target_branch: master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build docs with Maven
+      run: mvn install -Pdistribution -pl documentation -am -s maven-settings.xml
+    - name: Copy docs to the site
+      run: |
+        git clone -b $target_branch $target
+        cp -r infinispan/documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
+        cd infinispan.github.io
+        git config --global user.email "dnaro@redhat.com"
+        git config --global user.name "dnaro"
+        git add . --all
+        git commit -m "Synchronized docs to dev"
+        git push origin master
