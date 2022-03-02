@@ -263,6 +263,34 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
+   public void testReduceWithoutIdentityNonMatchingKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
+      Cache<Integer, String> cache = cache(0);
+      int insertAmount = insert(cache).size();
+      assertTrue(insertAmount > 0);
+
+      Set<Integer> keysToInclude = new HashSet<>();
+      keysToInclude.add(insertAmount + 1); // Not in the cache
+
+      // Using a reduce function without explicit identity tests the special case where completion-stages terminate with null
+      ClusterPublisherManager<Integer, String> cpm = cpm(cache);
+      CompletionStage<?> stage;
+      if (isEntry) {
+         Function<Publisher<CacheEntry<Integer, String>>, CompletionStage<CacheEntry<Integer, String>>> function =
+               PublisherReducers.reduce((SerializableBinaryOperator<CacheEntry<Integer, String>>)(e1, e2) -> e1); // reduce without identity
+         stage = cpm.entryReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+               function, function);
+      } else {
+         Function<Publisher<Integer>, CompletionStage<Integer>> function =
+               PublisherReducers.reduce((SerializableBinaryOperator<Integer>)(k1, k2) -> k1); // reduce without identity
+         stage = cpm.keyReduction(parallel, null, keysToInclude, null, false, deliveryGuarantee,
+               function, function);
+      }
+
+      Object result = stage.toCompletableFuture().join();
+      assertNull(result);
+   }
+
+   @Test(dataProvider = "GuaranteeParallelEntry")
    public void testReduceTransformerOnlyIdentityEmptyKeys(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry) {
       Cache<Integer, String> cache = cache(0);
       int insertAmount = insert(cache).size();
