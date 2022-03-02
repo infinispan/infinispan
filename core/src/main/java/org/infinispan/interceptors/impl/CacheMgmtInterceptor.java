@@ -897,7 +897,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       counters.reset(StripeB.removeMissesFieldUpdater);
       resetNanoseconds.set(timeService.time());
 
-      //todo [anistor] how do we reset microprofile metrics ?
+      //todo [anistor] how do we reset Micrometer metrics ?
    }
 
    private boolean getStatisticsEnabled(FlagAffectedCommand cmd) {

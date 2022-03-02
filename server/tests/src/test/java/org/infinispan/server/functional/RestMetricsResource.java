@@ -25,7 +25,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 /**
- * Tests the microprofile metrics exporter.
+ * Tests the Micrometer metrics exporter.
  *
  * @author anistor@redhat.com
  * @since 10.0

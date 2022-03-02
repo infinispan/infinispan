@@ -139,7 +139,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new SearchAdminResource(invocationHelper));
       resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
       resourceManager.registerResource(restContext, new ProtobufResource(invocationHelper));
-      resourceManager.registerResource(rootContext, new MetricsResource(auth.metricsAuth(), invocationHelper.getExecutor()));
+      resourceManager.registerResource(rootContext, new MetricsResource(auth.metricsAuth(), invocationHelper));
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
          Path console = configuration.staticResources().resolve("console");

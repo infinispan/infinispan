@@ -11,10 +11,10 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
- * Configures the types of metrics gathered and exported via microprofile metrics for all caches owned by this cache
+ * Configures the types of metrics gathered and exported via Micrometer metrics for all caches owned by this cache
  * manager. Gauges do not have any performance penalty so are enabled by default. Histograms are more expensive to
  * compute so should be enabled manually when needed. Enabling metrics in config has no effect unless the necessary
- * microprofile metrics API and provider (SmallRye) jars are present in classpath.
+ * Micrometer jar is present in classpath.
  */
 public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalMetricsConfiguration> {
 

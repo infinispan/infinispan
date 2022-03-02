@@ -85,9 +85,9 @@
       <module name="org.apache.xerces" services="import"/>
 
       <module name="org.eclipse.microprofile.config.api" export="true" optional="true"/>
-      <module name="org.eclipse.microprofile.metrics.api" export="true" optional="true"/>
       <module name="io.smallrye.config" services="export" export="true" optional="true"/>
-      <module name="io.smallrye.metrics" services="import" export="true" optional="true"/>
+      <module name="io.micrometer.micrometer-core" optional="true"/>
+      <module name="io.micrometer.registry-prometheus" optional="true"/>
 
       <module name="org.jboss.jandex"/>
       <module name="org.jboss.logging"/>

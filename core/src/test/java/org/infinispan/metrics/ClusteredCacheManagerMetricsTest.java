@@ -1,14 +1,11 @@
 package org.infinispan.metrics;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 
-import java.util.SortedMap;
+import java.util.Collection;
+import java.util.List;
 
-import org.eclipse.microprofile.metrics.Gauge;
-import org.eclipse.microprofile.metrics.MetricID;
-import org.eclipse.microprofile.metrics.Tag;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -18,6 +15,10 @@ import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
+
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
 
 /**
  * @author anistor@redhat.com
@@ -56,19 +57,23 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
 
    public void testMetricsAreRegistered() {
       MetricsCollector mc0 = manager(0).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
-      SortedMap<MetricID, Gauge> gauges0 = mc0.getRegistry().getGauges((metricID, metric) -> metricID.getName().contains("ispn"));
-      assertFalse(gauges0.isEmpty());
+      List<Meter> meters0 = mc0.getRegistry().getMeters();
+      assertThat(meters0).isNotEmpty();
+      assertThat(meters0.get(0).getId().getName()).startsWith("ispn");
 
       MetricsCollector mc1 = manager(1).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
-      SortedMap<MetricID, Gauge> gauges1 = mc1.getRegistry().getGauges((metricID, metric) -> metricID.getName().startsWith("ispn"));
-      assertFalse(gauges1.isEmpty());
+      List<Meter> meters1 = mc1.getRegistry().getMeters();
+      assertThat(meters1).isNotEmpty();
+      assertThat(meters1.get(0).getId().getName()).startsWith("ispn");
 
       GlobalConfiguration gcfg0 = manager(0).getCacheManagerConfiguration();
-      Tag nodeNameTag = new Tag(Constants.NODE_TAG_NAME, gcfg0.transport().nodeName());
-      Tag cacheManagerTag = new Tag(Constants.CACHE_MANAGER_TAG_NAME, gcfg0.cacheManagerName());
-      MetricID evictionsMetricId = new MetricID("ispn_cache_container_stats_evictions", nodeNameTag, cacheManagerTag);
+      Tag nodeNameTag = Tag.of(Constants.NODE_TAG_NAME, gcfg0.transport().nodeName());
+      Tag cacheManagerTag = Tag.of(Constants.CACHE_MANAGER_TAG_NAME, gcfg0.cacheManagerName());
 
-      Gauge<?> evictions = mc0.getRegistry().getGauges().get(evictionsMetricId);
-      assertNotNull(evictions);
+      Collection<Gauge> statsEvictions = mc0.getRegistry().find("ispn_cache_container_stats_evictions").gauges();
+      assertThat(statsEvictions).hasSize(1);
+      Gauge statsEviction = statsEvictions.iterator().next();
+      statsEviction.getId().getTags().contains(nodeNameTag);
+      statsEviction.getId().getTags().contains(cacheManagerTag);
    }
 }

@@ -4,13 +4,15 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.microprofile.metrics.Timer;
 import org.infinispan.commons.stat.TimerTracker;
+
+import io.micrometer.core.instrument.Timer;
 
 /**
  * A {@link TimerTracker} implementation that updates a {@link Timer} instance.
  *
  * @author Pedro Ruivo
+ * @author Fabio Massimo Ercoli
  * @since 13.0
  */
 public class TimerTrackerImpl implements TimerTracker {
@@ -23,11 +25,11 @@ public class TimerTrackerImpl implements TimerTracker {
 
    @Override
    public void update(Duration duration) {
-      timer.update(duration);
+      timer.record(duration);
    }
 
    @Override
    public void update(long value, TimeUnit timeUnit) {
-      timer.update(Duration.ofNanos(timeUnit.toNanos(value)));
+      timer.record(Duration.ofNanos(timeUnit.toNanos(value)));
    }
 }

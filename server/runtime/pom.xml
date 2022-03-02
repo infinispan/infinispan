@@ -243,11 +243,6 @@
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-sasl-scram</artifactId>
       </dependency>
-      <dependency>
-         <groupId>javax.annotation</groupId>
-         <artifactId>javax.annotation-api</artifactId>
-         <scope>compile</scope> <!-- Needed by smallrye-metrics -->
-      </dependency>
 
       <!-- Test dependencies -->
       <dependency>

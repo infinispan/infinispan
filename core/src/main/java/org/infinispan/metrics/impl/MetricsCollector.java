@@ -1,6 +1,7 @@
 package org.infinispan.metrics.impl;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,20 +9,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.eclipse.microprofile.metrics.Gauge;
-import org.eclipse.microprofile.metrics.Metadata;
-import org.eclipse.microprofile.metrics.MetadataBuilder;
-import org.eclipse.microprofile.metrics.MetricID;
-import org.eclipse.microprofile.metrics.MetricRegistry;
-import org.eclipse.microprofile.metrics.MetricType;
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.Tag;
-import org.eclipse.microprofile.metrics.Timer;
 import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.MBeanMetadata;
@@ -32,8 +25,14 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
+
 /**
- * Keeps a reference to the microprofile MetricRegistry. Optional component in component registry. Availability based on
+ * Keeps a reference to the Micrometer MeterRegistry. Optional component in component registry. Availability based on
  * available jars in classpath! See {@link MetricsCollectorFactory}.
  *
  * @author anistor@redhat.com
@@ -45,7 +44,7 @@ public class MetricsCollector implements Constants {
 
    private static final Log log = LogFactory.getLog(MetricsCollector.class);
 
-   private final MetricRegistry registry;
+   private final MeterRegistry registry;
 
    private Tag nodeTag;
 
@@ -57,11 +56,11 @@ public class MetricsCollector implements Constants {
    @Inject
    ComponentRef<Transport> transportRef;
 
-   protected MetricsCollector(MetricRegistry registry) {
+   protected MetricsCollector(MeterRegistry registry) {
       this.registry = registry;
    }
 
-   public MetricRegistry getRegistry() {
+   public MeterRegistry getRegistry() {
       return registry;
    }
 
@@ -74,10 +73,23 @@ public class MetricsCollector implements Constants {
          nodeName = generateRandomName();
          //throw new CacheConfigurationException("Node name must always be specified in configuration if metrics are enabled.");
       }
-      nodeTag = new Tag(NODE_TAG_NAME, nodeName);
+      nodeTag = Tag.of(NODE_TAG_NAME, nodeName);
 
       if (globalConfig.metrics().namesAsTags()) {
-         cacheManagerTag = new Tag(CACHE_MANAGER_TAG_NAME, globalConfig.cacheManagerName());
+         cacheManagerTag = Tag.of(CACHE_MANAGER_TAG_NAME, globalConfig.cacheManagerName());
+      }
+   }
+
+   @Stop
+   protected void stop() {
+      try {
+         if (baseRegistry != null) {
+            baseRegistry.close();
+         }
+      } finally {
+         if (vendorRegistry != null) {
+            vendorRegistry.close();
+         }
       }
    }
 
@@ -108,12 +120,13 @@ public class MetricsCollector implements Constants {
       return hostName + '-' + rand;
    }
 
+   @SuppressWarnings("unchecked")
    public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
       return registerMetrics(instance, attributes, namePrefix, cacheName, nodeTag);
    }
 
    public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName, String nodeName) {
-      return registerMetrics(instance, attributes, namePrefix, cacheName, nodeName == null ? null : new Tag(NODE_TAG_NAME, nodeName));
+      return registerMetrics(instance, attributes, namePrefix, cacheName, nodeName == null ? null : Tag.of(NODE_TAG_NAME, nodeName));
    }
 
    private Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName, Tag nodeTag) {
@@ -133,51 +146,46 @@ public class MetricsCollector implements Constants {
       if (cacheManagerTag != null) {
          tags[1] = cacheManagerTag;
          if (cacheName != null) {
-            tags[2] = new Tag(CACHE_TAG_NAME, cacheName);
+            tags[2] = Tag.of(CACHE_TAG_NAME, cacheName);
          }
       }
 
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
-         Supplier<?> getter = attr.getter(instance);
+         Supplier<Number> getter = (Supplier<Number>) attr.getter(instance);
          Consumer<TimerTracker> setter = (Consumer<TimerTracker>) attr.setter(instance);
 
          if (getter != null || setter != null) {
             String metricName = namePrefix + NameUtils.decamelize(attr.getName());
-            MetricID metricId = new MetricID(metricName, tags);
 
             if (getter != null) {
                if (metricsCfg.gauges()) {
-                  Gauge<Number> gaugeMetric = () -> (Number) getter.get();
-                  Metadata metadata = new MetadataBuilder()
-                        .withType(MetricType.GAUGE)
-                        .withUnit(MetricUnits.NONE)
-                        .withName(metricName)
-                        .withDisplayName(attr.getName())
-                        .withDescription(attr.getDescription())
-                        .build();
+                  Gauge gauge = Gauge.builder(metricName, getter)
+                        .tags(Arrays.asList(tags))
+                        .strongReference(true)
+                        .description(attr.getDescription())
+                        .register(registry);
+
+                  Meter.Id id = gauge.getId();
 
                   if (log.isTraceEnabled()) {
-                     log.tracef("Registering gauge metric %s", metricId);
+                     log.tracef("Registering gauge metric %s", id);
                   }
-                  registry.register(metadata, gaugeMetric, tags);
-                  metricIds.add(metricId);
+                  metricIds.add(id);
                }
             } else {
                if (metricsCfg.histograms()) {
-                  Metadata metadata = new MetadataBuilder()
-                        .withType(MetricType.TIMER)
-                        .withUnit(MetricUnits.NANOSECONDS)
-                        .withName(metricName)
-                        .withDisplayName(attr.getName())
-                        .withDescription(attr.getDescription())
-                        .build();
+                  Timer timer = Timer.builder(metricName)
+                        .tags(Arrays.asList(tags))
+                        .description(attr.getDescription())
+                        .register(registry);
+
+                  Meter.Id id = timer.getId();
 
                   if (log.isTraceEnabled()) {
-                     log.tracef("Registering histogram metric %s", metricId);
+                     log.tracef("Registering histogram metric %s", id);
                   }
-                  Timer timerMetric = registry.timer(metadata, tags);
-                  setter.accept(new TimerTrackerImpl(timerMetric));
-                  metricIds.add(metricId);
+                  setter.accept(new TimerTrackerImpl(timer));
+                  metricIds.add(id);
                }
             }
          }
@@ -185,21 +193,21 @@ public class MetricsCollector implements Constants {
 
       if (log.isTraceEnabled()) {
          log.tracef("Registered %d metrics. Metric registry @%x contains %d metrics.",
-                    metricIds.size(), System.identityHashCode(registry), registry.getMetrics().size());
+                    metricIds.size(), System.identityHashCode(registry), registry.getMeters().size());
       }
 
       return metricIds;
    }
 
    public void unregisterMetric(Object metricId) {
-      boolean removed = registry.remove((MetricID) metricId);
+      Meter removed = registry.remove((Meter.Id) metricId);
       if (log.isTraceEnabled()) {
-         if (removed) {
+         if (removed != null) {
             log.tracef("Unregistered metric \"%s\". Metric registry @%x contains %d metrics.",
-                       metricId, System.identityHashCode(registry), registry.getMetrics().size());
+                       metricId, System.identityHashCode(registry), registry.getMeters().size());
          } else {
             log.tracef("Could not remove unexisting metric \"%s\". Metric registry @%x contains %d metrics.",
-                       metricId, System.identityHashCode(registry), registry.getMetrics().size());
+                       metricId, System.identityHashCode(registry), registry.getMeters().size());
          }
       }
    }
