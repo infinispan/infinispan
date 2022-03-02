@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.stream.Stream;
 
-import org.eclipse.microprofile.metrics.Timer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.functional.AbstractWriteManyCommand;
@@ -38,6 +37,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
@@ -93,10 +93,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private final StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
 
-   private Timer hitTimes;
-   private Timer missTimes;
-   private Timer storeTimes;
-   private Timer removeTimes;
+   private TimerTracker hitTimes;
+   private TimerTracker missTimes;
+   private TimerTracker storeTimes;
+   private TimerTracker removeTimes;
 
    @Start
    public void start() {
@@ -105,22 +105,22 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(description = "Hit Times", displayName = "Hit Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
-   public void setHitTimes(Timer hitTimes) {
+   public void setHitTimes(TimerTracker hitTimes) {
       this.hitTimes = hitTimes;
    }
 
    @ManagedAttribute(description = "Miss times", displayName = "Miss times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
-   public void setMissTimes(Timer missTimes) {
+   public void setMissTimes(TimerTracker missTimes) {
       this.missTimes = missTimes;
    }
 
    @ManagedAttribute(description = "Store Times", displayName = "Store Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
-   public void setStoreTimes(Timer storeTimes) {
+   public void setStoreTimes(TimerTracker storeTimes) {
       this.storeTimes = storeTimes;
    }
 
    @ManagedAttribute(description = "Remove Times", displayName = "Remove Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
-   public void setRemoveTimes(Timer removeTimes) {
+   public void setRemoveTimes(TimerTracker removeTimes) {
       this.removeTimes = removeTimes;
    }
 

@@ -11,13 +11,13 @@ import java.util.function.Supplier;
 import org.eclipse.microprofile.metrics.Gauge;
 import org.eclipse.microprofile.metrics.Metadata;
 import org.eclipse.microprofile.metrics.MetadataBuilder;
-import org.eclipse.microprofile.metrics.Metric;
 import org.eclipse.microprofile.metrics.MetricID;
 import org.eclipse.microprofile.metrics.MetricRegistry;
 import org.eclipse.microprofile.metrics.MetricType;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.Tag;
 import org.eclipse.microprofile.metrics.Timer;
+import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -139,7 +139,7 @@ public class MetricsCollector implements Constants {
 
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
          Supplier<?> getter = attr.getter(instance);
-         Consumer<Metric> setter = (Consumer<Metric>) attr.setter(instance);
+         Consumer<TimerTracker> setter = (Consumer<TimerTracker>) attr.setter(instance);
 
          if (getter != null || setter != null) {
             String metricName = namePrefix + NameUtils.decamelize(attr.getName());
@@ -176,7 +176,7 @@ public class MetricsCollector implements Constants {
                      log.tracef("Registering histogram metric %s", metricId);
                   }
                   Timer timerMetric = registry.timer(metadata, tags);
-                  setter.accept(timerMetric);
+                  setter.accept(new TimerTrackerImpl(timerMetric));
                   metricIds.add(metricId);
                }
             }

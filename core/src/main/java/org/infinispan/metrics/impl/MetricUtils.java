@@ -5,7 +5,7 @@ import static org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import org.eclipse.microprofile.metrics.Timer;
+import org.infinispan.commons.stat.TimerTracker;
 
 /**
  * Utility methods for metrics.
@@ -38,12 +38,12 @@ public final class MetricUtils {
     *
     * @param name           The metric name.
     * @param description    The metrics description.
-    * @param setterFunction The {@link BiConsumer} invoked whit the {@link Timer} instance to update.
+    * @param setterFunction The {@link BiConsumer} invoked with the {@link TimerTracker} instance to update.
     * @param <C>            The instance type.
     * @return The {@link AttributeMetadata} to be registered.
     */
    public static <C> AttributeMetadata createTimer(String name, String description,
-         BiConsumer<C, Timer> setterFunction) {
+         BiConsumer<C, TimerTracker> setterFunction) {
       return new AttributeMetadata(name, description, false, false, null, false, null, setterFunction);
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.commons.stat;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -9,6 +10,13 @@ import java.util.concurrent.TimeUnit;
  * @since 13.0
  */
 public interface TimerTracker {
+
+   /**
+    * Adds a record.
+    *
+    * @param duration The duration value.
+    */
+   void update(Duration duration);
 
    /**
     * Adds a record.

@@ -17,8 +17,13 @@ public class TimerTrackerImpl implements TimerTracker {
 
    private final Timer timer;
 
-   public TimerTrackerImpl(Timer timer) {
+   TimerTrackerImpl(Timer timer) {
       this.timer = Objects.requireNonNull(timer, "Timer cannot be null.");
+   }
+
+   @Override
+   public void update(Duration duration) {
+      timer.update(duration);
    }
 
    @Override
