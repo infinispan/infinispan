@@ -1063,13 +1063,14 @@
       <xs:sequence>
          <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="path" use="required">
+      <xs:attribute type="xs:string" name="path">
          <xs:annotation>
             <xs:documentation>
                Specifies the location of the keystore on the host file system. You can set a relative or absolute value.
                If you set a relative value, configure a value for the 'relative-to' attribute.
                The type of the keystore will be auto-detected among JKS, JCEKS, PKCS12 or PEM.
                BKS, BCFKS and UBER are also supported if the `bouncycastle` libary is present.
+               The path may be omitted when using global store providers, such as 'SunPKCS11-NSS-FIPS'.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1132,6 +1133,14 @@
                specified, and OpenSSL is available and supported on the platform and architecture, the
                'openssl' provider will be used. Otherwise the first provider found that can create an instance of the
                specified 'type' will be used.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="type">
+         <xs:annotation>
+            <xs:documentation>
+               The type of the keystore. Normally the type will be auto-detected. This attribute is required for
+               file-less keystores, for example when using the `SunPKCS11-nss-fips` provider.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
