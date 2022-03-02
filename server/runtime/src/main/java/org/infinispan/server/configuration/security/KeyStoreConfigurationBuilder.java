@@ -7,12 +7,14 @@ import static org.infinispan.server.configuration.security.KeyStoreConfiguration
 import static org.infinispan.server.configuration.security.KeyStoreConfiguration.PATH;
 import static org.infinispan.server.configuration.security.KeyStoreConfiguration.PROVIDER;
 import static org.infinispan.server.configuration.security.KeyStoreConfiguration.RELATIVE_TO;
+import static org.infinispan.server.configuration.security.KeyStoreConfiguration.TYPE;
 
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.InstanceSupplier;
+import org.infinispan.server.Server;
 
 /**
  * @since 10.0
@@ -69,6 +71,18 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
    public KeyStoreConfigurationBuilder relativeTo(String relativeTo) {
       attributes.attribute(RELATIVE_TO).set(relativeTo);
       return this;
+   }
+
+   public KeyStoreConfigurationBuilder type(String value) {
+      attributes.attribute(TYPE).set(value);
+      return this;
+   }
+
+   @Override
+   public void validate() {
+      if (attributes.attribute(PATH).isNull() && attributes.attribute(TYPE).isNull()) {
+         throw Server.log.filelessKeyStoreRequiresType();
+      }
    }
 
    @Override

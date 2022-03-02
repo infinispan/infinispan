@@ -245,4 +245,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid keystore '%s'", id = 80065)
    KeyStoreException invalidKeyStore(String filename);
+
+   @Message(value = "KeyStore definitions without a path must specify a type.", id = 80066)
+   CacheConfigurationException filelessKeyStoreRequiresType();
 }
