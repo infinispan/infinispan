@@ -601,12 +601,12 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          // We send 16 keys to each rail to be parallelized - if ParallelFlowable had a method like railCompose
          // we could use it, but unfortunately it does not.
          Flowable<R> stageFlowable = keyFlowable.window(16)
-               .flatMapSingle(keys -> {
+               .flatMapMaybe(keys -> {
                   // Due to window abandonment (check RxJava3 docs) we must subscribe synchronously and then
                   // observe on the publisher for parallelism
                   CompletionStage<R> stage = keyTransformer.apply(keys.observeOn(nonBlockingScheduler))
                         .to(collator::apply);
-                  return Single.fromCompletionStage(stage);
+                  return Maybe.fromCompletionStage(stage);
                });
          return finalizer.apply(stageFlowable).thenApply(ignoreSegmentsFunction());
       } else {
