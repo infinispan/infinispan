@@ -217,7 +217,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       localStage.whenComplete(biConsumer);
    }
 
-   // Finalizer isn't require as the FlowableProcessor already has that configured upstream
+   // Finalizer isn't required as the FlowableProcessor already has that configured upstream
    private static <I, R> void handleNoTargets(Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
          FlowableProcessor<R> flowableProcessor) {
       // Need to do this in case if the transformer or finalizer has additional values such as reduce with identity
@@ -516,12 +516,16 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       private void handleResult(PublisherResult<R> result) {
+         // DistributedCacheStream.reduce(accumulator) works with null as defaultItem when identity is not given
+         //  -> So null is a valid actualValue and does not mean we have suspect keys
+         Set<?> suspectedKeys = result.getSuspectedKeys();
+         if (suspectedKeys != null && !suspectedKeys.isEmpty()) {
+            keysToRetry.addAll((Set) suspectedKeys);
+         }
+
          R actualValue = result.getResult();
          if (actualValue != null) {
             flowableProcessor.onNext(actualValue);
-         } else {
-            // If there wasn't a result it means there was some suspected keys most likely
-            keysToRetry.addAll((Set) result.getSuspectedKeys());
          }
       }
 
