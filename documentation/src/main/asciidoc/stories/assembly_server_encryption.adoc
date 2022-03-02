@@ -8,6 +8,7 @@ You can also configure client certificate authentication if you require mutual T
 include::{topics}/proc_configuring_server_keystores.adoc[leveloffset=+1]
 include::{topics}/proc_server_generating_keystores.adoc[leveloffset=+2]
 include::{topics}/proc_server_configuring_ssl_engine.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_server_fips.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_client_cert_authn.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_client_cert_authz.adoc[leveloffset=+1]
 
