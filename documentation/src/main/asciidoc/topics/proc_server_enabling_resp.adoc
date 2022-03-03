@@ -1,0 +1,75 @@
+[id='enabling-resp-endpoint_{context}']
+= Enabling the RESP endpoint
+
+Add the `resp-connector` to {brandname} Server configuration to enable the RESP endpoint.
+You can enable the RESP endpoint with:
+
+* Standalone {brandname} Server deployments, exactly like standalone Redis, where each server instance runs independently of each other.
+* Clustered {brandname} Server deployments, where server instances replicate or distribute data between each other. Clustered deployments provides clients with failover capabilities.
+
+.Prerequisites
+
+* Install {brandname} Server.
+
+.Procedure
+
+. Open your {brandname} Server configuration for editing.
+. Add cache configuration to the `cache-container` section if required.
++
+Cache configuration cannot enable capabilities that violate the RESP protocol.
+For example, specifying expiration values in a cache for the RESP endpoint results in a fatal error at startup.
++
+[TIP]
+====
+Configure your cache with Protobuf encoding if you want to view cache entries in the {brandname} Console (`encoding media-type="application/x-protostream"`).
+====
+. Add an `endpoint` declaration to your configuration.
+. Add the `resp-connector` element and specify the name of the cache to use with the RESP connector with the `cache` attribute.
++
+You can use only one cache with the RESP endpoint.
+. Declare the security realm to use with the RESP endpoint with the `security-realm` attribute, if required.
+. Ensure that the endpoint declaration also adds a Hot Rod and REST connector.
+. Save the changes to your configuration.
+
+.Verification
+
+When you start {brandname} Server check for the following log message:
+
+[source,options="nowrap"]
+----
+[org.infinispan.SERVER] ISPN080018: Started connector Resp (internal)
+----
+
+You can now connect to the RESP endpoint with a Redis client.
+For example, with the Redis CLI you can do the following to add an entry to the cache:
+
+[source,options="nowrap"]
+----
+$ redis-cli -p 11222 --user username --pass password
+127.0.0.1:11222> SET k v
+OK
+127.0.0.1:11222> GET k
+"v"
+127.0.0.1:11222> quit
+----
+
+[discrete]
+=== RESP endpoint configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/resp_connector.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/resp_connector.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/resp_connector.yaml[]
+----

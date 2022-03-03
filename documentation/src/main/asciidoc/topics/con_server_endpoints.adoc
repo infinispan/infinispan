@@ -40,7 +40,6 @@ ifdef::community[]
 {brandname} provides an implementation of the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3] protocol.
 
 The RESP connector supports a subset of the Redis commands.
-
 endif::community[]
 
 == Memcached

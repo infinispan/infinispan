@@ -491,13 +491,14 @@
             </xs:all>
             <xs:attribute name="cache" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>Names the cache that the RESP connector exposes. Defaults to respCache.
+                  <xs:documentation>Names the cache that the RESP connector exposes. The default cache name is respCache.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="security-realm" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
+                  <xs:documentation>Specifies a security realm for the RESP connector.
+                  </xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>
