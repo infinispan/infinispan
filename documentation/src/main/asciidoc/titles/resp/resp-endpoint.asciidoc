@@ -15,7 +15,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= {brandname} RESP Client Guide
+= Using the RESP protocol endpoint with Infinispan
+
+Infinispan Server includes an endpoint that implements the RESP3 protocol and allows you to interact with remote caches using Redis clients.
 
 //User stories
 include::stories.adoc[]

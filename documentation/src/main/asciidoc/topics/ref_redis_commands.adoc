@@ -1,0 +1,21 @@
+[id='redis-commands_{context}']
+= Redis commands
+
+The {brandname} RESP endpoint implements the following Redis commands:
+
+* link:https://redis.io/commands/auth[AUTH]
+* link:https://redis.io/commands/decr[DECR]
+* link:https://redis.io/commands/del[DEL]
+* link:https://redis.io/commands/echo[ECHO]
+* link:https://redis.io/commands/get[GET]
+* link:https://redis.io/commands/hello[HELLO]
+* link:https://redis.io/commands/incr[INCR]
+* link:https://redis.io/commands/mget[MGET]
+* link:https://redis.io/commands/mset[MSET]
+* link:https://redis.io/commands/ping[PING]
+* link:https://redis.io/commands/publish[PUBLISH]
+* link:https://redis.io/commands/quit[QUIT]
+* link:https://redis.io/commands/reset[RESET]
+* link:https://redis.io/commands/set[SET]
+* link:https://redis.io/commands/subscribe[SUBSCRIBE]
+* link:https://redis.io/commands/unsubscribe[UNSUBSCRIBE]

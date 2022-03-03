@@ -1,0 +1,7 @@
+<endpoints>
+  <endpoint socket-binding="default" security-realm="default">
+    <resp-connector cache="mycache" />
+    <hotrod-connector />
+    <rest-connector/>
+  </endpoint>
+</endpoints>

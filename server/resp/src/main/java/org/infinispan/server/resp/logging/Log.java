@@ -20,10 +20,10 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
-   @Message(value = "Cache '%s' has expiration enabled which violates the Resp protocol", id = 12001)
+   @Message(value = "Cache '%s' has expiration enabled which violates the RESP protocol.", id = 12001)
    CacheConfigurationException invalidExpiration(String cacheName);
 
-   @Message(value = "Cannot enable authentication without an authenticator", id = 12002)
+   @Message(value = "Cannot enable authentication without an authenticator.", id = 12002)
    CacheConfigurationException authenticationWithoutAuthenticator();
 
    @LogMessage(level = WARN)
