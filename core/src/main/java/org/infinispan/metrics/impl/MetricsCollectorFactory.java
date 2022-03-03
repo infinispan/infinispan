@@ -8,6 +8,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 
@@ -16,7 +18,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry;
  * based on the presence of Micrometer in classpath and the enabling of metrics in config.
  *
  * @author anistor@redhat.com
- * @author fabiomassimo.ercoli@gmail.com
+ * @author Fabio Massimo Ercoli
  * @since 10.1
  */
 @DefaultFactoryFor(classes = MetricsCollector.class)
@@ -32,6 +34,29 @@ public final class MetricsCollectorFactory implements ComponentFactory, AutoInst
          return null;
       }
 
-      return new MetricsCollector(new PrometheusMeterRegistry(PrometheusConfig.DEFAULT));
+      PrometheusMeterRegistry baseRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+      baseRegistry.config().meterFilter(new BaseFilter());
+      PrometheusMeterRegistry vendorRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+      vendorRegistry.config().meterFilter(new VendorFilter());
+
+      return new MetricsCollector(baseRegistry, vendorRegistry);
+   }
+
+   private static class BaseFilter implements MeterFilter {
+      private static final String PREFIX = "base.";
+
+      @Override
+      public Meter.Id map(Meter.Id id) {
+         return id.withName(PREFIX + id.getName());
+      }
+   }
+
+   private static class VendorFilter implements MeterFilter {
+      private static final String PREFIX = "vendor.";
+
+      @Override
+      public Meter.Id map(Meter.Id id) {
+         return id.withName(PREFIX + id.getName());
+      }
    }
 }

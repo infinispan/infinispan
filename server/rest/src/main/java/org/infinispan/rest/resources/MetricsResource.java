@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
+import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -16,8 +17,6 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 
 /**
@@ -32,12 +31,12 @@ public final class MetricsResource implements ResourceHandler {
 
    private final boolean auth;
    private final Executor blockingExecutor;
-   private final MeterRegistry meterRegistry;
+   private final MetricsCollector metricsCollector;
 
    public MetricsResource(boolean auth, InvocationHelper invocationHelper) {
       this.auth = auth;
       this.blockingExecutor = invocationHelper.getExecutor();
-      meterRegistry = invocationHelper.getMetricsCollector().getRegistry();
+      this.metricsCollector = invocationHelper.getMetricsCollector();
    }
 
    @Override
@@ -53,8 +52,9 @@ public final class MetricsResource implements ResourceHandler {
          RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder();
 
          try {
+            // Content-type for Prometheus text version 0.0.4:
             builder.header("Content-Type", TextFormat.CONTENT_TYPE_004);
-            builder.entity(((PrometheusMeterRegistry)meterRegistry).scrape());
+            builder.entity(metricsCollector.getBaseRegistry().scrape() + metricsCollector.getVendorRegistry().scrape());
 
             return builder.build();
          } catch (Exception e) {
