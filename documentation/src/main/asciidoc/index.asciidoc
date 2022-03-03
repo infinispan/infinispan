@@ -45,5 +45,6 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod protocol reference]
 * link:titles/hibernate/hibernate.html[Hibernate second-level caching (2LC)]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
+* link:titles/resp/resp-endpoint.html[Using the RESP protocol endpoint with Infinispan]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
 * link:titles/memcached/memcached.html[Using the Memcached protocol endpoint with Infinispan]
