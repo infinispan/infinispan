@@ -34,13 +34,14 @@ public class RespDetector extends ByteToMessageDecoder {
          return;
       }
       int i = in.readerIndex();
+      // RESP commands start with * to symbolize a STRING sequence
       if (in.getByte(i) == 42) {
          // The Redis CLI sends commands as array. Accept it only if it is a HELLO or AUTH command
          CharSequence handshake = in.getCharSequence(i, in.readableBytes(), StandardCharsets.US_ASCII);
          if (RESP3_HANDSHAKE.matcher(handshake).matches()) {
             installRespHandler(ctx);
          } else {
-            out.add("-ERR Only RESP3 supported");
+            out.add("-ERR Only RESP3 supported\r\n");
          }
       } else if (in.getCharSequence(i, 5, StandardCharsets.US_ASCII).equals("HELLO")) {
          installRespHandler(ctx);

@@ -5,7 +5,9 @@ import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +21,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyValue;
@@ -120,8 +123,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       assertEquals(stringToSend, redis.echo(stringToSend));
    }
 
-   public void testPubSub() throws InterruptedException {
-      RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
+   private BlockingQueue<String> addPubSubListener(RedisPubSubCommands<String, String> connection) {
       BlockingQueue<String> handOffQueue = new LinkedBlockingQueue<>();
 
       connection.getStatefulConnection().addListener(new RedisPubSubAdapter<String, String>() {
@@ -140,6 +142,48 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
             handOffQueue.add("unsubscribed-" + channel + "-" + count);
          }
       });
+
+      return handOffQueue;
+   }
+
+   @DataProvider(name = "booleans")
+   Object[][] booleans() {
+      // Reset disabled for now as the client isn't sending a reset command to the server
+      return new Object[][]{/*{true},*/ {false}};
+   }
+
+   @Test(dataProvider = "booleans")
+   public void testPubSubUnsubscribe(boolean reset) throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to some channels
+      connection.subscribe("channel2", "test");
+      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertEquals("subscribed-channel2-0", value);
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertEquals("subscribed-test-0", value);
+
+      // Unsubscribe to all channels
+      if (reset) {
+         connection.reset();
+      } else {
+         connection.unsubscribe();
+      }
+
+      // Unsubscribed channels can be in different orders
+      for (int i = 0; i < 2; ++i) {
+         value = handOffQueue.poll(10, TimeUnit.SECONDS);
+         assertNotNull("Didn't receive any notifications", value);
+         if (!value.equals("unsubscribed-channel2-0") && !value.equals("unsubscribed-test-0")) {
+            fail("Notification doesn't match expected, was: " + value);
+         }
+      }
+   }
+
+   public void testPubSub() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
       // Subscribe to some channels
       connection.subscribe("channel2", "test");
       String value = handOffQueue.poll(10, TimeUnit.SECONDS);
