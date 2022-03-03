@@ -3,9 +3,8 @@ package org.infinispan.server.resp;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.resp.logging.Log;
 
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.output.PushOutput;
@@ -16,19 +15,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 public class RespLettuceHandler extends ByteToMessageDecoder {
-   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
-   private static final ByteBufAllocator ALLOCATOR = ByteBufAllocator.DEFAULT;
-   private final RedisStateMachine stateMachine = new RedisStateMachine(ALLOCATOR);
-   private final RespServer respServer;
+   private final RedisStateMachine stateMachine = new RedisStateMachine(ByteBufAllocator.DEFAULT);
    private RespRequestHandler requestHandler;
 
-   private final Cache<byte[], byte[]> cache;
-
    public RespLettuceHandler(RespServer respServer) {
-      this.respServer = respServer;
-      this.cache = respServer.getCache();
-      this.requestHandler = respServer.getHandler();
+      this.requestHandler = respServer.newHandler();
    }
 
    @Override
@@ -43,8 +36,8 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      log.error("Exception", cause);
-      ctx.writeAndFlush(requestHandler.stringToByteBuf("-ERR Server Error Encountered: " + cause.getMessage() + "\r\n", ctx.alloc()));
+      log.unexpectedException(cause);
+      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Server Error Encountered: " + cause.getMessage() + "\r\n", ctx.alloc()));
       ctx.close();
    }
 }

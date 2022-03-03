@@ -13,7 +13,7 @@ public interface RespRequestHandler {
       return this;
    }
 
-   default ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufAllocator allocator, int extraBytes) {
+   static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufAllocator allocator, int extraBytes) {
       boolean release = true;
       ByteBuf buffer = allocator.buffer(ByteBufUtil.utf8Bytes(string) + extraBytes);
 
@@ -29,7 +29,7 @@ public interface RespRequestHandler {
       return buffer;
    }
 
-   default ByteBuf stringToByteBuf(CharSequence string, ByteBufAllocator allocator) {
-      return stringToByteBufWithExtra(string, allocator,0);
+   static ByteBuf stringToByteBuf(CharSequence string, ByteBufAllocator allocator) {
+      return stringToByteBufWithExtra(string, allocator, 0);
    }
 }

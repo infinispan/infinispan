@@ -30,6 +30,7 @@ public class RespServerTest extends AbstractInfinispanTest {
                ms.start(new RespServerConfigurationBuilder().build(), cm);
                assertEquals(ms.getHost(), "127.0.0.1");
                assertEquals((int) ms.getPort(), RespServerConfiguration.DEFAULT_RESP_PORT);
+               assertEquals(ms.getCache().getName(), RespServerConfiguration.DEFAULT_RESP_CACHE);
             }));
    }
 
