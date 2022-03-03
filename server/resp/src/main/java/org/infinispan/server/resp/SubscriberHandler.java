@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -14,7 +15,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 import io.netty.buffer.ByteBuf;
@@ -24,13 +25,14 @@ import io.netty.util.CharsetUtil;
 
 public class SubscriberHandler implements RespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   // Random bytes to keep listener keys separate from others
    public static final byte[] PREFIX_CHANNEL_BYTES = new byte[]{-114, 16, 78, -3, 127};
    private final Resp3Handler handler;
    private final RespServer respServer;
 
-   public SubscriberHandler(RespServer respServer) {
+   public SubscriberHandler(RespServer respServer, Resp3Handler prevHandler) {
       this.respServer = respServer;
-      this.handler = respServer.getHandler();
+      this.handler = prevHandler;
    }
 
    public static byte[] keyToChannel(byte[] keyBytes) {
@@ -91,11 +93,10 @@ public class SubscriberHandler implements RespRequestHandler {
                   specificChannelSubscribers.put(wrappedByteArray, pubSubListener);
                   byte[] channel = keyToChannel(keyChannel);
                   respServer.getCache().addListenerAsync(pubSubListener, (key, prevValue, prevMetadata, value, metadata, eventType) ->
-                     Arrays.equals((key), channel), null)
+                              Arrays.equals(key, channel), null)
                         .whenComplete((ignore, t) -> {
                            if (t != null) {
-                              log.warnf("There was an error adding listener for channel %s",
-                                    CharsetUtil.UTF_8.decode(ByteBuffer.wrap(channel)));
+                              log.exceptionWhileRegisteringListener(t, CharsetUtil.UTF_8.decode(ByteBuffer.wrap(channel)));
                               ctx.writeAndFlush("-ERR Failure adding client listener");
                            } else {
                               ByteBuf subscribeBuffer = ctx.alloc().buffer(20 + (int) Math.log10(keyChannel.length) + 1 + keyChannel.length + 2);
@@ -110,8 +111,12 @@ public class SubscriberHandler implements RespRequestHandler {
             break;
          case "UNSUBSCRIBE":
             if (arguments.size() == 0) {
-               for (PubSubListener listener : specificChannelSubscribers.values()) {
+               for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+                  Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
+                  PubSubListener listener = entry.getValue();
                   respServer.getCache().removeListenerAsync(listener);
+                  iterator.remove();
+                  sendUnsubscribe(ctx, entry.getKey().getBytes());
                }
             } else {
                for (byte[] keyChannel : arguments) {
@@ -121,8 +126,7 @@ public class SubscriberHandler implements RespRequestHandler {
                      respServer.getCache().removeListenerAsync(listener)
                            .whenComplete((ignore, t) -> {
                               if (t != null) {
-                                 log.warnf("There was an error removing listener for channel %s",
-                                       CharsetUtil.UTF_8.decode(ByteBuffer.wrap(keyChannel)));
+                                 log.exceptionWhileRemovingListener(t, CharsetUtil.UTF_8.decode(ByteBuffer.wrap(keyChannel)));
                                  ctx.writeAndFlush("-ERR Failure unsubscribing client listener");
                               } else {
                                  sendUnsubscribe(ctx, keyChannel);
@@ -139,8 +143,12 @@ public class SubscriberHandler implements RespRequestHandler {
             handler.handleRequest(ctx, type, arguments);
             break;
          case "RESET":
-            for (PubSubListener listener : specificChannelSubscribers.values()) {
+            for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+               Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
+               PubSubListener listener = entry.getValue();
                respServer.getCache().removeListenerAsync(listener);
+               iterator.remove();
+               sendUnsubscribe(ctx, entry.getKey().getBytes());
             }
             return handler.handleRequest(ctx, type, arguments);
          case "QUIT":
@@ -148,7 +156,7 @@ public class SubscriberHandler implements RespRequestHandler {
             break;
          case "PSUBSCRIBE":
          case "PUNSUBSCRIBE":
-            ctx.writeAndFlush(stringToByteBuf("-ERR not implemented yet" + "\r\n", ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()));
             break;
          default:
             return RespRequestHandler.super.handleRequest(ctx, type, arguments);

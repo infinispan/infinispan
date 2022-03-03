@@ -14,14 +14,14 @@ import org.infinispan.server.resp.Authenticator;
 public class AuthenticationConfiguration extends ConfigurationElement<AuthenticationConfiguration> {
    public static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).immutable().build();
 
-   private final Boolean enabled;
+   private final boolean enabled;
    private final Authenticator authenticator;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AuthenticationConfiguration.class, SECURITY_REALM);
    }
 
-   AuthenticationConfiguration(AttributeSet attributes, Authenticator authenticator, Boolean enabled) {
+   AuthenticationConfiguration(AttributeSet attributes, Authenticator authenticator, boolean enabled) {
       super("authentication", attributes);
       this.enabled = enabled;
       this.authenticator = authenticator;

@@ -2,11 +2,7 @@ package org.infinispan.server.resp;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
-import javax.security.auth.Subject;
-
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -34,12 +30,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public static final String RESP_SERVER_FEATURE = "resp-server";
    private final static Log log = LogFactory.getLog(RespServer.class, Log.class);
 
-   private AdvancedCache<byte[], byte[]> respCache;
-   private final Resp3Handler handler;
-
    public RespServer() {
       super("Resp");
-      handler = new Resp3Handler(this);
    }
 
    @Override
@@ -60,8 +52,6 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       ExpirationConfiguration expConfig = cacheManager.getCacheConfiguration(configuration.defaultCacheName()).expiration();
       if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)
         throw log.invalidExpiration(configuration.defaultCacheName());
-      Cache<byte[], byte[]> cache = cacheManager.getCache(configuration.defaultCacheName());
-      respCache = cache.getAdvancedCache().withWrapping(ByteArrayWrapper.class);
       super.startInternal();
    }
 
@@ -94,16 +84,11 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    /**
     * Returns the cache being used by the Resp server
     */
-   public Cache<byte[], byte[]> getCache() {
-      return respCache;
+   public AdvancedCache<byte[], byte[]> getCache() {
+      return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache();
    }
 
-   public Resp3Handler getHandler() {
-      return handler;
-   }
-
-   public Cache<byte[], byte[]> applySubjectToCache(Subject subject) {
-      respCache = respCache.withSubject(subject);
-      return respCache;
+   public Resp3Handler newHandler() {
+      return new Resp3Handler(this);
    }
 }
