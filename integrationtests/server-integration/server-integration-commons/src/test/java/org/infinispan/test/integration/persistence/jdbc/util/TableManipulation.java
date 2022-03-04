@@ -8,6 +8,7 @@ import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFact
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableName;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 
 import java.sql.Connection;
@@ -32,7 +33,7 @@ public class TableManipulation implements AutoCloseable {
 
    public TableManipulation(String cacheName, PooledConnectionFactoryConfigurationBuilder persistenceConfiguration, ConfigurationBuilder configurationBuilder) {
       this.persistenceConfiguration = persistenceConfiguration;
-      this.tableName = String.format("%s%s_%s%s", DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING);
+      this.tableName = new TableName(DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName).getName();
       this.countRowsSql = "SELECT COUNT(*) FROM " + tableName;
       this.selectIdRowSqlWithLike = String.format("SELECT %s FROM %s WHERE %s LIKE ?", ID_COLUMN_NAME, tableName, ID_COLUMN_NAME);
    }
