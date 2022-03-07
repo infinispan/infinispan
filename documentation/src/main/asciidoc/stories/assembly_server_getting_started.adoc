@@ -2,12 +2,20 @@
 :context: server-getting-started
 = Getting started with {brandname} Server
 
-Quickly set up {brandname} Server and learn the basics.
+Install the server distribution, create a user, and start your first {brandname} cluster.
 
 //Community
 ifdef::community[]
 image:https://infinispan.org/assets/images/documentation/icon-get-started.png[Get started icon,height=32]
-You can also visit our link:https://infinispan.org/get-started/[Get Started with {brandname}] tutorial and run the server image in 4 easy steps.
+link:https://infinispan.org/get-started/[Start running {brandname} in 4 easy steps]
+
+[discrete]
+== Ansible collection
+
+link:https://github.com/ansible-middleware/infinispan[Ansible collection for Infinispan]
+
+Automate installation of {brandname} clusters with our Ansible collection that optionally includes Keycloak caches and cross-site replication configuration.
+The Ansible collection also lets you inject {brandname} caches into the static configuration for each server instance during installation.
 endif::community[]
 
 include::{topics}/ref_server_requirements.adoc[leveloffset=+1]
