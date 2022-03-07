@@ -8,6 +8,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.prometheus.PrometheusConfig;
@@ -36,6 +41,13 @@ public final class MetricsCollectorFactory implements ComponentFactory, AutoInst
 
       PrometheusMeterRegistry baseRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
       baseRegistry.config().meterFilter(new BaseFilter());
+
+      new ClassLoaderMetrics().bindTo(baseRegistry);
+      new JvmMemoryMetrics().bindTo(baseRegistry);
+      new JvmGcMetrics().bindTo(baseRegistry);
+      new ProcessorMetrics().bindTo(baseRegistry);
+      new JvmThreadMetrics().bindTo(baseRegistry);
+
       PrometheusMeterRegistry vendorRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
       vendorRegistry.config().meterFilter(new VendorFilter());
 
