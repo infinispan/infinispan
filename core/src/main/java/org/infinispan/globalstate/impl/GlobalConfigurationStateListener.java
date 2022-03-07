@@ -72,14 +72,12 @@ public class GlobalConfigurationStateListener {
          return CompletableFutures.completedNull();
 
       String name = event.getKey().getName();
-      CacheState state = event.getOldValue();
-
       if (CACHE_SCOPE.equals(scope)) {
          CONTAINER.debugf("Stopping cache %s because it was removed from global state", name);
-         return gcm.removeCacheLocally(name, state);
+         return gcm.removeCacheLocally(name);
       } else {
          CONTAINER.debugf("Removing template %s because it was removed from global state", name);
-         return gcm.removeTemplateLocally(name, state);
+         return gcm.removeTemplateLocally(name);
       }
    }
 }
