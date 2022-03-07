@@ -14,3 +14,8 @@ Take advantage of Kubernetes orchestration to automatically provision pods, impo
 .{rhel-long}
 
 Couple {rhel-short}, or Microsoft Windows, with Red Hat Ansible to manage {brandname} configuration and poll services to ensure availability and achieve optimal resource usage.
+
+//Community
+ifdef::community[]
+The link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}] automates cluster installation and includes options for Keycloak integration and cross-site replication.
+endif::community[]
