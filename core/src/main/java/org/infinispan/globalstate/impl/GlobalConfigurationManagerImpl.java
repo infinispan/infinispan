@@ -323,11 +323,11 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return getStateCache().removeAsync(new ScopedState(TEMPLATE_SCOPE, name)).thenCompose((r) -> CompletableFutures.completedNull());
    }
 
-   CompletionStage<Void> removeCacheLocally(String name, CacheState state) {
-      return localConfigurationManager.removeCache(name, state.getFlags()).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "cache", name));
+   CompletionStage<Void> removeCacheLocally(String name) {
+      return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "cache", name));
    }
 
-   CompletionStage<Void> removeTemplateLocally(String name, CacheState state) {
-      return localConfigurationManager.removeTemplate(name, state.getFlags()).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "template", name));
+   CompletionStage<Void> removeTemplateLocally(String name) {
+      return localConfigurationManager.removeTemplate(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, "template", name));
    }
 }
