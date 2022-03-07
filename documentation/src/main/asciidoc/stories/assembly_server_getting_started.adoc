@@ -12,7 +12,7 @@ link:https://infinispan.org/get-started/[Start running {brandname} in 4 easy ste
 [discrete]
 == Ansible collection
 
-link:https://github.com/ansible-middleware/infinispan[Ansible collection for Infinispan]
+link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}]
 
 Automate installation of {brandname} clusters with our Ansible collection that optionally includes Keycloak caches and cross-site replication configuration.
 The Ansible collection also lets you inject {brandname} caches into the static configuration for each server instance during installation.
