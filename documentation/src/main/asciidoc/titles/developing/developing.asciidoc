@@ -15,7 +15,11 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 
 //Title
-= Developing for {brandname} {infinispanversion}
+= Infinispan developer's guide
+
+Develop applications with Infinispan using various APIs.
+This guide explains Infinispan's `Cache` API and provides details for certain cache configuration such as locking and transactions.
+This guide also tells you how to execute processing logic directly on Infinispan clusters.
 
 //User stories
 include::stories.adoc[]

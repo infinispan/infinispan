@@ -43,6 +43,7 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:titles/embedding/embedding.html[Embedding caches in Java applications]
 * link:titles/hotrod_java/hotrod_java.html[Using Hot Rod Java clients]
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod protocol reference]
+* link:titles/developing/developing.html[Infinispan developer's guide]
 * link:titles/hibernate/hibernate.html[Hibernate second-level caching (2LC)]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
