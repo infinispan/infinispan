@@ -15,12 +15,11 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.irac.IracCleanupKeyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
+import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
-import org.infinispan.commands.irac.IracPutKeyCommand;
-import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
@@ -458,11 +457,8 @@ public class RemoteCommandsFactory {
             case CheckTransactionRpcCommand.COMMAND_ID:
                command = new CheckTransactionRpcCommand(cacheName);
                break;
-            case IracPutKeyCommand.COMMAND_ID:
-               command = new IracPutKeyCommand(cacheName);
-               break;
-            case IracCleanupKeyCommand.COMMAND_ID:
-               command = new IracCleanupKeyCommand(cacheName);
+            case IracCleanupKeysCommand.COMMAND_ID:
+               command = new IracCleanupKeysCommand(cacheName);
                break;
             case IracMetadataRequestCommand.COMMAND_ID:
                command = new IracMetadataRequestCommand(cacheName);
@@ -472,9 +468,6 @@ public class RemoteCommandsFactory {
                break;
             case IracStateResponseCommand.COMMAND_ID:
                command = new IracStateResponseCommand(cacheName);
-               break;
-            case IracRemoveKeyCommand.COMMAND_ID:
-               command = new IracRemoveKeyCommand(cacheName);
                break;
             case IracClearKeysCommand.COMMAND_ID:
                command = new IracClearKeysCommand(cacheName);
@@ -502,6 +495,9 @@ public class RemoteCommandsFactory {
                break;
             case IracTombstonePrimaryCheckCommand.COMMAND_ID:
                command = new IracTombstonePrimaryCheckCommand(cacheName);
+               break;
+            case IracPutManyCommand.COMMAND_ID:
+               command = new IracPutManyCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

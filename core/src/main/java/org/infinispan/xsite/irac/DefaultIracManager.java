@@ -4,12 +4,14 @@ import static org.infinispan.commons.util.IntSets.mutableCopyFrom;
 import static org.infinispan.commons.util.IntSets.mutableEmptySet;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -17,10 +19,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupKeysCommand;
+import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -58,7 +63,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.util.ExponentialBackOffImpl;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -69,32 +73,37 @@ import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * Default implementation of {@link IracManager}.
  * <p>
- * It tracks the keys updated by this site and sends them, periodically, to the configured remote
- * sites.
+ * It tracks the keys updated by this site and sends them, periodically, to the configured remote sites.
  * <p>
- * The primary owner coordinates everything. It sends the updates request to the remote site and
- * coordinates the local site backup owners. After sending the updates to the remote site, it sends
- * a cleanup request to the local site backup owners
+ * The primary owner coordinates everything. It sends the updates request to the remote site and coordinates the local
+ * site backup owners. After sending the updates to the remote site, it sends a cleanup request to the local site backup
+ * owners
  * <p>
  * The backup owners only keeps a backup list of the tracked keys.
  * <p>
- * On topology change, the updated keys list is replicate to the new owner(s). Also, if a segment is
- * being transferred (i.e. the primary owner isn't a write and read owner), no updates to the remote
- * site is sent since, most likely, the node doesn't have the most up-to-date value.
+ * On topology change, the updated keys list is replicate to the new owner(s). Also, if a segment is being transferred
+ * (i.e. the primary owner isn't a write and read owner), no updates to the remote site is sent since, most likely, the
+ * node doesn't have the most up-to-date value.
  *
  * @author Pedro Ruivo
  * @since 11.0
  */
 @MBean(objectName = "AsyncXSiteStatistics", description = "Statistics for Asynchronous cross-site replication")
 @Scope(Scopes.NAMED_CACHE)
-public class DefaultIracManager implements IracManager, JmxStatisticsExposer, IracResponseCollector.IracResponseCompleted {
+public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(DefaultIracManager.class);
+   private static final Predicate<Map.Entry<Object, IracManagerKeyState>> CLEAR_PREDICATE = e -> {
+      e.getValue().discard();
+      return true;
+   };
 
    @Inject RpcManager rpcManager;
    @Inject TakeOfflineManager takeOfflineManager;
@@ -164,6 +173,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
 
    @Override
    public CompletionStage<Void> trackForStateTransfer(Collection<XSiteState> stateList) {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Tracking state for state transfer: %s", Util.toStr(stateList));
+      }
       AggregateCompletionStage<Void> cf = CompletionStages.aggregateCompletionStage();
       LocalizedCacheTopology topology = clusteringDependentLogic.getCacheTopology();
       for (XSiteState state : stateList) {
@@ -185,18 +197,15 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
          log.tracef("Tracking clear request. Replicate to backup sites? %s", sendClear);
       }
       hasClear = sendClear;
-      updatedKeys.values().removeIf(state -> {
-         state.discard();
-         return true;
-      });
+      updatedKeys.entrySet().removeIf(CLEAR_PREDICATE);
       if (sendClear) {
          iracExecutor.run();
       }
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner) {
-      removeStateFromLocal(new IracManagerKeyInfoImpl(segment, key, lockOwner));
+   public void removeState(IracManagerKeyInfo state) {
+      removeStateFromLocal(state);
    }
 
    @Override
@@ -333,7 +342,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
       }
       IracManagerKeyState old = updatedKeys.put(state.getKey(), state);
       if (old != null) {
-         //avoid sending the cleanup command to the cluster members
+         // avoid sending the cleanup command to the cluster members
          old.discard();
       }
       iracExecutor.run();
@@ -342,7 +351,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
    private CompletionStage<Void> run() {
       // this run on a blocking thread!
       if (log.isTraceEnabled()) {
-         log.tracef("[IRAC] Sending keys to remote site(s). Has clear? %s, keys: %s", hasClear, updatedKeys.keySet());
+         log.tracef("[IRAC] Sending keys to remote site(s). Is clear? %s, keys: %s", hasClear, Util.toStr(updatedKeys.keySet()));
       }
       if (hasClear) {
          // clear doesn't work very well with concurrent updates
@@ -350,46 +359,16 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
          return sendClearUpdate();
       }
 
-      for (IracManagerKeyState state : updatedKeys.values()) {
-         if (!state.canSend()) {
-            continue;
-         }
-         DistributionInfo dInfo = getDistributionInfo(state.getSegment());
-         if (!dInfo.isPrimary()) {
-            state.retry();
-            continue;
-         } else if (!dInfo.isWriteOwner()) {
-            // topology changed! cleanup the key
-            state.discard();
-            continue;
-         } else if (!dInfo.isReadOwner()) {
-            // state transfer in progress (we are a write owner but not a read owner)
-            // we need the data in DataContainer and CacheLoaders, so we must wait until we
-            // receive the key or will end up sending a remove update.
-            // when the new topology arrives, this will be triggered again
-            state.retry();
-            continue;
-         }
-
-         fetchEntry(state.getKey(), dInfo.segmentId()).thenApply(
-               lEntry -> lEntry == null ? buildRemoveCommand(state) : commandsFactory.buildIracPutKeyCommand(lEntry))
-               .thenAccept(cmd -> {
-                  if (cmd == null) { // only buildRemoveCommand can return null if tombstone is missing
-                     log.sendFailMissingTombstone(Util.toStr(state.getKey()));
-                     // avoid retrying
-                     onResponseCompleted(state, IracResponseCollector.Result.OK);
-                     return;
-                  }
-                  sendCommandToAllBackups(cmd, state, this);
-               })
-               .exceptionally(throwable -> {
-                  state.retry();
-                  onUnexpectedThrowable(throwable);
-                  return null;
-               });
-
-      }
-      return CompletableFutures.completedNull();
+      return Flowable.fromIterable(updatedKeys.values())
+            .filter(this::canStateBeSent)
+            .concatMapMaybe(this::fetchEntry)
+            .buffer(batchSize)
+            .concatMapCompletable(this::sendUpdateBatch)
+            .onErrorComplete(t -> {
+               onUnexpectedThrowable(t);
+               return true;
+            })
+            .toCompletionStage(null);
    }
 
    public void setBackOff(ExponentialBackOff backOff) {
@@ -400,41 +379,126 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
       return updatedKeys.isEmpty();
    }
 
-   private CompletionStage<Void> sendClearUpdate() {
-      // make sure the clear is replicated everywhere before sending the updates!
-      CompletableFuture<Void> cf = new CompletableFuture<>();
-      sendCommandToAllBackups(commandsFactory.buildIracClearKeysCommand(), null, (s, r) -> {
-         onRoundCompleted(r, true);
-         cf.complete(null);
-      });
-      return cf;
+   private boolean canStateBeSent(IracManagerKeyState state) {
+      LocalizedCacheTopology cacheTopology = clusteringDependentLogic.getCacheTopology();
+      DistributionInfo dInfo = cacheTopology.getSegmentDistribution(state.getSegment());
+      //not the primary, we do not send the update to the remote site.
+      if (!dInfo.isWriteOwner() && !dInfo.isReadOwner()) {
+         // topology changed! we no longer have the key; just drop it
+         state.discard();
+         removeStateFromLocal(state);
+         return false;
+      }
+      return dInfo.isPrimary() && state.canSend();
    }
 
-   private void onRoundCompleted(IracResponseCollector.Result result, boolean isClear) {
-      if (log.isTraceEnabled()) {
-         log.tracef("[IRAC] Round completed (is clear? %s). Result: %s", isClear, result);
+   private Maybe<IracStateData> fetchEntry(IracManagerKeyState state) {
+      return Maybe.fromCompletionStage(clusteringDependentLogic.getEntryLoader()
+            .loadAndStoreInDataContainer(state.getKey(), state.getSegment())
+            .thenApply(e -> new IracStateData(state, e, iracTombstoneManager.getTombstone(state.getKey())))
+            .exceptionally(throwable -> {
+               log.debugf(throwable, "[IRAC] Failed to load entry to send to remote sites. It will be retried. State=%s", state);
+               state.retry();
+               return null;
+            }));
+   }
+
+   private CompletableSource sendUpdateBatch(Collection<? extends IracStateData> batch) {
+      int size = batch.size();
+      boolean trace = log.isTraceEnabled();
+
+      if (trace) {
+         log.tracef("[IRAC] Batch ready to send remote site with %d keys", size);
+      }
+
+      if (size == 0) {
+         if (trace) {
+            log.trace("[IRAC] Batch not sent, reason: batch is empty");
+         }
+         return Completable.complete();
+      }
+      IracPutManyCommand cmd = commandsFactory.buildIracPutManyCommand(size);
+      Collection<IracManagerKeyState> invalidState = new ArrayList<>(size);
+      Collection<IracManagerKeyState> validState = new ArrayList<>(size);
+      for (IracStateData data : batch) {
+         if (data.entry == null && data.tombstone == null) {
+            // there a concurrency issue where the entry and the tombstone do not exist (remove following by a put)
+            // the put will create a new state and the key will be sent to the remote sites
+            invalidState.add(data.state);
+            continue;
+         }
+         validState.add(data.state);
+         if (data.state.isExpiration()) {
+            cmd.addExpire(data.state.getKey(), data.tombstone);
+         } else if (data.entry == null) {
+            cmd.addRemove(data.state.getKey(), data.tombstone);
+         } else {
+            cmd.addUpdate(data.state.getKey(), data.entry.getValue(), data.entry.getMetadata(), data.entry.getInternalMetadata().iracMetadata());
+         }
+      }
+      IracResponseCollector rspCollector = new IracResponseCollector(commandsFactory.getCacheName(), validState, this::onBatchResponse);
+      try {
+         for (IracXSiteBackup backup : asyncBackups) {
+            if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
+               continue; // backup is offline
+            }
+            rspCollector.dependsOn(backup, sendToRemoteSite(backup, cmd));
+         }
+      } catch (Throwable throwable) {
+         // marshalling error? JGroups error?
+         for (IracStateData data : batch) {
+            data.state.retry();
+         }
+         onUnexpectedThrowable(throwable);
+         return Completable.complete();
+      }
+
+      if (!invalidState.isEmpty()) {
+         if (trace) {
+            log.tracef("[IRAC] Removing %d invalid state(s)", invalidState.size());
+         }
+         invalidState.forEach(IracManagerKeyState::discard);
+         removeStateFromCluster(invalidState);
+      }
+
+      return Completable.fromCompletionStage(rspCollector.freeze());
+   }
+
+   private CompletionStage<Void> sendClearUpdate() {
+      // make sure the clear is replicated everywhere before sending the updates!
+      IracClearKeysCommand cmd = commandsFactory.buildIracClearKeysCommand();
+      IracClearResponseCollector collector = new IracClearResponseCollector(commandsFactory.getCacheName());
+      for (IracXSiteBackup backup : asyncBackups) {
+         if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
+            continue; // backup is offline
+         }
+         collector.dependsOn(backup, sendToRemoteSite(backup, cmd));
+      }
+      return collector.freeze().handle(this::onClearCompleted);
+   }
+
+   private Void onClearCompleted(IracBatchSendResult result, Throwable throwable) {
+      if (throwable != null) {
+         onUnexpectedThrowable(throwable);
+         return null;
       }
       switch (result) {
          case OK:
+            hasClear = false;
+            // fallthrough
+         case RETRY:
             iracExecutor.disableBackOff();
-            if (isClear) {
-               hasClear = false;
-               // re-schedule after clear
-               iracExecutor.run();
-            }
-            return;
-         case NETWORK_EXCEPTION:
+            iracExecutor.run();
+            break;
+         case BACK_OFF_AND_RETRY:
             iracExecutor.enableBackOff();
             iracExecutor.run();
-            return;
-         case REMOTE_EXCEPTION:
-            // retry
-            iracExecutor.disableBackOff();
-            iracExecutor.run();
-            return;
+            break;
          default:
             onUnexpectedThrowable(new IllegalStateException("Unknown result: " + result));
+            break;
       }
+      return null;
    }
 
    private void onUnexpectedThrowable(Throwable throwable) {
@@ -454,110 +518,106 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
       return rsp;
    }
 
-   private void removeStateFromCluster(IracManagerKeyInfo state) {
-      if (log.isTraceEnabled()) {
-         log.tracef("Replication completed for state %s", state);
+   private void removeStateFromCluster(Collection<? extends IracManagerKeyInfo> stateToCleanup) {
+      if (stateToCleanup.isEmpty()) {
+         return;
       }
-      // removes the key from the "updated keys map" in all owners.
-      DistributionInfo dInfo = getDistributionInfo(state.getSegment());
-      IracCleanupKeyCommand cmd = commandsFactory.buildIracCleanupKeyCommand(state.getSegment(), state.getKey(), state.getOwner());
-      rpcManager.sendToMany(dInfo.writeOwners(), cmd, DeliverOrder.NONE);
-      removeStateFromLocal(state);
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Removing states from cluster: %s", Util.toStr(stateToCleanup));
+      }
+
+      IntSet segments = mutableEmptySet();
+      LocalizedCacheTopology cacheTopology = clusteringDependentLogic.getCacheTopology();
+      Set<Address> owners = new HashSet<>(cacheTopology.getMembers().size());
+      for (IracManagerKeyInfo state : stateToCleanup) {
+         if (segments.add(state.getSegment())) {
+            owners.addAll(cacheTopology.getSegmentDistribution(state.getSegment()).writeOwners());
+         }
+      }
+
+      IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(stateToCleanup);
+      rpcManager.sendToMany(owners, cmd, DeliverOrder.NONE);
+      stateToCleanup.forEach(this::removeStateFromLocal);
    }
 
    private void removeStateFromLocal(IracManagerKeyInfo state) {
       //noinspection SuspiciousMethodCalls
       boolean removed = updatedKeys.remove(state.getKey(), state);
       if (log.isTraceEnabled()) {
-         log.tracef("Removing state '%s'. removed=%s", state, removed);
+         log.tracef("[IRAC] State removed? %s, state=%s", removed, state);
       }
    }
 
-   private DistributionInfo getDistributionInfo(int segmentId) {
-      return clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segmentId);
-   }
-
-   private void sendCommandToAllBackups(XSiteReplicateCommand<Void> command, IracManagerKeyState state, IracResponseCollector.IracResponseCompleted notifier) {
-      assert Objects.nonNull(command);
-      IracResponseCollector collector = new IracResponseCollector(commandsFactory.getCacheName(), state, notifier);
-      for (IracXSiteBackup backup : asyncBackups) {
-         if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
-            continue; // backup is offline
-         }
-         collector.dependsOn(backup, sendToRemoteSite(backup, command));
+   private void onBatchResponse(IracBatchSendResult result, Collection<? extends IracManagerKeyState> successfulSent) {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Batch completed with %d keys applied. Global result=%s", successfulSent.size(), result);
       }
-      collector.freeze();
-   }
-
-   private XSiteReplicateCommand<Void> buildRemoveCommand(IracManagerKeyState state) {
-      IracMetadata metadata = iracTombstoneManager.getTombstone(state.getKey());
-      if (metadata == null) {
-         return null;
+      switch (result) {
+         case OK:
+            iracExecutor.disableBackOff();
+            break;
+         case RETRY:
+            iracExecutor.disableBackOff();
+            iracExecutor.run();
+            break;
+         case BACK_OFF_AND_RETRY:
+            iracExecutor.enableBackOff();
+            iracExecutor.run();
+            break;
+         default:
+            onUnexpectedThrowable(new IllegalStateException("Unknown result: " + result));
+            break;
       }
-      return commandsFactory.buildIracRemoveKeyCommand(state.getKey(), metadata, state.isExpiration());
-   }
-
-   private CompletionStage<InternalCacheEntry<Object, Object>> fetchEntry(Object key, int segmentId) {
-      return clusteringDependentLogic.getEntryLoader().loadAndStoreInDataContainer(key, segmentId);
-   }
-
-   @Override
-   public void onResponseCompleted(IracManagerKeyState state, IracResponseCollector.Result result) {
-      if (result == IracResponseCollector.Result.OK && state.done()) {
-         removeStateFromCluster(state);
-      } else {
-         state.retry();
-      }
-      onRoundCompleted(result, false);
+      removeStateFromCluster(successfulSent);
    }
 
    @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)",
          displayName = "Queue size",
          measurementType = MeasurementType.DYNAMIC)
    public int getQueueSize() {
-      return getStatisticsEnabled() ? updatedKeys.size() : -1;
+      return statisticsEnabled ? updatedKeys.size() : -1;
    }
 
    @ManagedAttribute(description = "Number of tombstones stored",
          displayName = "Number of tombstones",
          measurementType = MeasurementType.DYNAMIC)
    public int getNumberOfTombstones() {
-      return getStatisticsEnabled() ? iracTombstoneManager.size() : -1;
+      return statisticsEnabled ? iracTombstoneManager.size() : -1;
    }
 
    @ManagedAttribute(description = "The total number of conflicts between local and remote sites.",
          displayName = "Number of conflicts",
          measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflicts() {
-      return getStatisticsEnabled() ? sumConflicts() : -1;
+      return statisticsEnabled ? sumConflicts() : -1;
    }
 
    @ManagedAttribute(description = "The number of updates from remote sites discarded (duplicate or old update).",
          displayName = "Number of discards",
          measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfDiscards() {
-      return getStatisticsEnabled() ? discardCounts.longValue() : -1;
+      return statisticsEnabled ? discardCounts.longValue() : -1;
    }
 
    @ManagedAttribute(description = "The number of conflicts where the merge policy discards the remote update.",
          displayName = "Number of conflicts where local value is used",
          measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictsLocalWins() {
-      return getStatisticsEnabled() ? conflictLocalWinsCount.longValue() : -1;
+      return statisticsEnabled ? conflictLocalWinsCount.longValue() : -1;
    }
 
    @ManagedAttribute(description = "The number of conflicts where the merge policy applies the remote update.",
          displayName = "Number of conflicts where remote value is used",
          measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictsRemoteWins() {
-      return getStatisticsEnabled() ? conflictRemoteWinsCount.longValue() : -1;
+      return statisticsEnabled ? conflictRemoteWinsCount.longValue() : -1;
    }
 
    @ManagedAttribute(description = "Number of conflicts where the merge policy created a new entry.",
          displayName = "Number of conflicts merged",
          measurementType = MeasurementType.TRENDSUP)
    public long getNumberOfConflictsMerged() {
-      return getStatisticsEnabled() ? conflictMergedCount.longValue() : -1;
+      return statisticsEnabled ? conflictMergedCount.longValue() : -1;
    }
 
    @ManagedAttribute(description = "Is tombstone cleanup task running?",
@@ -628,4 +688,17 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer, Ir
    public boolean containsKey(Object key) {
       return updatedKeys.containsKey(key);
    }
+
+   private static final class IracStateData {
+      final IracManagerKeyState state;
+      final InternalCacheEntry<Object, Object> entry;
+      final IracMetadata tombstone;
+
+      private IracStateData(IracManagerKeyState state, InternalCacheEntry<Object, Object> entry, IracMetadata tombstone) {
+         this.state = Objects.requireNonNull(state);
+         this.entry = entry;
+         this.tombstone = tombstone;
+      }
+   }
+
 }
