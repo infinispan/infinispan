@@ -19,16 +19,8 @@ import org.infinispan.xsite.statetransfer.XSiteState;
  * @since 11.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public class NoOpIracManager implements IracManager {
-
-   private static final NoOpIracManager INSTANCE = new NoOpIracManager();
-
-   private NoOpIracManager() {
-   }
-
-   public static NoOpIracManager getInstance() {
-      return INSTANCE;
-   }
+public enum NoOpIracManager implements IracManager {
+   INSTANCE;
 
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
@@ -51,8 +43,8 @@ public class NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner) {
-      // no-op
+   public void removeState(IracManagerKeyInfo state) {
+      //no-op
    }
 
    @Override

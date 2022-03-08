@@ -1,5 +1,8 @@
 package org.infinispan.commons.util;
 
+import static org.infinispan.commons.marshall.MarshallUtil.marshallByteArray;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallByteArray;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -13,8 +16,6 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
-
-import org.infinispan.commons.io.UnsignedNumeric;
 
 /**
  * Represent a set of integers (e.g. segments) as a {@code BitSet}.
@@ -241,12 +242,11 @@ public class SmallIntSet implements IntSet {
     * Add an integer to the set without boxing the parameter.
     */
    public boolean add(int i) {
-      boolean wasSet = bitSet.get(i);
-      if (!wasSet) {
-         bitSet.set(i);
-         return true;
+      if (bitSet.get(i)) {
+         return false;
       }
-      return false;
+      bitSet.set(i);
+      return true;
    }
 
    /**
@@ -445,7 +445,7 @@ public class SmallIntSet implements IntSet {
    public boolean equals(Object o) {
       if (this == o)
          return true;
-      if (o == null || !(o instanceof Set))
+      if (!(o instanceof Set))
          return false;
 
       if (o instanceof SmallIntSet) {
@@ -484,23 +484,11 @@ public class SmallIntSet implements IntSet {
    }
 
    public static void writeTo(ObjectOutput output, SmallIntSet set) throws IOException {
-      UnsignedNumeric.writeUnsignedInt(output, set.capacity());
-      UnsignedNumeric.writeUnsignedInt(output, set.size());
-      BitSet bitSet = set.bitSet;
-      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
-         UnsignedNumeric.writeUnsignedInt(output, i);
-      }
+      marshallByteArray(set == null ? null : set.bitSet.toByteArray(), output);
    }
 
    public static SmallIntSet readFrom(ObjectInput input) throws IOException {
-      int capacity = UnsignedNumeric.readUnsignedInt(input);
-      int size = UnsignedNumeric.readUnsignedInt(input);
-
-      SmallIntSet set = new SmallIntSet(capacity);
-      for (int i = 0; i < size; i++) {
-         int element = UnsignedNumeric.readUnsignedInt(input);
-         set.set(element);
-      }
-      return set;
+      byte[] bytes = unmarshallByteArray(input);
+      return bytes == null ? null : new SmallIntSet(BitSet.valueOf(bytes));
    }
 }

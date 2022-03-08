@@ -14,14 +14,14 @@ import org.infinispan.xsite.irac.IracManager;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand<Void> {
+public abstract class IracUpdateKeyCommand<T> extends XSiteReplicateCommand<T> {
 
    protected IracUpdateKeyCommand(byte commandId, ByteString cacheName) {
       super(commandId, cacheName);
    }
 
    @Override
-   public final CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+   public final CompletionStage<T> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
       assert !preserveOrder : "IRAC Update Command sent asynchronously!";
       return executeOperation(receiver);
    }
@@ -36,7 +36,7 @@ public abstract class IracUpdateKeyCommand extends XSiteReplicateCommand<Void> {
       return false;
    }
 
-   public abstract CompletionStage<Void> executeOperation(BackupReceiver receiver);
+   public abstract CompletionStage<T> executeOperation(BackupReceiver receiver);
 
    public boolean isClear() {
       return false; //by default

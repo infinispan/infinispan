@@ -44,7 +44,7 @@ public interface IracManager {
    void trackExpiredKey(int segment, Object key, Object lockOwner);
 
    /**
-    * Tracks a set of keys to be send to the remote site.
+    * Tracks a set of keys to be sent to the remote site.
     * <p>
     * There is no much difference between this method and {@link #trackUpdatedKey(int, Object, Object)}. It just returns
     * a {@link CompletionStage} to notify when the keys were sent. It is required by the cross-site state transfer
@@ -62,15 +62,11 @@ public interface IracManager {
    void trackClear();
 
    /**
-    * Sets the {@code key} as not changed and remove any tombstone related to it.
-    * <p>
-    * If {@code lockOwner} isn't the last one who updated the key, this method is a no-op.
+    * Removes the state associated to a single key.
     *
-    * @param segment   The key's segment.
-    * @param key       The key.
-    * @param lockOwner The lock owner who updated the key.
+    * @param state The state to remove.
     */
-   void cleanupKey(int segment, Object key, Object lockOwner);
+   void removeState(IracManagerKeyInfo state);
 
    /**
     * Notifies a topology changed.
