@@ -25,12 +25,11 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupKeysCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
-import org.infinispan.commands.irac.IracPutKeyCommand;
-import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
@@ -94,7 +93,6 @@ import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.IracTombstoneInfo;
 import org.infinispan.encoding.DataConversion;
@@ -108,7 +106,6 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
@@ -136,6 +133,7 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
+import org.infinispan.xsite.irac.IracManagerKeyInfo;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.reactivestreams.Publisher;
@@ -640,13 +638,9 @@ public interface CommandsFactory {
 
    TouchCommand buildTouchCommand(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet);
 
-   <K,V> IracPutKeyCommand buildIracPutKeyCommand(InternalCacheEntry<K, V> entry);
-
-   IracRemoveKeyCommand buildIracRemoveKeyCommand(Object key, IracMetadata iracMetadata, boolean expiration);
-
    IracClearKeysCommand buildIracClearKeysCommand();
 
-   IracCleanupKeyCommand buildIracCleanupKeyCommand(int segment, Object key, Object lockOwner);
+   IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<? extends IracManagerKeyInfo> state);
 
    IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(IracTombstoneInfo tombstone);
 
@@ -672,4 +666,6 @@ public interface CommandsFactory {
    IracTombstoneStateResponseCommand buildIracTombstoneStateResponseCommand(Collection<IracTombstoneInfo> state);
 
    IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(int capacity);
+
+   IracPutManyCommand buildIracPutManyCommand(int capacity);
 }

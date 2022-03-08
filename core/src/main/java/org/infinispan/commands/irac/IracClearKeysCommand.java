@@ -1,6 +1,5 @@
 package org.infinispan.commands.irac;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
@@ -15,7 +14,7 @@ import org.infinispan.xsite.irac.IracManager;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public class IracClearKeysCommand extends IracUpdateKeyCommand {
+public class IracClearKeysCommand extends IracUpdateKeyCommand<Void> {
 
    public static final byte COMMAND_ID = 17;
 
@@ -38,13 +37,11 @@ public class IracClearKeysCommand extends IracUpdateKeyCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-
+   public void writeTo(ObjectOutput output) {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-
+   public void readFrom(ObjectInput input) {
    }
 
    @Override

@@ -48,8 +48,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void cleanupKey(int segment, Object key, Object lockOwner) {
-      actual.cleanupKey(segment, key, lockOwner);
+   public void removeState(IracManagerKeyInfo state) {
+      actual.removeState(state);
    }
 
    @Override

@@ -1,48 +1,51 @@
 package org.infinispan.commands.irac;
 
+import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.IracManagerKeyInfo;
+import org.infinispan.xsite.irac.IracManagerKeyInfoImpl;
 
 /**
- * Sends a cleanup request from primary owner to backup owners.
+ * Sends a cleanup request from the primary owner to the backup owners.
  * <p>
  * Sent after a successful update of all remote sites.
  *
  * @author Pedro Ruivo
  * @since 11.0
  */
-public class IracCleanupKeyCommand implements CacheRpcCommand {
+public class IracCleanupKeysCommand implements CacheRpcCommand {
 
    public static final byte COMMAND_ID = 122;
 
    private ByteString cacheName;
-   private int segment;
-   private Object key;
-   private Object lockOwner;
+   private Collection<? extends IracManagerKeyInfo> cleanup;
 
    @SuppressWarnings("unused")
-   public IracCleanupKeyCommand() {
+   public IracCleanupKeysCommand() {
    }
 
-   public IracCleanupKeyCommand(ByteString cacheName) {
+   public IracCleanupKeysCommand(ByteString cacheName) {
       this.cacheName = cacheName;
    }
 
-   public IracCleanupKeyCommand(ByteString cacheName, int segment, Object key, Object lockOwner) {
+   public IracCleanupKeysCommand(ByteString cacheName, Collection<? extends IracManagerKeyInfo> cleanup) {
       this.cacheName = cacheName;
-      this.segment = segment;
-      this.key = key;
-      this.lockOwner = lockOwner;
+      this.cleanup = cleanup;
    }
 
    @Override
@@ -52,7 +55,8 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync(ComponentRegistry componentRegistry) {
-      componentRegistry.getIracManager().running().cleanupKey(segment, key, lockOwner);
+      IracManager manager = componentRegistry.getIracManager().running();
+      cleanup.forEach(manager::removeState);
       return CompletableFutures.completedNull();
    }
 
@@ -68,27 +72,12 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeInt(segment);
-      output.writeObject(key);
-      boolean cId = lockOwner instanceof CommandInvocationId;
-      output.writeBoolean(cId);
-      if (cId) {
-         CommandInvocationId.writeTo(output, (CommandInvocationId) lockOwner);
-      } else {
-         output.writeObject(lockOwner);
-      }
+      marshallCollection(cleanup, output, IracManagerKeyInfoImpl::writeTo);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.segment = input.readInt();
-      this.key = input.readObject();
-      boolean cId = input.readBoolean();
-      if (cId) {
-         lockOwner = CommandInvocationId.readFrom(input);
-      } else {
-         this.lockOwner = input.readObject();
-      }
+      cleanup = unmarshallCollection(input, ArrayList::new, IracManagerKeyInfoImpl::readFrom);
    }
 
    @Override
@@ -106,8 +95,7 @@ public class IracCleanupKeyCommand implements CacheRpcCommand {
    public String toString() {
       return "IracCleanupKeyCommand{" +
             "cacheName=" + cacheName +
-            ", key=" + Util.toStr(key) +
-            ", lockOwner=" + lockOwner +
+            ", cleanup=" + Util.toStr(cleanup) +
             '}';
    }
 }
