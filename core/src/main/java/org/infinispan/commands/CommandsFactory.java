@@ -642,7 +642,7 @@ public interface CommandsFactory {
 
    IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<? extends IracManagerKeyInfo> state);
 
-   IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(IracTombstoneInfo tombstone);
+   IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(int maxCapacity);
 
    IracMetadataRequestCommand buildIracMetadataRequestCommand(int segment, IracEntryVersion versionSeen);
 
@@ -661,11 +661,11 @@ public interface CommandsFactory {
 
    XSiteSetStateTransferModeCommand buildXSiteSetStateTransferModeCommand(String site, XSiteStateTransferMode mode);
 
-   IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(Object key);
+   IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(List<Object> keys);
 
    IracTombstoneStateResponseCommand buildIracTombstoneStateResponseCommand(Collection<IracTombstoneInfo> state);
 
-   IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(int capacity);
+   IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(Collection<IracTombstoneInfo> tombstones);
 
    IracPutManyCommand buildIracPutManyCommand(int capacity);
 }

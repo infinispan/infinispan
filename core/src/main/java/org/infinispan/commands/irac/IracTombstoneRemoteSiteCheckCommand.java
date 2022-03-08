@@ -3,19 +3,33 @@ package org.infinispan.commands.irac;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.PrimitiveIterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.irac.IracManager;
 
 /**
  * A {@link XSiteReplicateCommand} to check tombstones for IRAC algorithm.
@@ -25,12 +39,11 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  *
  * @since 14.0
  */
-public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<Boolean> {
+public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<IntSet> {
 
    public static final byte COMMAND_ID = 38;
 
-   // TODO add batching https://issues.redhat.com/browse/ISPN-13496
-   private Object key;
+   private List<Object> keys;
 
    @SuppressWarnings("unused")
    public IracTombstoneRemoteSiteCheckCommand() {
@@ -41,9 +54,9 @@ public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<B
       super(COMMAND_ID, cacheName);
    }
 
-   public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName, Object key) {
+   public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName, List<Object> keys) {
       super(COMMAND_ID, cacheName);
-      this.key = key;
+      this.keys = keys;
    }
 
    @Override
@@ -52,8 +65,20 @@ public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<B
    }
 
    @Override
-   public CompletionStage<Boolean> invokeAsync(ComponentRegistry registry) {
-      return isKeyInIracManager(registry);
+   public CompletionStage<IntSet> invokeAsync(ComponentRegistry registry) {
+      int numberOfKeys = keys.size();
+      IntSet toKeepIndexes = IntSets.mutableEmptySet(numberOfKeys);
+      LocalizedCacheTopology topology = registry.getDistributionManager().getCacheTopology();
+      IracManager iracManager = registry.getIracManager().running();
+      for (int index = 0; index < numberOfKeys; ++index) {
+         Object key = keys.get(index);
+         // if we are not the primary owner mark the tombstone to keep
+         // if we have a pending update to send, mark the tombstone to keep
+         if (!topology.getDistribution(key).isPrimary() || iracManager.containsKey(key)) {
+            toKeepIndexes.set(index);
+         }
+      }
+      return CompletableFuture.completedFuture(toKeepIndexes);
    }
 
    @Override
@@ -62,18 +87,42 @@ public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<B
    }
 
    @Override
-   public CompletionStage<Boolean> performInLocalSite(ComponentRegistry registry, boolean preserveOrder) {
-      DistributionInfo distribution = registry.getDistributionManager().getCacheTopology().getDistribution(key);
-      if (distribution.isPrimary()) {
-         return isKeyInIracManager(registry);
-      } else {
-         RpcManager manager = registry.getRpcManager().running();
-         return manager.invokeCommand(distribution.primary(), this, new BooleanResponseCollector(), manager.getSyncRpcOptions());
+   public CompletionStage<IntSet> performInLocalSite(ComponentRegistry registry, boolean preserveOrder) {
+      LocalizedCacheTopology topology = registry.getDistributionManager().getCacheTopology();
+      IracManager iracManager = registry.getIracManager().running();
+      RpcManager rpcManager = registry.getRpcManager().running();
+      RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+      int numberOfKeys = keys.size();
+
+      Map<Address, IntSetResponseCollector> primaryOwnerKeys = new HashMap<>(rpcManager.getMembers().size());
+      IntSet toKeepIndexes = IntSets.concurrentSet(numberOfKeys);
+
+      for (int index = 0 ; index  < numberOfKeys; ++index) {
+         Object key = keys.get(index);
+         DistributionInfo dInfo = topology.getDistribution(key);
+         if (dInfo.isPrimary()) {
+            if (iracManager.containsKey(key)) {
+               toKeepIndexes.set(index);
+            }
+         } else {
+            IntSetResponseCollector collector = primaryOwnerKeys.computeIfAbsent(dInfo.primary(), a -> new IntSetResponseCollector(numberOfKeys, toKeepIndexes));
+            collector.add(index, key);
+         }
       }
+      if (primaryOwnerKeys.isEmpty()) {
+         return CompletableFuture.completedFuture(toKeepIndexes);
+      }
+
+      AggregateCompletionStage<IntSet> stage = CompletionStages.aggregateCompletionStage(toKeepIndexes);
+      for (Map.Entry<Address, IntSetResponseCollector> entry : primaryOwnerKeys.entrySet()) {
+         IracTombstoneRemoteSiteCheckCommand cmd = new IracTombstoneRemoteSiteCheckCommand(cacheName, entry.getValue().getKeys());
+         stage.dependsOn(rpcManager.invokeCommand(entry.getKey(), cmd, entry.getValue(), rpcOptions));
+      }
+      return stage.freeze();
    }
 
    @Override
-   public CompletionStage<Boolean> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
+   public CompletionStage<IntSet> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
       throw new IllegalStateException("Should never be invoked!");
    }
 
@@ -84,12 +133,12 @@ public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<B
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
+      MarshallUtil.marshallCollection(keys, output);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.key = input.readObject();
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
    }
 
    @Override
@@ -107,24 +156,64 @@ public class IracTombstoneRemoteSiteCheckCommand extends XSiteReplicateCommand<B
    public String toString() {
       return "IracSiteTombstoneCheckCommand{" +
             "cacheName=" + cacheName +
-            ", key=" + Util.toStr(key) +
+            ", keys=" + keys.stream().map(Util::toStr).collect(Collectors.joining(",")) +
             '}';
    }
 
-   private CompletionStage<Boolean> isKeyInIracManager(ComponentRegistry registry) {
-      return CompletableFutures.booleanStage(registry.getIracManager().running().containsKey(key));
-   }
+   private static class IntSetResponseCollector extends ValidSingleResponseCollector<Void> {
 
-   private static final class BooleanResponseCollector extends ValidSingleResponseCollector<Boolean> {
+      private final List<Object> keys;
+      private final int[] keyIndexes;
+      private final IntSet globalToKeepIndexes;
+      private int nextInsertPosition;
 
-      @Override
-      protected Boolean withValidResponse(Address sender, ValidResponse response) {
-         return (Boolean) response.getResponseValue();
+      private IntSetResponseCollector(int maxCapacity, IntSet globalToKeepIndexes) {
+         keys = new ArrayList<>(maxCapacity);
+         keyIndexes = new int[maxCapacity];
+         this.globalToKeepIndexes = globalToKeepIndexes;
+      }
+
+      void add(int index, Object key) {
+         assert nextInsertPosition < keyIndexes.length;
+         keys.add(key);
+         keyIndexes[nextInsertPosition++] = index;
+      }
+
+      List<Object> getKeys() {
+         return keys;
       }
 
       @Override
-      protected Boolean targetNotFound(Address sender) {
-         return Boolean.TRUE;
+      protected Void withValidResponse(Address sender, ValidResponse response) {
+         Object rsp = response.getResponseValue();
+         assert rsp instanceof IntSet;
+         IntSet toKeep = (IntSet) rsp;
+
+         for (PrimitiveIterator.OfInt it = toKeep.iterator(); it.hasNext(); ) {
+            int localPosition = it.nextInt();
+            assert localPosition < keyIndexes.length;
+            globalToKeepIndexes.set(keyIndexes[localPosition]);
+         }
+         return null;
+      }
+
+      @Override
+      protected Void withException(Address sender, Exception exception) {
+         markAllToKeep();
+         return null;
+      }
+
+      @Override
+      protected Void targetNotFound(Address sender) {
+         markAllToKeep();
+         return null;
+      }
+
+      private void markAllToKeep() {
+         for (int index : keyIndexes) {
+            globalToKeepIndexes.set(index);
+         }
       }
    }
+
 }
