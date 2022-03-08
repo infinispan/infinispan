@@ -106,7 +106,7 @@ public class IracStateResponseCommand implements CacheRpcCommand {
    }
 
    private static void writeStateTo(ObjectOutput output, State state) throws IOException {
-      IracManagerKeyInfoImpl.writeTo(state.keyInfo, output);
+      IracManagerKeyInfoImpl.writeTo(output, state.keyInfo);
       IracMetadata.writeTo(output, state.tombstone);
    }
 

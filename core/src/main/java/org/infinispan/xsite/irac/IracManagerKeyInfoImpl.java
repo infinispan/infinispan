@@ -61,7 +61,7 @@ public class IracManagerKeyInfoImpl implements IracManagerKeyInfo {
       return result;
    }
 
-   public static void writeTo(IracManagerKeyInfo keyInfo, ObjectOutput output) throws IOException {
+   public static void writeTo(ObjectOutput output, IracManagerKeyInfo keyInfo) throws IOException {
       if (keyInfo == null) {
          output.writeObject(null);
          return;
