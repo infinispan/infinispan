@@ -6,12 +6,15 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,6 +30,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.xsite.status.SiteState;
@@ -82,6 +86,11 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       CommandsFactory factory = Mockito.mock(CommandsFactory.class);
       IracTombstoneRemoteSiteCheckCommand cmd = Mockito.mock(IracTombstoneRemoteSiteCheckCommand.class);
       Mockito.when(factory.buildIracTombstoneRemoteSiteCheckCommand(ArgumentMatchers.any())).thenReturn(cmd);
+
+      IracTombstoneCleanupCommand cmd2 = Mockito.mock(IracTombstoneCleanupCommand.class);
+      Mockito.when(cmd2.isEmpty()).thenReturn(false);
+      Mockito.when(factory.buildIracTombstoneCleanupCommand(ArgumentMatchers.anyInt())).thenReturn(cmd2);
+
       return factory;
    }
 
@@ -117,13 +126,24 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       return Mockito.mock(IracMetadata.class);
    }
 
+   private static BlockingManager createBlockingManager() {
+      BlockingManager blockingManager = Mockito.mock(BlockingManager.class);
+      Mockito.when(blockingManager.asExecutor(ArgumentMatchers.anyString())).thenReturn(new WithinThreadExecutor());
+      Mockito.when(blockingManager.thenComposeBlocking(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).thenAnswer(invocationOnMock -> {
+         CompletionStage<Void> stage = invocationOnMock.getArgument(0);
+         Function<Void, CompletionStage<Object>> f = invocationOnMock.getArgument(1);
+         return stage.thenCompose(f);
+      });
+      return blockingManager;
+   }
+
    private static DefaultIracTombstoneManager createIracTombstoneManager(Queue<? super RunnableData> queue, int targetSize, long maxDelay, AtomicBoolean keep) {
       DefaultIracTombstoneManager manager = new DefaultIracTombstoneManager(createConfiguration(targetSize, maxDelay));
       TestingUtil.inject(manager,
             createDistributionManager(),
             createTakeOfflineManager(),
             createIracManager(keep),
-            new WithinThreadExecutor(),
+            createBlockingManager(),
             createScheduledExecutorService(queue),
             createCommandFactory(),
             createRpcManager());

@@ -358,7 +358,7 @@ public class BackupSenderImpl implements BackupSender {
 
       synchronized void addException(String siteName, Throwable throwable) {
          if (exception == null) {
-            exception = new BackupFailureException();
+            exception = new BackupFailureException(cacheName);
          }
          exception.addFailure(siteName, throwable);
       }
