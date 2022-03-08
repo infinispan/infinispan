@@ -6,12 +6,11 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupKeysCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
-import org.infinispan.commands.irac.IracPutKeyCommand;
-import org.infinispan.commands.irac.IracRemoveKeyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
@@ -126,8 +125,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             ScatteredStateGetKeysCommand.class, ScatteredStateConfirmRevokedCommand.class,
             StateTransferCancelCommand.class, StateTransferGetListenersCommand.class,
             StateTransferGetTransactionsCommand.class, StateTransferStartCommand.class,
-            IracPutKeyCommand.class, IracRemoveKeyCommand.class, IracClearKeysCommand.class,
-            IracCleanupKeyCommand.class, IracMetadataRequestCommand.class,
+            IracClearKeysCommand.class,
+            IracCleanupKeysCommand.class, IracMetadataRequestCommand.class,
             IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class,
             IracUpdateVersionCommand.class,
             XSiteAutoTransferStatusCommand.class,
@@ -135,7 +134,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracTombstoneCleanupCommand.class,
             IracTombstoneStateResponseCommand.class,
             IracTombstonePrimaryCheckCommand.class,
-            IracTombstoneRemoteSiteCheckCommand.class);
+            IracTombstoneRemoteSiteCheckCommand.class,
+            IracPutManyCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
