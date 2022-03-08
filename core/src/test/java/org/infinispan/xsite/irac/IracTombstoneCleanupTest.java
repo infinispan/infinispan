@@ -113,9 +113,11 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       IracTombstoneCleanupCommand cmd = pRpcManager.findSingleCommand(IracTombstoneCleanupCommand.class);
 
       assertNotNull(cmd);
-      assertEquals(segment, cmd.getTombstone().getSegment());
-      assertEquals(key, cmd.getTombstone().getKey());
-      assertEquals(metadata, cmd.getTombstone().getMetadata());
+      assertEquals(1, cmd.getTombstonesToRemove().size());
+      IracTombstoneInfo tombstone = cmd.getTombstonesToRemove().iterator().next();
+      assertEquals(segment, tombstone.getSegment());
+      assertEquals(key, tombstone.getKey());
+      assertEquals(metadata, tombstone.getMetadata());
    }
 
    public void testBackupOwnerRoundCleanupDoNotCleanupPrimary(Method method) {

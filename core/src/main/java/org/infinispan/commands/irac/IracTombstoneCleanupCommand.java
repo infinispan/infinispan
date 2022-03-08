@@ -1,12 +1,19 @@
 package org.infinispan.commands.irac;
 
+import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.container.versioning.irac.IracTombstoneInfo;
+import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -25,21 +32,20 @@ public class IracTombstoneCleanupCommand implements CacheRpcCommand {
    public static final byte COMMAND_ID = 37;
 
    private final ByteString cacheName;
-   // TODO add batching https://issues.redhat.com/browse/ISPN-13496
-   private IracTombstoneInfo tombstone;
+   private Collection<IracTombstoneInfo> tombstonesToRemove;
 
    @SuppressWarnings("unused")
    public IracTombstoneCleanupCommand() {
-      this(null);
+      this(null, 1);
    }
 
    public IracTombstoneCleanupCommand(ByteString cacheName) {
-      this.cacheName = cacheName;
+      this(cacheName, 1);
    }
 
-   public IracTombstoneCleanupCommand(ByteString cacheName, IracTombstoneInfo tombstone) {
-      this(cacheName);
-      this.tombstone = tombstone;
+   public IracTombstoneCleanupCommand(ByteString cacheName, int maxCapacity) {
+      this.cacheName = cacheName;
+      tombstonesToRemove = new HashSet<>(maxCapacity);
    }
 
    @Override
@@ -49,7 +55,8 @@ public class IracTombstoneCleanupCommand implements CacheRpcCommand {
 
    @Override
    public CompletionStage<Boolean> invokeAsync(ComponentRegistry registry) {
-      registry.getIracTombstoneManager().running().removeTombstone(tombstone);
+      IracTombstoneManager tombstoneManager = registry.getIracTombstoneManager().running();
+      tombstonesToRemove.forEach(tombstoneManager::removeTombstone);
       return CompletableFutures.completedNull();
    }
 
@@ -65,12 +72,12 @@ public class IracTombstoneCleanupCommand implements CacheRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      IracTombstoneInfo.writeTo(output, tombstone);
+      marshallCollection(tombstonesToRemove, output, IracTombstoneInfo::writeTo);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.tombstone = IracTombstoneInfo.readFrom(input);
+      tombstonesToRemove = unmarshallCollection(input, ArrayList::new, IracTombstoneInfo::readFrom);
    }
 
    @Override
@@ -88,11 +95,23 @@ public class IracTombstoneCleanupCommand implements CacheRpcCommand {
    public String toString() {
       return "IracTombstoneCleanupCommand{" +
             "cacheName=" + cacheName +
-            ", tombstone=" + tombstone +
+            ", tombstone=" + tombstonesToRemove +
             '}';
    }
 
-   public IracTombstoneInfo getTombstone() {
-      return tombstone;
+   public void add(IracTombstoneInfo tombstone) {
+      tombstonesToRemove.add(tombstone);
+   }
+
+   public int size() {
+      return tombstonesToRemove.size();
+   }
+
+   public boolean isEmpty() {
+      return tombstonesToRemove.isEmpty();
+   }
+
+   public Collection<IracTombstoneInfo> getTombstonesToRemove() {
+      return tombstonesToRemove;
    }
 }

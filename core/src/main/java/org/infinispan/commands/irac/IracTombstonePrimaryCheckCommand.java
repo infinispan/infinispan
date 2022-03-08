@@ -39,9 +39,9 @@ public class IracTombstonePrimaryCheckCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public IracTombstonePrimaryCheckCommand(ByteString cacheName, int capacity) {
+   public IracTombstonePrimaryCheckCommand(ByteString cacheName, Collection<IracTombstoneInfo> tombstoneToCheck) {
       this.cacheName = cacheName;
-      this.tombstoneToCheck = new ArrayList<>(capacity);
+      this.tombstoneToCheck = tombstoneToCheck;
    }
 
    @Override
@@ -92,15 +92,6 @@ public class IracTombstonePrimaryCheckCommand implements CacheRpcCommand {
             "cacheName=" + cacheName +
             ", tombstoneToCheck=" + tombstoneToCheck +
             '}';
-   }
-
-   public int addTombstone(IracTombstoneInfo tombstone) {
-      tombstoneToCheck.add(tombstone);
-      return tombstoneToCheck.size();
-   }
-
-   public boolean isEmpty() {
-      return tombstoneToCheck.isEmpty();
    }
 
    public Collection<IracTombstoneInfo> getTombstoneToCheck() {
