@@ -10,10 +10,7 @@ ifdef::context[:parent-context: {context}]
 * Lower operational costs.
 
 include::{topics}/con_infinispan_deployment_models.adoc[leveloffset=+1]
-//Downstream content
-ifdef::downstream[]
 include::{topics}/con_platforms_automation_tooling.adoc[leveloffset=+2]
-endif::downstream[]
 include::{topics}/con_in_line_caching.adoc[leveloffset=+1]
 include::{topics}/con_side_caching.adoc[leveloffset=+1]
 include::{topics}/con_distributed_memory.adoc[leveloffset=+1]
