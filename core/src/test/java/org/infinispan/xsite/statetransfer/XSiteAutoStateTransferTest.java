@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.commands.irac.IracCleanupKeyCommand;
+import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -197,7 +197,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       SiteMasterController controller = findSiteMaster();
 
       //let the state command go through
-      controller.getRpcManager().excludeCommands(XSiteStatePushCommand.class, IracCleanupKeyCommand.class,
+      controller.getRpcManager().excludeCommands(XSiteStatePushCommand.class, IracCleanupKeysCommand.class,
             IracTombstoneStateResponseCommand.class, StateTransferCancelCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 =
             controller.getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
@@ -279,7 +279,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
                                                     StateTransferStartCommand.class, StateResponseCommand.class,
                                                     StateTransferCancelCommand.class,
                                                     IracRequestStateCommand.class, IracStateResponseCommand.class,
-                                                    IracUpdateVersionCommand.class, IracCleanupKeyCommand.class,
+                                                    IracUpdateVersionCommand.class, IracCleanupKeysCommand.class,
                                                     IracTombstoneStateResponseCommand.class);
       //the JGroups events triggers this command where NodeB checks if it needs to starts the transfer
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 = newSiteMaster

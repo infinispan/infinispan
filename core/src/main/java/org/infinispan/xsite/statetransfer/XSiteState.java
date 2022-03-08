@@ -7,8 +7,9 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -62,8 +63,8 @@ public class XSiteState {
    @Override
    public String toString() {
       return "XSiteState{" +
-            "key=" + key +
-            ", value=" + value +
+            "key=" + Util.toStr(key) +
+            ", value=" + Util.toStr(value) +
             ", metadata=" + metadata +
             ", internalMetadata=" + internalMetadata +
             '}';
