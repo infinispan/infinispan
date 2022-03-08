@@ -691,8 +691,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(IracTombstoneInfo tombstone) {
-      return actual.buildIracTombstoneCleanupCommand(tombstone);
+   public IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(int maxCapacity) {
+      return actual.buildIracTombstoneCleanupCommand(maxCapacity);
    }
 
    @Override
@@ -737,8 +737,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(Object key) {
-      return actual.buildIracTombstoneRemoteSiteCheckCommand(key);
+   public IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(List<Object> keys) {
+      return actual.buildIracTombstoneRemoteSiteCheckCommand(keys);
    }
 
    @Override
@@ -747,8 +747,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(int capacity) {
-      return actual.buildIracTombstonePrimaryCheckCommand(capacity);
+   public IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(Collection<IracTombstoneInfo> tombstones) {
+      return actual.buildIracTombstonePrimaryCheckCommand(tombstones);
    }
 
    @Override

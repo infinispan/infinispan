@@ -723,8 +723,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(IracTombstoneInfo tombstone) {
-      return new IracTombstoneCleanupCommand(cacheName, tombstone);
+   public IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(int maxCapacity) {
+      return new IracTombstoneCleanupCommand(cacheName, maxCapacity);
    }
 
    @Override
@@ -769,8 +769,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(Object key) {
-      return new IracTombstoneRemoteSiteCheckCommand(cacheName, key);
+   public IracTombstoneRemoteSiteCheckCommand buildIracTombstoneRemoteSiteCheckCommand(List<Object> keys) {
+      return new IracTombstoneRemoteSiteCheckCommand(cacheName, keys);
    }
 
    @Override
@@ -779,8 +779,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(int capacity) {
-      return new IracTombstonePrimaryCheckCommand(cacheName, capacity);
+   public IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(Collection<IracTombstoneInfo> tombstones) {
+      return new IracTombstonePrimaryCheckCommand(cacheName, tombstones);
    }
 
    @Override

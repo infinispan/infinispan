@@ -208,6 +208,24 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    @Override
+   public <I, O> CompletionStage<O> thenComposeBlocking(CompletionStage<? extends I> stage,
+         Function<? super I, ? extends CompletionStage<O>> function, Object traceId) {
+      if (CompletionStages.isCompletedSuccessfully(stage) && isCurrentThreadBlocking()) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoked thenComposeBlocking on a blocking thread, joining %s in same blocking thread", traceId);
+         }
+
+         try {
+            I value = CompletionStages.join(stage);
+            return function.apply(value);
+         } catch (Throwable t) {
+            return CompletableFutures.completedExceptionFuture(t);
+         }
+      }
+      return continueOnNonBlockingThread(stage.thenComposeAsync(function, blockingExecutor), traceId);
+   }
+
+   @Override
    public <V> CompletionStage<V> whenCompleteBlocking(CompletionStage<V> stage,
          BiConsumer<? super V, ? super Throwable> biConsumer, Object traceId) {
       if (isCurrentThreadBlocking()) {
