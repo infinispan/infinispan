@@ -31,7 +31,6 @@
         <extension module="org.wildfly.extension.request-controller"/>
         <extension module="org.wildfly.extension.security.manager"/>
         <extension module="org.wildfly.extension.undertow"/>
-        <extension module="org.wildfly.extension.microprofile.config-smallrye"/>
     </extensions>
     <management>
         <security-realms>

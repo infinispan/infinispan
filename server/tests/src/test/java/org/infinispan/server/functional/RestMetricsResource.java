@@ -81,7 +81,7 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testMicroprofileMetrics() {
+   public void testMetrics() {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -137,7 +137,7 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testMicroprofileTimerMetrics() {
+   public void testTimerMetrics() {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -178,7 +178,7 @@ public class RestMetricsResource {
    }
 
    @Test
-   public void testMicroprofileMetricsMetadata() {
+   public void testMetricsMetadata() {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
