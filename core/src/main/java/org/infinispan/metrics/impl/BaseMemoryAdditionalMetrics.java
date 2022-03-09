@@ -21,7 +21,7 @@ public class BaseMemoryAdditionalMetrics implements MeterBinder {
 
       Gauge.builder("memory.maxHeap", memoryBean, (mem) -> mem.getHeapMemoryUsage().getMax())
             .baseUnit(BaseUnits.BYTES)
-            .description("Displays the maximum amount of memory in bytes that can be used for memory management.")
+            .description("Displays the maximum amount of memory, in bytes, that can be used for memory management.")
             .register(registry);
 
       Gauge.builder("memory.usedHeap", memoryBean, (mem) -> mem.getHeapMemoryUsage().getUsed())
@@ -51,7 +51,7 @@ public class BaseMemoryAdditionalMetrics implements MeterBinder {
 
       Gauge.builder("memory.initNonHeap", memoryBean, (mem) -> mem.getNonHeapMemoryUsage().getInit())
             .baseUnit(BaseUnits.BYTES)
-            .description("Displays the initial amount of allocated memory in bytes for non-heap.")
+            .description("Displays the initial amount of allocated memory, in bytes, for off-heap storage.")
             .register(registry);
    }
 }

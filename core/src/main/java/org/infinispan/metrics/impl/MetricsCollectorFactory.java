@@ -43,7 +43,7 @@ public final class MetricsCollectorFactory implements ComponentFactory, AutoInst
          return create();
       } catch (Throwable e) {
          // missing dependency
-         log.debug("Micrometer metrics are not available due to missing classpath dependencies.", e);
+         log.debug("Micrometer metrics are not available because classpath dependencies are missing.", e);
          return null;
       }
    }

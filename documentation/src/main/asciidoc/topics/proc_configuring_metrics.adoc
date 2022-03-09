@@ -1,13 +1,19 @@
 [id='configuring-metrics_{context}']
 = Configuring {brandname} metrics
 
-{brandname} generates metrics that are compatible with the Prometheus format using Micrometer.
+{brandname} generates metrics that are compatible with any monitoring system.
 
 * Gauges provide values such as the average number of nanoseconds for write operations or JVM uptime.
 * Histograms provide details about operation execution times such as read,
 write, and remove times.
 
 By default, {brandname} generates gauges when you enable statistics but you can also configure it to generate histograms.
+
+ifdef::embedded_caches[]
+.Prerequisites
+
+* You must add Micrometer Core and Micrometer Registry Prometheus JARs to your classpath to export {brandname} metrics for embedded caches.
+endif::embedded_caches[]
 
 .Procedure
 
@@ -45,10 +51,9 @@ ifdef::embedded_caches[]
 include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 ----
 endif::embedded_caches[]
-
+ifdef::remote_caches[]
 .Verification
 
-ifdef::remote_caches[]
 {brandname} Server exposes statistics through the `metrics` endpoint.
 You can collect metrics with any monitoring tool that supports the OpenMetrics format, such as Prometheus.
 
@@ -63,13 +68,9 @@ $ curl -v http://localhost:11222/metrics
 
 [NOTE]
 ====
-Metrics in MicroProfile JSON format are not supported anymore.
+Metrics in MicroProfile JSON format are no longer supported.
 ====
-
 endif::remote_caches[]
-ifdef::embedded_caches[]
-For embedded caches, you must add the necessary Micrometer Core and Micrometer Registry Prometheus JARs to your classpath to export {brandname} metrics.
-endif::embedded_caches[]
 
 [role="_additional-resources"]
 .Additional resources

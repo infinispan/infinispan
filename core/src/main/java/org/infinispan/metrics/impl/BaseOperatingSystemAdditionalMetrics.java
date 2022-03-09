@@ -46,18 +46,18 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
             .register(registry);
 
       Gauge.builder("cpu.systemLoadAverage", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
-            .description("Displays the system load average for the last minute. The system load average is the sum of the number of runnable entities queued to the available processors and the number of runnable entities running on the available processors averaged over a period of time. The way in which the load average is calculated is operating system specific but is typically a damped time-dependent average. If the load average is not available, a negative value is displayed. This attribute is designed to provide a hint about the system load and may be queried frequently. The load average may be unavailable on some platform where it is expensive to implement this method.")
+            .description("Displays the system load average for the last minute. The system load average is the sum of the number of runnable entities queued to the available processors and the number of runnable entities running on the available processors averaged over a period of time. The way in which the load average is calculated is operating system specific but is typically a damped time-dependent average. If the load average is not available, a negative value is displayed. This attribute is designed to provide a hint about the system load and may be queried frequently. The load average might be unavailable on some platforms where it is expensive to implement this method.")
             .register(registry);
 
       if (processCpuLoadMethod != null) {
          Gauge.builder("cpu.processCpuLoad", () -> invoke(processCpuLoadMethod))
-               .description("Displays the \"recent cpu usage\" for the Java Virtual Machine process.")
+               .description("Displays the \"recent cpu usage\" for the Java virtual machine process.")
                .register(registry);
       }
 
       if (processCpuTimeMethod != null) {
          Gauge.builder("cpu.processCpuTime", () -> invoke(processCpuTimeMethod))
-               .description("Displays the CPU time used by the process on which the Java virtual machine is running in nanoseconds")
+               .description("Displays the CPU time, in nanoseconds, used by the process on which the Java virtual machine is running.")
                .register(registry);
       }
    }
@@ -98,7 +98,7 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
          }
          return (double) returnedValue;
       } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-         log.warn("Error invoking method %1$1", method, e);
+         log.warn("An error occurred while invoking method %1$1.", method, e);
          return -1;
       }
    }

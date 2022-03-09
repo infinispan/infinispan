@@ -77,7 +77,7 @@ import org.infinispan.util.concurrent.CompletionStages;
  * @author Jerry Gauthier
  * @since 9.0
  */
-@MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
+@MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, and so on.")
 public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Inject ComponentRef<AdvancedCache<?, ?>> cache;
@@ -109,7 +109,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       this.hitTimes = hitTimes;
    }
 
-   @ManagedAttribute(description = "Miss times", displayName = "Miss times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
+   @ManagedAttribute(description = "Miss Times", displayName = "Miss Times", dataType = DataType.TIMER, units = Units.NANOSECONDS)
    public void setMissTimes(TimerTracker missTimes) {
       this.missTimes = missTimes;
    }

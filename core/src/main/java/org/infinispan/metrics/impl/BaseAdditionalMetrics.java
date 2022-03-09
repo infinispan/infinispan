@@ -53,7 +53,7 @@ class BaseAdditionalMetrics implements MeterBinder {
 
          FunctionCounter.builder("gc.time", garbageCollectorBean, GarbageCollectorMXBean::getCollectionTime)
                .tags(Tags.of("name", garbageCollectorBean.getName()))
-               .description("Displays the approximate accumulated collection elapsed time in milliseconds. This attribute displays -1 if the collection elapsed time is undefined for this collector. The Java virtual machine implementation may use a high resolution timer to measure the elapsed time. This attribute may display the same value even if the collection count has been incremented if the collection elapsed time is very short.")
+               .description("Displays the approximate accumulated collection elapsed time in milliseconds. This attribute displays -1 if the collection elapsed time is undefined for this collector. The Java virtual machine implementation may use a high resolution timer to measure the elapsed time. This attribute might display the same value even if the collection count has been incremented if the collection elapsed time is very short.")
                .register(registry);
       }
    }
@@ -62,7 +62,7 @@ class BaseAdditionalMetrics implements MeterBinder {
       RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
 
       Gauge.builder("jvm.uptime", runtimeBean, RuntimeMXBean::getUptime)
-            .description("Displays the uptime of the Java virtual machine")
+            .description("Displays the uptime of the Java virtual machine.")
             .register(registry);
    }
 
@@ -70,7 +70,7 @@ class BaseAdditionalMetrics implements MeterBinder {
       ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
       Gauge.builder("thread.count", threadBean, ThreadMXBean::getThreadCount)
-            .description("Current Thread count")
+            .description("Displays the current thread count.")
             .register(registry);
 
       Gauge.builder("thread.daemon.count", threadBean, ThreadMXBean::getDaemonThreadCount)
@@ -82,7 +82,7 @@ class BaseAdditionalMetrics implements MeterBinder {
             .register(registry);
 
       Gauge.builder("thread.totalStarted", threadBean, ThreadMXBean::getTotalStartedThreadCount)
-            .description("Total number of started threads")
+            .description("Displays the total number of started threads.")
             .register(registry);
    }
 }
