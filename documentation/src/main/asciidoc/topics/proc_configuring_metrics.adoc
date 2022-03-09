@@ -1,7 +1,7 @@
 [id='configuring-metrics_{context}']
 = Configuring {brandname} metrics
 
-{brandname} generates metrics that are compatible with the MicroProfile Metrics API.
+{brandname} generates metrics that are compatible with the Prometheus format using Micrometer.
 
 * Gauges provide values such as the average number of nanoseconds for write operations or JVM uptime.
 * Histograms provide details about operation execution times such as read,
@@ -61,16 +61,16 @@ You can retrieve metrics from {brandname} Server as follows:
 $ curl -v http://localhost:11222/metrics
 ----
 
-To retrieve metrics in MicroProfile JSON format, do the following:
+[NOTE]
+====
+Metrics in MicroProfile JSON format are not supported anymore.
+====
 
-----
-$ curl --header "Accept: application/json" http://localhost:11222/metrics
-----
 endif::remote_caches[]
 ifdef::embedded_caches[]
-For embedded caches, you must add the necessary MicroProfile API and provider JARs to your classpath to export {brandname} metrics.
+For embedded caches, you must add the necessary Micrometer Core and Micrometer Registry Prometheus JARs to your classpath to export {brandname} metrics.
 endif::embedded_caches[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:https://github.com/eclipse/microprofile-metrics/blob/master/README.adoc[Eclipse MicroProfile Metrics]
+* link:https://micrometer.io/docs/registry/prometheus[Micrometer Prometheus]
