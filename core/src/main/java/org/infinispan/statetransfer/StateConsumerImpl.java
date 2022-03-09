@@ -200,6 +200,12 @@ public class StateConsumerImpl implements StateConsumer {
    protected final Map<Integer, List<InboundTransferTask>> transfersBySegment = new HashMap<>();
 
    /**
+    * A set identifying the transactional segments requested by the cache. This is a set so a segment is counted only
+    * once.
+    */
+   private IntSet requestedTransactionalSegments;
+
+   /**
     * Limit to one state request at a time.
     */
    protected LimitedExecutor stateRequestExecutor;
@@ -247,6 +253,18 @@ public class StateConsumerImpl implements StateConsumer {
 
       DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(key);
       return distributionInfo.isWriteOwner() && !distributionInfo.isReadOwner();
+   }
+
+   @Override
+   public long inflightRequestCount() {
+      synchronized(transferMapsLock) {
+         return transfersBySegment.size();
+      }
+   }
+
+   @Override
+   public long inflightTransactionSegmentCount() {
+      return requestedTransactionalSegments.size();
    }
 
    @Override
@@ -667,9 +685,10 @@ public class StateConsumerImpl implements StateConsumer {
       if (inboundTransfer != null) {
          return doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries())
                    .thenAccept(v -> {
-                      inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
-                      if (stateChunk.isLastChunk()) {
-                         commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, stateChunk.getSegmentId());
+                      boolean lastChunk = stateChunk.isLastChunk();
+                      inboundTransfer.onStateReceived(stateChunk.getSegmentId(), lastChunk);
+                      if (lastChunk) {
+                         onCompletedSegment(stateChunk.getSegmentId());
                       }
                    });
       } else {
@@ -678,6 +697,13 @@ public class StateConsumerImpl implements StateConsumer {
          }
       }
       return CompletableFutures.completedNull();
+   }
+
+   protected void onCompletedSegment(int segmentId) {
+      commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segmentId);
+      synchronized (transferMapsLock) {
+         transfersBySegment.remove(segmentId);
+      }
    }
 
    private CompletionStage<?> doApplyState(Address sender, int segmentId,
@@ -820,6 +846,8 @@ public class StateConsumerImpl implements StateConsumer {
 
       rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
 
+      requestedTransactionalSegments = IntSets.concurrentSet(numSegments);
+
       stateRequestExecutor = new LimitedExecutor("StateRequest-" + cacheName, nonBlockingExecutor, 1);
       running = true;
    }
@@ -844,6 +872,7 @@ public class StateConsumerImpl implements StateConsumer {
             Collection<List<InboundTransferTask>> transfers = new ArrayList<>(transfersBySource.values());
             transfersBySource.clear();
             transfersBySegment.clear();
+            requestedTransactionalSegments = null;
             for (List<InboundTransferTask> inboundTransfers : transfers) {
                inboundTransfers.forEach(InboundTransferTask::cancel);
             }
@@ -964,10 +993,13 @@ public class StateConsumerImpl implements StateConsumer {
    private CompletionStage<Response> requestAndApplyTransactions(IntSet failedSegments, Set<Address> sourcesToExclude,
                                                                  int topologyId, Address source,
                                                                  IntSet segmentsFromSource) {
+      // Register the requested transactional segments
+      requestedTransactionalSegments.addAll(segmentsFromSource);
       return getTransactions(source, segmentsFromSource, topologyId)
             .whenComplete((response, throwable) -> {
                processTransactionsResponse(failedSegments, sourcesToExclude, topologyId,
                                            source, segmentsFromSource, response, throwable);
+               requestedTransactionalSegments.removeAll(segmentsFromSource);
             });
    }
 
@@ -1048,6 +1080,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (log.isTraceEnabled()) {
          log.tracef("Requesting transactions from node %s for segments %s", source, segments);
       }
+
       // get transactions and locks
       CacheRpcCommand cmd = commandsFactory.buildStateTransferGetTransactionsCommand(topologyId, segments);
       return rpcManager.invokeCommand(source, cmd, PassthroughSingleResponseCollector.INSTANCE, rpcOptions);
