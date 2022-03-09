@@ -356,6 +356,12 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       }
    }
 
+   @Override
+   protected void onCompletedSegment(int segmentId) {
+      // On scattered mode is used only the `onTaskCompletion` method to remove a task when all segments are completed.
+      // We override this method with no operation for scattered mode.
+   }
+
    // This should be fixed in https://issues.redhat.com/browse/ISPN-10864
    @SuppressWarnings("checkstyle:ForbiddenMethod")
    private void blockingSubscribe(Flowable<?> flowable) {

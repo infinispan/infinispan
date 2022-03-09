@@ -13,6 +13,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -246,6 +247,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       newSegments.removeAll(oldSegments);
       log.debugf("Rebalancing. Added segments=%s, old segments=%s", newSegments, oldSegments);
       assertEquals(flatRequestedSegments, newSegments);
+      assertEquals(stateConsumer.inflightRequestCount(), newSegments.size());
 
       // simulate a cluster state recovery and return to ch2
       Future<Object> future = fork(() -> {
@@ -264,14 +266,25 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertTrue(stateConsumer.hasActiveTransfers());
       assertEquals(flatRequestedSegments, newSegments);
 
-      // apply state
-      ArrayList<StateChunk> stateChunks = new ArrayList<>();
-      for (Integer segment : newSegments) {
-         stateChunks.add(new StateChunk(segment, Collections.emptyList(), true));
+      // We count how many segments were requested and then start to apply the state individually, to assert that the
+      // number of in-flight requests will decrease accordingly. During real usage, the state chunk collections can
+      // have more than a single segment.
+      long inflightCounter = requestedSegments.values().stream().mapToLong(Collection::size).sum();
+      assertEquals(stateConsumer.inflightRequestCount(), inflightCounter);
+      for (Map.Entry<Address, Set<Integer>> entry : requestedSegments.entrySet()) {
+         for (Integer segment : entry.getValue()) {
+            Collection<StateChunk> chunks = Collections.singletonList(new StateChunk(segment, Collections.emptyList(), true));
+            stateConsumer.applyState(entry.getKey(), 4, false, chunks)
+                  .toCompletableFuture()
+                  .get(10, TimeUnit.SECONDS);
+
+            inflightCounter -= 1;
+            assertEquals(stateConsumer.inflightRequestCount(), inflightCounter);
+         }
       }
-      stateConsumer.applyState(addresses[1], 2, false, stateChunks);
 
       stateConsumer.stop();
       assertFalse(stateConsumer.hasActiveTransfers());
+      assertEquals(stateConsumer.inflightRequestCount(), 0);
    }
 }

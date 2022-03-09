@@ -273,6 +273,18 @@ public class StateTransferManagerImpl implements StateTransferManager {
       return stateConsumer.isStateTransferInProgress();
    }
 
+   @ManagedAttribute(description = "The number of in-flight segments the local node requested from other nodes", displayName = "In-flight requested segments", dataType = DataType.MEASUREMENT)
+   @Override
+   public long getInflightSegmentTransferCount() {
+      return stateConsumer.inflightRequestCount();
+   }
+
+   @ManagedAttribute(description = "The number of in-flight transactional segments the local node requested from other nodes", displayName = "In-flight requested transactional segments", dataType = DataType.MEASUREMENT)
+   @Override
+   public long getInflightTransactionalSegmentCount() {
+      return stateConsumer.inflightTransactionSegmentCount();
+   }
+
    @Override
    public StateConsumer getStateConsumer() {
       return stateConsumer;

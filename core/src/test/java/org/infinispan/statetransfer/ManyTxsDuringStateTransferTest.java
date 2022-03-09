@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -108,9 +110,18 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       // Wait for all (or at least most of) the txs to be replicated to cache 1
       Thread.sleep(1000);
 
+      // Verify that cache 1 is in fact transferring state and transactional segments were requested
+      StateConsumer stateConsumer = TestingUtil.extractComponent(cache1, StateConsumer.class);
+      assertTrue(stateConsumer.isStateTransferInProgress());
+      assertTrue(stateConsumer.inflightTransactionSegmentCount() > 0);
+
       // Let cache 1 receive the tx from cache 0.
       checkpoint.trigger("resume_get_transactions_" + rebalanceTopologyId + "_from_" + address(1));
       TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
+
+      // State transfer ended on cache 1 and request for transactional segments were received
+      assertFalse(stateConsumer.isStateTransferInProgress());
+      assertEquals(stateConsumer.inflightTransactionSegmentCount(), 0);
 
       // Wait for the txs to finish and check the results
       DataContainer dataContainer0 = TestingUtil.extractComponent(cache0, InternalDataContainer.class);

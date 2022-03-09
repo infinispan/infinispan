@@ -22,6 +22,16 @@ public interface StateConsumer {
    boolean isStateTransferInProgressForKey(Object key);
 
    /**
+    * Returns the number of in-flight requested segments.
+    */
+   long inflightRequestCount();
+
+   /**
+    * Returns the number of in-flight transactional requested segments.
+    */
+   long inflightTransactionSegmentCount();
+
+   /**
     * Receive notification of topology changes. {@link org.infinispan.commands.statetransfer.StateTransferStartCommand},
     * or {@link org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand} for
     * {@link org.infinispan.configuration.cache.CacheMode#SCATTERED_SYNC}, are issued for segments that are new to this
