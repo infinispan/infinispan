@@ -31,6 +31,16 @@ public interface StateTransferManager {
    boolean isStateTransferInProgress();
 
    /**
+    * Returns the number of requested segments to be transferred.
+    */
+   long getInflightSegmentTransferCount();
+
+   /**
+    * Returns the number of transactional segments requested which are still in-flight.
+    */
+   long getInflightTransactionalSegmentCount();
+
+   /**
     * Checks if an inbound state transfer is in progress for a given key.
     *
     * @deprecated since 10.0; to be removed in next major version

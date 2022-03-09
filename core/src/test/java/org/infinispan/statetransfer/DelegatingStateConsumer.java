@@ -25,6 +25,16 @@ public class DelegatingStateConsumer implements StateConsumer {
    }
 
    @Override
+   public long inflightRequestCount() {
+      return delegate.inflightRequestCount();
+   }
+
+   @Override
+   public long inflightTransactionSegmentCount() {
+      return delegate.inflightTransactionSegmentCount();
+   }
+
+   @Override
    public CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       return delegate.onTopologyUpdate(cacheTopology, isRebalance);
    }
