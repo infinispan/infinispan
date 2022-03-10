@@ -27,17 +27,17 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
 
    private static final Log log = LogFactory.getLog(BaseOperatingSystemAdditionalMetrics.class);
 
-   private final OperatingSystemMXBean operatingSystemBean;
-   private final Method processCpuLoadMethod;
-   private final Method processCpuTimeMethod;
-
-   public BaseOperatingSystemAdditionalMetrics() {
+   static {
       operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
 
       Class<?> operatingSystemBeanClass = getOperatingSystemMXBeanImpl();
       processCpuLoadMethod = detectMethod(operatingSystemBeanClass, "getProcessCpuLoad");
       processCpuTimeMethod = detectMethod(operatingSystemBeanClass, "getProcessCpuTime");
    }
+
+   private static final OperatingSystemMXBean operatingSystemBean;
+   private static final Method processCpuLoadMethod;
+   private static final Method processCpuTimeMethod;
 
    @Override
    public void bindTo(MeterRegistry registry) {
@@ -62,7 +62,7 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
       }
    }
 
-   private Class<?> getOperatingSystemMXBeanImpl() {
+   private static Class<?> getOperatingSystemMXBeanImpl() {
       List<String> classNames = Arrays.asList(
             "com.ibm.lang.management.OperatingSystemMXBean", // J9
             "com.sun.management.OperatingSystemMXBean" // HotSpot
@@ -77,7 +77,7 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
       return null;
    }
 
-   private Method detectMethod(Class<?> operatingSystemBeanClass, String name) {
+   private static Method detectMethod(Class<?> operatingSystemBeanClass, String name) {
       if (operatingSystemBeanClass == null) {
          return null;
       }
