@@ -19,10 +19,16 @@ import org.testcontainers.shaded.com.google.common.io.Files;
 
 public class RemoteLdapServer extends AbstractLdapServer {
 
+   private String initLDIF;
+
+   public RemoteLdapServer(String initLDIF) {
+      this.initLDIF = initLDIF;
+   }
+
    private static final Log log = LogFactory.getLog(RemoteLdapServer.class);
 
    @Override
-   public void start(String keystoreFile, String initLDIF) throws URISyntaxException, LdapException, IOException {
+   public void start(String keystoreFile, File confDir) throws URISyntaxException, LdapException, IOException {
       URI ldapUri = new URI(System.getProperty(TEST_LDAP_URL));
       LdapNetworkConnection connection = new LdapNetworkConnection(ldapUri.getHost(), ldapUri.getPort());
       connection.setTimeOut(60);
@@ -46,11 +52,6 @@ public class RemoteLdapServer extends AbstractLdapServer {
 
    @Override
    public void stop() {
-      // it is remote
-   }
-
-   @Override
-   public void startKdc() {
       // it is remote
    }
 }
