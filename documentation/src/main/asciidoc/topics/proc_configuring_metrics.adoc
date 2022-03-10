@@ -9,6 +9,12 @@ write, and remove times.
 
 By default, {brandname} generates gauges when you enable statistics but you can also configure it to generate histograms.
 
+[NOTE]
+====
+{brandname} metrics are provided at the `vendor` scope.
+Metrics related to the JVM are provided in the `base` scope.
+====
+
 ifdef::embedded_caches[]
 .Prerequisites
 
@@ -54,21 +60,27 @@ endif::embedded_caches[]
 ifdef::remote_caches[]
 .Verification
 
-{brandname} Server exposes statistics through the `metrics` endpoint.
-You can collect metrics with any monitoring tool that supports the OpenMetrics format, such as Prometheus.
+{brandname} Server exposes statistics through the `metrics` endpoint that you can collect with monitoring tools such as Prometheus.
+To verify that statistics are exported to the `metrics` endpoint, you can do the following:
 
-{brandname} metrics are provided at the `vendor` scope.
-Metrics related to the JVM are provided in the `base` scope.
-
-You can retrieve metrics from {brandname} Server as follows:
-
+.Prometheus format
+[source,options="nowrap",subs=attributes+,role="primary"]
 ----
-$ curl -v http://localhost:11222/metrics
+curl -v http://localhost:11222/metrics \
+--digest -u username:password
+----
+
+.OpenMetrics format
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+curl -v http://localhost:11222/metrics \
+--digest -u username:password \
+-H "Accept: application/openmetrics-text"
 ----
 
 [NOTE]
 ====
-Metrics in MicroProfile JSON format are no longer supported.
+{brandname} no longer provides metrics in MicroProfile JSON format.
 ====
 endif::remote_caches[]
 
