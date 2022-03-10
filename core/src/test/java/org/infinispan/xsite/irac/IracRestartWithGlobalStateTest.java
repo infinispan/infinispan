@@ -4,12 +4,14 @@ import static java.lang.String.format;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.BEFORE;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -106,7 +108,7 @@ public class IracRestartWithGlobalStateTest extends AbstractMultipleSitesTest {
                .site(siteName(1))
                .strategy(BackupConfiguration.BackupStrategy.ASYNC);
          if (persistent) {
-            builder.persistence().addSingleFileStore();
+            builder.persistence().addSoftIndexFileStore();
          }
       } else {
          builder.sites().addBackup()
@@ -148,21 +150,25 @@ public class IracRestartWithGlobalStateTest extends AbstractMultipleSitesTest {
    }
 
    private Map<Integer, IracEntryVersion> snapshotPrimaryVersions() {
-      Map<Integer, IracEntryVersion> versions = new HashMap<>();
+      Map<Integer, IracEntryVersion> versions = new HashMap<>(256);
       for (Cache<?, ?> cache : caches(0)) {
          DefaultIracVersionGenerator vGenerator = generator(cache);
          LocalizedCacheTopology topology = extractCacheTopology(cache);
-         vGenerator.peek().forEach((segment, version) -> {
+         Map<Integer, IracEntryVersion> cacheVersions = vGenerator.peek();
+         log.tracef("Taking snapshot from %s (%s entries): %s", addressOf(cache), cacheVersions.size(), cacheVersions);
+         cacheVersions.forEach((segment, version) -> {
             if (topology.getSegmentDistribution(segment).isPrimary()) {
-               versions.put(segment, version);
+               IracEntryVersion v = versions.putIfAbsent(segment, version);
+               assertNull(v);
             }
          });
+         log.tracef("Global versions after %s (%s entries): %s", addressOf(cache), versions.size(), versions);
       }
       return versions;
    }
 
    private Map<String, IracEntryVersion> snapshotKeyVersions(Method method, int siteIndex) {
-      Map<String, IracEntryVersion> versions = new HashMap<>();
+      Map<String, IracEntryVersion> versions = new HashMap<>(256);
       for (Cache<String, String> cache : this.<String, String>caches(siteIndex)) {
          LocalizedCacheTopology topology = extractCacheTopology(cache);
          //noinspection unchecked
@@ -181,12 +187,12 @@ public class IracRestartWithGlobalStateTest extends AbstractMultipleSitesTest {
       return versions;
    }
 
-   private DefaultIracVersionGenerator generator(Cache<?, ?> cache) {
+   private static DefaultIracVersionGenerator generator(Cache<?, ?> cache) {
       return (DefaultIracVersionGenerator) extractComponent(cache, IracVersionGenerator.class);
    }
 
-   private <K> void assertVersions(Map<K, IracEntryVersion> v1, Map<K, IracEntryVersion> v2,
-                                   InequalVersionComparisonResult expected) {
+   private static <K> void assertVersions(Map<K, IracEntryVersion> v1, Map<K, IracEntryVersion> v2,
+                                          InequalVersionComparisonResult expected) {
       assertEquals(v1.size(), v2.size());
       Iterator<K> iterator = Stream.concat(v1.keySet().stream(), v2.keySet().stream())
             .distinct()

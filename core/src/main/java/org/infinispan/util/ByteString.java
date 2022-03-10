@@ -21,11 +21,11 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 9.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.BYTE_STRING)
-public final class ByteString {
+public final class ByteString implements Comparable<ByteString> {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
    private transient String s;
-   private transient int hash;
+   private transient final int hash;
 
    @ProtoField(number = 1)
    final byte[] bytes;
@@ -86,5 +86,21 @@ public final class ByteString {
       byte[] b = new byte[len];
       input.readFully(b);
       return new ByteString(b);
+   }
+
+   @Override
+   public int compareTo(ByteString o) {
+      int ourLength = bytes.length;
+      int otherLength = o.bytes.length;
+      int compare;
+      if ((compare = Integer.compare(ourLength, otherLength)) != 0) {
+         return compare;
+      }
+      for (int i = 0; i < ourLength; ++i) {
+         if ((compare = Byte.compare(bytes[i], o.bytes[i])) != 0) {
+            return compare;
+         }
+      }
+      return 0;
    }
 }

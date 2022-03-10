@@ -10,6 +10,8 @@ import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
+import org.infinispan.xsite.XSiteNamedCache;
 
 /**
  * The metadata stored for an entry needed for IRAC (async cross-site replication).
@@ -20,11 +22,15 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_METADATA)
 public class IracMetadata {
 
-   private final String site;
+   private final ByteString site;
    private final IracEntryVersion version;
 
    @ProtoFactory
    public IracMetadata(String site, IracEntryVersion version) {
+      this(XSiteNamedCache.cachedByteString(Objects.requireNonNull(site)), Objects.requireNonNull(version));
+   }
+
+   public IracMetadata(ByteString site, IracEntryVersion version) {
       this.site = Objects.requireNonNull(site);
       this.version = Objects.requireNonNull(version);
    }
@@ -35,17 +41,17 @@ public class IracMetadata {
          return;
       }
       output.writeObject(metadata.version);
-      output.writeUTF(metadata.site);
+      ByteString.writeObject(output, metadata.site);
    }
 
    public static IracMetadata readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
       IracEntryVersion version = (IracEntryVersion) in.readObject();
-      return version == null ? null : new IracMetadata(in.readUTF(), version);
+      return version == null ? null : new IracMetadata(XSiteNamedCache.cachedByteString(ByteString.readObject(in)), version);
    }
 
    @ProtoField(1)
    public String getSite() {
-      return site;
+      return site.toString();
    }
 
    @ProtoField(2)

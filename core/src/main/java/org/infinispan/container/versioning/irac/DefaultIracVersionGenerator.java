@@ -1,10 +1,11 @@
 package org.infinispan.container.versioning.irac;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +25,10 @@ import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteNamedCache;
 
 /**
  * Default implementation of {@link IracVersionGenerator}.
@@ -34,28 +39,29 @@ import org.infinispan.topology.CacheTopology;
 @Scope(Scopes.NAMED_CACHE)
 public class DefaultIracVersionGenerator implements IracVersionGenerator {
 
+   private static final Log log = LogFactory.getLog(DefaultIracVersionGenerator.class);
    private static final Pattern PROPERTY_PATTERN = Pattern.compile("(\\d+)_(.*)$");
    private static final AtomicIntegerFieldUpdater<DefaultIracVersionGenerator> TOPOLOGY_UPDATED = AtomicIntegerFieldUpdater
          .newUpdater(DefaultIracVersionGenerator.class, "topologyId");
 
-   private final Map<Integer, Map<String, TopologyIracVersion>> segmentVersion;
-   private final String cacheName;
+   private final Map<Integer, IracEntryVersion> segmentVersion;
+   private final BiFunction<Integer, IracEntryVersion, IracEntryVersion> incrementAndGet = this::incrementAndGet;
+   private final Function<Integer, IracEntryVersion> createFunction = segment -> newVersion();
    @Inject RpcManager rpcManager;
    @Inject GlobalStateManager globalStateManager;
    @Inject CommandsFactory commandsFactory;
-   private String localSite;
+   private ByteString localSite;
    private volatile int topologyId = 1;
 
-   public DefaultIracVersionGenerator(String cacheName) {
-      this.cacheName = cacheName;
-      this.segmentVersion = new ConcurrentHashMap<>();
+   public DefaultIracVersionGenerator(int numberOfSegments) {
+      segmentVersion = new ConcurrentHashMap<>(numberOfSegments);
    }
 
    @Start
    @Override
    public void start() {
       rpcManager.getTransport().checkCrossSiteAvailable();
-      localSite = rpcManager.getTransport().localSiteName();
+      localSite = XSiteNamedCache.cachedByteString(rpcManager.getTransport().localSiteName());
       globalStateManager.readScopedState(scope()).ifPresent(this::loadState);
    }
 
@@ -67,19 +73,28 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
 
    @Override
    public IracMetadata generateNewMetadata(int segment) {
-      return new IracMetadata(localSite, new IracEntryVersion(increment(segment)));
+      return new IracMetadata(localSite, segmentVersion.compute(segment, incrementAndGet));
    }
 
    @Override
    public IracMetadata generateMetadataWithCurrentVersion(int segment) {
-      Map<String, TopologyIracVersion> v = segmentVersion.compute(segment, this::getVectorFunction);
-      return new IracMetadata(localSite, new IracEntryVersion(v));
+      return new IracMetadata(localSite, segmentVersion.computeIfAbsent(segment, createFunction));
    }
 
    @Override
    public IracMetadata generateNewMetadata(int segment, IracEntryVersion versionSeen) {
-      updateVersion(segment, versionSeen);
-      return generateNewMetadata(segment);
+      if (versionSeen == null) {
+         return generateNewMetadata(segment);
+      }
+      int vTopology = versionSeen.getTopology(localSite);
+      if (vTopology > topologyId) {
+         updateTopology(vTopology);
+      }
+      IracEntryVersion version = segmentVersion.compute(segment, (s, currentVersion) ->
+            currentVersion == null ?
+                  versionSeen.increment(localSite, topologyId) :
+                  currentVersion.merge(versionSeen).increment(localSite, topologyId));
+      return new IracMetadata(localSite, version);
    }
 
    @Override
@@ -87,12 +102,8 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
       if (remoteVersion == null) {
          return;
       }
-      segmentVersion.merge(segment, remoteVersion.toMap(), DefaultIracVersionGenerator::mergeVectorsFunction);
-      int currentTopology = topologyId;
-      final int newTopology = remoteVersion.getTopology(localSite);
-      while (newTopology > currentTopology && !TOPOLOGY_UPDATED.compareAndSet(this, currentTopology, newTopology)) {
-         currentTopology = topologyId;
-      }
+      segmentVersion.merge(segment, remoteVersion, IracEntryVersion::merge);
+      updateTopology(remoteVersion.getTopology(localSite));
    }
 
    @Override
@@ -104,57 +115,28 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
       }
    }
 
-
    public Map<Integer, IracEntryVersion> peek() {
-      Map<Integer, IracEntryVersion> copy = new HashMap<>();
-      segmentVersion.forEach((seg, vector) -> copy.put(seg, new IracEntryVersion(vector)));
-      return copy;
+      // make a copy. onTopologyChange() uses this method and avoids marshalling problems
+      return new HashMap<>(segmentVersion);
    }
 
-   private Map<String, TopologyIracVersion> generateNewVectorFunction(Integer s,
-         Map<String, TopologyIracVersion> versions) {
-      if (versions == null) {
-         return Collections.singletonMap(localSite, TopologyIracVersion.newVersion(topologyId));
-      } else {
-         Map<String, TopologyIracVersion> copy = new HashMap<>(versions);
-         copy.compute(localSite, this::incrementVersionFunction);
-         return copy;
+   private void updateTopology(int newTopology) {
+      int currentTopology = topologyId;
+      while (newTopology > currentTopology && !TOPOLOGY_UPDATED.compareAndSet(this, currentTopology, newTopology)) {
+         currentTopology = topologyId;
       }
    }
 
-   private Map<String, TopologyIracVersion> getVectorFunction(Integer s,
-                                                              Map<String, TopologyIracVersion> versions) {
-      if (versions == null) {
-         return Collections.singletonMap(localSite, TopologyIracVersion.newVersion(topologyId));
-      } else {
-         return versions;
-      }
+   private IracEntryVersion newVersion() {
+      return IracEntryVersion.newVersion(localSite, TopologyIracVersion.newVersion(topologyId));
    }
 
-   private TopologyIracVersion incrementVersionFunction(String site, TopologyIracVersion version) {
-      return version == null ? TopologyIracVersion.newVersion(topologyId) : version.increment(topologyId);
-   }
-
-   private static Map<String, TopologyIracVersion> mergeVectorsFunction(Map<String, TopologyIracVersion> v1,
-         Map<String, TopologyIracVersion> v2) {
-      if (v1 == null) {
-         return v2;
-      } else {
-         Map<String, TopologyIracVersion> copy = new HashMap<>(v1);
-         for (Map.Entry<String, TopologyIracVersion> entry : v2.entrySet()) {
-            copy.merge(entry.getKey(), entry.getValue(), TopologyIracVersion::max);
-         }
-         return copy;
-      }
-   }
-
-   private Map<String, TopologyIracVersion> increment(int segment) {
-      Map<String, TopologyIracVersion> result = segmentVersion.compute(segment, this::generateNewVectorFunction);
-      return new HashMap<>(result);
+   private IracEntryVersion incrementAndGet(int segment, IracEntryVersion currentVersion) {
+      return currentVersion == null ? newVersion() : currentVersion.increment(localSite, topologyId);
    }
 
    private String scope() {
-      return "___irac_version_" + cacheName;
+      return "___irac_version_" + commandsFactory.getCacheName();
    }
 
    private void loadState(ScopedPersistentState state) {
@@ -171,24 +153,25 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
          if (v == null) {
             return;
          }
-         segmentVersion.compute(segment, (seg, vectorClock) -> {
-            if (vectorClock == null) {
-               return Collections.singletonMap(site, v);
-            } else {
-               Map<String, TopologyIracVersion> copy = new HashMap<>(vectorClock);
-               copy.merge(site, v, TopologyIracVersion::max);
-               return copy;
-            }
-         });
+         IracEntryVersion partialVersion = IracEntryVersion.newVersion(XSiteNamedCache.cachedByteString(site), v);
+         segmentVersion.compute(segment, (seg, version) -> version == null ? partialVersion : version.merge(partialVersion));
       });
+      if (log.isTraceEnabled()) {
+         log.tracef("Read state (%s entries): %s", segmentVersion.size(), segmentVersion);
+      }
    }
 
    private ScopedPersistentState writeState() {
+      if (log.isTraceEnabled()) {
+         log.tracef("Write state (%s entries): %s", segmentVersion.size(), segmentVersion);
+      }
       ScopedPersistentStateImpl state = new ScopedPersistentStateImpl(scope());
       state.setProperty(GlobalStateManagerImpl.VERSION, Version.getVersion());
-      segmentVersion.forEach((segment, vector) ->
-            vector.forEach((site, version) ->
-                  state.setProperty(Integer.toString(segment) + '_' + site, version.toString())));
+      segmentVersion.forEach((segment, version) -> {
+         String prefix = segment + "_";
+         version.forEach((site, v) -> state.setProperty(prefix + site, v.toString()));
+      });
+
       return state;
    }
 }
