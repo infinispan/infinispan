@@ -1,14 +1,17 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -23,6 +26,8 @@ import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import io.prometheus.client.exporter.common.TextFormat;
 
 /**
  * Tests the Micrometer metrics exporter.
@@ -46,42 +51,36 @@ public class RestMetricsResource {
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
          assertEquals(200, response.getStatus());
-         assertEquals(MediaType.TEXT_PLAIN, response.contentType());
-         String metricsText = response.getBody();
-         assertTrue(metricsText.contains("# TYPE vendor_" + metricName + " gauge\n"));
-      }
-      try (RestResponse response = sync(metricsClient.metrics("vendor/" + metricName, true))) {
-         assertEquals(200, response.getStatus());
+         checkIsOpenmetrics(response.contentType());
          String metricsText = response.getBody();
          assertTrue(metricsText.contains("# TYPE vendor_" + metricName + " gauge\n"));
       }
    }
 
    @Test
-   public void testBaseAndVendorMetrics() {
+   public void testBaseAndVendorMetrics() throws Exception {
       RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
 
-      try (RestResponse response = sync(metricsClient.metrics("base/classloader.loadedClasses.count"))) {
+      try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
+         checkIsPrometheus(response.contentType()); // that is the default
 
-         Json loadedClassesCountNode = Json.read(response.getBody());
-         assertNotNull(loadedClassesCountNode.asJsonMap().get("classloader.loadedClasses.count"));
-         int loadedClassesCount = loadedClassesCountNode.at("classloader.loadedClasses.count").asInteger();
-         assertTrue(loadedClassesCount > 0);
-      }
+         String body = response.getBody();
 
-      try (RestResponse response = sync(metricsClient.metrics("vendor/memoryPool.Metaspace.usage"))) {
-         assertEquals(200, response.getStatus());
+         checkRule(body, "base_classloader_loadedClasses_count", (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isPositive();
+         });
 
-         Json memoryPoolMetaspaceUsageNode = Json.read(response.getBody());
-         assertNotNull(memoryPoolMetaspaceUsageNode.asJsonMap().get("memoryPool.Metaspace.usage"));
-         int metaspaceUsage = memoryPoolMetaspaceUsageNode.at("memoryPool.Metaspace.usage").asInteger();
-         assertTrue(metaspaceUsage > 0);
+         checkRule(body, "vendor_memoryPool_Metaspace_usage_bytes", (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isPositive();
+         });
       }
    }
 
    @Test
-   public void testMetrics() {
+   public void testMetrics() throws Exception {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -89,55 +88,56 @@ public class RestMetricsResource {
       int NUM_PUTS = 10;
 
       try (RestResponse response = sync(metricsClient.metrics())) {
-
          assertEquals(200, response.getStatus());
-         assertEquals(MediaType.APPLICATION_JSON, response.contentType());
+         checkIsPrometheus(response.contentType());
 
-         String metricsJson = response.getBody();
-         Json node = Json.read(metricsJson);
-         assertNotNull(node.at("base"));
-         assertNotNull(node.at("vendor"));
-         assertNotNull(node.at("application"));
-         assertTrue(metricsJson.contains(metricName));
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor", metricName);
+
+         checkRule(body, "vendor_" + metricName, (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isZero();
+         });
       }
 
-      try (RestResponse response = sync(metricsClient.metrics("vendor/" + metricName))) {
-         assertEquals(200, response.getStatus());
+      // put some entries then check that the stats were updated
+      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
 
-         long totalStoresBefore = streamNodeFields(Json.read(response.getBody()))
-               .map(e -> e.getValue().asLong())
-               .reduce(0L, Long::sum);
-
-         assertEquals(0, totalStoresBefore);
-
-         // put some entries then check that the stats were updated
-         RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
-
-         for (int i = 0; i < NUM_PUTS; i++) {
-            RestResponse putResp = sync(cache.put("k" + i, "v" + i));
-            assertEquals(204, putResp.getStatus());
-         }
+      for (int i = 0; i < NUM_PUTS; i++) {
+         RestResponse putResp = sync(cache.put("k" + i, "v" + i));
+         assertEquals(204, putResp.getStatus());
       }
 
-      try (RestResponse response = sync(metricsClient.metrics("vendor/" + metricName))) {
+      try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
-         String metricJson = response.getBody();
-         long totalStoresAfter = streamNodeFields(Json.read(metricJson))
-               .map(e -> e.getValue().asLong())
-               .reduce(0L, Long::sum);
-         assertEquals(NUM_PUTS, totalStoresAfter);
+         checkIsPrometheus(response.contentType());
+
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor", metricName);
+
+         checkRule(body, "vendor_" + metricName, (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isEqualTo(10.0);
+         });
       }
 
       // delete cache and check that the metric is gone
       sync(client.cache(SERVER_TEST.getMethodName()).delete());
-      assertStatus(404, metricsClient.metricsMetadata("vendor/" + metricName));
 
-      // check that an unexistent metric is correctly reported as missing
-      assertStatus(404, metricsClient.metricsMetadata("vendor/no_such_metric"));
+      try (RestResponse response = sync(metricsClient.metrics())) {
+         assertEquals(200, response.getStatus());
+         checkIsPrometheus(response.contentType());
+
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor");
+
+         // metric is not present anymore:
+         assertThat(body).doesNotContain(metricName);
+      }
    }
 
    @Test
-   public void testTimerMetrics() {
+   public void testTimerMetrics() throws Exception {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -145,65 +145,74 @@ public class RestMetricsResource {
       String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_store_times";
       int NUM_PUTS = 10;
 
-      try (RestResponse response = sync(metricsClient.metrics("vendor/" + metricName))) {
+      try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
-         assertEquals(MediaType.APPLICATION_JSON, response.contentType());
+         checkIsPrometheus(response.contentType());
 
-         long meanStoreTimesBefore = streamNodeFields(Json.read(response.getBody()).at(metricName))
-               .filter(e -> e.getKey().startsWith("mean;"))
-               .map(e -> e.getValue().asLong())
-               .reduce(0L, Long::sum);
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor", metricName);
 
-         assertEquals(0, meanStoreTimesBefore);
-
-         // put some entries then check that the stats were updated
-         RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
-
-         for (int i = 0; i < NUM_PUTS; i++) {
-            RestResponse putResp = sync(cache.put("k" + i, "v" + i));
-            assertEquals(204, putResp.getStatus());
-         }
+         checkRule(body, "vendor_" + metricName, (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isZero();
+         });
       }
 
-      try (RestResponse response = sync(metricsClient.metrics("vendor/" + metricName))) {
+      // put some entries then check that the stats were updated
+      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+
+      for (int i = 0; i < NUM_PUTS; i++) {
+         RestResponse putResp = sync(cache.put("k" + i, "v" + i));
+         assertEquals(204, putResp.getStatus());
+      }
+
+      try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
+         checkIsPrometheus(response.contentType());
 
-         long meanStoreTimesAfter = streamNodeFields(Json.read(response.getBody()).at(metricName))
-               .filter(e -> e.getKey().startsWith("mean;"))
-               .map(e -> e.getValue().asLong())
-               .reduce(0L, Long::sum);
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor", metricName);
 
-         assertTrue(meanStoreTimesAfter > 0);
+         checkRule(body, "vendor_" + metricName, (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isPositive();
+         });
       }
    }
 
    @Test
-   public void testMetricsMetadata() {
+   public void testMetricsMetadata() throws Exception {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
       String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_stores";
 
-      // get all
       try (RestResponse response = sync(metricsClient.metricsMetadata())) {
          assertEquals(200, response.getStatus());
-         assertEquals(MediaType.APPLICATION_JSON, response.contentType());
-         String metricsMetadataJson = response.getBody();
-         assertTrue(metricsMetadataJson.contains(metricName));
-      }
+         checkIsPrometheus(response.contentType());
 
-      // get one
-      try (RestResponse response = sync(metricsClient.metricsMetadata("vendor/" + metricName))) {
-         assertEquals(200, response.getStatus());
-         Json node = Json.read(response.getBody());
-         assertNotNull(node.at(metricName));
-         assertEquals("gauge", node.at(metricName).at("type").asString());
-         assertEquals("stores", node.at(metricName).at("displayName").asString());
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor", metricName);
+
+         checkRule(body, "vendor_" + metricName, (stringValue) -> {
+            double parsed = Double.parseDouble(stringValue);
+            assertThat(parsed).isZero();
+         });
       }
 
       // delete cache and check that the metric is gone
       sync(client.cache(SERVER_TEST.getMethodName()).delete());
-      assertStatus(404, metricsClient.metricsMetadata("vendor/" + metricName));
+
+      try (RestResponse response = sync(metricsClient.metricsMetadata())) {
+         assertEquals(200, response.getStatus());
+         checkIsPrometheus(response.contentType());
+
+         String body = response.getBody();
+         assertThat(body).contains("base", "vendor");
+
+         // metric is not present anymore:
+         assertThat(body).doesNotContain(metricName);
+      }
    }
 
    /**
@@ -214,5 +223,33 @@ public class RestMetricsResource {
          throw new IllegalArgumentException("Input node cannot be null");
       }
       return StreamSupport.stream(Spliterators.spliteratorUnknownSize(node.asJsonMap().entrySet().iterator(), Spliterator.IMMUTABLE), false);
+   }
+
+   static void checkIsPrometheus(MediaType contentType) {
+      String[] expectedContentType = TextFormat.CONTENT_TYPE_004.split(";");
+      String[] actualContentType = contentType.toString().split(";");
+
+      assertThat(actualContentType).containsExactlyInAnyOrder(expectedContentType);
+   }
+
+   static void checkIsOpenmetrics(MediaType contentType) {
+      String[] expectedContentType = TextFormat.CONTENT_TYPE_OPENMETRICS_100.split(";");
+      String[] actualContentType = contentType.toString().split(";");
+
+      assertThat(actualContentType).containsExactlyInAnyOrder(expectedContentType);
+   }
+
+   static void checkRule(String body, String key, Consumer<String> check) throws Exception {
+      BufferedReader bufferedReader = new BufferedReader(new StringReader(body));
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+         if (line.startsWith(key)) {
+            String[] split = line.split(" ");
+            assertThat(split).hasSize(2);
+            check.accept(split[1]);
+            return;
+         }
+      }
+      fail("Key " + key + " not found in body");
    }
 }
