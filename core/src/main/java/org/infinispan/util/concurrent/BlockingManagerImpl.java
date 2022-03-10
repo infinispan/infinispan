@@ -176,7 +176,7 @@ public class BlockingManagerImpl implements BlockingManager {
    @Override
    public <I, O> CompletionStage<O> thenApplyBlocking(CompletionStage<? extends I> stage,
          Function<? super I, ? extends O> function, Object traceId) {
-      if (isCurrentThreadBlocking()) {
+      if (CompletionStages.isCompletedSuccessfully(stage) && isCurrentThreadBlocking()) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoked thenApply on a blocking thread, joining %s in same blocking thread", traceId);
          }
@@ -192,7 +192,7 @@ public class BlockingManagerImpl implements BlockingManager {
 
    @Override
    public <I> CompletionStage<Void> thenRunBlocking(CompletionStage<? extends I> stage, Runnable runnable, Object traceId) {
-      if (isCurrentThreadBlocking()) {
+      if (CompletionStages.isCompletedSuccessfully(stage) && isCurrentThreadBlocking()) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoked thenRun on a blocking thread, joining %s in same blocking thread", traceId);
          }
@@ -210,7 +210,7 @@ public class BlockingManagerImpl implements BlockingManager {
    @Override
    public <V> CompletionStage<V> whenCompleteBlocking(CompletionStage<V> stage,
          BiConsumer<? super V, ? super Throwable> biConsumer, Object traceId) {
-      if (isCurrentThreadBlocking()) {
+      if (CompletionStages.isCompletedSuccessfully(stage) && isCurrentThreadBlocking()) {
          if (log.isTraceEnabled()) {
             log.tracef("Invoked whenComplete on a blocking thread, joining %s in same blocking thread", traceId);
          }
