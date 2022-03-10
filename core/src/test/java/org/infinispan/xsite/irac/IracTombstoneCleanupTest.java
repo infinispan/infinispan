@@ -13,7 +13,6 @@ import static org.testng.AssertJUnit.fail;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -42,6 +41,7 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.AbstractDelegatingRpcManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -275,22 +275,22 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       throw new IllegalStateException("Find non owner failed!");
    }
 
-   private IracMetadata dummyMetadata(long version) {
+   private static IracMetadata dummyMetadata(long version) {
       TopologyIracVersion iracVersion = TopologyIracVersion.create(1, version);
-      return new IracMetadata(SITE_NAME, new IracEntryVersion(Collections.singletonMap(SITE_NAME, iracVersion)));
+      return new IracMetadata(SITE_NAME, IracEntryVersion.newVersion(ByteString.fromString(SITE_NAME), iracVersion));
    }
 
    private int getSegment(String key) {
       return extractCacheTopology(cache(0, CACHE_NAME)).getSegment(key);
    }
 
-   private DefaultIracTombstoneManager tombstoneManager(Cache<?, ?> cache) {
+   private static DefaultIracTombstoneManager tombstoneManager(Cache<?, ?> cache) {
       IracTombstoneManager tombstoneManager = extractComponent(cache, IracTombstoneManager.class);
       assert tombstoneManager instanceof DefaultIracTombstoneManager;
       return (DefaultIracTombstoneManager) tombstoneManager;
    }
 
-   private RecordingRpcManager recordingRpcManager(Cache<?, ?> cache) {
+   private static RecordingRpcManager recordingRpcManager(Cache<?, ?> cache) {
       RpcManager rpcManager = extractComponent(cache, RpcManager.class);
       if (rpcManager instanceof RecordingRpcManager) {
          return (RecordingRpcManager) rpcManager;
@@ -304,7 +304,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       private final List<CacheRpcCommand> commandList;
       private volatile boolean recording;
 
-      public RecordingRpcManager(RpcManager realOne) {
+      RecordingRpcManager(RpcManager realOne) {
          super(realOne);
          commandList = new LinkedList<>();
       }

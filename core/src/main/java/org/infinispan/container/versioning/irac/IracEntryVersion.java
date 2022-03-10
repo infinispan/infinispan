@@ -1,21 +1,22 @@
 package org.infinispan.container.versioning.irac;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
+import org.infinispan.xsite.XSiteNamedCache;
 
 /**
  * An entry version for the IRAC algorithm (async cross site replication).
@@ -31,24 +32,26 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_VERSION)
 public class IracEntryVersion {
 
-   private final Map<String, TopologyIracVersion> vectorClock;
+   private final MapEntry[] vectorClock;
 
-   public IracEntryVersion(Map<String, TopologyIracVersion> vectorClock) {
-      this.vectorClock = Objects.requireNonNull(vectorClock);
+   private IracEntryVersion(MapEntry[] vectorClock) {
+      this.vectorClock = vectorClock;
+   }
+
+   public static IracEntryVersion newVersion(ByteString site, TopologyIracVersion version) {
+      return new IracEntryVersion(new MapEntry[] {new MapEntry(site, version)});
    }
 
    @ProtoFactory
    static IracEntryVersion protoFactory(List<MapEntry> entries) {
-      Map<String, TopologyIracVersion> vectorClock = entries.stream()
-            .collect(Collectors.toMap(MapEntry::getSite, MapEntry::getVersion));
-      return new IracEntryVersion(vectorClock);
+      MapEntry[] vc = entries.toArray(new MapEntry[entries.size()]);
+      Arrays.sort(vc);
+      return new IracEntryVersion(vc);
    }
 
    @ProtoField(number = 1, collectionImplementation = ArrayList.class)
    List<MapEntry> entries() {
-      List<MapEntry> entries = new ArrayList<>(3);
-      vectorClock.forEach((site, version) -> entries.add(new MapEntry(site, version)));
-      return entries;
+      return Arrays.asList(vectorClock);
    }
 
    /**
@@ -58,8 +61,8 @@ public class IracEntryVersion {
     *
     * @return The {@link Map} representation of this version.
     */
-   public Map<String, TopologyIracVersion> toMap() {
-      return Collections.unmodifiableMap(vectorClock);
+   public Map<ByteString, TopologyIracVersion> toMap() {
+      return toTreeMap(vectorClock);
    }
 
    /**
@@ -67,8 +70,10 @@ public class IracEntryVersion {
     *
     * @param consumer The {@link BiConsumer}.
     */
-   public void forEach(BiConsumer<String, TopologyIracVersion> consumer) {
-      vectorClock.forEach(consumer);
+   public void forEach(BiConsumer<ByteString, TopologyIracVersion> consumer) {
+      for (MapEntry entry : vectorClock) {
+         consumer.accept(entry.site, entry.version);
+      }
    }
 
    /**
@@ -77,36 +82,52 @@ public class IracEntryVersion {
     * @return A {@link InequalVersionComparisonResult} instance with the compare result.
     */
    public InequalVersionComparisonResult compareTo(IracEntryVersion other) {
-      VectorClock vectorClock = new VectorClock();
-      this.forEach(vectorClock::setOurs);
-      other.forEach(vectorClock::setTheirs);
+      VectorClockComparator comparator = new VectorClockComparator(Math.max(vectorClock.length, other.vectorClock.length));
+      forEach(comparator::setOurs);
+      other.forEach(comparator::setTheirs);
 
       Merger merger = Merger.NONE;
-      for (VersionCompare v : vectorClock.values()) {
+      for (VersionCompare v : comparator.values()) {
          merger = merger.accept(v);
       }
       return merger.result();
    }
 
    public IracEntryVersion merge(IracEntryVersion other) {
-      if (other == null || other.vectorClock.isEmpty()) {
+      if (other == null) {
          return this;
       }
-      Map<String, TopologyIracVersion> copy = new HashMap<>(vectorClock);
-      for (Map.Entry<String, TopologyIracVersion> entry : other.vectorClock.entrySet()) {
-         copy.merge(entry.getKey(), entry.getValue(), TopologyIracVersion::max);
+      TreeMap<ByteString, TopologyIracVersion> copy = toTreeMap(vectorClock);
+      for (MapEntry entry : other.vectorClock) {
+         copy.merge(entry.site, entry.version, TopologyIracVersion::max);
       }
-      return new IracEntryVersion(copy);
+      return new IracEntryVersion(toMapEntryArray(copy));
    }
 
-   public int getTopology(String siteName) {
-      return vectorClock.getOrDefault(siteName, TopologyIracVersion.NO_VERSION).getTopologyId();
+   public int getTopology(ByteString siteName) {
+      for (MapEntry entry : vectorClock) {
+         if (entry.site.equals(siteName)) {
+            return entry.version.getTopologyId();
+         }
+      }
+      return 0;
+   }
+
+   public IracEntryVersion increment(ByteString siteName, int topologyId) {
+      TreeMap<ByteString, TopologyIracVersion> map = toTreeMap(vectorClock);
+      TopologyIracVersion existing = map.get(siteName);
+      if (existing == null) {
+         map.put(siteName, TopologyIracVersion.newVersion(topologyId));
+      } else {
+         map.put(siteName, existing.increment(topologyId));
+      }
+      return new IracEntryVersion(toMapEntryArray(map));
    }
 
    @Override
    public String toString() {
       List<String> entries = new LinkedList<>();
-      vectorClock.forEach((site, version) -> entries.add(site + "=" + version));
+      forEach((site, version) -> entries.add(site + "=" + version));
       return "(" + String.join(", ", entries) + ")";
    }
 
@@ -119,14 +140,32 @@ public class IracEntryVersion {
          return false;
       }
 
-      IracEntryVersion version = (IracEntryVersion) o;
+      IracEntryVersion other = (IracEntryVersion) o;
 
-      return vectorClock.equals(version.vectorClock);
+      return Arrays.equals(vectorClock, other.vectorClock);
    }
 
    @Override
    public int hashCode() {
-      return vectorClock.hashCode();
+      return Arrays.hashCode(vectorClock);
+   }
+
+   private static MapEntry[] toMapEntryArray(TreeMap<ByteString, TopologyIracVersion> map) {
+      int length = map.size();
+      MapEntry[] entries = new MapEntry[length];
+      int index = 0;
+      for (Map.Entry<ByteString, TopologyIracVersion> e : map.entrySet()) {
+         entries[index++] = new MapEntry(e.getKey(), e.getValue());
+      }
+      return entries;
+   }
+
+   private static TreeMap<ByteString, TopologyIracVersion> toTreeMap(MapEntry[] entries) {
+      TreeMap<ByteString, TopologyIracVersion> copy = new TreeMap<>();
+      for (MapEntry entry : entries) {
+         copy.put(entry.site, entry.version);
+      }
+      return copy;
    }
 
    private enum Merger {
@@ -241,26 +280,26 @@ public class IracEntryVersion {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.IRAC_VERSION_ENTRY)
-   public static class MapEntry {
+   public static class MapEntry implements Comparable<MapEntry> {
 
-      @ProtoField(1)
-      final String site;
+      final ByteString site;
 
       @ProtoField(2)
       final TopologyIracVersion version;
 
       @ProtoFactory
       MapEntry(String site, TopologyIracVersion version) {
+         this(XSiteNamedCache.cachedByteString(site), version);
+      }
+
+      MapEntry(ByteString site, TopologyIracVersion version) {
          this.site = site;
          this.version = version;
       }
 
+      @ProtoField(1)
       public String getSite() {
-         return site;
-      }
-
-      public TopologyIracVersion getVersion() {
-         return version;
+         return site.toString();
       }
 
       @Override
@@ -269,6 +308,28 @@ public class IracEntryVersion {
                "site='" + site + '\'' +
                ", version=" + version +
                '}';
+      }
+
+      @Override
+      public int compareTo(MapEntry o) {
+         return site.compareTo(o.site);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         MapEntry entry = (MapEntry) o;
+
+         return site.equals(entry.site) && version.equals(entry.version);
+      }
+
+      @Override
+      public int hashCode() {
+         int result = site.hashCode();
+         result = 31 * result + version.hashCode();
+         return result;
       }
    }
 
@@ -285,11 +346,11 @@ public class IracEntryVersion {
       }
    }
 
-   private static class VectorClock {
-      private final Map<String, VersionCompare> vectorClock;
+   private static class VectorClockComparator {
+      private final Map<ByteString, VersionCompare> vectorClock;
 
-      private VectorClock() {
-         vectorClock = new HashMap<>();
+      VectorClockComparator(int capacity) {
+         vectorClock = new HashMap<>(capacity);
       }
 
       @Override
@@ -299,7 +360,7 @@ public class IracEntryVersion {
                '}';
       }
 
-      void setOurs(String site, TopologyIracVersion version) {
+      void setOurs(ByteString site, TopologyIracVersion version) {
          VersionCompare v = vectorClock.get(site);
          if (v == null) {
             v = new VersionCompare();
@@ -311,7 +372,7 @@ public class IracEntryVersion {
          }
       }
 
-      void setTheirs(String site, TopologyIracVersion version) {
+      void setTheirs(ByteString site, TopologyIracVersion version) {
          VersionCompare v = vectorClock.get(site);
          if (v == null) {
             v = new VersionCompare();

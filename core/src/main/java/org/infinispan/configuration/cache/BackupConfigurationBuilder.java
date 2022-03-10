@@ -11,6 +11,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.xsite.XSiteNamedCache;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -33,7 +34,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     *             global configuration.
     */
    public BackupConfigurationBuilder site(String site) {
-      attributes.attribute(SITE).set(site);
+      attributes.attribute(SITE).set(XSiteNamedCache.cachedString(site));
       return this;
    }
 
