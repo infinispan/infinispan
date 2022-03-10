@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.Optional;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.irac.DefaultIracVersionGenerator;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
@@ -18,6 +19,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.xsite.XSiteNamedCache;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
@@ -34,8 +36,8 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
    private static final String SITE_2 = "site_2";
 
    private static DefaultIracVersionGenerator newGenerator(String site) {
-      DefaultIracVersionGenerator generator = new DefaultIracVersionGenerator("cache-name");
-      TestingUtil.inject(generator, mockRpcManager(site), mockGlobalStateManager());
+      DefaultIracVersionGenerator generator = new DefaultIracVersionGenerator();
+      TestingUtil.inject(generator, mockRpcManager(site), mockGlobalStateManager(), mockCommandFactory());
       generator.start();
       return generator;
    }
@@ -67,9 +69,15 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
       return manager;
    }
 
+   private static CommandsFactory mockCommandFactory() {
+      CommandsFactory factory = Mockito.mock(CommandsFactory.class);
+      Mockito.when(factory.getCacheName()).thenReturn("unused");
+      return factory;
+   }
+
    private static void assertSiteVersion(IracEntryVersion entryVersion, String site, int topologyId, long version) {
       assertNotNull(entryVersion);
-      TopologyIracVersion iracVersion = entryVersion.toMap().get(site);
+      TopologyIracVersion iracVersion = entryVersion.toMap().get(XSiteNamedCache.cachedByteString(site));
       assertNotNull(iracVersion);
       assertEquals(topologyId, iracVersion.getTopologyId());
       assertEquals(version, iracVersion.getVersion());
@@ -77,7 +85,7 @@ public class IracVersionUnitTest extends AbstractInfinispanTest {
 
    private static void assertNoSiteVersion(IracEntryVersion entryVersion, String site) {
       assertNotNull(entryVersion);
-      TopologyIracVersion iracVersion = entryVersion.toMap().get(site);
+      TopologyIracVersion iracVersion = entryVersion.toMap().get(XSiteNamedCache.cachedByteString(site));
       assertNull(iracVersion);
    }
 

@@ -33,8 +33,10 @@ import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.xsite.AbstractXSiteTest;
+import org.infinispan.xsite.XSiteNamedCache;
 import org.infinispan.xsite.irac.ControlledIracVersionGenerator;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.ManualIracManager;
@@ -86,7 +88,8 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
 
    private static IracMetadata generateNew() {
       long v = V_GENERATOR.incrementAndGet();
-      return new IracMetadata(LON, new IracEntryVersion(Collections.singletonMap(LON, TopologyIracVersion.create(1, v))));
+      ByteString site = XSiteNamedCache.cachedByteString(LON);
+      return new IracMetadata(site, IracEntryVersion.newVersion(site, TopologyIracVersion.create(1, v)));
    }
 
    private static ManualIracVersionGenerator createManualIracVerionGenerator(Cache<String, Object> cache) {

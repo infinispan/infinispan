@@ -1,5 +1,7 @@
 package org.infinispan.commons.marshall;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -384,7 +386,7 @@ public class MarshallUtil {
     * A special marshall implementation for integer.
     * <p>
     * This method supports negative values but they are handles as {@link #NULL_VALUE}. It means that the real value is
-    * lost and {@link #NULL_VALUE} is returned by {@link #unmarshallSize(ObjectInput)}.
+    * lost and {@link #NULL_VALUE} is returned by {@link #unmarshallSize(DataInput)}.
     * <p>
     * The integer is marshalled in a variable length from 1 to 5 bytes. Negatives values are always marshalled in 1
     * byte.
@@ -393,7 +395,7 @@ public class MarshallUtil {
     * @param value Integer value to marshall.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
     */
-   public static void marshallSize(ObjectOutput out, int value) throws IOException {
+   public static void marshallSize(DataOutput out, int value) throws IOException {
       if (value < 0) {
          out.writeByte(0x80); //meaning it is a negative value!
          return;
@@ -418,9 +420,9 @@ public class MarshallUtil {
     * @param in {@link ObjectInput} to read.
     * @return The integer value or {@link #NULL_VALUE} if the original value was negative.
     * @throws IOException If any of the usual Input/Output related exceptions occur.
-    * @see #marshallSize(ObjectOutput, int).
+    * @see #marshallSize(DataOutput, int).
     */
-   public static int unmarshallSize(ObjectInput in) throws IOException {
+   public static int unmarshallSize(DataInput in) throws IOException {
       byte b = in.readByte();
       if ((b & 0x80) != 0) {
          return NULL_VALUE; //negative value
