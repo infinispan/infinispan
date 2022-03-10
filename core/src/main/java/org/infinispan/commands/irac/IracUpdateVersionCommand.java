@@ -89,4 +89,12 @@ public class IracUpdateVersionCommand implements CacheRpcCommand {
    private static IracEntryVersion read(ObjectInput input) throws IOException, ClassNotFoundException {
       return (IracEntryVersion) input.readObject();
    }
+
+   @Override
+   public String toString() {
+      return "IracUpdateVersionCommand{" +
+            "cacheName=" + cacheName +
+            ", versions=" + versions +
+            '}';
+   }
 }

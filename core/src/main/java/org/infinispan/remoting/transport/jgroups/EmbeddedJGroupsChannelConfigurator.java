@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.JGroupsConfiguration;
+import org.infinispan.xsite.XSiteNamedCache;
 import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolConfiguration;
@@ -305,6 +306,7 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
       }
 
       public void addRemoteSite(String stackName, String remoteSite, String cluster, String stack) {
+         remoteSite = XSiteNamedCache.cachedString(remoteSite);
          if (remoteSites.containsKey(remoteSite)) {
             throw CONFIG.duplicateRemoteSite(remoteSite, stackName);
          } else {

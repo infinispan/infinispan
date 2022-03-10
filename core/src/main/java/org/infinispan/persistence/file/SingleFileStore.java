@@ -67,6 +67,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteNamedCache;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -419,8 +420,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
       // Async XSite
       if (config.sites().hasAsyncEnabledBackups()) {
-         String siteName = cache.getCacheManager().getTransport().localSiteName();
-         IracEntryVersion version = new IracEntryVersion(Collections.singletonMap(siteName, TopologyIracVersion.newVersion(1)));
+         String siteName = cache.getRpcManager().getTransport().localSiteName();
+         IracEntryVersion version = IracEntryVersion.newVersion(XSiteNamedCache.cachedByteString(siteName), TopologyIracVersion.newVersion(1));
          builder.iracMetadata(new IracMetadata(siteName, version));
       }
       return builder.build();
