@@ -98,6 +98,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteNamedCache;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
 import org.jgroups.ChannelListener;
@@ -197,6 +198,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
    private final Set<String> unreachableSites;
+   private String localSite;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -440,15 +442,14 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    @Override
    public void checkCrossSiteAvailable() throws CacheConfigurationException {
-      if (findRelay2() == null) {
+      if (localSite == null) {
          throw CLUSTER.crossSiteUnavailable();
       }
    }
 
    @Override
    public String localSiteName() {
-      RELAY2 relay2 = findRelay2();
-      return relay2 == null ? null : relay2.site();
+      return localSite;
    }
 
    @Start
@@ -477,6 +478,10 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
       waitForInitialNodes();
       channel.getProtocolStack().getTransport().registerProbeHandler(probeHandler);
+      RELAY2 relay2 = findRelay2();
+      if (relay2 != null) {
+         localSite = XSiteNamedCache.cachedString(relay2.site());
+      }
       running = true;
    }
 

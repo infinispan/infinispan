@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,6 +29,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ByteString;
+import org.infinispan.xsite.XSiteNamedCache;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.testng.annotations.AfterClass;
@@ -110,7 +111,7 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
    @BeforeClass(alwaysRun = true)
    @Override
    protected void createBeforeClass() throws Exception {
-      tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
       Util.recursiveFileRemove(tmpDirectory);
       boolean created = new File(tmpDirectory).mkdirs();
       log.debugf("Created temporary directory %s (exists? %s)", tmpDirectory, !created);
@@ -143,13 +144,13 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
       return entryFactory.create(key, keyValueWrapper.wrap(key, value), null, wrapInternalMetadata(metadata), -1, -1);
    }
 
-   private IracMetadata createMetadata() {
-      TopologyIracVersion tVersion = TopologyIracVersion.create(1, V_GENERATOR.incrementAndGet());
-      IracEntryVersion version = new IracEntryVersion(Collections.singletonMap(SITE, tVersion));
-      return new IracMetadata(SITE, version);
+   private static IracMetadata createMetadata() {
+      TopologyIracVersion version = TopologyIracVersion.create(1, V_GENERATOR.incrementAndGet());
+      ByteString site = XSiteNamedCache.cachedByteString(SITE);
+      return new IracMetadata(site, IracEntryVersion.newVersion(site, version));
    }
 
-   private PrivateMetadata wrapInternalMetadata(IracMetadata metadata) {
+   private static PrivateMetadata wrapInternalMetadata(IracMetadata metadata) {
       return new PrivateMetadata.Builder()
             .iracMetadata(metadata)
             .build();
