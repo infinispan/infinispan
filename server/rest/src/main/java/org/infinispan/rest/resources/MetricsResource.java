@@ -52,9 +52,10 @@ public final class MetricsResource implements ResourceHandler {
          RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder();
 
          try {
-            // Content-type for Prometheus text version 0.0.4:
-            builder.header("Content-Type", TextFormat.CONTENT_TYPE_004);
-            builder.entity(metricsCollector.getBaseRegistry().scrape() + metricsCollector.getVendorRegistry().scrape());
+            String contentType = TextFormat.chooseContentType(restRequest.getAcceptHeader());
+            builder.header("Content-Type", contentType);
+            builder.entity(metricsCollector.getBaseRegistry().scrape(contentType)
+                  + metricsCollector.getVendorRegistry().scrape(contentType));
 
             return builder.build();
          } catch (Exception e) {
