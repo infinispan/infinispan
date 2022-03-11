@@ -155,7 +155,7 @@ public class Bootstrap extends Main {
       logJVMInformation();
 
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
-      Server.log.serverStarting(Version.getBrandName());
+      Server.log.serverStarting(Version.getBrandName(), Version.getBrandVersion());
       for (Path configurationFile : configurationFiles) {
          Server.log.serverConfiguration(configurationFile.toString());
       }
