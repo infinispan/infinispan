@@ -49,6 +49,14 @@ The same configuration should be changed to the following instead.
 </persistence>
 ----
 
+== RocksDB store
+
+The RocksDB implementation is no longer included by default with the server. It can be installed via the CLI:
+
+----
+$ cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
+----
+
 = Upgrading from 12.1 to 13.0
 
 == Search
