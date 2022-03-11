@@ -26,8 +26,8 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.INFO)
-   @Message(value = "%s Server starting", id = 80000)
-   void serverStarting(String name);
+   @Message(value = "%s Server %s starting", id = 80000)
+   void serverStarting(String name, String version);
 
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "%s Server %s started in %dms", id = 80001)
