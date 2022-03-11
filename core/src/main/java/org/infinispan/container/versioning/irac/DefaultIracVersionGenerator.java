@@ -53,9 +53,8 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
    private ByteString localSite;
    private volatile int topologyId = 1;
 
-   public DefaultIracVersionGenerator() {
-      // 256 is the default number of segments
-      segmentVersion = new ConcurrentHashMap<>(256);
+   public DefaultIracVersionGenerator(int numberOfSegments) {
+      segmentVersion = new ConcurrentHashMap<>(numberOfSegments);
    }
 
    @Start
