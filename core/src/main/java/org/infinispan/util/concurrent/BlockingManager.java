@@ -92,11 +92,13 @@ public interface BlockingManager {
 
    /**
     * Replacement for {@code CompletionStage.handleAsync()} that invokes the {@code BiFunction} in a blocking thread
-    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
+    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking and the stage
+    * is completed).
     * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
     * <p>
-    * Note that if the current thread is blocking, the task is invoked in the current thread meaning the stage is
-    * always completed when returned, so any chained stage is also invoked on the current thread.
+    * Note that if the current thread is blocking and the stage is completed, the task is invoked in the current thread
+    * meaning the stage is always completed when returned, so any chained stage is also invoked on the current thread.
+    *
     * @param stage stage, that may or may not be complete, to handle.
     * @param function the blocking function.
     * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
@@ -109,11 +111,13 @@ public interface BlockingManager {
 
    /**
     * Replacement for {@link CompletionStage#thenRunAsync(Runnable)} that invokes the {@code Runnable} in a blocking thread
-    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
+    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking and the stage
+    * is completed).
     * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
     * <p>
-    * Note that if the current thread is blocking, the task is invoked in the current thread meaning the stage is
-    * always completed when returned, so any chained stage is also invoked on the current thread.
+    * Note that if the current thread is blocking and the stage is completed, the task is invoked in the current thread
+    * meaning the stage is always completed when returned, so any chained stage is also invoked on the current thread.
+    *
     * @param stage stage, that may or may not be complete, to apply.
     * @param runnable blocking operation that runs some code.
     * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
@@ -124,11 +128,13 @@ public interface BlockingManager {
 
    /**
     * Replacement for {@code CompletionStage.thenApplyAsync()} that invokes the {@code Function} in a blocking thread
-    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
+    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking and the stage
+    * is completed).
     * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
     * <p>
-    * Note that if the current thread is blocking, the task is invoked in the current thread meaning the stage is
-    * always completed when returned, so any chained stage is also invoked on the current thread.
+    * Note that if the current thread is blocking and the stage is completed, the task is invoked in the current thread
+    * meaning the stage is always completed when returned, so any chained stage is also invoked on the current thread.
+    *
     * @param stage stage, that may or may not be complete, to apply.
     * @param function the blocking function.
     * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
@@ -140,12 +146,36 @@ public interface BlockingManager {
          Function<? super I, ? extends O> function, Object traceId);
 
    /**
+    * Replacement for {@code CompletionStage.thenComposeAsync()} that invokes the {@code Function} in a blocking thread
+    * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking and the stage
+    * is completed).
+    * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
+    * <p>
+    * Note that if the current thread is blocking and the stage is completed, the task is invoked in the current thread
+    * meaning the stage is always completed when returned, so any chained stage is also invoked on the current thread.
+    * <p>
+    * Note this method is not normally required as the Function already returns a CompletionStage and it is recommended
+    * to have the composed function just be non-blocking to begin with.
+    * This method is here when invoking some method that may spuriously block to be safe.
+    *
+    * @param stage stage, that may or may not be complete, to compose.
+    * @param function the blocking function.
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
+    * @param <I> input value type to the function.
+    * @param <O> output value type after being transformed via function.
+    * @return a stage that, when complete, contains the value returned from the composed function or a throwable.
+    */
+   <I, O> CompletionStage<O> thenComposeBlocking(CompletionStage<? extends I> stage,
+         Function<? super I, ? extends CompletionStage<O>> function, Object traceId);
+
+   /**
     * Replacement for {@code CompletionStage.whenCompleteAsync()} that invokes the {@code BiConsumer} in a blocking thread
     * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking).
     * The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
     * <p>
-    * Note that if the current thread is blocking, the task is invoked in the current thread meaning the stage is
-    * always completed when returned, so any chained stage is also invoked on the current thread.
+    * Note that if the current thread is blocking and the stage is completed, the task is invoked in the current thread
+    * meaning the stage is always completed when returned, so any chained stage is also invoked on the current thread.
+    *
     * @param stage stage, that may or may not be complete, to apply.
     * @param biConsumer the blocking biConsumer.
     * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
