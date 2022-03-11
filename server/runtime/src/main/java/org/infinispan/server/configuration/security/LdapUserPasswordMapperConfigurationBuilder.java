@@ -2,14 +2,17 @@ package org.infinispan.server.configuration.security;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.Server;
 
 /**
  * @since 10.0
  */
 public class LdapUserPasswordMapperConfigurationBuilder implements Builder<LdapUserPasswordMapperConfiguration> {
    private final AttributeSet attributes;
+   private final LdapRealmConfigurationBuilder ldapConfigurationBuilder;
 
-   LdapUserPasswordMapperConfigurationBuilder() {
+   LdapUserPasswordMapperConfigurationBuilder(LdapRealmConfigurationBuilder ldapConfigurationBuilder) {
+      this.ldapConfigurationBuilder = ldapConfigurationBuilder;
       attributes = LdapUserPasswordMapperConfiguration.attributeDefinitionSet();
    }
 
@@ -32,5 +35,12 @@ public class LdapUserPasswordMapperConfigurationBuilder implements Builder<LdapU
    public LdapUserPasswordMapperConfigurationBuilder read(LdapUserPasswordMapperConfiguration template) {
       attributes.read(template.attributes());
       return this;
+   }
+
+   @Override
+   public void validate() {
+      if (ldapConfigurationBuilder.isDirectVerificationEnabled() && attributes.attribute(LdapUserPasswordMapperConfiguration.FROM).isNull()) {
+         throw Server.log.ldapDirectVerificationWithoutUserMapper();
+      }
    }
 }

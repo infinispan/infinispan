@@ -4,6 +4,7 @@ import static org.infinispan.server.configuration.security.DistributedRealmConfi
 
 import java.util.function.Supplier;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
@@ -112,5 +113,10 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
    @Override
    public int compareTo(RealmProviderBuilder o) {
       return 0; // Irrelevant
+   }
+
+   boolean isDirectVerificationEnabled() {
+      Attribute<Boolean> attribute = attributes.attribute(LdapRealmConfiguration.DIRECT_EVIDENCE_VERIFICATION);
+      return !attribute.isNull() && attribute.get();
    }
 }

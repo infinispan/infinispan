@@ -68,9 +68,9 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
    @Override
    public SecurityRealm build(SecurityConfiguration security, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
       LdapSecurityRealmBuilder ldapRealmBuilder = LdapSecurityRealmBuilder.builder();
-      attributes.attribute(DIRECT_EVIDENCE_VERIFICATION).apply(v -> ldapRealmBuilder.addDirectEvidenceVerification(v));
+      attributes.attribute(DIRECT_EVIDENCE_VERIFICATION).apply(ldapRealmBuilder::addDirectEvidenceVerification);
       ldapRealmBuilder.setPageSize(attributes.attribute(PAGE_SIZE).get());
-      identityMapping.build(ldapRealmBuilder);
+      identityMapping.build(ldapRealmBuilder, realm);
       Properties connectionProperties = new Properties();
       connectionProperties.setProperty("com.sun.jndi.ldap.connect.pool", attributes.attribute(LdapRealmConfiguration.CONNECTION_POOLING).get().toString());
       SimpleDirContextFactoryBuilder dirContextBuilder = SimpleDirContextFactoryBuilder.builder();
@@ -87,7 +87,7 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
       if (attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).isModified()) {
          ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
       }
-      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD);
+      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN);
       return ldapRealmBuilder.build();
    }
 

@@ -53,7 +53,8 @@ public class PropertiesRealmConfiguration extends ConfigurationElement<Propertie
       String realmName = userPropertiesConfiguration.digestRealmName();
       PropertiesSecurityRealm propertiesSecurityRealm = new PropertiesSecurityRealm(usersFile, groupsFile, plainText, groupsAttribute, realmName);
       realm.setHttpChallengeReadiness(() -> !propertiesSecurityRealm.isEmpty());
-      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD);
+      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN);
+      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED);
       return propertiesSecurityRealm;
    }
 

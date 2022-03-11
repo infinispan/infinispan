@@ -172,7 +172,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                   .addMechanisms(SaslMechanismInformation.Names.EXTERNAL);
             Server.log.debug("Enabled EXTERNAL mechanism for Hot Rod");
          }
-         if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD)) {
+         if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
             authentication
                   .enable()
                   .addMechanisms(
@@ -233,7 +233,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                   .addMechanisms("CLIENT_CERT");
             Server.log.debug("Enabled CLIENT_CERT for HTTP");
          }
-         if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD)) {
+         if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
             authentication
                   .enable()
                   .addMechanisms("DIGEST");
@@ -258,7 +258,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
          authentication.securityRealm(securityRealmName);
       }
       ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
-      if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD)) {
+      if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN)) {
          authentication.authenticator(new ElytronRESPAuthenticator(authentication.securityRealm()));
       } else {
          throw Server.log.respEndpointRequiresRealmWithPassword();

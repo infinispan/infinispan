@@ -19,12 +19,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class LdapIdentityMappingConfigurationBuilder implements Builder<LdapIdentityMappingConfiguration> {
    private final AttributeSet attributes;
    private final List<LdapAttributeConfigurationBuilder> attributeMappings = new ArrayList<>();
-   private final LdapUserPasswordMapperConfigurationBuilder userPasswordMapper = new LdapUserPasswordMapperConfigurationBuilder();
-
-   private final LdapRealmConfigurationBuilder ldapConfigurationBuilder;
+   private final LdapUserPasswordMapperConfigurationBuilder userPasswordMapper;
 
    LdapIdentityMappingConfigurationBuilder(LdapRealmConfigurationBuilder ldapConfigurationBuilder) {
-      this.ldapConfigurationBuilder = ldapConfigurationBuilder;
+      this.userPasswordMapper = new LdapUserPasswordMapperConfigurationBuilder(ldapConfigurationBuilder);
       this.attributes = LdapIdentityMappingConfiguration.attributeDefinitionSet();
    }
 
