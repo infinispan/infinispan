@@ -63,6 +63,6 @@ public class ServerSecurityRealm {
    }
 
    public enum Feature {
-      PASSWORD, TOKEN, TRUST, ENCRYPT
+      PASSWORD_PLAIN, PASSWORD_HASHED, TOKEN, TRUST, ENCRYPT
    }
 }

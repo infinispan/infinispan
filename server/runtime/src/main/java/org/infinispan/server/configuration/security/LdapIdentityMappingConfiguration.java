@@ -43,7 +43,7 @@ public class LdapIdentityMappingConfiguration extends ConfigurationElement<LdapI
       return userPasswordMapper;
    }
 
-   void build(LdapSecurityRealmBuilder builder) {
+   void build(LdapSecurityRealmBuilder builder, RealmConfiguration realm) {
       LdapSecurityRealmBuilder.IdentityMappingBuilder identity = builder.identityMapping();
       if (attributes.attribute(RDN_IDENTIFIER).isModified()) {
          identity.setRdnIdentifier(attributes.attribute(RDN_IDENTIFIER).get());
@@ -61,7 +61,7 @@ public class LdapIdentityMappingConfiguration extends ConfigurationElement<LdapI
       for (LdapAttributeConfiguration mapping : attributeMappings) {
          mapping.build(identity);
       }
-      userPasswordMapper.build(builder);
+      userPasswordMapper.build(builder, realm);
       identity.build(); // side-effect
    }
 }
