@@ -525,7 +525,7 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Needed to call stop() before destroying but stop() threw exception. Proceeding to destroy", id = 127)
 //   void stopBeforeDestroyFailed(@Cause CacheException e);
 
-   @LogMessage(level = INFO)
+   @LogMessage(level = DEBUG)
    @Message(value = "Infinispan version: %s", id = 128)
    void version(String version);
 
