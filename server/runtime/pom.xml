@@ -89,11 +89,17 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-rocksdb</artifactId>
+         <artifactId>infinispan-cachestore-remote</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-remote</artifactId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.rocksdb</groupId>
+               <artifactId>rocksdbjni</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
