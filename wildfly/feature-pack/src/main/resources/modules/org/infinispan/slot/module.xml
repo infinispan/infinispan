@@ -84,8 +84,7 @@
 
       <module name="org.apache.xerces" services="import"/>
 
-      <module name="io.micrometer.micrometer-core" optional="true"/>
-      <module name="io.micrometer.registry-prometheus" optional="true"/>
+      <module name="io.micrometer" slot="@infinispan.module.slot@" export="true"/>
 
       <module name="org.jboss.jandex"/>
       <module name="org.jboss.logging"/>

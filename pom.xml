@@ -665,12 +665,12 @@
          <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
-            <version>${version.micrometer.core}</version>
+            <version>${version.micrometer}</version>
          </dependency>
          <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>${version.micrometer.core}</version>
+            <version>${version.micrometer}</version>
          </dependency>
          <dependency>
             <groupId>io.smallrye.reactive</groupId>
