@@ -67,18 +67,15 @@ public class TopologyIracVersion implements Comparable<TopologyIracVersion> {
    }
 
    public TopologyIracVersion increment(int currentTopologyId) {
-      long newVersion = currentTopologyId == topologyId ? version + 1 : 1;
-      return new TopologyIracVersion(currentTopologyId, newVersion);
+      return currentTopologyId > topologyId ?
+            TopologyIracVersion.newVersion(currentTopologyId) :
+            new TopologyIracVersion(topologyId, version + 1);
    }
 
    @Override
    public int compareTo(TopologyIracVersion other) {
-      if (topologyId < other.topologyId) {
-         return -1;
-      } else if (topologyId > other.topologyId) {
-         return 1;
-      }
-      return Long.compare(version, other.version);
+      int topologyCompare = Integer.compare(topologyId, other.topologyId);
+      return topologyCompare == 0 ? Long.compare(version, other.version) : topologyCompare;
    }
 
    @Override
