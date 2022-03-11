@@ -83,12 +83,17 @@ public class DefaultIracVersionGenerator implements IracVersionGenerator {
 
    @Override
    public IracMetadata generateNewMetadata(int segment, IracEntryVersion versionSeen) {
-      IracEntryVersion version = versionSeen == null ?
-            segmentVersion.compute(segment, incrementAndGet) :
-            segmentVersion.compute(segment, (s, currentVersion) ->
-                  currentVersion == null ?
-                        versionSeen.increment(localSite, topologyId) :
-                        currentVersion.merge(versionSeen).increment(localSite, topologyId));
+      if (versionSeen == null) {
+         return generateNewMetadata(segment);
+      }
+      int vTopology = versionSeen.getTopology(localSite);
+      if (vTopology > topologyId) {
+         updateTopology(vTopology);
+      }
+      IracEntryVersion version = segmentVersion.compute(segment, (s, currentVersion) ->
+            currentVersion == null ?
+                  versionSeen.increment(localSite, topologyId) :
+                  currentVersion.merge(versionSeen).increment(localSite, topologyId));
       return new IracMetadata(localSite, version);
    }
 
