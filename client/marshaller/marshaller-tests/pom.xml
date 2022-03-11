@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-marshaller-parent</artifactId>
-        <version>13.0.7.Final</version>
+        <version>13.0.8-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
