@@ -55,17 +55,6 @@ public class IracEntryVersion {
    }
 
    /**
-    * Converts this instance to a {@link Map}.
-    * <p>
-    * The map cannot be modified!.
-    *
-    * @return The {@link Map} representation of this version.
-    */
-   public Map<ByteString, TopologyIracVersion> toMap() {
-      return toTreeMap(vectorClock);
-   }
-
-   /**
     * Iterates over all entries of this version as pairs (site name, site version).
     *
     * @param consumer The {@link BiConsumer}.
@@ -104,13 +93,14 @@ public class IracEntryVersion {
       return new IracEntryVersion(toMapEntryArray(copy));
    }
 
+   public TopologyIracVersion getVersion(ByteString siteName) {
+      int index = Arrays.binarySearch(vectorClock, searchKey(siteName));
+      return index >= 0 ? vectorClock[index].version : null;
+   }
+
    public int getTopology(ByteString siteName) {
-      for (MapEntry entry : vectorClock) {
-         if (entry.site.equals(siteName)) {
-            return entry.version.getTopologyId();
-         }
-      }
-      return 0;
+      TopologyIracVersion version = getVersion(siteName);
+      return version == null ? 0 : version.getTopologyId();
    }
 
    public IracEntryVersion increment(ByteString siteName, int topologyId) {
@@ -166,6 +156,10 @@ public class IracEntryVersion {
          copy.put(entry.site, entry.version);
       }
       return copy;
+   }
+
+   private static MapEntry searchKey(ByteString site) {
+      return new MapEntry(site, null);
    }
 
    private enum Merger {
