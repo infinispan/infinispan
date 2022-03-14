@@ -521,7 +521,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
       int keyLength = entry.getKeyBytes().getLength();
       if (keyLength > maxKeyLength) {
-         throw log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength);
+         return CompletableFutures.completedExceptionFuture(log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength));
       }
       try {
          return logAppender.storeRequest(segment, entry);
