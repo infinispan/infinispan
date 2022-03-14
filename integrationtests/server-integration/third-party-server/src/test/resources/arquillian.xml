@@ -52,10 +52,8 @@
                 <!-- org.wildfly.clustering.marshalling.protostream.util.EnumMapMarshaller uses setAccessible -->
                 <!-- org.infinispan.protostream.annotations.impl.MarshallerByteCodeGenerator uses setAccessible via javassist -->
                 <property name="javaVmArguments">
-                    --add-opens=java.base/java.util=ALL-UNNAMED
-                   --add-opens=java.base/java.lang=ALL-UNNAMED
+                    ${server.jvm.args}
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
-                    -Djava.net.preferIPv4Stack=true
                 </property>
             </configuration>
         </container>
@@ -66,10 +64,8 @@
                 <!-- org.wildfly.clustering.marshalling.protostream.util.EnumMapMarshaller uses setAccessible -->
                 <!-- org.infinispan.protostream.annotations.impl.MarshallerByteCodeGenerator uses setAccessible via javassist -->
                 <property name="javaVmArguments">
-                   --add-opens=java.base/java.util=ALL-UNNAMED
-                   --add-opens=java.base/java.lang=ALL-UNNAMED
+                    ${server.jvm.args}
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
-                    -Djava.net.preferIPv4Stack=true
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="managementPort">10090</property>
