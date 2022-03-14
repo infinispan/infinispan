@@ -18,6 +18,14 @@
         <version.arquillian-tomcat-managed>1.1.0.Final</version.arquillian-tomcat-managed>
         <ispnserver.project.dir>${basedir}/../../../server/runtime</ispnserver.project.dir>
         <ispn.config.file>${basedir}/../server-integration-commons/target/test-classes/infinispan-custom.xml</ispn.config.file>
+        <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
+        <jvm.x64.args />
+        <!-- infinispan-custom.xml ignores the infinispan.cluster.stack system property and uses the test-tcp stack -->
+        <transport.stack/>
+        <mcast.ip>234.99.54.14</mcast.ip>
+        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
+        <server.jvm>${env.JAVA_HOME}</server.jvm>
+        <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
     </properties>
 
     <dependencies>
@@ -96,6 +104,7 @@
                         <jbossHome2>${jbossHome2}</jbossHome2>
                         <server.jvm>${server.jvm}</server.jvm>
                         <infinispan.server.integration.data-source>${infinispan.server.integration.data-source}</infinispan.server.integration.data-source>
+                        <server.jvm.args>${server.jvm.args}</server.jvm.args>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>
@@ -212,10 +221,8 @@
         <profile>
             <id>third-party-wildfly</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
                 <property>
-                    <name>infinispan.server.integration.launch</name>
-                    <value>wildfly</value>
+                    <name>!infinispan.server.integration.launch</name>
                 </property>
             </activation>
             <properties>
@@ -323,6 +330,17 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>java8-test</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <server.jvm>${env.JAVA8_HOME}</server.jvm>
+                <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+            </properties>
         </profile>
     </profiles>
 </project>
