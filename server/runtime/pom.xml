@@ -146,6 +146,12 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>org.latencyutils</groupId>
+         <artifactId>LatencyUtils</artifactId>
+         <version>${version.latencyutils}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>org.glassfish</groupId>
          <artifactId>javax.json</artifactId>
       </dependency>
