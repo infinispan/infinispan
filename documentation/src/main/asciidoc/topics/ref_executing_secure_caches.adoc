@@ -1,5 +1,5 @@
 [id='code-execution-security-authorization_{context}']
-= Code execution with securirty authorization
+= Code execution with security authorization
 
 When you configure security authorization for embedded caches and then construct a `DefaultCacheManager`, it returns a `SecureCache` that checks the security context before invoking any operations.
 A `SecureCache` also ensures that applications cannot retrieve lower-level insecure objects such as `DataContainer`.
