@@ -5,10 +5,12 @@ import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 import java.security.Provider;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -42,6 +44,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 10.0
  **/
 public class ElytronHTTPAuthenticator implements Authenticator {
+   public static final String SESSION_COOKIE = "ISPN_SESSION=";
    private final String name;
    private final String serverPrincipal;
    private final Collection<String> mechanisms;
@@ -94,6 +97,7 @@ public class ElytronHTTPAuthenticator implements Authenticator {
       HttpServerRequestAdapter requestAdapter = new HttpServerRequestAdapter(request, ctx);
       return blockingManager.supplyBlocking(() -> {
          try {
+            handleCookie(request, requestAdapter);
             String authorizationHeader = request.getAuthorizationHeader();
             if (authorizationHeader == null) {
                for (String name : configuration.authentication().mechanisms()) {
@@ -115,11 +119,25 @@ public class ElytronHTTPAuthenticator implements Authenticator {
                mechanism.evaluateRequest(requestAdapter);
                extractSubject(request, mechanism);
             }
-            return requestAdapter.getResponse();
+            return requestAdapter.buildResponse();
          } catch (Exception e) {
             throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
          }
       }, "auth");
+   }
+
+   private void handleCookie(RestRequest request, HttpServerRequestAdapter requestAdapter) {
+      String cookieHeader = request.getCookieHeader();
+      if (cookieHeader == null || !cookieHeader.contains(SESSION_COOKIE)) {
+         // add a cookie
+         StringBuilder sb = new StringBuilder();
+         sb.append(SESSION_COOKIE);
+         byte[] bytes = new byte[16];
+         ThreadLocalRandom.current().nextBytes(bytes);
+         sb.append(Util.toHexString(bytes));
+         sb.append("; HttpOnly");
+         requestAdapter.addResponseHeader("Set-Cookie", sb.toString());
+      }
    }
 
    private void extractSubject(RestRequest request, HttpServerAuthenticationMechanism mechanism) {

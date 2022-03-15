@@ -43,6 +43,7 @@ public class HttpServerRequestAdapter implements HttpServerRequest {
       this.request = request;
       this.ctx = ctx;
       this.responseBuilder = new NettyRestResponse.Builder();
+
    }
 
    @Override
@@ -174,7 +175,6 @@ public class HttpServerRequestAdapter implements HttpServerRequest {
       return null;
    }
 
-
    @Override
    public Collection<String> getScopeIds(Scope scope) {
       return null;
@@ -185,7 +185,11 @@ public class HttpServerRequestAdapter implements HttpServerRequest {
       return null;
    }
 
-   public RestResponse getResponse() {
+   public void addResponseHeader(String name, String value) {
+      responseBuilder.header(name, value);
+   }
+
+   public RestResponse buildResponse() {
       return responseBuilder.build();
    }
 

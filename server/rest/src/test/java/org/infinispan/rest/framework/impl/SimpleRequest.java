@@ -127,6 +127,11 @@ public class SimpleRequest implements RestRequest {
       return null;
    }
 
+   @Override
+   public String getCookieHeader() {
+      return null;
+   }
+
 
    @Override
    public String getEtagIfMatchHeader() {

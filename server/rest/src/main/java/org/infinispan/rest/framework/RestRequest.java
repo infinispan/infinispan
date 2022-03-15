@@ -44,6 +44,8 @@ public interface RestRequest {
 
    String getContentTypeHeader();
 
+   String getCookieHeader();
+
    String getEtagIfMatchHeader();
 
    String getIfModifiedSinceHeader();

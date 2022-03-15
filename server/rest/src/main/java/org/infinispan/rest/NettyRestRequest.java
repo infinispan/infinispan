@@ -183,6 +183,11 @@ public class NettyRestRequest implements RestRequest {
    }
 
    @Override
+   public String getCookieHeader() {
+      return request.headers().get(HttpHeaderNames.COOKIE);
+   }
+
+   @Override
    public String getEtagIfMatchHeader() {
       return request.headers().get(HttpHeaderNames.IF_MATCH);
    }
