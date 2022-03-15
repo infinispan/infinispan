@@ -1,19 +1,16 @@
 package org.infinispan.server.functional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.functional.XSiteIT.LON;
 import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Map;
-
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
 import org.junit.ClassRule;
@@ -52,7 +49,7 @@ public class XSiteRestMetricsOperations {
    public InfinispanXSiteServerTestMethodRule SERVER_TEST = new InfinispanXSiteServerTestMethodRule(SERVERS);
 
    @Test
-   public void testSiteStatus() {
+   public void testSiteStatus() throws Exception {
       String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
       String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
 
@@ -66,7 +63,7 @@ public class XSiteRestMetricsOperations {
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
          assertEquals(200, response.getStatus());
-         assertEquals(MediaType.TEXT_PLAIN, response.contentType());
+         RestMetricsResource.checkIsOpenmetrics(response.contentType());
          assertTrue(response.getBody().contains("# TYPE vendor_" + statusMetricName + " gauge\n"));
       }
 
@@ -79,17 +76,14 @@ public class XSiteRestMetricsOperations {
       assertSiteStatusMetrics(metricsClient, statusMetricName, 0);
    }
 
-   private static void assertSiteStatusMetrics(RestMetricsClient client, String metric, int expected) {
+   private static void assertSiteStatusMetrics(RestMetricsClient client, String metric, int expected) throws Exception {
       try (RestResponse response = sync(client.metrics())) {
          assertEquals(200, response.getStatus());
-         assertEquals(MediaType.APPLICATION_JSON, response.contentType());
-         Json node = Json.read(response.getBody());
-         for (Map.Entry<String, Json> entry : node.at("vendor").asJsonMap().entrySet()) {
-            if (!entry.getKey().startsWith(metric)) {
-               continue;
-            }
-            assertEquals(expected, entry.getValue().asInteger());
-         }
+         RestMetricsResource.checkIsPrometheus(response.contentType());
+         RestMetricsResource.checkRule(response.getBody(), "vendor_" + metric, (stringValue) -> {
+            int parsed = (int) Double.parseDouble(stringValue);
+            assertThat(parsed).isEqualTo(expected);
+         });
       }
    }
 

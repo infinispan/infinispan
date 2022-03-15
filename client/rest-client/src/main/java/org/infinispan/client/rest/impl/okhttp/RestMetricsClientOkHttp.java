@@ -23,43 +23,28 @@ public class RestMetricsClientOkHttp implements RestMetricsClient {
 
    @Override
    public CompletionStage<RestResponse> metrics() {
-      return metricsGet("", false);
-   }
-
-   @Override
-   public CompletionStage<RestResponse> metrics(String path) {
-      return metricsGet(path, false);
+      return metricsGet(false);
    }
 
    @Override
    public CompletionStage<RestResponse> metrics(boolean openMetricsFormat) {
-      return metricsGet("", openMetricsFormat);
-   }
-
-   @Override
-   public CompletionStage<RestResponse> metrics(String path, boolean openMetricsFormat) {
-      return metricsGet(path, openMetricsFormat);
+      return metricsGet(openMetricsFormat);
    }
 
    @Override
    public CompletionStage<RestResponse> metricsMetadata() {
-      return metricsOptions("");
+      return metricsOptions();
    }
 
-   @Override
-   public CompletionStage<RestResponse> metricsMetadata(String path) {
-      return metricsOptions(path);
-   }
-
-   private CompletionStage<RestResponse> metricsGet(String path, boolean openMetricsFormat) {
+   private CompletionStage<RestResponse> metricsGet(boolean openMetricsFormat) {
       Request.Builder builder = new Request.Builder()
             .addHeader("ACCEPT", openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : APPLICATION_JSON_TYPE);
-      return client.execute(builder, baseMetricsURL, path);
+      return client.execute(builder, baseMetricsURL);
    }
 
-   private CompletionStage<RestResponse> metricsOptions(String path) {
+   private CompletionStage<RestResponse> metricsOptions() {
       Request.Builder builder = new Request.Builder()
             .method("OPTIONS", null);
-      return client.execute(builder, baseMetricsURL, path);
+      return client.execute(builder, baseMetricsURL);
    }
 }

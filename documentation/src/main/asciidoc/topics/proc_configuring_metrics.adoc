@@ -1,13 +1,25 @@
 [id='configuring-metrics_{context}']
 = Configuring {brandname} metrics
 
-{brandname} generates metrics that are compatible with the MicroProfile Metrics API.
+{brandname} generates metrics that are compatible with any monitoring system.
 
 * Gauges provide values such as the average number of nanoseconds for write operations or JVM uptime.
 * Histograms provide details about operation execution times such as read,
 write, and remove times.
 
 By default, {brandname} generates gauges when you enable statistics but you can also configure it to generate histograms.
+
+[NOTE]
+====
+{brandname} metrics are provided at the `vendor` scope.
+Metrics related to the JVM are provided in the `base` scope.
+====
+
+ifdef::embedded_caches[]
+.Prerequisites
+
+* You must add Micrometer Core and Micrometer Registry Prometheus JARs to your classpath to export {brandname} metrics for embedded caches.
+endif::embedded_caches[]
 
 .Procedure
 
@@ -45,32 +57,33 @@ ifdef::embedded_caches[]
 include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 ----
 endif::embedded_caches[]
-
+ifdef::remote_caches[]
 .Verification
 
-ifdef::remote_caches[]
-{brandname} Server exposes statistics through the `metrics` endpoint.
-You can collect metrics with any monitoring tool that supports the OpenMetrics format, such as Prometheus.
+{brandname} Server exposes statistics through the `metrics` endpoint that you can collect with monitoring tools such as Prometheus.
+To verify that statistics are exported to the `metrics` endpoint, you can do the following:
 
-{brandname} metrics are provided at the `vendor` scope.
-Metrics related to the JVM are provided in the `base` scope.
-
-You can retrieve metrics from {brandname} Server as follows:
-
+.Prometheus format
+[source,options="nowrap",subs=attributes+,role="primary"]
 ----
-$ curl -v http://localhost:11222/metrics
+curl -v http://localhost:11222/metrics \
+--digest -u username:password
 ----
 
-To retrieve metrics in MicroProfile JSON format, do the following:
+.OpenMetrics format
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+curl -v http://localhost:11222/metrics \
+--digest -u username:password \
+-H "Accept: application/openmetrics-text"
+----
 
-----
-$ curl --header "Accept: application/json" http://localhost:11222/metrics
-----
+[NOTE]
+====
+{brandname} no longer provides metrics in MicroProfile JSON format.
+====
 endif::remote_caches[]
-ifdef::embedded_caches[]
-For embedded caches, you must add the necessary MicroProfile API and provider JARs to your classpath to export {brandname} metrics.
-endif::embedded_caches[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:https://github.com/eclipse/microprofile-metrics/blob/master/README.adoc[Eclipse MicroProfile Metrics]
+* link:https://micrometer.io/docs/registry/prometheus[Micrometer Prometheus]

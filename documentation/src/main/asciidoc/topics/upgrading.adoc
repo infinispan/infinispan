@@ -57,6 +57,13 @@ The RocksDB implementation is no longer included by default with the server. It 
 $ cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
 ----
 
+== Micrometer Metrics
+
+Microprofile metrics are no longer supported, available output metrics are now Prometheus and OpenMetrics.
+
+The implementation relies on Micrometer library, for more information see
+the link:../server/server.html#configuring-metrics_statistics-jmx[Configuring Infinispan metrics].
+
 = Upgrading from 12.1 to 13.0
 
 == Search

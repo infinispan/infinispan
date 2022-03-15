@@ -17,7 +17,7 @@
       </dependency>
    </dependencies>
    <default-packages>
-      <!-- include all our packages: aws & infinispan -->
+      <!-- include all our packages: aws & infinispan & micrometer -->
       <package name="modules.all"/>
       <package name="docs.schema"/>
    </default-packages>

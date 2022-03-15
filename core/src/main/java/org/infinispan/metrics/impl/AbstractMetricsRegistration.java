@@ -19,7 +19,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
- * Parent class for microprofile metrics registration. Gathers all components in component registry and registers
+ * Parent class for metrics registration. Gathers all components in component registry and registers
  * metrics for them.
  *
  * @author anistor@redhat.com
@@ -49,7 +49,7 @@ abstract class AbstractMetricsRegistration {
          try {
             processComponents();
          } catch (Exception e) {
-            throw new CacheException("Failure while registering metrics", e);
+            throw new CacheException("A failure occurred while registering metrics.", e);
          }
       }
    }
@@ -98,7 +98,7 @@ abstract class AbstractMetricsRegistration {
          jmxObjectName = componentName;
       }
       if (jmxObjectName == null) {
-         throw new IllegalArgumentException("No MBean name and no component name was specified");
+         throw new IllegalArgumentException("No MBean name and no component name was specified.");
       }
       String metricPrefix = namePrefix;
       if (!jmxObjectName.equals("Cache") && !jmxObjectName.equals("CacheManager")) {
@@ -121,7 +121,7 @@ abstract class AbstractMetricsRegistration {
     */
    public void registerMetrics(Object instance, String type, String componentName) {
       if (metricsCollector == null) {
-         throw new IllegalStateException("Microprofile metrics are not initialized");
+         throw new IllegalStateException("Metrics are not initialized.");
       }
       MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
       if (beanMetadata == null) {
@@ -137,7 +137,7 @@ abstract class AbstractMetricsRegistration {
     */
    public Set<Object> registerExternalMetrics(Object instance, String prefix) {
       if (metricsCollector == null) {
-         throw new IllegalStateException("Microprofile metrics are not initialized");
+         throw new IllegalStateException("Metrics are not initialized.");
       }
       MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
       if (beanMetadata == null) {
@@ -148,14 +148,14 @@ abstract class AbstractMetricsRegistration {
 
    public void unregisterMetrics(Set<Object> metricIds) {
       if (metricsCollector == null) {
-         throw new IllegalStateException("Microprofile metrics are not initialized");
+         throw new IllegalStateException("Metrics are not initialized.");
       }
       try {
          for (Object metricId : metricIds) {
             metricsCollector.unregisterMetric(metricId);
          }
       } catch (Exception e) {
-         throw new CacheException("Failure while unregistering metrics", e);
+         throw new CacheException("A failure occurred while unregistering metrics.", e);
       }
    }
 }

@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
-import org.eclipse.microprofile.metrics.Timer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -27,6 +26,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
+import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -49,7 +49,6 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.metrics.impl.MetricUtils;
-import org.infinispan.metrics.impl.TimerTrackerImpl;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -123,7 +122,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
                rpcManager -> rpcManager.getNumberXSiteRequestsReceivedFrom(site)));
          attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesTo_" + lSite,
                "Replication times to " + site,
-               (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, new TimerTrackerImpl(timer))));
+               (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer)));
       }
       return attributes;
    }
@@ -615,8 +614,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
          displayName = "Cross Site Replication Times",
          dataType = DataType.TIMER,
          units = Units.NANOSECONDS)
-   public void setCrossSiteReplicationTimes(Timer timer) {
-      xSiteMetricsCollector.registerTimer(new TimerTrackerImpl(timer));
+   public void setCrossSiteReplicationTimes(TimerTracker timer) {
+      xSiteMetricsCollector.registerTimer(timer);
    }
 
    // mainly for unit testing

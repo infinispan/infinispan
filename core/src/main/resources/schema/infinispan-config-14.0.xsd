@@ -293,7 +293,7 @@
       <xs:element name="metrics" type="tns:metrics" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Configures MicroProfile metrics.
+            Configures metrics.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
