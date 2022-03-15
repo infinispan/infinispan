@@ -59,6 +59,9 @@ public class JGroupsConfiguration {
    }
 
    public JGroupsChannelConfigurator configurator(String name) {
+      if (name == null) {
+         return null;
+      }
       return Stream.concat(stackConfigurations.stream(), stackFileConfigurations.stream())
             .filter(s -> s.name().equals(name))
             .map(NamedStackConfiguration::configurator)
