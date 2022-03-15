@@ -89,7 +89,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(CacheMode.REPL_SYNC, cfg.clustering().cacheMode());
    }
 
-   private ConfigurationBuilderHolder parseStringConfiguration(String config) {
+   private static ConfigurationBuilderHolder parseStringConfiguration(String config) {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
       return parserRegistry.parse(is, null, MediaType.APPLICATION_XML);
@@ -357,6 +357,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(repl2.isTemplate());
       assertEquals(CacheMode.REPL_ASYNC, repl1.clustering().cacheMode());
       assertEquals(CacheMode.REPL_ASYNC, repl2.clustering().cacheMode());
+   }
+
+   public void testInlineJGroupsStack() throws IOException {
+      try (DefaultCacheManager cm = new DefaultCacheManager("configs/config-with-jgroups-stack.xml")) {
+         assertTrue(cm.isCoordinator());
+      }
    }
 
    private void assertNamedCacheFile(ConfigurationBuilderHolder holder, boolean deprecated) {
