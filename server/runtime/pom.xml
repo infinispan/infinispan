@@ -146,6 +146,12 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>org.latencyutils</groupId>
+         <artifactId>LatencyUtils</artifactId>
+         <version>${version.latencyutils}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>org.glassfish</groupId>
          <artifactId>javax.json</artifactId>
       </dependency>
@@ -242,11 +248,6 @@
       <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-sasl-scram</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>javax.annotation</groupId>
-         <artifactId>javax.annotation-api</artifactId>
-         <scope>compile</scope> <!-- Needed by smallrye-metrics -->
       </dependency>
 
       <!-- Test dependencies -->

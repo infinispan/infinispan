@@ -4,8 +4,10 @@ import java.util.concurrent.Executor;
 
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
@@ -23,6 +25,7 @@ public class InvocationHelper {
    private final Executor executor;
    private final RestServer protocolServer;
    private final EncoderRegistry encoderRegistry;
+   private final MetricsCollector metricsCollector;
 
    InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
@@ -32,7 +35,10 @@ public class InvocationHelper {
       this.configuration = configuration;
       this.server = server;
       this.executor = executor;
-      this.encoderRegistry = restCacheManager.getInstance().getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+
+      GlobalComponentRegistry globalComponentRegistry = restCacheManager.getInstance().getGlobalComponentRegistry();
+      this.encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
+      this.metricsCollector = globalComponentRegistry.getComponent(MetricsCollector.class);
    }
 
    public ParserRegistry getParserRegistry() {
@@ -71,6 +77,10 @@ public class InvocationHelper {
 
    public EncoderRegistry getEncoderRegistry() {
       return encoderRegistry;
+   }
+
+   public MetricsCollector getMetricsCollector() {
+      return metricsCollector;
    }
 
    private void checkServerStatus() {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.5" name="io.micrometer" slot="@infinispan.module.slot@">
+   <resources>
+      <artifact name="${io.micrometer:micrometer-core}"/>
+      <artifact name="${io.micrometer:micrometer-registry-prometheus}"/>
+      <artifact name="${org.hdrhistogram:HdrHistogram}"/>
+      <artifact name="${io.prometheus:simpleclient_common}"/>
+      <artifact name="${io.prometheus:simpleclient}"/>
+      <artifact name="${io.prometheus:simpleclient_tracer_otel}"/>
+      <artifact name="${io.prometheus:simpleclient_tracer_common}"/>
+      <artifact name="${io.prometheus:simpleclient_tracer_otel_agent}"/>
+   </resources>
+</module>

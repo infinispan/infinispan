@@ -9,7 +9,7 @@ import java.util.function.Function;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 
 /**
- * Interface to implement if the class want to register more metrics to microprofile than the methods annotated with
+ * Interface to implement if the class want to register more metrics to Micrometer than the methods annotated with
  * {@link ManagedAttribute}.
  * <p>
  * The main goal is to allow some dynamic metrics (i.e. metrics that depends on some configuration). As an example, the

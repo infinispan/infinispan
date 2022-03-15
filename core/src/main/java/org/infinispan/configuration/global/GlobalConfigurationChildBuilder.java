@@ -13,7 +13,7 @@ public interface GlobalConfigurationChildBuilder {
    TransportConfigurationBuilder transport();
 
    /**
-    * Global microprofile metrics configuration.
+    * Global metrics configuration.
     */
    GlobalMetricsConfigurationBuilder metrics();
 

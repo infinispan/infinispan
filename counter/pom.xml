@@ -91,12 +91,7 @@
             <artifactId>blockhound</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- Included to avoid issue in blockhound during tests -->
-        <dependency>
-            <groupId>org.eclipse.microprofile.metrics</groupId>
-            <artifactId>microprofile-metrics-api</artifactId>
-            <optional>true</optional>
-        </dependency>
+
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>

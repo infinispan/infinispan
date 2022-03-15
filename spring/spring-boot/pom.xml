@@ -17,6 +17,8 @@
 
     <properties>
         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
+        <!-- Tests in these modules were designed for this micrometer version -->
+        <version.micrometer>1.7.1</version.micrometer>
     </properties>
 
     <build>

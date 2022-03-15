@@ -14,7 +14,7 @@ final class NameUtils {
    }
 
    /**
-    * Transform a camel-cased name to snake-case, because microprofile metrics loves underscores. Eventual sequences of
+    * Transform a camel-cased name to snake-case, because Micrometer metrics loves underscores. Eventual sequences of
     * multiple underscores are replaced with a single underscore. Illegal characters are also replaced with underscore.
     */
    public static String decamelize(String name) {

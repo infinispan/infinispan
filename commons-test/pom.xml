@@ -44,6 +44,16 @@
          <groupId>io.projectreactor.tools</groupId>
          <artifactId>blockhound</artifactId>
       </dependency>
+
+      <!-- Add Micrometer dependencies to all tests -->
+      <dependency>
+         <groupId>io.micrometer</groupId>
+         <artifactId>micrometer-core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.micrometer</groupId>
+         <artifactId>micrometer-registry-prometheus</artifactId>
+      </dependency>
    </dependencies>
 
    <build>

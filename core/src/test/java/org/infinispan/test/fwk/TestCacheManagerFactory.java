@@ -72,7 +72,6 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gcb,
                                                              ConfigurationBuilder c) {
       setNodeName(gcb);
-      MetricsCollectorTestHelper.replace(gcb);
       GlobalConfiguration globalConfiguration = gcb.build();
       checkJmx(globalConfiguration);
       DefaultCacheManager defaultCacheManager;
@@ -95,7 +94,6 @@ public class TestCacheManagerFactory {
          amendDefaultCache(gcb);
       }
       setNodeName(gcb);
-      MetricsCollectorTestHelper.replace(gcb);
       checkJmx(gcb.build());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
       TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));

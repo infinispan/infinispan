@@ -1,7 +1,7 @@
 package org.infinispan.metrics;
 
 /**
- * Various public constant names, used by Infinispan's microprofile metrics support.
+ * Various public constant names, used by Infinispan's metrics support.
  *
  * @author anistor@redhat.com
  * @since 10.1

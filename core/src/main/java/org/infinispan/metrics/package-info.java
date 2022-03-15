@@ -1,5 +1,5 @@
 /**
- * Eclipse microprofile based metrics. All exported metrics are placed in VENDOR scope.
+ * Micrometer based metrics. All exported metrics are placed in VENDOR scope.
  *
  * @public
  */

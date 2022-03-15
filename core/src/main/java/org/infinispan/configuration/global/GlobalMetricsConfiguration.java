@@ -7,7 +7,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
- * Configuration for microprofile metrics. See {@link GlobalMetricsConfigurationBuilder}.
+ * Configuration for metrics. See {@link GlobalMetricsConfigurationBuilder}.
  */
 public class GlobalMetricsConfiguration {
 
