@@ -47,6 +47,7 @@ import java.util.stream.IntStream;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.assertj.core.api.Assertions;
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
@@ -650,6 +651,21 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(entry).doesNotContain("created");
       assertThat(entry).doesNotContain("lastUsed");
       assertThat(entry).doesNotContain("expireTime");
+   }
+
+   @Test
+   public void testStreamComplexProtobufEntries() {
+      RestResponse response = join(client.cache("indexedCache").entries(-1, false));
+      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      assertEquals(0, emptyEntries.size());
+      insertEntity(3, "Another", 3, "Three");
+      response = join(client.cache("indexedCache").entries(-1, true));
+
+      if (response.getStatus() != 200) {
+         Assertions.fail(response.getBody());
+      }
+      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      assertThat(jsons).hasSize(1);
    }
 
    private String asString(Json json) {

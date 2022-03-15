@@ -391,8 +391,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request).getAdvancedCache();
       if (cache == null) return notFoundResponseFuture();
 
-      final MediaType keyMediaType = negotiate ? negotiateEntryMediaType(cache, true) : TEXT_PLAIN;
-      final MediaType valueMediaType = negotiate ? negotiateEntryMediaType(cache, false) : TEXT_PLAIN;
+      final MediaType keyMediaType = getMediaType(negotiate, cache, true);
+      final MediaType valueMediaType = getMediaType(negotiate, cache, false);
 
       Cache<?, ?> streamCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
 
@@ -427,16 +427,31 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return cache.addListenerAsync(listener).thenApply(v -> responseBuilder.build());
    }
 
-   private MediaType negotiateEntryMediaType(AdvancedCache<?, ?> cache, boolean forKey) {
-      MediaType storage = forKey ? cache.getKeyDataConversion().getStorageMediaType() : cache.getValueDataConversion().getStorageMediaType();
+   private MediaType getMediaType(boolean negotiate, AdvancedCache<?, ?> cache, boolean forKey) {
+      MediaType storageMediaType = (forKey) ?
+            cache.getKeyDataConversion().getStorageMediaType() :
+            cache.getValueDataConversion().getStorageMediaType();
+
+      boolean protoStreamEncoding = MediaType.APPLICATION_PROTOSTREAM.equals(storageMediaType);
+      if (negotiate) {
+         return negotiateEntryMediaType(storageMediaType, protoStreamEncoding);
+      }
+      return (protoStreamEncoding) ? APPLICATION_JSON : TEXT_PLAIN;
+   }
+
+   private MediaType negotiateEntryMediaType(MediaType storage, boolean protoStreamEncoding) {
       EncoderRegistry encoderRegistry = invocationHelper.getEncoderRegistry();
       boolean encodingDefined = !MediaType.APPLICATION_UNKNOWN.equals(storage);
       boolean jsonSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, APPLICATION_JSON);
       boolean textSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, TEXT_PLAIN);
 
-      if (textSupported) return TEXT_PLAIN;
-
-      if (jsonSupported) return APPLICATION_JSON;
+      if (protoStreamEncoding) {
+         if (jsonSupported) return APPLICATION_JSON;
+         if (textSupported) return TEXT_PLAIN;
+      } else {
+         if (textSupported) return TEXT_PLAIN;
+         if (jsonSupported) return APPLICATION_JSON;
+      }
 
       if (encodingDefined) return storage.withEncoding("hex");
 
