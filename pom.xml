@@ -358,7 +358,6 @@
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
       <versionx.org.jboss.narayana.jta.narayana-jta>${version.jboss.narayana}</versionx.org.jboss.narayana.jta.narayana-jta>
       <versionx.org.jboss.remoting.jboss-remoting>5.0.16.Final</versionx.org.jboss.remoting.jboss-remoting>
-      <versionx.org.jboss.remotingjmx.remoting-jmx>3.0.3.Final</versionx.org.jboss.remotingjmx.remoting-jmx>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
       <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
       <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>${version.jboss.shrinkwrap.descriptors}</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>
@@ -1436,11 +1435,6 @@
             <groupId>org.jboss.remoting</groupId>
             <artifactId>jboss-remoting</artifactId>
             <version>${versionx.org.jboss.remoting.jboss-remoting}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.remotingjmx</groupId>
-            <artifactId>remoting-jmx</artifactId>
-            <version>${versionx.org.jboss.remotingjmx.remoting-jmx}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.security</groupId>
