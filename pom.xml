@@ -409,7 +409,7 @@
       <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
       <!-- Version 0.33.0 is not compatible -->
       <versionx.org.opentracing.api>0.31.0</versionx.org.opentracing.api>
-      <versionx.io.jaegertracing.jaeger-client>1.5.0</versionx.io.jaegertracing.jaeger-client>
+      <versionx.io.jaegertracing.jaeger-client>1.6.0</versionx.io.jaegertracing.jaeger-client>
       <versionx.org.testcontainers.testcontainers>1.15.3</versionx.org.testcontainers.testcontainers>
       <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
