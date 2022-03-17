@@ -1512,31 +1512,35 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    @Override
    public void channelConnected(JChannel channel) {
-      MetricsCollector mc = metricsCollector.wired();
-      clusters.computeIfAbsent(channel, c -> {
-         String name = c.clusterName();
-         String nodeName;
-         org.jgroups.Address addr = c.getAddress();
-         if (addr != null) {
-            nodeName = addr.toString();
-         } else {
-            nodeName = c.getName();
-         }
-         Set<Object> metrics = new HashSet<>();
-         for (Protocol protocol : c.getProtocolStack().getProtocols()) {
-            metrics.addAll(mc.registerMetrics(protocol, JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass()), METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null, nodeName));
-         }
-         return metrics;
-      });
+      if (isMetricsEnabled()) {
+         MetricsCollector mc = metricsCollector.wired();
+         clusters.computeIfAbsent(channel, c -> {
+            String name = c.clusterName();
+            String nodeName;
+            org.jgroups.Address addr = c.getAddress();
+            if (addr != null) {
+               nodeName = addr.toString();
+            } else {
+               nodeName = c.getName();
+            }
+            Set<Object> metrics = new HashSet<>();
+            for (Protocol protocol : c.getProtocolStack().getProtocols()) {
+               metrics.addAll(mc.registerMetrics(protocol, JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass()), METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null, nodeName));
+            }
+            return metrics;
+         });
+      }
    }
 
    @Override
    public void channelDisconnected(JChannel channel) {
-      MetricsCollector mc = metricsCollector.wired();
-      Set<Object> metrics = clusters.remove(channel);
-      if (metrics != null) {
-         for (Object metric : metrics) {
-            mc.unregisterMetric(metric);
+      if (isMetricsEnabled()) {
+         MetricsCollector mc = metricsCollector.wired();
+         Set<Object> metrics = clusters.remove(channel);
+         if (metrics != null) {
+            for (Object metric : metrics) {
+               mc.unregisterMetric(metric);
+            }
          }
       }
    }
@@ -1544,6 +1548,10 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Override
    public void channelClosed(JChannel channel) {
       // NO-OP
+   }
+
+   private boolean isMetricsEnabled() {
+      return configuration.metrics().enabled() && metricsCollector.wired() != null;
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {
