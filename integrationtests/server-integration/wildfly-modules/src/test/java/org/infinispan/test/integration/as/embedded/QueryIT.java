@@ -1,4 +1,4 @@
-package org.infinispan.test.integration.as.hibernate;
+package org.infinispan.test.integration.as.embedded;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
@@ -15,6 +15,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.integration.data.Person;
+import org.infinispan.test.integration.data.PersonHibernate;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -30,7 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
-public class HibernateIT {
+public class QueryIT {
 
    private EmbeddedCacheManager cm;
 
@@ -48,14 +49,19 @@ public class HibernateIT {
             .indexing().enable().storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
             .build());
+      cm.createCache("myCacheHibernate", new ConfigurationBuilder()
+            .indexing().enable().storage(LOCAL_HEAP)
+            .addIndexedEntity(PersonHibernate.class)
+            .build());
    }
 
    @Deployment
    public static Archive<?> deployment() {
       return ShrinkWrap
-            .create(WebArchive.class, "hibernate.war")
-            .addClass(HibernateIT.class)
+            .create(WebArchive.class, "query.war")
+            .addClass(QueryIT.class)
             .addClass(Person.class)
+            .addClass(PersonHibernate.class)
             .add(manifest(), "META-INF/MANIFEST.MF");
    }
 
@@ -70,10 +76,24 @@ public class HibernateIT {
       cache.put(1, new Person("foo", 1));
       cache.put(2, new Person("bar", 2));
 
-      // get account back from local cache via query and check its attributes
       QueryFactory queryFactory = org.infinispan.query.Search.getQueryFactory(cache);
       Query<Person> query = queryFactory.create(String.format("FROM %s WHERE name LIKE '%%fo%%'", Person.class.getName()));
       List<Person> list = query.execute().list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertEquals("foo", list.get(0).getName());
+   }
+
+   @Test
+   public void testLuceneQueryHibernate() {
+      Cache<Integer, PersonHibernate> cache = cm.getCache("myCacheHibernate");
+      cache.put(1, new PersonHibernate("foo", 1));
+      cache.put(2, new PersonHibernate("bar", 2));
+
+      QueryFactory queryFactory = org.infinispan.query.Search.getQueryFactory(cache);
+      Query<PersonHibernate> query = queryFactory.create(String.format("FROM %s p WHERE p.name:'foo'", PersonHibernate.class.getName()));
+      List<PersonHibernate> list = query.execute().list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
