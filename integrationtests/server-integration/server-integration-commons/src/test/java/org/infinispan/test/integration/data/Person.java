@@ -1,10 +1,18 @@
 package org.infinispan.test.integration.data;
 
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.SortableField;
+import org.hibernate.search.annotations.Store;
 import org.infinispan.protostream.annotations.ProtoField;
 
+@Indexed
 public class Person {
 
    @ProtoField(1)
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    public String name;
 
    @ProtoField(2)
