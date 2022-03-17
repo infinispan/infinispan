@@ -64,6 +64,7 @@
       <artifact name="${org.hibernate.search:hibernate-search-mapper-pojo-base}"/>
       <artifact name="${org.hibernate.search:hibernate-search-util-common}"/>
       <artifact name="${org.hibernate.search:hibernate-search-backend-lucene}"/>
+      <artifact name="${org.hibernate.search:hibernate-search-v5migrationhelper-engine}"/>
       <artifact name="${org.apache.lucene:lucene-core}"/>
       <artifact name="${org.apache.lucene:lucene-analyzers-common}"/>
       <artifact name="${org.apache.lucene:lucene-queryparser}"/>
