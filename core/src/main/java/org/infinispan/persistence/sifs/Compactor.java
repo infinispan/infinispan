@@ -2,7 +2,9 @@ package org.infinispan.persistence.sifs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,7 +97,7 @@ class Compactor implements Consumer<Object> {
                }
                return RxJavaInterop.voidCompletionStageToFlowable(paused);
             })
-            .subscribe(this, error -> log.warn("Compactor encountered an exception", error));
+            .subscribe(this, error -> log.compactorEncounteredException(error, -1));
    }
 
    public void setIndex(Index index) {
@@ -132,6 +134,18 @@ class Compactor implements Consumer<Object> {
 
    public void performExpirationCompaction(CompactionExpirationSubscriber subscriber) {
       processor.onNext(subscriber);
+   }
+
+   // Present for testing only - note is still asynchronous if underlying executor is
+   CompletionStage<Void> forceCompactionForFile(int file) {
+      CompactionRequest compactionRequest = new CompactionRequest(file);
+      processor.onNext(compactionRequest);
+      return compactionRequest;
+   }
+
+   // Present for testing only - so test can see what files are currently known to compactor
+   Set<Integer> getFiles() {
+      return fileStats.keySet();
    }
 
    private Stats getStats(int file, int currentSize, long expirationTime) {
@@ -172,7 +186,15 @@ class Compactor implements Consumer<Object> {
          }
       }
       if (shouldSchedule) {
-         processor.onNext(file);
+         CompactionRequest request = new CompactionRequest(file);
+         processor.onNext(request);
+         request.whenComplete((__, t) -> {
+            if (t != null) {
+               log.compactorEncounteredException(t, file);
+               // Poor attempt to allow compactor to continue operating - file will never be compacted again
+               fileStats.remove(file);
+            }
+         });
       }
    }
 
@@ -213,6 +235,14 @@ class Compactor implements Consumer<Object> {
       logFile = null;
    }
 
+   private static class CompactionRequest extends CompletableFuture<Void> {
+      private final int fileId;
+
+      private CompactionRequest(int fileId) {
+         this.fileId = fileId;
+      }
+   }
+
    @Override
    public void accept(Object o) throws Throwable {
       if (terminateSignal) {
@@ -248,15 +278,22 @@ class Compactor implements Consumer<Object> {
       if (o instanceof CompactionExpirationSubscriber) {
          CompactionExpirationSubscriber subscriber = (CompactionExpirationSubscriber) o;
          try {
+            // We have to copy the file ids into its own collection because it can pickup the compactor files sometimes
+            // causing extra unneeded churn in some cases
+            Set<Integer> currentFiles = new HashSet<>();
             for (CloseableIterator<Integer> iter = fileProvider.getFileIterator(); iter.hasNext(); ) {
-               int fileId = iter.next();
+               currentFiles.add(iter.next());
+            }
+            for (int fileId : currentFiles) {
                Stats stats = fileStats.get(fileId);
                long currentTimeMilliseconds = timeService.wallClockTime();
                boolean isLogFile = fileProvider.isLogFile(fileId);
                if (stats != null) {
                   // Don't check for expired entries in any files that are marked for deletion or don't have entries
                   // that can expire yet
-                  if (stats.markedForDeletion() || stats.nextExpirationTime > currentTimeMilliseconds) {
+                  // Note that log files do not set the expiration time, so it is always -1 in that case, but we still
+                  // want to check just in case some files are expired there.
+                  if (stats.markedForDeletion() || (!isLogFile && stats.nextExpirationTime == -1) || stats.nextExpirationTime > currentTimeMilliseconds) {
                      log.tracef("Skipping expiration for file %d since it is marked for deletion: %s or its expiration time %s is not yet",
                            (Object) fileId, stats.markedForDeletion(), stats.nextExpirationTime);
                      continue;
@@ -271,8 +308,20 @@ class Compactor implements Consumer<Object> {
          return;
       }
 
-      // Any other type submitted has to be a positive integer
-      compactSingleFile((int) o, false, null, timeService.wallClockTime());
+      CompactionRequest request = (CompactionRequest) o;
+      try {
+         // Any other type submitted has to be a positive integer
+         Stats stats = fileStats.get(request.fileId);
+
+         // Double check that the file wasn't removed. If stats are null that means the file was previously removed
+         // and also make sure the file wasn't marked for deletion, but hasn't yet
+         if (stats != null && !stats.markedForDeletion()) {
+            compactSingleFile(request.fileId, false, null, timeService.wallClockTime());
+         }
+         request.complete(null);
+      } catch (Throwable t) {
+         request.completeExceptionally(t);
+      }
    }
 
    /**
