@@ -21,7 +21,7 @@
         <driver.jar>h2.jar</driver.jar>
         <driver.dir>${project.basedir}/db-libs</driver.dir>
         <driver.class>org.h2.Driver</driver.class>
-        <connection.url>jdbc:h2:mem:test</connection.url>
+        <connection.url>jdbc:h2:mem:test;DATABASE_TO_UPPER=false</connection.url>
         <db.username>sa</db.username>
         <db.password>sa</db.password>
         <database>h2</database>
