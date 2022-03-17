@@ -247,7 +247,7 @@
 
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
-      <versionx.com.amazonaws>1.11.708</versionx.com.amazonaws>
+      <versionx.com.amazonaws>1.12.180</versionx.com.amazonaws>
       <versionx.com.bouncycastle>${version.bouncycastle}</versionx.com.bouncycastle>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
