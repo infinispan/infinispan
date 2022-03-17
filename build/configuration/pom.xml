@@ -207,6 +207,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.1.1</version.checkstyle.maven-plugin>
+      <version.maven>3.8.2</version.maven>
       <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
       <version.maven.antrun>3.0.0</version.maven.antrun>
       <version.maven.buildhelper>3.1.0</version.maven.buildhelper>
@@ -215,8 +216,6 @@
       <version.maven.invoker>3.2.1</version.maven.invoker>
       <version.maven.jar>3.2.0</version.maven.jar>
       <version.maven.javadoc>3.2.0</version.maven.javadoc>
-      <version.maven-plugin-annotations>3.5.1</version.maven-plugin-annotations>
-      <version.maven-plugin-api>3.5.3</version.maven-plugin-api>
       <version.maven-plugin-plugin>3.6.0</version.maven-plugin-plugin>
       <version.maven.release>3.0.0-M1</version.maven.release>
       <version.maven.remote.resource>1.5</version.maven.remote.resource>

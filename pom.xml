@@ -321,8 +321,9 @@
       <versionx.org.apache.lucene.lucene-join>${version.lucene}</versionx.org.apache.lucene.lucene-join>
       <versionx.org.apache.lucene.lucene-misc>${version.lucene}</versionx.org.apache.lucene.lucene-misc>
       <versionx.org.apache.lucene.lucene-queryparser>${version.lucene}</versionx.org.apache.lucene.lucene-queryparser>
-      <versionx.org.apache.maven.maven-core>3.5.4</versionx.org.apache.maven.maven-core>
-      <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.5.1</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
+      <versionx.org.apache.maven.maven-core>${version.maven}</versionx.org.apache.maven.maven-core>
+      <versionx.org.apache.maven.maven-plugin-api>${version.maven}</versionx.org.apache.maven.maven-plugin-api>
+      <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.6.4</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.4.1</versionx.org.assertj.assertj-core>
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
@@ -416,7 +417,7 @@
       <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
-      <versionx.org.twdata.maven.mojo-executor>2.3.1</versionx.org.twdata.maven.mojo-executor>
+      <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
       <versionx.org.wildfly.common.wildfly-common>1.5.4.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
@@ -485,12 +486,6 @@
             <groupId>com.clearspring.analytics</groupId>
             <artifactId>stream</artifactId>
             <version>${versionx.com.clearspring.analytics.stream}</version>
-         </dependency>
-         <!-- Bump maven-core version. Dependency of org.twdata.maven:mojo-executor -->
-         <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>${versionx.org.apache.maven.maven-core}</version>
          </dependency>
          <!-- Override dependency version to use the same version everywhere -->
          <dependency>
@@ -974,6 +969,19 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
             <version>${versionx.org.apache.lucene.lucene-queryparser}</version>
+         </dependency>
+         <!-- Bump maven-core version. Dependency of org.twdata.maven:mojo-executor -->
+         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${versionx.org.apache.maven.maven-core}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${versionx.org.apache.maven.maven-plugin-api}</version>
+            <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
