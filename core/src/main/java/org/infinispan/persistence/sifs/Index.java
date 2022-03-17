@@ -172,16 +172,16 @@ class Index {
 
    public void deleteFileAsync(int fileId) {
       AtomicInteger count = new AtomicInteger(flowableProcessors.length);
+      IndexRequest deleteFile = IndexRequest.syncRequest(() -> {
+         // After all indexes have ensured they have processed all requests - the last one will delete the file
+         // This guarantees that the index can't see an outdated value
+         if (count.decrementAndGet() == 0) {
+            fileProvider.deleteFile(fileId);
+            log.tracef("Deleted file %s", fileId);
+            compactor.releaseStats(fileId);
+         }
+      });
       for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
-         IndexRequest deleteFile = IndexRequest.syncRequest(() -> {
-            // After all indexes have ensured they have processed all requests - the last one will delete the file
-            // This guarantees that the index can't see an outdated value
-            if (count.decrementAndGet() == 0) {
-               fileProvider.deleteFile(fileId);
-               log.tracef("Deleted file %s", fileId);
-               compactor.releaseStats(fileId);
-            }
-         });
          flowableProcessor.onNext(deleteFile);
       }
    }
