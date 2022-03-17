@@ -84,4 +84,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Index looks corrupt.", id = 29020)
    PersistenceException indexLooksCorrupt(@Cause Exception e);
+
+   @LogMessage(level = Logger.Level.ERROR)
+   @Message(value = "File id %s encountered an exception while compacting, file may be orphaned", id = 29021)
+   void compactorEncounteredException(@Cause Throwable t, int fileId);
 }
