@@ -131,6 +131,9 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       //  Moving this to an AnchoredBulkInterceptor may also help with that problem
 //      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP))
 //         return invokeNext(ctx, command);
+      if (command.hasAnyFlag(FlagBitSets.STATE_TRANSFER_PROGRESS)) {
+         return invokeNext(ctx, command);
+      }
 
       return new BackingEntrySet((CacheSet<CacheEntry<K,V>>)  invokeNext(ctx, command));
    }

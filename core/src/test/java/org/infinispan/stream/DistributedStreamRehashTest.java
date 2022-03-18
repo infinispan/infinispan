@@ -1,5 +1,7 @@
 package org.infinispan.stream;
 
+import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -14,10 +16,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -25,7 +30,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.reactivestreams.Publisher;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -68,22 +73,21 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
       // Always let it process the publisher
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
       // Block on the publisher
-      InternalDataContainer internalDataContainer = TestingUtil.extractComponent(nodeToBlockBeforeProcessing, InternalDataContainer.class);
-      InternalDataContainer spy = spy(internalDataContainer);
+      LocalPublisherManager<?, ?> lpm = TestingUtil.extractComponent(nodeToBlockBeforeProcessing, LocalPublisherManager.class);
+      LocalPublisherManager<?, ?> spy = spy(lpm);
+      Answer<SegmentAwarePublisherSupplier<?>> blockingLpmAnswer = invocation -> {
+         SegmentAwarePublisherSupplier<?> result = (SegmentAwarePublisherSupplier<?>) invocation.callRealMethod();
+         return Mocks.blockingPublisherAware(result, checkPoint);
+      };
 
-      doAnswer(invocation -> {
-         Publisher result = (Publisher) invocation.callRealMethod();
-         return Mocks.blockingPublisher(result, checkPoint);
-         // Cache2 owns segment 1 primary and 2 as backup
-      }).when(spy).publisher(eq(1));
+      doAnswer(blockingLpmAnswer).when(spy)
+            .entryPublisher(eq(IntSets.immutableSet(1)), any(), any(),
+                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any());
 
-      TestingUtil.replaceComponent(nodeToBlockBeforeProcessing, InternalDataContainer.class, spy, true);
+      TestingUtil.replaceComponent(nodeToBlockBeforeProcessing, LocalPublisherManager.class, spy, true);
 
       Future<List<Map.Entry<MagicKey, Object>>> future = fork(() ->
             originator.entrySet().stream().collect(() -> Collectors.toList()));
-
-      // Make sure we are up to sync
-      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 
       // Note that segment 2 doesn't map to the node1 anymore
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {0, 2}, {2, 1}, {1, 0}});
@@ -94,10 +98,12 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
 
       TestingUtil.blockUntilViewsReceived((int) TimeUnit.SECONDS.toMillis(10), false, caches(CACHE_NAME));
 
-      TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
+      Future<?> rebalanceFuture = fork(() -> TestingUtil.waitForNoRebalance(caches(CACHE_NAME)));
 
       // Now let the stream be processed
+      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      rebalanceFuture.get(10, TimeUnit.SECONDS);
 
       List<Map.Entry<MagicKey, Object>> list = future.get(10, TimeUnit.SECONDS);
 

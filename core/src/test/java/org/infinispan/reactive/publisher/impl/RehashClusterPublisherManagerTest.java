@@ -1,5 +1,6 @@
 package org.infinispan.reactive.publisher.impl;
 
+import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.any;
@@ -38,7 +39,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -115,8 +115,6 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       Cache cache2 = cache(2);
 
       CheckPoint checkPoint = new CheckPoint();
-      // Always let it finish once released
-      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
       // Block on the checkpoint when it is requesting segment 2 from node 2 (need both as different methods are invoked
       // if the invocation is parallel)
       Mocks.blockingMock(checkPoint, InternalDataContainer.class, cache2,
@@ -125,17 +123,17 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
             (stub, m) -> stub.when(m).publisher(Mockito.eq(IntSets.immutableSet(2))));
 
       int expectedAmount = caches().size();
-      // If it is at most once, we don't retry the segment so the count will be off by 1
-      if (deliveryGuarantee == DeliveryGuarantee.AT_MOST_ONCE) {
-         expectedAmount -= 1;
-      }
 
       runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
-         checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
-
-         triggerRebalanceSegment2MovesToNode0();
-
+         // Let it process the publisher
          checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+         Future<?> rebalanceFuture = fork(this::triggerRebalanceSegment2MovesToNode0);
+
+         // Now let the stream be processed
+         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
+         checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+         rebalanceFuture.get(10, TimeUnit.SECONDS);
       });
    }
 
@@ -199,33 +197,28 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       // Always let it process the publisher
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
       // Block on the publisher
-      InternalDataContainer internalDataContainer = TestingUtil.extractComponent(cache2, InternalDataContainer.class);
-      InternalDataContainer spy = spy(internalDataContainer);
+      LocalPublisherManager<?, ?> lpm = TestingUtil.extractComponent(cache2, LocalPublisherManager.class);
+      LocalPublisherManager<?, ?> spy = spy(lpm);
 
-      Answer blockingAnswer = invocation -> {
-         Publisher result = (Publisher) invocation.callRealMethod();
-         return Mocks.blockingPublisher(result, checkPoint);
+      Answer<SegmentAwarePublisherSupplier<?>> blockingLpmAnswer = invocation -> {
+         SegmentAwarePublisherSupplier<?> result = (SegmentAwarePublisherSupplier<?>) invocation.callRealMethod();
+         return Mocks.blockingPublisherAware(result, checkPoint);
       };
       // Depending upon if it is parallel or not, it can invoke either method
-      doAnswer(blockingAnswer).when(spy).publisher(eq(2));
-      doAnswer(blockingAnswer).when(spy).publisher(eq(IntSets.immutableSet(2)));
-
-      TestingUtil.replaceComponent(cache2, InternalDataContainer.class, spy, true);
+      doAnswer(blockingLpmAnswer).when(spy)
+            .entryPublisher(eq(IntSets.immutableSet(2)), any(), any(),
+                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any());
+      TestingUtil.replaceComponent(cache2, LocalPublisherManager.class, spy, true);
 
 
       int expectedAmount = caches().size();
-      // At least once is retried after retrieving the value, so it will count the value for segment 2 twice
-      if (deliveryGuarantee == DeliveryGuarantee.AT_LEAST_ONCE) {
-         expectedAmount++;
-      }
-
       runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
-         // Wait until after the publisher completes - but don't let it just yet
+         Future<?> rebalanceFuture = fork(this::triggerRebalanceSegment2MovesToNode0);
+
+         // Now let the stream be processed
          checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
-
-         triggerRebalanceSegment2MovesToNode0();
-
          checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+         rebalanceFuture.get(10, TimeUnit.SECONDS);
       });
    }
 

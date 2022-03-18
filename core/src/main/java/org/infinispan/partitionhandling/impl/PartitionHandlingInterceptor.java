@@ -46,7 +46,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessAction<VisitableCommand> postTxCommandCheck = this::postTxCommandCheck;
 
    private boolean performPartitionCheck(FlagAffectedCommand command) {
-      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER);
+      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.STATE_TRANSFER_PROGRESS);
    }
 
    @Override

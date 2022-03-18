@@ -10,14 +10,15 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.publisher.impl.Notifications;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredStateProvider;
@@ -29,9 +30,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.reactivestreams.Publisher;
-
-import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -84,13 +82,11 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          CompletableFuture<Void> invalidationFuture = new CompletableFuture<>();
          OutboundTransferTask outboundTransferTask =
             new OutboundTransferTask(nextMember, oldSegments, cacheTopology.getCurrentCH().getNumSegments(), chunkSize,
-                                     cacheTopology.getTopologyId(), keyPartitioner,
-                                     chunks -> invalidateChunks(chunks, otherMembers, outboundInvalidations,
+                                     cacheTopology.getTopologyId(), chunks -> invalidateChunks(chunks, otherMembers, outboundInvalidations,
                                                                 invalidationFuture, cacheTopology),
                                      rpcManager, commandsFactory,
                                      timeout, cacheName, true, true);
-         outboundTransferTask.execute(Flowable.concat(publishDataContainerEntries(oldSegments),
-                                                      publishStoreEntries(oldSegments)))
+         outboundTransferTask.execute(readEntries(oldSegments))
                              .whenComplete((ignored, throwable) -> {
                                 if (throwable != null) {
                                    logError(outboundTransferTask, throwable);
@@ -177,11 +173,11 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
       CacheTopology cacheTopology = distributionManager.getCacheTopology();
       OutboundTransferTask outboundTransferTask =
          new OutboundTransferTask(origin, segments, cacheTopology.getCurrentCH().getNumSegments(), chunkSize,
-                                  cacheTopology.getTopologyId(), keyPartitioner, chunks -> {},
+                                  cacheTopology.getTopologyId(), chunks -> {},
                                   rpcManager, commandsFactory,
                                   timeout, cacheName, true, false);
       addTransfer(outboundTransferTask);
-      outboundTransferTask.execute(Flowable.concat(publishDataContainerKeys(segments), publishStoreKeys(segments)))
+      outboundTransferTask.execute(readKeys(segments))
                           .whenComplete((ignored, throwable) -> {
          if (throwable != null) {
             logError(outboundTransferTask, throwable);
@@ -190,25 +186,25 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
       });
    }
 
-   private Flowable<InternalCacheEntry<Object, Object>> publishDataContainerKeys(IntSet segments) {
-      Address localAddress = rpcManager.getAddress();
-      return Flowable.fromIterable(() -> dataContainer.iterator(segments))
-                     .filter(ice -> ice.getMetadata() != null && ice.getMetadata().version() != null)
-                     .map(ice -> entryFactory.create(ice.getKey(), null,
-                                                     new RemoteMetadata(localAddress, ice.getMetadata().version())));
-
-   }
-
-   private Flowable<InternalCacheEntry<Object, Object>> publishStoreKeys(IntSet segments) {
-      Address localAddress = rpcManager.getAddress();
-      Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-            persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
-                  PersistenceManager.AccessMode.PRIVATE);
-      return Flowable.fromPublisher(loaderPublisher)
-                     // We rely on MarshallableEntry implementations caching the unmarshalled metadata for performance
-                     .filter(me -> me.getMetadata() != null && me.getMetadata().version() != null)
-                     .map(me -> entryFactory.create(me.getKey(), null,
-                                                    new RemoteMetadata(localAddress, me.getMetadata().version())));
+   private Flowable<SegmentPublisherSupplier.Notification<InternalCacheEntry<?, ?>>> readKeys(IntSet segments) {
+      final Address localAddress = rpcManager.getAddress();
+      return super.readEntries(segments)
+            .filter(notification -> {
+               if (notification.isValue()) {
+                  final InternalCacheEntry<?, ?> ice = notification.value();
+                  return ice.getMetadata() != null && ice.getMetadata().version() != null;
+               }
+               return true;
+            })
+            .map(notification -> {
+               if (notification.isValue()) {
+                  final InternalCacheEntry<?, ?> ice = notification.value();
+                  final InternalCacheEntry<?, ?> created = entryFactory.create(ice.getKey(), null,
+                        new RemoteMetadata(localAddress, ice.getMetadata().version()));
+                  return Notifications.value(created, notification.valueSegment());
+               }
+               return notification;
+            });
    }
 
    @Override

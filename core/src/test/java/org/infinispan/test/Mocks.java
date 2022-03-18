@@ -21,6 +21,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.reactive.publisher.impl.Notifications;
+import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -246,6 +247,49 @@ public class Mocks {
          @Override
          public Publisher<E> publisherWithoutSegments() {
             return Flowable.fromPublisher(publisher.publisherWithoutSegments())
+                  .doOnSubscribe(subscription -> {
+                     checkPoint.trigger(BEFORE_INVOCATION);
+                     checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
+                  })
+                  .doOnComplete(() -> {
+                     checkPoint.trigger(AFTER_INVOCATION);
+                     checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
+                  });
+         }
+      };
+   }
+
+   public static <E> SegmentAwarePublisherSupplier<E> blockingPublisherAware(SegmentAwarePublisherSupplier<E> publisher, CheckPoint checkPoint) {
+      return new SegmentAwarePublisherSupplier<E>() {
+         @Override
+         public Publisher<Notification<E>> publisherWithSegments() {
+            return Flowable.fromPublisher(publisher.publisherWithSegments())
+                  .doOnSubscribe(s -> {
+                     checkPoint.trigger(BEFORE_INVOCATION);
+                     checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
+                  })
+                  .doOnComplete(() -> {
+                     checkPoint.trigger(AFTER_INVOCATION);
+                     checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
+                  });
+         }
+
+         @Override
+         public Publisher<E> publisherWithoutSegments() {
+            return Flowable.fromPublisher(publisher.publisherWithoutSegments())
+                  .doOnSubscribe(subscription -> {
+                     checkPoint.trigger(BEFORE_INVOCATION);
+                     checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
+                  })
+                  .doOnComplete(() -> {
+                     checkPoint.trigger(AFTER_INVOCATION);
+                     checkPoint.awaitStrict(AFTER_RELEASE, 20, TimeUnit.SECONDS);
+                  });
+         }
+
+         @Override
+         public Publisher<NotificationWithLost<E>> publisherWithLostSegments(boolean reuseNotifications) {
+            return Flowable.fromPublisher(publisher.publisherWithLostSegments(reuseNotifications))
                   .doOnSubscribe(subscription -> {
                      checkPoint.trigger(BEFORE_INVOCATION);
                      checkPoint.awaitStrict(BEFORE_RELEASE, 20, TimeUnit.SECONDS);
