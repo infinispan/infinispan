@@ -4,6 +4,8 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -26,5 +28,10 @@ public class TestBlocking {
    public static void await(CyclicBarrier barrier, long time, TimeUnit timeUnit) throws InterruptedException,
          TimeoutException, BrokenBarrierException {
       barrier.await(time, timeUnit);
+   }
+
+   public static <V> V get(Future<V> future, long time, TimeUnit timeUnit) throws ExecutionException,
+         InterruptedException, TimeoutException {
+      return future.get(time, timeUnit);
    }
 }
