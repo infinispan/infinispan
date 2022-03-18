@@ -1,0 +1,135 @@
+package org.infinispan.persistence.sifs;
+
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.lang.reflect.Method;
+import java.nio.file.Paths;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestBlocking;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+@Test(groups = "stress", testName = "persistence.sifs.SoftIndexFileStoreStressTest")
+public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
+   protected String tmpDirectory;
+
+   @BeforeClass(alwaysRun = true)
+   protected void setUpTempDir() {
+      tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
+   }
+
+   @AfterClass(alwaysRun = true)
+   protected void clearTempDir() {
+      Util.recursiveFileRemove(tmpDirectory);
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
+      global.cacheContainer().security().authorization().enable();
+      return TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder());
+   }
+
+   protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, String cacheName, boolean preload) {
+      persistence
+            .addSoftIndexFileStore()
+            .dataLocation(Paths.get(tmpDirectory, "data").toString())
+            .indexLocation(Paths.get(tmpDirectory, "index").toString())
+            .maxFileSize(1000)
+            .purgeOnStartup(false).preload(preload)
+            // Effectively disable reaper for tests
+            .expiration().wakeUpInterval(Long.MAX_VALUE);
+      return persistence;
+   }
+
+   public void testConstantReadsWithCompaction(Method method) throws InterruptedException, ExecutionException, TimeoutException {
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.persistence(), method.getName(), false);
+      TestingUtil.defineConfiguration(cacheManager, method.getName(), cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(method.getName());
+      cache.start();
+
+      int numKeys = 22;
+
+      for (int i = 0; i < numKeys; ++i) {
+         cache.put("key-" + i, "value-" + i);
+      }
+
+      WaitDelegatingNonBlockingStore<?, ?> store = TestingUtil.getFirstStoreWait(cache);
+
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      Set<Integer> files = compactor.getFiles();
+
+      assertEquals(2, files.size());
+
+      AtomicBoolean continueRunning = new AtomicBoolean(true);
+      Future<Void> retrievalFork = fork(() -> {
+         while (continueRunning.get()) {
+            for (int i = 0; i < numKeys; ++i) {
+               assertEquals("value-" + i, cache.get("key-" + i));
+               if (!continueRunning.get()) {
+                  break;
+               }
+            }
+         }
+      });
+
+      Future<Void> writeFork = fork(() -> {
+         while (continueRunning.get()) {
+            for (int i = 12; i < 22; ++i) {
+               cache.put("k" + i, "v" + 2);
+               if (!continueRunning.get()) {
+                  break;
+               }
+            }
+         }
+      });
+
+      Future<Void> compactionFork = fork(() -> {
+         while (continueRunning.get()) {
+            try {
+               compactor.forceCompactionForAllNonLogFiles()
+                     .toCompletableFuture().get(5, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+               throw e;
+            }
+         }
+      });
+
+      long startTime = System.nanoTime();
+      long secondsToRun = TimeUnit.MINUTES.toSeconds(2);
+
+      while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) < secondsToRun) {
+         if (retrievalFork.isDone() || compactionFork.isDone() || writeFork.isDone()) {
+            continueRunning.set(false);
+            break;
+         }
+         TestingUtil.sleepThread(200);
+      }
+      continueRunning.set(false);
+
+      TestBlocking.get(retrievalFork, 10, TimeUnit.SECONDS);
+      TestBlocking.get(compactionFork, 10, TimeUnit.SECONDS);
+      TestBlocking.get(writeFork, 10, TimeUnit.SECONDS);
+   }
+}
