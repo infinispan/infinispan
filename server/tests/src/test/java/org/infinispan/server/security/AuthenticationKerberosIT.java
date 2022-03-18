@@ -46,10 +46,10 @@ public class AuthenticationKerberosIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthenticationKerberosTest.xml")
-                                    .numServers(1)
-                                    .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-                                    .addListener(new LdapServerListener(new String[]{"ldif/infinispan-dn.ldif", "ldif/infinispan-kerberos.ldif"}, true))
-                                    .build();
+               .numServers(1)
+               .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
+               .addListener(new LdapServerListener(true))
+               .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);

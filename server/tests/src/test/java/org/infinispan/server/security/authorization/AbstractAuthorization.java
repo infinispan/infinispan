@@ -10,6 +10,7 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.awaitStatus;
 import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.HOTROD_CLIENT_SASL_MECHANISM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -86,7 +87,7 @@ public abstract class AbstractAuthorization {
    protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
       hotRodBuilder.security().authentication()
-            .saslMechanism("SCRAM-SHA-1")
+            .saslMechanism(System.getProperty(HOTROD_CLIENT_SASL_MECHANISM, "SCRAM-SHA-1"))
             .serverName("infinispan")
             .realm("default")
             .username(user.getUser())

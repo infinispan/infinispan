@@ -102,8 +102,12 @@ public class TestSystemPropertyNames {
     */
    public static final String JAEGER_IMAGE = "org.infinispan.test.jaegerImage";
    /**
-    * Specifies the name of the keycloak base image
+    * Specifies the type of the ldap server
     */
    public static final String LDAP_SERVER = "org.infinispan.test.ldapServer";
+   /**
+    * Specifies the type of sasl mechanism for the Hot Rod client. Not all tests are using it.
+    */
+   public static final String HOTROD_CLIENT_SASL_MECHANISM = "org.infinispan.test.hotrod.client.salsmechanism";
 
 }
