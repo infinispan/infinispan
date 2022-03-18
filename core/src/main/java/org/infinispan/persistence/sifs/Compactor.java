@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -87,7 +88,7 @@ class Compactor implements Consumer<Object> {
       this.maxFileSize = maxFileSize;
       this.compactionThreshold = compactionThreshold;
 
-      processor = UnicastProcessor.create();
+      processor = UnicastProcessor.create().toSerialized();
       Scheduler scheduler = Schedulers.from(blockingExecutor);
       processor.observeOn(scheduler)
             .delay(obj -> {
@@ -137,10 +138,17 @@ class Compactor implements Consumer<Object> {
    }
 
    // Present for testing only - note is still asynchronous if underlying executor is
-   CompletionStage<Void> forceCompactionForFile(int file) {
-      CompactionRequest compactionRequest = new CompactionRequest(file);
-      processor.onNext(compactionRequest);
-      return compactionRequest;
+   CompletionStage<Void> forceCompactionForAllNonLogFiles() {
+      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      for (Map.Entry<Integer, Stats> stats : fileStats.entrySet()) {
+         int fileId = stats.getKey();
+         if (!fileProvider.isLogFile(fileId) && !stats.getValue().markedForDeletion) {
+            CompactionRequest compactionRequest = new CompactionRequest(fileId);
+            processor.onNext(compactionRequest);
+            aggregateCompletionStage.dependsOn(compactionRequest);
+         }
+      }
+      return aggregateCompletionStage.freeze();
    }
 
    // Present for testing only - so test can see what files are currently known to compactor
@@ -210,11 +218,18 @@ class Compactor implements Consumer<Object> {
          throw new IllegalStateException("Clear signal was already set for compactor, clear cannot be invoked " +
                "concurrently with another!");
       }
-      CompletableFuture<Void> clearFuture = new CompletableFuture<>();
+      ClearFuture clearFuture = new ClearFuture();
       // Make sure to do this before submitting to processor this is done in the blocking thread
       clearFuture.whenComplete((ignore, t) -> fileStats.clear());
       processor.onNext(clearFuture);
       return clearFuture;
+   }
+
+   private static class ClearFuture extends CompletableFuture<Void> {
+      @Override
+      public String toString() {
+         return "ClearFuture{}";
+      }
    }
 
    public void resumeAfterClear() {
@@ -241,15 +256,34 @@ class Compactor implements Consumer<Object> {
       private CompactionRequest(int fileId) {
          this.fileId = fileId;
       }
+
+      @Override
+      public String toString() {
+         return "CompactionRequest{" +
+               "fileId=" + fileId +
+               '}';
+      }
+   }
+
+   void handleIgnoredElement(Object o) {
+      if (o instanceof CompactionExpirationSubscriber) {
+         // We assume the subscriber handles blocking properly
+         ((CompactionExpirationSubscriber) o).onComplete();
+      } else if (o instanceof CompletableFuture) {
+         nonBlockingManager.complete((CompletableFuture<?>) o, null);
+      }
    }
 
    @Override
    public void accept(Object o) throws Throwable {
       if (terminateSignal) {
+         log.tracef("Compactor already terminated, ignoring request " + o);
          // Just ignore if terminated
+         handleIgnoredElement(o);
          return;
       }
       if (o == RESUME_PILL) {
+         log.tracef("Resuming compactor");
          // This completion will push all the other tasks that have been delayed in this method call
          // Note this must be completed in the context of the compactor thread
          paused.complete(null);
@@ -259,7 +293,7 @@ class Compactor implements Consumer<Object> {
       // any other threads decrementing clear signal. However, another thread can increment, that is okay for us
       if (clearSignal.get()) {
          // We ignore any entries since it was last cleared
-         if (o instanceof CompletableFuture) {
+         if (o instanceof ClearFuture) {
             log.tracef("Compactor ignoring all future compactions until resumed");
 
             if (logFile != null) {
@@ -271,6 +305,7 @@ class Compactor implements Consumer<Object> {
             nonBlockingManager.complete((CompletableFuture<?>) o, null);
          } else {
             log.tracef("Ignoring compaction request for %s as compactor is being cleared", o);
+            handleIgnoredElement(o);
          }
          return;
       }
@@ -298,6 +333,8 @@ class Compactor implements Consumer<Object> {
                            (Object) fileId, stats.markedForDeletion(), stats.nextExpirationTime);
                      continue;
                   }
+                  // Make sure we don't start another compactoin for this file while performing expiration
+                  stats.scheduled = true;
                }
                compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
             }
@@ -316,10 +353,13 @@ class Compactor implements Consumer<Object> {
          // Double check that the file wasn't removed. If stats are null that means the file was previously removed
          // and also make sure the file wasn't marked for deletion, but hasn't yet
          if (stats != null && !stats.markedForDeletion()) {
+            // If this was an explicit compaction, make sure we don't start another on accident
+            stats.scheduled = true;
             compactSingleFile(request.fileId, false, null, timeService.wallClockTime());
          }
          request.complete(null);
       } catch (Throwable t) {
+         log.trace("Completing compaction for file: " + request.fileId + " due to exception!", t);
          request.completeExceptionally(t);
       }
    }
@@ -542,8 +582,7 @@ class Compactor implements Consumer<Object> {
                   indexRequest = IndexRequest.moved(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength,
                         scheduledFile, indexedOffset);
                }
-               index.handleRequest(indexRequest);
-               aggregateCompletionStage.dependsOn(indexRequest);
+               aggregateCompletionStage.dependsOn(index.handleRequest(indexRequest));
 
                currentOffset += writtenLength;
             }
