@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.fail;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -21,13 +22,11 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "persistence.dummy.SoftIndexFileStoreFunctionalTest")
+@Test(groups = "unit", testName = "persistence.sifs.SoftIndexFileStoreFunctionalTest")
 public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected String tmpDirectory;
 
@@ -87,11 +86,7 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
          SynchronousQueue<Object> syncQueue = new SynchronousQueue<>();
          // This runs async but will block waiting on queue
          compactor.performExpirationCompaction(new MyCompactionObserver(syncQueue));
-         AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         for (Integer file : files) {
-            // This will be queued waiting for expiration compaction first
-            aggregateCompletionStage.dependsOn(compactor.forceCompactionForFile(file));
-         }
+         CompletionStage<Void> compactionStage = compactor.forceCompactionForAllNonLogFiles();
 
          Object result = syncQueue.poll(100, TimeUnit.MINUTES);
          if (result == null) {
@@ -109,16 +104,16 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
          assertSame("Previous result was: " + result, syncQueue, complete);
 
          // This makes sure the compactor is still working properly
-         aggregateCompletionStage.freeze().toCompletableFuture().get(10, TimeUnit.SECONDS);
+         compactionStage.toCompletableFuture().get(10, TimeUnit.SECONDS);
       } finally {
          TestingUtil.replaceComponent(cacheManager, TimeService.class, prev, true);
       }
    }
 
-   private static class MyCompactionObserver implements Compactor.CompactionExpirationSubscriber {
+   static class MyCompactionObserver implements Compactor.CompactionExpirationSubscriber {
       private final SynchronousQueue<Object> syncQueue;
 
-      private MyCompactionObserver(SynchronousQueue<Object> syncQueue) {
+      MyCompactionObserver(SynchronousQueue<Object> syncQueue) {
          this.syncQueue = syncQueue;
       }
 
