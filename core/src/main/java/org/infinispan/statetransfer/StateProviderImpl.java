@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.ArrayList;
@@ -15,8 +16,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
@@ -37,6 +40,10 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -48,7 +55,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -77,6 +83,7 @@ public class StateProviderImpl implements StateProvider {
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected DistributionManager distributionManager;
    @Inject protected TransactionOriginatorChecker transactionOriginatorChecker;
+   @Inject protected LocalPublisherManager<?, ?> localPublisherManager;
    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    @Inject ScheduledExecutorService timeoutExecutor;
 
@@ -88,6 +95,14 @@ public class StateProviderImpl implements StateProvider {
     * flowing to the same destination (but for different segments) so the values are lists.
     */
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<>();
+
+   /**
+    * Flags used when requesting the local publisher for the entries.
+    */
+   private static final long STATE_TRANSFER_ENTRIES_FLAGS = EnumUtil.bitSetOf(
+         // Indicate the command to not use shared stores.
+         STATE_TRANSFER_PROGRESS
+   );
 
    public StateProviderImpl() {
    }
@@ -276,10 +291,10 @@ public class StateProviderImpl implements StateProvider {
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer =
          new OutboundTransferTask(destination, segments, this.configuration.clustering().hash().numSegments(),
-                                  chunkSize, requestTopologyId, keyPartitioner, chunks -> {}, rpcManager,
+                                  chunkSize, requestTopologyId, chunks -> {}, rpcManager,
                                   commandsFactory, timeout, cacheName, applyState, false);
       addTransfer(outboundTransfer);
-      outboundTransfer.execute(Flowable.concat(publishDataContainerEntries(segments), publishStoreEntries(segments)))
+      outboundTransfer.execute(readEntries(segments))
                       .whenComplete((ignored, throwable) -> {
                          if (throwable != null) {
                             logError(outboundTransfer, throwable);
@@ -288,17 +303,12 @@ public class StateProviderImpl implements StateProvider {
                       });
    }
 
-   protected Flowable<InternalCacheEntry<Object, Object>> publishDataContainerEntries(IntSet segments) {
-      return Flowable.fromIterable(() -> dataContainer.iterator(segments))
-                     // TODO Investigate removing the filter, we clear L1 entries before becoming an owner
-                     .filter(ice -> !ice.isL1Entry());
-   }
-
-   protected Flowable<InternalCacheEntry<Object, Object>> publishStoreEntries(IntSet segments) {
-      Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-            persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
-                  PersistenceManager.AccessMode.PRIVATE);
-      return Flowable.fromPublisher(loaderPublisher).map(this::defaultMapEntryFromStore);
+   protected Flowable<SegmentPublisherSupplier.Notification<InternalCacheEntry<?, ?>>> readEntries(IntSet segments) {
+      SegmentAwarePublisherSupplier<?> publisher =
+            localPublisherManager.entryPublisher(segments, null, null,
+                  STATE_TRANSFER_ENTRIES_FLAGS, DeliveryGuarantee.AT_MOST_ONCE, Function.identity());
+      return Flowable.fromPublisher(publisher.publisherWithSegments())
+            .map(notification -> (SegmentPublisherSupplier.Notification<InternalCacheEntry<?, ?>>) notification);
    }
 
    protected void addTransfer(OutboundTransferTask transferTask) {

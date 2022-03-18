@@ -7,6 +7,8 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.reactive.publisher.impl.Notifications;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateProviderImpl;
 import org.infinispan.util.logging.Log;
@@ -27,15 +29,15 @@ public class AnchoredStateProvider extends StateProviderImpl implements StatePro
    @Inject InternalEntryFactory internalEntryFactory;
 
    @Override
-   protected Flowable<InternalCacheEntry<Object, Object>> publishDataContainerEntries(IntSet segments) {
-      return super.publishDataContainerEntries(segments)
-                  .map(this::replaceValueWithLocation);
-   }
-
-   @Override
-   protected Flowable<InternalCacheEntry<Object, Object>> publishStoreEntries(IntSet segments) {
-      return super.publishStoreEntries(segments)
-                  .map(this::replaceValueWithLocation);
+   protected Flowable<SegmentPublisherSupplier.Notification<InternalCacheEntry<?, ?>>> readEntries(IntSet segments) {
+      return super.readEntries(segments)
+            .map(notification -> {
+               if (notification.isValue()) {
+                  InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) notification.value();
+                  return Notifications.value(replaceValueWithLocation(ice), notification.valueSegment());
+               }
+               return notification;
+            });
    }
 
    private InternalCacheEntry<Object, Object> replaceValueWithLocation(InternalCacheEntry<Object, Object> ice) {

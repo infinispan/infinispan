@@ -18,6 +18,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -204,6 +205,10 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
 
       @Override
       public Object visitCommand(InvocationContext ctx, VisitableCommand command) {
+         if (command instanceof EntrySetCommand) {
+            return invokeNext(ctx, command);
+         }
+
          if (ctx.isOriginLocal()) {
             if ((command instanceof AbstractDataCommand) && ((AbstractDataCommand)command).hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
                int count = backupSiteInvocationCount.incrementAndGet();

@@ -1,7 +1,9 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -17,11 +19,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.SmallIntSet;
@@ -41,6 +45,9 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.reactive.publisher.impl.Notifications;
+import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -99,6 +106,7 @@ public class StateProviderTest {
    private DistributionManager distributionManager;
    private LocalizedCacheTopology cacheTopology;
    private InternalEntryFactory ef;
+   private LocalPublisherManager<?, ?> lpm;
 
    @BeforeMethod
    public void setUp() {
@@ -123,6 +131,7 @@ public class StateProviderTest {
       stateTransferLock = mock(StateTransferLock.class);
       distributionManager = mock(DistributionManager.class);
       ef = mock(InternalEntryFactory.class);
+      lpm = mock(LocalPublisherManager.class);
       when(distributionManager.getCacheTopology()).thenAnswer(invocation -> cacheTopology);
    }
 
@@ -147,7 +156,7 @@ public class StateProviderTest {
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
       TestingUtil.inject(stateProvider, configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
-                         dataContainer, transactionTable, stateTransferLock, distributionManager, ef, keyPartitioner,
+                         dataContainer, transactionTable, stateTransferLock, distributionManager, ef, lpm, keyPartitioner,
                          TransactionOriginatorChecker.LOCAL);
       stateProvider.start();
 
@@ -183,6 +192,16 @@ public class StateProviderTest {
       when(dataContainer.iterator(any())).thenReturn(cacheEntries.iterator());
       when(persistenceManager.publishEntries(any(IntSet.class), any(), anyBoolean(), anyBoolean(), any()))
          .thenReturn(Flowable.empty());
+      SegmentAwarePublisherSupplier<?> supplier = mock(SegmentAwarePublisherSupplier.class);
+      when(lpm.entryPublisher(any(), any(), any(), eq(
+            EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any()))
+            .thenAnswer(i -> supplier);
+      List<SegmentAwarePublisherSupplier.NotificationWithLost<?>> values = cacheEntries.stream()
+            .map(ice -> Notifications.value(ice, 0))
+            .collect(Collectors.toList());
+      values.add(Notifications.segmentComplete(0));
+      when(supplier.publisherWithSegments())
+            .thenAnswer(i -> Flowable.fromIterable(values));
 
       stateProvider.startOutboundTransfer(F, 1, IntSets.immutableSet(0), true);
 
@@ -234,7 +253,7 @@ public class StateProviderTest {
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
       TestingUtil.inject(stateProvider, configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
-                         dataContainer, transactionTable, stateTransferLock, distributionManager, ef, keyPartitioner,
+                         dataContainer, transactionTable, stateTransferLock, distributionManager, ef, lpm, keyPartitioner,
                          TransactionOriginatorChecker.LOCAL);
       stateProvider.start();
 
@@ -274,6 +293,16 @@ public class StateProviderTest {
 
       verifyNoMoreInteractions(stateTransferLock);
 
+      SegmentAwarePublisherSupplier<?> supplier = mock(SegmentAwarePublisherSupplier.class);
+      when(lpm.entryPublisher(any(), any(), any(),
+            eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any()))
+            .thenAnswer(i -> supplier);
+      List<SegmentAwarePublisherSupplier.NotificationWithLost<?>> values = cacheEntries.stream()
+            .map(ice -> Notifications.value(ice, 0))
+            .collect(Collectors.toList());
+      values.add(Notifications.segmentComplete(0));
+      when(supplier.publisherWithSegments())
+            .thenAnswer(i -> Flowable.fromIterable(values));
       stateProvider.startOutboundTransfer(F, 1, IntSets.immutableSet(0), true);
 
       assertTrue(stateProvider.isStateTransferInProgress());
