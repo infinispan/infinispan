@@ -2,6 +2,7 @@ package org.infinispan.interceptors.impl;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
 import java.util.Collection;
@@ -47,6 +48,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -227,7 +229,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
             return rv;
          }
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
-         return new WrappedEntrySet(entrySet);
+         return new WrappedEntrySet(entrySet, command);
       });
    }
 
@@ -241,7 +243,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          }
 
          CacheSet<K> keySet = (CacheSet<K>) rv;
-         return new WrappedKeySet(keySet);
+         return new WrappedKeySet(keySet, command);
       });
    }
 
@@ -569,11 +571,28 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       persistenceManager.disableStore(storeType);
    }
 
+   /**
+    * Resolves how the operation should be performed.
+    * If the command is for state transfer then we do not use shared stores, any other type of command can use
+    * {@link org.infinispan.persistence.manager.PersistenceManager.AccessMode#BOTH}.
+    *
+    * @param command: The received command.
+    * @return An access mode.
+    */
+   private Predicate<? super StoreConfiguration> resolveStorePredicate(FlagAffectedCommand command) {
+      if (command.hasAnyFlag(FlagBitSets.STATE_TRANSFER_PROGRESS)) {
+         return PRIVATE;
+      }
+      return BOTH;
+   }
+
    private class WrappedEntrySet extends InternalCacheSet<CacheEntry<K, V>> {
       protected final CacheSet<CacheEntry<K, V>> next;
+      private final FlagAffectedCommand command;
 
-      public WrappedEntrySet(CacheSet<CacheEntry<K, V>> next) {
+      public WrappedEntrySet(CacheSet<CacheEntry<K, V>> next, FlagAffectedCommand command) {
          this.next = next;
+         this.command = command;
       }
 
       @Override
@@ -593,7 +612,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
                                                                  IntSet segments) {
          Set<K> seenKeys = new HashSet<>(dataContainer.sizeIncludingExpired(segments));
          Publisher<MarshallableEntry<K, V>> loaderSource =
-               persistenceManager.publishEntries(segments, k -> !seenKeys.contains(k), true, true, BOTH);
+               persistenceManager.publishEntries(segments,
+                     k -> !seenKeys.contains(k), true, true, resolveStorePredicate(command));
          return Flowable.concat(
                Flowable.fromPublisher(inMemorySource)
                      .doOnNext(ce -> seenKeys.add(ce.getKey())),
@@ -604,9 +624,11 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    private class WrappedKeySet extends InternalCacheSet<K> {
       protected final CacheSet<K> next;
+      private final FlagAffectedCommand command;
 
-      public WrappedKeySet(CacheSet<K> next) {
+      public WrappedKeySet(CacheSet<K> next, FlagAffectedCommand command) {
          this.next = next;
+         this.command = command;
       }
 
       @Override
@@ -627,7 +649,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          return Flowable.concat(
                Flowable.fromPublisher(inMemorySource)
                      .doOnNext(seenKeys::add),
-               persistenceManager.publishKeys(segments, k -> !seenKeys.contains(k), BOTH));
+               persistenceManager.publishKeys(segments, k -> !seenKeys.contains(k), resolveStorePredicate(command)));
       }
    }
 }

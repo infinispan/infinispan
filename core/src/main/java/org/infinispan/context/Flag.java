@@ -260,6 +260,12 @@ public enum Flag {
     * Some things do not need to be checked in this case.
     */
    BACKUP_WRITE,
+
+   /**
+    * Signals that a state transfer is in course. This is primarily used to identify how to load data from cache stores
+    * during the state transfer.
+    */
+   STATE_TRANSFER_PROGRESS,
    ;
 
    private static final Flag[] CACHED_VALUES = values();

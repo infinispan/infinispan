@@ -4,13 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.PrimitiveIterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
@@ -19,7 +15,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -31,9 +27,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.disposables.Disposable;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -57,8 +51,6 @@ public class OutboundTransferTask {
 
    private final int chunkSize;
 
-   private final KeyPartitioner keyPartitioner;
-
    private final RpcManager rpcManager;
 
    private final CommandsFactory commandsFactory;
@@ -76,12 +68,10 @@ public class OutboundTransferTask {
 
    private volatile boolean cancelled;
 
-   public OutboundTransferTask(Address destination, IntSet segments, int segmentCount, int chunkSize,
-                               int topologyId, KeyPartitioner keyPartitioner,
-                               Consumer<Collection<StateChunk>> onChunkReplicated,
-                               RpcManager rpcManager,
-                               CommandsFactory commandsFactory, long timeout, String cacheName,
-                               boolean applyState, boolean pushTransfer) {
+   public OutboundTransferTask(Address destination, IntSet segments, int segmentCount, int chunkSize, int topologyId,
+                               Consumer<Collection<StateChunk>> onChunkReplicated, RpcManager rpcManager,
+                               CommandsFactory commandsFactory, long timeout, String cacheName, boolean applyState,
+                               boolean pushTransfer) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
       }
@@ -96,7 +86,6 @@ public class OutboundTransferTask {
       this.segments = IntSets.concurrentCopyFrom(segments, segmentCount);
       this.chunkSize = chunkSize;
       this.topologyId = topologyId;
-      this.keyPartitioner = keyPartitioner;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
@@ -124,85 +113,47 @@ public class OutboundTransferTask {
     * to the target node.
     *
     * @return a completion stage that completes when all the entries have been sent.
-    * @param entries a {@code Flowable} with all the entries that need to be sent
+    * @param notifications a {@code Flowable} with all the entries that need to be sent
     */
-   public CompletionStage<Void> execute(Flowable<InternalCacheEntry<Object, Object>> entries) {
-      CompletableFuture<Void> taskFuture = new CompletableFuture<>();
-      try {
-         AtomicReference<List<InternalCacheEntry<Object, Object>>> batchRef =
-            new AtomicReference<>(Collections.emptyList());
-         entries.buffer(chunkSize)
-                .takeUntil(batch -> cancelled)
-                .concatMapCompletable(batch -> {
-                   // Send the previous batch, not the current one
-                   // This allows us to mark all the segments as finished in the same RPC with the
-                   // last batch
-                   List<InternalCacheEntry<Object, Object>> previousBatch = batchRef.getAndSet(batch);
-                   if (previousBatch.isEmpty())
-                      return Completable.complete();
+   public CompletionStage<Void> execute(Flowable<SegmentPublisherSupplier.Notification<InternalCacheEntry<?, ?>>> notifications) {
+      return notifications
+            .buffer(chunkSize)
+            .takeUntil(batch -> cancelled)
+            // Here we receive a batch of notifications, a list with size up to chunkSize.
+            // Although the notification list has the chunkSize the list contains not only data segments.
+            // The notification contains data segments which hold values; lost and completed segments. This means that
+            // although we are batching the data, our final chunk can be smaller than chunkSize.
+            // This could be improved.
+            .concatMapCompletable(batch -> {
+               Map<Integer, StateChunk> chunks = new HashMap<>();
+               for(SegmentPublisherSupplier.Notification<InternalCacheEntry<?, ?>> notification: batch) {
+                  if (notification.isValue()) {
+                     StateChunk chunk = chunks.computeIfAbsent(
+                           notification.valueSegment(), segment -> new StateChunk(segment, new ArrayList<>(), false));
+                     chunk.getCacheEntries().add(notification.value());
+                  }
 
-                   return Completable.fromCompletionStage(sendEntries(previousBatch, false));
-                }, 1)
-                .subscribe(new CompletableObserver() {
-                   @Override
-                   public void onSubscribe(Disposable d) {
-                   }
+                  // If the notification identify the segment is completed we mark a chunk as a last chunk.
+                  if (notification.isSegmentComplete()) {
+                     int segment = notification.completedSegment();
+                     chunks.compute(segment, (s, previous) -> previous == null
+                           ? new StateChunk(s, Collections.emptyList(), true)
+                           : new StateChunk(segment, previous.getCacheEntries(), true));
+                  }
+               }
 
-                   @Override
-                   public void onComplete() {
-                      // Send the remaining entries and mark all the segments as finished
-                      List<InternalCacheEntry<Object, Object>> previousBatch = batchRef.get();
-                      sendEntries(previousBatch, true)
-                         .whenComplete((ignored, throwable) -> {
-                            if (throwable == null) {
-                               taskFuture.complete(null);
-                            } else {
-                               taskFuture.completeExceptionally(throwable);
-                            }
-                         });
-                   }
-
-                   @Override
-                   public void onError(Throwable e) {
-                      taskFuture.completeExceptionally(e);
-                   }
-                });
-      } catch (Throwable t) {
-         taskFuture.completeExceptionally(t);
-      }
-      return taskFuture;
+               return Completable.fromCompletionStage(sendChunks(chunks));
+            }, 1)
+            .toCompletionStage(null);
    }
 
-   private CompletionStage<Void> sendEntries(List<InternalCacheEntry<Object, Object>> entries, boolean isLast) {
-      Map<Integer, StateChunk> chunks = new HashMap<>();
-      for (InternalCacheEntry<Object, Object> ice : entries) {
-         int segmentId = keyPartitioner.getSegment(ice.getKey());
-         if (segments.contains(segmentId)) {
-            StateChunk chunk = chunks.computeIfAbsent(
-               segmentId, segment -> new StateChunk(segment, new ArrayList<>(), isLast));
-            chunk.getCacheEntries().add(ice);
-         }
-      }
-
-      if (isLast) {
-         for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
-            int segmentId = iter.nextInt();
-            chunks.computeIfAbsent(
-               segmentId, segment -> new StateChunk(segment, Collections.emptyList(), true));
-         }
-      }
-
+   private CompletionStage<Void> sendChunks(Map<Integer, StateChunk> chunks) {
       if (chunks.isEmpty())
          return CompletableFutures.completedNull();
 
       if (log.isTraceEnabled()) {
-         if (isLast) {
-            log.tracef("Sending last chunk to node %s containing %d cache entries from segments %s", destination,
-                       entries.size(), segments);
-         } else {
-            log.tracef("Sending to node %s %d cache entries from segments %s", destination, entries.size(),
-                       chunks.keySet());
-         }
+         long entriesSize = chunks.values().stream().mapToInt(v -> v.getCacheEntries().size()).sum();
+         log.tracef("Sending to node %s %d cache entries from segments %s", destination, entriesSize, chunks.keySet());
       }
 
       StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(topologyId,
