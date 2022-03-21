@@ -358,7 +358,7 @@
       <versionx.org.jboss.naming.jnp-client>${version.jboss.naming}</versionx.org.jboss.naming.jnp-client>
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
       <versionx.org.jboss.narayana.jta.narayana-jta>${version.jboss.narayana}</versionx.org.jboss.narayana.jta.narayana-jta>
-      <versionx.org.jboss.remoting.jboss-remoting>5.0.16.Final</versionx.org.jboss.remoting.jboss-remoting>
+      <versionx.org.jboss.remoting.jboss-remoting>5.0.20.Final</versionx.org.jboss.remoting.jboss-remoting>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
       <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
       <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>${version.jboss.shrinkwrap.descriptors}</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>
