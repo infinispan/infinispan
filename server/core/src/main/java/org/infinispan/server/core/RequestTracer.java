@@ -1,41 +1,36 @@
 package org.infinispan.server.core;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
-import io.opentracing.Span;
-import io.opentracing.Tracer;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
 
 public class RequestTracer {
    private static final Log log = LogFactory.getLog(RequestTracer.class);
-   private static TracerAdapter adapter;
 
-   public static final String TRACER_FACTORY_CLASS = System.getProperty("infinispan.opentracing.factory.class");
+   public static final String TRACING_ENABLED = System.getProperty("infinispan.tracing.enabled");
 
-   public static final String TRACER_FACTORY_METHOD = System.getProperty("infinispan.opentracing.factory.method");
+   private static Tracer tracer;
 
    static {
-      if (TRACER_FACTORY_CLASS != null && TRACER_FACTORY_METHOD != null) {
+      if (TRACING_ENABLED != null && "true".equalsIgnoreCase(TRACING_ENABLED.trim())) {
          try {
-            Class<?> tracerFactoryClass =
-                  Thread.currentThread().getContextClassLoader().loadClass(RequestTracer.TRACER_FACTORY_CLASS);
-            Method getTracer = tracerFactoryClass.getMethod(TRACER_FACTORY_METHOD);
-            Object factoryInstance;
-            if (Modifier.isStatic(getTracer.getModifiers())) {
-               factoryInstance = null;
-            } else {
-               factoryInstance = tracerFactoryClass.getDeclaredConstructor().newInstance();
-            }
-            adapter = new TracerAdapter((Tracer) getTracer.invoke(factoryInstance));
-            log.infof("OpenTracing implementation loaded: %s", adapter);
+            OpenTelemetry openTelemetry = AutoConfiguredOpenTelemetrySdk.builder()
+                  .build()
+                  .getOpenTelemetrySdk();
+
+            tracer = openTelemetry.getTracer("org.infinispan.tracing", "1.0.0");
+            log.tracerLoaded(tracer);
          } catch (Throwable e) {
-            log.warnf(e, "OpenTracing implementation could not be loaded");
+            log.errorOnLoadingTracer();
          }
       } else {
-         log.info("OpenTracing integration is disabled");
+         log.tracerDisabled();
       }
    }
 
@@ -44,54 +39,20 @@ public class RequestTracer {
    }
 
    public static void stop() {
-      if (adapter != null) {
-         adapter.stop();
-      }
+      // theoretically OpenTelemetry should stop by itself (IIC)
+      GlobalOpenTelemetry.resetForTest();
    }
 
-   public static Object requestStart(String operationName) {
-      if (adapter != null) {
-         return adapter.requestStart(operationName);
+   public static Span requestStart(String operationName) {
+      if (tracer != null) {
+         return tracer.spanBuilder(operationName).setSpanKind(SpanKind.CLIENT).startSpan();
       }
       return null;
    }
 
-   public static void requestEnd(Object span) {
-      if (adapter != null) {
-         adapter.requestEnd(span);
-      }
-   }
-
-   public static class TracerAdapter {
-      private Tracer tracer;
-
-      public TracerAdapter(Tracer tracer) {
-         this.tracer = tracer;
-      }
-
-      public void stop() {
-         if (tracer instanceof AutoCloseable) {
-            try {
-               ((AutoCloseable) tracer).close();
-            } catch (Exception e) {
-               log.warn("OpenTracing error during stop", e);
-            }
-         }
-      }
-
-      public Object requestStart(String operationName) {
-         return tracer.buildSpan(operationName).start();
-      }
-
-      public void requestEnd(Object span) {
-         if (span instanceof Span) {
-            ((Span) span).finish();
-         }
-      }
-
-      @Override
-      public String toString() {
-         return tracer.toString();
+   public static void requestEnd(Span span) {
+      if (tracer != null) {
+         span.end();
       }
    }
 }

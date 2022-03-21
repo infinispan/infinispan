@@ -231,6 +231,18 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid value %s for attribute %s: must be a number greater than zero", id = 951)
    CacheConfigurationException attributeMustBeGreaterThanZero(Number value, Enum<?> attribute);
 
+   @LogMessage(level = INFO)
+   @Message(value = "OpenTelemetry tracer loaded: %s", id = 952)
+   void tracerLoaded(Object tracer);
+
+   @LogMessage(level = INFO)
+   @Message(value = "OpenTelemetry tracer integration is disabled", id = 953)
+   void tracerDisabled();
+
+   @LogMessage(level = WARN)
+   @Message(value = "OpenTelemetry tracer cannot be configured", id = 954)
+   void errorOnLoadingTracer();
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

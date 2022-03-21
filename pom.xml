@@ -408,9 +408,6 @@
       <versionx.org.springframework.spring-expression>${version.spring5}</versionx.org.springframework.spring-expression>
       <versionx.org.springframework.spring-jdbc>${version.spring5}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
-      <!-- Version 0.33.0 is not compatible -->
-      <versionx.org.opentracing.api>0.31.0</versionx.org.opentracing.api>
-      <versionx.io.jaegertracing.jaeger-client>1.6.0</versionx.io.jaegertracing.jaeger-client>
       <versionx.org.testcontainers.testcontainers>1.17.2</versionx.org.testcontainers.testcontainers>
       <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
@@ -659,6 +656,31 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>${version.micrometer}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+            <version>${version.opentelemetry}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+            <version>${version.opentelemetry}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+            <version>${version.opentelemetry.sdk-autoconfigure}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-semconv</artifactId>
+            <version>${version.opentelemetry.sdk-autoconfigure}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp-common</artifactId>
+            <version>${version.opentelemetry}</version>
          </dependency>
          <dependency>
             <groupId>io.smallrye.reactive</groupId>
@@ -1760,29 +1782,10 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>io.opentracing</groupId>
-            <artifactId>opentracing-api</artifactId>
-            <version>${versionx.org.opentracing.api}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.opentracing</groupId>
-            <artifactId>opentracing-noop</artifactId>
-            <version>${versionx.org.opentracing.api}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.jaegertracing</groupId>
-            <artifactId>jaeger-core</artifactId>
-            <version>${versionx.io.jaegertracing.jaeger-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.jaegertracing</groupId>
-            <artifactId>jaeger-thrift</artifactId>
-            <version>${versionx.io.jaegertracing.jaeger-client}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.jaegertracing</groupId>
-            <artifactId>jaeger-tracerresolver</artifactId>
-            <version>${versionx.io.jaegertracing.jaeger-client}</version>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk-testing</artifactId>
+            <version>${version.opentelemetry}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>io.jaegertracing</groupId>
