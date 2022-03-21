@@ -125,6 +125,28 @@
          </exclusions>
       </dependency>
       <dependency>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-exporter-otlp</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+      </dependency>
+
+      <!-- The following dependencies are runtime dependencies of `opentelemetry-exporter-otlp` and
+         `opentelemetry-sdk-extension-autoconfigure`.
+         Transitive runtime dependencies won't be added to the server lib
+         o we need to make them scope compile -->
+      <dependency>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-semconv</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-exporter-otlp-common</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <scope>provided</scope>
@@ -143,11 +165,6 @@
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>io.opentracing</groupId>
-         <artifactId>opentracing-api</artifactId>
       </dependency>
    </dependencies>
 

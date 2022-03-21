@@ -102,26 +102,10 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- OpenTracing dependencies -->
+      <!-- OpenTelemetry dependencies -->
       <dependency>
-         <groupId>io.opentracing</groupId>
-         <artifactId>opentracing-api</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.opentracing</groupId>
-         <artifactId>opentracing-noop</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.jaegertracing</groupId>
-         <artifactId>jaeger-core</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.jaegertracing</groupId>
-         <artifactId>jaeger-thrift</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.jaegertracing</groupId>
-         <artifactId>jaeger-tracerresolver</artifactId>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-sdk-testing</artifactId>
       </dependency>
       <dependency>
          <groupId>io.jaegertracing</groupId>

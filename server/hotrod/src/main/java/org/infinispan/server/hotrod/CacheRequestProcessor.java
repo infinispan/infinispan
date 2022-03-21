@@ -33,6 +33,7 @@ import org.infinispan.stats.Stats;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.opentelemetry.api.trace.Span;
 
 class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
@@ -216,7 +217,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      Object span = RequestTracer.requestStart(HotRodOperation.PUT.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.PUT.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -224,12 +225,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                            Metadata metadata, Object span) {
+                            Metadata metadata, Span span) {
       cache.putAsyncReturnEntry(key, value, metadata)
             .whenComplete((ce, throwable) -> handlePut(header, ce, throwable, span));
    }
 
-   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
+   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
@@ -239,7 +240,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
-      Object span = RequestTracer.requestStart(HotRodOperation.REPLACE_IF_UNMODIFIED.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.REPLACE_IF_UNMODIFIED.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -247,7 +248,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void replaceIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                            long version, byte[] value, Metadata metadata, Object span) {
+                                            long version, byte[] value, Metadata metadata, Span span) {
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(key)
             .whenComplete((entry, throwable) -> {
                handleGetForReplaceIfUnmodified(header, cache, entry, version, value, metadata, throwable, span);
@@ -256,7 +257,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void handleGetForReplaceIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
                                                 CacheEntry<byte[], byte[]> entry, long version, byte[] value,
-                                                Metadata metadata, Throwable throwable, Object span) {
+                                                Metadata metadata, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
          RequestTracer.requestEnd(span);
@@ -285,7 +286,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      Object span = RequestTracer.requestStart(HotRodOperation.REPLACE.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.REPLACE.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -293,7 +294,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void replaceInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                                Metadata metadata, Object span) {
+                                Metadata metadata, Span span) {
       // Avoid listener notification for a simple optimization
       // on whether a new version should be calculated or not.
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getAsync(key)
@@ -303,7 +304,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void handleGetForReplace(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] prev,
-                                    byte[] value, Metadata metadata, Throwable throwable, Object span) {
+                                    byte[] value, Metadata metadata, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
          RequestTracer.requestEnd(span);
@@ -317,7 +318,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   private void handleReplace(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Object span) {
+   private void handleReplace(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else if (result != null) {
@@ -329,7 +330,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      Object span = RequestTracer.requestStart(HotRodOperation.PUT_IF_ABSENT.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.PUT_IF_ABSENT.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -337,13 +338,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                                    Metadata metadata, Object span) {
+                                    Metadata metadata, Span span) {
       cache.putIfAbsentAsyncReturnEntry(key, value, metadata).whenComplete((prev, throwable) -> {
          handlePutIfAbsent(header, prev, throwable, span);
       });
    }
 
-   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Object span) {
+   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else if (result == null) {
@@ -355,18 +356,18 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void remove(HotRodHeader header, Subject subject, byte[] key) {
-      Object span = RequestTracer.requestStart(HotRodOperation.REMOVE.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.REMOVE.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeInternal(header, cache, key, span);
    }
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                               Object span) {
+                               Span span) {
       cache.removeAsyncReturnEntry(key).whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
    }
 
-   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
+   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else if (ce != null) {
@@ -378,14 +379,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
-      Object span = RequestTracer.requestStart(HotRodOperation.REMOVE_IF_UNMODIFIED.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.REMOVE_IF_UNMODIFIED.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeIfUnmodifiedInternal(header, cache, key, version, span);
    }
 
    private void removeIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                           long version, Object span) {
+                                           long version, Span span) {
       cache.getCacheEntryAsync(key)
             .whenComplete((entry, throwable) -> {
                handleGetForRemoveIfUnmodified(header, cache, entry, key, version, throwable, span);
@@ -394,7 +395,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void handleGetForRemoveIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
                                                CacheEntry<byte[], byte[]> entry, byte[] key, long version,
-                                               Throwable throwable, Object span) {
+                                               Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
          RequestTracer.requestEnd(span);
@@ -423,13 +424,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void clear(HotRodHeader header, Subject subject) {
-      Object span = RequestTracer.requestStart(HotRodOperation.CLEAR.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.CLEAR.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       clearInternal(header, cache, span);
    }
 
-   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Object span) {
+   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Span span) {
       cache.clearAsync().whenComplete((nil, throwable) -> {
          if (throwable != null) {
             writeException(header, throwable);
@@ -441,18 +442,18 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
-      Object span = RequestTracer.requestStart(HotRodOperation.PUT_ALL.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.PUT_ALL.name());
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       putAllInternal(header, cache, entries, metadata.build(), span);
    }
 
    private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries,
-                               Metadata metadata, Object span) {
+                               Metadata metadata, Span span) {
       cache.putAllAsync(entries, metadata).whenComplete((nil, throwable) -> handlePutAll(header, throwable, span));
    }
 
-   private void handlePutAll(HotRodHeader header, Throwable throwable, Object span) {
+   private void handlePutAll(HotRodHeader header, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
@@ -481,17 +482,17 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void size(HotRodHeader header, Subject subject) {
-      Object span = RequestTracer.requestStart(HotRodOperation.SIZE.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.SIZE.name());
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       sizeInternal(header, cache, span);
    }
 
-   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Object span) {
+   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Span span) {
       cache.sizeAsync()
             .whenComplete((size, throwable) -> handleSize(header, size, throwable, span));
    }
 
-   private void handleSize(HotRodHeader header, Long size, Throwable throwable, Object span) {
+   private void handleSize(HotRodHeader header, Long size, Throwable throwable, Span span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
@@ -549,7 +550,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState,
                           String filterFactory, List<byte[]> filterParams, String converterFactory,
                           List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
-      Object span = RequestTracer.requestStart(HotRodOperation.ADD_CLIENT_LISTENER.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.ADD_CLIENT_LISTENER.name());
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       BloomFilter<byte[]> bloomFilter = null;
       if (bloomBits > 0) {
@@ -576,13 +577,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
-      Object span = RequestTracer.requestStart(HotRodOperation.REMOVE_CLIENT_LISTENER.name());
+      Span span = RequestTracer.requestStart(HotRodOperation.REMOVE_CLIENT_LISTENER.name());
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       removeClientListenerInternal(header, cache, listenerId, span);
    }
 
    private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
-                                             byte[] listenerId, Object span) {
+                                             byte[] listenerId, Span span) {
       server.getClientListenerRegistry().removeClientListener(listenerId, cache)
             .whenComplete((success, t) -> {
                if (t != null) {

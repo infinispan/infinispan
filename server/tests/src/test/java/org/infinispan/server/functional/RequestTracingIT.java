@@ -22,79 +22,41 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * Test OpenTracing integration with the Jaeger client
- *
- * We use the latest Jaeger client compatible with opentracing-api version 0.31.0,
- * as that's the only API version supported by both Jaeger and AppDynamics ATM.
- *
- * It's only possible to use the latest Jaeger client by replacing the opentracing-api jar
- * in the main {@code lib} directory (as opposed to the {@code server/lib} directory used by this test).
+ * Test OpenTelemetry tracing integration with the Jaeger client
  *
  * @since 10.0
  */
 public class RequestTracingIT {
-   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/jaegertracing/all-in-one:latest");
+   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/jaegertracing/all-in-one:1.35.2");
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
 
-   private static final JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE);
+   private static final JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE)
+         .withEnv("COLLECTOR_OTLP_ENABLED", "true");
 
    @ClassRule
    public static final InfinispanServerRule SERVER =
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
-                                    .runMode(ServerRunMode.CONTAINER)
-                                    .numServers(1)
-// Jaeger client version 0.34.3 and dependencies
-                                    .mavenArtifacts("io.jaegertracing:jaeger-core:0.34.3",
-                                                    "io.jaegertracing:jaeger-thrift:0.34.3",
-                                                    "io.jaegertracing:jaeger-tracerresolver:0.34.3",
-                                                    "io.opentracing.contrib:opentracing-tracerresolver:0.1.5",
-                                                    "org.slf4j:slf4j-api:1.7.25",
-                                                    "com.squareup.okhttp3:okhttp:3.14.4",
-                                                    "com.squareup.okio:okio:1.13.0",
-                                                    "org.apache.thrift:libthrift:0.13.0",
-                                                    "io.opentracing:opentracing-api:0.31.0",
-                                                    "io.opentracing:opentracing-util:0.31.0",
-                                                    "io.opentracing:opentracing-noop:0.31.0",
-                                                    "org.slf4j:slf4j-jdk14:1.7.5")
-// Alternative Jaeger client version 1.5.0 and dependencies
-//                                    .mavenArtifacts("io.jaegertracing:jaeger-core:1.5.0",
-//                                                    "io.jaegertracing:jaeger-thrift:1.5.0",
-//                                                    "io.jaegertracing:jaeger-tracerresolver:1.5.0",
-//                                                    "io.opentracing.contrib:opentracing-tracerresolver:0.1.8",
-//                                                    "org.slf4j:slf4j-api:1.7.28",
-//                                                    "com.squareup.okhttp3:okhttp:4.9.0",
-//                                                    "com.squareup.okio:okio:2.8.0",
-//                                                    "org.apache.thrift:libthrift:0.13.0",
-//                                                    "io.opentracing:opentracing-api:0.33.0",
-//                                                    "io.opentracing:opentracing-util:0.33.0",
-//                                                    "io.opentracing:opentracing-noop:0.33.0",
-//                                                    "org.slf4j:slf4j-jdk14:1.7.5")
-                                    .property("infinispan.opentracing.factory.class", "io.jaegertracing.tracerresolver.internal.JaegerTracerFactory")
-                                    .property("infinispan.opentracing.factory.method", "getTracer")
-                                    .property("JAEGER_SERVICE_NAME", SERVICE_NAME)
-                                    .property("JAEGER_SAMPLER_TYPE", "const")
-                                    .property("JAEGER_SAMPLER_PARAM", "1")
-                                    .property("JAEGER_REPORTER_LOG_SPANS", "true")
-                                    .property("JAEGER_REPORTER_MAX_QUEUE_SIZE", "1")
-                                    .property("JAEGER_REPORTER_FLUSH_INTERVAL", "1")
-                                    .addListener(new InfinispanServerListener() {
-                                       @Override
-                                       public void before(InfinispanServerDriver driver) {
-                                          JAEGER.start();
-                                          String endpoint = String.format("http://%s:%s/api/traces",
-                                                                          ipAddress(JAEGER),
-                                                                          JaegerAllInOne.JAEGER_COLLECTOR_THRIFT_PORT);
-                                          driver.getConfiguration().properties()
-                                                .setProperty("JAEGER_ENDPOINT", endpoint);
-                                       }
+               .runMode(ServerRunMode.CONTAINER)
+               .numServers(1)
+               .property("infinispan.tracing.enabled", "true")
+               .property("otel.traces.exporter", "otlp")
+               .property("otel.service.name", SERVICE_NAME)
+               .addListener(new InfinispanServerListener() {
+                  @Override
+                  public void before(InfinispanServerDriver driver) {
+                     JAEGER.start();
+                     String endpoint = String.format("http://%s:%s", ipAddress(JAEGER), "4317");
+                     driver.getConfiguration().properties()
+                           .setProperty("otel.exporter.otlp.endpoint", endpoint);
+                  }
 
-                                       @Override
-                                       public void after(InfinispanServerDriver driver) {
-                                          JAEGER.stop();
-                                       }
-                                    })
-                                    .build();
+                  @Override
+                  public void after(InfinispanServerDriver driver) {
+                     JAEGER.stop();
+                  }
+               })
+               .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);
@@ -123,5 +85,4 @@ public class RequestTracingIT {
          }
       });
    }
-
 }
