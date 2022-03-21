@@ -215,10 +215,10 @@ public class Credentials extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = "mask", description = "Creates a masked credential.")
+   @CommandDefinition(name = "mask", description = "Masks the password for a credential keystore.")
    public static class Mask extends CliCommand {
 
-      @Argument(description = "Specifies the password to be masked.", required = true)
+      @Argument(description = "Specifies the password to mask.", required = true)
       String password;
 
       @Option(description = "Specifies a salt value for the encryption.", shortName = 's', required = true)

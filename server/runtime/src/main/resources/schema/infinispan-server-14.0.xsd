@@ -959,13 +959,13 @@
    <xs:complexType name="masked-credential">
       <xs:annotation>
          <xs:documentation>
-            A masked credential using the format `MASKED_VALUE;SALT;ITERATION`
+           Adds a masked password for the credential keystore.
          </xs:documentation>
       </xs:annotation>
       <xs:attribute name="masked" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               The masked credential.
+               Specifies a masked password in the format of `MASKED_VALUE;SALT;ITERATION`.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -974,13 +974,13 @@
    <xs:complexType name="command-credential">
       <xs:annotation>
          <xs:documentation>
-            A credential supplied by executing an external command.
+            Executes an external command that supplies the password for the credential keystore.
          </xs:documentation>
       </xs:annotation>
       <xs:attribute name="command" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               An external command, including arguments, that when executed returns the credential on the standard output.
+               An external command, including arguments, that returns the credential on the standard output.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -996,28 +996,28 @@
          <xs:element name="clear-text-credential" type="tns:clear-text-credential">
             <xs:annotation>
                <xs:documentation>
-                  Credential to be used as protection parameter for the Credential Store.
+                  Specifies a clear-text password that allows access to the credential keystore.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element name="masked-credential" type="tns:masked-credential">
             <xs:annotation>
                <xs:documentation>
-                  Masked credential to be used as protection parameter for the Credential Store.
+                  Specifies a masked password that allows access to the credential keystore.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element name="command-credential" type="tns:command-credential">
             <xs:annotation>
                <xs:documentation>
-                  Command credential to be used as protection parameter for the Credential Store.
+                  Specifies an external command that supplies a password that allows access to the credential keystore.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element name="credential-reference" type="tns:credential-reference">
             <xs:annotation>
                <xs:documentation>
-                  Credential to be used by as protection parameter for the Credential Store.
+                  Specifies the credential keystore that contains a password that allows access to the credential keystore.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
@@ -1025,7 +1025,7 @@
       <xs:attribute name="name" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               The name of this credential store.
+               Specifies the name of the credential keystore.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1039,8 +1039,7 @@
       <xs:attribute name="path" type="xs:string" use="required">
          <xs:annotation>
             <xs:documentation>
-               File name of credential store storage. If the path is relative, the full path will be resolved using
-               the 'relative-to' attribute.
+               File name of the credential keystore. If the path is relative, the full path will be resolved using the 'relative-to' attribute.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
