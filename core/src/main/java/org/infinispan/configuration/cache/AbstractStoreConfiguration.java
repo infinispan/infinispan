@@ -9,7 +9,6 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.parsing.Element;
 
 public class AbstractStoreConfiguration implements StoreConfiguration {
-   public static final AttributeDefinition<Boolean> FETCH_STATE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FETCH_STATE, false).immutable().build();
    public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PURGE, false).immutable().build();
    public static final AttributeDefinition<Boolean> READ_ONLY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.READ_ONLY, false).immutable().build();
    public static final AttributeDefinition<Boolean> WRITE_ONLY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.WRITE_ONLY, false).immutable().build();
@@ -22,11 +21,10 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_STATE, PURGE_ON_STARTUP,
+      return new AttributeSet(AbstractStoreConfiguration.class, PURGE_ON_STARTUP,
             READ_ONLY, WRITE_ONLY, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, SEGMENTED, PROPERTIES);
    }
 
-   private final Attribute<Boolean> fetchPersistentState;
    private final Attribute<Boolean> purgeOnStartup;
    private final Attribute<Boolean> ignoreModifications;
    private final Attribute<Boolean> writeOnly;
@@ -43,7 +41,6 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    public AbstractStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
       this.attributes = attributes.checkProtection();
       this.async = async;
-      this.fetchPersistentState = attributes.attribute(FETCH_STATE);
       this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
       this.ignoreModifications = attributes.attribute(READ_ONLY);
       this.writeOnly = attributes.attribute(WRITE_ONLY);
@@ -98,10 +95,13 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     * store does not make sense, as the same persistent store that provides the data will just end
     * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
     * persistent state transfer even if a cache store has this property set to true.
+    *
+    * @deprecated since 14.0. Always returns false. The first non shared store is used instead.
     */
+   @Deprecated
    @Override
    public boolean fetchPersistentState() {
-      return fetchPersistentState.get();
+      return false;
    }
 
    /**

@@ -4,4 +4,3 @@ distributedCache:
     singleFileStore:
       shared: "false"
       preload: "true"
-      fetchState: "true"

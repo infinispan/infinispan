@@ -63,7 +63,6 @@ public class ConfigurationTest {
       assertEquals("BIGINT", store.table().timestampColumnType());
       assertEquals("segfault", store.table().segmentColumnName());
       assertEquals("BIGINT", store.table().segmentColumnType());
-      assertTrue(store.fetchPersistentState());
       assertTrue(store.async().enabled());
 
       b = new ConfigurationBuilder();
@@ -81,7 +80,6 @@ public class ConfigurationTest {
       assertEquals("BIGINT", store2.table().timestampColumnType());
       assertEquals("segfault", store2.table().segmentColumnName());
       assertEquals("BIGINT", store2.table().segmentColumnType());
-      assertTrue(store2.fetchPersistentState());
       assertTrue(store2.async().enabled());
    }
 

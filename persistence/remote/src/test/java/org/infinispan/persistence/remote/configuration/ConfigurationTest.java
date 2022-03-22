@@ -37,7 +37,6 @@ public class ConfigurationTest {
       assertEquals(5, store.connectionPool().minIdle());
       assertEquals(ExhaustedAction.EXCEPTION, store.connectionPool().exhaustedAction());
       assertEquals(10_000, store.connectionPool().minEvictableIdleTime());
-      assertTrue(store.fetchPersistentState());
       assertTrue(store.async().enabled());
       assertEquals(ProtocolVersion.PROTOCOL_VERSION_27, store.protocol());
 
@@ -51,7 +50,6 @@ public class ConfigurationTest {
       assertEquals(5, store2.connectionPool().minIdle());
       assertEquals(ExhaustedAction.EXCEPTION, store2.connectionPool().exhaustedAction());
       assertEquals(10_000, store2.connectionPool().minEvictableIdleTime());
-      assertTrue(store2.fetchPersistentState());
       assertTrue(store2.async().enabled());
       assertEquals(ProtocolVersion.PROTOCOL_VERSION_27, store2.protocol());
    }

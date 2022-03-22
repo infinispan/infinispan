@@ -486,7 +486,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(10, c.expiration().maxIdle());
             assertFalse(c.persistence().passivation());
             StoreConfiguration fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
-            assertFalse(fileStore.fetchPersistentState());
             assertFalse(fileStore.purgeOnStartup());
             assertTrue(fileStore.preload());
             assertFalse(fileStore.shared());

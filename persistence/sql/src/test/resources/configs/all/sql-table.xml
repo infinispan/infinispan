@@ -4,7 +4,7 @@
    <cache-container default-cache="first">
       <local-cache-configuration name="default">
          <persistence>
-            <table-jdbc-store fetch-state="false" read-only="false" purge="false" dialect="H2" table-name="books">
+            <table-jdbc-store read-only="false" purge="false" dialect="H2" table-name="books">
                <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa"
                                 driver="org.h2.Driver"/>
                <schema message-name="Book" key-message-name="BookID" package="library" embedded-key="true"/>

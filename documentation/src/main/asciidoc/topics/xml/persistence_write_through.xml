@@ -1,6 +1,6 @@
 <distributed-cache>
   <persistence passivation="false">
-    <file-store fetch-state="true">
+    <file-store>
       <index path="path/to/index" />
       <data path="path/to/data" />
     </file-store>

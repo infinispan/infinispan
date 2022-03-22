@@ -11,13 +11,14 @@
       <local-cache name="___defaultcache">
          <persistence passivation="false">
             <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
-                          cache="___defaultcache" fetch-state="false" preload="false" purge="false" shared="true" read-only="false"
+                          cache="___defaultcache" preload="false" purge="false" shared="true" read-only="false"
                           hotrod-wrapping="false" raw-values="true" socket-timeout="60000" protocol-version="2.8"
-                          tcp-no-delay="true" balancing-strategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
+                          tcp-no-delay="true"
+                          balancing-strategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
                           transport-factory="org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory"
                           key-size-estimate="62" value-size-estimate="512" force-return-values="false">
-               <remote-server host="127.0.0.1" port="19711" outbound-socket-binding="hotrod-server-1" />
-               <remote-server host="127.0.0.2" port="19712" outbound-socket-binding="hotrod-server-2" />
+               <remote-server host="127.0.0.1" port="19711" outbound-socket-binding="hotrod-server-1"/>
+               <remote-server host="127.0.0.2" port="19712" outbound-socket-binding="hotrod-server-2"/>
                <connection-pool max-active="99" max-pending-requests="97" min-idle="98"/>
                <async-executor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
                   <property name="pool_size">1</property>

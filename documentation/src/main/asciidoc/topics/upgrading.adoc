@@ -49,6 +49,15 @@ The same configuration should be changed to the following instead.
 </persistence>
 ----
 
+== Fetch Persistent State Remove
+
+The store property named fetch-persistent-state has been deprecated and removed from xml configuration.
+Instead the first configured non shared store that allows for bulk loading will be used for state transfer of entries.
+This reduces configuration complexity and does not allow for a configuration that could lose data due to not
+transferring entries stored in a store.
+
+NOTE: This change has no effect for shared stores
+
 == RocksDB store
 
 The RocksDB implementation is no longer included by default with the server. It can be installed via the CLI:
@@ -166,7 +175,6 @@ To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later
 <persistence passivation="false">
   <single-file-store shared="false"
                      preload="true"
-                     fetch-state="true"
                      read-only="false"/>
 </persistence>
 ----

@@ -75,7 +75,7 @@ public class XSiteIT {
                "        </backups>" +
                "        <memory storage=\"OFF_HEAP\" max-count=\"100\" when-full=\"REMOVE\"/>" +
                "        <persistence passivation=\"true\">" +
-               "     <file-store shared=\"false\" preload=\"true\" purge=\"false\" fetch-state=\"true\"/>" +
+               "     <file-store shared=\"false\" preload=\"true\" purge=\"false\" />" +
                "  </persistence>" +
                "  </distributed-cache>" +
                "</cache-container></infinispan>";

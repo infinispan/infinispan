@@ -1,7 +1,6 @@
 <distributed-cache>
   <persistence passivation="true">
     <single-file-store shared="false"
-                       preload="true"
-                       fetch-state="true"/>
+                       preload="true"/>
   </persistence>
 </distributed-cache>
