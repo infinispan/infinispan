@@ -666,8 +666,12 @@ public class StateConsumerImpl implements StateConsumer {
       }
       if (inboundTransfer != null) {
          return doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries())
-                   .thenAccept(
-                      v -> inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk()));
+                   .thenAccept(v -> {
+                      inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
+                      if (stateChunk.isLastChunk()) {
+                         commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, stateChunk.getSegmentId());
+                      }
+                   });
       } else {
          if (cache.wired().getStatus().allowInvocations()) {
             log.ignoringUnsolicitedState(sender, stateChunk.getSegmentId(), cacheName);
