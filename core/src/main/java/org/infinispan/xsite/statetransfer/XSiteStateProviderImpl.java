@@ -17,7 +17,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.ComponentName;
@@ -192,7 +191,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       //async backup only needs the key
       Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
             persistenceManager.publishEntries(segments, this::missingInDataContainer, syncBackup, syncBackup,
-                  Configurations::isStateTransferStore);
+                  PersistenceManager.AccessMode.PRIVATE);
       return Flowable.fromPublisher(loaderPublisher).map(XSiteState::fromCacheLoader);
    }
 

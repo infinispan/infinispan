@@ -224,7 +224,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       StoreConfiguration storeConfiguration = cfg.stores().get(0);
       assertTrue(storeConfiguration instanceof AbstractStoreConfiguration);
       AbstractStoreConfiguration abstractStoreConfiguration = (AbstractStoreConfiguration)storeConfiguration;
-      assertTrue(abstractStoreConfiguration.fetchPersistentState());
       assertTrue(abstractStoreConfiguration.preload());
    }
 
@@ -504,7 +503,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       SoftIndexFileStoreConfiguration loaderCfg = (SoftIndexFileStoreConfiguration) c.persistence().stores().get(0);
 
-      assertTrue(loaderCfg.fetchPersistentState());
       assertFalse(loaderCfg.ignoreModifications());
       assertFalse(loaderCfg.purgeOnStartup());
       assertEquals("/tmp/FileCacheStore-Location", loaderCfg.dataLocation());

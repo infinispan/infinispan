@@ -156,7 +156,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    protected String cacheName;
    protected long timeout;
-   protected volatile boolean isFetchEnabled;
+   protected boolean isFetchEnabled;
    protected boolean isTransactional;
    protected boolean isInvalidationMode;
    protected volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
@@ -210,7 +210,6 @@ public class StateConsumerImpl implements StateConsumer {
    protected RpcOptions rpcOptions;
    private volatile boolean running;
    private int numSegments;
-   private final PersistenceManager.StoreChangeListener storeChangeListener = pm -> isFetchEnabled = isFetchEnabled(pm.fetchPersistentState());
 
    public StateConsumerImpl() {
    }
@@ -813,18 +812,17 @@ public class StateConsumerImpl implements StateConsumer {
       timeout = configuration.clustering().stateTransfer().timeout();
       numSegments = configuration.clustering().hash().numSegments();
 
-      isFetchEnabled = isFetchEnabled(configuration.persistence().fetchPersistentState());
+      isFetchEnabled = isFetchEnabled();
 
       rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
 
       stateRequestExecutor = new LimitedExecutor("StateRequest-" + cacheName, nonBlockingExecutor, 1);
-      persistenceManager.addStoreListener(storeChangeListener);
       running = true;
    }
 
-   private boolean isFetchEnabled(boolean fetchPersistenceState) {
+   private boolean isFetchEnabled() {
       return configuration.clustering().cacheMode().needsStateTransfer() &&
-            (configuration.clustering().stateTransfer().fetchInMemoryState() || fetchPersistenceState);
+            configuration.clustering().stateTransfer().fetchInMemoryState();
    }
 
    @Stop(priority = 0)
@@ -851,7 +849,6 @@ public class StateConsumerImpl implements StateConsumer {
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
-      persistenceManager.removeStoreListener(storeChangeListener);
    }
 
    public void setKeyInvalidationListener(KeyInvalidationListener keyInvalidationListener) {

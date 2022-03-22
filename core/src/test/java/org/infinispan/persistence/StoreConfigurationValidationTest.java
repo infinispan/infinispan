@@ -58,18 +58,6 @@ public class StoreConfigurationValidationTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = ".* Cannot enable 'fetch-state' in invalidation caches!")
-   public void testFetchPersistentStateInInvalidationMode() {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.clustering()
-            .cacheMode(CacheMode.INVALIDATION_SYNC)
-            .persistence()
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .fetchPersistentState(true)
-            .validate();
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = ".* A store cannot be shared when utilised with a local cache.")
    public void testSharedStoreWithLocalCache() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);

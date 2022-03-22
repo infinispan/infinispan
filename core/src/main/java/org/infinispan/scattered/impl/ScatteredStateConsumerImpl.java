@@ -26,7 +26,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
@@ -39,6 +38,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -279,8 +279,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          // With passivation, some key could be activated here and we could miss it,
          // but then it should be broadcast-loaded in PrefetchInvalidationInterceptor
          Publisher<MarshallableEntry<Object, Object>> persistencePublisher =
-            persistenceManager.publishEntries(completedSegments, k -> dataContainer.peek(k) == null, true, true,
-                                              Configurations::isStateTransferStore);
+               persistenceManager.publishEntries(completedSegments, k -> dataContainer.peek(k) == null, true, true,
+                     PersistenceManager.AccessMode.PRIVATE);
          try {
             blockingSubscribe(Flowable.fromPublisher(persistencePublisher)
                   .doOnNext(me -> {

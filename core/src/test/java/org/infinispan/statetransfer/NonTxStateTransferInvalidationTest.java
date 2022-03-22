@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -19,7 +20,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -84,11 +84,6 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       builder3.clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       builder3.validate();
-
-      ConfigurationBuilder builder4 = new ConfigurationBuilder();
-      builder4.clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).persistence()
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class).fetchPersistentState(true);
-      Exceptions.expectException(CacheConfigurationException.class, builder4::validate);
    }
 
    public void testInvalidationDuringStateTransfer() throws Exception {

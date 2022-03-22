@@ -4,13 +4,14 @@
    <cache-container default-cache="first">
       <local-cache-configuration name="default">
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}" fetch-state="false" read-only="false" purge="false">
-               <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:${infinispan.core.schema.version}"
+                                     read-only="false" purge="false">
+               <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS"/>
                <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
-                  <id-column name="ID_COLUMN" type="VARCHAR(255)" />
-                  <data-column name="DATA_COLUMN" type="BINARY" />
-                  <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
-                  <segment-column name="SEGMENT_COLUMN" type="BIGINT" />
+                  <id-column name="ID_COLUMN" type="VARCHAR(255)"/>
+                  <data-column name="DATA_COLUMN" type="BINARY"/>
+                  <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>
+                  <segment-column name="SEGMENT_COLUMN" type="BIGINT"/>
                </string-keyed-table>
             </string-keyed-jdbc-store>
          </persistence>

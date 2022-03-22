@@ -4,7 +4,7 @@
     <cache-container default-cache="first">
         <local-cache-configuration name="default">
             <persistence>
-                <string-keyed-jdbc-store fetch-state="false" read-only="false" dialect="ORACLE">
+                <string-keyed-jdbc-store read-only="false" dialect="ORACLE">
                     <data-source jndi-url="java:jboss/datasources/ExampleDS"/>
                     <string-keyed-table create-on-start="true" prefix="ISPN_ANOTHER_STRING_TABLE">
                         <id-column name="ID_COLUMN" type="VARCHAR(20)"/>

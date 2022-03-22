@@ -1539,8 +1539,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid cache loader configuration for '%s'. A cache loader cannot be both Asynchronous and transactional.", id = 444)
    CacheConfigurationException transactionalStoreCannotBeAsync(String simpleName);
 
-   @Message(value = "At most one store can be set to 'fetchPersistentState'!", id = 445)
-   CacheConfigurationException onlyOneFetchPersistentStoreAllowed();
+//   @Message(value = "At most one store can be set to 'fetchPersistentState'!", id = 445)
+//   CacheConfigurationException onlyOneFetchPersistentStoreAllowed();
 
    @Message(value = "Multiple sites with name '%s' are configured. That is not allowed!", id = 446)
    CacheConfigurationException multipleSitesWithSameName(String site);
@@ -2253,5 +2253,5 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
-   void failedToTransferTombstones(Address requestor, IntSet segments,  @Cause Throwable t);
+   void failedToTransferTombstones(Address requestor, IntSet segments, @Cause Throwable t);
 }

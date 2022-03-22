@@ -21,7 +21,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -303,8 +302,8 @@ public class StateProviderImpl implements StateProvider {
 
    protected Flowable<InternalCacheEntry<Object, Object>> publishStoreEntries(IntSet segments) {
       Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-         persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
-                                           Configurations::isStateTransferStore);
+            persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
+                  PersistenceManager.AccessMode.PRIVATE);
       return Flowable.fromPublisher(loaderPublisher).map(this::defaultMapEntryFromStore);
    }
 

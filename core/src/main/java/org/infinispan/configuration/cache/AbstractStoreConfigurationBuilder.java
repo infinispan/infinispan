@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_STATE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
@@ -55,10 +54,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    /**
     * {@inheritDoc}
+    *
+    * @deprecated Deprecated since 14.0. There is no replacement. First non shared store is picked instead.
     */
+   @Deprecated
    @Override
    public S fetchPersistentState(boolean b) {
-      attributes.attribute(FETCH_STATE).set(b);
       return self();
    }
 
@@ -169,7 +170,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       async.validate();
       boolean shared = attributes.attribute(SHARED).get();
       boolean preload = attributes.attribute(PRELOAD).get();
-      boolean fetchPersistentState = attributes.attribute(FETCH_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
       boolean transactional = attributes.attribute(TRANSACTIONAL).get();
       boolean readOnly = attributes.attribute(READ_ONLY).get();
@@ -188,17 +188,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          throw CONFIG.storeReadOnlyExceptions();
       }
 
-      if (writeOnly && (fetchPersistentState || preload)) {
+      if (writeOnly && preload) {
          throw CONFIG.storeWriteOnlyExceptions();
-      }
-
-      if (!shared && !fetchPersistentState && !purgeOnStartup
-            && builder.clustering().cacheMode().isClustered() && !getBuilder().template())
-         CONFIG.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
-
-      if (fetchPersistentState && attributes.attribute(FETCH_STATE).isModified() &&
-            clustering().cacheMode().isInvalidation()) {
-         throw CONFIG.attributeNotAllowedInInvalidationMode(FETCH_STATE.name());
       }
 
       if (shared && !builder.clustering().cacheMode().isClustered()) {

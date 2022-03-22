@@ -69,12 +69,11 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
    /**
     * Loops through all individual cache loader configs and checks if fetchPersistentState is set on
     * any of them
+    *
+    * @deprecated since 14.0. This will always return false
     */
+   @Deprecated
    public Boolean fetchPersistentState() {
-      for (StoreConfiguration c : stores) {
-         if (c.fetchPersistentState())
-            return true;
-      }
       return false;
    }
 
