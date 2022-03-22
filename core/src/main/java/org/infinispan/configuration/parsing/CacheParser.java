@@ -1626,7 +1626,11 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case FETCH_STATE: {
-            storeBuilder.fetchPersistentState(Boolean.parseBoolean(value));
+            if (reader.getSchema().since(14, 0)) {
+               throw ParseUtils.attributeRemoved(reader, index);
+            } else {
+               ignoreAttribute(reader, index);
+            }
             break;
          }
          case PURGE: {

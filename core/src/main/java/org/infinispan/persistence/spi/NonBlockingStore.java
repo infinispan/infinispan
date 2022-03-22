@@ -14,7 +14,6 @@ import javax.transaction.Transaction;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
@@ -49,7 +48,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * {@link #publishEntries(IntSet, Predicate, boolean)}. If your store implementation does not support segmentation,
  * you can ignore these parameters. However, you should note that segmented stores allow Infinispan caches to more
  * efficiently perform bulk operations such as {@code Cache.size()} or {@code Cache.entrySet().stream()}. Segmentation
- * also decreases the duration of state transfers when {@link PersistenceConfiguration#fetchPersistentState()} is enabled,
+ * also decreases the duration of state transfers when a store with {@link Characteristic#BULK_READ} is present,
  * as well as the time required to remove data by segments. To indicate that a store implementation supports segmentation,
  * the {@link Characteristic#SEGMENTABLE} characteristic must be returned by the {@link #characteristics()} method. Store
  * implementations can determine if stores are configured to be segmented if {@link StoreConfiguration#segmented()} is

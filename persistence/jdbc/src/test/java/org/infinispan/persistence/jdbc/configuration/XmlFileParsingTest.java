@@ -30,21 +30,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testStringKeyedJdbcStore() throws Exception {
       String config = TestingUtil.wrapXMLWithSchema(
             "   <cache-container default-cache=\"default\">\n" +
-            "     <transport/>\n" +
-            "      <distributed-cache name=\"default\">\n" +
-            "     <persistence>\n" +
-            "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
-            "                                preload=\"true\" read-only=\"false\" fetch-state=\"true\" dialect=\"H2\">\n" +
-            "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
-            "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
-            "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
-            "           <data-column name=\"datum\" type=\"BINARY\" />\n" +
-            "           <timestamp-column name=\"version\" type=\"BIGINT\" />\n" +
-            "           <segment-column name=\"segfault\" type=\"BIGINT\" />\n" +
-            "         </string-keyed-table>\n" +
-            "         <write-behind />\n" +
-            "       </string-keyed-jdbc-store>\n" +
-            "     </persistence>\n" +
+                  "     <transport/>\n" +
+                  "      <distributed-cache name=\"default\">\n" +
+                  "     <persistence>\n" +
+                  "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:" + Version.getSchemaVersion() + "\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
+                  "                                preload=\"true\" read-only=\"false\" dialect=\"H2\">\n" +
+                  "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
+                  "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
+                  "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
+                  "           <data-column name=\"datum\" type=\"BINARY\" />\n" +
+                  "           <timestamp-column name=\"version\" type=\"BIGINT\" />\n" +
+                  "           <segment-column name=\"segfault\" type=\"BIGINT\" />\n" +
+                  "         </string-keyed-table>\n" +
+                  "         <write-behind />\n" +
+                  "       </string-keyed-jdbc-store>\n" +
+                  "     </persistence>\n" +
             "   </distributed-cache></cache-container>\n"
       );
 
@@ -69,7 +69,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("dbuser", connectionFactory.username());
       assertEquals("dbpass", connectionFactory.password());
       assertFalse(store.ignoreModifications());
-      assertTrue(store.fetchPersistentState());
       assertFalse(store.purgeOnStartup());
    }
 }

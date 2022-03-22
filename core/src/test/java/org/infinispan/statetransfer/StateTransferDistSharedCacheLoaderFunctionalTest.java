@@ -28,12 +28,6 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
          return true;
       }
    };
-   ThreadLocal<Boolean> fetchPersistentState = new ThreadLocal<Boolean>() {
-      @Override
-      protected Boolean initialValue() {
-         return true;
-      }
-   };
    int id;
 
    static final int INSERTION_COUNT = 500;
@@ -41,7 +35,6 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    @BeforeMethod
    public void beforeEachMethod() {
       sharedCacheLoader.set(true);
-      fetchPersistentState.set(true);
    }
 
 
@@ -60,7 +53,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
          dimcs.storeName(getClass().getName() + id++);
       }
       dimcs.fetchPersistentState(false).purgeOnStartup(false).shared(sharedCacheLoader.get()).preload(true);
-      configurationBuilder.persistence().passivation(false).addStore(dimcs).fetchPersistentState(fetchPersistentState.get());
+      configurationBuilder.persistence().passivation(false).addStore(dimcs);
       // Want to enable eviction, but don't actually evict anything
       configurationBuilder.memory().size(INSERTION_COUNT * 10);
 
@@ -69,39 +62,8 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       return cm;
    }
 
-   public void testSharedFetchedStoreEntriesUnaffected() throws Exception {
-      Cache<Object, Object> cache1, cache2, cache3;
-      EmbeddedCacheManager cm1 = createCacheManager(cacheName);
-      cache1 = cm1.getCache(cacheName);
-      writeLargeInitialData(cache1);
-
-      assertEquals(INSERTION_COUNT, getDataContainerSize(cache1));
-
-      verifyInitialDataOnLoader(cache1);
-
-      EmbeddedCacheManager cm2 = createCacheManager(cacheName);
-      cache2 = cm2.getCache(cacheName);
-      TestingUtil.waitForNoRebalance(cache1, cache2);
-
-      assertEquals(INSERTION_COUNT, getDataContainerSize(cache1));
-      assertEquals(INSERTION_COUNT, getDataContainerSize(cache2));
-
-      verifyInitialDataOnLoader(cache2);
-
-      EmbeddedCacheManager cm3 = createCacheManager(cacheName);
-      cache3 = cm3.getCache(cacheName);
-      TestingUtil.waitForNoRebalance(cache1, cache2, cache3);
-
-      // Need an additional wait for the non-owned entries to be deleted from the data containers
-      eventuallyEquals(INSERTION_COUNT * 2, () -> getDataContainerSize(cache1, cache2, cache3));
-
-      // Shared cache loader should have all the contents still
-      verifyInitialDataOnLoader(cache3);
-   }
-
    public void testUnsharedNotFetchedStoreEntriesRemovedProperly() throws Exception {
       sharedCacheLoader.set(false);
-      fetchPersistentState.set(false);
 
       Cache<Object, Object> cache1, cache2, cache3;
       EmbeddedCacheManager cm1 = createCacheManager(cacheName);
@@ -165,8 +127,6 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    }
 
    public void testSharedNotFetchedStoreEntriesRemovedProperly() throws Exception {
-      fetchPersistentState.set(false);
-
       Cache<Object, Object> cache1, cache2, cache3;
       EmbeddedCacheManager cm1 = createCacheManager(cacheName);
       cache1 = cm1.getCache(cacheName);

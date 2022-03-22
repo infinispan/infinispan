@@ -35,7 +35,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
       // increment the DIMCS store id
       DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(configurationBuilder.persistence());
       dimcs.storeName("store number " + id++);
-      dimcs.fetchPersistentState(true).shared(sharedCacheLoader.get()).preload(true);
+      dimcs.shared(sharedCacheLoader.get()).preload(true);
       configurationBuilder.persistence().addStore(dimcs);
       configurationBuilder.persistence();
 

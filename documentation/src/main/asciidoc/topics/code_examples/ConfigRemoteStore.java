@@ -1,6 +1,5 @@
 ConfigurationBuilder b = new ConfigurationBuilder();
 b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
-      .fetchPersistentState(false)
       .ignoreModifications(false)
       .purgeOnStartup(false)
       .remoteCacheName("mycache")

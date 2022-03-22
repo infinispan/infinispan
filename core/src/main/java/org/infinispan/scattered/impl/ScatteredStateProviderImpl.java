@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
@@ -202,8 +202,8 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    private Flowable<InternalCacheEntry<Object, Object>> publishStoreKeys(IntSet segments) {
       Address localAddress = rpcManager.getAddress();
       Publisher<MarshallableEntry<Object, Object>> loaderPublisher =
-         persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
-                                           Configurations::isStateTransferStore);
+            persistenceManager.publishEntries(segments, k -> dataContainer.peek(k) == null, true, true,
+                  PersistenceManager.AccessMode.PRIVATE);
       return Flowable.fromPublisher(loaderPublisher)
                      // We rely on MarshallableEntry implementations caching the unmarshalled metadata for performance
                      .filter(me -> me.getMetadata() != null && me.getMetadata().version() != null)

@@ -49,8 +49,17 @@ public class Configurations {
       return globalConfiguration.transport().transport() != null;
    }
 
+   /**
+    * Returns if the store configuration is a store that is used for state transfer. This is no longer used and will
+    * return true if the store config is not shared.
+    *
+    * @param storeConfiguration Store configuration to check
+    * @return if the store config can be used for state transfer
+    * @deprecated since 14.0. Returns true if the store is not shared.
+    */
+   @Deprecated
    public static boolean isStateTransferStore(StoreConfiguration storeConfiguration) {
-      return !storeConfiguration.shared() && storeConfiguration.fetchPersistentState();
+      return !storeConfiguration.shared();
    }
 
    public static boolean needSegments(Configuration configuration) {
@@ -58,10 +67,10 @@ public class Configurations {
       boolean transactional = configuration.transaction().transactionMode().isTransactional();
       boolean usingSegmentedStore = configuration.persistence().usingSegmentedStore();
       return (cacheMode.isReplicated() ||
-              cacheMode.isDistributed() ||
-              cacheMode.isScattered() ||
-              (cacheMode.isInvalidation() && transactional) ||
-              usingSegmentedStore);
+            cacheMode.isDistributed() ||
+            cacheMode.isScattered() ||
+            (cacheMode.isInvalidation() && transactional) ||
+            usingSegmentedStore);
    }
 
    public static Metadata newDefaultMetadata(Configuration configuration) {

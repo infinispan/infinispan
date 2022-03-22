@@ -150,7 +150,6 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    @Override
    public void validate() {
       boolean isLocalCache = builder.clustering().create().cacheMode().equals(CacheMode.LOCAL);
-      int numFetchPersistentState = 0;
       int numPreload = 0;
       for (StoreConfigurationBuilder<?, ?> b : stores) {
          b.validate();
@@ -168,15 +167,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {
             throw CONFIG.transactionalStoreCannotBeAsync(storeConfiguration.getClass().getSimpleName());
          }
-         if (storeConfiguration.fetchPersistentState()) {
-            numFetchPersistentState++;
-         }
          if (storeConfiguration.preload()) {
             numPreload++;
          }
-      }
-      if (numFetchPersistentState > 1) {
-         throw CONFIG.onlyOneFetchPersistentStoreAllowed();
       }
       if (numPreload > 1) {
          throw CONFIG.onlyOnePreloadStoreAllowed();

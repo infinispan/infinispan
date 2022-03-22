@@ -17,7 +17,6 @@ cache content.
 The following points also apply to `ClusterCacheLoader`:
 
 * Preloading does not take effect (`preload=true`).
-* Fetching persistent state is not supported (`fetch-state=true`).
 * Segmentation is not supported.
 
 [discrete]

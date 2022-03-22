@@ -19,7 +19,10 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
     * persistent state transfer even if a cache store has this property set to true. Finally,
     * setting it to true only makes sense if in a clustered environment.
+    *
+    * @deprecated since 14.0. This method does nothing. Only the first non shared store that supports publishEntries is used for state transfer.
     */
+   @Deprecated
    S fetchPersistentState(boolean b);
 
    /**

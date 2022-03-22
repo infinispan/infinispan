@@ -98,7 +98,6 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
          assertEquals(1, stores.size());
 
          DummyInMemoryStore store = (DummyInMemoryStore) stores.iterator().next();
-         assertTrue(store.getConfiguration().fetchPersistentState());
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }

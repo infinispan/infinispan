@@ -481,7 +481,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       boolean usingSharedAsync = false;
       boolean usingSegments = false;
       boolean usingAsync = false;
-      boolean usingFetchPersistentState = false;
       boolean usingReadOnly = false;
       boolean usingTransactionalStore = false;
       for (StoreStatus storeStatus : stores) {
@@ -492,9 +491,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          if (storeStatus.config.segmented()) {
             usingSegments = true;
          }
-         if (storeStatus.config.fetchPersistentState()) {
-            usingFetchPersistentState = true;
-         }
          if (storeStatus.config.ignoreModifications()) {
             usingReadOnly = true;
          }
@@ -502,8 +498,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
             usingTransactionalStore = true;
          }
       }
-      return new PersistenceStatus(enabled, usingSegments, usingAsync, usingFetchPersistentState, usingSharedAsync,
-                                   usingReadOnly, usingTransactionalStore);
+      return new PersistenceStatus(enabled, usingSegments, usingAsync, usingSharedAsync,
+            usingReadOnly, usingTransactionalStore);
    }
 
    @Override
