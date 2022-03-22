@@ -276,6 +276,7 @@
             <filtering>true</filtering>
             <includes>
                <include>**/*.xml</include>
+               <include>**/*.json</include>
                <include>**/*.yaml</include>
             </includes>
          </testResource>
@@ -284,6 +285,7 @@
             <filtering>false</filtering>
             <excludes>
                <exclude>**/*.xml</exclude>
+               <exclude>**/*.json</exclude>
                <exclude>**/*.yaml</exclude>
             </excludes>
          </testResource>

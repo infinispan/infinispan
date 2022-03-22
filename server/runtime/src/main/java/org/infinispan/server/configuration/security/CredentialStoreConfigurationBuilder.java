@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.InstanceSupplier;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -19,7 +19,7 @@ import org.infinispan.commons.util.InstanceSupplier;
 public class CredentialStoreConfigurationBuilder implements Builder<CredentialStoreConfiguration> {
    private final AttributeSet attributes;
 
-   CredentialStoreConfigurationBuilder(CredentialStoresConfigurationBuilder credentialStoresConfigurationBuilder, String name) {
+   CredentialStoreConfigurationBuilder(String name) {
       this.attributes = CredentialStoreConfiguration.attributeDefinitionSet();
       attributes.attribute(NAME).set(name);
    }
@@ -39,12 +39,7 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
       return this;
    }
 
-   public CredentialStoreConfigurationBuilder credential(char[] credential) {
-      attributes.attribute(CREDENTIAL).set(new InstanceSupplier<>(credential));
-      return this;
-   }
-
-   public CredentialStoreConfigurationBuilder credential(Supplier<char[]> credential) {
+   public CredentialStoreConfigurationBuilder credential(Supplier<CredentialSource> credential) {
       attributes.attribute(CREDENTIAL).set(credential);
       return this;
    }

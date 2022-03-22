@@ -251,4 +251,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The RESP endpoint requires a security realm which supports passwords.", id = 80067)
    CacheConfigurationException respEndpointRequiresRealmWithPassword();
+
+   @Message(value = "Wrong masked password format", id = 80068)
+   CacheConfigurationException wrongMaskedPasswordFormat();
 }

@@ -219,7 +219,7 @@
       <version.maven-plugin-plugin>3.6.0</version.maven-plugin-plugin>
       <version.maven.release>3.0.0-M1</version.maven.release>
       <version.maven.remote.resource>1.5</version.maven.remote.resource>
-      <version.maven.resources>3.1.0</version.maven.resources>
+      <version.maven.resources>3.2.0</version.maven.resources>
       <version.maven.shade>3.2.4</version.maven.shade>
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.surefire>3.0.0-M5</version.maven.surefire>

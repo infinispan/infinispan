@@ -13,8 +13,9 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.server.Server;
+import org.infinispan.server.security.PasswordCredentialSource;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @since 10.0
@@ -34,11 +35,11 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
    }
 
    public KeyStoreConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
-      attributes.attribute(KEYSTORE_PASSWORD).set(new InstanceSupplier<>(keyStorePassword));
+      attributes.attribute(KEYSTORE_PASSWORD).set(new PasswordCredentialSource(keyStorePassword));
       return this;
    }
 
-   public KeyStoreConfigurationBuilder keyStorePassword(Supplier<char[]> keyStorePassword) {
+   public KeyStoreConfigurationBuilder keyStorePassword(Supplier<CredentialSource> keyStorePassword) {
       attributes.attribute(KEYSTORE_PASSWORD).set(keyStorePassword);
       return this;
    }
@@ -48,13 +49,9 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
       return this;
    }
 
+   @Deprecated
    public KeyStoreConfigurationBuilder keyPassword(char[] keyPassword) {
-      attributes.attribute(KEY_PASSWORD).set(new InstanceSupplier<>(keyPassword));
-      return this;
-   }
-
-   public KeyStoreConfigurationBuilder keyPassword(Supplier<char[]> keyPassword) {
-      attributes.attribute(KEY_PASSWORD).set(keyPassword);
+      attributes.attribute(KEY_PASSWORD).set(new PasswordCredentialSource(keyPassword));
       return this;
    }
 

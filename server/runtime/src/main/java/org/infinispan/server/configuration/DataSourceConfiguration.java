@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration;
 
+import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -8,6 +10,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.PropertiesAttributeSerializer;
+import org.wildfly.security.credential.source.CredentialSource;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration.TransactionIsolation;
@@ -21,7 +24,7 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    static final AttributeDefinition<String> DRIVER = AttributeDefinition.builder(Attribute.DRIVER, null, String.class).build();
    static final AttributeDefinition<String> URL = AttributeDefinition.builder(Attribute.URL, null, String.class).build();
    static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(Attribute.USERNAME, null, String.class).build();
-   static final AttributeDefinition<Supplier<char[]>> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class).serializer(ServerConfigurationSerializer.CREDENTIAL).build();
+   static final AttributeDefinition<Supplier<CredentialSource>> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class).serializer(ServerConfigurationSerializer.CREDENTIAL).build();
    static final AttributeDefinition<String> INITIAL_SQL = AttributeDefinition.builder(Attribute.NEW_CONNECTION_SQL, null, String.class).build();
    static final AttributeDefinition<TransactionIsolation> TRANSACTION_ISOLATION = AttributeDefinition.builder(Attribute.TRANSACTION_ISOLATION, TransactionIsolation.READ_COMMITTED, AgroalConnectionFactoryConfiguration.TransactionIsolation.class).build();
 
@@ -72,7 +75,7 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    }
 
    public char[] password() {
-      return attributes.attribute(PASSWORD).get().get();
+      return resolvePassword(attributes.attribute(PASSWORD));
    }
 
    public String url() {

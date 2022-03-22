@@ -24,7 +24,7 @@ Add `search-recursive="true"` to the configuration to search the directory recur
 By default, the search for the user entry uses the `(rdn_identifier={0})` filter.
 Specify a different filter with the `filter-name` attribute.
 
-The `attribute-mapping` element retrieves all the groups of which the user is a member. There are typically two ways in which membership information is stored:
+    The `attribute-mapping` element retrieves all the groups of which the user is a member. There are typically two ways in which membership information is stored:
 
 * Under group entries that usually have class `groupOfNames` in the `member` attribute. In this case, you can use an attribute filter as in the preceding example configuration. This filter searches for entries that match the supplied filter, which locates groups with a `member` attribute equal to the user's DN. The filter then extracts the group entry's CN as specified by `from`, and adds it to the user's `Roles`.
 * In the user entry in the `memberOf` attribute. In this case you should use an attribute reference such as the following:
