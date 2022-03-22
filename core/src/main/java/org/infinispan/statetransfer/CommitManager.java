@@ -2,11 +2,10 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
@@ -36,7 +35,9 @@ import org.infinispan.util.logging.LogFactory;
 public class CommitManager {
 
    private static final Log log = LogFactory.getLog(CommitManager.class);
-   private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
+
+   // Package private for testing only.
+   final Map<Integer, Map<Object, DiscardPolicy>> tracker = new ConcurrentHashMap<>();
 
    @Inject InternalDataContainer dataContainer;
    @Inject PersistenceManager persistenceManager;
@@ -68,12 +69,27 @@ public class CommitManager {
          }
          tracker.clear();
       } else {
-         for (Iterator<Map.Entry<Object, DiscardPolicy>> iterator = tracker.entrySet().iterator();
-              iterator.hasNext(); ) {
-            if (iterator.next().getValue().update(trackStateTransfer, trackXSiteStateTransfer)) {
-               iterator.remove();
-            }
-         }
+         tracker.values().removeIf(entries -> {
+            entries.values().removeIf(policy -> policy.update(trackStateTransfer, trackXSiteStateTransfer));
+            return entries.isEmpty();
+         });
+      }
+   }
+
+   /**
+    * Stop tracking the entries for the given segment if state transfer tracking is enabled.
+    *
+    * @param flag: flag to verify if tracking is enabled.
+    * @param segmentId: segment to stop tracking.
+    */
+   public final void stopTrackFor(Flag flag, int segmentId) {
+      if (flag == Flag.PUT_FOR_STATE_TRANSFER && trackStateTransfer) {
+         // We only remove entries that are not related to cross-site state transfer. Different sites may have
+         // different configurations, thus a single entry may have different segment mapping varying from site to site.
+         tracker.computeIfPresent(segmentId, (k, entries) -> {
+            entries.values().removeIf(DiscardPolicy::stopForST);
+            return entries.isEmpty() ? null : entries;
+         });
       }
    }
 
@@ -109,7 +125,7 @@ public class CommitManager {
          return CompletableFutures.completedNull();
       }
       ByRef<CompletionStage<Void>> byRef = new ByRef<>(null);
-      tracker.compute(entry.getKey(), (o, discardPolicy) -> {
+      Function<DiscardPolicy, DiscardPolicy> renewPolicy = discardPolicy -> {
          if (discardPolicy != null && discardPolicy.ignore(operation)) {
             if (log.isTraceEnabled()) {
                log.tracef("Not committing key=%s. It was already overwritten! Discard policy=%s",
@@ -124,6 +140,19 @@ public class CommitManager {
                        discardPolicy, newDiscardPolicy);
          }
          return newDiscardPolicy;
+      };
+      tracker.compute(segment, (key, entries) -> {
+         if (entries == null) {
+            DiscardPolicy newDiscardPolicy = renewPolicy.apply(null);
+            if (newDiscardPolicy != null) {
+               entries = new ConcurrentHashMap<>();
+               entries.put(entry.getKey(), newDiscardPolicy);
+            }
+         } else {
+            entries.compute(entry.getKey(), (e, discardPolicy) -> renewPolicy.apply(discardPolicy));
+         }
+
+         return entries;
       });
       CompletionStage<Void> stage = byRef.get();
       if (stage != null) {
@@ -216,6 +245,10 @@ public class CommitManager {
          this.discardST = discardST;
          this.discardXSiteST = discardXSiteST;
          return !this.discardST && !this.discardXSiteST;
+      }
+
+      public boolean stopForST() {
+         return update(false, discardXSiteST);
       }
 
       @Override
