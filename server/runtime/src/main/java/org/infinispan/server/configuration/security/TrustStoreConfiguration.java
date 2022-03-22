@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.FileInputStream;
@@ -23,6 +24,7 @@ import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
 import org.infinispan.server.configuration.ServerConfigurationSerializer;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.ssl.SSLContextBuilder;
 
@@ -30,7 +32,7 @@ import org.wildfly.security.ssl.SSLContextBuilder;
  * @since 12.1
  */
 public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConfiguration> {
-   static final AttributeDefinition<Supplier<char[]>> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class).serializer(ServerConfigurationSerializer.CREDENTIAL).build();
+   static final AttributeDefinition<Supplier<CredentialSource>> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class).serializer(ServerConfigurationSerializer.CREDENTIAL).build();
    static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
    static final AttributeDefinition<String> PROVIDER = AttributeDefinition.builder(Attribute.PROVIDER, null, String.class).build();
@@ -50,7 +52,7 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
          return null;
       } else {
          String provider = attributes.attribute(PROVIDER).get();
-         char[] password = attributes.attribute(PASSWORD).get().get();
+         char[] password = resolvePassword(attributes.attribute(PASSWORD));
          try (FileInputStream is = new FileInputStream(fileName)) {
             return KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, provider, is, fileName, password);
          } catch (IOException | KeyStoreException e) {

@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.function.Supplier;
@@ -14,6 +16,7 @@ import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.security.HostnameVerificationPolicy;
 import org.wildfly.security.auth.realm.token.TokenValidator;
 import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @since 10.0
@@ -21,7 +24,7 @@ import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator
 public class OAuth2Configuration extends ConfigurationElement<OAuth2Configuration> {
 
    static final AttributeDefinition<String> CLIENT_ID = AttributeDefinition.builder(Attribute.CLIENT_ID, null, String.class).immutable().build();
-   static final AttributeDefinition<Supplier<char[]>> CLIENT_SECRET = AttributeDefinition.builder(Attribute.CLIENT_SECRET, null, (Class<Supplier<char[]>>) (Class<?>) Supplier.class)
+   static final AttributeDefinition<Supplier<CredentialSource>> CLIENT_SECRET = AttributeDefinition.builder(Attribute.CLIENT_SECRET, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
          .serializer(ServerConfigurationSerializer.CREDENTIAL).immutable().build();
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
    static final AttributeDefinition<String> HOST_VERIFICATION_POLICY = AttributeDefinition.builder(Attribute.HOST_NAME_VERIFICATION_POLICY, null, String.class).immutable().build();
@@ -40,7 +43,7 @@ public class OAuth2Configuration extends ConfigurationElement<OAuth2Configuratio
    TokenValidator getValidator(SecurityConfiguration security, RealmConfiguration realm) {
       OAuth2IntrospectValidator.Builder validatorBuilder = OAuth2IntrospectValidator.builder();
       validatorBuilder.clientId(attributes.attribute(CLIENT_ID).get());
-      validatorBuilder.clientSecret(new String(attributes.attribute(CLIENT_SECRET).get().get()));
+      validatorBuilder.clientSecret(new String(resolvePassword(attributes.attribute(CLIENT_SECRET))));
       final URL url;
       try {
          url = new URL(attributes.attribute(INTROSPECTION_URL).get());

@@ -27,6 +27,12 @@
             <credential-store name="credentials" path="credentials.pfx">
                <clear-text-credential clear-text="secret"/>
             </credential-store>
+            <credential-store name="masked" path="credentials.pfx">
+               <masked-credential masked="1Hc4Feq2wJs;pepper99;100"/>
+            </credential-store>
+            <credential-store name="command" path="credentials.pfx">
+               <command-credential command="${build.directory}/test-classes/bin/credential.sh"/>
+            </credential-store>
          </credential-stores>
          <security-realms>
             <security-realm name="default">

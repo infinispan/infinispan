@@ -4,7 +4,8 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.InstanceSupplier;
+import org.infinispan.server.security.PasswordCredentialSource;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @since 10.0
@@ -26,11 +27,11 @@ public class OAuth2ConfigurationBuilder implements Builder<OAuth2Configuration> 
    }
 
    public OAuth2ConfigurationBuilder clientSecret(char[] clientSecret) {
-      attributes.attribute(OAuth2Configuration.CLIENT_SECRET).set(new InstanceSupplier<>(clientSecret));
+      attributes.attribute(OAuth2Configuration.CLIENT_SECRET).set(new PasswordCredentialSource(clientSecret));
       return this;
    }
 
-   public OAuth2ConfigurationBuilder clientSecret(Supplier<char[]> clientSecret) {
+   public OAuth2ConfigurationBuilder clientSecret(Supplier<CredentialSource> clientSecret) {
       attributes.attribute(OAuth2Configuration.CLIENT_SECRET).set(clientSecret);
       return this;
    }

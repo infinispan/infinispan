@@ -5,9 +5,10 @@ import static org.infinispan.server.configuration.security.DistributedRealmConfi
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.InstanceSupplier;
+import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @since 10.0
@@ -47,11 +48,11 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
    }
 
    public LdapRealmConfigurationBuilder credential(char[] credential) {
-      attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(new InstanceSupplier<>(credential));
+      attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(new PasswordCredentialSource(credential));
       return this;
    }
 
-   public LdapRealmConfigurationBuilder credential(Supplier<char[]> credential) {
+   public LdapRealmConfigurationBuilder credential(Supplier<CredentialSource> credential) {
       attributes.attribute(LdapRealmConfiguration.CREDENTIAL).set(credential);
       return this;
    }

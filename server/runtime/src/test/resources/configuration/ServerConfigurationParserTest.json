@@ -52,6 +52,20 @@
             "clear-text-credential": {
               "clear-text": "secret"
             }
+          },
+          {
+            "name": "masked",
+            "path": "credentials.pfx",
+            "masked-credential": {
+              "masked": "1Hc4Feq2wJs;pepper99;100"
+            }
+          },
+          {
+            "name": "command",
+            "path": "credentials.pfx",
+            "command-credential": {
+              "command": "${build.directory}/test-classes/bin/credential.sh"
+            }
           }
         ],
         "security-realms": [

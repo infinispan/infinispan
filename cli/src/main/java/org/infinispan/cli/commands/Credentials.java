@@ -26,13 +26,14 @@ import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "credentials", description = "Credential store operations", groupCommands = {Credentials.Add.class, Credentials.Remove.class, Credentials.Ls.class})
+@GroupCommandDefinition(name = "credentials", description = "Credential store operations", groupCommands = {Credentials.Add.class, Credentials.Remove.class, Credentials.Ls.class, Credentials.Mask.class})
 public class Credentials extends CliCommand {
 
    public static final String STORE_TYPE = "pkcs12";
@@ -207,6 +208,43 @@ public class Credentials extends CliCommand {
                   invocation.println(alias);
                }
             }
+            return CommandResult.SUCCESS;
+         } catch (Exception e) {
+            throw new CommandException(e);
+         }
+      }
+   }
+
+   @CommandDefinition(name = "mask", description = "Masks the password for a credential keystore.")
+   public static class Mask extends CliCommand {
+
+      @Argument(description = "Specifies the password to mask.", required = true)
+      String password;
+
+      @Option(description = "Specifies a salt value for the encryption.", shortName = 's', required = true)
+      String salt;
+
+      @Option(description = "Sets the number of iterations.", shortName = 'i', required = true)
+      Integer iterations;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         try {
+            PasswordBasedEncryptionUtil pbe = new PasswordBasedEncryptionUtil.Builder()
+                  .picketBoxCompatibility()
+                  .salt(salt)
+                  .iteration(iterations)
+                  .encryptMode()
+                  .build();
+            invocation.printf("%s;%s;%d%n", pbe.encryptAndEncode(password.toCharArray()), salt, iterations);
             return CommandResult.SUCCESS;
          } catch (Exception e) {
             throw new CommandException(e);

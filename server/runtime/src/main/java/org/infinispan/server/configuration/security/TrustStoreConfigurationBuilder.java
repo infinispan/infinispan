@@ -9,7 +9,8 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.InstanceSupplier;
+import org.infinispan.server.security.PasswordCredentialSource;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @since 12.1
@@ -24,11 +25,11 @@ public class TrustStoreConfigurationBuilder implements Builder<TrustStoreConfigu
    }
 
    public TrustStoreConfigurationBuilder password(char[] password) {
-      attributes.attribute(PASSWORD).set(new InstanceSupplier<>(password));
+      attributes.attribute(PASSWORD).set(new PasswordCredentialSource(password));
       return this;
    }
 
-   public TrustStoreConfigurationBuilder password(Supplier<char[]> password) {
+   public TrustStoreConfigurationBuilder password(Supplier<CredentialSource> password) {
       attributes.attribute(PASSWORD).set(password);
       return this;
    }

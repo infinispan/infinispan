@@ -1,14 +1,18 @@
 package org.infinispan.server.configuration.security;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Element;
-import org.wildfly.security.credential.Credential;
+import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
@@ -33,11 +37,7 @@ public class CredentialStoresConfiguration extends ConfigurationElement<Credenti
       return credentialStores;
    }
 
-   public char[] getCredential(String store, String alias) {
-      return getCredential(store, alias, PasswordCredential.class).getPassword(ClearPassword.class).getPassword();
-   }
-
-   private <C extends Credential> C getCredential(String store, String alias, Class<C> type) {
+   public CredentialSource getCredentialSource(String store, String alias) {
       CredentialStoreConfiguration credentialStoreConfiguration;
       if (store == null) {
          if (credentialStores.size() == 1) {
@@ -51,17 +51,30 @@ public class CredentialStoresConfiguration extends ConfigurationElement<Credenti
       if (credentialStoreConfiguration == null) {
          throw Server.log.unknownCredentialStore(store);
       }
-      C credential = credentialStoreConfiguration.getCredential(alias, type);
+      PasswordCredential credential = credentialStoreConfiguration.getCredential(alias, PasswordCredential.class);
       if (credential == null) {
          throw Server.log.unknownCredential(alias, store);
       } else {
-         return credential;
+         return new PasswordCredentialSource(credential);
       }
    }
 
    private void init(Properties properties) {
-      for(CredentialStoreConfiguration cs : credentialStores.values()) {
+      for (CredentialStoreConfiguration cs : credentialStores.values()) {
          cs.init(properties);
+      }
+   }
+
+   public static char[] resolvePassword(org.infinispan.commons.configuration.attributes.Attribute<Supplier<CredentialSource>> attribute) {
+      return attribute.isNull() ? null : resolvePassword(attribute.get());
+   }
+
+   public static char[] resolvePassword(Supplier<CredentialSource> supplier) {
+      try {
+         CredentialSource credentialSource = supplier.get();
+         return credentialSource.getCredential(PasswordCredential.class).getPassword(ClearPassword.class).getPassword();
+      } catch (IOException e) {
+         throw new CacheConfigurationException(e);
       }
    }
 }

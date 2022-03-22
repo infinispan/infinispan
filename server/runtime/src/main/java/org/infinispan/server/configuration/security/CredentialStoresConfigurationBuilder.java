@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -19,7 +20,7 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
 
    private final AttributeSet attributes;
    private final Map<String, CredentialStoreConfigurationBuilder> credentialStores = new LinkedHashMap<>(2);
-   private final List<CredentialSupplier> suppliers = new ArrayList<>();
+   private final List<CredentialStoreSourceSupplier> suppliers = new ArrayList<>();
    private final ServerConfigurationBuilder builder;
 
    public CredentialStoresConfigurationBuilder(ServerConfigurationBuilder builder) {
@@ -28,7 +29,7 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
    }
 
    public CredentialStoreConfigurationBuilder addCredentialStore(String name) {
-      CredentialStoreConfigurationBuilder credentialStoreBuilder = new CredentialStoreConfigurationBuilder(this, name);
+      CredentialStoreConfigurationBuilder credentialStoreBuilder = new CredentialStoreConfigurationBuilder(name);
       credentialStores.put(name, credentialStoreBuilder);
       return credentialStoreBuilder;
    }
@@ -38,7 +39,7 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       Map<String, CredentialStoreConfiguration> map = credentialStores.entrySet().stream()
             .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));
       CredentialStoresConfiguration configuration = new CredentialStoresConfiguration(attributes.protect(), map, builder.properties());
-      for(CredentialSupplier s : suppliers) {
+      for (CredentialStoreSourceSupplier s : suppliers) {
          s.configuration = configuration;
       }
       return configuration;
@@ -51,25 +52,25 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       return this;
    }
 
-   public Supplier<char[]> getCredential(String store, String alias) {
-      CredentialSupplier credentialSupplier = new CredentialSupplier(store, alias);
+   public Supplier<CredentialSource> getCredential(String store, String alias) {
+      CredentialStoreSourceSupplier credentialSupplier = new CredentialStoreSourceSupplier(store, alias);
       suppliers.add(credentialSupplier);
       return credentialSupplier;
    }
 
-   public static class CredentialSupplier implements Supplier<char[]> {
+   public static class CredentialStoreSourceSupplier implements Supplier<CredentialSource> {
       final String store;
       final String alias;
       CredentialStoresConfiguration configuration;
 
-      CredentialSupplier(String store, String alias) {
+      CredentialStoreSourceSupplier(String store, String alias) {
          this.store = store;
          this.alias = alias;
       }
 
       @Override
-      public char[] get() {
-         return configuration.getCredential(store, alias);
+      public CredentialSource get() {
+         return configuration.getCredentialSource(store, alias);
       }
 
       public String getStore() {

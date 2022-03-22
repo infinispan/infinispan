@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration;
 
 import static org.infinispan.server.configuration.ServerConfigurationParser.NAMESPACE;
+import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -38,8 +38,10 @@ import org.infinispan.server.configuration.security.TrustStoreRealmConfiguration
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
+import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.credential.source.CredentialSource;
 
 public class ServerConfigurationSerializer
       implements ConfigurationSerializer<ServerConfiguration> {
@@ -324,12 +326,12 @@ public class ServerConfigurationSerializer
       connector.write(writer);
    }
 
-   public static AttributeSerializer<Supplier<char[]>> CREDENTIAL = (writer, name, value) -> {
-      if (value instanceof InstanceSupplier) {
-         String credential = writer.clearTextSecrets() ? new String(value.get()) : "***";
+   public static AttributeSerializer<Supplier<CredentialSource>> CREDENTIAL = (writer, name, value) -> {
+      if (value instanceof PasswordCredentialSource) {
+         String credential = writer.clearTextSecrets() ? new String(resolvePassword(value)) : "***";
          writer.writeAttribute(name, credential);
-      } else if (value instanceof CredentialStoresConfigurationBuilder.CredentialSupplier) {
-         CredentialStoresConfigurationBuilder.CredentialSupplier credentialSupplier = (CredentialStoresConfigurationBuilder.CredentialSupplier) value;
+      } else if (value instanceof CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier) {
+         CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier credentialSupplier = (CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier) value;
          writer.writeStartElement(Element.CREDENTIAL_REFERENCE);
          writer.writeAttribute(Attribute.STORE, credentialSupplier.getStore());
          writer.writeAttribute(Attribute.ALIAS, credentialSupplier.getAlias());
