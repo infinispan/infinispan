@@ -94,7 +94,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.protocol_version</b></td>
  *          <td>String</td>
- *          <td>The highest version supported by the client in use</td>
+ *          <td>Latest version supported by the client in use</td>
  *          <td>The Hot Rod {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#version(org.infinispan.client.hotrod.ProtocolVersion) version}.</td>
  *       </tr>
  *       <tr>
@@ -127,19 +127,19 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_idle</b></td>
  *          <td>Integer</td>
- *          <td>-1 (no limit)</td>
- *          <td>Minimum number of idle {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minIdle(int) connections} (per server) that should always be available</td>
+ *          <td>1</td>
+ *          <td>Minimum number of idle {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minIdle(int) connections} that each server should have available.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_evictable_idle_time</b></td>
  *          <td>Integer</td>
- *          <td>-1 (no limit)</td>
+ *          <td>1800000</td>
  *          <td>Minimum amount of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minEvictableIdleTime(long) time} that an connection may sit idle in the pool</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.max_pending_requests</b></td>
  *          <td>Integer</td>
- *          <td>-1 (no limit)</td>
+ *          <td>5</td>
  *          <td>Specifies maximum number of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxPendingRequests(int) requests} sent over single connection at one instant.</td>
  *       </tr>
  *       <tr>
@@ -166,7 +166,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.default_executor_factory.threadname_suffix</b></td>
  *          <td>String</td>
- *          <td>(empty)</td>
+ *          <td>"" (empty value)</td>
  *          <td>Suffix for the default executor thread names</td>
  *       </tr>
  *       <tr>
@@ -181,14 +181,14 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.key_size_estimate</b></td>
  *          <td>Integer</td>
- *          <td>64</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#keySizeEstimate(int) estimated&nbsp;size} of keys in bytes when marshalled.</td>
+ *          <td>N/A</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#keySizeEstimate(int) estimated&nbsp;size} of keys in bytes when marshalled. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.value_size_estimate</b></td>
  *          <td>Integer</td>
- *          <td>512</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#valueSizeEstimate(int) estimated&nbsp;size} of values in bytes when marshalled.</td>
+ *          <td>N/A</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#valueSizeEstimate(int) estimated&nbsp;size} of values in bytes when marshalled. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.force_return_values</b></td>
@@ -211,7 +211,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.context-initializers</b></td>
  *          <td>String (class names)</td>
- *          <td>(empty)</td>
+ *          <td>"" (empty value)</td>
  *          <td>A list of {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#addContextInitializers(org.infinispan.protostream.SerializationContextInitializer... contextInitializers) SerializationContextInitializer implementation}</td>
  *       </tr>
  *       <tr>
@@ -304,19 +304,19 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.use_auth</b></td>
  *          <td>Boolean</td>
- *          <td>Implicitly enabled by other authentication properties</td>
+ *          <td>Enabled implicitly with other authentication properties.</td>
  *          <td>{@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#enabled(boolean) Enable} authentication.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.sasl_mechanism</b></td>
  *          <td>String</td>
- *          <td><pre>SCRAM-SHA-512</pre> if username and password are set<br>EXTERNAL if a trust store is set</td>
+ *          <td><pre>SCRAM-SHA-512</pre> if username and password are set<br>EXTERNAL if a trust store is set.</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#saslMechanism(String) SASL&nbsp;mechanism} to use for authentication.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.auth_callback_handler</b></td>
  *          <td>String</td>
- *          <td>Chosen automatically based on selected SASL mech</td>
+ *          <td>Automatically selected based on the configured SASL mechanism.</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#callbackHandler(javax.security.auth.callback.CallbackHandler) CallbackHandler} to use for providing credentials for authentication.</td>
  *       </tr>
  *       <tr>
@@ -398,7 +398,7 @@
  *          <td>A {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#cacheNamePattern(String) regex} which matches caches for which near-caching should be enabled. This property is deprecated and it is preferable to use the per-cache configuration.</td>
  *       </tr>
  *       <tr>
- *          <th colspan="4">XSite properties</th>
+ *          <th colspan="4">Cross-site replication properties</th>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.cluster.SITE</b></td>
