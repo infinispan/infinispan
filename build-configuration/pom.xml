@@ -198,7 +198,7 @@
       <version.spring5>5.3.10</version.spring5>
       <version.spring.session>2.5.2</version.spring.session>
       <version.micrometer>1.7.1</version.micrometer>
-      <version.kafka.client>2.5.0</version.kafka.client>
+      <version.kafka.client>2.7.2</version.kafka.client>
       <version.xom>1.3.7</version.xom>
       <version.xstream>1.4.19</version.xstream>
 
