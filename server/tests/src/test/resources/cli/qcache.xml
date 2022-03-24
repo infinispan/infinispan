@@ -5,6 +5,11 @@
             <key media-type="application/x-protostream"/>
             <value media-type="application/x-protostream"/>
          </encoding>
+         <indexing>
+            <indexed-entities>
+               <indexed-entity>org.infinispan.rest.search.entity.Person</indexed-entity>
+            </indexed-entities>
+         </indexing>
       </distributed-cache>
    </cache-container>
 </infinispan>

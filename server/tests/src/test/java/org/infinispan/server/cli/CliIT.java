@@ -89,8 +89,8 @@ public class CliIT {
          terminal.send("describe k2");
          terminal.assertContains("\"timetoliveseconds\" : [ \"10\" ]");
 
-         terminal.send("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
          terminal.send("schema upload -f=" + getCliResource("person.proto").getPath() + " person.proto");
+         terminal.send("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
          terminal.clear();
          terminal.send("cd /containers/default/schemas");
          terminal.send("ls");
@@ -108,7 +108,15 @@ public class CliIT {
          terminal.clear();
          terminal.send("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
          terminal.assertContains("\"total_results\":3,");
+         terminal.clear();
 
+         terminal.send("index stats qcache");
+         terminal.assertContains("\"slowest\" : \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
+         terminal.clear();
+         terminal.send("index clear qcache");
+         terminal.send("index reindex qcache");
+         terminal.send("index clear-stats qcache");
+         terminal.assertNotContains("Error");
          terminal.clear();
 
          terminal.send("stats");

@@ -44,6 +44,7 @@ import org.infinispan.cli.commands.rest.ClearCache;
 import org.infinispan.cli.commands.rest.Create;
 import org.infinispan.cli.commands.rest.Drop;
 import org.infinispan.cli.commands.rest.Get;
+import org.infinispan.cli.commands.rest.Index;
 import org.infinispan.cli.commands.rest.Logging;
 import org.infinispan.cli.commands.rest.Migrate;
 import org.infinispan.cli.commands.rest.Put;
@@ -109,6 +110,7 @@ import org.wildfly.security.provider.util.ProviderUtil;
             Echo.class,
             Encoding.class,
             Get.class,
+            Index.class,
             Install.class,
             Logging.class,
             Ls.class,
