@@ -13,6 +13,7 @@ import org.infinispan.cli.commands.rest.ClearCache;
 import org.infinispan.cli.commands.rest.Create;
 import org.infinispan.cli.commands.rest.Drop;
 import org.infinispan.cli.commands.rest.Get;
+import org.infinispan.cli.commands.rest.Index;
 import org.infinispan.cli.commands.rest.Migrate;
 import org.infinispan.cli.commands.rest.Put;
 import org.infinispan.cli.commands.rest.Query;
@@ -55,6 +56,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             Echo.class,
             Encoding.class,
             Get.class,
+            Index.class,
             Install.class,
             Ls.class,
             Migrate.class,

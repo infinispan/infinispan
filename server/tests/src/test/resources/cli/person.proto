@@ -1,25 +1,75 @@
 package org.infinispan.rest.search.entity;
 
+/**
+ * @Indexed
+ */
 message Address {
+
+    /**
+     * @Field(analyze = Analyze.YES, store = Store.YES)
+     */
     required string street = 1;
+
+    /**
+     * @Field(store = Store.YES)
+     */
     required string postCode = 2;
 }
 
+/**
+ * @Indexed
+ */
 message PhoneNumber {
+
+    /**
+     * @Field(store = Store.YES)
+     */
     required string number = 1;
 }
 
+/**
+ * @Indexed
+ */
 message Person {
+
+    /**
+     * @Field(store = Store.YES)
+     */
     optional int32 id = 1;
+
+    /**
+     * @Field(store = Store.YES)
+     * @SortableField
+     */
     required string name = 2;
+
+    /**
+     * @Field(store = Store.YES)
+     */
     required string surname = 3;
-    optional Address address = 4;
-    repeated PhoneNumber phoneNumbers = 5;
-    optional uint32 age = 6;
+
     enum Gender {
         MALE = 0;
         FEMALE = 1;
     }
 
-    optional Gender gender = 7;
+    /**
+     * @Field(store = Store.YES)
+     */
+    optional Gender gender = 4;
+
+    /**
+     * @Field(analyze = Analyze.YES, store = Store.YES)
+     */
+    optional Address address = 5;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    repeated PhoneNumber phoneNumbers = 6;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    optional uint32 age = 7;
 }
