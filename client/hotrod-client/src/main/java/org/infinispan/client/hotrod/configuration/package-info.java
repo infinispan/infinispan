@@ -127,13 +127,13 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_idle</b></td>
  *          <td>Integer</td>
- *          <td>-1 (no limit)</td>
- *          <td>Minimum number of idle {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minIdle(int) connections} (per server) that should always be available</td>
+ *          <td>1</td>
+ *          <td>Minimum number of idle {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minIdle(int) connections} that each server should have available.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_evictable_idle_time</b></td>
  *          <td>Integer</td>
- *          <td>1800000L</td>
+ *          <td>1800000</td>
  *          <td>Minimum amount of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minEvictableIdleTime(long) time} that an connection may sit idle in the pool</td>
  *       </tr>
  *       <tr>
