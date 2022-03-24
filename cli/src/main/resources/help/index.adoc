@@ -1,0 +1,40 @@
+INDEX(1)
+========
+:doctype: manpage
+
+
+NAME
+----
+index - manages cache indexes.
+
+
+SYNOPSIS
+--------
+*index reindex* 'cache-name'
+
+*index clear* 'cache-name'
+
+*index stats* 'cache-name'
+
+*index clear-stats* 'cache-name'
+
+
+EXAMPLES
+--------
+
+`index reindex mycache` +
+Reindexes a cache.
+
+`index clear mycache` +
+Clears a cache index.
+
+`index stats mycache` +
+Shows indexing and search statistics for a cache.
+
+`index clear-stats mycache` +
+Clears indexing and search statistics for a cache.
+
+
+SEE ALSO
+--------
+query(1)

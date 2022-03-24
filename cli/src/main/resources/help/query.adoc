@@ -34,4 +34,5 @@ entity where the gender datatype is `MALE`.
 
 SEE ALSO
 --------
+index(1)
 schema(1)
