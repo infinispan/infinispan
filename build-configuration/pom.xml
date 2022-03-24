@@ -162,7 +162,6 @@
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.1.3</version.jboss.shrinkwrap.resolver>
-      <version.jboss.xnio>3.7.7.Final</version.jboss.xnio>
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jgroups>4.2.18.Final</version.jgroups>
       <version.jsr107>1.1.0</version.jsr107>
