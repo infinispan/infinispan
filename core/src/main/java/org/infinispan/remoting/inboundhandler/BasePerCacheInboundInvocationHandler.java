@@ -21,7 +21,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -60,7 +59,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    // Stop after RpcManager, so we stop accepting requests before we are unable to send requests ourselves
    @Inject RpcManager rpcManager;
 
-   private volatile boolean stopped = false;
+   private volatile boolean stopped;
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
@@ -126,7 +125,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return stateTransferLock;
    }
 
-   final ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
+   static ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
       if (command.logThrowable(throwable)) {
          CLUSTER.exceptionHandlingCommand(command, throwable);
       }
@@ -137,18 +136,14 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       }
    }
 
-   final ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
+   static ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
       log.tracef("Topology changed, retrying: %s", exception);
       return new ExceptionResponse(exception);
    }
 
-   final Response interruptedException(CacheRpcCommand command) {
+   static Response interruptedException(CacheRpcCommand command) {
       CLUSTER.debugf("Shutdown while handling command %s", command);
       return CacheNotFoundResponse.INSTANCE;
-   }
-
-   final void unexpectedDeliverMode(ReplicableCommand command, DeliverOrder deliverOrder) {
-      throw new IllegalArgumentException(String.format("Unexpected deliver mode %s for command%s", deliverOrder, command));
    }
 
    final void handleRunnable(BlockingRunnable runnable, boolean onExecutorService) {
@@ -184,39 +179,8 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
    }
 
-   final boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
+   static boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
       return !order.preserveOrder() && command.canBlock();
-   }
-
-   final BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
-         boolean sync, ReadyAction readyAction) {
-      if (readyAction != null) {
-         return createNonNullReadyActionRunnable(command, reply, commandTopologyId, sync, readyAction);
-      } else {
-         return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync);
-      }
-   }
-
-   private BlockingRunnable createNonNullReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId, boolean sync, ReadyAction readyAction) {
-      readyAction.addListener(this::checkForReadyTasks);
-      return new DefaultTopologyRunnable(this, command, reply, TopologyMode.READY_TX_DATA, commandTopologyId, sync) {
-         @Override
-         public boolean isReady() {
-            return super.isReady() && readyAction.isReady();
-         }
-
-         @Override
-         protected void onException(Throwable throwable) {
-            super.onException(throwable);
-            readyAction.onException();
-         }
-
-         @Override
-         protected void onFinally() {
-            super.onFinally();
-            readyAction.onFinally();
-         }
-      };
    }
 
    @Override
