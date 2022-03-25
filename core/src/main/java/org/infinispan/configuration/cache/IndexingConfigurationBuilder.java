@@ -8,6 +8,7 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
 import static org.infinispan.configuration.cache.IndexingConfiguration.PATH;
+import static org.infinispan.configuration.cache.IndexingConfiguration.STARTUP_MODE;
 import static org.infinispan.configuration.cache.IndexingConfiguration.STORAGE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -121,6 +122,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public IndexingConfigurationBuilder storage(IndexStorage storage) {
       attributes.attribute(STORAGE).set(storage);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder startupMode(IndexStartupMode startupMode) {
+      attributes.attribute(STARTUP_MODE).set(startupMode);
       return this;
    }
 

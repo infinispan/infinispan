@@ -49,6 +49,11 @@ abstract class AbstractIndexingConfigurationChildBuilder
    }
 
    @Override
+   public IndexingConfigurationBuilder startupMode(IndexStartupMode startupMode) {
+      return indexingBuilder.startupMode(startupMode);
+   }
+
+   @Override
    public IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass) {
       return indexingBuilder.addKeyTransformer(keyClass, keyTransformerClass);
    }
