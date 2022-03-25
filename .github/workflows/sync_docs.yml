@@ -3,10 +3,10 @@ name: Synchronize changes to the website
 on:
   push:
     branches:
-      - main
-      - 13.0.x
+      - 'main'
+      - '13.0.x'
     paths:
-      - documentation
+      - 'documentation/**'
 
 env:
   target: git@github.com:infinispan/infinispan.github.io.git
