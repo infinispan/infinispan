@@ -38,10 +38,12 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
          .initializer(HashSet::new).immutable().build();
    public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STORAGE, IndexStorage.FILESYSTEM)
          .immutable().build();
+   public static final AttributeDefinition<IndexStartupMode> STARTUP_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STARTUP_MODE, IndexStartupMode.NONE)
+         .immutable().build();
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, PATH);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH);
    }
 
    /**
@@ -61,6 +63,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    private final Set<Class<?>> resolvedIndexedClasses;
    private final Attribute<Boolean> enabled;
    private final Attribute<IndexStorage> storage;
+   private final Attribute<IndexStartupMode> startupMode;
    private final Attribute<String> path;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
@@ -77,6 +80,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       indexedEntities = attributes.attribute(INDEXED_ENTITIES);
       enabled = attributes.attribute(ENABLED);
       storage = attributes.attribute(STORAGE);
+      startupMode = attributes.attribute(STARTUP_MODE);
       path = attributes.attribute(PATH);
    }
 
@@ -128,6 +132,11 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    public IndexStorage storage() {
       return storage.get();
+   }
+
+   // TODO ISPN-13784 Use it
+   public IndexStartupMode startupMode() {
+      return startupMode.get();
    }
 
    public String path() {

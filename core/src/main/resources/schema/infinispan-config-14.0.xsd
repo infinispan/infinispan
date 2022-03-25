@@ -1031,6 +1031,13 @@
               <xs:documentation>Specify index storage options.</xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="startup-mode" type="tns:startup-mode" default="none">
+            <xs:annotation>
+              <xs:documentation>
+                Specify the process to trigger on indexes when the cache starts.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="path" type="xs:string">
             <xs:annotation>
               <xs:documentation>
@@ -2569,6 +2576,41 @@
       <xs:enumeration value="local-heap">
         <xs:annotation>
           <xs:documentation>JVM heap index storage, not persisted between restarts. Only suitable for small datasets with low concurrency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="startup-mode">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="purge">
+        <xs:annotation>
+          <xs:documentation>
+            Purge will be triggered at cache startup time.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="reindex">
+        <xs:annotation>
+          <xs:documentation>
+            Reindex will be triggered at cache startup time.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="auto">
+        <xs:annotation>
+          <xs:documentation>
+            With this configuration Infinispan will try to run the right action to align cache data and indexes.
+            Purge will be triggered if the cache data is volatile and indexes are not.
+            Reindex will be triggered if the cache data is not volatile and indexes are.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="none">
+        <xs:annotation>
+          <xs:documentation>
+            No mass-indexing operation is triggered at cache startup time. This is the default.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
