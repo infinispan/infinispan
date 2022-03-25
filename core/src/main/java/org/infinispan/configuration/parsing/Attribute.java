@@ -179,6 +179,7 @@ public enum Attribute {
     STATISTICS,
     STATISTICS_AVAILABLE,
     START,
+    STARTUP_MODE,
     @Deprecated
     STATE_TRANSFER_EXECUTOR,
     STORAGE,
