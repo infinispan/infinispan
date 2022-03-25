@@ -27,7 +27,6 @@ import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.inboundhandler.action.Action;
@@ -36,13 +35,9 @@ import org.infinispan.remoting.inboundhandler.action.ActionStatus;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.locks.LockListener;
-import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -53,26 +48,22 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler implements
-      LockListener, Action {
+public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler implements Action {
 
    private static final Log log = LogFactory.getLog(TrianglePerCacheInboundInvocationHandler.class);
 
-   @Inject LockManager lockManager;
-   @Inject DistributionManager distributionManager;
    @Inject TriangleOrderManager triangleOrderManager;
-   @Inject RpcManager rpcManager;
    @Inject CommandAckCollector commandAckCollector;
    @Inject CommandsFactory commandsFactory;
 
    private Address localAddress;
-   private boolean syncCache;
+   private boolean asyncCache;
 
    @Override
    public void start() {
       super.start();
       localAddress = rpcManager.getAddress();
-      syncCache = configuration.clustering().cacheMode().isSynchronous();
+      asyncCache = !configuration.clustering().cacheMode().isSynchronous();
    }
 
    @Override
@@ -112,12 +103,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       } catch (Throwable throwable) {
          reply.reply(exceptionHandlingCommand(command, throwable));
       }
-   }
-
-   //lock listener interface
-   @Override
-   public void onEvent(LockState state) {
-      checkForReadyTasks();
    }
 
    //action interface
@@ -313,12 +298,12 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    }
 
    private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, int segmentId) {
-      return new DefaultReadyAction(new ActionState(command, topologyId, 0), this,
+      return new DefaultReadyAction(new ActionState(command, topologyId), this,
             new TriangleOrderAction(this, sequence, segmentId));
    }
 
    private boolean skipBackupAck(long flagBitSet) {
       return containsAll(flagBitSet, FORCE_ASYNCHRONOUS) ||
-            (!syncCache && !containsAll(flagBitSet, FORCE_SYNCHRONOUS));
+            (asyncCache && !containsAll(flagBitSet, FORCE_SYNCHRONOUS));
    }
 }

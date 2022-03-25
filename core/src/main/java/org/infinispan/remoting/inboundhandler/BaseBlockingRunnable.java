@@ -1,5 +1,9 @@
 package org.infinispan.remoting.inboundhandler;
 
+import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.exceptionHandlingCommand;
+import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.interruptedException;
+import static org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandler.outdatedTopology;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -26,7 +30,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    protected final Reply reply;
    protected final boolean sync;
    protected Response response;
-   private BiConsumer<Response, Throwable> handleBeforeInvoke = this::handleBeforeInvoke;
+   private final BiConsumer<Response, Throwable> handleBeforeInvoke = this::handleBeforeInvoke;
 
    protected BaseBlockingRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply,
                                   boolean sync) {
@@ -139,7 +143,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       }
    }
 
-   private Throwable unwrap(Throwable throwable) {
+   private static Throwable unwrap(Throwable throwable) {
       if (throwable instanceof CompletionException && throwable.getCause() != null) {
          throwable = throwable.getCause();
       }
@@ -148,13 +152,13 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
 
    private void afterCommandException(Throwable throwable) {
       if (throwable instanceof InterruptedException) {
-         response = handler.interruptedException(command);
+         response = interruptedException(command);
       } else if (throwable instanceof OutdatedTopologyException) {
-         response = handler.outdatedTopology((OutdatedTopologyException) throwable);
+         response = outdatedTopology((OutdatedTopologyException) throwable);
       } else if (throwable instanceof IllegalLifecycleStateException) {
          response = CacheNotFoundResponse.INSTANCE;
       } else {
-         response = handler.exceptionHandlingCommand(command, throwable);
+         response = exceptionHandlingCommand(command, throwable);
       }
       onException(throwable);
    }
