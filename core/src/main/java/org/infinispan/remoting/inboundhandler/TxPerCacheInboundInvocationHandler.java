@@ -1,8 +1,5 @@
 package org.infinispan.remoting.inboundhandler;
 
-import java.util.Collection;
-
-import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
@@ -11,15 +8,7 @@ import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.remoting.inboundhandler.action.ActionState;
-import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
-import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
-import org.infinispan.remoting.inboundhandler.action.ReadyAction;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.BlockingRunnable;
-import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 
 /**
  * A {@link PerCacheInboundInvocationHandler} implementation for non-total order caches.
@@ -29,22 +18,6 @@ import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
  */
 public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
 
-   private final CheckTopologyAction checkTopologyAction;
-
-   private boolean pessimisticLocking;
-   private long lockAcquisitionTimeout;
-
-   public TxPerCacheInboundInvocationHandler() {
-      checkTopologyAction = new CheckTopologyAction(this);
-   }
-
-   @Override
-   public void start() {
-      super.start();
-      this.pessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
-      this.lockAcquisitionTimeout = configuration.locking().lockAcquisitionTimeout();
-   }
-
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       try {
@@ -52,23 +25,7 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
          final boolean onExecutorService = executeOnExecutorService(order, command);
          final boolean sync = order.preserveOrder();
          final BlockingRunnable runnable;
-
-         boolean waitForTransactionalData = true;
          switch (command.getCommandId()) {
-            case PrepareCommand.COMMAND_ID:
-            case VersionedPrepareCommand.COMMAND_ID:
-               if (pessimisticLocking) {
-                  runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService, sync);
-               } else {
-                  runnable = createReadyActionRunnable(command, reply, commandTopologyId, onExecutorService,
-                        sync, createReadyAction(commandTopologyId, (PrepareCommand) command));
-               }
-               break;
-            case LockControlCommand.COMMAND_ID:
-               runnable = createReadyActionRunnable(command, reply, commandTopologyId, onExecutorService,
-                     sync, createReadyAction(commandTopologyId, (LockControlCommand) command)
-               );
-               break;
             case ConflictResolutionStartCommand.COMMAND_ID:
             case ScatteredStateConfirmRevokedCommand.COMMAND_ID:
             case ScatteredStateGetKeysCommand.COMMAND_ID:
@@ -76,10 +33,10 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
             case StateTransferGetListenersCommand.COMMAND_ID:
             case StateTransferGetTransactionsCommand.COMMAND_ID:
             case StateTransferStartCommand.COMMAND_ID:
-               waitForTransactionalData = false;
-            default:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, waitForTransactionalData, onExecutorService, sync);
+               runnable = createDefaultRunnable(command, reply, commandTopologyId, false, onExecutorService, sync);
                break;
+            default:
+               runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService, sync);
          }
          handleRunnable(runnable, onExecutorService);
       } catch (Throwable throwable) {
@@ -87,35 +44,4 @@ public class TxPerCacheInboundInvocationHandler extends BasePerCacheInboundInvoc
       }
    }
 
-   private BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply,
-         int commandTopologyId, boolean onExecutorService, boolean sync, ReadyAction readyAction) {
-      final TopologyMode topologyMode = TopologyMode.create(onExecutorService, true);
-      if (onExecutorService && readyAction != null) {
-         readyAction.addListener(this::checkForReadyTasks);
-         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync) {
-            @Override
-            public boolean isReady() {
-               return super.isReady() && readyAction.isReady();
-            }
-         };
-      } else {
-         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
-      }
-   }
-
-   private ReadyAction createReadyAction(int topologyId, TransactionalRemoteLockCommand replicableCommand) {
-      if (replicableCommand.hasSkipLocking()) {
-         return null;
-      }
-      Collection<?> keys = replicableCommand.getKeysToLock();
-      if (keys.isEmpty()) {
-         return null;
-      }
-      final long timeoutMillis = replicableCommand.hasZeroLockAcquisition() ? 0 : lockAcquisitionTimeout;
-
-      DefaultReadyAction action = new DefaultReadyAction(new ActionState(replicableCommand, topologyId, timeoutMillis),
-                                                         checkTopologyAction);
-      action.registerListener();
-      return action;
-   }
 }

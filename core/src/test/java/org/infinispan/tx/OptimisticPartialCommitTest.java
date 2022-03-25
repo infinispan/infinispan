@@ -22,6 +22,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -37,7 +38,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.OptimisticPartialCommitTest")
 public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
 
-   ControlledConsistentHashFactory controlledCHFactory;
+   private ControlledConsistentHashFactory controlledCHFactory;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -116,12 +117,15 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       ss.logicalThread("main", "before_kill_3",
             "after_state_applied_on_1", "before_commit_on_2", "after_commit_on_2", "after_commit_on_1");
 
+      // avoids blockhound exception in the next method
+      TransactionTable transactionTable = transactionTable(1);
+
       advanceOnInterceptor(ss, cache(1), StateTransferInterceptor.class,
             command -> {
                if (!(command instanceof VersionedCommitCommand))
                   return false;
                GlobalTransaction gtx = ((VersionedCommitCommand) command).getGlobalTransaction();
-               LocalTransaction tx = transactionTable(1).getLocalTransaction(gtx);
+               LocalTransaction tx = transactionTable.getLocalTransaction(gtx);
                return tx.getStateTransferFlag() == null;
             }).after("after_commit_on_1");
       advanceOnInterceptor(ss, cache(2), StateTransferInterceptor.class,
