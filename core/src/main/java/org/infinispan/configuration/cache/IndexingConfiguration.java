@@ -134,7 +134,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return storage.get();
    }
 
-   // TODO ISPN-13784 Use it
    public IndexStartupMode startupMode() {
       return startupMode.get();
    }
