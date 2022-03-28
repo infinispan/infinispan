@@ -22,6 +22,31 @@ include::xml/indexing_file_system.xml[]
 include::xml/indexing_jvm_heap.xml[]
 ----
 
+== Index startup mode
+
+Allows to define some mass indexing operations (e.g.: purge or reindex) to trigger when the cache starts.
+These actions are usually needed to keep data and indexes aligned (consistent).
+
+Possible values are:
+
+* `purge` to purge indexes at cache startup time.
+* `reindex` to reindex the entities present in cache at cache startup time.
+* `auto` with this configuration Infinispan will try to run the right action to align cache data and indexes:
+** Purge will be triggered if the cache data is volatile and indexes are not.
+** Reindex will be triggered if the cache data is not volatile and indexes are.
+* `none` to not trigger any operation. This is the default.
+
+For instance to set `purge` see the following example.
+The other configurations are similar.
+
+=== Purge indexes at start
+
+.Purge indexes at startup time
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_startup_mode.xml[]
+----
+
 == Index reader
 
 The index reader is an internal component that provides access to the indexes to perform queries. As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.
@@ -109,7 +134,6 @@ To configure how {brandname} merges index segments, you use the `index-merge` su
 |Whether the number of deleted entries in an index should be taken into account when counting the entries in the segment. Setting `false` will lead to more frequent merges caused by `max-entries`, but will more aggressively merge segments with many deleted documents, improving query performance.
 
 |===
-
 
 [role="_additional-resources"]
 .Additional resources
