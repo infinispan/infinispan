@@ -1,0 +1,5 @@
+<distributed-cache>
+  <indexing storage="filesystem" startup-mode="purge">
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>
