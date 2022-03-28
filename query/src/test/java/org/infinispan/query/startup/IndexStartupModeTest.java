@@ -1,0 +1,184 @@
+package org.infinispan.query.startup;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.OptionalLong;
+
+import org.infinispan.Cache;
+import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStartupMode;
+import org.infinispan.configuration.cache.IndexStorage;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.Search;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.model.Developer;
+import org.infinispan.query.model.ModelSchemaImpl;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+@Test(groups = "functional", testName = "query.startup.IndexStartupModeTest")
+public class IndexStartupModeTest extends AbstractInfinispanTest {
+
+   private final String dataLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "data");
+   private final String indexLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "index");
+
+   private EmbeddedCacheManager cacheManager;
+   private Cache<String, Developer> cache;
+   private QueryFactory queryFactory;
+
+   public void volatileDataNonVolatileIndexes_purgeAtStartup() {
+      execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.PURGE, () -> {
+         verifyMatches(0, "fax4ever");
+
+         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0));
+
+         verifyMatches(1, "fax4ever");
+      });
+
+      execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.NONE, () -> {
+         // data is not present anymore
+         assertThat(cache.get("fabio")).isNull();
+
+         // but by default no purge is applied on persisted indexes
+         verifyMatches(1, "fax4ever");
+      });
+
+      execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.PURGE, () -> {
+         // with the initial purge the persisted indexes are wiped out at cache startup
+         verifyMatches(0, "fax4ever");
+
+         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0));
+
+         // recreate the index for the next executions
+         verifyMatches(1, "fax4ever");
+      });
+
+      execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.NONE, () -> {
+         // data is not present anymore
+         assertThat(cache.get("fabio")).isNull();
+
+         // but by default no purge is applied on persisted indexes
+         verifyMatches(1, "fax4ever");
+      });
+
+      execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.AUTO, () -> {
+         // auto in this case is equivalent to purge
+         verifyMatches(0, "fax4ever");
+      });
+   }
+
+   public void nonVolatileDataVolatileIndexes_reindexAtStartup() {
+      execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.NONE, () -> {
+         verifyMatches(0, "fax4ever");
+
+         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0));
+
+         verifyMatches(1, "fax4ever");
+      });
+
+      execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.NONE, () -> {
+         // data is still present
+         Developer fabio = cache.get("fabio");
+         assertThat(fabio).isNotNull();
+         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+
+         // but indexes have gone!
+         verifyMatches(0, "fax4ever");
+      });
+
+      execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.REINDEX, () -> {
+         // data is still present
+         Developer fabio = cache.get("fabio");
+         assertThat(fabio).isNotNull();
+         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+
+         eventually( () -> {
+            // now indexes are aligned
+            return matches(1, "fax4ever");
+         } );
+      });
+
+      execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.NONE, () -> {
+         // data is still present
+         Developer fabio = cache.get("fabio");
+         assertThat(fabio).isNotNull();
+         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+
+         // but indexes have gone!
+         verifyMatches(0, "fax4ever");
+      });
+
+      execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.AUTO, () -> {
+         // data is still present
+         Developer fabio = cache.get("fabio");
+         assertThat(fabio).isNotNull();
+         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+
+         // auto in this case is equivalent to reindex
+         eventually( () -> {
+            // now indexes are aligned
+            return matches(1, "fax4ever");
+         } );
+      });
+   }
+
+   @BeforeClass(alwaysRun = true)
+   public void setUp() {
+      Util.recursiveFileRemove(dataLocation);
+      Util.recursiveFileRemove(indexLocation);
+   }
+
+   @AfterClass(alwaysRun = true)
+   public void tearDown() {
+      Util.recursiveFileRemove(dataLocation);
+      Util.recursiveFileRemove(indexLocation);
+   }
+
+   private void execute(IndexStorage storage, boolean cacheStorage, IndexStartupMode startupMode, Runnable runnable) {
+      try {
+         recreateCacheManager(storage, cacheStorage, startupMode);
+         runnable.run();
+      } finally {
+         TestingUtil.killCacheManagers(cacheManager);
+      }
+   }
+
+   private void recreateCacheManager(IndexStorage storage, boolean persistentCacheData, IndexStartupMode startupMode) {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.indexing()
+            .enable()
+            .storage(storage)
+            .startupMode(startupMode)
+            .addIndexedEntity(Developer.class);
+
+      if (persistentCacheData) {
+         cfg.persistence()
+               .addSoftIndexFileStore()
+               .dataLocation(dataLocation)
+               .indexLocation(indexLocation)
+               .preload(true);
+      }
+
+      cacheManager = TestCacheManagerFactory.createCacheManager(new ModelSchemaImpl(), cfg);
+      cache = cacheManager.getCache();
+      queryFactory = Search.getQueryFactory(cache);
+   }
+
+   private void verifyMatches(int i, String nick) {
+      String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
+      assertThat(queryFactory.create(query).execute().hitCount()).hasValue(i);
+   }
+
+   private boolean matches(long i, String nick) {
+      String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
+      OptionalLong hitCount = queryFactory.create(query).execute().hitCount();
+      assertThat(hitCount).isPresent();
+      return hitCount.getAsLong() == i;
+   }
+}
