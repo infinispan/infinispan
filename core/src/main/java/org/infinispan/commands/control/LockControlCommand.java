@@ -123,7 +123,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
             return null;
          }
          //create a remote tx without any modifications (we do not know modifications ahead of time)
-         transaction = txTable.getOrCreateRemoteTransaction(globalTx, null);
+         transaction = txTable.getOrCreateRemoteTransaction(globalTx, Collections.emptyList());
       }
       return componentRegistry.getInvocationContextFactory().running().createRemoteTxInvocationContext(transaction, getOrigin());
    }

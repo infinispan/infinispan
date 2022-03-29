@@ -1,11 +1,12 @@
 package org.infinispan.commands.tx;
 
-import static org.infinispan.commons.util.InfinispanCollections.forEach;
+import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,7 +34,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
@@ -66,28 +66,20 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    public static final byte COMMAND_ID = 12;
 
-   protected WriteCommand[] modifications;
+   protected List<WriteCommand> modifications;
    protected boolean onePhaseCommit;
-   private transient boolean replayEntryWrapping  = false;
+   private transient boolean replayEntryWrapping;
    protected boolean retriedCommand;
 
-   private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
-
+   @SuppressWarnings("unused")
    private PrepareCommand() {
       super(null); // For command id uniqueness test
    }
 
-   public PrepareCommand(ByteString cacheName, GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
-      super(cacheName);
-      this.globalTx = gtx;
-      this.modifications = modifications;
-      this.onePhaseCommit = onePhaseCommit;
-   }
-
    public PrepareCommand(ByteString cacheName, GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
       super(cacheName);
-      this.globalTx = gtx;
-      this.modifications = commands == null || commands.isEmpty() ? null : commands.toArray(new WriteCommand[commands.size()]);
+      globalTx = gtx;
+      modifications = commands == null ? Collections.emptyList() : Collections.unmodifiableList(commands);
       this.onePhaseCommit = onePhaseCommit;
    }
 
@@ -105,11 +97,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
       if (log.isTraceEnabled())
          log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
-      CacheNotifier notifier = registry.getCacheNotifier().running();
+      CacheNotifier<?, ?> notifier = registry.getCacheNotifier().running();
       CompletionStage<Void> stage = notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
 
       AsyncInterceptorChain invoker = registry.getInterceptorChain().running();
-      for (VisitableCommand nested : getModifications())
+      for (VisitableCommand nested : modifications)
          nested.init(registry);
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          return invoker.invokeAsync(ctx, this);
@@ -132,7 +124,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       //set the list of modifications anyway, as the transaction might have already been created by a previous
       //LockControlCommand with null modifications.
       if (hasModifications()) {
-         remoteTransaction.setModifications(Arrays.asList(modifications));
+         remoteTransaction.setModifications(modifications);
       }
 
       // 2. then set it on the invocation context
@@ -142,13 +134,13 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    @Override
    public Collection<?> getKeysToLock() {
-      if (modifications == null || modifications.length == 0) {
+      if (modifications.isEmpty()) {
          return Collections.emptyList();
       }
-      final Set<Object> set = new HashSet<>(modifications.length);
-      forEach(modifications, writeCommand -> {
+      final Set<Object> set = new HashSet<>(modifications.size());
+      for (WriteCommand writeCommand : modifications) {
          if (writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
-            return;
+            continue;
          }
          switch (writeCommand.getCommandId()) {
             case PutKeyValueCommand.COMMAND_ID:
@@ -174,7 +166,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
             default:
                break;
          }
-      });
+      }
       return set;
    }
 
@@ -185,9 +177,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    @Override
    public boolean hasZeroLockAcquisition() {
-      if (modifications == null || modifications.length == 0) {
-         return false;
-      }
       for (WriteCommand wc : modifications) {
          // If even a single command doesn't have the zero lock acquisition timeout flag, we can't use a zero timeout
          if (!wc.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
@@ -204,11 +193,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitPrepareCommand((TxInvocationContext) ctx, this);
+      return visitor.visitPrepareCommand((TxInvocationContext<?>) ctx, this);
    }
 
-   public WriteCommand[] getModifications() {
-      return modifications == null ? EMPTY_WRITE_COMMAND_ARRAY : modifications;
+   public List<WriteCommand> getModifications() {
+      return modifications;
    }
 
    public boolean isOnePhaseCommit() {
@@ -225,7 +214,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       super.writeTo(output); //global tx
       output.writeBoolean(onePhaseCommit);
       output.writeBoolean(retriedCommand);
-      MarshallUtil.marshallArray(modifications, output);
+      marshallCollection(modifications, output);
    }
 
    @Override
@@ -233,37 +222,30 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       super.readFrom(input);
       onePhaseCommit = input.readBoolean();
       retriedCommand = input.readBoolean();
-      modifications = MarshallUtil.unmarshallArray(input, WriteCommand[]::new);
-   }
-
-   public PrepareCommand copy() {
-      PrepareCommand copy = new PrepareCommand(cacheName);
-      copy.globalTx = globalTx;
-      copy.modifications = modifications == null ? null : modifications.clone();
-      copy.onePhaseCommit = onePhaseCommit;
-      return copy;
+      modifications = unmarshallCollection(input, ArrayList::new);
    }
 
    @Override
    public String toString() {
       return "PrepareCommand {" +
-            "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
+            "modifications=" + modifications +
             ", onePhaseCommit=" + onePhaseCommit +
             ", retried=" + retriedCommand +
             ", " + super.toString();
    }
 
    public boolean hasModifications() {
-      return modifications != null && modifications.length > 0;
+      return modifications != null && !modifications.isEmpty();
    }
 
    public Collection<?> getAffectedKeys() {
-      if (modifications == null || modifications.length == 0)
+      if (modifications == null || modifications.isEmpty())
          return Collections.emptySet();
 
-      if (modifications.length == 1) return modifications[0].getAffectedKeys();
-      Set<Object> keys = new HashSet<>(modifications.length);
-      for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());
+      int size = modifications.size();
+      if (size == 1) return modifications.get(0).getAffectedKeys();
+      Set<Object> keys = new HashSet<>(size);
+      for (WriteCommand wc : modifications) keys.addAll(wc.getAffectedKeys());
       return keys;
    }
 

@@ -400,11 +400,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * transaction object.
     */
    // TODO: consider returning null instead of throwing exception when the transaction is already completed
-   public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
+   public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, List<WriteCommand> modifications) {
       return getOrCreateRemoteTransaction(globalTx, modifications, currentTopologyId);
    }
 
-   public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
+   public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, List<WriteCommand> modifications, int topologyId) {
       RemoteTransaction existingTransaction = remoteTransactions.get(globalTx);
       if (existingTransaction != null)
          return existingTransaction;
@@ -419,8 +419,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          throw CLUSTER.remoteTransactionOriginatorNotInView(globalTx);
       }
 
-      RemoteTransaction newTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
-            : txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
+      RemoteTransaction newTransaction = txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
       RemoteTransaction remoteTransaction = remoteTransactions.compute(globalTx, (gtx, existing) -> {
          if (existing != null) {
             if (log.isTraceEnabled())
@@ -946,7 +945,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    private boolean mayHaveRemoteLocks(LocalTransaction lt) {
       return (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
-                  !lt.getModifications().isEmpty() ||
+                  lt.hasModifications() ||
                   isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId());
    }
 

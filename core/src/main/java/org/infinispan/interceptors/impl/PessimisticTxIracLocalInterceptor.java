@@ -223,7 +223,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
       //on prepare, we need to wait for all replies from the primary owners that contains the new IracMetadata
       //this is required because pessimistic transactions commits in 1 phase!
       AggregateCompletionStage<Void> allStages = CompletionStages.aggregateCompletionStage();
-      Iterator<StreamData> iterator = streamKeysFromModifications(command.getModifications()).iterator();
+      Iterator<StreamData> iterator = streamKeysFromModifications(command.getModifications().stream()).iterator();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
          CompletionStage<IracMetadata> rsp = ctx.getIracMetadata(data.key);
@@ -234,7 +234,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
 
    private Object onRemotePrepare(TxInvocationContext<RemoteTransaction> ctx, PrepareCommand command) {
       //on remote side, we need to merge the irac metadata from the WriteCommand to CacheEntry
-      Iterator<StreamData> iterator = streamKeysFromModifications(command.getModifications())
+      Iterator<StreamData> iterator = streamKeysFromModifications(command.getModifications().stream())
             .filter(this::isWriteOwner)
             .iterator();
       while (iterator.hasNext()) {
@@ -282,7 +282,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
       return rpcManager.invokeCommand(dInfo.primary(), cmd, RESPONSE_COLLECTOR, rpcOptions);
    }
 
-   private boolean skipCommand(InvocationContext ctx, FlagAffectedCommand command) {
+   private static boolean skipCommand(InvocationContext ctx, FlagAffectedCommand command) {
       return !ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.IRAC_UPDATE);
    }
 

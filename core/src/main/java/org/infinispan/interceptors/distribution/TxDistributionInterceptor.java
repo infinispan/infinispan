@@ -372,7 +372,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       } else if (command instanceof PrepareCommand) {
          if (((PrepareCommand) command).isOnePhaseCommit()) {
             return partitionHandlingManager.addPartialCommit1PCTransaction(globalTransaction, recipients, lockedKeys,
-                                                                           Arrays.asList(((PrepareCommand) command).getModifications()));
+                                                                           ((PrepareCommand) command).getModifications());
          }
       } else if (command instanceof CommitCommand) {
          Map<Object, IncrementableEntryVersion> newVersion = null;

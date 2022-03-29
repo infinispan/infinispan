@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,11 +11,9 @@ import java.util.concurrent.CompletionStage;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -59,14 +56,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    public final void addModification(WriteCommand mod) {
       if (log.isTraceEnabled()) log.tracef("Adding modification %s. Mod list is %s", mod, modifications);
-      if (modifications == null) {
-         // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-         modifications = Collections.synchronizedList(new LinkedList<>());
-      }
-      if (mod.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-         hasLocalOnlyModifications = true;
-      }
-      modifications.add(mod);
+      modifications.append(mod);
    }
 
    public void locksAcquired(Collection<Address> nodes) {
@@ -119,7 +109,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public boolean isReadOnly() {
-      return modifications == null || modifications.isEmpty();
+      return modifications.isEmpty();
    }
 
    public abstract boolean isEnlisted();
@@ -187,9 +177,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       List<Address> members = cacheTopology.getMembers();
       if (log.isTraceEnabled()) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
                             recipients, currentTopologyId, members, getTopologyId());
-      if (hasModification(ClearCommand.class)) {
-         return members;
-      }
       if (recipients == null) {
          return null;
       }

@@ -2,7 +2,6 @@ package org.infinispan.transaction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,16 +12,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.ImmutableListCopy;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -45,8 +40,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    private static final Log log = LogFactory.getLog(AbstractCacheTransaction.class);
    private static final int INITIAL_LOCK_CAPACITY = 4;
 
-   volatile boolean hasLocalOnlyModifications;
-   protected volatile List<WriteCommand> modifications;
+   protected volatile ModificationList modifications;
 
    protected Map<Object, CacheEntry> lookedUpEntries;
 
@@ -97,6 +91,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.topologyId = topologyId;
       this.txCreationTime = txCreationTime;
       txCompleted = new CompletableFuture<>();
+      modifications = new ModificationList();
    }
 
    @Override
@@ -106,57 +101,25 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public final List<WriteCommand> getModifications() {
-      if (hasLocalOnlyModifications) {
-         return modifications.stream().filter(cmd -> !cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)).collect(Collectors.toList());
-      } else {
-         return getAllModifications();
-      }
+      return modifications.getModifications();
    }
 
    @Override
    public final List<WriteCommand> getAllModifications() {
-      if (modifications instanceof ImmutableListCopy)
-         return modifications;
-      else if (modifications == null)
-         return Collections.emptyList();
-      else
-         return Immutables.immutableListCopy(modifications);
+      return modifications.getAllModifications();
    }
 
    public final void setModifications(List<WriteCommand> modifications) {
-      if (modifications == null) {
-         throw new IllegalArgumentException("modification list cannot be null");
-      }
-      List<WriteCommand> mods = new ArrayList<>(modifications.size());
-      for (WriteCommand cmd : modifications) {
-         if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-            hasLocalOnlyModifications = true;
-         }
-         mods.add(cmd);
-      }
-      // we need to synchronize this collection to be able to get a valid copy from another thread during state transfer
-      this.modifications = Collections.synchronizedList(mods);
+      this.modifications = ModificationList.fromCollection(modifications);
    }
 
-   public final boolean hasModification(Class<?> modificationClass) {
-      if (modifications != null) {
-         for (WriteCommand mod : getModifications()) {
-            if (modificationClass.isAssignableFrom(mod.getClass())) {
-               return true;
-            }
-         }
-      }
-      return false;
+   public final boolean hasModifications() {
+      return modifications.hasNonLocalModifications();
    }
-
 
    @Override
    public void freezeModifications() {
-      if (modifications != null) {
-         modifications = Immutables.immutableListCopy(modifications);
-      } else {
-         modifications = Collections.emptyList();
-      }
+      modifications.freeze();
    }
 
    @Override

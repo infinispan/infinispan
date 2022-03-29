@@ -3,7 +3,6 @@ package org.infinispan.commands.tx;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,7 @@ import org.infinispan.util.ByteString;
  */
 public class VersionedPrepareCommand extends PrepareCommand {
    public static final byte COMMAND_ID = 26;
-   private Map<Object, IncrementableEntryVersion> versionsSeen = null;
+   private Map<Object, IncrementableEntryVersion> versionsSeen;
 
    public VersionedPrepareCommand() {
       super(null);
@@ -71,7 +70,7 @@ public class VersionedPrepareCommand extends PrepareCommand {
    @Override
    public String toString() {
       return "VersionedPrepareCommand {" +
-            "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
+            "modifications=" + modifications +
             ", onePhaseCommit=" + onePhaseCommit +
             ", retried=" + retriedCommand +
             ", versionsSeen=" + versionsSeen +

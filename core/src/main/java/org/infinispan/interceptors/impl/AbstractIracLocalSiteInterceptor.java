@@ -128,10 +128,6 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
       setIracMetadata(entry, segment, metadata, iracTombstoneManager, this);
    }
 
-   protected Stream<StreamData> streamKeysFromModifications(WriteCommand[] mods) {
-      return streamKeysFromModifications(Stream.of(mods));
-   }
-
    protected Stream<StreamData> streamKeysFromModifications(Stream<WriteCommand> modsStream) {
       return modsStream.filter(AbstractIracLocalSiteInterceptor::isNormalWriteCommand)
             .flatMap(this::streamKeysFromCommand);

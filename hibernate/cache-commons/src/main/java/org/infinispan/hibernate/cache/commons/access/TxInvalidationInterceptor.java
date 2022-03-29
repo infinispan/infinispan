@@ -6,7 +6,6 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -194,7 +193,7 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
       throws Throwable {
 		// A prepare does not carry flags, so skip checking whether is local or not
 		if ( ctx.isInTxScope() ) {
-         List<WriteCommand> modifications = Arrays.asList(prepareCmd.getModifications());
+         List<WriteCommand> modifications = prepareCmd.getModifications();
 			if ( modifications.isEmpty() ) {
 				return null;
 			}
