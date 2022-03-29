@@ -1,6 +1,7 @@
 package org.infinispan.transaction.xa.recovery;
 
 import java.util.Collection;
+import java.util.List;
 
 import javax.transaction.Status;
 
@@ -27,20 +28,16 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
 
    private Integer status;
 
-   public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId,
+   public RecoveryAwareRemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx, int topologyId,
                                          long txCreationTime) {
       super(modifications, tx, topologyId, txCreationTime);
-   }
-
-   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
-      super(tx, topologyId, txCreationTime);
    }
 
    /**
     * A transaction is in doubt if it is prepared and and it is orphan.
     */
    public boolean isInDoubt() {
-      return isPrepared() && isOrphan();
+      return prepared && isOrphan;
    }
 
    /**

@@ -958,11 +958,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return handler.apply(ctx, command, null);
    }
 
-   private <P extends PrepareCommand> Object applyModificationsAndThen(TxInvocationContext ctx, P command, WriteCommand[] modifications, int startIndex, InvocationSuccessFunction<P> handler) throws Throwable {
+   private <P extends PrepareCommand> Object applyModificationsAndThen(TxInvocationContext ctx, P command, List<WriteCommand> modifications, int startIndex, InvocationSuccessFunction<P> handler) throws Throwable {
       // We need to execute modifications for the same key sequentially. In theory we could optimize
       // this loop if there are multiple remote invocations but since remote invocations are rare, we omit this.
-      for (int i = startIndex; i < modifications.length; i++) {
-         WriteCommand c = modifications[i];
+      for (int i = startIndex; i < modifications.size(); i++) {
+         WriteCommand c = modifications.get(i);
          c.setTopologyId(command.getTopologyId());
          if (c.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
             ctx.getCacheTransaction().setStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
@@ -971,7 +971,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
          if (!isSuccessfullyDone(result)) {
             int nextIndex = i + 1;
-            if (nextIndex >= modifications.length) {
+            if (nextIndex >= modifications.size()) {
                return makeStage(result).thenApply(ctx, command, handler);
             }
             return makeStage(result).thenApply(ctx, command,

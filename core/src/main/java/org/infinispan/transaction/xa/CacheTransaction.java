@@ -44,8 +44,12 @@ public interface CacheTransaction {
     *
     * @param modificationClass the modification type to look for
     * @return true if found, false otherwise
+    * @deprecated since 14.0. To be removed without replacement.
     */
-   boolean hasModification(Class<?> modificationClass);
+   @Deprecated
+   default boolean hasModification(Class<?> modificationClass) {
+      return false;
+   }
 
    CacheEntry lookupEntry(Object key);
 

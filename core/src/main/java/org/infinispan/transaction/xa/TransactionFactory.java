@@ -1,5 +1,9 @@
 package org.infinispan.transaction.xa;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.write.WriteCommand;
@@ -23,7 +27,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Factory for transaction related sate.
+ * Factory for transaction related state.
  *
  * @author Mircea.Markus@jboss.com
  */
@@ -58,16 +62,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                       int topologyId,
-                                                       long txCreationTime) {
+         public RemoteTransaction newRemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
             return new RecoveryAwareRemoteTransaction(modifications, tx, topologyId, txCreationTime);
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId,
-                                                       long txCreationTime) {
-            return new RecoveryAwareRemoteTransaction(tx, topologyId, txCreationTime);
          }
       },
       NODLD_NORECOVERY_XA {
@@ -84,16 +80,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                       int topologyId,
-                                                       long txCreationTime) {
+         public RemoteTransaction newRemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
             return new RemoteTransaction(modifications, tx, topologyId, txCreationTime);
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId,
-                                                       long txCreationTime) {
-            return new RemoteTransaction(tx, topologyId, txCreationTime);
          }
       },
       NODLD_NORECOVERY_NOXA {
@@ -110,16 +98,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                       int topologyId,
-                                                       long txCreationTime) {
+         public RemoteTransaction newRemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
             return new RemoteTransaction(modifications, tx, topologyId, txCreationTime);
-         }
-
-         @Override
-         public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId,
-                                                       long txCreationTime) {
-            return new RemoteTransaction(tx, topologyId, txCreationTime);
          }
       };
 
@@ -129,10 +109,17 @@ public class TransactionFactory {
 
       public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered);
 
-      public abstract RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
-                                                             int topologyId, long txCreationTime);
+      public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
+                                                             int topologyId, long txCreationTime) {
+         return newRemoteTransaction(Arrays.asList(modifications), tx, topologyId, txCreationTime);
+      }
 
-      public abstract RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime);
+      public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
+         return newRemoteTransaction(Collections.emptyList(), tx, topologyId, txCreationTime);
+      }
+
+      public abstract RemoteTransaction newRemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx,
+                                                             int topologyId, long txCreationTime);
    }
 
    public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
@@ -149,6 +136,10 @@ public class TransactionFactory {
 
    public RemoteTransaction newRemoteTransaction(GlobalTransaction tx, int topologyId) {
       return txFactoryEnum.newRemoteTransaction(tx, topologyId, timeService.time());
+   }
+
+   public RemoteTransaction newRemoteTransaction(List<WriteCommand> modifications, GlobalTransaction gtx, int topologyId) {
+      return txFactoryEnum.newRemoteTransaction(modifications, gtx, topologyId, timeService.time());
    }
 
    @Start
