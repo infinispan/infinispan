@@ -16,10 +16,14 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.PrivilegedAction;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -30,6 +34,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 import javax.sql.DataSource;
 
@@ -48,6 +53,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.Messages;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
@@ -67,9 +73,11 @@ import io.netty.handler.ipfilter.IpFilterRuleType;
 public class ServerResource implements ResourceHandler {
    private final InvocationHelper invocationHelper;
    private static final ServerInfo SERVER_INFO = new ServerInfo();
+   private final Executor blockingExecutor;
 
    public ServerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
+      this.blockingExecutor = invocationHelper.getExecutor();
    }
 
    @Override
@@ -83,6 +91,8 @@ public class ServerResource implements ResourceHandler {
             .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::env)
             .invocation().methods(GET).path("/v2/server/memory")
             .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::memory)
+            .invocation().methods(POST).path("/v2/server/memory").withAction("heap-dump")
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::heapDump)
             .invocation().methods(POST).path("/v2/server/").withAction("stop")
             .permission(AuthorizationPermission.ADMIN)
             .handleWith(this::stop)
@@ -289,6 +299,21 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> memory(RestRequest restRequest) {
       return asJsonResponseFuture(new JVMMemoryInfoInfo().toJson());
+   }
+
+   private CompletionStage<RestResponse> heapDump(RestRequest restRequest) {
+      boolean live = Boolean.parseBoolean(restRequest.getParameter("live"));
+      ServerManagement server = invocationHelper.getServer();
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            Path dumpFile = Files.createTempFile(server.getServerDataPath(), "dump", ".hprof");
+            Files.delete(dumpFile);
+            new JVMMemoryInfoInfo().heapDump(dumpFile, live);
+            return asJsonResponse(Json.object().set("filename", dumpFile.getFileName().toString()));
+         } catch (IOException e) {
+            throw Log.REST.heapDumpFailed(e);
+         }
+      }, blockingExecutor);
    }
 
    private CompletionStage<RestResponse> env(RestRequest restRequest) {

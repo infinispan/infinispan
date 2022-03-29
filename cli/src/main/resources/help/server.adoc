@@ -19,6 +19,8 @@ SYNOPSIS
 --------
 *server report*
 
+*server heap-dump* [--live]
+
 *server connector ls*
 
 *server connector describe* 'connector-name'
@@ -50,6 +52,9 @@ EXAMPLES
 
 `server report` +
 Obtains a server report, including information about network, threads, memory, etc.
+
+`server heap-dump` +
+Generates a JVM heap dump in the server data directory, returning the name of the generated file.
 
 `server connector ls` +
 Lists all available connectors on the server.

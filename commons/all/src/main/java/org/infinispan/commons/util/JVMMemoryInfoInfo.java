@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import java.io.IOException;
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -7,11 +8,14 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+
+import com.sun.management.HotSpotDiagnosticMXBean;
 
 /**
  * @since 10.0
@@ -23,12 +27,14 @@ public final class JVMMemoryInfoInfo implements JsonSerialization {
    private final List<MemoryPoolMXBean> memoryPoolMBeans;
    private final List<BufferPoolMXBean> bufferPoolsMBeans;
    private final List<GarbageCollectorMXBean> garbageCollectorMXBeans;
+   HotSpotDiagnosticMXBean hotSpotDiagnosticMXBean;
 
    public JVMMemoryInfoInfo() {
       garbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
       memoryMBean = ManagementFactory.getMemoryMXBean();
       memoryPoolMBeans = ManagementFactory.getMemoryPoolMXBeans();
       bufferPoolsMBeans = ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class);
+      hotSpotDiagnosticMXBean = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
    }
 
    public List<MemoryManager> getGc() {
@@ -49,6 +55,10 @@ public final class JVMMemoryInfoInfo implements JsonSerialization {
 
    public MemoryUsage getNonHeap() {
       return memoryMBean.getNonHeapMemoryUsage();
+   }
+
+   public void heapDump(Path path, boolean live) throws IOException {
+      hotSpotDiagnosticMXBean.dumpHeap(path.toString(), live);
    }
 
    private static Json asJson(MemoryUsage usage) {

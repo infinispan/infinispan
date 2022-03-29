@@ -55,6 +55,12 @@ public class RestServerClientOkHttp implements RestServerClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> heapDump(boolean live) {
+      String url = String.format("%s/memory?action=heap-dump&live=%b", baseServerURL, live);
+      return client.execute(new Request.Builder().url(url).method("POST",new FormBody.Builder().build()));
+   }
+
+   @Override
    public CompletionStage<RestResponse> env() {
       return client.execute(baseServerURL, "env");
    }

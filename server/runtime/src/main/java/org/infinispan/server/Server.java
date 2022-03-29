@@ -208,6 +208,7 @@ public class Server implements ServerManagement, AutoCloseable {
    private BlockingManager blockingManager;
    private BackupManager backupManager;
    private Map<String, DataSource> dataSources;
+   private Path dataPath;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -253,6 +254,7 @@ public class Server implements ServerManagement, AutoCloseable {
       properties.putIfAbsent(INFINISPAN_SERVER_LOG_PATH, new File(serverRoot, DEFAULT_SERVER_LOG).getAbsolutePath());
       properties.putIfAbsent(INFINISPAN_BIND_PORT, DEFAULT_BIND_PORT);
 
+      this.dataPath = Paths.get(properties.getProperty(INFINISPAN_SERVER_DATA_PATH));
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 
       // Register our simple naming context factory builder
@@ -409,8 +411,7 @@ public class Server implements ServerManagement, AutoCloseable {
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
          // the clustered locks.
-         Path dataRoot = serverRoot.toPath().resolve(properties.getProperty(INFINISPAN_SERVER_DATA_PATH));
-         backupManager = new BackupManagerImpl(blockingManager, cacheManager, dataRoot);
+         backupManager = new BackupManagerImpl(blockingManager, cacheManager, dataPath);
          backupManager.init();
 
          // Register the task manager
@@ -712,5 +713,10 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public Map<String, DataSource> getDataSources() {
       return dataSources;
+   }
+
+   @Override
+   public Path getServerDataPath() {
+      return dataPath;
    }
 }
