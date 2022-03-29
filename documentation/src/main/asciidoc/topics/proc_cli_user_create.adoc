@@ -39,3 +39,9 @@ $ cat server/conf/users.properties
 
 admin=scram-sha-1\:BYGcIAwvf6b...
 ----
+
+[NOTE]
+====
+Adding credentials to a properties realm with the CLI creates the user only on the server instance to which you are connected.
+You must manually synchronize credentials in a properties realm to each node in the cluster.
+====

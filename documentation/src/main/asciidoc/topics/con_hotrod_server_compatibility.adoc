@@ -1,0 +1,37 @@
+[id='client-server-compatibility_{context}']
+= Hot Rod client compatibility with {brandname} Server
+
+{brandname} Server allows you to connect Hot Rod clients with different versions.
+For instance during a migration or upgrade to your {brandname} cluster, the Hot Rod client version might be a lower {brandname} version than {brandname} Server.
+
+[TIP]
+====
+{brandname} recommends using the latest Hot Rod client version to benefit from the most recent capabilities and security enhancements.
+====
+
+//Community content
+ifdef::community[]
+.{brandname} 10 and later
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+.{brandname} 8 and later
+endif::downstream[]
+Hot Rod protocol version 3.x automatically negotiates the highest version possible for clients with {brandname} Server.
+
+//Community content
+ifdef::community[]
+.{brandname} 9.4 and earlier
+endif::community[]
+//Downstream content
+ifdef::downstream[]
+.{brandname} 7.3 and earlier
+endif::downstream[]
+Clients that use a Hot Rod protocol version that is higher than the {brandname} Server version must set the `infinispan.client.hotrod.protocol_version` property.
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://infinispan.org/docs/stable/titles/hotrod_protocol/hotrod_protocol.html[Hot Rod protocol reference]
+ifdef::downstream[]
+* link:https://access.redhat.com/solutions/1610983[Connecting Hot Rod clients to servers with different versions] (Red Hat Knowledgebase)
+endif::downstream[]

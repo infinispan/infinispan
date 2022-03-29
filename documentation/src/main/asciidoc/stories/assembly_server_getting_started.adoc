@@ -8,15 +8,23 @@ Install the server distribution, create a user, and start your first {brandname}
 ifdef::community[]
 image:https://infinispan.org/assets/images/documentation/icon-get-started.png[Get started icon,height=32]
 link:https://infinispan.org/get-started/[Start running {brandname} in 4 easy steps]
+endif::community[]
 
 [discrete]
 == Ansible collection
 
-link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}]
-
 Automate installation of {brandname} clusters with our Ansible collection that optionally includes Keycloak caches and cross-site replication configuration.
 The Ansible collection also lets you inject {brandname} caches into the static configuration for each server instance during installation.
+
+//Community content
+ifdef::community[]
+The link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}] is available from Ansible Galaxy.
 endif::community[]
+//Downstream content
+ifdef::downstream[]
+The link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}] is available from the Red Hat **Automation Hub**.
+endif::downstream[]
+
 
 include::{topics}/ref_server_requirements.adoc[leveloffset=+1]
 include::{topics}/proc_downloading_server.adoc[leveloffset=+1]
