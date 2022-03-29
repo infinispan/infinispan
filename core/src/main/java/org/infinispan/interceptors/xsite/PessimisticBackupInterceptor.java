@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.xsite;
 
-import java.util.Arrays;
-
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -51,7 +49,7 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          //for async, all nodes need to keep track of the updates keys after it is applied locally.
-         keysFromMods(Arrays.stream(rCommand.getModifications()))
+         keysFromMods(rCommand.getModifications().stream())
                .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), rCommand.getGlobalTransaction()));
          return stage.thenReturn(rCtx, rCommand, rv);
       });

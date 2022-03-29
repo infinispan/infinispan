@@ -1,16 +1,19 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -25,13 +28,13 @@ public class TransactionInfo {
 
    private final GlobalTransaction globalTransaction;
 
-   private final WriteCommand[] modifications;
+   private final List<WriteCommand> modifications;
 
    private final Set<Object> lockedKeys;
 
    private final int topologyId;
 
-   public TransactionInfo(GlobalTransaction globalTransaction, int topologyId, WriteCommand[] modifications, Set<Object> lockedKeys) {
+   public TransactionInfo(GlobalTransaction globalTransaction, int topologyId, List<WriteCommand> modifications, Set<Object> lockedKeys) {
       this.globalTransaction = globalTransaction;
       this.topologyId = topologyId;
       this.modifications = modifications;
@@ -42,7 +45,7 @@ public class TransactionInfo {
       return globalTransaction;
    }
 
-   public WriteCommand[] getModifications() {
+   public List<WriteCommand> getModifications() {
       return modifications;
    }
 
@@ -59,7 +62,7 @@ public class TransactionInfo {
       return "TransactionInfo{" +
             "globalTransaction=" + globalTransaction +
             ", topologyId=" + topologyId +
-            ", modifications=" + Arrays.toString(modifications) +
+            ", modifications=" + modifications +
             ", lockedKeys=" + lockedKeys +
             '}';
    }
@@ -80,16 +83,16 @@ public class TransactionInfo {
       public void writeObject(ObjectOutput output, TransactionInfo object) throws IOException {
          output.writeObject(object.globalTransaction);
          output.writeInt(object.topologyId);
-         MarshallUtil.marshallArray(object.modifications, output);
-         MarshallUtil.marshallCollection(object.lockedKeys, output);
+         marshallCollection(object.modifications, output);
+         marshallCollection(object.lockedKeys, output);
       }
 
       @Override
       public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
          int topologyId = input.readInt();
-         WriteCommand[] modifications = MarshallUtil.unmarshallArray(input, WriteCommand[]::new);
-         Set<Object> lockedKeys = MarshallUtil.unmarshallCollection(input, HashSet::new);
+         List<WriteCommand> modifications = unmarshallCollection(input, ArrayList::new);
+         Set<Object> lockedKeys = unmarshallCollection(input, HashSet::new);
          return new TransactionInfo(globalTransaction, topologyId, modifications, lockedKeys);
       }
    }

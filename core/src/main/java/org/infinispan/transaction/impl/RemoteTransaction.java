@@ -2,11 +2,8 @@ package org.infinispan.transaction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class RemoteTransaction extends AbstractCacheTransaction implements Cloneable {
+public class RemoteTransaction extends AbstractCacheTransaction {
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
    private static final CompletableFuture<Void> INITIAL_FUTURE = CompletableFutures.completedNull();
@@ -43,24 +40,21 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private final AtomicReference<CompletableFuture<Void>> synchronization =
          new AtomicReference<>(INITIAL_FUTURE);
 
-   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
+   public RemoteTransaction(List<WriteCommand> modifications, GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
-      this.modifications = modifications == null || modifications.length == 0
-            ? Collections.emptyList()
-            : Arrays.asList(modifications);
-      lookedUpEntries = new HashMap<>(this.modifications.size());
+      lookedUpEntries = new HashMap<>(modifications.size());
+      setModifications(modifications);
    }
 
    public RemoteTransaction(GlobalTransaction tx, int topologyId, long txCreationTime) {
       super(tx, topologyId, txCreationTime);
-      this.modifications = new LinkedList<>();
       lookedUpEntries = new HashMap<>(4);
    }
 
    @Override
    public void setStateTransferFlag(Flag stateTransferFlag) {
       if (getStateTransferFlag() == null && stateTransferFlag == Flag.PUT_FOR_X_SITE_STATE_TRANSFER) {
-         internalSetStateTransferFlag(stateTransferFlag);
+         internalSetStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
       }
    }
 
@@ -93,18 +87,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public int hashCode() {
       return tx.hashCode();
-   }
-
-   @Override
-   public Object clone() {
-      try {
-         RemoteTransaction dolly = (RemoteTransaction) super.clone();
-         dolly.modifications = new ArrayList<>(modifications);
-         dolly.lookedUpEntries = new HashMap<>(lookedUpEntries);
-         return dolly;
-      } catch (CloneNotSupportedException e) {
-         throw new IllegalStateException("Impossible!!", e);
-      }
    }
 
    @Override

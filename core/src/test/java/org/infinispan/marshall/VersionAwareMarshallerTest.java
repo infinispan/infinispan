@@ -244,7 +244,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       Address local = new JGroupsAddress(UUID.randomUUID());
       GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
-      PrepareCommand c11 = new PrepareCommand(cacheName, gtx, true, c5, c6, c8, c10);
+      PrepareCommand c11 = new PrepareCommand(cacheName, gtx, Arrays.asList(c5, c6, c8, c10), true);
       marshallAndAssertEquality(c11);
 
       CommitCommand c12 = new CommitCommand(cacheName, gtx);

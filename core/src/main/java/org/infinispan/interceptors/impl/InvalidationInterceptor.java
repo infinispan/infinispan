@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -156,7 +155,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
       if (txInvocationContext.getTransaction() == null)
          throw new IllegalStateException("We must have an associated transaction");
-      List<WriteCommand> mods = Arrays.asList(prepareCommand.getModifications());
+      List<WriteCommand> mods = prepareCommand.getModifications();
       Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, txInvocationContext);
       if (remoteKeys == null) {
          return rv;
