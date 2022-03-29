@@ -80,4 +80,9 @@ public class DummyServerManagement implements ServerManagement {
    public Map<String, DataSource> getDataSources() {
       return null;
    }
+
+   @Override
+   public Path getServerDataPath() {
+      return null;
+   }
 }

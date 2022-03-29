@@ -31,6 +31,11 @@ public interface RestServerClient {
    CompletionStage<RestResponse> memory();
 
    /**
+    * Performs a heap dump
+    */
+   CompletionStage<RestResponse> heapDump(boolean live);
+
+   /**
     * Returns the server environment
     */
    CompletionStage<RestResponse> env();

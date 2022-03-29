@@ -4,6 +4,8 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.io.IOException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
 import org.infinispan.rest.framework.Invocation;
@@ -115,4 +117,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The role-permission mapper is not mutable", id = 12029)
    String rolePermissionMapperNotMutable();
+
+   @Message(value = "Heap dump generation failed", id = 12030)
+   RuntimeException heapDumpFailed(@Cause IOException e);
 }
