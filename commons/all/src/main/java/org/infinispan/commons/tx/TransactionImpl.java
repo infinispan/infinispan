@@ -3,12 +3,11 @@ package org.infinispan.commons.tx;
 
 import static java.lang.String.format;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.transaction.HeuristicMixedException;
@@ -49,7 +48,7 @@ public class TransactionImpl implements Transaction {
    private static final Log log = LogFactory.getLog(TransactionImpl.class);
    private static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
    private final List<Synchronization> syncs;
-   private final List<Map.Entry<XAResource, Integer>> resources;
+   private final List<XaResourceData> resources;
    private final Object xidLock = new Object();
    private volatile XidImpl xid;
    private volatile int status;
@@ -183,9 +182,9 @@ public class TransactionImpl implements Transaction {
       checkStatusBeforeRegister("resource");
 
       //avoid duplicates
-      for (Map.Entry<XAResource, Integer> otherResourceEntry : resources) {
+      for (XaResourceData other : resources) {
          try {
-            if (otherResourceEntry.getKey().isSameRM(resource)) {
+            if (other.xaResource.isSameRM(resource)) {
                log.debug("Ignoring resource. It is already there.");
                return true;
             }
@@ -195,7 +194,7 @@ public class TransactionImpl implements Transaction {
       }
 
       synchronized (xidLock) {
-         resources.add(new AbstractMap.SimpleEntry<>(resource, null));
+         resources.add(new XaResourceData(resource));
       }
 
       try {
@@ -254,7 +253,7 @@ public class TransactionImpl implements Transaction {
    }
 
    public Collection<XAResource> getEnlistedResources() {
-      return Collections.unmodifiableList(resources.stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+      return Collections.unmodifiableList(resources.stream().map(xaResourceData -> xaResourceData.xaResource).collect(Collectors.toList()));
    }
 
    public boolean runPrepare() {
@@ -270,8 +269,8 @@ public class TransactionImpl implements Transaction {
 
       status = Status.STATUS_PREPARING;
 
-      for (Map.Entry<XAResource, Integer> resourceStatusEntry : resources) {
-         final XAResource res = resourceStatusEntry.getKey();
+      for (XaResourceData data : resources) {
+         final XAResource res = data.xaResource;
 
          //note: it is safe to return even if we don't prepare all the resources. rollback will be invoked.
          try {
@@ -280,8 +279,7 @@ public class TransactionImpl implements Transaction {
             }
             // Need to check return value: the only possible values are XA_OK or XA_RDONLY.
             // We do *not* perform commit() on XA_RDONLY! See ISPN-6146.
-            int lastStatus = res.prepare(xid);
-            resourceStatusEntry.setValue(lastStatus);
+            data.status = res.prepare(xid);
          } catch (XAException e) {
             if (log.isTraceEnabled()) {
                log.trace("The resource wants to rollback!", e);
@@ -396,14 +394,14 @@ public class TransactionImpl implements Transaction {
       boolean error = false;
       Exception cause = null;
 
-      for (Map.Entry<XAResource, Integer> resourceStatusEntry : resources) {
-         final XAResource res = resourceStatusEntry.getKey();
+      for (XaResourceData data : resources) {
+         final XAResource res = data.xaResource;
          try {
             if (commit) {
                if (log.isTraceEnabled()) {
                   log.tracef("XaResource.commit() for %s", res);
                }
-               if (resourceStatusEntry.getValue() == XAResource.XA_RDONLY) {
+               if (data.status == XAResource.XA_RDONLY) {
                   log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s", res);
                   continue;
                }
@@ -510,19 +508,19 @@ public class TransactionImpl implements Transaction {
    }
 
    private void endResources() {
-      for (XAResource resource : getEnlistedResources()) {
+      for (XaResourceData data : resources) {
          if (log.isTraceEnabled()) {
-            log.tracef("XAResource.end() for %s", resource);
+            log.tracef("XAResource.end() for %s", data.xaResource);
          }
          try {
-            resource.end(xid, XAResource.TMSUCCESS);
+            data.xaResource.end(xid, XAResource.TMSUCCESS);
          } catch (XAException e) {
-            markRollbackOnly(newRollbackException(format("XaResource.end() for %s wants to rollback.", resource), e));
-            log.xaResourceEndFailed(resource.toString(), e);
+            markRollbackOnly(newRollbackException(format("XaResource.end() for %s wants to rollback.", data.xaResource), e));
+            log.xaResourceEndFailed(data.xaResource.toString(), e);
          } catch (Throwable t) {
             markRollbackOnly(newRollbackException(
-                  format("Unexpected error in XaResource.end() for %s. Marked as rollback", resource), t));
-            log.xaResourceEndFailed(resource.toString(), t);
+                  format("Unexpected error in XaResource.end() for %s. Marked as rollback", data.xaResource), t));
+            log.xaResourceEndFailed(data.xaResource.toString(), t);
          }
       }
    }
@@ -548,5 +546,14 @@ public class TransactionImpl implements Transaction {
             return true;
       }
       return false;
+   }
+
+   private static class XaResourceData {
+      final XAResource xaResource;
+      volatile int status;
+
+      private XaResourceData(XAResource xaResource) {
+         this.xaResource = Objects.requireNonNull(xaResource);
+      }
    }
 }
