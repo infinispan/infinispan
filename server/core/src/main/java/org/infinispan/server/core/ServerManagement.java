@@ -61,4 +61,6 @@ public interface ServerManagement {
    BackupManager getBackupManager();
 
    Map<String, DataSource> getDataSources();
+
+   Path getServerDataPath();
 }

@@ -21,7 +21,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Connector.class, DataSource.class, Server.Report.class})
+@GroupCommandDefinition(name = "server", description = "Obtains information about the server", activator = ConnectionActivator.class, groupCommands = {Connector.class, DataSource.class, Server.Report.class, Server.HeapDump.class})
 public class Server extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -57,6 +57,26 @@ public class Server extends CliCommand {
       @Override
       public Connection.ResponseMode getResponseMode() {
          return Connection.ResponseMode.FILE;
+      }
+   }
+
+   @CommandDefinition(name = "heap-dump", description = "Generates a JVM heap dump on the server", activator = ConnectionActivator.class)
+   public static class HeapDump extends RestCliCommand {
+
+      @Option(shortName = 'l', hasValue = false, description = "Dump only live objects, i.e. objects that are reachable from others.")
+      protected boolean live;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.server().heapDump(live);
       }
    }
 }

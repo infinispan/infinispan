@@ -117,6 +117,20 @@ usage, and information about memory pools and garbage collection in JSON
 format.
 
 
+[id='rest_v2_server_memory']
+= Getting JVM Heap Dumps
+Generate JVM heap dumps for {brandname} servers with `POST`
+requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/server/memory?action=heap-dump[&live=true|false]
+----
+
+{brandname} generates a heap dump file in HPROF format in the server data directory and responds
+with the full path of the file in JSON format.
+
+
 [id='rest_v2_server_threads']
 = Getting JVM Thread Dumps
 Retrieve the current thread dump for the JVM with `GET` requests.
