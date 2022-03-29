@@ -38,6 +38,12 @@ user create <username> -p <changeme> -g <role> \
 Run [command]`user create --help` for examples and more information.
 ====
 
+[NOTE]
+====
+Adding credentials to a properties realm with the CLI creates the user only on the server instance to which you are connected.
+You must manually synchronize credentials in a properties realm to each node in the cluster.
+====
+
 .Procedure
 
 . Open your {brandname} Server configuration for editing.

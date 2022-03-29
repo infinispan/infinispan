@@ -19,6 +19,15 @@ LDAP queries and access specific attributes.
 
 As an alternative to verifying user credentials with the `direct-verification` attribute, you can specify an LDAP attribute that validates passwords with the `user-password-mapper` element.
 
+[NOTE]
+====
+You cannot use endpoint authentication mechanisms that perform hashing with the `direct-verification` attribute.
+
+Because Active Directory does not expose the `password` attribute you can use the `direct-verification` attribute only and not the `user-password-mapper` element.
+As a result you must use the `BASIC` authentication mechanism with the REST endpoint and `PLAIN` with the Hot Rod endpoint to integrate with Active Directory Server.
+A more secure alternative is to use Kerberos, which allows the `SPNEGO`, `GSSAPI`, and `GS2-KRB5` authentication mechanisms.
+====
+
 The `rdn-identifier` attribute specifies an LDAP attribute that finds the user entry based on a provided identifier, which is typically a username; for example, the `uid` or `sAMAccountName` attribute.
 Add `search-recursive="true"` to the configuration to search the directory recursively.
 By default, the search for the user entry uses the `(rdn_identifier={0})` filter.

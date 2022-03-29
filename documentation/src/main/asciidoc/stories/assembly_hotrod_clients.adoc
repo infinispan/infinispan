@@ -5,9 +5,10 @@ ifdef::context[:parent-context: {context}]
 Access {brandname} remotely through the Hot Rod Java client API.
 
 include::{topics}/con_hotrod.adoc[leveloffset=+1]
-include::{topics}/con_hotrod_client_intelligence.adoc[leveloffset=+2]
-include::{topics}/con_hotrod_request_balancing.adoc[leveloffset=+2]
-include::{topics}/con_hotrod_failover.adoc[leveloffset=+2]
+include::{topics}/con_hotrod_client_intelligence.adoc[leveloffset=+1]
+include::{topics}/con_hotrod_request_balancing.adoc[leveloffset=+1]
+include::{topics}/con_hotrod_failover.adoc[leveloffset=+1]
+include::{topics}/con_hotrod_server_compatibility.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

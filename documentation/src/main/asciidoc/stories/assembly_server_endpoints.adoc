@@ -6,6 +6,7 @@
 
 include::{topics}/con_server_endpoints.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
+include::{topics}/con_hotrod_server_compatibility.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_server_endpoints.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]
 include::{topics}/ref_server_ipfilter.adoc[leveloffset=+1]
