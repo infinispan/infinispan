@@ -45,7 +45,7 @@ public class RemoteClientPutGetTest {
 
    @AfterClass(alwaysRun = true)
    public void afterClass() throws IOException {
-      cache.getRemoteCacheManager().close();
+      cache.getRemoteCacheContainer().stop();
    }
 
    public void putTest() throws Exception {

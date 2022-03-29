@@ -49,7 +49,7 @@ enum QuerySerializer {
                throw new HotRodClientException(e);
             }
          } else {
-            marshaller = remoteQuery.getCache().getRemoteCacheManager().getMarshaller();
+            marshaller = remoteQuery.getCache().getRemoteCacheContainer().getMarshaller();
             try {
                return marshaller.objectToByteBuffer(queryRequest);
             } catch (IOException e) {

@@ -149,7 +149,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             new RawStaticCustomEventLogListener<>(remoteCacheManager.getCache());
       withClientListener(eventListener, remote -> {
          eventListener.expectNoEvents();
-         Marshaller marshaller = remote.getRemoteCacheManager().getMarshaller();
+         Marshaller marshaller = remote.getRemoteCacheContainer().getMarshaller();
          Integer key = 1;
          Object value = "one";
          try {

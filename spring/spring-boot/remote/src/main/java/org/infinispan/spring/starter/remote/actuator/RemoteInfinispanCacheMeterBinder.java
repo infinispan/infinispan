@@ -116,7 +116,7 @@ public class RemoteInfinispanCacheMeterBinder extends CacheMeterBinder {
    }
 
    private boolean isNearCacheEnabled() {
-      return cache.getRemoteCacheManager().getConfiguration().nearCache().mode().enabled();
+      return cache.getRemoteCacheContainer().getConfiguration().nearCache().mode().enabled();
    }
 
 }

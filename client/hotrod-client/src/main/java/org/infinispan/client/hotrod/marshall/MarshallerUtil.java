@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamConstants;
 
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.logging.Log;
@@ -37,7 +38,7 @@ public final class MarshallerUtil {
     * @return the associated {@link SerializationContext}
     * @throws HotRodClientException if the cache manager is not started or is not configured to use a {@link ProtoStreamMarshaller}
     */
-   public static SerializationContext getSerializationContext(RemoteCacheManager remoteCacheManager) {
+   public static SerializationContext getSerializationContext(RemoteCacheContainer remoteCacheManager) {
       Marshaller marshaller = remoteCacheManager.getMarshaller();
       if (marshaller instanceof ProtoStreamMarshaller) {
          return ((ProtoStreamMarshaller) marshaller).getSerializationContext();

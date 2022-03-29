@@ -323,7 +323,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    }
 
    private byte[] marshall(Object o) throws Exception {
-      return remoteCache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(o);
+      return remoteCache.getRemoteCacheContainer().getMarshaller().objectToByteBuffer(o);
    }
 
    @AutoProtoSchemaBuilder(
