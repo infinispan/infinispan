@@ -25,7 +25,7 @@ public class RemoteCacheWithSyncListeners<K, V> extends RemoteCacheWrapper<K, V>
       super(delegate);
       this.notifier = notifier;
       this.cache = cache;
-      this.timeout = delegate.getRemoteCacheManager().getConfiguration().socketTimeout();
+      this.timeout = delegate.getRemoteCacheContainer().getConfiguration().socketTimeout();
    }
 
    @Override

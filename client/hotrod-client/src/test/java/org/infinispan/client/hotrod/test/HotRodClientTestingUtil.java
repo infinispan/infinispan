@@ -19,6 +19,7 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
@@ -71,7 +72,7 @@ public class HotRodClientTestingUtil {
     *
     * @param rcm the remote cache manager instance to kill
     */
-   public static void killRemoteCacheManager(RemoteCacheManager rcm) {
+   public static void killRemoteCacheManager(RemoteCacheContainer rcm) {
       try {
          if (rcm != null) rcm.stop();
       } catch (Throwable t) {

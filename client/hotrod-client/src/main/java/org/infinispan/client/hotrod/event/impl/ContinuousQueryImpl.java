@@ -42,7 +42,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
          throw new IllegalArgumentException("cache parameter cannot be null");
       }
       this.cache = cache;
-      serializationContext = MarshallerUtil.getSerializationContext(cache.getRemoteCacheManager());
+      serializationContext = MarshallerUtil.getSerializationContext(cache.getRemoteCacheContainer());
    }
 
    @Override
