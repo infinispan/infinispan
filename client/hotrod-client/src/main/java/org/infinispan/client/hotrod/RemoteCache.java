@@ -78,6 +78,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * <p>
     * The returned value is only sent back if {@link Flag#FORCE_RETURN_VALUE} is enabled.
     */
+   @Override
    V remove(Object key);
 
    /**
@@ -87,6 +88,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * remove the key with the version if the value matches. If possible user should use
     * {@link RemoteCache#getWithMetadata(Object)} and {@link RemoteCache#removeWithVersion(Object, long)}.
     */
+   @Override
    boolean remove(Object key, Object value);
 
    /**
@@ -478,9 +480,18 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    RemoteCache<K, V> withFlags(Flag... flags);
 
    /**
-    * Returns the {@link org.infinispan.client.hotrod.RemoteCacheManager} that created this cache.
+    * Returns the {@link org.infinispan.client.hotrod.RemoteCacheContainer} that created this cache.
     */
-   RemoteCacheManager getRemoteCacheManager();
+   RemoteCacheContainer getRemoteCacheContainer();
+
+   /**
+    * Returns the {@link org.infinispan.client.hotrod.RemoteCacheManager} that created this cache.
+    * @deprecated Since 14.0. Use {@link #getRemoteCacheContainer()} instead.
+    */
+   @Deprecated
+   default RemoteCacheManager getRemoteCacheManager() {
+      return (RemoteCacheManager) this.getRemoteCacheContainer();
+   }
 
    /**
     * Retrieves all of the entries for the provided keys.  A key will not be present in
