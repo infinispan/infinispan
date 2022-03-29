@@ -13,7 +13,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
@@ -111,8 +111,8 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public RemoteCacheManager getRemoteCacheManager() {
-      return delegate.getRemoteCacheManager();
+   public RemoteCacheContainer getRemoteCacheContainer() {
+      return delegate.getRemoteCacheContainer();
    }
 
    @Override

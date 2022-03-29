@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
@@ -130,7 +131,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    private void registerMBean(ObjectName jmxParent) {
-      StatisticsConfiguration configuration = getRemoteCacheManager().getConfiguration().statistics();
+      StatisticsConfiguration configuration = getRemoteCacheContainer().getConfiguration().statistics();
       if (configuration.jmxEnabled()) {
          try {
             MBeanServer mbeanServer = configuration.mbeanServerLookup().getMBeanServer();
@@ -146,7 +147,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    private void unregisterMBean() {
       if (mbeanObjectName != null) {
          try {
-            MBeanServer mBeanServer = getRemoteCacheManager().getConfiguration().statistics()
+            MBeanServer mBeanServer = getRemoteCacheContainer().getConfiguration().statistics()
                   .mbeanServerLookup().getMBeanServer();
             if (mBeanServer.isRegistered(mbeanObjectName)) {
                mBeanServer.unregisterMBean(mbeanObjectName);
@@ -165,7 +166,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
-   public RemoteCacheManager getRemoteCacheManager() {
+   public RemoteCacheContainer getRemoteCacheContainer() {
       return remoteCacheManager;
    }
 
