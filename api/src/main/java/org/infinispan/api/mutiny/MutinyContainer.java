@@ -1,5 +1,7 @@
 package org.infinispan.api.mutiny;
 
+import java.util.function.Function;
+
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.common.events.container.ContainerEvent;
 import org.infinispan.api.common.events.container.ContainerListenerEventType;
@@ -29,5 +31,5 @@ public interface MutinyContainer extends Infinispan {
 
    <R> Uni<R> execute(String name, Object... args);
 
-   // execute(new NamedTask("name"), ...)
+   <T> Uni<T> batch(Function<MutinyContainer, Uni<T>> function);
 }
