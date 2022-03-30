@@ -1034,7 +1034,7 @@
           <xs:attribute name="startup-mode" type="tns:startup-mode" default="none">
             <xs:annotation>
               <xs:documentation>
-                Specify the process to trigger on indexes when the cache starts.
+                Triggers an indexing process when the cache starts.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -2587,30 +2587,30 @@
       <xs:enumeration value="purge">
         <xs:annotation>
           <xs:documentation>
-            Purge will be triggered at cache startup time.
+            Clears the index when the cache starts.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="reindex">
         <xs:annotation>
           <xs:documentation>
-            Reindex will be triggered at cache startup time.
+            Rebuilds the index when the cache starts.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="auto">
         <xs:annotation>
           <xs:documentation>
-            With this configuration Infinispan will try to run the right action to align cache data and indexes.
-            Purge will be triggered if the cache data is volatile and indexes are not.
-            Reindex will be triggered if the cache data is not volatile and indexes are.
+            Automatically triggers an indexing operation when the cache starts.
+            If data is volatile and the index is persistent then the cache is cleared when it starts.
+            If data is persistent and the index is volatile then the cache is reindexed when it starts.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="none">
         <xs:annotation>
           <xs:documentation>
-            No mass-indexing operation is triggered at cache startup time. This is the default.
+            Cache startup does not trigger an indexing operation. This is the default value.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
