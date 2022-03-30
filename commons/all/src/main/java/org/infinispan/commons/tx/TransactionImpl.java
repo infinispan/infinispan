@@ -6,8 +6,13 @@ import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.transaction.HeuristicMixedException;
@@ -22,6 +27,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 
 /**
@@ -82,6 +88,45 @@ public class TransactionImpl implements Transaction {
       return exception;
    }
 
+   private static Throwable throwChecked(Throwable throwable) throws RollbackException, HeuristicMixedException, HeuristicRollbackException {
+      throwable = CompletableFutures.extractException(throwable);
+      if (throwable instanceof HeuristicMixedException) {
+         throw (HeuristicMixedException) throwable;
+      } else if (throwable instanceof HeuristicRollbackException) {
+         throw (HeuristicRollbackException) throwable;
+      } else if (throwable instanceof RollbackException) {
+         throw (RollbackException) throwable;
+      } else if (throwable instanceof RuntimeException) {
+         throw (RuntimeException) throwable;
+      }
+      return throwable;
+   }
+
+   private static void throwRuntimeException(Throwable throwable) {
+      if (throwable instanceof RuntimeException) {
+         throw (RuntimeException) throwable;
+      } else {
+         throw new RuntimeException(throwable);
+      }
+   }
+
+   private static Void checkThrowableForRollback(Throwable t) {
+      t = CompletableFutures.extractException(t);
+      if (t instanceof HeuristicMixedException || t instanceof HeuristicRollbackException) {
+         log.errorRollingBack(t);
+         SystemException systemException = new SystemException("Unable to rollback transaction");
+         systemException.initCause(t);
+         throw CompletableFutures.asCompletionException(systemException);
+      } else if (t instanceof RollbackException) {
+         //ignored
+         if (log.isTraceEnabled()) {
+            log.trace("RollbackException thrown while rolling back", t);
+         }
+      }
+      return null;
+   }
+
+
    /**
     * Attempt to commit this transaction.
     *
@@ -95,14 +140,31 @@ public class TransactionImpl implements Transaction {
    @Override
    public void commit()
          throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException {
+      try {
+         commitAsync(DefaultResourceConverter.INSTANCE).toCompletableFuture().get();
+      } catch (ExecutionException e) {
+         Throwable cause = throwChecked(e.getCause());
+         if (cause instanceof SecurityException) {
+            throw (SecurityException) cause;
+         }
+         throwRuntimeException(cause);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
+   }
+
+   public CompletionStage<Void> commitAsync(TransactionResourceConverter converter) {
       if (log.isTraceEnabled()) {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
-         throw new IllegalStateException("Transaction is done. Cannot commit transaction.");
+         CompletableFuture<Void> cf = new CompletableFuture<>();
+         cf.completeExceptionally(new IllegalStateException("Transaction is done. Cannot commit transaction."));
+         return cf;
       }
-      runPrepare();
-      runCommit(false);
+      return runPrepareAsync(converter)
+            .handle((____, ___) -> runCommitAsync(false, converter))
+            .thenCompose(Function.identity());
    }
 
    /**
@@ -115,27 +177,35 @@ public class TransactionImpl implements Transaction {
     */
    @Override
    public void rollback() throws IllegalStateException, SystemException {
+      try {
+         rollbackAsync(DefaultResourceConverter.INSTANCE).toCompletableFuture().get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+         Throwable cause = CompletableFutures.extractException(e.getCause());
+         if (cause instanceof IllegalStateException) {
+            throw (IllegalStateException) cause;
+         } else if (cause instanceof SystemException) {
+            throw (SystemException) cause;
+         }
+         throwRuntimeException(cause);
+      }
+   }
+
+   public CompletionStage<Void> rollbackAsync(TransactionResourceConverter converter) {
       if (log.isTraceEnabled()) {
-         log.tracef("Transaction.rollback() invoked in transaction with Xid=%s", xid);
+         log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
-         throw new IllegalStateException("Transaction is done. Cannot rollback transaction");
+         CompletableFuture<Void> cf = new CompletableFuture<>();
+         cf.completeExceptionally(new IllegalStateException("Transaction is done. Cannot commit transaction."));
+         return cf;
       }
-      try {
-         status = Status.STATUS_MARKED_ROLLBACK;
-         endResources();
-         runCommit(false);
-      } catch (HeuristicMixedException | HeuristicRollbackException e) {
-         log.errorRollingBack(e);
-         SystemException systemException = new SystemException("Unable to rollback transaction");
-         systemException.initCause(e);
-         throw systemException;
-      } catch (RollbackException e) {
-         //ignored
-         if (log.isTraceEnabled()) {
-            log.trace("RollbackException thrown while rolling back", e);
-         }
-      }
+      status = Status.STATUS_MARKED_ROLLBACK;
+
+      return asyncEndXaResources(converter)
+            .thenCompose(unused -> runCommitAsync(false, converter))
+            .exceptionally(TransactionImpl::checkThrowableForRollback);
    }
 
    /**
@@ -257,44 +327,29 @@ public class TransactionImpl implements Transaction {
    }
 
    public boolean runPrepare() {
+      return runPrepareAsync(DefaultResourceConverter.INSTANCE).toCompletableFuture().join();
+   }
+
+   public CompletionStage<Boolean> runPrepareAsync(TransactionResourceConverter resourceConverter) {
+      TransactionResourceConverter converter = resourceConverter == null ? DefaultResourceConverter.INSTANCE : resourceConverter;
       if (log.isTraceEnabled()) {
-         log.tracef("runPrepare() invoked in transaction with Xid=%s", xid);
+         log.tracef("asyncPrepare() invoked in transaction with Xid=%s", xid);
       }
-      notifyBeforeCompletion();
-      endResources();
+      // notify Synchronizations
+      CompletionStage<Void> cf = asyncBeforeCompletion(converter);
 
-      if (status == Status.STATUS_MARKED_ROLLBACK) {
-         return false;
-      }
+      // XaResource.end()
+      cf = cf.thenCompose(unused -> asyncEndXaResources(converter));
 
-      status = Status.STATUS_PREPARING;
-
-      for (XaResourceData data : resources) {
-         final XAResource res = data.xaResource;
-
-         //note: it is safe to return even if we don't prepare all the resources. rollback will be invoked.
-         try {
-            if (log.isTraceEnabled()) {
-               log.tracef("XaResource.prepare() for %s", res);
-            }
-            // Need to check return value: the only possible values are XA_OK or XA_RDONLY.
-            // We do *not* perform commit() on XA_RDONLY! See ISPN-6146.
-            data.status = res.prepare(xid);
-         } catch (XAException e) {
-            if (log.isTraceEnabled()) {
-               log.trace("The resource wants to rollback!", e);
-            }
-            markRollbackOnly(newRollbackException(format("XaResource.prepare() for %s wants to rollback.", res), e));
-            return false;
-         } catch (Throwable th) {
-            markRollbackOnly(newRollbackException(
-                  format("Unexpected error in XaResource.prepare() for %s. Rollback transaction.", res), th));
-            log.unexpectedErrorFromResourceManager(th);
-            return false;
+      // XaResource.prepare()
+      return cf.thenCompose(unused -> {
+         if (status == Status.STATUS_MARKED_ROLLBACK) {
+            //no need for prepare since we are going to rollback
+            return CompletableFutures.completedFalse();
          }
-      }
-      status = Status.STATUS_PREPARED;
-      return true;
+         status = Status.STATUS_PREPARING;
+         return asyncPrepareXaResources(converter);
+      });
    }
 
    /**
@@ -305,8 +360,20 @@ public class TransactionImpl implements Transaction {
     *
     * @param forceRollback force the transaction to rollback.
     */
-   public synchronized void runCommit(boolean forceRollback) //synch because of client transactions
+   public synchronized void runCommit(boolean forceRollback) //synchronized because of client transactions
          throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
+      try {
+         runCommitAsync(forceRollback, DefaultResourceConverter.INSTANCE).toCompletableFuture().get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+         Throwable cause = throwChecked(e.getCause());
+         throwRuntimeException(cause);
+      }
+   }
+
+   public CompletionStage<Void> runCommitAsync(boolean forceRollback, TransactionResourceConverter resourceConverter) {
+      TransactionResourceConverter converter = resourceConverter == null ? DefaultResourceConverter.INSTANCE : resourceConverter;
       if (log.isTraceEnabled()) {
          log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s", forceRollback, xid);
       }
@@ -314,21 +381,22 @@ public class TransactionImpl implements Transaction {
          markRollbackOnly(new RollbackException(FORCE_ROLLBACK_MESSAGE));
       }
 
-      int notifyAfterStatus = 0;
-
-      try {
-         if (status == Status.STATUS_MARKED_ROLLBACK) {
-            notifyAfterStatus = Status.STATUS_ROLLEDBACK;
-            rollbackResources();
+      boolean commit = status != Status.STATUS_MARKED_ROLLBACK;
+      CompletionStage<Void> stage = asyncFinishXaResources(commit, converter);
+      //notify Synchronizations
+      stage = stage.handle((__, t) -> {
+         CompletionStage<Void> s = asyncAfterCompletion(commit ? Status.STATUS_COMMITTED : Status.STATUS_ROLLEDBACK, converter);
+         if (t != null) {
+            return s.thenAccept(___ -> {
+               throw CompletableFutures.asCompletionException(t);
+            });
          } else {
-            notifyAfterStatus = Status.STATUS_COMMITTED;
-            commitResources();
+            return s.thenAccept(___ -> CompletableFutures.rethrowExceptionIfPresent(hasRollbackException(forceRollback)));
          }
-      } finally {
-         notifyAfterCompletion(notifyAfterStatus);
-         TransactionManagerImpl.dissociateTransaction();
-      }
-      throwRollbackExceptionIfAny(forceRollback);
+      }).thenCompose(CompletableFutures.identity());
+      TransactionManagerImpl.dissociateTransaction();
+      resources.clear();
+      return stage;
    }
 
    @Override
@@ -368,14 +436,15 @@ public class TransactionImpl implements Transaction {
       return this == obj;
    }
 
-   private void throwRollbackExceptionIfAny(boolean forceRollback) throws RollbackException {
+   private RollbackException hasRollbackException(boolean forceRollback) {
       if (firstRollbackException != null) {
          if (forceRollback && FORCE_ROLLBACK_MESSAGE.equals(firstRollbackException.getMessage())) {
             //force rollback set. don't throw it.
-            return;
+            return null;
          }
-         throw firstRollbackException;
+         return firstRollbackException;
       }
+      return null;
    }
 
    private void markRollbackOnly(RollbackException e) {
@@ -388,141 +457,208 @@ public class TransactionImpl implements Transaction {
       }
    }
 
-   private void finishResource(boolean commit) throws HeuristicRollbackException, HeuristicMixedException {
-      boolean ok = false;
-      boolean heuristic = false;
-      boolean error = false;
-      Exception cause = null;
-
-      for (XaResourceData data : resources) {
-         final XAResource res = data.xaResource;
-         try {
-            if (commit) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("XaResource.commit() for %s", res);
-               }
-               if (data.status == XAResource.XA_RDONLY) {
-                  log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s", res);
-                  continue;
-               }
-               //we only do 2-phase commits
-               res.commit(xid, false);
-            } else {
-               if (log.isTraceEnabled()) {
-                  log.tracef("XaResource.rollback() for %s", res);
-               }
-               res.rollback(xid);
-            }
-            ok = true;
-         } catch (XAException e) {
-            cause = e;
-            log.errorCommittingTx(e);
-            switch (e.errorCode) {
-               case XAException.XA_HEURCOM:
-               case XAException.XA_HEURRB:
-               case XAException.XA_HEURMIX:
-                  heuristic = true;
-                  break;
-               case XAException.XAER_NOTA:
-                  if (commit) {
-                     //we are committing and the resource does not know the transaction
-                     //the resource rolled-back the transaction without waiting for us (most likely).
-                     heuristic = true;
-                  } else {
-                     //we are rolling-back the transaction. just ignore it...
-                     ok = true;
-                  }
-                  break;
-               default:
-                  error = true;
-                  break;
-            }
-         }
+   private CompletionStage<Void> asyncBeforeCompletion(TransactionResourceConverter converter) {
+      Iterator<Synchronization> iterator = syncs.iterator();
+      if (!iterator.hasNext()) {
+         return CompletableFutures.completedNull();
       }
-
-      resources.clear();
-
-      if (heuristic && !ok && !error) {
-         //all the resources thrown an heuristic exception
-         HeuristicRollbackException exception = new HeuristicRollbackException();
-         exception.initCause(cause);
-         throw exception;
-      } else if (error || heuristic) {
-         status = Status.STATUS_UNKNOWN;
-         //some resources commits, other rollbacks and others we don't know...
-         HeuristicMixedException exception = new HeuristicMixedException();
-         exception.initCause(cause);
-         throw exception;
+      CompletionStage<Void> cf = beforeCompletion(iterator.next(), converter);
+      while (iterator.hasNext()) {
+         Synchronization synchronization = iterator.next();
+         cf = cf.thenCompose(unused -> beforeCompletion(synchronization, converter));
       }
+      return cf;
    }
 
-   private void commitResources() throws HeuristicRollbackException, HeuristicMixedException {
-      status = Status.STATUS_COMMITTING;
-      try {
-         finishResource(true);
-      } catch (HeuristicRollbackException | HeuristicMixedException e) {
-         status = Status.STATUS_UNKNOWN;
-         throw e;
+   private CompletionStage<Void> beforeCompletion(Synchronization s, TransactionResourceConverter converter) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Synchronization.beforeCompletion() for %s", s);
       }
-      status = Status.STATUS_COMMITTED;
+      return converter.convertSynchronization(s).asyncBeforeCompletion().exceptionally(t -> {
+         beforeCompletionFailed(s, t);
+         return null;
+      });
    }
 
-   private void rollbackResources() throws HeuristicRollbackException, HeuristicMixedException {
-      status = Status.STATUS_ROLLING_BACK;
-      try {
-         finishResource(false);
-      } catch (HeuristicRollbackException | HeuristicMixedException e) {
-         status = Status.STATUS_UNKNOWN;
-         throw e;
-      }
-      status = Status.STATUS_ROLLEDBACK;
+   private void beforeCompletionFailed(Synchronization s, Throwable t) {
+      t = CompletableFutures.extractException(t);
+      markRollbackOnly(newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.", s), t));
+      log.beforeCompletionFailed(s.toString(), t);
    }
 
-   private void notifyBeforeCompletion() {
-      for (Synchronization s : getEnlistedSynchronization()) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Synchronization.beforeCompletion() for %s", s);
-         }
-         try {
-            s.beforeCompletion();
-         } catch (Throwable t) {
-            markRollbackOnly(
-                  newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.", s), t));
-            log.beforeCompletionFailed(s.toString(), t);
-         }
+   private CompletionStage<Void> asyncAfterCompletion(int status, TransactionResourceConverter converter) {
+      Iterator<Synchronization> iterator = syncs.iterator();
+      if (!iterator.hasNext()) {
+         return CompletableFutures.completedNull();
       }
-   }
-
-   private void notifyAfterCompletion(int status) {
-      for (Synchronization s : getEnlistedSynchronization()) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Synchronization.afterCompletion() for %s", s);
-         }
-         try {
-            s.afterCompletion(status);
-         } catch (Throwable t) {
-            log.afterCompletionFailed(s.toString(), t);
-         }
+      CompletionStage<Void> cf = afterCompletion(iterator.next(), status, converter);
+      while (iterator.hasNext()) {
+         Synchronization synchronization = iterator.next();
+         cf = cf.thenCompose(unused -> afterCompletion(synchronization, status, converter));
       }
       syncs.clear();
+      return cf;
    }
 
-   private void endResources() {
-      for (XaResourceData data : resources) {
-         if (log.isTraceEnabled()) {
-            log.tracef("XAResource.end() for %s", data.xaResource);
-         }
-         try {
-            data.xaResource.end(xid, XAResource.TMSUCCESS);
-         } catch (XAException e) {
-            markRollbackOnly(newRollbackException(format("XaResource.end() for %s wants to rollback.", data.xaResource), e));
-            log.xaResourceEndFailed(data.xaResource.toString(), e);
-         } catch (Throwable t) {
-            markRollbackOnly(newRollbackException(
-                  format("Unexpected error in XaResource.end() for %s. Marked as rollback", data.xaResource), t));
-            log.xaResourceEndFailed(data.xaResource.toString(), t);
-         }
+   private static CompletionStage<Void> afterCompletion(Synchronization s, int status, TransactionResourceConverter converter) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Synchronization.afterCompletion() for %s", s);
       }
+      return converter.convertSynchronization(s).asyncAfterCompletion(status).exceptionally(t -> {
+         log.afterCompletionFailed(s.toString(), CompletableFutures.extractException(t));
+         return null;
+      });
+   }
+
+
+   private CompletionStage<Void> asyncEndXaResources(TransactionResourceConverter converter) {
+      Iterator<XaResourceData> iterator = resources.iterator();
+      if (!iterator.hasNext()) {
+         return CompletableFutures.completedNull();
+      }
+      CompletionStage<Void> cf = endXaResource(iterator.next().xaResource, converter);
+      while (iterator.hasNext()) {
+         XAResource resource = iterator.next().xaResource;
+         cf = cf.thenCompose(unused -> endXaResource(resource, converter));
+      }
+      return cf;
+   }
+
+   private CompletionStage<Void> endXaResource(XAResource resource, TransactionResourceConverter converter) {
+      if (log.isTraceEnabled()) {
+         log.tracef("XAResource.end() for %s", resource);
+      }
+      return converter.convertXaResource(resource).asyncEnd(xid, XAResource.TMSUCCESS).exceptionally(t -> {
+         endXaResourceFailed(resource, t);
+         return null;
+      });
+   }
+
+   private void endXaResourceFailed(XAResource resource, Throwable t) {
+      t = CompletableFutures.extractException(t);
+      String msg = t instanceof XAException ?
+            format("XaResource.end() for %s wants to rollback.", resource) :
+            format("Unexpected error in XaResource.end() for %s. Marked as rollback", resource);
+      markRollbackOnly(newRollbackException(msg, t));
+      log.xaResourceEndFailed(resource.toString(), t);
+   }
+
+   private CompletionStage<Boolean> asyncPrepareXaResources(TransactionResourceConverter converter) {
+      status = Status.STATUS_PREPARING;
+      Iterator<XaResourceData> iterator = resources.iterator();
+      if (!iterator.hasNext()) {
+         status = Status.STATUS_PREPARED;
+         return CompletableFutures.completedTrue();
+      }
+
+      CompletionStage<Boolean> cf = prepareXaResource(iterator.next(), converter);
+      while (iterator.hasNext()) {
+         XaResourceData data = iterator.next();
+         cf = cf.thenCompose(prepared -> prepared ? prepareXaResource(data, converter) : CompletableFutures.completedFalse());
+      }
+      return cf.whenComplete((prepared, ___) -> {
+         if (prepared) {
+            status = Status.STATUS_PREPARED;
+         }
+      });
+   }
+
+   private CompletionStage<Boolean> prepareXaResource(XaResourceData data, TransactionResourceConverter converter) {
+      if (log.isTraceEnabled()) {
+         log.tracef("XaResource.prepare() for %s", data.xaResource);
+      }
+      return converter.convertXaResource(data.xaResource).asyncPrepare(xid)
+            .thenApply(status -> {
+               data.status = status;
+               return true;
+            }).exceptionally(t -> {
+               prepareXaResourceFailed(data.xaResource, t);
+               return false;
+            });
+   }
+
+   private void prepareXaResourceFailed(XAResource resource, Throwable t) {
+      t = CompletableFutures.extractException(t);
+      String msg;
+      if (t instanceof XAException) {
+         if (log.isTraceEnabled()) {
+            log.tracef(t, "XaResource.prepare() for %s wants to rollback.", resource);
+         }
+         msg = format("XaResource.prepare() for %s wants to rollback.", resource);
+      } else {
+         msg = format("Unexpected error in XaResource.prepare() for %s. Rollback transaction.", resource);
+         log.unexpectedErrorFromResourceManager(t);
+      }
+      markRollbackOnly(newRollbackException(msg, t));
+   }
+
+   private CompletionStage<Void> asyncFinishXaResources(boolean commit, TransactionResourceConverter converter) {
+      Iterator<XaResourceData> iterator = resources.iterator();
+      if (!iterator.hasNext()) {
+         status = commit ? Status.STATUS_COMMITTED : Status.STATUS_ROLLEDBACK;
+         return CompletableFutures.completedNull();
+      }
+      XaResultCollector collector = new XaResultCollector(resources.size(), commit);
+      CompletionStage<Void> cf = commit ?
+            commitXaResource(iterator.next(), converter, collector) :
+            rollbackXaResource(iterator.next(), converter, collector);
+      while (iterator.hasNext()) {
+         XaResourceData data = iterator.next();
+         cf = cf.thenCompose(unused -> commit ?
+               commitXaResource(data, converter, collector) :
+               rollbackXaResource(data, converter, collector));
+      }
+      return cf.thenApply(unused -> {
+         checkCollector(collector, commit);
+         return null;
+      });
+   }
+
+   private CompletionStage<Void> commitXaResource(XaResourceData data, TransactionResourceConverter converter, XaResultCollector collector) {
+      if (data.status == XAResource.XA_RDONLY) {
+         log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s", data.xaResource);
+         return CompletableFutures.completedNull();
+      }
+      if (log.isTraceEnabled()) {
+         log.tracef("XaResource.commit() for %s", data.xaResource);
+      }
+      return converter.convertXaResource(data.xaResource).asyncCommit(xid, false)
+            .thenRun(collector)
+            .exceptionally(collector);
+   }
+
+   private CompletionStage<Void> rollbackXaResource(XaResourceData data, TransactionResourceConverter converter, XaResultCollector collector) {
+      if (data.status == XAResource.XA_RDONLY) {
+         log.tracef("Skipping XaResource.rollback() since prepare status was XA_RDONLY for %s", data.xaResource);
+         return CompletableFutures.completedNull();
+      }
+      if (log.isTraceEnabled()) {
+         log.tracef("XaResource.rollback() for %s", data.xaResource);
+      }
+      return converter.convertXaResource(data.xaResource).asyncRollback(xid)
+            .thenRun(collector)
+            .exceptionally(collector);
+   }
+
+   private void checkCollector(XaResultCollector collector, boolean commit) {
+      switch (collector.status()) {
+         case ERROR:
+         case HEURISTIC_MIXED:
+            status = Status.STATUS_UNKNOWN;
+            //some resources commits, other rollbacks and others we don't know...
+            HeuristicMixedException exception = new HeuristicMixedException();
+            collector.addSuppressedTo(exception);
+            status = Status.STATUS_UNKNOWN;
+            throw CompletableFutures.asCompletionException(exception);
+         case HEURISTIC_ROLLBACK:
+            HeuristicRollbackException e = new HeuristicRollbackException();
+            collector.addSuppressedTo(e);
+            status = Status.STATUS_UNKNOWN;
+            throw CompletableFutures.asCompletionException(e);
+         default:
+            break;
+      }
+      status = commit ? Status.STATUS_COMMITTED : Status.STATUS_ROLLEDBACK;
    }
 
    private void checkStatusBeforeRegister(String component) throws RollbackException, IllegalStateException {
@@ -554,6 +690,86 @@ public class TransactionImpl implements Transaction {
 
       private XaResourceData(XAResource xaResource) {
          this.xaResource = Objects.requireNonNull(xaResource);
+      }
+   }
+
+   private enum TxCompletableStatus {
+      NONE,
+      OK,
+      HEURISTIC_ROLLBACK,
+      HEURISTIC_MIXED,
+      ERROR
+
+
+   }
+
+   private static class XaResultCollector implements Runnable, Function<Throwable, Void> {
+      private TxCompletableStatus status = TxCompletableStatus.NONE;
+      private final List<Throwable> exceptions;
+      private final boolean commit;
+
+      XaResultCollector(int capacity, boolean commit) {
+         exceptions = new ArrayList<>(capacity);
+         this.commit = commit;
+      }
+
+      @Override
+      public synchronized void run() {
+         if (status == TxCompletableStatus.NONE) {
+            status = TxCompletableStatus.OK;
+         } else if (status == TxCompletableStatus.HEURISTIC_ROLLBACK) {
+            status = TxCompletableStatus.HEURISTIC_MIXED;
+         }
+      }
+
+      @Override
+      public synchronized Void apply(Throwable throwable) {
+         throwable = CompletableFutures.extractException(throwable);
+         log.errorCommittingTx(throwable);
+         exceptions.add(throwable);
+         if (throwable instanceof XAException) {
+            XAException e = (XAException) throwable;
+            switch (e.errorCode) {
+               case XAException.XA_HEURCOM:
+               case XAException.XA_HEURRB:
+               case XAException.XA_HEURMIX:
+                  if (status == TxCompletableStatus.NONE) {
+                     status = TxCompletableStatus.HEURISTIC_ROLLBACK;
+                  } else if (status == TxCompletableStatus.OK) {
+                     status = TxCompletableStatus.HEURISTIC_MIXED;
+                  }
+                  break;
+               case XAException.XAER_NOTA:
+                  if (commit) {
+                     if (status == TxCompletableStatus.NONE) {
+                        status = TxCompletableStatus.HEURISTIC_ROLLBACK;
+                     } else if (status == TxCompletableStatus.OK) {
+                        status = TxCompletableStatus.HEURISTIC_MIXED;
+                     }
+                  } else {
+                     // we are rolling back the transaction but the transaction does no exist.
+                     // just ignore it
+                     if (status == TxCompletableStatus.NONE) {
+                        status = TxCompletableStatus.OK;
+                     }
+                  }
+                  break;
+               default:
+                  status = TxCompletableStatus.ERROR;
+                  break;
+            }
+         } else {
+            status = TxCompletableStatus.ERROR;
+         }
+         return null;
+      }
+
+      synchronized TxCompletableStatus status() {
+         return status;
+      }
+
+      synchronized void addSuppressedTo(Throwable t) {
+         exceptions.forEach(t::addSuppressed);
       }
    }
 }
