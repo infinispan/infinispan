@@ -328,26 +328,18 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       Flowable<NotificationWithLost<R>> flowableWithNotifications(boolean reuseNotifications) {
          switch (deliveryGuarantee) {
             case AT_MOST_ONCE:
-               return Flowable.defer(() -> {
-                  // LocalClusterPublisherManagerImpl always forces AT_MOST_ONCE so distributionManager may be null
-                  LocalizedCacheTopology localizedCacheTopology = distributionManager != null ?
-                        distributionManager.getCacheTopology() : null;
-                  Notifications.NotificationBuilder<R> builder = reuseNotifications ? Notifications.reuseBuilder() :
-                        Notifications.newBuilder();
-                  return Flowable.fromIterable(segments)
-                        .concatMap(segment -> {
-                           if (localizedCacheTopology != null && !localizedCacheTopology.isSegmentReadOwner(segment)) {
-                              return Flowable.just(builder.segmentLost(segment));
-                           }
-                           Flowable<I> flowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
-                           if (predicate != null) {
-                              flowable = flowable.filter(predicate);
-                           }
-                           return flowable.compose(transformer::apply)
-                                 .map(r -> builder.value(r, segment))
-                                 .concatWith(Single.fromSupplier(() -> builder.segmentComplete(segment)));
-                  });
-               });
+               Notifications.NotificationBuilder<R> atMostBuilder = reuseNotifications ? Notifications.reuseBuilder() :
+                     Notifications.newBuilder();
+               return Flowable.fromIterable(segments)
+                     .concatMap(segment -> {
+                        Flowable<I> flowable = Flowable.fromPublisher(cacheSet.localPublisher(segment));
+                        if (predicate != null) {
+                           flowable = flowable.filter(predicate);
+                        }
+                        return flowable.compose(transformer::apply)
+                              .map(r -> atMostBuilder.value(r, segment))
+                              .concatWith(Single.fromSupplier(() -> atMostBuilder.segmentComplete(segment)));
+                     });
             case AT_LEAST_ONCE:
             case EXACTLY_ONCE:
                // Need to use defer to have the shared variables between the various inner publishers but also
