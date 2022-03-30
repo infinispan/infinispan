@@ -24,27 +24,25 @@ include::xml/indexing_jvm_heap.xml[]
 
 == Index startup mode
 
-Allows to define some mass indexing operations (e.g.: purge or reindex) to trigger when the cache starts.
-These actions are usually needed to keep data and indexes aligned (consistent).
+When {brandname} starts caches it can perform operations to ensure the index is consistent with data in the cache.
+By default no indexing operation takes place when a cache starts but you can configure {brandname} to:
 
-Possible values are:
+* Clear the index when the cache starts.
+* Reindex the cache when it starts.
+* Automatically clear or reindex the cache.
+** If data is volatile and the index is persistent then the cache is cleared when it starts.
+** If data is persistent and the index is volatile then the cache is reindexed when it starts.
 
-* `purge` to purge indexes at cache startup time.
-* `reindex` to reindex the entities present in cache at cache startup time.
-* `auto` with this configuration Infinispan will try to run the right action to align cache data and indexes:
-** Purge will be triggered if the cache data is volatile and indexes are not.
-** Reindex will be triggered if the cache data is not volatile and indexes are.
-* `none` to not trigger any operation. This is the default.
-
-For instance to set `purge` see the following example.
-The other configurations are similar.
-
-=== Purge indexes at start
-
-.Purge indexes at startup time
+.Clear the index when the cache starts
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/indexing_startup_mode.xml[]
+include::xml/indexing_startup_purge.xml[]
+----
+
+.Rebuild the index when the cache starts
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_startup_reindex.xml[]
 ----
 
 == Index reader
