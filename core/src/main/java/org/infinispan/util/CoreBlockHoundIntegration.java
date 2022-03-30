@@ -14,6 +14,7 @@ import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.persistence.sifs.TemporaryTable;
 import org.infinispan.scattered.impl.ScatteredStateConsumerImpl;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferLockImpl;
@@ -115,6 +116,10 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // Scattered state consumer is currently blocking - needs to be rewritten to be non blocking
       // https://issues.redhat.com/browse/ISPN-10864
       builder.allowBlockingCallsInside(ScatteredStateConsumerImpl.class.getName(), "blockingSubscribe");
+
+      // SoftIndexFileStore locks and awaits on write if there is a concurrent compaction
+      // https://issues.redhat.com/browse/ISPN-13799
+      builder.allowBlockingCallsInside(TemporaryTable.class.getName(), "set");
    }
 
    private static void registerBlockingMethods(BlockHound.Builder builder) {
