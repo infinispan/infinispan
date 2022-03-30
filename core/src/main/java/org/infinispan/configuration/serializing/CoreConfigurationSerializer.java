@@ -14,7 +14,6 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -394,7 +393,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             writer.writeStartMap(Element.ROLES);
             for (Role role : authorization.roles().values()) {
                writer.writeMapItem(Element.ROLE, Attribute.NAME, role.getName());
-               writeCollectionAsAttribute(writer, Attribute.PERMISSIONS, role.getPermissions());
+               writer.writeAttribute(Attribute.PERMISSIONS, role.getPermissions().stream().map(Enum::name).collect(Collectors.toList()));
                writer.writeEndMapItem();
             }
             writer.writeEndMap();
@@ -601,7 +600,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writer.writeStartElement(Element.SECURITY);
          writer.writeStartElement(Element.AUTHORIZATION);
          attributes.write(writer, AuthorizationConfiguration.ENABLED, Attribute.ENABLED);
-         writeCollectionAsAttribute(writer, Attribute.ROLES, authorization.roles());
+         writer.writeAttribute(Attribute.ROLES, authorization.roles());
          writer.writeEndElement();
          writer.writeEndElement();
       }
@@ -833,21 +832,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       }
       writer.writeEndMap();
    }
-
-   private void writeCollectionAsAttribute(ConfigurationWriter writer, Attribute attribute, Collection<?> collection) {
-      if (!collection.isEmpty()) {
-         StringBuilder result = new StringBuilder();
-         boolean separator = false;
-         for (Object item : collection) {
-            if (separator)
-               result.append(" ");
-            result.append(item);
-            separator = true;
-         }
-         writer.writeAttribute(attribute, result.toString());
-      }
-   }
-
 
    private void writeFileStore(ConfigurationWriter writer, SoftIndexFileStoreConfiguration configuration) {
       writer.writeStartElement(Element.FILE_STORE);

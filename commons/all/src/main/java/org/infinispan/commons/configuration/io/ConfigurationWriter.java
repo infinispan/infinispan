@@ -181,9 +181,9 @@ public interface ConfigurationWriter extends AutoCloseable {
 
    void writeAttribute(String name, boolean value);
 
-   void writeAttribute(Enum<?> name, String[] values);
+   void writeAttribute(Enum<?> name, Iterable<String> values);
 
-   void writeAttribute(String name, String[] values);
+   void writeAttribute(String name, Iterable<String> values);
 
    void writeCharacters(String chars);
 

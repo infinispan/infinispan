@@ -1,7 +1,9 @@
 package org.infinispan.commons.configuration.attributes;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 
@@ -25,9 +27,9 @@ public interface AttributeSerializer<T> {
          writer.writeAttribute(name, "***");
       }
    };
-   AttributeSerializer<String[]> STRING_ARRAY = ConfigurationWriter::writeAttribute;
-   AttributeSerializer<Collection<String>> STRING_COLLECTION = (writer, name, value) -> writer.writeAttribute(name, value.toArray(new String[0]));
-   AttributeSerializer<Collection<? extends Enum<?>>> ENUM_COLLECTION = (writer, name, value) -> writer.writeAttribute(name, value.stream().map(Enum::toString).toArray(String[]::new));
+   AttributeSerializer<String[]> STRING_ARRAY = (writer, name, value) -> writer.writeAttribute(name, Arrays.asList(value));
+   AttributeSerializer<Collection<String>> STRING_COLLECTION = (writer, name, value) -> writer.writeAttribute(name, value);
+   AttributeSerializer<Collection<? extends Enum<?>>> ENUM_COLLECTION = (writer, name, value) -> writer.writeAttribute(name, value.stream().map(Enum::toString).collect(Collectors.toList()));
    AttributeSerializer<Object> INSTANCE_CLASS_NAME = ((writer, name, value) -> writer.writeAttribute(name, value.getClass().getName()));
    AttributeSerializer<Class> CLASS_NAME = ((writer, name, value) -> writer.writeAttribute(name, value.getName()));
 

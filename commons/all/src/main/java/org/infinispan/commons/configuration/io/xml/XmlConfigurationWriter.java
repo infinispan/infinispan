@@ -241,8 +241,10 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    @Override
-   public void writeAttribute(String name, String[] values) {
-      writeAttribute(name, String.join(" ", values));
+   public void writeAttribute(String name, Iterable<String> values) {
+      if (values.iterator().hasNext()) {
+         writeAttribute(name, String.join(" ", values));
+      }
    }
 
    @Override

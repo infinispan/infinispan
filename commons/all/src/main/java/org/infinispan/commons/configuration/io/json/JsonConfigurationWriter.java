@@ -142,7 +142,7 @@ public class JsonConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    @Override
-   public void writeAttribute(String name, String[] values) {
+   public void writeAttribute(String name, Iterable<String> values) {
       Json parent = attributeParent();
       Json array = Json.array();
       for (String value : values) {
