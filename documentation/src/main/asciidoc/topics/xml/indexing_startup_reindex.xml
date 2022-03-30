@@ -1,0 +1,5 @@
+<distributed-cache>
+  <indexing storage="local-heap" startup-mode="reindex">
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>
