@@ -1,6 +1,8 @@
 package org.infinispan.api.async;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+import java.util.function.Function;
 
 import org.infinispan.api.Infinispan;
 import org.infinispan.api.common.events.container.ContainerEvent;
@@ -22,4 +24,6 @@ public interface AsyncContainer extends Infinispan {
    AsyncLocks locks();
 
    Flow.Publisher<ContainerEvent> listen(ContainerListenerEventType... types);
+
+   <T> CompletionStage<T> batch(Function<AsyncContainer, CompletionStage<T>> function);
 }
