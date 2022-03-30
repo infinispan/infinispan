@@ -156,7 +156,9 @@ public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
             int segment;
             if (notification.isSegmentComplete()) {
                segment = notification.completedSegment();
-               assertTrue(localSegments.contains(segment));
+               if (!localSegments.contains(segment)) {
+                  assertEquals("Only at most once can say the segment is complete without having it", deliveryGuarantee, DeliveryGuarantee.AT_MOST_ONCE);
+               }
             } else {
                segment = notification.lostSegment();
                assertFalse(localSegments.contains(segment));
