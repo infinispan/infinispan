@@ -165,7 +165,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
    }
 
    @Override
-   public void writeAttribute(String name, String[] values) {
+   public void writeAttribute(String name, Iterable<String> values) {
       try {
          openTag = false;
          if (!attributes) {
@@ -175,7 +175,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
          tab();
          writer.write(naming.convert(name));
          writer.write(":");
-         if (values.length == 0) {
+         if (!values.iterator().hasNext()) {
             writer.write(" ~");
             nl();
          } else {
