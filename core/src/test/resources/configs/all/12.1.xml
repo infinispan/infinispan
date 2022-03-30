@@ -473,5 +473,11 @@
          </encoding>
       </scattered-cache-configuration>
       <scattered-cache name="scattered-cache" configuration="scattered-template"/>
+
+      <local-cache name="secure">
+         <security>
+            <authorization roles="peasant vavasour vassal king"/>
+         </security>
+      </local-cache>
    </cache-container>
 </infinispan>
