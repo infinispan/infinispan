@@ -1,20 +1,25 @@
 package org.infinispan.transaction.synchronization;
 
+import java.util.Objects;
+import java.util.concurrent.CompletionStage;
+
 import javax.transaction.Synchronization;
 
+import org.infinispan.commons.tx.AsyncSynchronization;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**
- * {@link Synchronization} implementation for integrating with the TM.
- * See <a href="https://issues.jboss.org/browse/ISPN-888">ISPN-888</a> for more information on this.
+ * {@link Synchronization} implementation for integrating with the TM. See <a href="https://issues.jboss.org/browse/ISPN-888">ISPN-888</a>
+ * for more information on this.
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements Synchronization {
+public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements Synchronization, AsyncSynchronization {
    private final LocalTransaction localTransaction;
    private final TransactionTable txTable;
 
@@ -48,9 +53,17 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
 
       SynchronizationAdapter that = (SynchronizationAdapter) o;
 
-      if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
-         return false;
+      return Objects.equals(localTransaction, that.localTransaction);
+   }
 
-      return true;
+   @Override
+   public CompletionStage<Void> asyncBeforeCompletion() {
+      return txTable.beforeCompletion(localTransaction)
+            .thenApply(CompletableFutures.toNullFunction());
+   }
+
+   @Override
+   public CompletionStage<Void> asyncAfterCompletion(int status) {
+      return txTable.afterCompletion(localTransaction, status);
    }
 }
