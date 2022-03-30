@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -986,27 +987,32 @@ public class Parser extends CacheParser {
    }
 
    private void parseGlobalRole(ConfigurationReader reader, GlobalAuthorizationConfigurationBuilder builder, String name) {
-      String permissions = ParseUtils.requireAttributes(reader, Attribute.PERMISSIONS.getLocalName())[0];
       if (name == null) {
          name = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName())[0];
       }
       GlobalRoleConfigurationBuilder role = builder.role(name);
-      for (String permission : permissions.split("\\s+")) {
-         role.permission(permission);
-      }
+      String[] permissions = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
-            case NAME:
-            case PERMISSIONS: {
+            case NAME: {
                // Already handled
+               break;
+            }
+            case PERMISSIONS: {
+               permissions = reader.getListAttributeValue(i);
                break;
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
+      }
+      if (permissions != null) {
+         role.permission(permissions);
+      } else {
+         throw ParseUtils.missingRequired(reader, Collections.singleton(Attribute.PERMISSIONS));
       }
       ParseUtils.requireNoContent(reader);
    }

@@ -48,7 +48,7 @@ public class CorsRuleConfiguration extends ConfigurationElement<CorsRuleConfigur
    private static AttributeSerializer<String[]> stringArraySerializer() {
       return (w, n, v) -> {
          if (w.hasFeature(ConfigurationFormatFeature.MIXED_ELEMENTS)) {
-            w.writeAttribute(n, v);
+            w.writeAttribute(n, Arrays.asList(v));
          } else {
             w.writeArrayElement(n, n, null, Arrays.asList(v));
          }
