@@ -437,15 +437,14 @@ public class CacheParser implements ConfigurationParser {
 
    private void parseCacheAuthorization(ConfigurationReader reader, AuthorizationConfigurationBuilder authzBuilder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
-               authzBuilder.enabled(Boolean.parseBoolean(value));
+               authzBuilder.enabled(Boolean.parseBoolean(reader.getAttributeValue(i)));
                break;
             }
             case ROLES: {
-               for(String role : value.split("\\s+")) {
+               for(String role : reader.getListAttributeValue(i)) {
                   authzBuilder.role(role);
                }
                break;

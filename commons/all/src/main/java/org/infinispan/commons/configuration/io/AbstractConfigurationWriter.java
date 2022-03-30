@@ -77,7 +77,7 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    }
 
    @Override
-   public void writeAttribute(Enum<?> name, String[] value) {
+   public void writeAttribute(Enum<?> name, Iterable<String> value) {
       writeAttribute(name.toString(), value);
    }
 

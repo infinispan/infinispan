@@ -378,5 +378,11 @@
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
       </distributed-cache-configuration>
       <distributed-cache name="dist-instance" configuration="dist-template" />
+
+      <local-cache name="secure">
+         <security>
+            <authorization roles="peasant vavasour vassal king"/>
+         </security>
+      </local-cache>
    </cache-container>
 </infinispan>
