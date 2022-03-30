@@ -25,10 +25,7 @@ import org.infinispan.commons.CacheException;
 public class CompletableFutures {
    public static final CompletableFuture[] EMPTY_ARRAY = new CompletableFuture[0];
 
-   private static final CompletableFuture<Boolean> completedTrueFuture = CompletableFuture.completedFuture(Boolean.TRUE);
-   private static final CompletableFuture<Boolean> completedFalseFuture = CompletableFuture.completedFuture(Boolean.FALSE);
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
-   private static final CompletableFuture completedNullFuture = CompletableFuture.completedFuture(null);
    private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
    private static final Function<?, ?> TO_NULL = o -> null;
    private static final Function<?, Boolean> TO_TRUE_FUNCTION = o -> Boolean.TRUE;
@@ -38,21 +35,20 @@ public class CompletableFutures {
       return completedEmptyMapFuture;
    }
 
-   @SuppressWarnings("unchecked")
    public static <T> CompletableFuture<T> completedNull() {
-      return completedNullFuture;
+      return org.infinispan.commons.util.concurrent.CompletableFutures.completedNull();
    }
 
    public static CompletableFuture<Boolean> completedTrue() {
-      return completedTrueFuture;
+      return org.infinispan.commons.util.concurrent.CompletableFutures.completedTrue();
    }
 
    public static CompletableFuture<Boolean> completedFalse() {
-      return completedFalseFuture;
+      return org.infinispan.commons.util.concurrent.CompletableFutures.completedFalse();
    }
 
    public static CompletionStage<Boolean> booleanStage(boolean trueOrFalse) {
-      return trueOrFalse ? completedTrueFuture : completedFalseFuture;
+      return org.infinispan.commons.util.concurrent.CompletableFutures.booleanStage(trueOrFalse);
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {
@@ -150,25 +146,15 @@ public class CompletableFutures {
    }
 
    public static CompletionException asCompletionException(Throwable t) {
-      if (t instanceof CompletionException) {
-         return ((CompletionException) t);
-      } else {
-         return new CompletionException(t);
-      }
+      return org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException(t);
    }
 
    public static void rethrowExceptionIfPresent(Throwable t) {
-      if (t != null) {
-         throw asCompletionException(t);
-      }
+      org.infinispan.commons.util.concurrent.CompletableFutures.rethrowExceptionIfPresent(t);
    }
 
    public static Throwable extractException(Throwable t) {
-      Throwable cause = t.getCause();
-      if (cause != null && t instanceof CompletionException) {
-         return cause;
-      }
-      return t;
+      return org.infinispan.commons.util.concurrent.CompletableFutures.extractException(t);
    }
 
    public static <T, R> Function<T, R> toNullFunction() {

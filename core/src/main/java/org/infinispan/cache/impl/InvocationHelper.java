@@ -1,14 +1,25 @@
 package org.infinispan.cache.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.tx.AsyncSynchronization;
+import org.infinispan.commons.tx.AsyncXaResource;
+import org.infinispan.commons.tx.TransactionImpl;
+import org.infinispan.commons.tx.TransactionResourceConverter;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.context.InvocationContext;
@@ -33,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 11.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public class InvocationHelper {
+public class InvocationHelper implements TransactionResourceConverter {
 
    private static final Log log = LogFactory.getLog(InvocationHelper.class);
 
@@ -96,8 +107,8 @@ public class InvocationHelper {
    public <T> T invoke(InvocationContext context, VisitableCommand command) {
       checkLockOwner(context, command);
       return isTxInjected(context) ?
-             executeCommandWithInjectedTx(context, command) :
-             doInvoke(context, command);
+            executeCommandWithInjectedTx(context, command) :
+            doInvoke(context, command);
    }
 
    /**
@@ -141,8 +152,8 @@ public class InvocationHelper {
    public <T> CompletableFuture<T> invokeAsync(InvocationContext context, VisitableCommand command) {
       checkLockOwner(context, command);
       return isTxInjected(context) ?
-             executeCommandAsyncWithInjectedTx(context, command) :
-             doInvokeAsync(context, command);
+            executeCommandAsyncWithInjectedTx(context, command) :
+            doInvokeAsync(context, command);
    }
 
    /**
@@ -153,7 +164,7 @@ public class InvocationHelper {
     * @return the invocation context
     */
    public InvocationContext createInvocationContextWithImplicitTransaction(int keyCount,
-         boolean forceCreateTransaction) {
+                                                                           boolean forceCreateTransaction) {
       boolean txInjected = false;
       TransactionConfiguration txConfig = config.transaction();
       if (txConfig.transactionMode().isTransactional()) {
@@ -209,29 +220,52 @@ public class InvocationHelper {
          assert implicitTransaction != null;
          cf = doInvokeAsync(ctx, command);
       } catch (SystemException e) {
-         throw new CacheException("Cannot suspend implicit transaction", e);
+         return CompletableFutures.completedExceptionFuture(new CacheException("Cannot suspend implicit transaction", e));
       } catch (Throwable e) {
          tryRollback();
-         throw e;
+         return CompletableFutures.completedExceptionFuture(e);
       }
+      if (implicitTransaction instanceof TransactionImpl) {
+         return commitInjectedTransactionAsync(cf, (TransactionImpl) implicitTransaction);
+      } else {
+         return commitInjectTransaction(cf, implicitTransaction, ctx.getLockOwner());
+      }
+   }
+
+   private <T> CompletableFuture<T> commitInjectTransaction(CompletionStage<T> cf, Transaction transaction, Object traceId) {
       return blockingManager.handleBlocking(cf, (result, throwable) -> {
+
          if (throwable != null) {
             try {
-               implicitTransaction.rollback();
-            } catch (SystemException e) {
+               transactionManager.resume(transaction);
+               transactionManager.rollback();
+            } catch (SystemException | InvalidTransactionException e) {
                log.trace("Could not rollback", e);
                throwable.addSuppressed(e);
             }
             throw CompletableFutures.asCompletionException(throwable);
          }
          try {
-            implicitTransaction.commit();
+            transactionManager.resume(transaction);
+            transactionManager.commit();
          } catch (Exception e) {
             log.couldNotCompleteInjectedTransaction(e);
             throw CompletableFutures.asCompletionException(e);
          }
          return result;
-      }, ctx.getLockOwner()).toCompletableFuture();
+      }, traceId).toCompletableFuture();
+   }
+
+   private <T> CompletableFuture<T> commitInjectedTransactionAsync(CompletionStage<T> cf, TransactionImpl transaction) {
+      return cf.handle((result, throwable) -> {
+               if (throwable != null) {
+                  return transaction.rollbackAsync(InvocationHelper.this).thenApply(__ -> result);
+               } else {
+                  return transaction.commitAsync(InvocationHelper.this).thenApply(__ -> result);
+               }
+            })
+            .thenCompose(Function.identity())
+            .toCompletableFuture();
    }
 
    private Transaction tryBegin() {
@@ -287,5 +321,91 @@ public class InvocationHelper {
    private <T> T doInvoke(InvocationContext ctx, VisitableCommand command) {
       //noinspection unchecked
       return (T) invoker.invoke(ctx, command);
+   }
+
+   @Override
+   public AsyncSynchronization convertSynchronization(Synchronization synchronization) {
+      return synchronization instanceof AsyncSynchronization ?
+            (AsyncSynchronization) synchronization :
+            new Sync(synchronization);
+   }
+
+   @Override
+   public AsyncXaResource convertXaResource(XAResource resource) {
+      return resource instanceof AsyncXaResource ?
+            (AsyncXaResource) resource :
+            new Xa(resource);
+   }
+
+   private class Sync implements AsyncSynchronization {
+
+      private final Synchronization synchronization;
+
+      private Sync(Synchronization synchronization) {
+         this.synchronization = synchronization;
+      }
+
+      @Override
+      public CompletionStage<Void> asyncBeforeCompletion() {
+         return blockingManager.runBlocking(synchronization::beforeCompletion, synchronization);
+      }
+
+      @Override
+      public CompletionStage<Void> asyncAfterCompletion(int status) {
+         return blockingManager.runBlocking(() -> synchronization.afterCompletion(status), synchronization);
+      }
+   }
+
+   private class Xa implements AsyncXaResource {
+
+      private final XAResource resource;
+
+      private Xa(XAResource resource) {
+         this.resource = resource;
+      }
+
+      @Override
+      public CompletionStage<Void> asyncEnd(XidImpl xid, int flags) {
+         return blockingManager.runBlocking(() -> {
+            try {
+               resource.end(xid, flags);
+            } catch (XAException e) {
+               throw CompletableFutures.asCompletionException(e);
+            }
+         }, resource);
+      }
+
+      @Override
+      public CompletionStage<Integer> asyncPrepare(XidImpl xid) {
+         return blockingManager.supplyBlocking(() -> {
+            try {
+               return resource.prepare(xid);
+            } catch (XAException e) {
+               throw CompletableFutures.asCompletionException(e);
+            }
+         }, resource);
+      }
+
+      @Override
+      public CompletionStage<Void> asyncCommit(XidImpl xid, boolean onePhase) {
+         return blockingManager.runBlocking(() -> {
+            try {
+               resource.commit(xid, onePhase);
+            } catch (XAException e) {
+               throw CompletableFutures.asCompletionException(e);
+            }
+         }, resource);
+      }
+
+      @Override
+      public CompletionStage<Void> asyncRollback(XidImpl xid) {
+         return blockingManager.runBlocking(() -> {
+            try {
+               resource.rollback(xid);
+            } catch (XAException e) {
+               throw CompletableFutures.asCompletionException(e);
+            }
+         }, resource);
+      }
    }
 }

@@ -8,9 +8,11 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.tx.AsyncXaResource;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -22,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource {
+public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements XAResource, AsyncXaResource {
 
    private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
 
@@ -179,11 +181,11 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
             txTable == that.txTable;
    }
 
-   private boolean isFlag(int value, int flag) {
+   private static boolean isFlag(int value, int flag) {
       return (value & flag) != 0;
    }
 
-   private <T> T runRethrowingXAException(CompletionStage<T> completionStage) throws XAException {
+   private static <T> T runRethrowingXAException(CompletionStage<T> completionStage) throws XAException {
       try {
          return CompletionStages.join(completionStage);
       } catch (CompletionException e) {
@@ -193,5 +195,26 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
          }
          throw e;
       }
+   }
+
+   @Override
+   public CompletionStage<Void> asyncEnd(XidImpl xid, int flags) {
+      txTable.end(localTransaction);
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Integer> asyncPrepare(XidImpl xid) {
+      return txTable.prepare(xid);
+   }
+
+   @Override
+   public CompletionStage<Void> asyncCommit(XidImpl xid, boolean onePhase) {
+      return txTable.commit(xid, onePhase);
+   }
+
+   @Override
+   public CompletionStage<Void> asyncRollback(XidImpl xid) {
+      return txTable.rollback(xid);
    }
 }
