@@ -42,10 +42,12 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -61,6 +63,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.ContainerResourceTest")
 public class ContainerResourceTest extends AbstractRestResourceTest {
    private static final String PERSISTENT_LOCATION = tmpDirectory(ContainerResourceTest.class.getName());
+   private static final String CACHE_1 = "cache1";
+   private static final String CACHE_2 = "cache2";
+   private static final String DEFAULT_CACHE = "defaultcache";
+   private static final String INVALID_CACHE = "invalid";
+   private static final String CACHE_MANAGER_NAME = "default";
+   public static final String TEMPLATE_CONFIG = "template";
 
    private Configuration cache2Config;
    private Configuration templateConfig;
@@ -91,8 +99,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    protected void createCacheManagers() throws Exception {
       Util.recursiveFileRemove(PERSISTENT_LOCATION);
       super.createCacheManagers();
-      cacheManagerClient = client.cacheManager("default");
-      adminCacheManagerClient = adminClient.cacheManager("default");
+      cacheManagerClient = client.cacheManager(CACHE_MANAGER_NAME);
+      adminCacheManagerClient = adminClient.cacheManager(CACHE_MANAGER_NAME);
       timeService = new ControlledTimeService();
       cacheManagers.forEach(cm -> TestingUtil.replaceComponent(cm, TimeService.class, timeService, true));
    }
@@ -104,9 +112,9 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       ConfigurationBuilder templateConfigBuilder = new ConfigurationBuilder();
       templateConfigBuilder.template(true).clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
       templateConfig = templateConfigBuilder.build();
-      cm.defineConfiguration("cache1", cache1Config);
-      cm.defineConfiguration("cache2", cache2Config);
-      cm.defineConfiguration("template", templateConfig);
+      cm.defineConfiguration(CACHE_1, cache1Config);
+      cm.defineConfiguration(CACHE_2, cache2Config);
+      cm.defineConfiguration(TEMPLATE_CONFIG, templateConfig);
    }
 
    private Configuration getCache1Config() {
@@ -118,6 +126,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    private Configuration getCache2Config() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.statistics().enable().clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
+      builder.memory().maxCount(1000).storage(StorageType.HEAP).whenFull(EvictionStrategy.REMOVE);
       return builder.build();
    }
 
@@ -135,8 +144,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       Json cacheHealth = jsonNode.at("cache_health");
       List<String> cacheNames = extractCacheNames(cacheHealth);
-      assertTrue(cacheNames.contains("cache1"));
-      assertTrue(cacheNames.contains("cache2"));
+      assertTrue(cacheNames.contains(CACHE_1));
+      assertTrue(cacheNames.contains(CACHE_2));
 
       response = join(cacheManagerClient.health(true));
       ResponseAssertion.assertThat(response).isOk();
@@ -155,8 +164,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       Json jsonNode = Json.read(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
-      assertEquals(cachesAndConfig.get("template"), cacheConfigToJson("template", templateConfig));
-      assertEquals(cachesAndConfig.get("cache2"), cacheConfigToJson("cache2", cache2Config));
+      assertEquals(cachesAndConfig.get(TEMPLATE_CONFIG), cacheConfigToJson(TEMPLATE_CONFIG, templateConfig));
+      assertEquals(cachesAndConfig.get(CACHE_2), cacheConfigToJson(CACHE_2, cache2Config));
    }
 
    @Test
@@ -171,9 +180,9 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       Json jsonNode = Json.read(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
-      assertEquals(cachesAndConfig.get("template"), cacheConfigToJson("template", templateConfig));
-      assertFalse(cachesAndConfig.containsKey("cache1"));
-      assertFalse(cachesAndConfig.containsKey("cache2"));
+      assertEquals(cachesAndConfig.get(TEMPLATE_CONFIG), cacheConfigToJson(TEMPLATE_CONFIG, templateConfig));
+      assertFalse(cachesAndConfig.containsKey(CACHE_1));
+      assertFalse(cachesAndConfig.containsKey(CACHE_2));
    }
 
    @Test
@@ -184,7 +193,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       String json = response.getBody();
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
-      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2", "invalid");
+      Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, INVALID_CACHE);
 
       assertEquals(expectedNames, new HashSet<>(names));
 
@@ -205,7 +214,10 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertTrue(persistent.contains("false"));
 
       List<String> bounded = find(jsonNode, "bounded");
-      assertTrue(bounded.contains("false"));
+      List<String> notBoundedCaches = bounded.stream().filter(b -> "false".equals(b)).collect(Collectors.toList());
+      List<String> boundedCaches = bounded.stream().filter(b -> "true".equals(b)).collect(Collectors.toList());
+      assertEquals(1, boundedCaches.size());
+      assertEquals(3, notBoundedCaches.size());
 
       List<String> secured = find(jsonNode, "secured");
       assertTrue(secured.contains("false"));
@@ -227,9 +239,10 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCachesWithIgnoreCache() {
       if (security) {
-         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<CompletableFuture<Void>>) () -> serverStateManager.ignoreCache("cache1"));
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<CompletableFuture<Void>>) () -> serverStateManager.ignoreCache(
+               CACHE_1));
       } else {
-         serverStateManager.ignoreCache("cache1");
+         serverStateManager.ignoreCache(CACHE_1);
       }
 
       RestResponse response = join(cacheManagerClient.caches());
@@ -238,7 +251,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       String json = response.getBody();
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
-      Set<String> expectedNames = Util.asSet("defaultcache", "cache1", "cache2", "invalid");
+      Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, INVALID_CACHE);
 
       assertEquals(expectedNames, new HashSet<>(names));
 
@@ -317,7 +330,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       // Advance 1 second for the cached stats to expire
       timeService.advance(1000);
 
-      cacheManagers.iterator().next().getCache("cache1").put("key", "value");
+      cacheManagers.iterator().next().getCache(CACHE_1).put("key", "value");
       cmStats = Json.read(join(adminCacheManagerClient.stats()).getBody());
       assertEquals(1, cmStats.at("stores").asInteger());
       assertEquals(1, cmStats.at("number_of_entries").asInteger());
@@ -330,12 +343,12 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 
          // Assert that all of the existing caches and templates have a corresponding event
-         sseListener.expectEvent("create-template", "template");
+         sseListener.expectEvent("create-template", TEMPLATE_CONFIG);
          sseListener.expectEvent("create-cache", "___protobuf_metadata");
-         sseListener.expectEvent("create-cache", "cache2");
-         sseListener.expectEvent("create-cache", "invalid");
-         sseListener.expectEvent("create-cache", "cache1");
-         sseListener.expectEvent("create-cache", "defaultcache");
+         sseListener.expectEvent("create-cache", CACHE_2);
+         sseListener.expectEvent("create-cache", INVALID_CACHE);
+         sseListener.expectEvent("create-cache", CACHE_1);
+         sseListener.expectEvent("create-cache", DEFAULT_CACHE);
          sseListener.expectEvent("create-cache", "___script_cache");
 
          // Assert that new cache creations create an event
