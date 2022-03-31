@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,10 +52,15 @@ public interface StateTransferManager {
    void stop();
 
    /**
-    * If there is an state transfer happening at the moment, this method forwards the supplied
-    * command to the nodes that are new owners of the data, in order to assure consistency.
+    * If there is an state transfer happening at the moment, this method forwards the supplied command to the nodes that
+    * are new owners of the data, in order to assure consistency.
+    *
+    * @deprecated Since 14.0. To be removed without replacement.
     */
-   Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin);
+   @Deprecated
+   default Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin) {
+      return Collections.emptyMap();
+   }
 
    String getRebalancingStatus() throws Exception;
 
