@@ -2,26 +2,19 @@ package org.infinispan.statetransfer;
 
 import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
@@ -44,11 +37,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PreloadManager;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
@@ -281,48 +271,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public boolean isStateTransferInProgress() {
       return stateConsumer.isStateTransferInProgress();
-   }
-
-   @Override
-   public Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys,
-                                                        Address origin) {
-      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      if (cacheTopology == null) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Not fowarding command %s because topology is null.", command);
-         }
-         return Collections.emptyMap();
-      }
-      int cmdTopologyId = command.getTopologyId();
-      // forward commands with older topology ids to their new targets
-      // but we need to make sure we have the latest topology
-      int localTopologyId = cacheTopology.getTopologyId();
-      // if it's a tx/lock/write command, forward it to the new owners
-      if (log.isTraceEnabled()) {
-         log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
-      }
-
-      if (cmdTopologyId < localTopologyId) {
-         Collection<Address> newTargets = new HashSet<>(cacheTopology.getWriteOwners(affectedKeys));
-         newTargets.remove(rpcManager.getAddress());
-         // Forwarding to the originator would create a cycle
-         // TODO This may not be the "real" originator, but one of the original recipients
-         // or even one of the nodes that one of the original recipients forwarded the command to.
-         // In non-transactional caches, the "real" originator keeps a lock for the duration
-         // of the RPC, so this means we could get a deadlock while forwarding to it.
-         newTargets.remove(origin);
-         if (!newTargets.isEmpty()) {
-            // Update the topology id to prevent cycles
-            command.setTopologyId(localTopologyId);
-            if (log.isTraceEnabled()) {
-               log.tracef("Forwarding command %s to new targets %s", command, newTargets);
-            }
-            // TxCompletionNotificationCommands are the only commands being forwarded now,
-            // and they must be OOB + asynchronous
-            rpcManager.sendToMany(newTargets, command, DeliverOrder.NONE);
-         }
-      }
-      return Collections.emptyMap();
    }
 
    @Override
