@@ -310,8 +310,7 @@ public class ContainerResource implements ResourceHandler {
       cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
       cacheInfo.persistent = isPersistent;
       cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
-      cacheInfo.bounded = cacheConfiguration.expiration().maxIdle() != -1 ||
-            cacheConfiguration.expiration().lifespan() != -1;
+      cacheInfo.bounded = cacheConfiguration.memory().whenFull().isEnabled();
       cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
       cacheInfo.indexed = cacheConfiguration.indexing().enabled();
       cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasEnabledBackups();
