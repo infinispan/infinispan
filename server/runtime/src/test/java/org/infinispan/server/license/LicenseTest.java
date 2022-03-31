@@ -67,11 +67,11 @@ public class LicenseTest {
 
             tdMatcher.find();
             String remoteLicenses = tdMatcher.group(1);
-            Assert.assertTrue(hasLicenseLink(remoteLicenses));
+            Assert.assertTrue("Remote License: " + artifact + ":" + version + ":" + remoteLicenses, hasLicenseLink(remoteLicenses));
 
             tdMatcher.find();
             String localLicenses = tdMatcher.group(1);
-            Assert.assertTrue(hasLicenseLink(localLicenses));
+            Assert.assertTrue("Local License: " + artifact + ":" + version + ":" + localLicenses, hasLicenseLink(localLicenses));
 
             htmlDependencies.add(String.format("%s-%s.jar", artifact, version));
          }
