@@ -50,7 +50,7 @@ import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;

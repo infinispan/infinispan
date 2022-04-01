@@ -37,7 +37,7 @@ import org.infinispan.server.core.transport.CompositeChannelMatcher;
 import org.infinispan.server.core.transport.IpFilterRuleChannelMatcher;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 import org.infinispan.server.core.transport.Transport;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 import io.netty.handler.ipfilter.IpFilterRuleType;
 

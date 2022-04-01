@@ -10,7 +10,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

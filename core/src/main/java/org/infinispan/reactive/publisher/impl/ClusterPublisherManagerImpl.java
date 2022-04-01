@@ -71,7 +71,7 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

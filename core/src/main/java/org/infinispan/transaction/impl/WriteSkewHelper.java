@@ -20,7 +20,7 @@ import org.infinispan.remoting.responses.PrepareResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**

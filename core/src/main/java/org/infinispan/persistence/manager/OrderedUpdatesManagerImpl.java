@@ -17,7 +17,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 @Scope(Scopes.NAMED_CACHE)
 public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {

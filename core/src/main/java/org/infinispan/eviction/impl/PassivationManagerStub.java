@@ -5,7 +5,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

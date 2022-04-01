@@ -17,6 +17,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A mixture between a {@link CompletableFuture} and a {@link java.util.concurrent.locks.Condition}.

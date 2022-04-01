@@ -13,7 +13,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
 /**

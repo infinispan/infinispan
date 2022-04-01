@@ -18,7 +18,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Sent in commit phase (after DB commit) to remote nodes in order to stop invalidating

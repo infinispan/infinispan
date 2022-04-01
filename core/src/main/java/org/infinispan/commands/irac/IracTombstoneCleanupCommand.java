@@ -17,7 +17,7 @@ import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link CacheRpcCommand} to clean up tombstones for IRAC algorithm.

@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link CacheRpcCommand} that sets the {@link XSiteStateTransferMode} cluster-wide.

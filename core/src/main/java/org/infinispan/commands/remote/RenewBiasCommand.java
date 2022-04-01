@@ -9,7 +9,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 public class RenewBiasCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 75;

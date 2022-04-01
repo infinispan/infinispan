@@ -8,7 +8,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.server.hotrod.command.Ids;
 import org.infinispan.server.hotrod.tx.operation.Util;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link CacheRpcCommand} implementation to forward the commit request from a client to the member that run the

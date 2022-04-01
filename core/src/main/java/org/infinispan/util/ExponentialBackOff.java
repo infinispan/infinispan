@@ -3,7 +3,7 @@ package org.infinispan.util;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Experimental;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Interface to implement an exponential back-off algorithm that retries the request based on the result of the remote

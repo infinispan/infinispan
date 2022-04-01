@@ -2,6 +2,14 @@ package org.infinispan.commons.tx;
 
 
 import static java.lang.String.format;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedFalse;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedTrue;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.extractException;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.identity;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.rethrowExceptionIfPresent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +17,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -27,7 +34,6 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 
 /**
@@ -89,7 +95,7 @@ public class TransactionImpl implements Transaction {
    }
 
    private static Throwable throwChecked(Throwable throwable) throws RollbackException, HeuristicMixedException, HeuristicRollbackException {
-      throwable = CompletableFutures.extractException(throwable);
+      throwable = extractException(throwable);
       if (throwable instanceof HeuristicMixedException) {
          throw (HeuristicMixedException) throwable;
       } else if (throwable instanceof HeuristicRollbackException) {
@@ -111,12 +117,12 @@ public class TransactionImpl implements Transaction {
    }
 
    private static Void checkThrowableForRollback(Throwable t) {
-      t = CompletableFutures.extractException(t);
+      t = extractException(t);
       if (t instanceof HeuristicMixedException || t instanceof HeuristicRollbackException) {
          log.errorRollingBack(t);
          SystemException systemException = new SystemException("Unable to rollback transaction");
          systemException.initCause(t);
-         throw CompletableFutures.asCompletionException(systemException);
+         throw asCompletionException(systemException);
       } else if (t instanceof RollbackException) {
          //ignored
          if (log.isTraceEnabled()) {
@@ -158,9 +164,7 @@ public class TransactionImpl implements Transaction {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
-         CompletableFuture<Void> cf = new CompletableFuture<>();
-         cf.completeExceptionally(new IllegalStateException("Transaction is done. Cannot commit transaction."));
-         return cf;
+         return completedExceptionFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
       }
       return runPrepareAsync(converter)
             .handle((____, ___) -> runCommitAsync(false, converter))
@@ -182,7 +186,7 @@ public class TransactionImpl implements Transaction {
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-         Throwable cause = CompletableFutures.extractException(e.getCause());
+         Throwable cause = extractException(e.getCause());
          if (cause instanceof IllegalStateException) {
             throw (IllegalStateException) cause;
          } else if (cause instanceof SystemException) {
@@ -197,9 +201,7 @@ public class TransactionImpl implements Transaction {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
-         CompletableFuture<Void> cf = new CompletableFuture<>();
-         cf.completeExceptionally(new IllegalStateException("Transaction is done. Cannot commit transaction."));
-         return cf;
+         return completedExceptionFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
       }
       status = Status.STATUS_MARKED_ROLLBACK;
 
@@ -345,7 +347,7 @@ public class TransactionImpl implements Transaction {
       return cf.thenCompose(unused -> {
          if (status == Status.STATUS_MARKED_ROLLBACK) {
             //no need for prepare since we are going to rollback
-            return CompletableFutures.completedFalse();
+            return completedFalse();
          }
          status = Status.STATUS_PREPARING;
          return asyncPrepareXaResources(converter);
@@ -388,12 +390,12 @@ public class TransactionImpl implements Transaction {
          CompletionStage<Void> s = asyncAfterCompletion(commit ? Status.STATUS_COMMITTED : Status.STATUS_ROLLEDBACK, converter);
          if (t != null) {
             return s.thenAccept(___ -> {
-               throw CompletableFutures.asCompletionException(t);
+               throw asCompletionException(t);
             });
          } else {
-            return s.thenAccept(___ -> CompletableFutures.rethrowExceptionIfPresent(hasRollbackException(forceRollback)));
+            return s.thenAccept(___ -> rethrowExceptionIfPresent(hasRollbackException(forceRollback)));
          }
-      }).thenCompose(CompletableFutures.identity());
+      }).thenCompose(identity());
       TransactionManagerImpl.dissociateTransaction();
       resources.clear();
       return stage;
@@ -460,7 +462,7 @@ public class TransactionImpl implements Transaction {
    private CompletionStage<Void> asyncBeforeCompletion(TransactionResourceConverter converter) {
       Iterator<Synchronization> iterator = syncs.iterator();
       if (!iterator.hasNext()) {
-         return CompletableFutures.completedNull();
+         return completedNull();
       }
       CompletionStage<Void> cf = beforeCompletion(iterator.next(), converter);
       while (iterator.hasNext()) {
@@ -481,7 +483,7 @@ public class TransactionImpl implements Transaction {
    }
 
    private void beforeCompletionFailed(Synchronization s, Throwable t) {
-      t = CompletableFutures.extractException(t);
+      t = extractException(t);
       markRollbackOnly(newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.", s), t));
       log.beforeCompletionFailed(s.toString(), t);
    }
@@ -489,7 +491,7 @@ public class TransactionImpl implements Transaction {
    private CompletionStage<Void> asyncAfterCompletion(int status, TransactionResourceConverter converter) {
       Iterator<Synchronization> iterator = syncs.iterator();
       if (!iterator.hasNext()) {
-         return CompletableFutures.completedNull();
+         return completedNull();
       }
       CompletionStage<Void> cf = afterCompletion(iterator.next(), status, converter);
       while (iterator.hasNext()) {
@@ -505,7 +507,7 @@ public class TransactionImpl implements Transaction {
          log.tracef("Synchronization.afterCompletion() for %s", s);
       }
       return converter.convertSynchronization(s).asyncAfterCompletion(status).exceptionally(t -> {
-         log.afterCompletionFailed(s.toString(), CompletableFutures.extractException(t));
+         log.afterCompletionFailed(s.toString(), extractException(t));
          return null;
       });
    }
@@ -514,7 +516,7 @@ public class TransactionImpl implements Transaction {
    private CompletionStage<Void> asyncEndXaResources(TransactionResourceConverter converter) {
       Iterator<XaResourceData> iterator = resources.iterator();
       if (!iterator.hasNext()) {
-         return CompletableFutures.completedNull();
+         return completedNull();
       }
       CompletionStage<Void> cf = endXaResource(iterator.next().xaResource, converter);
       while (iterator.hasNext()) {
@@ -535,7 +537,7 @@ public class TransactionImpl implements Transaction {
    }
 
    private void endXaResourceFailed(XAResource resource, Throwable t) {
-      t = CompletableFutures.extractException(t);
+      t = extractException(t);
       String msg = t instanceof XAException ?
             format("XaResource.end() for %s wants to rollback.", resource) :
             format("Unexpected error in XaResource.end() for %s. Marked as rollback", resource);
@@ -548,13 +550,13 @@ public class TransactionImpl implements Transaction {
       Iterator<XaResourceData> iterator = resources.iterator();
       if (!iterator.hasNext()) {
          status = Status.STATUS_PREPARED;
-         return CompletableFutures.completedTrue();
+         return completedTrue();
       }
 
       CompletionStage<Boolean> cf = prepareXaResource(iterator.next(), converter);
       while (iterator.hasNext()) {
          XaResourceData data = iterator.next();
-         cf = cf.thenCompose(prepared -> prepared ? prepareXaResource(data, converter) : CompletableFutures.completedFalse());
+         cf = cf.thenCompose(prepared -> prepared ? prepareXaResource(data, converter) : completedFalse());
       }
       return cf.whenComplete((prepared, ___) -> {
          if (prepared) {
@@ -578,7 +580,7 @@ public class TransactionImpl implements Transaction {
    }
 
    private void prepareXaResourceFailed(XAResource resource, Throwable t) {
-      t = CompletableFutures.extractException(t);
+      t = extractException(t);
       String msg;
       if (t instanceof XAException) {
          if (log.isTraceEnabled()) {
@@ -596,7 +598,7 @@ public class TransactionImpl implements Transaction {
       Iterator<XaResourceData> iterator = resources.iterator();
       if (!iterator.hasNext()) {
          status = commit ? Status.STATUS_COMMITTED : Status.STATUS_ROLLEDBACK;
-         return CompletableFutures.completedNull();
+         return completedNull();
       }
       XaResultCollector collector = new XaResultCollector(resources.size(), commit);
       CompletionStage<Void> cf = commit ?
@@ -617,7 +619,7 @@ public class TransactionImpl implements Transaction {
    private CompletionStage<Void> commitXaResource(XaResourceData data, TransactionResourceConverter converter, XaResultCollector collector) {
       if (data.status == XAResource.XA_RDONLY) {
          log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s", data.xaResource);
-         return CompletableFutures.completedNull();
+         return completedNull();
       }
       if (log.isTraceEnabled()) {
          log.tracef("XaResource.commit() for %s", data.xaResource);
@@ -630,7 +632,7 @@ public class TransactionImpl implements Transaction {
    private CompletionStage<Void> rollbackXaResource(XaResourceData data, TransactionResourceConverter converter, XaResultCollector collector) {
       if (data.status == XAResource.XA_RDONLY) {
          log.tracef("Skipping XaResource.rollback() since prepare status was XA_RDONLY for %s", data.xaResource);
-         return CompletableFutures.completedNull();
+         return completedNull();
       }
       if (log.isTraceEnabled()) {
          log.tracef("XaResource.rollback() for %s", data.xaResource);
@@ -649,12 +651,12 @@ public class TransactionImpl implements Transaction {
             HeuristicMixedException exception = new HeuristicMixedException();
             collector.addSuppressedTo(exception);
             status = Status.STATUS_UNKNOWN;
-            throw CompletableFutures.asCompletionException(exception);
+            throw asCompletionException(exception);
          case HEURISTIC_ROLLBACK:
             HeuristicRollbackException e = new HeuristicRollbackException();
             collector.addSuppressedTo(e);
             status = Status.STATUS_UNKNOWN;
-            throw CompletableFutures.asCompletionException(e);
+            throw asCompletionException(e);
          default:
             break;
       }
@@ -724,7 +726,7 @@ public class TransactionImpl implements Transaction {
 
       @Override
       public synchronized Void apply(Throwable throwable) {
-         throwable = CompletableFutures.extractException(throwable);
+         throwable = extractException(throwable);
          log.errorCommittingTx(throwable);
          exceptions.add(throwable);
          if (throwable instanceof XAException) {

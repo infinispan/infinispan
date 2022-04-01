@@ -23,7 +23,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.annotations.Test;
 
 /**

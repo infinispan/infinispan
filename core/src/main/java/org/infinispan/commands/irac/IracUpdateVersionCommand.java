@@ -16,7 +16,7 @@ import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * It transfers the current versions stored in {@link IracVersionGenerator} to the other nodes when joins/leaving events

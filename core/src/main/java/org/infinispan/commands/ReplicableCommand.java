@@ -9,7 +9,7 @@ import java.util.concurrent.CompletionException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * The core of the command-based cache framework.  Commands correspond to specific areas of functionality in the cache,

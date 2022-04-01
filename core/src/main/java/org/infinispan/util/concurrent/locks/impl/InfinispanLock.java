@@ -1,7 +1,7 @@
 package org.infinispan.util.concurrent.locks.impl;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
-import static org.infinispan.util.concurrent.CompletableFutures.await;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.await;
 
 import java.util.Objects;
 import java.util.Queue;
