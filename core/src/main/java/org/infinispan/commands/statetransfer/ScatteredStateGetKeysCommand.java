@@ -6,7 +6,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.scattered.ScatteredStateProvider;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Start transferring keys and remote metadata for the given segments.

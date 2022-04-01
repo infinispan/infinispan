@@ -6,7 +6,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Start conflict resolution.

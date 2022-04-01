@@ -16,7 +16,7 @@ import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Response for a state request with the tombstones stored in the local node.

@@ -7,7 +7,7 @@ import java.util.function.BiConsumer;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidResponseCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Collects and merges all the {@link StateTransferStatus} from all nodes in the cluster.

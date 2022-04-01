@@ -1,7 +1,7 @@
 package org.infinispan.query.clustered;
 
-import static org.infinispan.util.concurrent.CompletableFutures.await;
-import static org.infinispan.util.concurrent.CompletableFutures.sequence;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.await;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.sequence;
 
 import java.util.ArrayList;
 import java.util.BitSet;

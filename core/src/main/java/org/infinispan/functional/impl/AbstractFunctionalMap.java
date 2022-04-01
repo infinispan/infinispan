@@ -22,7 +22,7 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Param;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

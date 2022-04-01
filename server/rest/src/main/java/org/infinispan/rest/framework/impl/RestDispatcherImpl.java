@@ -17,7 +17,7 @@ import org.infinispan.rest.operations.exceptions.NotAllowedException;
 import org.infinispan.rest.operations.exceptions.ResourceNotFoundException;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * @since 10.0

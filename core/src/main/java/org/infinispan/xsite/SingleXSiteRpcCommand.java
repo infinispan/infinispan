@@ -10,7 +10,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * RPC command to replicate cache operations (such as put, remove, replace, etc.) to the backup site.

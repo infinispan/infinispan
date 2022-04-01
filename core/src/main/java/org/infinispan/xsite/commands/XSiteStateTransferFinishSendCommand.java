@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 /**

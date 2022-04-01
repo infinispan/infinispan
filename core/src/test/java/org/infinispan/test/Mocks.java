@@ -26,7 +26,7 @@ import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.mockito.AdditionalAnswers;
 import org.mockito.MockSettings;
 import org.mockito.invocation.InvocationOnMock;

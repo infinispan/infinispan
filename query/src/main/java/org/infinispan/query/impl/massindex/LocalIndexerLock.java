@@ -3,7 +3,7 @@ package org.infinispan.query.impl.massindex;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Semaphore;
 
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A lock to prevent multiple {@link org.infinispan.query.Indexer} in non-clustered environments.
