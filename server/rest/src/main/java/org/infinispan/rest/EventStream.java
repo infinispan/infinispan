@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 import io.netty.channel.ChannelHandlerContext;
 

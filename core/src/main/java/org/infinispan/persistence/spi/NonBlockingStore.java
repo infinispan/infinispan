@@ -15,7 +15,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 

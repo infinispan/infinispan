@@ -79,7 +79,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;

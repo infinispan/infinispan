@@ -90,7 +90,7 @@ import org.infinispan.stats.impl.CacheContainerStatsImpl;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

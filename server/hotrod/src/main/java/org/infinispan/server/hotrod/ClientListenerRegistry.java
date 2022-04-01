@@ -48,7 +48,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;

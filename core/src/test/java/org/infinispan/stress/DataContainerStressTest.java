@@ -25,7 +25,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;

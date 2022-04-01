@@ -2,7 +2,7 @@ package org.infinispan.container.versioning.irac;
 
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
-import static org.infinispan.util.concurrent.CompletableFutures.completedNull;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -53,7 +53,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

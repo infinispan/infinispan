@@ -134,7 +134,7 @@ import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;

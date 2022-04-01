@@ -20,7 +20,7 @@ import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.RebalancingStatus;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.

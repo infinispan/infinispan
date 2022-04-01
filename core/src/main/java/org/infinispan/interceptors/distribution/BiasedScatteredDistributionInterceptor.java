@@ -27,7 +27,7 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CommandAckCollector.MultiTargetCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 public class BiasedScatteredDistributionInterceptor extends ScatteredDistributionInterceptor {
    private CommandAckCollector commandAckCollector;

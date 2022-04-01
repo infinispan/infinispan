@@ -109,7 +109,7 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CommandAckCollector.MultiTargetCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;

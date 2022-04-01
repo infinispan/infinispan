@@ -59,7 +59,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.Log;

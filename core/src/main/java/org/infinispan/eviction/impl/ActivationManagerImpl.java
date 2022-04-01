@@ -21,7 +21,7 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.persistence.manager.PersistenceStatus;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

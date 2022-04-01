@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 

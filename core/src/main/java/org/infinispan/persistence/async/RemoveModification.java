@@ -3,7 +3,7 @@ package org.infinispan.persistence.async;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 class RemoveModification implements Modification {
    private final int segment;

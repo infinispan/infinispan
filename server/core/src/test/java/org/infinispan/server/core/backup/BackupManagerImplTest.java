@@ -59,7 +59,7 @@ import org.infinispan.server.core.BackupManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.TriConsumer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

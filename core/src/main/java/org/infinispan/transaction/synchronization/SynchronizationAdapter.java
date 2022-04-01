@@ -9,7 +9,7 @@ import org.infinispan.commons.tx.AsyncSynchronization;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**

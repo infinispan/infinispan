@@ -104,7 +104,7 @@ import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;

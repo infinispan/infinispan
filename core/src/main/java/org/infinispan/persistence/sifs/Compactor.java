@@ -23,7 +23,7 @@ import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;

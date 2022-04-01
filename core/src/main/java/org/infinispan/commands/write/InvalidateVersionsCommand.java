@@ -16,7 +16,7 @@ import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

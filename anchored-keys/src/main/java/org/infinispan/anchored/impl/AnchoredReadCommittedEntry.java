@@ -12,7 +12,7 @@ import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Extend a {@link ReadCommittedEntry} with the key location.

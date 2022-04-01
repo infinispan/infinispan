@@ -9,7 +9,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**

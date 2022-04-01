@@ -14,7 +14,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

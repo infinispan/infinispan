@@ -26,7 +26,7 @@ import org.infinispan.statetransfer.OutboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateProviderImpl;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;

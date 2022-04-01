@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.util.concurrent.CompletableFutures.extractException;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.extractException;
 
 import java.util.Collection;
 import java.util.concurrent.Executor;

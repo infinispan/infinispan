@@ -39,7 +39,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;

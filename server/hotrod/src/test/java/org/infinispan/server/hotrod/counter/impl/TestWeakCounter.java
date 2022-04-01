@@ -18,7 +18,7 @@ import org.infinispan.server.hotrod.counter.response.CounterValueTestResponse;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link WeakCounter} implementation for Hot Rod server testing.

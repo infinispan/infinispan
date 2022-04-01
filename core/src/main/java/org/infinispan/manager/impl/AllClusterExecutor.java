@@ -1,6 +1,6 @@
 package org.infinispan.manager.impl;
 
-import static org.infinispan.util.concurrent.CompletableFutures.asCompletionException;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +24,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughMapResponseCollector;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;

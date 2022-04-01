@@ -50,7 +50,7 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 

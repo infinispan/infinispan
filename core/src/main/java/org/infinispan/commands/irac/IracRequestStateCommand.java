@@ -10,7 +10,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSetsExternalization;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Requests the state for a given segments.

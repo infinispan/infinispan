@@ -41,7 +41,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
