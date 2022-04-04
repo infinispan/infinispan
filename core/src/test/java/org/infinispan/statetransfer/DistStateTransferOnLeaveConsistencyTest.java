@@ -1,27 +1,29 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -29,6 +31,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -145,12 +149,12 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          assertEquals("before_st_" + i, cache(2).get(i));
       }
 
-      final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      final CountDownLatch applyStateStartedLatch1 = new CountDownLatch(1);
-      extractInterceptorChain(advancedCache(0)).addInterceptor(new LatchInterceptor(applyStateStartedLatch1, applyStateProceedLatch), 0);
+      CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
+      CountDownLatch applyStateStartedLatch1 = new CountDownLatch(1);
+      blockStateTransfer(advancedCache(0), applyStateStartedLatch1, applyStateProceedLatch);
 
-      final CountDownLatch applyStateStartedLatch2 = new CountDownLatch(1);
-      extractInterceptorChain(advancedCache(2)).addInterceptor(new LatchInterceptor(applyStateStartedLatch2, applyStateProceedLatch), 0);
+      CountDownLatch applyStateStartedLatch2 = new CountDownLatch(1);
+      blockStateTransfer(advancedCache(2), applyStateStartedLatch2, applyStateProceedLatch);
 
       // The indexes will only be used after node 1 is killed
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {1, 0}});
@@ -268,29 +272,46 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }
    }
 
-   public static class LatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch startedLatch;
-      private final CountDownLatch proceedLatch;
+   private static void blockStateTransfer(Cache<?,?> cache, CountDownLatch started, CountDownLatch proceed) {
+      TestingUtil.wrapComponent(cache, StateConsumer.class, (current) -> {
+         BlockingStateConsumer stateConsumer;
+         if (current instanceof BlockingStateConsumer) {
+            stateConsumer = (BlockingStateConsumer) current;
+         } else {
+            stateConsumer = new BlockingStateConsumer(current);
+         }
+         stateConsumer.startedLatch = started;
+         stateConsumer.proceedLatch = proceed;
+         return stateConsumer;
+      });
+   }
 
-      public LatchInterceptor(CountDownLatch startedLatch, CountDownLatch proceedLatch) {
-         this.startedLatch = startedLatch;
-         this.proceedLatch = proceedLatch;
+   @Scope(Scopes.NAMED_CACHE)
+   public static class BlockingStateConsumer extends DelegatingStateConsumer {
+
+      @Inject BlockingManager blockingManager;
+      volatile CountDownLatch startedLatch;
+      volatile CountDownLatch proceedLatch;
+
+      BlockingStateConsumer(StateConsumer delegate) {
+         super(delegate);
       }
 
       @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
-         // are performed first and create opportunity for inconsistencies
-         if (cmd instanceof PutKeyValueCommand &&
-             ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+      public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+         return blockingManager.runBlocking(() -> {
             // signal we encounter a state transfer PUT
             startedLatch.countDown();
             // wait until it is ok to apply state
-            if (!proceedLatch.await(15, TimeUnit.SECONDS)) {
-               throw new TimeoutException();
+            try {
+               if (!proceedLatch.await(15, TimeUnit.SECONDS)) {
+                  throw CompletableFutures.asCompletionException(new TimeoutException());
+               }
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
             }
-         }
-         return invokeNext(ctx, cmd);
+            CompletionStages.join(super.applyState(sender, topologyId, pushTransfer, stateChunks));
+         }, "state-" + sender);
       }
    }
 }
