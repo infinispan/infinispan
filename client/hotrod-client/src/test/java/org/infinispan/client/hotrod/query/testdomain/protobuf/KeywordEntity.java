@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -18,5 +20,10 @@ public class KeywordEntity {
    @ProtoDoc("@Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"keyword\"))")
    public String getKeyword() {
       return keyword;
+   }
+
+   @AutoProtoSchemaBuilder(includeClasses = KeywordEntity.class)
+   public interface KeywordSchema extends GeneratedSchema {
+      KeywordSchema INSTANCE = new KeywordSchemaImpl();
    }
 }
