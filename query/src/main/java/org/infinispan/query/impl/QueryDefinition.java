@@ -105,7 +105,7 @@ public final class QueryDefinition {
    }
 
    public int getMaxResults() {
-      return maxResults == -1 ? Integer.MAX_VALUE : maxResults;
+      return maxResults == -1 ? Integer.MAX_VALUE - getFirstResult() : maxResults;
    }
 
    public void setMaxResults(int maxResults) {
