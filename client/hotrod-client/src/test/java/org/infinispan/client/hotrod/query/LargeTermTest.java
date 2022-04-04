@@ -10,21 +10,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.KeywordEntity;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.query.LargeTermTest")
@@ -34,25 +29,19 @@ public class LargeTermTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("KeywordEntity");
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
-      Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(KeywordSchema.INSTANCE.getProtoFileName(), KeywordSchema.INSTANCE.getProtoFile());
-      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
-
       manager.defineConfiguration("keyword", builder.build());
       return manager;
    }
 
-   @BeforeClass
-   protected void registerProtobufSchema() {
-      SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      KeywordSchema.INSTANCE.registerSchema(serCtx);
-      KeywordSchema.INSTANCE.registerMarshallers(serCtx);
+   @Override
+   protected SerializationContextInitializer contextInitializer() {
+      return KeywordEntity.KeywordSchema.INSTANCE;
    }
 
    @Test
@@ -81,10 +70,5 @@ public class LargeTermTest extends SingleHotRodServerTest {
          }
       }
       return builder.toString();
-   }
-
-   @AutoProtoSchemaBuilder(includeClasses = KeywordEntity.class)
-   public interface KeywordSchema extends GeneratedSchema {
-      KeywordSchema INSTANCE = new KeywordSchemaImpl();
    }
 }
