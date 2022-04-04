@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,6 +48,18 @@ public class CheckPoint {
    public void awaitStrict(String event, long timeout, TimeUnit unit)
          throws InterruptedException, TimeoutException {
       awaitStrict(event, 1, timeout, unit);
+   }
+
+   public CompletionStage<Void> awaitStrictAsync(String event, long timeout, TimeUnit unit, Executor executor) {
+      return CompletableFuture.runAsync(() -> {
+         try {
+            awaitStrict(event, 1, timeout, unit);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         } catch (TimeoutException e) {
+            CompletableFutures.rethrowExceptionIfPresent(e);
+         }
+      }, executor);
    }
 
    private boolean await(String event, long timeout, TimeUnit unit) throws InterruptedException {
