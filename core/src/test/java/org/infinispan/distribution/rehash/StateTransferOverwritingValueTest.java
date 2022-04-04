@@ -12,6 +12,7 @@ import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,7 @@ import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -42,6 +44,7 @@ import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
@@ -229,13 +232,22 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       Answer<?> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
       ClusterTopologyManager mock = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
+      BlockingManager blockingManager = manager.getGlobalComponentRegistry().getComponent(BlockingManager.class);
       doAnswer(invocation -> {
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[1];
          int topologyId = (Integer) arguments[2];
          if (topologyId == rebalanceTopologyId) {
             checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            return checkPoint.awaitStrictAsync("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS, blockingManager.asExecutor("checkpoint"))
+                  .thenCompose(unused -> {
+                     try {
+                        //noinspection unchecked
+                        return (CompletionStage<Void>) forwardedAnswer.answer(invocation);
+                     } catch (Throwable e) {
+                        throw CompletableFutures.asCompletionException(e);
+                     }
+                  });
          }
          return forwardedAnswer.answer(invocation);
       }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());

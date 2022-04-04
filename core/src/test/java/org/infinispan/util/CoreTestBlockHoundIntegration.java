@@ -18,7 +18,6 @@ import org.infinispan.functional.FunctionalTestUtils;
 import org.infinispan.manager.DefaultCacheManagerHelper;
 import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.statetransfer.DistStateTransferOnLeaveConsistencyTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestingUtil;
@@ -117,7 +116,6 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, BlockingLocalTopologyManager.class);
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, AbstractControlledLocalTopologyManager.class);
 
-      CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, DistStateTransferOnLeaveConsistencyTest.LatchInterceptor.class);
       CommonsBlockHoundIntegration.allowPublicMethodsToBlock(builder, ConflictManagerTest.DelayStateResponseCommandHandler.class);
 
       // The join is used to allow for a sync API for test simplicity - where as the actual store invocation
