@@ -25,8 +25,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.startup.IndexStartupModeTest")
 public class IndexStartupModeTest extends AbstractInfinispanTest {
 
-   private final String dataLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "data");
-   private final String indexLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "index");
+   private final String fileStoreDataLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "fileStoreDataLocation");
+   private final String fileStoreIndexLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "fileStoreIndexLocation");
+   private final String indexesLocation = CommonsTestingUtil.tmpDirectory("IndexStartupModeTest", "indexes");
 
    private EmbeddedCacheManager cacheManager;
    private Cache<String, Developer> cache;
@@ -98,10 +99,10 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          assertThat(fabio).isNotNull();
          assertThat(fabio).extracting("nick").containsExactly("fax4ever");
 
-         eventually( () -> {
+         eventually(() -> {
             // now indexes are aligned
             return matches(1, "fax4ever");
-         } );
+         });
       });
 
       execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.NONE, () -> {
@@ -121,23 +122,25 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          assertThat(fabio).extracting("nick").containsExactly("fax4ever");
 
          // auto in this case is equivalent to reindex
-         eventually( () -> {
+         eventually(() -> {
             // now indexes are aligned
             return matches(1, "fax4ever");
-         } );
+         });
       });
    }
 
    @BeforeClass(alwaysRun = true)
    public void setUp() {
-      Util.recursiveFileRemove(dataLocation);
-      Util.recursiveFileRemove(indexLocation);
+      Util.recursiveFileRemove(fileStoreDataLocation);
+      Util.recursiveFileRemove(fileStoreIndexLocation);
+      Util.recursiveFileRemove(indexesLocation);
    }
 
    @AfterClass(alwaysRun = true)
    public void tearDown() {
-      Util.recursiveFileRemove(dataLocation);
-      Util.recursiveFileRemove(indexLocation);
+      Util.recursiveFileRemove(fileStoreDataLocation);
+      Util.recursiveFileRemove(fileStoreIndexLocation);
+      Util.recursiveFileRemove(indexesLocation);
    }
 
    private void execute(IndexStorage storage, boolean cacheStorage, IndexStartupMode startupMode, Runnable runnable) {
@@ -154,14 +157,15 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
       cfg.indexing()
             .enable()
             .storage(storage)
+            .path(indexesLocation)
             .startupMode(startupMode)
             .addIndexedEntity(Developer.class);
 
       if (persistentCacheData) {
          cfg.persistence()
                .addSoftIndexFileStore()
-               .dataLocation(dataLocation)
-               .indexLocation(indexLocation)
+               .dataLocation(fileStoreDataLocation)
+               .indexLocation(fileStoreIndexLocation)
                .preload(true);
       }
 
