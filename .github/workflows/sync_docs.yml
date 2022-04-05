@@ -8,10 +8,6 @@ on:
     paths:
       - documentation
 
-env:
-  target: git@github.com:infinispan/infinispan.github.io.git
-  target_branch: master
-
 jobs:
   upload:
     runs-on: ubuntu-latest
@@ -30,8 +26,10 @@ jobs:
       run: mvn install -Pdistribution -pl documentation -am -s maven-settings.xml
 
     - name: Clone infinispan.github.io
-      run: |
-        git clone -b $target_branch $target
+      uses: actions/checkout@master
+      with:
+        name: infinispan/infinispan.github.io
+        ref: master
 
     - if: github.ref == 'refs/heads/main'
       name: Copy docs to dev
