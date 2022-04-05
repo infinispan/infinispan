@@ -282,7 +282,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    @Override
    public PredicateFinalStep visit(FullTextTermExpr fullTextTermExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextTermExpr.getChild();
-      String text = fullTextTermExpr.getTerm();
+      String text = fullTextTermExpr.getTerm(namedParameters);
       String absoluteFieldPath = propertyValueExpr.getPropertyPath().asStringPath();
 
       int asteriskPos = text.indexOf(LUCENE_MULTIPLE_CHARACTERS_WILDCARD);

@@ -368,7 +368,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (phase == Phase.WHERE) {
          checkAnalyzed(property, true);
          Object comparisonObject = parameterValue(term);
-         whereBuilder.addFullTextTerm(property, comparisonObject.toString(), fuzzyFlop == null ? null : (fuzzyFlop.equals("~") ? 2 : Integer.parseInt(fuzzyFlop)));
+         whereBuilder.addFullTextTerm(property, comparisonObject, fuzzyFlop == null ? null : (fuzzyFlop.equals("~") ? 2 : Integer.parseInt(fuzzyFlop)));
       } else if (phase == Phase.HAVING) {
          throw log.getFullTextQueriesNotAllowedInHavingClauseException();
       } else {
