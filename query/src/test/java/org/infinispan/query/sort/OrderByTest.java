@@ -48,7 +48,7 @@ public class OrderByTest extends SingleCacheManagerTest {
 
    public void useDifferentIndexFieldNamesTests() {
       QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where description : 'place' order by label");
+      Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : 'place' order by label");
       QueryResult<Book> result = query.execute();
 
       assertThat(result.hitCount()).hasValue(3L);

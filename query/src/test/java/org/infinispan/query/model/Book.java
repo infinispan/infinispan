@@ -11,7 +11,7 @@ public class Book {
    @GenericField(sortable = Sortable.YES, name = "label")
    private String title;
 
-   @FullTextField(analyzer = "whitespace")
+   @FullTextField(analyzer = "whitespace", name = "naming")
    private String description;
 
    public String getTitle() {
