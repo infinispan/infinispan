@@ -88,6 +88,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<BackupSender> backupSender;
    private ComponentRef<BlockingManager> blockingManager;
    private ComponentRef<ClusterPublisherManager> clusterPublisherManager;
+   private ComponentRef<ClusterPublisherManager> localClusterPublisherManager;
    private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
    private ComponentRef<ClusterCacheNotifier> clusterCacheNotifier;
@@ -376,6 +377,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
       blockingManager = basicComponentRegistry.getComponent(BlockingManager.class);
       clusterPublisherManager = basicComponentRegistry.getComponent(ClusterPublisherManager.class);
+      localClusterPublisherManager = basicComponentRegistry.getComponent(PublisherManagerFactory.LOCAL_CLUSTER_PUBLISHER, ClusterPublisherManager.class);
       takeOfflineManager = basicComponentRegistry.getComponent(TakeOfflineManager.class);
       cache = basicComponentRegistry.getComponent(AdvancedCache.class);
       cacheNotifier = basicComponentRegistry.getComponent(CacheNotifier.class);
@@ -446,6 +448,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<ClusterPublisherManager> getClusterPublisherManager() {
       return clusterPublisherManager;
+   }
+
+   public ComponentRef<ClusterPublisherManager> getLocalClusterPublisherManager() {
+      return localClusterPublisherManager;
    }
 
    public ComponentRef<TakeOfflineManager> getTakeOfflineManager() {

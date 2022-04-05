@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -67,6 +68,12 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected DataOperationOrderer orderer;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
+
+   /**
+    * A long to keep track of how many entries that {@link InternalCacheEntry#canExpire()} we currently have in the
+    * container. All operations that insert or remove the container's expirable entries must update this value.
+    */
+   private final AtomicLong expirable = new AtomicLong();
 
    protected abstract PeekableTouchableMap<K, V> getMapForSegment(int segment);
    protected abstract int getSegmentForKey(Object key);
@@ -148,6 +155,10 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          copy.setInternalMetadata(internalMetadata);
          if (log.isTraceEnabled())
             log.tracef("Store %s=%s in container", k, copy);
+
+         if (e != null) entryUpdated(copy, e);
+         else entryAdded(copy);
+
          putEntryInMap(entries, segment, k, copy);
       } else {
          log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
@@ -187,7 +198,18 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             log.tracef("Removed %s=%s from container", k, e);
          }
 
-         return e == null || (e.canExpire() && e.isExpired(timeService.wallClockTime())) ? null : e;
+         if (e == null) {
+            return null;
+         }
+
+         if (e.canExpire()) {
+            entryRemoved(e);
+            if (e.isExpired(timeService.wallClockTime())) {
+               return null;
+            }
+         }
+
+         return e;
       }
       return null;
    }
@@ -211,6 +233,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          // - we don't need eviction manager either as it is handled in NotifyHelper
          evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, null));
          computeEntryRemoved(o, entry);
+         entryRemoved(entry);
          return null;
       });
       return evictionStageRef.get();
@@ -230,9 +253,11 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             return oldEntry;
          } else if (newEntry == null) {
             computeEntryRemoved(k, oldEntry);
+            entryRemoved(oldEntry);
             return null;
          }
          computeEntryWritten(k, newEntry);
+         entryAdded(newEntry);
          if (log.isTraceEnabled())
             log.tracef("Store %s in container", newEntry);
          return newEntry;
@@ -249,6 +274,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       segments.forEach((int segment) -> {
          Map<K, InternalCacheEntry<K, V>> map = getMapForSegment(segment);
          if (map != null) {
+            segmentRemoved(map);
             map.clear();
          }
       });
@@ -289,6 +315,48 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Override
    public void removeRemovalListener(Object listener) {
       listeners.remove(listener);
+   }
+
+   @Override
+   public boolean hasExpirable() {
+      return expirable.get() > 0;
+   }
+
+   protected final void entryAdded(InternalCacheEntry<K, V> ice) {
+      if (ice.canExpire()) {
+         expirable.incrementAndGet();
+      }
+   }
+
+   protected final void entryUpdated(InternalCacheEntry<K, V> curr, InternalCacheEntry<K, V> prev) {
+      byte combination = 0b00;
+      if (curr.canExpire()) combination |= 0b01;
+      if (prev.canExpire()) combination |= 0b10;
+
+      // If both do not expire or if both do expire, then we do nothing.
+      switch (combination) {
+         // Previous could not expire, but current can.
+         case 0b01:
+            expirable.incrementAndGet();
+            break;
+
+         // Previous could expire, but current can not.
+         case 0b10:
+            expirable.decrementAndGet();
+            break;
+         default: break;
+      }
+   }
+
+   protected final void entryRemoved(InternalCacheEntry<K, V> ice) {
+      if (ice.canExpire()) {
+         expirable.decrementAndGet();
+      }
+   }
+
+   protected final void segmentRemoved(Map<K, InternalCacheEntry<K, V>> segment) {
+      long expirableInSegment = segment.values().stream().filter(InternalCacheEntry::canExpire).count();
+      expirable.addAndGet(-expirableInSegment);
    }
 
    protected class EntryIterator extends AbstractIterator<InternalCacheEntry<K, V>> {

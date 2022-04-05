@@ -237,6 +237,11 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    }
 
    @Override
+   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate, IntSet segments) {
+      return persistenceManager.size(predicate, segments);
+   }
+
+   @Override
    public CompletionStage<Void> writeToAllNonTxStores(MarshallableEntry marshalledEntry, int segment,
                                                       Predicate<? super StoreConfiguration> predicate) {
       return persistenceManager.writeToAllNonTxStores(marshalledEntry, segment, predicate);

@@ -244,8 +244,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public SizeCommand buildSizeCommand(long flagsBitSet) {
-      return new SizeCommand(flagsBitSet);
+   public SizeCommand buildSizeCommand(IntSet segments, long flagsBitSet) {
+      return new SizeCommand(cacheName, segments, flagsBitSet);
    }
 
    @Override

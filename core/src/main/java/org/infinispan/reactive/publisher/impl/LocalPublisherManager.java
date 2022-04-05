@@ -129,4 +129,6 @@ public interface LocalPublisherManager<K, V> {
     * @param lostSegments the segments that are being removed from this node
     */
    void segmentsLost(IntSet lostSegments);
+
+   CompletionStage<Long> sizePublisher(IntSet segments, long flags);
 }
