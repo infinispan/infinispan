@@ -205,4 +205,9 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          }
       };
    }
+
+   @Override
+   public CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags) {
+      return localPublisherManager.sizePublisher(segments, flags);
+   }
 }

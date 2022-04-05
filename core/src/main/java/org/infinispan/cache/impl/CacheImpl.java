@@ -493,7 +493,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final int size(long explicitFlags) {
-      SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
+      SizeCommand command = commandsFactory.buildSizeCommand(null, explicitFlags);
       long size = invocationHelper.invoke(invocationContextFactory.createInvocationContext(false, UNBOUNDED), command);
       return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
    }
@@ -504,7 +504,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<Long> sizeAsync(long explicitFlags) {
-      SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
+      SizeCommand command = commandsFactory.buildSizeCommand(null, explicitFlags);
       return invocationHelper.invokeAsync(invocationContextFactory.createInvocationContext(false, UNBOUNDED), command);
    }
 

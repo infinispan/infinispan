@@ -258,8 +258,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public SizeCommand buildSizeCommand(long flagsBitSet) {
-      return actual.buildSizeCommand(flagsBitSet);
+   public SizeCommand buildSizeCommand(IntSet segments, long flagsBitSet) {
+      return actual.buildSizeCommand(segments, flagsBitSet);
    }
 
    @Override

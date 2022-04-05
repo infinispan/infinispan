@@ -208,6 +208,20 @@ public interface PersistenceManager extends Lifecycle {
        return size(AccessMode.BOTH);
    }
 
+   default CompletionStage<Long> size(IntSet segments) {
+      return size(AccessMode.BOTH, segments);
+   }
+
+   /**
+    * Returns the count of how many entries are persisted in the given segments. If no store can handle the request
+    * for the given mode a value of <b>-1</b> is returned instead.
+    *
+    * @param predicate whether a loader can be used
+    * @param segments segments to check
+    * @return size or -1 if size couldn't be computed
+    */
+   CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate, IntSet segments);
+
    /**
     * Returns the count of how many entries are persisted. If no store can handle the request for the given mode a
     * value of <b>-1</b> is returned instead.

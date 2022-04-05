@@ -227,4 +227,9 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    public void resize(long newSize) {
       delegate().resize(newSize);
    }
+
+   @Override
+   public boolean hasExpirable() {
+      return delegate().hasExpirable();
+   }
 }

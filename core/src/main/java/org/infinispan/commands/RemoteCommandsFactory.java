@@ -30,6 +30,7 @@ import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
@@ -494,6 +495,9 @@ public class RemoteCommandsFactory {
                break;
             case IracPutManyCommand.COMMAND_ID:
                command = new IracPutManyCommand(cacheName);
+               break;
+            case SizeCommand.COMMAND_ID:
+               command = new SizeCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

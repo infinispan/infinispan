@@ -21,6 +21,7 @@ import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -34,6 +35,7 @@ import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -383,6 +385,14 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
          log.tracef("Notifying listeners of lost segments %s", lostSegments);
       }
       changeListener.forEach(lostSegments::forEach);
+   }
+
+   @Override
+   public CompletionStage<Long> sizePublisher(IntSet segments, long flags) {
+      SizeCommand command = commandsFactory.buildSizeCommand(
+            segments, EnumUtil.mergeBitSets(flags, FlagBitSets.CACHE_MODE_LOCAL));
+      InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
+      return CompletableFuture.completedFuture(invocationHelper.running().invoke(ctx, command));
    }
 
    private static Function<Object, PublisherResult<Object>> ignoreSegmentsFunction = value ->

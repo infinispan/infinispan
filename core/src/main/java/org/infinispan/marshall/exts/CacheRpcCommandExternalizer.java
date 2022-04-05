@@ -18,6 +18,7 @@ import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
+import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
@@ -111,6 +112,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             PutMapBackupWriteCommand.class,
             MultiEntriesFunctionalBackupWriteCommand.class,
             MultiKeyFunctionalBackupWriteCommand.class,
+            SizeCommand.class,
             BackupNoopCommand.class,
             InvalidateVersionsCommand.class,
             RevokeBiasCommand.class, RenewBiasCommand.class, ReductionPublisherRequestCommand.class,
