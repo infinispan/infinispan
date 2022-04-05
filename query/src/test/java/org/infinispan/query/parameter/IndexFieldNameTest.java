@@ -15,8 +15,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "query.parameter.SpecialCharTextTest")
-public class SpecialCharTextTest extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "query.parameter.IndexFieldNameTest")
+public class IndexFieldNameTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -30,27 +30,23 @@ public class SpecialCharTextTest extends SingleCacheManagerTest {
 
    @BeforeMethod(alwaysRun = true)
    public void beforeMethod() {
-      Book book = new Book();
-      book.setTitle("is*and");
-      book.setDescription("A pl*ce surrounded by the sea.");
-      cache.put(1, book);
+      Book book1 = new Book();
+      book1.setTitle("is*and");
+      book1.setDescription("A pl*ce surrounded by the sea.");
+      cache.put(1, book1);
+
+      Book book2 = new Book();
+      book2.setTitle("home");
+      book2.setDescription("The pl*ce where I'm staying.");
+      cache.put(2, book2);
    }
 
-   public void fulltext() {
+   public void useDifferentIndexFieldNames() {
       QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : 'pl*ce'");
+      Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : 'pl*ce' order by label");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
-      assertThat(result.list()).extracting("title").contains("is*and");
-   }
-
-   public void generic() {
-      QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where title = 'is*and'");
-      QueryResult<Book> result = query.execute();
-
-      assertThat(result.hitCount()).hasValue(1L);
-      assertThat(result.list()).extracting("title").contains("is*and");
+      assertThat(result.hitCount()).hasValue(2L);
+      assertThat(result.list()).extracting("title").contains("is*and", "home");
    }
 }

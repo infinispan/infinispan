@@ -38,7 +38,7 @@ public class FullTextParameterTest extends SingleCacheManagerTest {
 
    public void fulltext() {
       QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where description : :description");
+      Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : :description");
       query.setParameter("description", "place");
       QueryResult<Book> result = query.execute();
 
