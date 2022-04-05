@@ -59,8 +59,8 @@ final class ExpressionBuilder<TypeMetadata> {
       stack.push(new LazyRootBooleanExpr());
    }
 
-   public void addFullTextTerm(PropertyPath<?> propertyPath, String value, Integer fuzzySlop) {
-      push(new FullTextTermExpr(makePropertyValueExpr(propertyPath), value, fuzzySlop));
+   public void addFullTextTerm(PropertyPath<?> propertyPath, Object comparisonObject, Integer fuzzySlop) {
+      push(new FullTextTermExpr(makePropertyValueExpr(propertyPath), comparisonObject, fuzzySlop));
    }
 
    public void addFullTextRegexp(PropertyPath<?> propertyPath, String regexp) {
