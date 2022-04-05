@@ -66,6 +66,8 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -138,9 +140,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Inject InternalEntryFactory internalEntryFactory;
    @Inject KeyPartitioner keyPartitioner;
    @Inject GroupManager groupManager;
-   @Inject ClusterPublisherManager clusterPublisherManager;
    @ComponentName(PublisherManagerFactory.LOCAL_CLUSTER_PUBLISHER)
-   @Inject ClusterPublisherManager localClusterPublisherManager;
+   @Inject ClusterPublisherManager<?, ?> localClusterPublisherManager;
    @Inject ComponentRegistry componentRegistry;
 
    // Internally we always deal with an unwrapped cache, so don't unwrap per invocation
@@ -603,16 +604,36 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      ClusterPublisherManager managerToUse;
-      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-         managerToUse = localClusterPublisherManager;
-      } else {
-         managerToUse = clusterPublisherManager;
+      long size = trySizeOptimization(ctx, command);
+      if (size >= 0) {
+         return size;
       }
 
-      return asyncValue(managerToUse.keyReduction(false, null, null, ctx,
-            command.getFlagsBitSet(), DeliveryGuarantee.EXACTLY_ONCE, PublisherReducers.count(),
-            PublisherReducers.add()));
+      return asyncValue(localClusterPublisherManager.keyReduction(false, command.getSegments(), null,
+            ctx, command.getFlagsBitSet(), DeliveryGuarantee.EXACTLY_ONCE, PublisherReducers.count(), PublisherReducers.add()));
+   }
+
+   private long trySizeOptimization(InvocationContext ctx, SizeCommand command) {
+      if (command.hasAnyFlag(FlagBitSets.SKIP_SIZE_OPTIMIZATION)
+            || dataContainer.hasExpirable()
+            || cacheConfiguration.clustering().cacheMode().isScattered()
+            || (ctx != null && ctx.lookedUpEntriesCount() > 0)) {
+         return -1;
+      }
+
+      return dataContainer.sizeIncludingExpired(identifySegments(command.getSegments()));
+   }
+
+   private IntSet identifySegments(IntSet segments) {
+      if (segments == null) {
+         int maxSegments = 1;
+         if (Configurations.needSegments(cacheConfiguration)) {
+            maxSegments = cacheConfiguration.clustering().hash().numSegments();
+         }
+         segments = IntSets.immutableRangeSet(maxSegments);
+      }
+
+      return segments;
    }
 
    @Override

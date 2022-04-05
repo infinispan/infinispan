@@ -2,6 +2,7 @@ package org.infinispan.container;
 
 import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -20,6 +21,7 @@ import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.impl.DefaultDataContainer;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
@@ -36,7 +38,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest extends AbstractInfinispanTest {
-   private DataContainer<String, String> dc;
+   private InternalDataContainer<String, String> dc;
 
    private ControlledTimeService timeService;
 
@@ -50,7 +52,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc = null;
    }
 
-   protected DataContainer<String, String> createContainer() {
+   protected InternalDataContainer<String, String> createContainer() {
       DefaultDataContainer<String, String> dc = new DefaultDataContainer<>(16);
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       timeService = new ControlledTimeService();
@@ -117,6 +119,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assertEquals(-1, ice.toInternalCacheValue().getExpiryTime());
       assertEquals(-1, ice.getMaxIdle());
       assertEquals(-1, ice.getLifespan());
+      assertFalse(dc.hasExpirable());
       dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(idle, TimeUnit.MILLISECONDS).build());
       timeService.advance(100); // for time calc granularity
       ice = dc.get("k");
@@ -125,6 +128,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assertEquals(timeService.wallClockTime(), ice.getLastUsed());
       assertEquals(idle, ice.getMaxIdle());
       assertEquals(-1, ice.getLifespan());
+      assertTrue(dc.hasExpirable());
 
       timeService.advance(100); // for time calc granularity
       assertNotNull(dc.get("k"));
@@ -158,28 +162,34 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       String value = "v";
       dc.put("k", value, new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       assertContainerEntry(mortaltype(), value);
+      assertTrue(dc.hasExpirable());
 
       value = "v2";
       dc.put("k", value, new EmbeddedMetadata.Builder().build());
       assertContainerEntry(immortaltype(), value);
+      assertFalse(dc.hasExpirable());
 
       value = "v3";
       dc.put("k", value, new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
       assertContainerEntry(transienttype(), value);
+      assertTrue(dc.hasExpirable());
 
       value = "v4";
       dc.put("k", value, new EmbeddedMetadata.Builder()
             .lifespan(100, TimeUnit.MINUTES).maxIdle(100, TimeUnit.MINUTES).build());
       assertContainerEntry(transientmortaltype(), value);
+      assertTrue(dc.hasExpirable());
 
       value = "v41";
       dc.put("k", value, new EmbeddedMetadata.Builder()
             .lifespan(100, TimeUnit.MINUTES).maxIdle(100, TimeUnit.MINUTES).build());
       assertContainerEntry(transientmortaltype(), value);
+      assertTrue(dc.hasExpirable());
 
       value = "v5";
       dc.put("k", value, new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       assertContainerEntry(mortaltype(), value);
+      assertTrue(dc.hasExpirable());
    }
 
    private void assertContainerEntry(Class<? extends InternalCacheEntry> type,

@@ -282,4 +282,12 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
    default void cleanUp() {
       // Default is to do nothing
    }
+
+   /**
+    * Verify if the container has entries that can expire. This is __not__ the same thing as verifying
+    * for expired entries. This method can return true even if entries are not expired.
+    *
+    * @return true if any entry can expire, false otherwise.
+    */
+   boolean hasExpirable();
 }

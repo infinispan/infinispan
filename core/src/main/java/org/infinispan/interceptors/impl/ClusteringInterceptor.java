@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -23,6 +24,9 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.expiration.TouchMode;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.reactive.publisher.PublisherReducers;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -49,6 +53,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject protected LockManager lockManager;
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected DistributionManager distributionManager;
+   @Inject ClusterPublisherManager<?, ?> clusterPublisherManager;
 
    private TouchMode touchMode;
    private boolean isScattered;
@@ -143,6 +148,20 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
          }
          return null;
       }
+   }
+
+   @Override
+   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
+      if (isLocalModeForced(command)) {
+         return invokeNext(ctx, command);
+      }
+
+      if (command.hasAnyFlag(FlagBitSets.SKIP_SIZE_OPTIMIZATION)) {
+         return asyncValue(clusterPublisherManager.keyReduction(false, null, null, ctx,
+               command.getFlagsBitSet(), DeliveryGuarantee.EXACTLY_ONCE, PublisherReducers.count(), PublisherReducers.add()));
+      }
+
+      return asyncValue(clusterPublisherManager.sizePublisher(command.getSegments(), ctx, command.getFlagsBitSet()));
    }
 
    @Override

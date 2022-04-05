@@ -289,6 +289,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
          if (notifyListener && !map.isEmpty()) {
             listeners.forEach(c -> c.accept(map.values()));
          }
+         segmentRemoved(map);
          if (map instanceof AutoCloseable) {
             try {
                ((AutoCloseable) map).close();

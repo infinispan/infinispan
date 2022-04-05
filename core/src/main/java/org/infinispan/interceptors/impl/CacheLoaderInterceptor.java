@@ -44,7 +44,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -259,9 +258,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) {
-      CompletionStage<Long> sizeStage = trySizeOptimization(command.getFlagsBitSet());
+      CompletionStage<Long> sizeStage = trySizeOptimization(command);
       return asyncValue(sizeStage).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if ((Long) rv == -1) {
+            // Avoid any try to optimization down the stack. If we are here means that we are using stores, any other
+            // optimization should be possible only if not using any store.
+            rCommand.addFlags(FlagBitSets.SKIP_SIZE_OPTIMIZATION);
             return super.visitSizeCommand(rCtx, rCommand);
          }
          return rv;
@@ -269,12 +271,18 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    }
 
-   private CompletionStage<Long> trySizeOptimization(long flagBitSet) {
-      if (EnumUtil.containsAny(flagBitSet, FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_SIZE_OPTIMIZATION)) {
+   private CompletionStage<Long> trySizeOptimization(SizeCommand command) {
+      if (command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_SIZE_OPTIMIZATION)
+            || cacheConfiguration.persistence().passivation()) {
          return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
       }
+
       // Get the size from any shared store that isn't async
-      return persistenceManager.size(SHARED.and(NOT_ASYNC));
+      return persistenceManager.size(SHARED.and(NOT_ASYNC))
+            .thenCompose(v -> v >= 0 || !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)
+                  ? CompletableFuture.completedFuture(v)
+                  // For a local request get the size private not asynchronous store
+                  : persistenceManager.size(PRIVATE.and(NOT_ASYNC), command.getSegments()));
    }
 
    protected final boolean isConditional(WriteCommand cmd) {
