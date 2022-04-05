@@ -10,7 +10,7 @@ public class Book {
    @GenericField
    private String title;
 
-   @FullTextField
+   @FullTextField(analyzer = "whitespace")
    private String description;
 
    public String getTitle() {
