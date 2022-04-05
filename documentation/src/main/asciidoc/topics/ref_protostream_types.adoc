@@ -42,7 +42,7 @@ public interface LibraryInitalizer extends SerializationContextInitializer {
 
 [source,java,options="nowrap",subs=attributes+]
 ----
-@AutoProtoSchemaBuilder(includeClasses = { Author.class, Book.class, UUIDAdaptor.class, java.math.BigInteger }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
+@AutoProtoSchemaBuilder(includeClasses = { Author.class, Book.class, UUIDAdapter.class, java.math.BigInteger }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
 public interface LibraryInitalizer extends SerializationContextInitializer {
 
 }
