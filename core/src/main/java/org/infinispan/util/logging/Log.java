@@ -1638,8 +1638,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error processing response for request %d from %s", id = 475)
    void errorProcessingResponse(long requestId, org.jgroups.Address sender, @Cause Throwable t);
 
-   @Message(value = "Timed out waiting for responses for request %d from %s", id = 476)
-   TimeoutException requestTimedOut(long requestId, String targetsWithoutResponses);
+   @Message(value = "Timed out waiting for responses for request %d from %s after %s", id = 476)
+   TimeoutException requestTimedOut(long requestId, String targetsWithoutResponses, String elapsed);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to perform operation %s for site %s", id = 477)
