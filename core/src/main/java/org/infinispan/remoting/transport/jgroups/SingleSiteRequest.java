@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Set;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -59,7 +60,7 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
 
    @Override
    protected void onTimeout() {
-      completeExceptionally(CLUSTER.requestTimedOut(requestId, site));
+      completeExceptionally(CLUSTER.requestTimedOut(requestId, site, Util.prettyPrintTime(getTimeoutMs())));
    }
 
    public void sitesUnreachable(String unreachableSite) {

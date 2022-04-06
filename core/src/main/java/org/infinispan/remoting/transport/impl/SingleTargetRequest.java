@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import java.util.Objects;
 import java.util.Set;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -82,6 +83,6 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
    protected void onTimeout() {
       // The target might be null
       String targetString = Objects.toString(target);
-      completeExceptionally(CLUSTER.requestTimedOut(requestId, targetString));
+      completeExceptionally(CLUSTER.requestTimedOut(requestId, targetString, Util.prettyPrintTime(getTimeoutMs())));
    }
 }
