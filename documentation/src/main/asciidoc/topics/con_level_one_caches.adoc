@@ -1,7 +1,7 @@
 [id='level-one-caches_{context}']
 = Level one (L1) caches
 
-{brandname} nodes create local replicas when they retrieve entries from another node in the clsuter.
+{brandname} nodes create local replicas when they retrieve entries from another node in the cluster.
 L1 caches avoid repeatedly looking up entries on primary owner nodes and adds performance.
 
 The following diagram illustrates how L1 caches work:
