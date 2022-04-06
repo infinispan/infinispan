@@ -452,28 +452,28 @@
     <xs:attribute name="node-name" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          Name of the current node. This is a friendly name to make logs, etc. make more sense. Defaults to a combination of host name and a random number (to differentiate multiple nodes on the same host)
+          Specifies the name of the current node. Defaults to a combination of the host name and a random number to differentiate between multiple nodes on the same host.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="machine" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The id of the machine where this node runs.
+          Specifies the ID of the machine where the node runs. When a single physical machine hosts multiple JVM instances, the machine ID ensures that data is distributed across different physical hosts.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="rack" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The id of the rack where this node runs.
+          Specifies the ID of the rack where the node runs. The rack ID ensures that the copies of data are stored on different rack than the original data.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="site" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          The id of the site where this node runs.
+          The ID of the site where the node runs.In clusters with nodes in multiple physical locations site ID ensures that backup copies of data are stored across different locations.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
