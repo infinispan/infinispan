@@ -539,7 +539,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        */
       public void forceTimeout() {
          assertFalse(request.isDone());
-         request.fail(log.requestTimedOut(-1, "Induced timeout failure"));
+         request.fail(log.requestTimedOut(-1, "Induced timeout failure", "some time"));
       }
 
       /**
@@ -800,7 +800,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        * Complete the request with a {@link TimeoutException}
        */
       public void forceTimeout() {
-         fail(log.requestTimedOut(-1, "Induced failure"));
+         fail(log.requestTimedOut(-1, "Induced failure", "some time"));
       }
 
       /**

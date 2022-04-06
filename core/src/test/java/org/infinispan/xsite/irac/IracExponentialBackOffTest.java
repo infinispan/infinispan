@@ -84,7 +84,7 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
    }
 
    public void testSimulatedTimeout(Method method) throws InterruptedException {
-      doTest(method, () -> log.requestTimedOut(1, NYC));
+      doTest(method, () -> log.requestTimedOut(1, NYC, "some time"));
    }
 
    public void testSimulatedUnreachableException(Method method) throws InterruptedException {

@@ -25,6 +25,7 @@ public abstract class AbstractRequest<T> extends CompletableFuture<T> implements
    protected final RequestRepository repository;
 
    private volatile Future<?> timeoutFuture = null;
+   private volatile long timeoutMs = -1;
 
    protected AbstractRequest(long requestId, ResponseCollector<T> responseCollector, RequestRepository repository) {
       this.responseCollector = responseCollector;
@@ -52,7 +53,7 @@ public abstract class AbstractRequest<T> extends CompletableFuture<T> implements
    public void setTimeout(ScheduledExecutorService timeoutExecutor, long timeout, TimeUnit unit) {
       cancelTimeoutTask();
       ScheduledFuture<Void> timeoutFuture = timeoutExecutor.schedule(this, timeout, unit);
-      setTimeoutFuture(timeoutFuture);
+      setTimeoutFuture(timeoutFuture, unit.toMillis(timeout));
    }
 
    public void cancel(Exception exception) {
@@ -88,8 +89,9 @@ public abstract class AbstractRequest<T> extends CompletableFuture<T> implements
       return null;
    }
 
-   private void setTimeoutFuture(Future<?> timeoutFuture) {
+   private void setTimeoutFuture(Future<?> timeoutFuture, long timeout) {
       this.timeoutFuture = timeoutFuture;
+      this.timeoutMs = timeout;
       if (isDone()) {
          timeoutFuture.cancel(false);
       }
@@ -98,6 +100,11 @@ public abstract class AbstractRequest<T> extends CompletableFuture<T> implements
    private void cancelTimeoutTask() {
       if (timeoutFuture != null) {
          timeoutFuture.cancel(false);
+         timeoutMs = -1;
       }
+   }
+
+   public long getTimeoutMs() {
+      return timeoutMs;
    }
 }

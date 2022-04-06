@@ -738,7 +738,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
        */
       public void forceTimeout() {
          assertFalse(request.isDone());
-         request.fail(log.requestTimedOut(-1, "Induced timeout failure"));
+         request.fail(log.requestTimedOut(-1, "Induced timeout failure", "some time"));
       }
 
       /**
@@ -1023,7 +1023,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
        * Complete the request with a {@link TimeoutException}
        */
       public void forceTimeout() {
-         fail(log.requestTimedOut(-1, "Induced failure"));
+         fail(log.requestTimedOut(-1, "Induced failure", "some time"));
       }
 
       /**

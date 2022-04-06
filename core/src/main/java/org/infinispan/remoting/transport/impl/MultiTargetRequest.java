@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -167,6 +168,6 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
                                              .filter(Objects::nonNull)
                                              .map(Object::toString)
                                              .collect(Collectors.joining(","));
-      completeExceptionally(CLUSTER.requestTimedOut(requestId, targetsWithoutResponses));
+      completeExceptionally(CLUSTER.requestTimedOut(requestId, targetsWithoutResponses, Util.prettyPrintTime(getTimeoutMs())));
    }
 }
