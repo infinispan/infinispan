@@ -252,7 +252,7 @@
       <versionx.com.fasterxml.jackson.core.jackson-annotations>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-annotations>
       <versionx.com.fasterxml.jackson.core.jackson-core>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-core>
       <versionx.com.fasterxml.jackson.core.jackson-databind>${version.jackson.databind}</versionx.com.fasterxml.jackson.core.jackson-databind>
-      <versionx.com.fasterxml.jackson.modules.jackson-modules-java8>${version.jackson.databind}</versionx.com.fasterxml.jackson.modules.jackson-modules-java8>
+      <versionx.com.fasterxml.jackson.modules.jackson-modules-java8>${version.jackson}</versionx.com.fasterxml.jackson.modules.jackson-modules-java8>
       <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>30.1.1-jre</versionx.com.google.guava.guava>
