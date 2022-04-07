@@ -11,6 +11,7 @@ public interface SyncLock {
 
    /**
     * Return the container of this lock
+    *
     * @return
     */
    SyncContainer container();

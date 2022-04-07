@@ -29,6 +29,7 @@ public interface AsyncStrongCounter {
 
    /**
     * Return the container of this counter
+    *
     * @return
     */
    AsyncContainer container();

@@ -13,13 +13,13 @@ public interface MutinyCaches {
 
    <K, V> Uni<MutinyCache<K, V>> create(String name, String template);
 
-   <K, V> Uni<MutinyCache<K, V>> cache(String name);
+   <K, V> Uni<MutinyCache<K, V>> get(String name);
 
    Uni<Void> remove(String name);
 
    Multi<String> names();
 
-   <K, V> Uni<Void> createTemplate(String name, CacheConfiguration cacheConfiguration);
+   Uni<Void> createTemplate(String name, CacheConfiguration cacheConfiguration);
 
    Uni<Void> removeTemplate(String name);
 

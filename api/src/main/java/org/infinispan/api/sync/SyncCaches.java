@@ -10,18 +10,17 @@ public interface SyncCaches {
     * Obtains an existing cache
     *
     * @param name the name of the cache
-    * @param <K> the type of the key
-    * @param <V> the type of the value
+    * @param <K>  the type of the key
+    * @param <V>  the type of the value
     * @return
     */
    <K, V> SyncCache<K, V> get(String name);
 
    /**
-    *
-    * @param name the name of the cache
+    * @param name               the name of the cache
     * @param cacheConfiguration
-    * @param <K> the type of the key
-    * @param <V> the type of the value
+    * @param <K>                the type of the key
+    * @param <V>                the type of the value
     * @return
     */
    <K, V> SyncCache<K, V> create(String name, CacheConfiguration cacheConfiguration);
@@ -29,10 +28,10 @@ public interface SyncCaches {
    /**
     * Creates a cache using the supplied template name
     *
-    * @param name the name of the cache
+    * @param name     the name of the cache
     * @param template the name of an existing template
-    * @param <K> the type of the key
-    * @param <V> the type of the value
+    * @param <K>      the type of the key
+    * @param <V>      the type of the value
     * @return
     */
    <K, V> SyncCache<K, V> create(String name, String template);
@@ -54,7 +53,7 @@ public interface SyncCaches {
    /**
     * Creates a cache template
     *
-    * @param name the name of the template
+    * @param name               the name of the template
     * @param cacheConfiguration the configuration of the template
     */
    void createTemplate(String name, CacheConfiguration cacheConfiguration);

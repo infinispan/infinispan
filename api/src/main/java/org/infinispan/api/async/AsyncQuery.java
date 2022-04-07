@@ -2,17 +2,21 @@ package org.infinispan.api.async;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
-import java.util.function.Consumer;
 
-import org.infinispan.api.common.CacheEntry;
+import org.infinispan.api.common.events.cache.CacheContinuousQueryEvent;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
+import org.infinispan.api.common.process.CacheProcessor;
+import org.infinispan.api.common.process.CacheProcessorOptions;
 
 /**
  * Parameterized Query builder
  *
+ * @param <K>
+ * @param <V>
  * @param <R> the result type for the query
  * @since 14.0
  */
-public interface AsyncQuery<R> {
+public interface AsyncQuery<K, V, R> {
    /**
     * Sets the named parameter to the specified value
     *
@@ -20,7 +24,7 @@ public interface AsyncQuery<R> {
     * @param value
     * @return
     */
-   AsyncQuery<R> param(String name, Object value);
+   AsyncQuery<K, V, R> param(String name, Object value);
 
    /**
     * Skips the first specified number of results
@@ -28,7 +32,7 @@ public interface AsyncQuery<R> {
     * @param skip
     * @return
     */
-   AsyncQuery<R> skip(long skip);
+   AsyncQuery<K, V, R> skip(long skip);
 
    /**
     * Limits the number of results
@@ -36,28 +40,67 @@ public interface AsyncQuery<R> {
     * @param limit
     * @return
     */
-   AsyncQuery<R> limit(int limit);
+   AsyncQuery<K, V, R> limit(int limit);
 
    /**
     * Executes the query
     */
-   Flow.Publisher<R> find();
+   CompletionStage<AsyncQueryResult<R>> find();
 
    /**
-    * Removes all entries which match the query.
+    * Executes the query and returns a {@link java.util.concurrent.Flow.Publisher} with the results
     *
+    * @param query query String
+    * @return a {@link Flow.Publisher} which produces {@link CacheContinuousQueryEvent} items.
+    */
+   Flow.Publisher<CacheContinuousQueryEvent<K, R>> findContinuously(String query);
+
+   /**
+    * Executes the manipulation statement (UPDATE, REMOVE)
+    *
+    * @return the number of entries that were processed
+    */
+   CompletionStage<Long> execute();
+
+   /**
+    * @param <T>
+    * @param processor the entry processor task
     * @return
     */
-   CompletionStage<Void> remove();
+   default <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(AsyncCacheEntryProcessor<K, V, T> processor) {
+      return process(processor, CacheProcessorOptions.DEFAULT);
+   }
 
    /**
-    * Updates entries using a {@link Consumer}. If the cache is embedded, the consumer will be executed locally on the
-    * owner of the entry. If the cache is remote, entries will be retrieved, manipulated locally and put back.
+    * @param <T>
+    * @param processor the entry processor task
+    * @param options
+    * @return
     */
-   <K, V> CompletionStage<Void> update(Consumer<CacheEntry<K, V>> entryConsumer);
+   <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(AsyncCacheEntryProcessor<K, V, T> processor, CacheProcessorOptions options);
 
    /**
-    * Updates entries using a named task. The task must be an EntryConsumerTask.
+    * Processes entries matched by the query using a named {@link CacheProcessor}. The query <b>MUST NOT</b> use
+    * projections. If the cache processor returns a non-null value for an entry, it will be returned through the
+    * publisher.
+    *
+    * @param <T>
+    * @param processor the entry processor
+    * @return
     */
-   CompletionStage<Void> update(String taskName, Object... args);
+   default <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(CacheProcessor processor) {
+      return process(processor, CacheProcessorOptions.DEFAULT);
+   }
+
+   /**
+    * Processes entries matched by the query using a named {@link CacheProcessor}. The query <b>MUST NOT</b> use
+    * projections. If the cache processor returns a non-null value for an entry, it will be returned through the
+    * publisher.
+    *
+    * @param <T>
+    * @param processor the named entry processor
+    * @param options
+    * @return
+    */
+   <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(CacheProcessor processor, CacheProcessorOptions options);
 }

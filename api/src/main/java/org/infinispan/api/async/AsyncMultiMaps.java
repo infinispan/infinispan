@@ -19,7 +19,7 @@ public interface AsyncMultiMaps {
 
    Flow.Publisher<String> names();
 
-   <K, V> CompletionStage<Void> createTemplate(String name, MultiMapConfiguration cacheConfiguration);
+   CompletionStage<Void> createTemplate(String name, MultiMapConfiguration cacheConfiguration);
 
    CompletionStage<Void> removeTemplate(String name);
 

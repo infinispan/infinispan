@@ -14,6 +14,7 @@ public interface SyncStrongCounter {
 
    /**
     * Return the container of this counter
+    *
     * @return
     */
    SyncContainer container();
