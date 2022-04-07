@@ -18,7 +18,7 @@
 |OPTIONAL
 |Defines either an array of Protobuf schema names to back up or `*` for all schemas.
 
-|`tasks`
+|`process`
 |OPTIONAL
 |Specifies either an array of server tasks to back up or `*` for all tasks.
 

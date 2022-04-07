@@ -16,6 +16,7 @@ public interface SyncMultiMap<K, V> {
 
    /**
     * Return the container of this multimap
+    *
     * @return
     */
    SyncContainer container();

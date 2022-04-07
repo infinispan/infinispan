@@ -19,7 +19,7 @@ public interface AsyncCaches {
 
    Flow.Publisher<String> names();
 
-   <K, V> CompletionStage<Void> createTemplate(String name, CacheConfiguration cacheConfiguration);
+   CompletionStage<Void> createTemplate(String name, CacheConfiguration cacheConfiguration);
 
    CompletionStage<Void> removeTemplate(String name);
 

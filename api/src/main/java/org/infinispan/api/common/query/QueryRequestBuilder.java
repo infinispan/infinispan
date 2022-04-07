@@ -26,7 +26,7 @@ public final class QueryRequestBuilder {
       params = new HashMap<>();
    }
 
-   public static final QueryRequestBuilder query(String ickleQuery) {
+   public static QueryRequestBuilder query(String ickleQuery) {
       QueryRequestBuilder queryParameters = new QueryRequestBuilder();
       queryParameters.ickleQuery = ickleQuery;
       return queryParameters;

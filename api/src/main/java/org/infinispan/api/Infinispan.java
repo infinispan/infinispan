@@ -18,7 +18,7 @@ import org.infinispan.api.sync.SyncContainer;
 public interface Infinispan extends AutoCloseable {
    /**
     * Creates and starts the Infinispan manager object
-    *
+    * <p>
     * Calling create with the same URI multiple times should return the same object. Ref count the object.
     *
     * <ul>
@@ -31,7 +31,7 @@ public interface Infinispan extends AutoCloseable {
     * @return an
     */
    static Infinispan create(URI uri) {
-      for(Factory factory : ServiceLoader.load(Factory.class, Factory.class.getClassLoader())) {
+      for (Factory factory : ServiceLoader.load(Factory.class, Factory.class.getClassLoader())) {
          Infinispan instance = factory.create(uri);
          if (instance != null) {
             return instance;
@@ -45,7 +45,7 @@ public interface Infinispan extends AutoCloseable {
    }
 
    static Infinispan create(Configuration configuration) {
-      for(Factory factory : ServiceLoader.load(Factory.class, Factory.class.getClassLoader())) {
+      for (Factory factory : ServiceLoader.load(Factory.class, Factory.class.getClassLoader())) {
          Infinispan instance = factory.create(configuration);
          if (instance != null) {
             return instance;
@@ -83,14 +83,18 @@ public interface Infinispan extends AutoCloseable {
 
    interface Factory {
       /**
-       * Create an {@link Infinispan} instance for the supplied uri. If the factory cannot handle the uri, it should return null.
+       * Create an {@link Infinispan} instance for the supplied uri. If the factory cannot handle the uri, it should
+       * return null.
+       *
        * @param uri
        * @return An {@link Infinispan} instance or null if the factory cannot handle the uri.
        */
       Infinispan create(URI uri);
 
       /**
-       * Create an {@link Infinispan} instance for the supplied configuration. If the factory cannot handle the uri, it should return null.
+       * Create an {@link Infinispan} instance for the supplied configuration. If the factory cannot handle the uri, it
+       * should return null.
+       *
        * @param configuration
        * @return An {@link Infinispan} instance or null if the factory cannot handle the uri.
        */

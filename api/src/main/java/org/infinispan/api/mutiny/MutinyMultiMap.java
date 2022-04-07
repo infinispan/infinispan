@@ -18,6 +18,7 @@ public interface MutinyMultiMap<K, V> {
 
    /**
     * Return the container of this MultiMap
+    *
     * @return
     */
    MutinyContainer container();
