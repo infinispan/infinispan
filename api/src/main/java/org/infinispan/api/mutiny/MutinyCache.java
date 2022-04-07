@@ -1,17 +1,18 @@
 package org.infinispan.api.mutiny;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.api.Experimental;
 import org.infinispan.api.common.CacheEntry;
-import org.infinispan.api.common.CacheEntryMetadata;
-import org.infinispan.api.common.events.cache.CacheContinuousQueryEvent;
+import org.infinispan.api.common.CacheEntryVersion;
+import org.infinispan.api.common.CacheOptions;
+import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
-import org.infinispan.api.common.tasks.EntryConsumerTask;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
+import org.infinispan.api.common.process.CacheProcessor;
 import org.infinispan.api.configuration.CacheConfiguration;
 
 import io.smallrye.mutiny.Multi;
@@ -41,6 +42,7 @@ public interface MutinyCache<K, V> {
 
    /**
     * Return the container of this cache
+    *
     * @return
     */
    MutinyContainer container();
@@ -51,32 +53,107 @@ public interface MutinyCache<K, V> {
     * @param key
     * @return the value
     */
-   Uni<V> get(K key);
+   default Uni<V> get(K key) {
+      return get(key, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Get the value of the Key if such exists
+    *
+    * @param key
+    * @param options
+    * @return the value
+    */
+   Uni<V> get(K key, CacheOptions options);
+
+   /**
+    * @param key
+    * @return
+    */
+   default Uni<CacheEntry<K, V>> getEntry(K key) {
+      return getEntry(key, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param options
+    * @return
+    */
+   Uni<CacheEntry<K, V>> getEntry(K key, CacheOptions options);
 
    /**
     * Insert the key/value if such key does not exist
     *
     * @param key
     * @param value
-    * @return Void
+    * @return the previous value if present
     */
-   Uni<Boolean> putIfAbsent(K key, V value);
+   default Uni<V> putIfAbsent(K key, V value) {
+      return putIfAbsent(key, value, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @param options
+    * @return the previous value if present
+    */
+   Uni<V> putIfAbsent(K key, V value, CacheWriteOptions options);
+
+   /**
+    * Insert the key/value if such key does not exist
+    *
+    * @param key
+    * @param value
+    * @return
+    */
+   default Uni<Boolean> setIfAbsent(K key, V value) {
+      return setIfAbsent(key, value, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @param options
+    * @return
+    */
+   Uni<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options);
 
    /**
     * Save the key/value. If the key exists will replace the value
     *
     * @param key
     * @param value
-    * @return Void
+    * @return
     */
-   Uni<V> put(K key, V value);
+   default Uni<V> put(K key, V value) {
+      return put(key, value, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @param options
+    * @return
+    */
+   Uni<V> put(K key, V value, CacheWriteOptions options);
 
    /**
     * @param key
     * @param value
     * @return
     */
-   Uni<Void> set(K key, V value);
+   default Uni<Void> set(K key, V value) {
+      return set(key, value, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @param options
+    * @return
+    */
+   Uni<Void> set(K key, V value, CacheWriteOptions options);
 
    /**
     * Delete the key
@@ -84,7 +161,18 @@ public interface MutinyCache<K, V> {
     * @param key
     * @return true if the key existed and was removed, false if the key did not exist.
     */
-   Uni<Boolean> remove(K key);
+   default Uni<Boolean> remove(K key) {
+      return remove(key, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Delete the key
+    *
+    * @param key
+    * @param options
+    * @return true if the key existed and was removed, false if the key did not exist.
+    */
+   Uni<Boolean> remove(K key, CacheOptions options);
 
    /**
     * Removes the key and returns its value if present.
@@ -92,21 +180,51 @@ public interface MutinyCache<K, V> {
     * @param key
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   Uni<V> getAndRemove(K key);
+   default Uni<V> getAndRemove(K key) {
+      return getAndRemove(key, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Removes the key and returns its value if present.
+    *
+    * @param key
+    * @param options
+    * @return the value of the key before removal. Returns null if the key didn't exist.
+    */
+   Uni<V> getAndRemove(K key, CacheOptions options);
 
    /**
     * Retrieve all keys
     *
     * @return @{@link Multi} which produces keys as items.
     */
-   Multi<K> keys();
+   default Multi<K> keys() {
+      return keys(CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Retrieve all keys
+    *
+    * @return @{@link Multi} which produces keys as items.
+    */
+   Multi<K> keys(CacheOptions options);
 
    /**
     * Retrieve all entries
     *
     * @return
     */
-   Multi<? extends CacheEntry<K, V>> entries();
+   default Multi<CacheEntry<K, V>> entries() {
+      return entries(CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Retrieve all entries
+    *
+    * @param options
+    * @return
+    */
+   Multi<CacheEntry<K, V>> entries(CacheOptions options);
 
    /**
     * Retrieve all the entries for the specified keys.
@@ -114,9 +232,33 @@ public interface MutinyCache<K, V> {
     * @param keys
     * @return
     */
-   Multi<? extends CacheEntry<K, V>> getMany(List<K> keys);
+   default Multi<CacheEntry<K, V>> getAll(Set<K> keys) {
+      return getAll(keys, CacheOptions.DEFAULT);
+   }
 
-   Multi<? extends CacheEntry<K, V>> getMany(K... keys);
+   /**
+    * Retrieve all the entries for the specified keys.
+    *
+    * @param keys
+    * @param options
+    * @return
+    */
+   Multi<CacheEntry<K, V>> getAll(Set<K> keys, CacheOptions options);
+
+   /**
+    * @param keys
+    * @return
+    */
+   default Multi<CacheEntry<K, V>> getAll(K... keys) {
+      return getAll(CacheOptions.DEFAULT, keys);
+   }
+
+   /**
+    * @param keys
+    * @param options
+    * @return
+    */
+   Multi<CacheEntry<K, V>> getAll(CacheOptions options, K... keys);
 
    /**
     * Put multiple entries from a {@link Multi}
@@ -124,13 +266,63 @@ public interface MutinyCache<K, V> {
     * @param pairs
     * @return Void
     */
-   Multi<MutinyWriteResult<K>> put(Multi<CacheEntry<K, V>> pairs);
+   default Uni<Void> putAll(Multi<CacheEntry<K, V>> pairs) {
+      return putAll(pairs, CacheWriteOptions.DEFAULT);
+   }
 
-   Multi<MutinyWriteResult<K>> put(List<CacheEntry<K, V>> pairs);
+   /**
+    * @param pairs
+    * @param options
+    * @return
+    */
+   Uni<Void> putAll(Multi<CacheEntry<K, V>> pairs, CacheWriteOptions options);
 
-   Multi<MutinyWriteResult<K>> put(Map<K, V> map, CacheEntryMetadata metadata);
+   /**
+    * @param map
+    * @param options
+    * @return
+    */
+   Uni<Void> putAll(Map<K, V> map, CacheWriteOptions options);
 
-   Multi<MutinyWriteResult<K>> put(Map<K, V> map);
+   default Uni<Void> putAll(Map<K, V> map) {
+      return putAll(map, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @return
+    */
+   default Uni<Boolean> replace(K key, V value, CacheEntryVersion version) {
+      return replace(key, value, version, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @param options
+    * @return
+    */
+   Uni<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options);
+
+   /**
+    * @param key
+    * @param value
+    * @param version
+    * @return
+    */
+   default Uni<CacheEntry<K, V>> getOrReplaceEntry(K key, V value, CacheEntryVersion version) {
+      return getOrReplaceEntry(key, value, version, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * @param key
+    * @param value
+    * @param options
+    * @param version
+    * @return
+    */
+   Uni<CacheEntry<K, V>> getOrReplaceEntry(K key, V value, CacheEntryVersion version, CacheWriteOptions options);
 
    /**
     * Removes a set of keys. Returns the keys that were removed.
@@ -138,7 +330,18 @@ public interface MutinyCache<K, V> {
     * @param keys
     * @return
     */
-   Multi<K> removeMany(Multi<K> keys);
+   default Multi<K> removeAll(Set<K> keys) {
+      return removeAll(keys, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Removes a set of keys. Returns the keys that were removed.
+    *
+    * @param keys
+    * @param options
+    * @return
+    */
+   Multi<K> removeAll(Set<K> keys, CacheOptions options);
 
    /**
     * Removes a set of keys. Returns the keys that were removed.
@@ -146,45 +349,92 @@ public interface MutinyCache<K, V> {
     * @param keys
     * @return
     */
-   Multi<? extends CacheEntry<K, V>> getAndRemoveMany(Multi<K> keys);
+   default Multi<K> removeAll(Multi<K> keys) {
+      return removeAll(keys, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Removes a set of keys. Returns the keys that were removed.
+    *
+    * @param keys
+    * @param options
+    * @return
+    */
+   Multi<K> removeAll(Multi<K> keys, CacheOptions options);
+
+   /**
+    * Removes a set of keys. Returns the keys that were removed.
+    *
+    * @param keys
+    * @return
+    */
+   default Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys) {
+      return getAndRemoveAll(keys, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Removes a set of keys. Returns the keys that were removed.
+    *
+    * @param keys
+    * @param options
+    * @return
+    */
+   Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys, CacheOptions options);
 
    /**
     * Estimate the size of the store
     *
     * @return Long, estimated size
     */
-   Uni<Long> estimateSize();
+   default Uni<Long> estimateSize() {
+      return estimateSize(CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Estimate the size of the store
+    *
+    * @param options
+    * @return Long, estimated size
+    */
+   Uni<Long> estimateSize(CacheOptions options);
 
    /**
     * Clear the store. If a concurrent operation puts data in the store the clear might not properly work
     *
     * @return Void
     */
-   Uni<Void> clear();
+   default Uni<Void> clear() {
+      return clear(CacheOptions.DEFAULT);
+   }
 
    /**
-    * Executes the query and returns a {@link Multi} with the results
+    * Clear the store. If a concurrent operation puts data in the store the clear might not properly work
     *
-    * @param query query String
-    * @return a {@link Multi} which produces query result items.
+    * @param options
+    * @return Void
     */
-   <R> Multi<R> find(String query);
+   Uni<Void> clear(CacheOptions options);
 
    /**
     * Find by QueryRequest.
     *
+    * @param <R>
     * @param query
     * @return
     */
-   <R> MutinyQuery<R> query(String query);
+   default <R> MutinyQuery<K, V, R> query(String query) {
+      return query(query, CacheOptions.DEFAULT);
+   }
 
    /**
-    * Executes the query and returns a {@link Multi} with the results
+    * Find by QueryRequest.
     *
-    * @param query query String
-    * @return a {@link Multi} which produces {@link CacheContinuousQueryEvent} items.
+    * @param <R>
+    * @param query
+    * @param options
+    * @return
     */
-   <R> Multi<CacheContinuousQueryEvent<K, R>> queryContinuously(String query);
+   <R> MutinyQuery<K, V, R> query(String query, CacheOptions options);
 
    /**
     * Listens to the events
@@ -192,7 +442,7 @@ public interface MutinyCache<K, V> {
     * @param types
     * @return a {@link Multi} which produces {@link CacheEntryEvent} items.
     */
-   default Multi<? extends CacheEntryEvent<K, V>> listen(CacheEntryEventType... types) {
+   default Multi<CacheEntryEvent<K, V>> listen(CacheEntryEventType... types) {
       return listen(new CacheListenerOptions(), types);
    }
 
@@ -203,21 +453,46 @@ public interface MutinyCache<K, V> {
     * @param types
     * @return a {@link Multi} which produces {@link CacheEntryEvent} items.
     */
-   Multi<? extends CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types);
+   Multi<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types);
+
+   /**
+    * Process the specified entries using the supplied processor
+    *
+    * @param keys
+    * @param processor
+    */
+   default <T> Multi<CacheEntryProcessorResult<K, T>> process(Set<K> keys, MutinyCacheEntryProcessor<K, V, T> processor) {
+      return process(keys, processor, CacheOptions.DEFAULT);
+   }
+
+   /**
+    * Process the specified entries using the supplied processor
+    *
+    * @param keys
+    * @param processor
+    * @param options
+    */
+   <T> Multi<CacheEntryProcessorResult<K, T>> process(Set<K> keys, MutinyCacheEntryProcessor<K, V, T> processor, CacheOptions options);
 
    /**
     * Process all entries using the supplied task
+    *
     * @param task
     */
-   Multi<MutinyWriteResult> process(Set<K> keys, EntryConsumerTask<K, V> task); // cache.process(new ServerTask("blah"));
+   default <T> Multi<CacheEntryProcessorResult<K, T>> processAll(CacheProcessor task) {
+      return processAll(task, CacheOptions.DEFAULT);
+   }
 
    /**
-    * NO PROJECTIONS !
-    * @param query
+    * Process all entries using the supplied task
+    *
     * @param task
+    * @param options
+    */
+   <T> Multi<CacheEntryProcessorResult<K, T>> processAll(CacheProcessor task, CacheOptions options);
+
+   /**
     * @return
     */
-   Multi<MutinyWriteResult> process(String query, EntryConsumerTask<K, V> task);
-
    MutinyStreamingCache<K> streaming();
 }

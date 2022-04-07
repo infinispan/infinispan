@@ -24,6 +24,7 @@ public interface MutinyStrongCounter {
 
    /**
     * Return the container of this counter
+    *
     * @return
     */
    MutinyContainer container();
@@ -75,7 +76,7 @@ public interface MutinyStrongCounter {
     *
     * @return a {@link Multi} which produces {@link CacheEntryEvent} items.
     */
-   Multi<? extends CounterEvent> listen();
+   Multi<CounterEvent> listen();
 
    /**
     * Atomically sets the value to the given updated value if the current value {@code ==} the expected value.

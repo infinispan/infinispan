@@ -11,6 +11,7 @@ public interface AsyncLock {
 
    /**
     * Return the container of this lock
+    *
     * @return
     */
    AsyncContainer container();

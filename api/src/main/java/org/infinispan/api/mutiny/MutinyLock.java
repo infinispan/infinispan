@@ -10,6 +10,7 @@ public interface MutinyLock {
 
    /**
     * Return the container of this container
+    *
     * @return
     */
    MutinyContainer container();

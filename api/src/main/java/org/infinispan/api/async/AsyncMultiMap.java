@@ -11,18 +11,21 @@ import org.infinispan.api.configuration.MultiMapConfiguration;
 public interface AsyncMultiMap<K, V> {
    /**
     * The name of this multimap
+    *
     * @return
     */
    String name();
 
    /**
     * The configuration of this multimap
+    *
     * @return
     */
    CompletionStage<MultiMapConfiguration> configuration();
 
    /**
     * Return the container of this MultiMap
+    *
     * @return
     */
    AsyncContainer container();

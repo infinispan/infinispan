@@ -19,7 +19,7 @@ public interface MutinyMultiMaps {
 
    Multi<String> names();
 
-   <K, V> Uni<Void> createTemplate(String name, MultiMapConfiguration cacheConfiguration);
+   Uni<Void> createTemplate(String name, MultiMapConfiguration cacheConfiguration);
 
    Uni<Void> removeTemplate(String name);
 

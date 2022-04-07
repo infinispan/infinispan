@@ -15,12 +15,14 @@ public interface MutinyWeakCounter {
 
    /**
     * Return the container of this counter
+    *
     * @return
     */
    MutinyContainer container();
 
    /**
     * Returns the current value of this counter
+    *
     * @return
     */
    Uni<Long> value();

@@ -22,6 +22,7 @@ public interface AsyncWeakCounter {
 
    /**
     * Return the container of this counter
+    *
     * @return
     */
    AsyncContainer container();
