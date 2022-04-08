@@ -13,8 +13,7 @@
       <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
       <FD_SOCK sock_conn_timeout="3000"/>
       <FD_ALL3 timeout="3000"
-               interval="1000"
-               ispn:stack.combine="REPLACE" ispn:stack.position="FD_ALL"/>
+               interval="1000"/>
       <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
       <remote-sites default-stack="tcp">
          <remote-site name="LON"/>
@@ -47,8 +46,7 @@
       <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
       <FD_SOCK sock_conn_timeout="3000"/>
       <FD_ALL3 timeout="3000"
-               interval="1000"
-               ispn:stack.combine="REPLACE" ispn:stack.position="FD_ALL"/>
+               interval="1000"/>
       <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
       <remote-sites default-stack="tcp">
          <remote-site name="LON"/>

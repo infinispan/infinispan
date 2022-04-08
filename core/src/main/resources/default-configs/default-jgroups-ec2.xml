@@ -22,18 +22,17 @@
    />
    <RED/>
    <org.jgroups.aws.s3.NATIVE_S3_PING
-      region_name="${jgroups.s3.region_name}"
-      bucket_name="${jgroups.s3.bucket_name}"
-      num_discovery_runs="3"
+         region_name="${jgroups.s3.region_name}"
+         bucket_name="${jgroups.s3.bucket_name}"
+         num_discovery_runs="3"
    />
    <MERGE3 min_interval="10000"
            max_interval="30000"
    />
    <FD_SOCK/>
-   <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
-   <FD_ALL timeout="10000"
-           interval="2000"
-           timeout_check_interval="1000"
+   <!-- Suspect node `timeout` millis after the last heartbeat -->
+   <FD_ALL3 timeout="10000"
+            interval="2000"
    />
    <VERIFY_SUSPECT timeout="1000"/>
    <pbcast.NAKACK2 use_mcast_xmit="false"
