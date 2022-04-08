@@ -12,8 +12,6 @@ infinispan:
       FD_ALL3:
         timeout: "3000"
         interval: "1000"
-        stack.combine: "REPLACE"
-        stack.position: "FD_ALL"
     - stack:
       stack name: "test-udp"
       extends: "udp"
@@ -26,8 +24,6 @@ infinispan:
       FD_ALL3:
         timeout: "3000"
         interval: "1000"
-        ispn:stack.combine: "REPLACE"
-        ispn:stack.position: "FD_ALL"
   cache-container:
     name: "default"
     transport:
