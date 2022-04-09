@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.mapping.reference;
 
+import org.hibernate.search.backend.lucene.analysis.model.impl.LuceneAnalysisDefinitionRegistry;
+import org.hibernate.search.backend.lucene.types.dsl.impl.LuceneIndexFieldTypeFactoryImpl;
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaElement;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaFieldOptionsStep;
@@ -117,15 +119,29 @@ public class FieldReferenceProvider {
             return typeFactory.asBoolean();
          case STRING: {
             StringIndexFieldTypeOptionsStep<?> step = typeFactory.asString();
-            if (analyzer != null) {
-               step.analyzer(analyzer);
-            }
+            bindAnalyzer(typeFactory, step);
             return step;
          }
          case BYTE_STRING:
             return typeFactory.asString();
          default:
             throw log.fieldTypeNotIndexable(type.toString(), name);
+      }
+   }
+
+   private void bindAnalyzer(IndexFieldTypeFactory typeFactory, StringIndexFieldTypeOptionsStep<?> step) {
+      if (analyzer == null) {
+         return;
+      }
+
+      @SuppressWarnings("uncheked")
+      LuceneAnalysisDefinitionRegistry analysisDefinitionRegistry =
+            ((LuceneIndexFieldTypeFactoryImpl) typeFactory).getAnalysisDefinitionRegistry();
+
+      if (analysisDefinitionRegistry.getNormalizerDefinition(analyzer) != null) {
+         step.normalizer(analyzer);
+      } else {
+         step.analyzer(analyzer);
       }
    }
 
