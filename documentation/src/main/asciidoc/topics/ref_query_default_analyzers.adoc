@@ -30,6 +30,9 @@
 | `filename`
 | Splits text fields into larger size tokens than the `standard` analyzer, treating whitespace as a delimiter and converts all letters to lowercase characters.
 
+| `lowercase`
+| Converts all the letters of the text to lowercase characters, the text is not tokenized (normalizer).
+
 |===
 
 These analyzer definitions are based on Apache Lucene and are provided "as-is".
