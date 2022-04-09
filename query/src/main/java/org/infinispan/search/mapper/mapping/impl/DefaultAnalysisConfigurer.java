@@ -54,6 +54,9 @@ public class DefaultAnalysisConfigurer implements LuceneAnalysisConfigurer {
             .tokenizer(ConfigurableBufferSizeKeywordTokenizerFactory.class)
                .param("bufferSize", "2048")
             .tokenFilter(LowerCaseFilterFactory.class);
+
+      context.normalizer("lowercase").custom()
+            .tokenFilter(LowerCaseFilterFactory.class);
    }
 
    /**
