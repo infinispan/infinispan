@@ -33,7 +33,12 @@ public class BooleShannonExpansionTest {
       }
 
       @Override
-      public boolean isStored(String[] propertyPath) {
+      public boolean isProjectable(String[] propertyPath) {
+         return isIndexed(propertyPath);
+      }
+
+      @Override
+      public boolean isSortable(String[] propertyPath) {
          return isIndexed(propertyPath);
       }
 

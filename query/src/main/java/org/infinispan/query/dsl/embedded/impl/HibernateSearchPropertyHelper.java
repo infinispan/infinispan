@@ -159,9 +159,15 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       @Override
-      public boolean isStored(String[] propertyPath) {
+      public boolean isProjectable(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
          return field != null && field.projectable();
+      }
+
+      @Override
+      public boolean isSortable(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+         return field != null && field.sortable();
       }
 
       @Override

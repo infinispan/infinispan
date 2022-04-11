@@ -28,12 +28,20 @@ public interface IndexedFieldProvider<TypeMetadata> {
       boolean isAnalyzed(String[] propertyPath);
 
       /**
-       * Checks if the property of the indexed entity is stored.
+       * Checks if the property of the indexed entity is projectable.
        *
        * @param propertyPath the path of the property
-       * @return {@code true} if the property is stored, {@code false} otherwise.
+       * @return {@code true} if the property is projectable, {@code false} otherwise.
        */
-      boolean isStored(String[] propertyPath);
+      boolean isProjectable(String[] propertyPath);
+
+      /**
+       * Checks if the property of the indexed entity is sortable.
+       *
+       * @param propertyPath the path of the property
+       * @return {@code true} if the property is sortable, {@code false} otherwise.
+       */
+      boolean isSortable(String[] propertyPath);
 
       Object getNullMarker(String[] propertyPath);
    }
@@ -50,7 +58,12 @@ public interface IndexedFieldProvider<TypeMetadata> {
       }
 
       @Override
-      public boolean isStored(String[] propertyPath) {
+      public boolean isProjectable(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
+      public boolean isSortable(String[] propertyPath) {
          return false;
       }
 
