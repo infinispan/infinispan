@@ -502,7 +502,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
             if (idx == null) {
                idx = new ArrayList<>();
                projectionsMap.put(p, idx);
-               if (!fieldIndexingMetadata.isStored(p.asArrayPath())) {
+               if (!fieldIndexingMetadata.isProjectable(p.asArrayPath())) {
                   allProjectionsAreStored = false;
                }
             }
@@ -520,7 +520,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
             String asStringPath = p.asStringPath();
             if (!sortFieldMap.containsKey(asStringPath)) {
                sortFieldMap.put(asStringPath, sf);
-               if (!fieldIndexingMetadata.isStored(p.asArrayPath())) {
+               if (!fieldIndexingMetadata.isSortable(p.asArrayPath())) {
                   allSortFieldsAreStored = false;
                }
             }
