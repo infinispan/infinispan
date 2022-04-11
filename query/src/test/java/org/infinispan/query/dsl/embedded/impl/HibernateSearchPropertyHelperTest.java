@@ -78,7 +78,8 @@ public class HibernateSearchPropertyHelperTest {
 
    @Test
    public void testRecognizeStoredField() {
-      assertThat(propertyHelper.getIndexedFieldProvider().get(TestEntity.class).isStored(new String[]{"description"})).isTrue();
+      assertThat(propertyHelper.getIndexedFieldProvider().get(TestEntity.class).isProjectable(new String[]{"description"})).isTrue();
+      assertThat(propertyHelper.getIndexedFieldProvider().get(TestEntity.class).isSortable(new String[]{"description"})).isFalse();
    }
 
    @Test
