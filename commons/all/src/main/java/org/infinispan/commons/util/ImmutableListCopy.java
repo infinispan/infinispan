@@ -233,9 +233,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
 
    @Override
    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + Arrays.hashCode(elements);
-      return result;
+      return Arrays.hashCode(elements);
    }
 
    @SuppressWarnings("rawtypes")
