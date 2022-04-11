@@ -36,8 +36,14 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
-   public boolean isStored(String[] propertyPath) {
+   public boolean isProjectable(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldStored);
+   }
+
+   @Override
+   public boolean isSortable(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isFieldStored) &&
+            !getFlag(propertyPath, IndexingMetadata::isFieldAnalyzed);
    }
 
    @Override
