@@ -98,4 +98,8 @@ final class SecurityActions {
          return cache;
       }
    }
+
+   static String getSystemProperty(String propertyName) {
+      return doPrivileged(() -> System.getProperty(propertyName));
+   }
 }

@@ -34,6 +34,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
@@ -48,6 +49,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TestHandlersChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
@@ -306,7 +308,8 @@ public class HotRodTestingUtil {
    }
 
    public static int getServerTopologyId(EmbeddedCacheManager cm, String cacheName) {
-      return cm.getCache(cacheName).getAdvancedCache().getRpcManager().getTopologyId();
+      return TestingUtil.extractComponent(cm.getCache(cacheName), DistributionManager.class).getCacheTopology()
+            .getReadConsistentHash().hashCode();
    }
 
    public static void killClient(HotRodClient client) {

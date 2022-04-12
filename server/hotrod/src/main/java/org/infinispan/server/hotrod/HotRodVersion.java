@@ -79,6 +79,6 @@ public enum HotRodVersion {
    }
 
    public static VersionedEncoder getEncoder(byte version) {
-      return new Encoder2x();
+      return Encoder2x.instance();
    }
 }

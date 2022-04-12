@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
@@ -54,12 +58,45 @@ import org.jgroups.SuspectedException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelId;
 
 /**
  * @author Galder Zamarreño
  */
 class Encoder2x implements VersionedEncoder {
    private static final Log log = LogFactory.getLog(Encoder2x.class, Log.class);
+   private static final int topologyCheckInterval;
+
+   static {
+      String intervalStr = SecurityActions.getSystemProperty("infinispan.server.topology-check-interval");
+      if (intervalStr != null) {
+         topologyCheckInterval = Integer.parseInt(intervalStr);
+      } else {
+         // Default interval of 5 seconds
+         topologyCheckInterval = 5_000;
+      }
+   }
+
+   private static final Encoder2x INSTANCE = new Encoder2x();
+
+   private final ConcurrentMap<ChannelId, LastKnownClientTopologyId> lastKnownTopologyIds = topologyCheckInterval > 0 ? new ConcurrentHashMap<>() : null;
+
+   private static class LastKnownClientTopologyId {
+      private final int topologyId;
+      private final long timeCaptured;
+
+      private LastKnownClientTopologyId(int topologyId, long timeCaptured) {
+         this.topologyId = topologyId;
+         this.timeCaptured = timeCaptured;
+      }
+   }
+
+   private Encoder2x() {
+   }
+
+   public static Encoder2x instance() {
+      return INSTANCE;
+   }
 
    @Override
    public void writeEvent(Events.Event e, ByteBuf buf) {
@@ -174,7 +211,7 @@ class Encoder2x implements VersionedEncoder {
 
    @Override
    public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats,
-                                NettyTransport transport, ClusterCacheStats clusterCacheStats) {
+         NettyTransport transport, ClusterCacheStats clusterCacheStats) {
       ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
       int numStats = 11;
       if (transport != null) {
@@ -452,8 +489,8 @@ class Encoder2x implements VersionedEncoder {
       if (header.op != HotRodOperation.ERROR) {
          if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(header.cacheName)) {
             cacheTopology = getCounterCacheTopology(server.getCacheManager());
-            newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, CacheMode.DIST_SYNC,
-                  cacheTopology);
+            newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, channel,
+                  server.getTimeService(), CacheMode.DIST_SYNC, cacheTopology);
          } else if (header.cacheName.isEmpty() && !server.hasDefaultCache()) {
             cacheTopology = null;
             newTopology = Optional.empty();
@@ -463,9 +500,9 @@ class Encoder2x implements VersionedEncoder {
             CacheMode cacheMode = configuration.clustering().cacheMode();
 
             cacheTopology =
-               cacheMode.isClustered() ? cacheInfo.distributionManager.getCacheTopology() : null;
-            newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, cacheMode,
-                                              cacheTopology);
+                  cacheMode.isClustered() ? cacheInfo.distributionManager.getCacheTopology() : null;
+            newTopology = getTopologyResponse(header.clientIntel, header.topologyId, addressCache, channel,
+                  server.getTimeService(), cacheMode, cacheTopology);
             keyMediaType = configuration.encoding().keyDataType().mediaType();
             valueMediaType = configuration.encoding().valueDataType().mediaType();
             objectStorage = APPLICATION_OBJECT.match(keyMediaType);
@@ -570,7 +607,8 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private void writeEmptyHashInfo(AbstractTopologyResponse t, ByteBuf buffer) {
-      if (log.isTraceEnabled()) log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t);
+      if (log.isTraceEnabled())
+         log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t);
       buffer.writeByte(0); // Hash Function Version
       ExtendedByteBuf.writeUnsignedInt(t.numSegments, buffer);
    }
@@ -632,7 +670,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    private Optional<AbstractTopologyResponse> getTopologyResponse(short clientIntel, int topologyId, Cache<Address, ServerAddress> addressCache,
-                                                                  CacheMode cacheMode, CacheTopology cacheTopology) {
+         Channel channel, TimeService timeService, CacheMode cacheMode, CacheTopology cacheTopology) {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          switch (clientIntel) {
@@ -641,10 +679,26 @@ class Encoder2x implements VersionedEncoder {
                // Only send a topology update if the cache is clustered
                if (cacheMode.isClustered()) {
                   // Use the request cache's topology id as the HotRod topologyId.
-                  int currentTopologyId = cacheTopology.getTopologyId();
-                  // AND if the client's topology id is smaller than the server's topology id
-                  if (topologyId < currentTopologyId)
-                     return generateTopologyResponse(clientIntel, topologyId, addressCache, cacheMode, cacheTopology);
+                  int currentTopologyId = cacheTopology.getReadConsistentHash().hashCode();
+                  // AND if the client's topology id is different from the server's topology id
+                  if (topologyId != currentTopologyId) {
+                     Optional<AbstractTopologyResponse> respOptional =
+                           generateTopologyResponse(clientIntel, topologyId, addressCache, cacheMode, cacheTopology);
+                     if (lastKnownTopologyIds != null && respOptional.isPresent()) {
+                        ChannelId id = channel.id();
+                        LastKnownClientTopologyId lastKnown = lastKnownTopologyIds.get(id);
+                        if (lastKnown != null && lastKnown.topologyId == topologyId && lastKnown.timeCaptured != -1) {
+                           if (timeService.timeDuration(lastKnown.timeCaptured, TimeUnit.MILLISECONDS) > topologyCheckInterval) {
+                              log.clientNotUpdatingTopology(channel.localAddress(), topologyId);
+                              // Update last known topology to the current one to avoid logging a message over and over
+                              lastKnownTopologyIds.replace(id, new LastKnownClientTopologyId(currentTopologyId, -1));
+                           }
+                        } else if (lastKnownTopologyIds.put(id, new LastKnownClientTopologyId(topologyId, timeService.time())) == null) {
+                           channel.closeFuture().addListener(___ -> lastKnownTopologyIds.remove(id));
+                        }
+                     }
+                     return respOptional;
+                  }
                }
             }
          }
@@ -663,7 +717,6 @@ class Encoder2x implements VersionedEncoder {
       // difference between the client topology id and the server topology id is 2 or more. The partial update
       // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
       // the topology cache is updated.
-      int currentTopologyId = cacheTopology.getTopologyId();
       List<Address> cacheMembers = cacheTopology.getActualMembers();
       Map<Address, ServerAddress> serverEndpoints = new HashMap<>();
       try {
@@ -673,31 +726,25 @@ class Encoder2x implements VersionedEncoder {
          return Optional.empty();
       }
 
-      int topologyId = currentTopologyId;
-
+      int clientTopologyId = cacheTopology.getReadConsistentHash().hashCode();
       if (log.isTraceEnabled()) {
-         log.tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
-               cacheMembers, cacheMembers, responseTopologyId, topologyId);
+         log.tracef("Check for partial topologies: endpoints=%s, client-topology=%s, server-topology=%s, server-client-topology=%s",
+               serverEndpoints, responseTopologyId, cacheTopology.getTopologyId(), clientTopologyId);
       }
 
       if (!serverEndpoints.keySet().containsAll(cacheMembers)) {
-         // At least one cache member is missing from the topology cache
-         if (currentTopologyId - responseTopologyId < 2) {
-            if (log.isTraceEnabled()) log.trace("Postpone topology update");
-            return Optional.empty(); // Postpone topology update
-         } else {
-            // Send partial topology update
-            topologyId -= 1;
-            if (log.isTraceEnabled()) log.tracef("Send partial topology update with topology id %s", topologyId);
-         }
+         if (log.isTraceEnabled()) log.trace("Postpone topology update");
+         return Optional.empty(); // Postpone topology update
       }
+
+      if (log.isTraceEnabled()) log.tracef("Send client topology update with topology id %s", clientTopologyId);
 
       if (clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE && !cacheMode.isInvalidation()) {
          int numSegments = cacheTopology.getReadConsistentHash().getNumSegments();
-         return Optional.of(new HashDistAware20Response(topologyId, serverEndpoints, numSegments,
+         return Optional.of(new HashDistAware20Response(clientTopologyId, serverEndpoints, numSegments,
                Constants.DEFAULT_CONSISTENT_HASH_VERSION));
       } else {
-         return Optional.of(new TopologyAwareResponse(topologyId, serverEndpoints, 0));
+         return Optional.of(new TopologyAwareResponse(clientTopologyId, serverEndpoints, 0));
       }
    }
 

@@ -24,7 +24,6 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.server.hotrod.test.TestSizeResponse;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.topology.ClusterCacheStatus;
 import org.testng.annotations.Test;
 
 /**
@@ -93,9 +92,10 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients().get(1).ping((byte) 2, 0);
       assertStatus(resp, Success);
-      assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
+      int serverClientTopologyId = currentServerTopologyId();
+      assertTopologyReceived(resp.topologyResponse, servers(), serverClientTopologyId);
 
-      resp = clients().get(1).ping((byte) 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
+      resp = clients().get(1).ping((byte) 2, serverClientTopologyId);
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
    }
@@ -112,10 +112,11 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       resp = clients().get(1).put(k(m), 0, 0, v(m, "v2-"), (byte) 2, 0);
       assertStatus(resp, Success);
-      assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
+      int serverClientTopologyId = currentServerTopologyId();
+      assertTopologyReceived(resp.topologyResponse, servers(), serverClientTopologyId);
 
       resp = clients().get(0)
-                      .put(k(m), 0, 0, v(m, "v3-"), (byte) 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
+            .put(k(m), 0, 0, v(m, "v3-"), (byte) 2, serverClientTopologyId);
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
       assertSuccess(clients().get(1).get(k(m), 0), v(m, "v3-"));
@@ -123,9 +124,10 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       HotRodServer newServer = startClusteredServer(servers().get(1).getPort() + 25);
       try {
          resp = clients().get(0)
-                         .put(k(m), 0, 0, v(m, "v4-"), (byte) 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
+               .put(k(m), 0, 0, v(m, "v4-"), (byte) 2, serverClientTopologyId);
          assertStatus(resp, Success);
-         assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
+         serverClientTopologyId = currentServerTopologyId();
+         assertEquals(resp.topologyResponse.topologyId, serverClientTopologyId);
          AbstractTestTopologyAwareResponse topoResp = resp.asTopologyAwareResponse();
          assertEquals(topoResp.members.size(), 3);
          Stream.concat(Stream.of(newServer), servers().stream())
@@ -138,22 +140,23 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       }
 
       resp = clients().get(0)
-                      .put(k(m), 0, 0, v(m, "v5-"), (byte) 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 2);
+            .put(k(m), 0, 0, v(m, "v5-"), (byte) 2, serverClientTopologyId);
       assertStatus(resp, Success);
-      assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
+      serverClientTopologyId = currentServerTopologyId();
+      assertEquals(resp.topologyResponse.topologyId, serverClientTopologyId);
       AbstractTestTopologyAwareResponse topoResp3 = resp.asTopologyAwareResponse();
       assertEquals(topoResp3.members.size(), 2);
       servers().stream()
-               .map(HotRodServer::getAddress)
-               .forEach(addr -> assertTrue(topoResp3.members.contains(addr)));
+            .map(HotRodServer::getAddress)
+            .forEach(addr -> assertTrue(topoResp3.members.contains(addr)));
       assertSuccess(clients().get(1).get(k(m), 0), v(m, "v5-"));
 
       HotRodServer crashingServer = startClusteredServer(servers().get(1).getPort() + 25);
       try {
-         resp = clients().get(0).put(k(m), 0, 0, v(m, "v6-"), (byte) 2,
-                                     ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 4);
+         resp = clients().get(0).put(k(m), 0, 0, v(m, "v6-"), (byte) 2, serverClientTopologyId);
          assertStatus(resp, Success);
-         assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
+         serverClientTopologyId = currentServerTopologyId();
+         assertEquals(resp.topologyResponse.topologyId, serverClientTopologyId);
          AbstractTestTopologyAwareResponse topoResp2 = resp.asTopologyAwareResponse();
          assertEquals(topoResp2.members.size(), 3);
          Stream.concat(Stream.of(crashingServer), servers().stream())
@@ -166,7 +169,7 @@ public class HotRodReplicationTest extends HotRodMultiNodeTest {
       }
 
       resp = clients().get(0)
-                      .put(k(m), 0, 0, v(m, "v7-"), (byte) 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 6);
+            .put(k(m), 0, 0, v(m, "v7-"), (byte) 2, serverClientTopologyId);
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
       AbstractTestTopologyAwareResponse topoResp4 = resp.asTopologyAwareResponse();

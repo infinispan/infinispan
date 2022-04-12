@@ -26,7 +26,6 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.server.hotrod.test.TestSizeResponse;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.topology.ClusterCacheStatus;
 import org.testng.annotations.Test;
 
 /**
@@ -71,10 +70,11 @@ public class HotRodDistributionTest extends HotRodMultiNodeTest {
 
       resp = client2.put(k(m), 0, 0, v(m, "v2-"), INTELLIGENCE_TOPOLOGY_AWARE, 0);
       assertStatus(resp, Success);
-      assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
+      int serverClientTopologyId = currentServerTopologyId();
+      assertTopologyReceived(resp.topologyResponse, servers(), serverClientTopologyId);
 
       resp = client1.put(k(m), 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
+            serverClientTopologyId);
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"));
@@ -115,8 +115,7 @@ public class HotRodDistributionTest extends HotRodMultiNodeTest {
          log.trace("New server stopped");
       }
 
-      resp = client2.put(k(m), 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE,
-                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
+      resp = client2.put(k(m), 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
       assertStatus(resp, Success);
       assertHashTopology20Received(resp.topologyResponse, servers(), cacheName(), currentServerTopologyId());
 

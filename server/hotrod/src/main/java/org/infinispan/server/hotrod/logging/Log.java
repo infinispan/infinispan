@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.net.SocketAddress;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -111,4 +112,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid mech '%s'", id = 28028)
    IllegalArgumentException invalidMech(String mech);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Client %s keeps providing outdated topology %s", id = 28029)
+   void clientNotUpdatingTopology(SocketAddress socketAddress, int topologyId);
 }
