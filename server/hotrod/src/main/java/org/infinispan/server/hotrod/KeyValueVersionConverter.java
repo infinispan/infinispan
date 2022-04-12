@@ -36,26 +36,35 @@ class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], by
       byte[] out = new byte[capacity];
       int offset = UnsignedNumeric.writeUnsignedInt(out, 0, key.length);
       offset += putBytes(key, offset, out);
-      EntryVersion version = newMetadata.version();
       if (newValue != null) {
          offset += UnsignedNumeric.writeUnsignedInt(out, offset, newValue.length);
          offset += putBytes(newValue, offset, out);
-         if(version != null) putLong(((NumericVersion) version).getVersion(), offset, out);
+         writeVersion(newMetadata, offset, out);
       }
       if (newValue == null && returnOldValue && oldValue != null) {
          offset += UnsignedNumeric.writeUnsignedInt(out, offset, oldValue.length);
          offset += putBytes(oldValue, offset, out);
-         if(version != null) putLong(((NumericVersion) version).getVersion(), offset, out);
+         writeVersion(oldMetadata, offset, out);
       }
       return out;
    }
 
-   private int putBytes(byte[] bytes, int offset, byte[] out) {
+   private static void writeVersion(Metadata metadata, int offset, byte[] out) {
+      if (metadata == null || metadata.version() == null) {
+         return;
+      }
+      EntryVersion version = metadata.version();
+      if (version instanceof NumericVersion) {
+         putLong(((NumericVersion) version).getVersion(), offset, out);
+      }
+   }
+
+   private static int putBytes(byte[] bytes, int offset, byte[] out) {
       System.arraycopy(bytes, 0, out, offset, bytes.length);
       return bytes.length;
    }
 
-   private int putLong(long l, int offset, byte[] out) {
+   private static int putLong(long l, int offset, byte[] out) {
       out[offset] = (byte) (l >> 56);
       out[offset + 1] = (byte) (l >> 48);
       out[offset + 2] = (byte) (l >> 40);
