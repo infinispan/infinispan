@@ -53,6 +53,9 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       sessionRepository.save(sessionToBeDeleted);
       sessionRepository.deleteById(sessionToBeDeleted.getId());
 
+      // Attempt to delete a non present session
+      sessionRepository.deleteById("not-present");
+
       sleepOneSecond();
       callEviction();
 
