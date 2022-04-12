@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -37,6 +38,8 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -110,12 +113,14 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
     * @param configuration The counter's configuration.
     * @param counterName   The counter's name.
     */
-   public static void removeWeakCounter(Cache<WeakCounterKey, CounterValue> cache, CounterConfiguration configuration,
-         String counterName) {
+   public static CompletionStage<Void> removeWeakCounter(Cache<WeakCounterKey, CounterValue> cache,
+                                                         CounterConfiguration configuration, String counterName) {
       ByteString counterNameByteString = ByteString.fromString(counterName);
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
       for (int i = 0; i < configuration.concurrencyLevel(); ++i) {
-         cache.remove(new WeakCounterKey(counterNameByteString, i));
+         stage.dependsOn(cache.removeAsync(new WeakCounterKey(counterNameByteString, i)));
       }
+      return stage.freeze();
    }
 
    /**

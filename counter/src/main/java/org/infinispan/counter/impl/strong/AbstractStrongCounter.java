@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
@@ -81,8 +82,8 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
     * @param cache       The {@link Cache} to remove the counter from.
     * @param counterName The counter's name.
     */
-   public static void removeStrongCounter(Cache<StrongCounterKey, CounterValue> cache, String counterName) {
-      cache.remove(new StrongCounterKey(counterName));
+   public static CompletionStage<Void> removeStrongCounter(Cache<StrongCounterKey, CounterValue> cache, String counterName) {
+      return cache.removeAsync(new StrongCounterKey(counterName)).thenApply(CompletableFutures.toNullFunction());
    }
 
    public final void init() {

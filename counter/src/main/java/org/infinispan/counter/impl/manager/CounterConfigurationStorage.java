@@ -3,7 +3,6 @@ package org.infinispan.counter.impl.manager;
 import java.util.Map;
 
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * A local storage to persist counter's {@link CounterConfiguration}.
@@ -43,11 +42,4 @@ public interface CounterConfigurationStorage {
     * @param configuration the {@link CounterConfiguration} to check.
     */
    void validatePersistence(CounterConfiguration configuration);
-
-   /**
-    * Initializes this instance with the {@link EmbeddedCacheManager}.
-    *
-    * @param cacheManager the cache manager.
-    */
-   void initialize(EmbeddedCacheManager cacheManager);
 }
