@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.Storage;
@@ -22,29 +23,33 @@ import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.counter.configuration.CounterConfigurationParser;
 import org.infinispan.counter.configuration.CounterConfigurationSerializer;
 import org.infinispan.counter.logging.Log;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * A persistent implementation of {@link CounterConfigurationStorage}.
  * <p>
- * The counter's configuration will be stored (as xml format) in {@code counters.xml} file in {@link GlobalStateConfiguration#sharedPersistentLocation()}
+ * The counter's configuration will be stored (as xml format) in {@code counters.xml} file in {@link
+ * GlobalStateConfiguration#sharedPersistentLocation()}
  *
  * @author Pedro Ruivo
  * @since 9.2
  */
+@Scope(Scopes.GLOBAL)
 public class PersistedCounterConfigurationStorage implements CounterConfigurationStorage {
 
    private static final Log log = LogFactory.getLog(PersistedCounterConfigurationStorage.class, Log.class);
    private final Map<String, CounterConfiguration> storage;
    private final CounterConfigurationSerializer serializer;
    private final CounterConfigurationParser parser;
-   private volatile String sharedDirectory;
+   private final String sharedDirectory;
 
-   PersistedCounterConfigurationStorage() {
-      storage = new ConcurrentHashMap<>();
+   public PersistedCounterConfigurationStorage(GlobalConfiguration globalConfiguration) {
+      storage = new ConcurrentHashMap<>(32);
       serializer = new CounterConfigurationSerializer();
       parser = new CounterConfigurationParser();
+      sharedDirectory = globalConfiguration.globalState().sharedPersistentLocation();
    }
 
    private static AbstractCounterConfiguration fromEntry(Map.Entry<String, CounterConfiguration> entry) {
@@ -85,11 +90,6 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       //nothing to validate
    }
 
-   @Override
-   public void initialize(EmbeddedCacheManager cacheManager) {
-      sharedDirectory = cacheManager.getCacheManagerConfiguration().globalState().sharedPersistentLocation();
-   }
-
    private void doStoreAll() throws IOException {
       File directory = getSharedDirectory();
       File temp = File.createTempFile("counters", null, directory);
@@ -100,7 +100,7 @@ public class PersistedCounterConfigurationStorage implements CounterConfiguratio
       try {
          renameTempFile(temp, getFileLock(), persistentFile);
       } catch (Exception e) {
-          throw CONTAINER.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
+         throw CONTAINER.cannotRenamePersistentFile(temp.getAbsolutePath(), persistentFile, e);
       }
    }
 

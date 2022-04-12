@@ -110,9 +110,9 @@ public class CounterJmxTest extends BaseCounterTest {
    @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {
-      super.clearContent();
       findCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).ifPresent(Cache::clear);
       findCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME).ifPresent(Cache::clear);
+      super.clearContent();
    }
 
    @Override
