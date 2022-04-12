@@ -24,7 +24,6 @@ import org.infinispan.counter.impl.function.ReadFunction;
 import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
-import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
@@ -44,7 +43,8 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * It registers a {@link EmbeddedCounterManager} to each {@link EmbeddedCacheManager} started and starts the cache on it.
+ * It registers a {@link EmbeddedCounterManager} to each {@link EmbeddedCacheManager} started and starts the cache on
+ * it.
  *
  * @author Pedro Ruivo
  * @since 9.0
@@ -62,8 +62,8 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
             .stateTransfer().fetchInMemoryState(true)
             .l1().disable()
             .partitionHandling().whenSplit(config.reliability() == Reliability.CONSISTENT ?
-                                           PartitionHandling.DENY_READ_WRITES :
-                                           PartitionHandling.ALLOW_READ_WRITES)
+                  PartitionHandling.DENY_READ_WRITES :
+                  PartitionHandling.ALLOW_READ_WRITES)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       return builder.build();
    }
@@ -85,23 +85,6 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       return config == null ? CounterManagerConfigurationBuilder.defaultConfiguration() : config;
    }
 
-   private static void registerCounterManager(EmbeddedCacheManager cacheManager, BasicComponentRegistry registry,
-                                              GlobalConfiguration globalConfiguration) {
-      if (log.isTraceEnabled())
-         log.tracef("Registering counter manager.");
-      EmbeddedCounterManager counterManager = new EmbeddedCounterManager(cacheManager);
-      // This must happen before CacheManagerJmxRegistration starts
-      registry.registerComponent(CounterManager.class, counterManager, true);
-      if (globalConfiguration.jmx().enabled()) {
-         try {
-            CacheManagerJmxRegistration jmxRegistration = registry.getComponent(CacheManagerJmxRegistration.class).running();
-            jmxRegistration.registerMBean(counterManager);
-         } catch (Exception e) {
-            throw log.jmxRegistrationFailed(e);
-         }
-      }
-   }
-
    private static void registerCounterCache(InternalCacheRegistry registry, CounterManagerConfiguration config) {
       registry.registerInternalCache(COUNTER_CACHE_NAME, createCounterCacheConfiguration(config),
             of(EXCLUSIVE, PERSISTENT));
@@ -112,14 +95,10 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
             of(EXCLUSIVE, PERSISTENT));
    }
 
-   private static void registerCounterNotificationManager(BasicComponentRegistry registry) {
-      registry.registerComponent(CounterManagerNotificationManager.class, new CounterManagerNotificationManager(), true);
-   }
-
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
-      final Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization()
-            .advancedExternalizers();
+      log.debug("Initialize counter module lifecycle");
+      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization().advancedExternalizers();
 
       // Only required by GlobalMarshaller
       addAdvancedExternalizer(externalizerMap, ResetFunction.EXTERNALIZER);
@@ -132,12 +111,12 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, RemoveFunction.EXTERNALIZER);
 
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
-      EmbeddedCacheManager cacheManager = bcr.getComponent(EmbeddedCacheManager.class).wired();
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
 
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
 
+      log.debugf("Register counter's cache %s", COUNTER_CACHE_NAME);
       CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(globalConfiguration);
       if (gcr.getGlobalConfiguration().isClustered()) {
          //only attempts to create the caches if the cache manager is clustered.
@@ -146,19 +125,30 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          //local only cache manager.
          registerLocalCounterCache(internalCacheRegistry);
       }
-      registerCounterNotificationManager(bcr);
-      registerCounterManager(cacheManager, bcr, globalConfiguration);
+
+      log.debug("Register EmbeddedCounterManager");
+      // required to instantiate and start the EmbeddedCounterManager.
+      CounterManager cm = bcr.getComponent(CounterManager.class).wired();
+      if (globalConfiguration.jmx().enabled()) {
+         try {
+            CacheManagerJmxRegistration jmxRegistration = bcr.getComponent(CacheManagerJmxRegistration.class).running();
+            jmxRegistration.registerMBean(cm);
+         } catch (Exception e) {
+            throw log.jmxRegistrationFailed(e);
+         }
+      }
    }
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
       if (COUNTER_CACHE_NAME.equals(cacheName) && configuration.clustering().cacheMode().isClustered()) {
+         log.debugf("Starting counter's cache %s", cacheName);
          BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
          CounterInterceptor counterInterceptor = new CounterInterceptor();
          bcr.registerComponent(CounterInterceptor.class, counterInterceptor, true);
          bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), CounterInterceptor.class.getName());
          bcr.getComponent(AsyncInterceptorChain.class).wired()
-            .addInterceptorAfter(counterInterceptor, EntryWrappingInterceptor.class);
+               .addInterceptorAfter(counterInterceptor, EntryWrappingInterceptor.class);
       }
    }
 }

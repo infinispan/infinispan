@@ -7,7 +7,8 @@ import java.util.Map;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * A volatile implementation of {@link CounterConfigurationStorage}.
@@ -17,7 +18,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Pedro Ruivo
  * @since 9.2
  */
-public class VolatileCounterConfigurationStorage implements CounterConfigurationStorage {
+@Scope(Scopes.GLOBAL)
+public enum VolatileCounterConfigurationStorage implements CounterConfigurationStorage {
+   INSTANCE;
 
    @Override
    public Map<String, CounterConfiguration> loadAll() {
@@ -39,10 +42,5 @@ public class VolatileCounterConfigurationStorage implements CounterConfiguration
       if (configuration.storage() == Storage.PERSISTENT) {
          throw CONTAINER.invalidPersistentStorageMode();
       }
-   }
-
-   @Override
-   public void initialize(EmbeddedCacheManager cacheManager) {
-      //no-op
    }
 }

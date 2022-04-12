@@ -10,23 +10,17 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.PropertyFormatter;
-import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
-import org.infinispan.counter.impl.CounterModuleLifecycle;
-import org.infinispan.counter.impl.entries.CounterKey;
-import org.infinispan.counter.impl.entries.CounterValue;
+import org.infinispan.counter.impl.factory.StrongCounterFactory;
+import org.infinispan.counter.impl.factory.WeakCounterFactory;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.strong.AbstractStrongCounter;
-import org.infinispan.counter.impl.strong.BoundedStrongCounter;
-import org.infinispan.counter.impl.strong.UnboundedStrongCounter;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.annotations.Inject;
@@ -36,7 +30,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * A {@link CounterManager} implementation for embedded cache manager.
@@ -51,25 +45,15 @@ public class EmbeddedCounterManager implements CounterManager {
    private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
 
    private final Map<String, Object> counters;
-   private final EmbeddedCacheManager cacheManager;
-   private final CounterConfigurationManager configurationManager;
-   private volatile AdvancedCache<CounterKey, CounterValue> counterCache;
    private volatile boolean started;
 
+   @Inject CounterConfigurationManager configurationManager;
    @Inject CounterManagerNotificationManager notificationManager;
+   @Inject StrongCounterFactory strongCounterFactory;
+   @Inject WeakCounterFactory weakCounterFactory;
 
-   public EmbeddedCounterManager(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
+   public EmbeddedCounterManager() {
       counters = new ConcurrentHashMap<>(32);
-      CounterConfigurationStorage storage = isGlobalStateEnabled(cacheManager) ?
-            new PersistedCounterConfigurationStorage() :
-            new VolatileCounterConfigurationStorage();
-      storage.initialize(cacheManager);
-      configurationManager = new CounterConfigurationManager(cacheManager, storage);
-   }
-
-   private static boolean isGlobalStateEnabled(EmbeddedCacheManager cacheManager) {
-      return SecurityActions.getCacheManagerConfiguration(cacheManager).globalState().enabled();
    }
 
    @Start
@@ -77,7 +61,6 @@ public class EmbeddedCounterManager implements CounterManager {
       if (log.isTraceEnabled()) {
          log.trace("Starting EmbeddedCounterManager");
       }
-      configurationManager.start();
       started = true;
    }
 
@@ -87,8 +70,6 @@ public class EmbeddedCounterManager implements CounterManager {
          log.trace("Stopping EmbeddedCounterManager");
       }
       started = false;
-      counterCache = null;
-      configurationManager.stop();
    }
 
    private static <T> T validateCounter(Class<T> tClass, Object retVal) {
@@ -191,13 +172,6 @@ public class EmbeddedCounterManager implements CounterManager {
       return configurationManager.getConfiguration(name);
    }
 
-   private StrongCounter createBoundedStrongCounter(String counterName, CounterConfiguration configuration) {
-      BoundedStrongCounter counter = new BoundedStrongCounter(counterName, cache(configuration), configuration,
-            notificationManager);
-      counter.init();
-      return counter;
-   }
-
    @ManagedOperation(
          description = "Returns the current counter's value",
          displayName = "Get Counter' Value",
@@ -245,56 +219,22 @@ public class EmbeddedCounterManager implements CounterManager {
       return PropertyFormatter.getInstance().format(configuration);
    }
 
-   private StrongCounter createUnboundedStrongCounter(String counterName, CounterConfiguration configuration) {
-      UnboundedStrongCounter counter = new UnboundedStrongCounter(counterName, cache(configuration), configuration,
-            notificationManager);
-      counter.init();
-      return counter;
-   }
-
-   private WeakCounter createWeakCounter(String counterName, CounterConfiguration configuration) {
-      WeakCounterImpl counter = new WeakCounterImpl(counterName, cache(configuration), configuration,
-            notificationManager);
-      counter.init();
-      return counter;
-   }
-
    public CompletableFuture<Boolean> isDefinedAsync(String name) {
       return getConfigurationAsync(name).thenApply(Objects::nonNull);
-   }
-
-   private synchronized void assertCounterCacheCreated() {
-      //checks and waits until cache is started
-      if (started && counterCache == null) {
-         counterCache = cacheManager.<CounterKey, CounterValue>getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME)
-               .getAdvancedCache();
-      }
-   }
-
-   private <K extends CounterKey> AdvancedCache<K, CounterValue> cache() {
-      assertCounterCacheCreated();
-      //noinspection unchecked
-      return (AdvancedCache<K, CounterValue>) counterCache;
-   }
-
-   private <K extends CounterKey> AdvancedCache<K, CounterValue> cache(CounterConfiguration configuration) {
-      return configuration.storage() == Storage.VOLATILE ?
-            this.<K>cache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE) :
-            cache();
    }
 
    private void removeCounter(String name, Object counter, CounterConfiguration configuration) {
       if (configuration.type() == CounterType.WEAK) {
          if (counter ==  null) {
             //no instance stored locally. Remove from cache only.
-            WeakCounterImpl.removeWeakCounter(cache(), configuration, name);
+            CompletionStages.join(weakCounterFactory.removeWeakCounter(name, configuration));
          } else {
             ((WeakCounterImpl) counter).destroyAndRemove();
          }
       } else {
          if (counter == null) {
             //no instance stored locally. Remove from cache only.
-            AbstractStrongCounter.removeStrongCounter(cache(), name);
+            CompletionStages.join(strongCounterFactory.removeStrongCounter(name));
          } else {
             ((AbstractStrongCounter) counter).destroyAndRemove();
          }
@@ -315,16 +255,10 @@ public class EmbeddedCounterManager implements CounterManager {
 
       switch (configuration.type()) {
          case WEAK:
-            // topology listener is used to compute the keys where this node is the primary owner
-            // adds are made on these keys to avoid contention and improve performance
-            notificationManager.registerTopologyListener(cache());
-            // the weak counter keeps a local value and, on each event, the local value is updated (reads are always local)
-            notificationManager.registerCounterValueListener(cache());
-            return createWeakCounter(counterName, configuration);
+            return CompletionStages.join(weakCounterFactory.createWeakCounter(counterName, configuration));
          case BOUNDED_STRONG:
-            return createBoundedStrongCounter(counterName, configuration);
          case UNBOUNDED_STRONG:
-            return createUnboundedStrongCounter(counterName, configuration);
+            return CompletionStages.join(strongCounterFactory.createStrongCounter(counterName, configuration));
          default:
             throw new IllegalStateException("[should never happen] unknown counter type: " + configuration.type());
       }

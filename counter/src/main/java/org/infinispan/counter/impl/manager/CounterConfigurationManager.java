@@ -14,11 +14,17 @@ import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
@@ -30,36 +36,36 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Stores all the defined counter's configuration.
  * <p>
- * It uses the state-{@link Cache} to distribute the counter's configuration among the nodes in the cluster, and the {@link CounterConfigurationStorage} to persist persistent configurations.
+ * It uses the state-{@link Cache} to distribute the counter's configuration among the nodes in the cluster, and the
+ * {@link CounterConfigurationStorage} to persist persistent configurations.
  * <p>
  * Note that the {@link Cache} doesn't persist anything.
  *
  * @author Pedro Ruivo
  * @since 9.2
  */
+@Scope(Scopes.GLOBAL)
 public class CounterConfigurationManager {
 
    public static final String COUNTER_SCOPE = "counter";
+
+   @Inject EmbeddedCacheManager cacheManager;
+   @Inject CounterConfigurationStorage storage;
+
    private final AtomicBoolean counterCacheStarted = new AtomicBoolean(false);
-   private final EmbeddedCacheManager cacheManager;
    private final Map<String, AbstractCounterConfiguration> configuredCounters;
-   private final CounterConfigurationStorage storage;
 
 
    private volatile AdvancedCache<ScopedState, CounterConfiguration> stateCache;
    private volatile CounterConfigurationListener listener;
 
-   CounterConfigurationManager(EmbeddedCacheManager cacheManager, CounterConfigurationStorage storage) {
-      this.cacheManager = cacheManager;
-      this.storage = storage;
-      GlobalConfiguration globalConfig = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      CounterManagerConfiguration counterManagerConfig = globalConfig.module(CounterManagerConfiguration.class);
-      this.configuredCounters = counterManagerConfig == null ?
+   public CounterConfigurationManager(GlobalConfiguration globalConfiguration) {
+      CounterManagerConfiguration counterManagerConfig = globalConfiguration.module(CounterManagerConfiguration.class);
+      configuredCounters = counterManagerConfig == null ?
             Collections.emptyMap() :
             counterManagerConfig.counters();
    }
@@ -74,8 +80,9 @@ public class CounterConfigurationManager {
     * <p>
     * If any is found, it starts the counter's {@link Cache}.
     */
+   @Start
    public void start() {
-      this.stateCache = cacheManager
+      stateCache = cacheManager
             .<ScopedState, CounterConfiguration>getCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME)
             .getAdvancedCache();
       listener = new CounterConfigurationListener();
@@ -96,6 +103,7 @@ public class CounterConfigurationManager {
     * <p>
     * The persistence is done on the fly when the configuration is defined.
     */
+   @Stop
    public void stop() {
       counterCacheStarted.set(true); //avoid starting the counter cache if it hasn't started yet
       if (listener != null && stateCache != null) {
@@ -143,7 +151,6 @@ public class CounterConfigurationManager {
     * Remove a configuration
     *
     * @param name the name of the counter
-    *
     * @return true if the configuration was removed
     */
    CompletableFuture<Boolean> removeConfiguration(String name) {
@@ -158,7 +165,7 @@ public class CounterConfigurationManager {
             .filter(new ScopeFilter(COUNTER_SCOPE))
             .map(ScopedState::getName)
             .collect(CacheCollectors.serializableCollector(Collectors::toSet));
-      configuredCounters.keySet().stream().forEach(countersName::add);
+      countersName.addAll(configuredCounters.keySet());
       return Collections.unmodifiableCollection(countersName);
    }
 
@@ -235,16 +242,16 @@ public class CounterConfigurationManager {
          BlockingManager blockingManager = SecurityActions.getGlobalComponentRegistry(cacheManager)
                .getComponent(BlockingManager.class);
          blockingManager.runBlocking(() -> {
-               String oldName = Thread.currentThread().getName();
-               try {
-                  GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);
-                  String threadName = "CounterCacheStartThread," + configuration.transport().nodeName();
-                  SecurityActions.setThreadName(threadName);
-                  cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
-               } finally {
-                  SecurityActions.setThreadName(oldName);
-               }
-            }, CounterModuleLifecycle.COUNTER_CACHE_NAME);
+            String oldName = Thread.currentThread().getName();
+            try {
+               GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);
+               String threadName = "CounterCacheStartThread," + configuration.transport().nodeName();
+               SecurityActions.setThreadName(threadName);
+               cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
+            } finally {
+               SecurityActions.setThreadName(oldName);
+            }
+         }, CounterModuleLifecycle.COUNTER_CACHE_NAME);
       }
    }
 

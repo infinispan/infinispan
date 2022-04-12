@@ -161,10 +161,10 @@ class CounterRequestProcessor extends BaseRequestProcessor {
       switch (config.type()) {
          case UNBOUNDED_STRONG:
          case BOUNDED_STRONG:
-            applyStrong.accept(header, counterManager.getStrongCounter(counterName));
+            executor.execute(() -> applyStrong.accept(header, counterManager.getStrongCounter(counterName)));
             break;
          case WEAK:
-            applyWeak.accept(header, counterManager.getWeakCounter(counterName));
+            executor.execute(() -> applyWeak.accept(header, counterManager.getWeakCounter(counterName)));
             break;
       }
    }
