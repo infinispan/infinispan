@@ -34,6 +34,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -123,6 +124,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
    private HotRodAccessLogging accessLogging = new HotRodAccessLogging();
    private ScheduledExecutorService scheduledExecutor;
+   private TimeService timeService;
 
    public HotRodServer() {
       super("HotRod");
@@ -138,6 +140,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public Marshaller getMarshaller() {
       return marshaller;
+   }
+
+   public TimeService getTimeService() {
+      return timeService;
    }
 
    byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
@@ -320,10 +326,12 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       topologyChangeListener = new ReAddMyAddressListener(addressCache, clusterAddress, address);
       addressCache.addListener(topologyChangeListener);
 
+      timeService = SecurityActions.getGlobalComponentRegistry(cacheManager).getTimeService();
+
       // Map cluster address to server endpoint address
       log.debugf("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address);
       addressCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES)
-                  .put(clusterAddress, address);
+            .put(clusterAddress, address);
    }
 
    private void defineTopologyCacheConfig(EmbeddedCacheManager cacheManager) {
