@@ -1,6 +1,7 @@
 package org.infinispan.query.remote.impl.mapping.reference;
 
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.FIELD_ANNOTATION;
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.FIELD_INDEX_ATTRIBUTE;
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.INDEXED_ANNOTATION;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaElement;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
@@ -40,11 +42,9 @@ public class MessageReferenceProvider {
          if (Type.MESSAGE.equals(fieldDescriptor.getType())) {
             // If a protobuf field is a Message reference, only take it into account
             // if the Message is @Indexed and has at least one @Field annotation
-            if (fieldDescriptor.getAnnotations().containsKey(FIELD_ANNOTATION)) {
-               if (isIndexable(fieldDescriptor.getMessageType())) {
-                  // Hibernate Search can handle the @Field regardless of its attributes
-                  embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
-               }
+            if (indexEmbedded(fieldDescriptor)) {
+               // Hibernate Search can handle the @Field regardless of its attributes
+               embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
             }
             continue;
          }
@@ -60,6 +60,21 @@ public class MessageReferenceProvider {
             fields.add(fieldReferenceProvider);
          }
       }
+   }
+
+   private boolean indexEmbedded(FieldDescriptor fieldDescriptor) {
+      AnnotationElement.Annotation fieldAnnotation = fieldDescriptor.getAnnotations().get(FIELD_ANNOTATION);
+      if (fieldAnnotation == null) {
+         return false;
+      }
+
+      AnnotationElement.Value indexAttribute = fieldAnnotation.getAttributeValue(FIELD_INDEX_ATTRIBUTE);
+      boolean isIndexed = IndexingMetadata.INDEX_YES.equals(indexAttribute.getValue());
+      if (!isIndexed) {
+         return false;
+      }
+
+      return isIndexable(fieldDescriptor.getMessageType());
    }
 
    /**
