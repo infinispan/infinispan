@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import java.util.function.Predicate;
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.test.Eventually;
@@ -33,6 +34,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -92,7 +94,12 @@ public class ServerEventLoggerTest {
 
    private static List<EventLog> getLatestEvents(EventLogger eventLogger, EventLogCategory category,
                                                  EventLogLevel level) {
-      return eventLogger.getEvents(Instant.now(), 10, Optional.ofNullable(category), Optional.ofNullable(level));
+      return getLatestEvents(10, eventLogger, category, level);
+   }
+
+   private static List<EventLog> getLatestEvents(int count, EventLogger eventLogger, EventLogCategory category,
+                                                 EventLogLevel level) {
+      return eventLogger.getEvents(Instant.now(), count, Optional.ofNullable(category), Optional.ofNullable(level));
    }
 
    @Test
@@ -128,6 +135,13 @@ public class ServerEventLoggerTest {
                for (EventLog event : events) {
                   assertEquals(EventLogLevel.INFO, event.getLevel());
                }
+
+               // There are rebalance events, must be an even number of events.
+               events = getLatestEvents(-1, eventLogger, EventLogCategory.LIFECYCLE, null);
+               Predicate<EventLog> predicate = e -> e.getContext().isPresent()
+                     && e.getContext().get().equals(LocalTopologyManagerImpl.class.getName());
+               assertTrue(events.stream().anyMatch(predicate));
+               assertEquals(0, events.stream().filter(predicate).count() & 1);
             }
          }
       });
