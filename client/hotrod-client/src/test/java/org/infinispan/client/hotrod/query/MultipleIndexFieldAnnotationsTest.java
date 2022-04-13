@@ -42,7 +42,7 @@ public class MultipleIndexFieldAnnotationsTest extends SingleHotRodServerTest {
    }
 
    @Test
-   public void test() {
+   public void testDifferentIndexProperties() {
       RemoteCache<Integer, Color> remoteCache = remoteCacheManager.getCache("colors");
 
       Color color1 = new Color();
