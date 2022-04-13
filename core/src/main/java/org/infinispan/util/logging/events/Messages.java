@@ -103,4 +103,7 @@ public interface Messages {
 
    @Message(value = "Cancelled conflict resolution with members %s, topology id %s", id = 100015)
    String conflictResolutionCancelled(Collection<Address> members, int topologyId);
+
+   @Message(value = "Rebalance failed with members %s, topology id %s and cause %s", id = 100016)
+   String rebalanceFinishedWithFailure(Collection<Address> members, int topologyId, Throwable t);
 }
