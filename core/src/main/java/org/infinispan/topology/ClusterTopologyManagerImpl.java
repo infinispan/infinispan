@@ -7,7 +7,6 @@ import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.infinispan.util.logging.Log.CLUSTER;
-import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,11 +55,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
@@ -83,9 +78,7 @@ import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
-import org.infinispan.util.logging.events.EventLogger;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -138,7 +131,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    // The global rebalancing status
    private boolean globalRebalancingEnabled = true;
 
-   private final ClusterViewListener viewListener = new ClusterViewListener();
+   private EventLoggerViewListener viewListener;
 
    @Start(priority = 100)
    public void start() {
@@ -146,6 +139,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       joinViewFuture = new ConditionFuture<>(timeoutScheduledExecutor);
       actionSequencer = new ActionSequencer(nonBlockingExecutor, true, timeService);
 
+      viewListener = new EventLoggerViewListener(eventLogManager, e -> handleClusterView(e.isMergeView(), e.getViewId()));
       cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
       handleClusterView(false, transport.getViewId());
@@ -734,31 +728,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public CompletionStage<Void> handleShutdownRequest(String cacheName) throws Exception {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       return cacheStatus.shutdownCache();
-   }
-
-   @Listener(sync = true)
-   public class ClusterViewListener {
-      @Merged
-      @ViewChanged
-      public void handleViewChange(final ViewChangedEvent e) {
-         EventLogger eventLogger = eventLogManager.getEventLogger().scope(e.getLocalAddress());
-         logNodeJoined(eventLogger, e.getNewMembers(), e.getOldMembers());
-         logNodeLeft(eventLogger, e.getNewMembers(), e.getOldMembers());
-
-         handleClusterView(e.isMergeView(), e.getViewId());
-      }
-   }
-
-   private static void logNodeJoined(EventLogger logger, List<Address> newMembers, List<Address> oldMembers) {
-      newMembers.stream()
-            .filter(address -> !oldMembers.contains(address))
-            .forEach(address -> logger.info(EventLogCategory.CLUSTER, MESSAGES.nodeJoined(address)));
-   }
-
-   private static void logNodeLeft(EventLogger logger, List<Address> newMembers, List<Address> oldMembers) {
-      oldMembers.stream()
-            .filter(address -> !newMembers.contains(address))
-            .forEach(address -> logger.info(EventLogCategory.CLUSTER, MESSAGES.nodeLeft(address)));
    }
 
    public static boolean scatteredLostDataCheck(ConsistentHash stableCH, List<Address> newMembers) {

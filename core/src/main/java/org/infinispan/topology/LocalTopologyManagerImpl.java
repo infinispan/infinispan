@@ -7,7 +7,9 @@ import static org.infinispan.commons.util.concurrent.CompletableFutures.complete
 import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONFIG;
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +50,7 @@ import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -63,6 +66,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.GuardedBy;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 
 /**
  * The {@code LocalTopologyManager} implementation.
@@ -88,11 +94,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Inject TimeService timeService;
    @Inject GlobalStateManager globalStateManager;
    @Inject PersistentUUIDManager persistentUUIDManager;
+   @Inject EventLogManager eventLogManager;
+   @Inject CacheManagerNotifier cacheManagerNotifier;
    // Not used directly, but we have to start the ClusterTopologyManager before sending the join request
    @Inject ClusterTopologyManager clusterTopologyManager;
 
    private TopologyManagementHelper helper;
    private ActionSequencer actionSequencer;
+   private EventLogger eventLogger;
 
    // We synchronize on the entire map while handling a status request, to make sure there are no concurrent topology
    // updates from the old coordinator.
@@ -102,6 +111,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @GuardedBy("runningCaches")
    private int latestStatusResponseViewId;
    private PersistentUUID persistentUUID;
+
+   private EventLoggerViewListener viewListener;
 
    // This must be invoked before GlobalStateManagerImpl.start
    @Start(priority = 0)
@@ -125,6 +136,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          globalStateManager.writeGlobalState();
       }
       persistentUUIDManager.addPersistentAddressMapping(transport.getAddress(), persistentUUID);
+      eventLogger = eventLogManager.getEventLogger()
+            .scope(transport.getAddress())
+            .context(this.getClass().getName());
+      viewListener = new EventLoggerViewListener(eventLogManager);
+      cacheManagerNotifier.addListener(viewListener);
 
       synchronized (runningCaches) {
          latestStatusResponseViewId = transport.getViewId();
@@ -138,6 +154,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       if (log.isTraceEnabled()) {
          log.tracef("Stopping LocalTopologyManager on %s", transport.getAddress());
       }
+      cacheManagerNotifier.removeListener(viewListener);
       running = false;
    }
 
@@ -525,16 +542,28 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return CompletableFutures.completedNull();
       }
 
+      eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.cacheRebalanceStart(
+            cacheTopology.getMembers(), cacheTopology.getPhase(), cacheTopology.getTopologyId()));
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
             .thenCompose(ignored -> orderOnCache(cacheName, () -> {
                return doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
             }))
-            .exceptionally(throwable -> {
-               Throwable t = CompletableFutures.extractException(throwable);
-               // Ignore errors when the cache is shutting down
-               if (!(t instanceof IllegalLifecycleStateException)) {
-                  log.rebalanceStartError(cacheName, throwable);
+            .handle((ignore, throwable) -> {
+               Collection<Address> members = cacheTopology.getMembers();
+               int topologyId = cacheTopology.getTopologyId();
+
+               if (throwable != null) {
+                  Throwable t = CompletableFutures.extractException(throwable);
+                  // Ignore errors when the cache is shutting down
+                  if (!(t instanceof IllegalLifecycleStateException)) {
+                     log.rebalanceStartError(cacheName, throwable);
+                     eventLogger.error(EventLogCategory.LIFECYCLE, MESSAGES.rebalanceFinishedWithFailure(
+                           members, topologyId, t));
+                  }
+               } else {
+                  eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.rebalanceFinished(members, topologyId));
                }
+
                return null;
             });
    }

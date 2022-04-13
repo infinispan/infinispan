@@ -17,6 +17,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.core.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
@@ -65,6 +66,11 @@ public class ServerEventLogger implements EventLogger {
 
    void eventLog(ServerEventImpl event) {
       getEventCache().putAsync(Util.threadLocalRandomUUID(), event);
+   }
+
+   @Override
+   public EventLogger scope(Address scope) {
+      return new DecoratedServerEventLogger(this).scope(scope);
    }
 
    @Override
@@ -133,6 +139,8 @@ public class ServerEventLogger implements EventLogger {
       }
       // must sort and limit again the distributed results
       Collections.sort(events);
-      return events.subList(0, Math.min(events.size(), count));
+      return count > 0
+            ? events.subList(0, Math.min(events.size(), count))
+            : events;
    }
 }
