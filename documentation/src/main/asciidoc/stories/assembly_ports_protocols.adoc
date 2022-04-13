@@ -1,6 +1,6 @@
 [id='ports_protocols']
 :context: network
-= {brandname} Ports and Protocols
+= {brandname} ports and protocols
 As {brandname} distributes data across your network and can establish
 connections for external client requests, you should be aware of the ports and
 protocols that {brandname} uses to handle network traffic.

@@ -12,11 +12,13 @@ While you benchmark and tune {brandname} clusters to find the right allocation o
 ifdef::community[]
 Couple a Linux, Unix-like, or Microsoft Windows host system with Ansible to manage {brandname} configuration and poll services to ensure availability and achieve optimal resource usage.
 
-The link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}] automates cluster installation and includes options for Keycloak integration and cross-site replication.
+The link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}], available from Ansible Galaxy, automates cluster installation and includes options for Keycloak integration and cross-site replication.
 endif::community[]
 //Downstream content
 ifdef::downstream[]
 Couple {rhel-short}, or Microsoft Windows, with Red Hat Ansible to manage {brandname} configuration and poll services to ensure availability and achieve optimal resource usage.
+
+The link:https://github.com/ansible-middleware/infinispan[Ansible collection for {brandname}], available from the **Automation Hub**, automates cluster installation and includes options for Keycloak integration and cross-site replication.
 endif::downstream[]
 
 .{k8s}
