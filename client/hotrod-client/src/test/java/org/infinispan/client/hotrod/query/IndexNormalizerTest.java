@@ -31,7 +31,7 @@ public class IndexNormalizerTest extends SingleHotRodServerTest {
 
    @Override
    protected SerializationContextInitializer contextInitializer() {
-      return Book.Schema.INSTANCE;
+      return Book.BookSchema.INSTANCE;
    }
 
    @Test
