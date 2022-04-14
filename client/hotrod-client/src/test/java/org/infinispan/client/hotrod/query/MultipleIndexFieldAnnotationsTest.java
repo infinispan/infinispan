@@ -38,7 +38,7 @@ public class MultipleIndexFieldAnnotationsTest extends SingleHotRodServerTest {
 
    @Override
    protected SerializationContextInitializer contextInitializer() {
-      return Color.Schema.INSTANCE;
+      return Color.ColorSchema.INSTANCE;
    }
 
    @Test
