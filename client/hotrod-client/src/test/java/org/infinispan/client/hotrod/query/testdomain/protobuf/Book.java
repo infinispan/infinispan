@@ -23,7 +23,7 @@ public class Book {
    }
 
    @AutoProtoSchemaBuilder(includeClasses = Book.class)
-   public interface Schema extends GeneratedSchema {
-      Schema INSTANCE = new SchemaImpl();
+   public interface BookSchema extends GeneratedSchema {
+      BookSchema INSTANCE = new BookSchemaImpl();
    }
 }

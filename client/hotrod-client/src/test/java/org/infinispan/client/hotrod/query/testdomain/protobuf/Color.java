@@ -61,7 +61,7 @@ public class Color {
    }
 
    @AutoProtoSchemaBuilder(includeClasses = Color.class)
-   public interface Schema extends GeneratedSchema {
-      Schema INSTANCE = new SchemaImpl();
+   public interface ColorSchema extends GeneratedSchema {
+      ColorSchema INSTANCE = new ColorSchemaImpl();
    }
 }
