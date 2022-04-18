@@ -6,11 +6,14 @@ import org.infinispan.Cache;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.WeakCounter;
+import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Creates {@link WeakCounter} stored in a {@link Cache}.
@@ -21,14 +24,12 @@ import org.infinispan.factories.scopes.Scopes;
 public class CacheBasedWeakCounterFactory extends CacheBaseCounterFactory<WeakCounterKey> implements WeakCounterFactory {
 
    @Override
-   public CompletionStage<WeakCounter> createWeakCounter(String name, CounterConfiguration configuration) {
+   public CompletionStage<InternalCounterAdmin> createWeakCounter(String name, CounterConfiguration configuration) {
       assert configuration.type() == CounterType.WEAK;
-      return blockingManager.thenApplyBlocking(cache(configuration), cache -> {
-         registerListeners(cache);
+      return cache(configuration).thenCompose(cache -> {
          WeakCounterImpl counter = new WeakCounterImpl(name, cache, configuration, notificationManager);
-         counter.init();
-         return counter;
-      }, "create-weak-counter-" + name);
+         return registerListeners(cache).thenCompose(___ -> counter.init());
+      });
    }
 
    @Override
@@ -36,11 +37,13 @@ public class CacheBasedWeakCounterFactory extends CacheBaseCounterFactory<WeakCo
       return getCounterCacheAsync().thenCompose(cache -> WeakCounterImpl.removeWeakCounter(cache, configuration, name));
    }
 
-   private void registerListeners(Cache<WeakCounterKey, CounterValue> cache) {
+   private CompletionStage<Void> registerListeners(Cache<? extends CounterKey, CounterValue> cache) {
       // topology listener is used to compute the keys where this node is the primary owner
       // adds are made on these keys to avoid contention and improve performance
-      notificationManager.registerTopologyListener(cache);
+      CompletionStage<Void> topologyStage = notificationManager.registerTopologyListener(cache);
       // the weak counter keeps a local value and, on each event, the local value is updated (reads are always local)
-      notificationManager.registerCounterValueListener(cache);
+      CompletionStage<Void> valueStage = notificationManager.registerCounterValueListener(cache);
+
+      return CompletionStages.allOf(topologyStage, valueStage);
    }
 }

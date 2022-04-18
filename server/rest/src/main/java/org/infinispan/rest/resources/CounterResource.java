@@ -5,10 +5,15 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.extractException;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.noContent;
+import static org.infinispan.rest.resources.ResourceUtil.noContentResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.util.List;
@@ -23,7 +28,6 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
@@ -31,7 +35,9 @@ import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.counter.configuration.CounterConfigurationSerializer;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
+import org.infinispan.counter.exception.CounterNotFoundException;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -41,6 +47,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -88,7 +95,7 @@ public class CounterResource implements ResourceHandler {
 
       String contents = request.contents().asString();
 
-      if (contents == null || contents.length() == 0) {
+      if (contents == null || contents.isEmpty()) {
          responseBuilder.status(HttpResponseStatus.BAD_REQUEST);
          responseBuilder.entity("Configuration not provided");
          return completedFuture(responseBuilder.build());
@@ -111,7 +118,7 @@ public class CounterResource implements ResourceHandler {
 
       return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
          if (configuration == null) return notFoundResponseFuture();
-         return CompletableFuture.runAsync(() -> counterManager.undefineCounter(counterName), invocationHelper.getExecutor())
+         return counterManager.removeAsync(counterName, false)
                .thenApply(ignore -> new NettyRestResponse.Builder().status(NO_CONTENT).build());
       });
    }
@@ -138,23 +145,15 @@ public class CounterResource implements ResourceHandler {
       MediaType contentType = accept == null ? MediaType.TEXT_PLAIN : negotiateMediaType(accept);
 
       EmbeddedCounterManager counterManager = invocationHelper.getCounterManager();
-      return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
-         if (configuration == null) return notFoundResponseFuture();
-
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder()
-               .contentType(contentType)
-               .header(CACHE_CONTROL.toString(), CacheControl.noCache());
-
-         CompletionStage<Long> response;
-         if (configuration.type() == CounterType.WEAK) {
-            response = getWeakCounter(counterName, counterManager)
-                  .thenApply(WeakCounter::getValue);
-         } else {
-            response = getStrongCounter(counterName, counterManager)
-                  .thenCompose(StrongCounter::getValue);
+      CompletionStage<InternalCounterAdmin> stage = counterManager.getOrCreateAsync(counterName);
+      return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
+         if (throwable != null) {
+            return handleThrowable(throwable);
          }
-
-         return response.thenApply(v -> responseBuilder.entity(Long.toString(v)).build());
+         return counter.value().thenApply(v -> new NettyRestResponse.Builder()
+               .contentType(contentType)
+               .header(CACHE_CONTROL.toString(), CacheControl.noCache())
+               .entity(Long.toString(v)).build());
       });
    }
 
@@ -162,13 +161,13 @@ public class CounterResource implements ResourceHandler {
       String counterName = request.variables().get("counterName");
 
       EmbeddedCounterManager counterManager = invocationHelper.getCounterManager();
-      return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
-         if (configuration == null) return notFoundResponseFuture();
-         CompletionStage<Void> result = configuration.type() == CounterType.WEAK ?
-               counterManager.getWeakCounter(counterName).reset() :
-               counterManager.getStrongCounter(counterName).reset();
-
-         return result.thenApply(v -> new NettyRestResponse.Builder().status(NO_CONTENT).build());
+      CompletionStage<InternalCounterAdmin> stage = counterManager.getOrCreateAsync(counterName);
+      return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
+         if (throwable != null) {
+            return handleThrowable(throwable);
+         } else {
+            return counter.reset().thenCompose(unused -> noContentResponseFuture());
+         }
       });
    }
 
@@ -213,16 +212,30 @@ public class CounterResource implements ResourceHandler {
                                                                 Function<WeakCounter, CompletionStage<Void>> weakOp,
                                                                 Function<StrongCounter, CompletableFuture<Long>> strongOp) {
       String counterName = request.variables().get("counterName");
-
-      CompletableFuture<CounterConfiguration> counterConfigAsync = invocationHelper.getCounterManager().getConfigurationAsync(counterName);
-
-      return counterConfigAsync.thenCompose(configuration -> {
-         if (configuration == null) return notFoundResponseFuture();
-         CounterType type = configuration.type();
-
-         if (type == CounterType.WEAK) return executeWeakCounterOp(counterName, weakOp);
-
-         return executeStrongCounterOp(counterName, strongOp);
+      CompletionStage<InternalCounterAdmin> stage = invocationHelper.getCounterManager().getOrCreateAsync(counterName);
+      return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
+         if (throwable != null) {
+            return handleThrowable(throwable);
+         }
+         CompletableFuture<RestResponse> rsp = new CompletableFuture<>();
+         if (counter.isWeakCounter()) {
+            weakOp.apply(counter.asWeakCounter()).whenComplete((___, t) -> {
+               if (t != null) {
+                  rsp.completeExceptionally(t);
+               } else {
+                  rsp.complete(noContent());
+               }
+            });
+         } else {
+            strongOp.apply(counter.asStrongCounter()).whenComplete((rv, t) -> {
+               if (t != null) {
+                  rsp.completeExceptionally(t);
+               } else {
+                  rsp.complete(asJsonResponse(Json.make(rv)));
+               }
+            });
+         }
+         return rsp;
       });
    }
 
@@ -236,53 +249,18 @@ public class CounterResource implements ResourceHandler {
       Long update = checkForNumericParam("update", request, responseBuilder);
       if (update == null) return completedFuture(responseBuilder.build());
 
-      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName, invocationHelper.getCounterManager());
-      return strongCounter.thenCompose(counter -> {
-         if (counter == null) {
-            responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", counterName));
-            return completedFuture(responseBuilder.build());
+      CompletionStage<StrongCounter> stage = invocationHelper.getCounterManager().getStrongCounterAsync(counterName);
+      return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
+         if (throwable != null) {
+            return handleThrowable(throwable);
          }
-         CompletableFuture<T> opResult = invocation.apply(counter, expect, update);
-
-         return opResult.thenCompose(value -> asJsonResponseFuture(Json.make(value)));
+         return invocation.apply(counter, expect, update).thenCompose(value -> asJsonResponseFuture(Json.make(value)));
       });
    }
 
    @FunctionalInterface
    interface CASInvocation<C, A, B, R> {
       R apply(C t, A u, B v);
-   }
-
-   private CompletionStage<RestResponse> executeStrongCounterOp(String counterName, Function<StrongCounter, CompletableFuture<Long>> op) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-
-      CompletionStage<StrongCounter> strongCounter = getStrongCounter(counterName, invocationHelper.getCounterManager());
-      return strongCounter.thenCompose(counter -> {
-         if (counter == null) {
-            responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Strong counter '%s' not found", counterName));
-            return completedFuture(responseBuilder.build());
-         }
-         return op.apply(counter)
-               .thenCompose(value -> asJsonResponseFuture(Json.make(value), responseBuilder));
-      });
-   }
-
-   private CompletionStage<WeakCounter> getWeakCounter(String name, EmbeddedCounterManager counterManager) {
-      WeakCounter weakCounter = counterManager.getCreatedWeakCounter(name);
-      if (weakCounter != null) {
-         return CompletableFuture.completedFuture(weakCounter);
-      }
-      return CompletableFuture.supplyAsync(() -> counterManager.getWeakCounter(name), invocationHelper.getExecutor())
-            .exceptionally(ignore -> null);
-   }
-
-   private CompletionStage<StrongCounter> getStrongCounter(String name, EmbeddedCounterManager counterManager) {
-      StrongCounter strongCounter = counterManager.getCreatedStrongCounter(name);
-      if (strongCounter != null) {
-         return CompletableFuture.completedFuture(strongCounter);
-      }
-      return CompletableFuture.supplyAsync(() -> counterManager.getStrongCounter(name), invocationHelper.getExecutor())
-            .exceptionally(ignore -> null);
    }
 
    private Long checkForNumericParam(String name, RestRequest request, NettyRestResponse.Builder builder) {
@@ -301,23 +279,17 @@ public class CounterResource implements ResourceHandler {
       return null;
    }
 
-   private CompletionStage<RestResponse> executeWeakCounterOp(String counterName, Function<WeakCounter, CompletionStage<Void>> op) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      responseBuilder.status(NO_CONTENT);
-
-      CompletionStage<WeakCounter> weakCounter = getWeakCounter(counterName, invocationHelper.getCounterManager());
-      return weakCounter.thenCompose(counter -> {
-         if (counter == null) {
-            responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity(String.format("Weak counter '%s' not found", counterName));
-            return completedFuture(responseBuilder.build());
-         }
-         return op.apply(counter).thenCompose(t -> completedFuture(responseBuilder.build()));
-      });
-   }
-
    private MediaType negotiateMediaType(String accept) {
       return MediaType.parseList(accept).filter(t ->
             t.match(MediaType.TEXT_PLAIN) // TODO: add more types in ISPN-10211
       ).findFirst().orElseThrow(() -> Log.REST.unsupportedDataFormat(accept));
+   }
+
+   private CompletionStage<RestResponse> handleThrowable(Throwable throwable) {
+      Throwable cause = extractException(throwable);
+      if (cause instanceof CounterNotFoundException) {
+         return notFoundResponseFuture();
+      }
+      return completedExceptionFuture(cause);
    }
 }

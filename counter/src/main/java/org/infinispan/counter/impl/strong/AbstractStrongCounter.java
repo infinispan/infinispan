@@ -1,8 +1,8 @@
 package org.infinispan.counter.impl.strong;
 
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
 import static org.infinispan.counter.impl.Utils.getPersistenceMode;
+import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -30,6 +30,7 @@ import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
@@ -54,7 +55,7 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public abstract class AbstractStrongCounter implements StrongCounter, CounterEventGenerator {
+public abstract class AbstractStrongCounter implements StrongCounter, CounterEventGenerator, InternalCounterAdmin {
 
    final StrongCounterKey key;
    private final FunctionalMap.ReadWriteMap<StrongCounterKey, CounterValue> readWriteMap;
@@ -86,9 +87,30 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       return cache.removeAsync(new StrongCounterKey(counterName)).thenApply(CompletableFutures.toNullFunction());
    }
 
-   public final void init() {
+   public final CompletionStage<InternalCounterAdmin> init() {
       registerListener();
-      awaitCounterOperation(readOnlyMap.eval(key, ReadFunction.getInstance()).thenAccept(this::initCounterState));
+      return readOnlyMap.eval(key, ReadFunction.getInstance()).thenAccept(this::initCounterState).thenApply(unused -> this);
+   }
+
+   @Override
+   public StrongCounter asStrongCounter() {
+      return this;
+   }
+
+   @Override
+   public CompletionStage<Void> destroy() {
+      removeListener();
+      return remove();
+   }
+
+   @Override
+   public CompletionStage<Long> value() {
+      return getValue();
+   }
+
+   @Override
+   public boolean isWeakCounter() {
+      return false;
    }
 
    @Override
@@ -113,7 +135,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
 
    @Override
    public final <T extends CounterListener> Handle<T> addListener(T listener) {
-      notificationManager.registerCounterValueListener(readWriteMap.cache());
+      awaitCounterOperation(notificationManager.registerCounterValueListener(readWriteMap.cache()));
       return notificationManager.registerUserListener(key.getCounterName(), listener);
    }
 
@@ -150,11 +172,6 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    @Override
    public SyncStrongCounter sync() {
       return new SyncStrongCounterAdapter(this);
-   }
-
-   public void destroyAndRemove() {
-      removeListener();
-      awaitCounterOperation(remove());
    }
 
    protected abstract Long handleCASResult(Object state);

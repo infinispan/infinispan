@@ -1,5 +1,8 @@
 package org.infinispan.counter.impl.manager;
 
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.toNullFunction;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
@@ -8,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.logging.LogFactory;
@@ -20,8 +24,6 @@ import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.factory.StrongCounterFactory;
 import org.infinispan.counter.impl.factory.WeakCounterFactory;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
-import org.infinispan.counter.impl.strong.AbstractStrongCounter;
-import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -44,8 +46,8 @@ public class EmbeddedCounterManager implements CounterManager {
    public static final String OBJECT_NAME = "CounterManager";
    private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
 
-   private final Map<String, Object> counters;
-   private volatile boolean started;
+   private final Map<String, CompletableFuture<InternalCounterAdmin>> counters;
+   private volatile boolean stopped = true;
 
    @Inject CounterConfigurationManager configurationManager;
    @Inject CounterManagerNotificationManager notificationManager;
@@ -61,7 +63,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (log.isTraceEnabled()) {
          log.trace("Starting EmbeddedCounterManager");
       }
-      started = true;
+      stopped = false;
    }
 
    @Stop(priority = 9) //lower than default priority to avoid creating the counters cache.
@@ -69,15 +71,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (log.isTraceEnabled()) {
          log.trace("Stopping EmbeddedCounterManager");
       }
-      started = false;
-   }
-
-   private static <T> T validateCounter(Class<T> tClass, Object retVal) {
-      Class<?> rClass = retVal.getClass();
-      if (tClass.isAssignableFrom(rClass)) {
-         return tClass.cast(retVal);
-      }
-      throw CONTAINER.invalidCounterType(tClass.getSimpleName(), rClass.getSimpleName());
+      stopped = true;
    }
 
    @ManagedOperation(
@@ -87,57 +81,77 @@ public class EmbeddedCounterManager implements CounterManager {
    )
    @Override
    public void remove(String counterName) {
-      removeCounter(counterName, true);
+      awaitCounterOperation(removeAsync(counterName, true));
    }
 
-   private void removeCounter(String counterName, boolean keepConfig) {
-      CounterConfiguration configuration = getConfiguration(counterName);
-      if (configuration == null) {
-         //counter not defined (cluster-wide). do nothing :)
-         return;
+   public CompletionStage<Void> removeAsync(String counterName, boolean keepConfig) {
+      CompletionStage<Void> removeStage = getConfigurationAsync(counterName)
+            .thenCompose(config -> {
+               // check if the counter is defined
+               if (config == null) {
+                  return completedNull();
+               }
+
+               CompletionStage<InternalCounterAdmin> existingCounter = counters.remove(counterName);
+               // if counter instance exists, invoke destroy()
+               if (existingCounter != null) {
+                  return existingCounter.thenCompose(InternalCounterAdmin::destroy);
+               }
+
+               if (config.type() == CounterType.WEAK) {
+                  return weakCounterFactory.removeWeakCounter(counterName, config);
+               } else {
+                  return strongCounterFactory.removeStrongCounter(counterName);
+               }
+            });
+      if (keepConfig) {
+         return removeStage;
       }
-      counters.compute(counterName, (name, counter) -> {
-         removeCounter(name, counter, configuration);
-         if (!keepConfig) awaitCounterOperation(configurationManager.removeConfiguration(name));
-         return null;
-      });
+      return removeStage.thenCompose(unused -> configurationManager.removeConfiguration(counterName))
+            .thenApply(toNullFunction());
    }
 
    @Override
    public void undefineCounter(String counterName) {
-      removeCounter(counterName, false);
+      awaitCounterOperation(removeAsync(counterName, false));
    }
 
    @Override
    public StrongCounter getStrongCounter(String name) {
-      checkStarted();
-      Object counter = counters.computeIfAbsent(name, this::createCounter);
-      return validateCounter(StrongCounter.class, counter);
+      return awaitCounterOperation(getStrongCounterAsync(name));
    }
 
-   public StrongCounter getCreatedStrongCounter(String name) {
-      checkStarted();
-      Object counter = counters.get(name);
-      if (counter == null) {
-         return null;
-      }
-      return validateCounter(StrongCounter.class, counter);
+   public CompletionStage<StrongCounter> getStrongCounterAsync(String counterName) {
+      return getOrCreateAsync(counterName).thenApply(InternalCounterAdmin::asStrongCounter);
    }
 
    @Override
    public WeakCounter getWeakCounter(String name) {
-      checkStarted();
-      Object counter = counters.computeIfAbsent(name, this::createCounter);
-      return validateCounter(WeakCounter.class, counter);
+      return awaitCounterOperation(getWeakCounterAsync(name));
    }
 
-   public WeakCounter getCreatedWeakCounter(String name) {
-      checkStarted();
-      Object counter = counters.get(name);
-      if (counter == null) {
-         return null;
+   public CompletionStage<WeakCounter> getWeakCounterAsync(String counterName) {
+      return getOrCreateAsync(counterName).thenApply(InternalCounterAdmin::asWeakCounter);
+   }
+
+   public CompletionStage<InternalCounterAdmin> getOrCreateAsync(String counterName) {
+      if (stopped) {
+         return completedExceptionFuture(CONTAINER.counterManagerNotStarted());
       }
-      return validateCounter(WeakCounter.class, counter);
+      CompletableFuture<InternalCounterAdmin> stage = counters.computeIfAbsent(counterName, this::createCounter);
+
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
+         // avoid invoking "exceptionally()" every time
+         return stage;
+      }
+
+      // remove if it fails
+      stage.exceptionally(throwable -> {
+         counters.remove(counterName, stage);
+         return null;
+      });
+
+      return stage;
    }
 
    @ManagedOperation(
@@ -178,15 +192,7 @@ public class EmbeddedCounterManager implements CounterManager {
          name = "value"
    )
    public long getValue(String counterName) {
-      CounterConfiguration configuration = getConfiguration(counterName);
-      if (configuration == null) {
-         throw CONTAINER.undefinedCounter(counterName);
-      }
-      if (configuration.type() == CounterType.WEAK) {
-         return getWeakCounter(counterName).getValue();
-      } else {
-         return awaitCounterOperation(getStrongCounter(counterName).getValue());
-      }
+      return awaitCounterOperation(getOrCreateAsync(counterName).thenCompose(InternalCounterAdmin::value));
    }
 
    @ManagedOperation(
@@ -195,15 +201,7 @@ public class EmbeddedCounterManager implements CounterManager {
          name = "reset"
    )
    public void reset(String counterName) {
-      CounterConfiguration configuration = getConfiguration(counterName);
-      if (configuration == null) {
-         throw CONTAINER.undefinedCounter(counterName);
-      }
-      if (configuration.type() == CounterType.WEAK) {
-         awaitCounterOperation(getWeakCounter(counterName).reset());
-      } else {
-         awaitCounterOperation(getStrongCounter(counterName).reset());
-      }
+      awaitCounterOperation(getOrCreateAsync(counterName).thenCompose(InternalCounterAdmin::reset));
    }
 
    @ManagedOperation(
@@ -223,44 +221,21 @@ public class EmbeddedCounterManager implements CounterManager {
       return getConfigurationAsync(name).thenApply(Objects::nonNull);
    }
 
-   private void removeCounter(String name, Object counter, CounterConfiguration configuration) {
-      if (configuration.type() == CounterType.WEAK) {
-         if (counter ==  null) {
-            //no instance stored locally. Remove from cache only.
-            CompletionStages.join(weakCounterFactory.removeWeakCounter(name, configuration));
-         } else {
-            ((WeakCounterImpl) counter).destroyAndRemove();
-         }
-      } else {
-         if (counter == null) {
-            //no instance stored locally. Remove from cache only.
-            CompletionStages.join(strongCounterFactory.removeStrongCounter(name));
-         } else {
-            ((AbstractStrongCounter) counter).destroyAndRemove();
-         }
-      }
-   }
-
-   private void checkStarted() {
-      if (!started) {
-         throw CONTAINER.managerNotStarted();
-      }
-   }
-
-   private Object createCounter(String counterName) {
-      CounterConfiguration configuration = getConfiguration(counterName);
-      if (configuration == null) {
-         throw CONTAINER.undefinedCounter(counterName);
-      }
-
-      switch (configuration.type()) {
-         case WEAK:
-            return CompletionStages.join(weakCounterFactory.createWeakCounter(counterName, configuration));
-         case BOUNDED_STRONG:
-         case UNBOUNDED_STRONG:
-            return CompletionStages.join(strongCounterFactory.createStrongCounter(counterName, configuration));
-         default:
-            throw new IllegalStateException("[should never happen] unknown counter type: " + configuration.type());
-      }
+   private CompletableFuture<InternalCounterAdmin> createCounter(String counterName) {
+      return getConfigurationAsync(counterName)
+            .thenCompose(config -> {
+               if (config == null) {
+                  return completedExceptionFuture(CONTAINER.undefinedCounter(counterName));
+               }
+               switch (config.type()) {
+                  case WEAK:
+                     return weakCounterFactory.createWeakCounter(counterName, config);
+                  case BOUNDED_STRONG:
+                  case UNBOUNDED_STRONG:
+                     return strongCounterFactory.createStrongCounter(counterName, config);
+                  default:
+                     return completedExceptionFuture(new IllegalStateException("[should never happen] unknown counter type: " + config.type()));
+               }
+            });
    }
 }

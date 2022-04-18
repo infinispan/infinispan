@@ -4,34 +4,25 @@ import static org.infinispan.commons.util.concurrent.CompletableFutures.extractE
 
 import java.util.Collection;
 import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.counter.api.StrongCounter;
-import org.infinispan.counter.api.WeakCounter;
+import org.infinispan.counter.exception.CounterNotFoundException;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.counter.listener.ListenerOperationStatus;
-import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 class CounterRequestProcessor extends BaseRequestProcessor {
-   private static final Log log = LogFactory.getLog(CounterRequestProcessor.class, Log.class);
 
    private final ClientCounterManagerNotificationManager notificationManager;
    private final EmbeddedCounterManager counterManager;
-
-   private final BiConsumer<HotRodHeader, StrongCounter> handleStrongGet = this::handleGetStrong;
-   private final BiConsumer<HotRodHeader, WeakCounter> handleWeakGet = this::handleGetWeak;
-   private final BiConsumer<HotRodHeader, StrongCounter> handleStrongReset = this::handleResetStrong;
-   private final BiConsumer<HotRodHeader, WeakCounter> handleWeakReset = this::handleResetWeak;
 
    CounterRequestProcessor(Channel channel, EmbeddedCounterManager counterManager, Executor executor, HotRodServer server) {
       super(channel, executor, server);
@@ -76,53 +67,41 @@ class CounterRequestProcessor extends BaseRequestProcessor {
    }
 
    void counterRemove(HotRodHeader header, Subject subject, String counterName) {
-      executor.execute(() -> counterRemoveInternal(header, counterName));
-   }
-
-   private void counterRemoveInternal(HotRodHeader header, String counterName) {
-      try {
-         counterManager(header).remove(counterName);
-         writeSuccess(header);
-      } catch (Throwable t) {
-         writeException(header, t);
-      }
+      counterManager(header).removeAsync(counterName, true)
+            .whenComplete((___, throwable) -> voidResultHandler(header, throwable));
    }
 
    void counterCompareAndSwap(HotRodHeader header, Subject subject, String counterName, long expect, long update) {
-      applyCounter(header, counterName,
-            (h, counter) -> counter.compareAndSwap(expect, update).whenComplete((value, throwable) -> longResultHandler(h, value, throwable)),
-            (h, counter) -> writeException(h, log.invalidWeakCounter(counterName))
-      );
+      counterManager(header).getStrongCounterAsync(counterName)
+            .thenCompose(strongCounter -> strongCounter.compareAndSwap(expect, update))
+            .whenComplete((returnValue, throwable) -> longResultHandler(header, returnValue, throwable));
    }
 
    void counterGet(HotRodHeader header, Subject subject, String counterName) {
-      applyCounter(header, counterName, handleStrongGet, handleWeakGet);
-   }
-
-   private void handleGetStrong(HotRodHeader header, StrongCounter counter) {
-      counter.getValue().whenComplete((value, throwable) -> longResultHandler(header, value, throwable));
-   }
-
-   private void handleGetWeak(HotRodHeader header, WeakCounter counter) {
-      longResultHandler(header, counter.getValue(), null);
+      counterManager(header).getOrCreateAsync(counterName)
+            .thenCompose(InternalCounterAdmin::value)
+            .whenComplete((value, throwable) -> longResultHandler(header, value, throwable));
    }
 
    void counterReset(HotRodHeader header, Subject subject, String counterName) {
-      applyCounter(header, counterName, handleStrongReset, handleWeakReset);
-   }
-
-   private void handleResetStrong(HotRodHeader header, StrongCounter counter) {
-      counter.reset().whenComplete((value, throwable) -> voidResultHandler(header, throwable));
-   }
-
-   private void handleResetWeak(HotRodHeader header, WeakCounter counter) {
-      counter.reset().whenComplete((value, throwable) -> voidResultHandler(header, throwable));
+      counterManager(header).getOrCreateAsync(counterName)
+            .thenCompose(InternalCounterAdmin::reset)
+            .whenComplete((unused, throwable) -> voidResultHandler(header, throwable));
    }
 
    void counterAddAndGet(HotRodHeader header, Subject subject, String counterName, long value) {
-      applyCounter(header, counterName,
-            (h, counter) -> counter.addAndGet(value).whenComplete((value1, throwable) -> longResultHandler(h, value1, throwable)),
-            (h, counter) -> counter.add(value).whenComplete((value2, throwable1) -> longResultHandler(h, 0L, throwable1)));
+      counterManager(header).getOrCreateAsync(counterName)
+            .thenAccept(counter -> {
+               if (counter.isWeakCounter()) {
+                  counter.asWeakCounter().add(value).whenComplete((___, t) -> longResultHandler(header, 0L, t));
+               } else {
+                  counter.asStrongCounter().addAndGet(value).whenComplete((rv, t) -> longResultHandler(header, rv, t));
+               }
+            })
+            .exceptionally(throwable -> {
+               checkCounterThrowable(header, throwable);
+               return null;
+            });
    }
 
    void getCounterConfiguration(HotRodHeader header, Subject subject, String counterName) {
@@ -149,26 +128,6 @@ class CounterRequestProcessor extends BaseRequestProcessor {
             .whenComplete((value, throwable) -> booleanResultHandler(header, value, throwable));
    }
 
-   private void applyCounter(HotRodHeader header, String counterName,
-                             BiConsumer<HotRodHeader, StrongCounter> applyStrong,
-                             BiConsumer<HotRodHeader, WeakCounter> applyWeak) {
-      EmbeddedCounterManager counterManager = counterManager(header);
-      CounterConfiguration config = counterManager.getConfiguration(counterName);
-      if (config == null) {
-         writeResponse(header, missingCounterResponse(header));
-         return;
-      }
-      switch (config.type()) {
-         case UNBOUNDED_STRONG:
-         case BOUNDED_STRONG:
-            executor.execute(() -> applyStrong.accept(header, counterManager.getStrongCounter(counterName)));
-            break;
-         case WEAK:
-            executor.execute(() -> applyWeak.accept(header, counterManager.getWeakCounter(counterName)));
-            break;
-      }
-   }
-
    private ByteBuf createResponseFrom(HotRodHeader header, ListenerOperationStatus status) {
       switch (status) {
          case OK:
@@ -186,6 +145,8 @@ class CounterRequestProcessor extends BaseRequestProcessor {
       Throwable cause = extractException(throwable);
       if (cause instanceof CounterOutOfBoundsException) {
          writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.NotExecutedWithPrevious));
+      } else if (cause instanceof CounterNotFoundException) {
+         writeResponse(header, missingCounterResponse(header));
       } else {
          writeException(header, cause);
       }
