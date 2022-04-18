@@ -1,6 +1,5 @@
 package org.infinispan.counter.impl.weak;
 
-import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.counter.impl.Utils.getPersistenceMode;
 
 import java.math.BigInteger;
@@ -8,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
@@ -31,17 +32,15 @@ import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.listener.TopologyChangeListener;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
-
-import net.jcip.annotations.GuardedBy;
 
 /**
  * A weak consistent counter implementation.
@@ -62,9 +61,10 @@ import net.jcip.annotations.GuardedBy;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, TopologyChangeListener {
+public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, TopologyChangeListener, InternalCounterAdmin {
 
-   @GuardedBy("entries")
+   private static final AtomicReferenceFieldUpdater<Entry, Long> SNAPSHOT_UPDATER = AtomicReferenceFieldUpdater.newUpdater(Entry.class, Long.class, "snapshot");
+
    private final Entry[] entries;
    private final AdvancedCache<WeakCounterKey, CounterValue> cache;
    private final FunctionalMap.ReadWriteMap<WeakCounterKey, CounterValue> readWriteMap;
@@ -128,14 +128,17 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
     * <p>
     * Only one key will have the initial value and the remaining is zero.
     */
-   public void init() {
+   public CompletionStage<InternalCounterAdmin> init() {
       registerListener();
+      AggregateCompletionStage<InternalCounterAdmin> stage = CompletionStages.aggregateCompletionStage(this);
       for (int i = 0; i < entries.length; ++i) {
-         final int index = i;
-         awaitCounterOperation(readOnlyMap.eval(entries[index].key, ReadFunction.getInstance())
+         int index = i;
+         stage.dependsOn(readOnlyMap.eval(entries[index].key, ReadFunction.getInstance())
                .thenAccept(value -> initEntry(index, value)));
       }
+
       selector.updatePreferredKeys();
+      return stage.freeze();
    }
 
    @Override
@@ -158,13 +161,33 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
    }
 
    @Override
+   public WeakCounter asWeakCounter() {
+      return this;
+   }
+
+   @Override
+   public CompletionStage<Void> destroy() {
+      removeListener();
+      return remove();
+   }
+
+   @Override
    public CompletableFuture<Void> reset() {
-      final int size = entries.length;
-      CompletableFuture[] futures = new CompletableFuture[size];
-      for (int i = 0; i < size; ++i) {
-         futures[i] = readWriteMap.eval(entries[i].key, ResetFunction.getInstance());
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      for (Entry entry : entries) {
+         stage.dependsOn(readWriteMap.eval(entry.key, ResetFunction.getInstance()));
       }
-      return CompletableFuture.allOf(futures);
+      return stage.freeze().toCompletableFuture();
+   }
+
+   @Override
+   public CompletionStage<Long> value() {
+      return CompletableFuture.completedFuture(getValue());
+   }
+
+   @Override
+   public boolean isWeakCounter() {
+      return true;
    }
 
    @Override
@@ -178,42 +201,34 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
    }
 
    @Override
-   public CounterEvent generate(CounterKey key, CounterValue value) {
+   public synchronized CounterEvent generate(CounterKey key, CounterValue value) {
       //we need to synchronize this.
       //if it receives 2 events concurrently (e.g. 2 increments), it can generate duplicated events!
-      synchronized (entries) {
-         assert key instanceof WeakCounterKey;
-         int index = ((WeakCounterKey) key).getIndex();
-         long newValue = value == null ?
-                         defaultValueOfIndex(index) :
-                         value.getValue();
-         Long base = getCachedValue(index);
-         Long oldValue = entries[index].update(newValue);
-         return base == null || oldValue == null || oldValue == newValue ?
-                null :
-                CounterEventImpl.create(base + oldValue, base + newValue);
-      }
+      assert key instanceof WeakCounterKey;
+      int index = ((WeakCounterKey) key).getIndex();
+      long newValue = value == null ?
+            defaultValueOfIndex(index) :
+            value.getValue();
+      Long base = getCachedValue(index);
+      Long oldValue = entries[index].update(newValue);
+      return base == null || oldValue == null || oldValue == newValue ?
+            null :
+            CounterEventImpl.create(base + oldValue, base + newValue);
    }
 
 
    @Override
    public CompletableFuture<Void> remove() {
-      final int size = entries.length;
-      CompletableFuture[] futures = new CompletableFuture[size];
-      for (int i = 0; i < size; ++i) {
-         futures[i] = readWriteMap.eval(entries[i].key, RemoveFunction.getInstance());
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      for (Entry entry : entries) {
+         stage.dependsOn(readWriteMap.eval(entry.key, RemoveFunction.getInstance()));
       }
-      return CompletableFuture.allOf(futures);
+      return stage.freeze().toCompletableFuture();
    }
 
    @Override
    public SyncWeakCounter sync() {
       return new SyncWeakCounterAdapter(this);
-   }
-
-   public void destroyAndRemove() {
-      removeListener();
-      awaitCounterOperation(remove());
    }
 
    @Override
@@ -254,52 +269,46 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       if (value == null) {
          value = defaultValueOfIndex(index);
       }
-      synchronized (entries) {
-         entries[index].init(value);
-      }
+      entries[index].init(value);
    }
 
    private Long getCachedValue() {
-      synchronized (entries) {
-         long value = 0;
-         int index = 0;
-         try {
-            for (; index < entries.length; ++index) {
-               Long toAdd = entries[index].snapshot;
-               if (toAdd == null) {
-                  //we don't have a valid snapshot
-                  return null;
-               }
-               value = Math.addExact(value, toAdd);
+      long value = 0;
+      int index = 0;
+      try {
+         for (; index < entries.length; ++index) {
+            Long toAdd = entries[index].snapshot;
+            if (toAdd == null) {
+               //we don't have a valid snapshot
+               return null;
             }
-         } catch (ArithmeticException e) {
-            return getCachedValue0(index, value, -1);
+            value = Math.addExact(value, toAdd);
          }
-         return value;
+      } catch (ArithmeticException e) {
+         return getCachedValue0(index, value, -1);
       }
+      return value;
    }
 
    private Long getCachedValue(int skipIndex) {
-      synchronized (entries) {
-         long value = 0;
-         int index = 0;
-         try {
-            for (; index < entries.length; ++index) {
-               if (index == skipIndex) {
-                  continue;
-               }
-               Long toAdd = entries[index].snapshot;
-               if (toAdd == null) {
-                  //we don't have a valid snapshot
-                  return null;
-               }
-               value = Math.addExact(value, toAdd);
+      long value = 0;
+      int index = 0;
+      try {
+         for (; index < entries.length; ++index) {
+            if (index == skipIndex) {
+               continue;
             }
-         } catch (ArithmeticException e) {
-            return getCachedValue0(index, value, skipIndex);
+            Long toAdd = entries[index].snapshot;
+            if (toAdd == null) {
+               //we don't have a valid snapshot
+               return null;
+            }
+            value = Math.addExact(value, toAdd);
          }
-         return value;
+      } catch (ArithmeticException e) {
+         return getCachedValue0(index, value, skipIndex);
       }
+      return value;
    }
 
    private Long getCachedValue0(int index, long value, int skipIndex) {
@@ -352,25 +361,20 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
    }
 
 
-   private static class Entry {
+   private static final class Entry {
       final WeakCounterKey key;
-      @GuardedBy("entries")
       volatile Long snapshot;
 
       private Entry(WeakCounterKey key) {
          this.key = key;
       }
 
-      private void init(long initialValue) {
-         if (snapshot == null) {
-            snapshot = initialValue;
-         }
+      void init(long initialValue) {
+         SNAPSHOT_UPDATER.compareAndSet(this, null, initialValue);
       }
 
-      private Long update(long value) {
-         Long old = snapshot;
-         snapshot = value;
-         return old;
+      Long update(long value) {
+         return SNAPSHOT_UPDATER.getAndSet(this, value);
       }
    }
 
@@ -380,7 +384,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       WeakCounterKey[] getPreferredKeys();
    }
 
-   private static class LocalKeySelector implements KeySelector {
+   private static final class LocalKeySelector implements KeySelector {
 
       private final Entry[] entries;
 
@@ -404,7 +408,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       }
    }
 
-   private class ClusteredKeySelector implements KeySelector {
+   private final class ClusteredKeySelector implements KeySelector {
       private final Entry[] entries;
       private volatile WeakCounterKey[] preferredKeys; //null when no keys available
 

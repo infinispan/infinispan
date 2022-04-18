@@ -1,8 +1,11 @@
 package org.infinispan.counter.impl.listener;
 
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -109,8 +112,8 @@ public class CounterManagerNotificationManager {
     *
     * @param cache The {@link  Cache} to listen to cluster events.
     */
-   public void registerCounterValueListener(Cache<? extends CounterKey, CounterValue> cache) {
-      valueListener.register(cache);
+   public CompletionStage<Void> registerCounterValueListener(Cache<? extends CounterKey, CounterValue> cache) {
+      return valueListener.register(cache);
    }
 
    /**
@@ -118,8 +121,8 @@ public class CounterManagerNotificationManager {
     *
     * @param cache The {@link  Cache} to listen to cluster events.
     */
-   public void registerTopologyListener(Cache<? extends CounterKey, CounterValue> cache) {
-      topologyListener.register(cache);
+   public CompletionStage<Void> registerTopologyListener(Cache<? extends CounterKey, CounterValue> cache) {
+      return topologyListener.register(cache);
    }
 
    /**
@@ -244,10 +247,11 @@ public class CounterManagerNotificationManager {
          userListenerExecutor.execute(() -> userListeners.forEach(l -> l.onUpdate(event)), event);
       }
 
-      void register(Cache<? extends CounterKey, CounterValue> cache) {
+      CompletionStage<Void> register(Cache<? extends CounterKey, CounterValue> cache) {
          if (registered.compareAndSet(false, true)) {
-            cache.addListener(this);
+            return cache.addListenerAsync(this);
          }
+         return completedNull();
       }
    }
 
@@ -261,20 +265,18 @@ public class CounterManagerNotificationManager {
 
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<?, ?> event) {
-         counters.values().parallelStream()
+         counters.values().stream()
                  .map(Holder::getTopologyChangeListener)
                  .filter(Objects::nonNull)
                  .forEach(TopologyChangeListener::topologyChanged);
       }
 
-      private void register(Cache<?, ?> cache) {
+      private CompletionStage<Void> register(Cache<?, ?> cache) {
          ClusteringConfiguration config = cache.getCacheConfiguration().clustering();
-         if (!config.cacheMode().isClustered()) {
-            return;
+         if (config.cacheMode().isClustered() && registered.compareAndSet(false, true)) {
+            return cache.addListenerAsync(this);
          }
-         if (registered.compareAndSet(false, true)) {
-            cache.addListener(this);
-         }
+         return completedNull();
       }
    }
 }

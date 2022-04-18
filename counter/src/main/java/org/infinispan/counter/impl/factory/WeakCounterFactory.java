@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.WeakCounter;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 
 /**
  * Factory to create and remove {@link WeakCounter}.
@@ -28,5 +29,5 @@ public interface WeakCounterFactory {
     * @param configuration The counter's configuration.
     * @return A {@link CompletionStage} that is completed after the counter is created.
     */
-   CompletionStage<WeakCounter> createWeakCounter(String counterName, CounterConfiguration configuration);
+   CompletionStage<InternalCounterAdmin> createWeakCounter(String counterName, CounterConfiguration configuration);
 }
