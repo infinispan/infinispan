@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
+import org.infinispan.counter.impl.manager.InternalCounterAdmin;
 
 /**
  * Factory to create and remove bounded and unbounded {@link StrongCounter}.
@@ -27,6 +28,6 @@ public interface StrongCounterFactory {
     * @param configuration The counter's configuration.
     * @return A {@link CompletionStage} that is completed after the counter is created.
     */
-   CompletionStage<StrongCounter> createStrongCounter(String counterName, CounterConfiguration configuration);
+   CompletionStage<InternalCounterAdmin> createStrongCounter(String counterName, CounterConfiguration configuration);
 
 }

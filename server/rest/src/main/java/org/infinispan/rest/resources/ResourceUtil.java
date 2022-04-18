@@ -2,11 +2,13 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
@@ -44,6 +46,14 @@ class ResourceUtil {
 
    static CompletableFuture<RestResponse> notFoundResponseFuture() {
       return responseFuture(NOT_FOUND);
+   }
+
+   static CompletionStage<RestResponse> noContentResponseFuture() {
+      return responseFuture(NO_CONTENT);
+   }
+
+   static RestResponse noContent() {
+      return response(NO_CONTENT);
    }
 
    static CompletableFuture<RestResponse> badRequestResponseFuture(Object message) {

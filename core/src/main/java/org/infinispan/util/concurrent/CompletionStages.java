@@ -183,6 +183,10 @@ public class CompletionStages {
       return stage.thenRun(NO_OP_RUNNABLE);
    }
 
+   public static <T> T await(CompletionStage<T> stage) throws ExecutionException, InterruptedException {
+      return CompletableFutures.await(stage.toCompletableFuture());
+   }
+
    private static class VoidAggregateCompletionStage extends AbstractAggregateCompletionStage<Void> {
       @Override
       Void getValue() {

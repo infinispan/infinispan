@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.exception.CounterException;
+import org.infinispan.counter.exception.CounterNotFoundException;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -71,7 +72,7 @@ public interface Log extends BasicLogger {
    CounterException unableToFetchCaches();
 
    @Message(value = "Counter '%s' is not defined.", id = 29516)
-   CounterException undefinedCounter(String name);
+   CounterNotFoundException undefinedCounter(String name);
 
    @Message(value = "Duplicated counter name found. Counter '%s' already exists.", id = 29517)
    CounterConfigurationException duplicatedCounterName(String counter);
@@ -106,7 +107,7 @@ public interface Log extends BasicLogger {
    CounterConfigurationException errorReadingCountersConfiguration(@Cause Throwable cause);
 
    @Message(value = "CounterManager hasn't started yet or has been stopped.", id = 29528)
-   CounterException managerNotStarted();
+   CounterException counterManagerNotStarted();
 
    @Message(value = "MBean registration failed", id = 29529)
    CounterException jmxRegistrationFailed(@Cause Throwable cause);

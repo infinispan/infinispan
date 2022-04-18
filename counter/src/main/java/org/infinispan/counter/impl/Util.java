@@ -1,10 +1,11 @@
 package org.infinispan.counter.impl;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.counter.exception.CounterException;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Utility methods.
@@ -34,14 +35,17 @@ public final class Util {
    /**
     * Awaits for the counter operation and throws any exception as {@link CounterException}.
     */
-   public static <T> T awaitCounterOperation(CompletableFuture<T> future) {
+   public static <T> T awaitCounterOperation(CompletionStage<T> stage) {
       try {
-         return future.get();
+         return CompletionStages.await(stage);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw rethrowAsCounterException(e);
       } catch (ExecutionException e) {
-         throw rethrowAsCounterException(e);
+         if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException) e.getCause();
+         }
+         throw rethrowAsCounterException(e.getCause());
       }
    }
 }
