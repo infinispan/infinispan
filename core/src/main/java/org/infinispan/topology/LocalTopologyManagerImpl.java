@@ -542,8 +542,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return CompletableFutures.completedNull();
       }
 
-      eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.cacheRebalanceStart(
-            cacheTopology.getMembers(), cacheTopology.getPhase(), cacheTopology.getTopologyId()));
+      eventLogger.context(cacheName)
+            .info(EventLogCategory.LIFECYCLE, MESSAGES.cacheRebalanceStart(cacheTopology.getMembers(), cacheTopology.getPhase(), cacheTopology.getTopologyId()));
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
             .thenCompose(ignored -> orderOnCache(cacheName, () -> {
                return doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
@@ -557,11 +557,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                   // Ignore errors when the cache is shutting down
                   if (!(t instanceof IllegalLifecycleStateException)) {
                      log.rebalanceStartError(cacheName, throwable);
-                     eventLogger.error(EventLogCategory.LIFECYCLE, MESSAGES.rebalanceFinishedWithFailure(
-                           members, topologyId, t));
+                     eventLogger.context(cacheName)
+                           .error(EventLogCategory.LIFECYCLE, MESSAGES.rebalanceFinishedWithFailure(members, topologyId, t));
                   }
                } else {
-                  eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.rebalanceFinished(members, topologyId));
+                  eventLogger.context(cacheName)
+                        .info(EventLogCategory.LIFECYCLE, MESSAGES.rebalanceFinished(members, topologyId));
                }
 
                return null;

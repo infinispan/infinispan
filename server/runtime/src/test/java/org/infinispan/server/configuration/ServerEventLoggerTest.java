@@ -39,7 +39,6 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -166,8 +165,9 @@ public class ServerEventLoggerTest {
 
                // There are rebalance events, must be an even number of events.
                events = getLatestEvents(-1, eventLogger, EventLogCategory.LIFECYCLE, null);
+               final String cacheName = cms[0].getCache().getName();
                Predicate<EventLog> predicate = e -> e.getContext().isPresent()
-                     && e.getContext().get().equals(LocalTopologyManagerImpl.class.getName());
+                     && e.getContext().get().equals(cacheName);
                assertTrue(events.stream().anyMatch(predicate));
                assertEquals(0, events.stream().filter(predicate).count() & 1);
             }

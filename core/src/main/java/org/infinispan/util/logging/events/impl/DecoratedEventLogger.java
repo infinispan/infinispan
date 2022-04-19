@@ -44,8 +44,8 @@ public class DecoratedEventLogger implements EventLogger {
 
    protected void addLogsToBuilder(StringBuilder sb) {
       if (context != null) sb.append(MESSAGES.eventLogContext(context));
-      if (scope != null) sb.append(MESSAGES.eventLogContext(scope));
-      if (who != null) sb.append(MESSAGES.eventLogContext(who));
+      if (scope != null) sb.append(MESSAGES.eventLogScope(scope));
+      if (who != null) sb.append(MESSAGES.eventLogWho(who));
    }
 
    @Override

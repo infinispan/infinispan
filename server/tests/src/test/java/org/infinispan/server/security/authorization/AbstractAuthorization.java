@@ -14,7 +14,9 @@ import static org.infinispan.server.test.core.TestSystemPropertyNames.HOTROD_CLI
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -38,6 +42,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
@@ -51,6 +56,7 @@ import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistratio
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -569,6 +575,35 @@ public abstract class AbstractAuthorization {
          assertStatus(FORBIDDEN, client.getRestoreNames());
          assertStatus(FORBIDDEN, client.getRestore("restore"));
          assertStatus(FORBIDDEN, client.deleteRestore("restore"));
+      }
+   }
+
+   @Test
+   public void testRestListenSSEAuthorizations() throws Exception {
+      RestClient adminClient = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
+      WeakSSEListener sseListener = new WeakSSEListener();
+
+      // admin must be able to listen events.
+      try (Closeable ignored = adminClient.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {
+         assertTrue(sseListener.await(10, TimeUnit.SECONDS));
+      }
+
+      // non-admins must receive 403 status code.
+      for (TestUser nonAdmin : TestUser.NON_ADMINS) {
+         CountDownLatch latch = new CountDownLatch(1);
+         RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(nonAdmin)).get();
+         WeakSSEListener listener = new WeakSSEListener() {
+            @Override
+            public void onError(Throwable t, RestResponse response) {
+               if (response.getStatus() == FORBIDDEN) {
+                  latch.countDown();
+               }
+            }
+         };
+
+         try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), listener)) {
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
+         }
       }
    }
 

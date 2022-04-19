@@ -3,15 +3,20 @@ package org.infinispan.server.functional;
 import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.test.core.Common.assertResponse;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
@@ -27,6 +32,7 @@ import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.rest.resources.AbstractRestResourceTest;
+import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
@@ -118,5 +124,26 @@ public class RestOperations {
       assertStatus(OK, counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
 
       assertEquals("5", assertStatus(OK, counter.get()));
+   }
+
+   @Test
+   public void testSSECluster() throws Exception {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      builder.protocol(protocol);
+      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      WeakSSEListener sseListener = new WeakSSEListener();
+
+      try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {
+         assertTrue(sseListener.await(10, TimeUnit.SECONDS));
+
+         assertThat(client.cache("caching-listen").createWithTemplate("org.infinispan.DIST_SYNC")).isOk();
+
+         sseListener.expectEvent("create-cache", "caching-listen");
+         sseListener.expectEvent("lifecycle-event", "ISPN100002");
+         sseListener.expectEvent("lifecycle-event", "ISPN100010");
+
+         assertThat(client.cache("caching-listen").delete()).isOk();
+         sseListener.expectEvent("remove-cache", "caching-listen");
+      }
    }
 }

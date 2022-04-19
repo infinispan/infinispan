@@ -37,6 +37,10 @@ public class SSEListener implements RestEventListener {
       this.events.add(new KeyValuePair<>(type, data));
    }
 
+   public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
+      return openLatch.await(timeout, unit);
+   }
+
    public void expectEvent(String type, String subString) throws InterruptedException {
       KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
       assertNotNull(event);

@@ -25,7 +25,7 @@ public final class ServerEventImpl extends BaseEventLog {
    }
 
    ServerEventImpl(Instant when, EventLogLevel level, EventLogCategory category, String message, String detail, String context, String who, String scope) {
-      super(when, level, category, message, detail, who, context, scope);
+      super(when, level, category, message, detail, context, who, scope);
    }
 
    ServerEventImpl(Instant when, EventLogLevel level, EventLogCategory category, String message) {

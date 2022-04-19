@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
@@ -15,6 +16,8 @@ import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.AddCacheManagerListenerAsyncAction;
+import org.infinispan.security.actions.AddLoggerListenerAsyncAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
@@ -71,6 +74,14 @@ final class SecurityActions {
 
    static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
       return doPrivileged(new GetCacheComponentRegistryAction(cache));
+   }
+
+   static CompletionStage<Void> addLoggerListenerAsync(EmbeddedCacheManager ecm, Object listener) {
+      return doPrivileged(new AddLoggerListenerAsyncAction(ecm, listener));
+   }
+
+   static CompletionStage<Void> addListenerAsync(EmbeddedCacheManager cacheManager, Object listener) {
+      return doPrivileged(new AddCacheManagerListenerAsyncAction(cacheManager, listener));
    }
 
    static void checkPermission(InvocationHelper invocationHelper, RestRequest request, AuthorizationPermission permission) {
