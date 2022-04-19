@@ -114,6 +114,7 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
                for(ChannelListener listener : channelListeners) {
                   configurator.addChannelListener(listener);
                }
+               configurator.setExecutor(executor);
                RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(remoteSite.getKey());
                siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteCluster) {
                   @Override

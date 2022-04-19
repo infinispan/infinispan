@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.util.concurrent.Executor;
+
 import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -17,4 +19,6 @@ public interface JGroupsChannelConfigurator extends ProtocolStackConfigurator {
    void setSocketFactory(SocketFactory socketFactory);
 
    void addChannelListener(ChannelListener listener);
+
+   void setExecutor(Executor executor);
 }
