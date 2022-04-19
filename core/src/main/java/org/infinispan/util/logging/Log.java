@@ -42,6 +42,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.jmx.JmxDomainConflictException;
+import org.infinispan.logging.annotations.Description;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.persistence.spi.NonBlockingStore;
@@ -771,6 +772,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Encountered issues while backing up data for cache %s to site %s", id = 202)
+   @Description("This message indicates an issue has occurred with state transfer operations. First check that the site is online and if any network issues have occurred. Confirm that the relay nodes in the cluster are not overloaded with cross-site replication requests. In some cases garbage collection pauses can also interrupt backup operations. You can either increase the amount of memory available to relay nodes or increase the number of relay nodes in the cluster.")
    void warnXsiteBackupFailed(String cacheName, String siteName, @Cause Throwable throwable);
 
    @LogMessage(level = WARN)
@@ -1059,7 +1061,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException invalidPrincipalRoleMapper();
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to send X-Site state chunk to '%s'.", id = 289)
+   @Message(value = "Cannot send cross-site state chunk to '%s'.", id = 289)
+   @Description("During a state transfer operation it was not possible to transfer a batch of cache entries. First check that the site is online and if any network issues have occurred. Confirm that the relay nodes in the cluster are not overloaded with cross-site replication requests. In some cases garbage collection pauses can also interrupt backup operations. You can either increase the amount of memory available to relay nodes or increase the number of relay nodes in the cluster.")
    void unableToSendXSiteState(String site, @Cause Throwable cause);
 
 //   @LogMessage(level = WARN)
@@ -1067,7 +1070,8 @@ public interface Log extends BasicLogger {
 //   void unableToWaitForXSiteStateAcks(String site, @Cause Throwable cause);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to apply X-Site state chunk.", id = 291)
+   @Message(value = "Cannot apply cross-site state chunk.", id = 291)
+   @Description("During a state transfer operation it was not possible to apply a batch of cache entries. Ensure that sites are online and check network status.")
    void unableToApplyXSiteState(@Cause Throwable cause);
 
    @LogMessage(level = WARN)
@@ -1140,7 +1144,8 @@ public interface Log extends BasicLogger {
    void stopOrderIgnored();
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to re-start x-site state transfer to site %s", id = 322)
+   @Message(value = "Cannot restart cross-site state transfer to site %s", id = 322)
+   @Description("It was not possible to resume a state transfer operation to a backup location. Ensure that sites are online and check network status.")
    void failedToRestartXSiteStateTransfer(String siteName, @Cause Throwable cause);
 
    @Message(value = "%s is in '%s' state and so it does not accept new invocations. " +
@@ -1193,16 +1198,20 @@ public interface Log extends BasicLogger {
    @Message(value = "Finished rebalance for cache %s, topology %s", id = 336)
    void finishedRebalance(String cacheName, CacheTopology topology);
 
-   @Message(value = "The 'site' must be specified!", id = 337)
+   @Message(value = "Backup configuration must include a 'site'.", id = 337)
+   @Description("Caches that use cross-site replication must include a site in the configuration. Edit the cache and specify the name of the site in the backup configuration.")
    CacheConfigurationException backupMissingSite();
 
-   @Message(value = "You must specify a 'failure-policy-class' to use a custom backup failure policy for backup '%s'!", id = 338)
+   @Message(value = "You must specify a 'failure-policy-class' to use a custom backup failure policy for backup '%s'.", id = 338)
+   @Description("The backup configuration for the cache uses a custom failure policy but does not include the fully qualified class of a custom failure policy implementation. Specify the failure policy class in the backup configuration or use a different failure policy.")
    CacheConfigurationException missingBackupFailurePolicyClass(String remoteSite);
 
-   @Message(value = "Null name not allowed (use 'defaultRemoteCache()' in case you want to specify the default cache name).", id = 339)
+   @Message(value = "Remote cache name is missing or null in backup configuration.", id = 339)
+   @Description("Cross-site replication backs up data to caches with the same name by default. If you want to backup to a cache with a different name, you must specify the name of the remote cache in the 'backup-for' configuration. Modify cache configuration to include the name of the remote cache.")
    CacheConfigurationException backupForNullCache();
 
-   @Message(value = "Both 'remoteCache' and 'remoteSite' must be specified for a backup'!", id = 340)
+   @Message(value = "Remote cache name and remote site is missing or null in backup configuration.", id = 340)
+   @Description("Cross-site replication backs up data to caches with the same name by default. If you want to backup to a cache with a different name, you must specify the name of the remote cache and the remote site in the 'backup-for' configuration. Modify cache configuration to include the name of the remote cache and remote site.")
    CacheConfigurationException backupForMissingParameters();
 
 //   @Message(value = "Cannot configure async properties for an sync cache. Set the cache mode to async first.", id = 341)
@@ -1391,6 +1400,7 @@ public interface Log extends BasicLogger {
    TimeoutException timeoutWaitingForInitialNodes(int initialClusterSize, List<?> members);
 
    @Message(value = "Node %s was suspected", id = 400)
+   @Description("A node in the cluster is offline or cannot be reached on the network. If you are using cross-site replication this message indicates that the relay nodes are not reachable. Check network settings for all nodes in the cluster.")
    SuspectException remoteNodeSuspected(Address address);
 
    @Message(value = "Node %s timed out, time : %s %s", id = 401)
@@ -1520,7 +1530,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException duplicateCacheName(String name);
 
    @LogMessage(level = INFO)
-   @Message(value = "Received new x-site view: %s", id = 439)
+   @Message(value = "Received new cross-site view: %s", id = 439)
+   @Description("A cluster has either joined or left the global cluster view.")
    void receivedXSiteClusterView(Collection<String> view);
 
    @LogMessage(level = ERROR)
@@ -1542,19 +1553,22 @@ public interface Log extends BasicLogger {
 //   @Message(value = "At most one store can be set to 'fetchPersistentState'!", id = 445)
 //   CacheConfigurationException onlyOneFetchPersistentStoreAllowed();
 
-   @Message(value = "Multiple sites with name '%s' are configured. That is not allowed!", id = 446)
+   @Message(value = "Multiple sites have the same name '%s'. This configuration is not valid.", id = 446)
+   @Description("The name for each cluster that participates in cross-site replication must have a unique site name. Modify JGroups RELAY2 configuration and specify a unique site name for each backup location.")
    CacheConfigurationException multipleSitesWithSameName(String site);
 
-   @Message(value = "The site '%s' must be defined within the set of backups!", id = 447)
-   CacheConfigurationException siteMustBeInBackups(String site);
+//   @Message(value = "The site '%s' must be defined within the set of backups!", id = 447)
+//   CacheConfigurationException siteMustBeInBackups(String site);
 
    @Message(value = "'awaitInitialTransfer' can be enabled only if cache mode is distributed or replicated.", id = 448)
    CacheConfigurationException awaitInitialTransferOnlyForDistOrRepl();
 
-   @Message(value = "XSite state transfer timeout must be higher or equals than 1 (one).", id = 449)
+   @Message(value = "Timeout value for cross-site replication state transfer must be equal to or greater than one.", id = 449)
+   @Description("The value of the timeout attribute is zero or a negative number. Specify a value of at least one for the timeout attribute in the cross-site state transfer configuration for your cache.")
    CacheConfigurationException invalidXSiteStateTransferTimeout();
 
-   @Message(value = "XSite state transfer waiting time between retries must be higher or equals than 1 (one).", id = 450)
+   @Message(value = "Wait time between retries for cross-site replication state transfer must be equal to or greater than one.", id = 450)
+   @Description("The value of the wait-time attribute is zero or a negative number. Specify a value of at least one for the wait-time attribute in the cross-site state transfer configuration for your cache.")
    CacheConfigurationException invalidXSiteStateTransferWaitTime();
 
    @Message(value = "Timed out waiting for view %d, current view is %d", id = 451)
@@ -1642,7 +1656,8 @@ public interface Log extends BasicLogger {
    TimeoutException requestTimedOut(long requestId, String targetsWithoutResponses, String elapsed);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Unable to perform operation %s for site %s", id = 477)
+   @Message(value = "Cannot perform operation %s for site %s", id = 477)
+   @Description("It was not possible to successfully complete an operation on a backup location. Set logging levels to TRACE to analyze and troubleshoot the issue.")
    void xsiteAdminOperationError(String operationName, String siteName, @Cause Throwable t);
 
    @Message(value = "Couldn't find a local transaction corresponding to remote site transaction %s", id = 478)
@@ -1856,12 +1871,15 @@ public interface Log extends BasicLogger {
    CacheConfigurationException jgroupsInsertRequiresPosition(String protocolName);
 
    @Message(value = "Duplicate remote site '%s' in stack '%s'", id = 546)
+   @Description("The name for each cluster that participates in cross-site replication must have a unique site name. Modify JGroups RELAY2 configuration and specify a unique site name for each backup location.")
    CacheConfigurationException duplicateRemoteSite(String remoteSite, String name);
 
-   @Message(value = "JGroups stack '%s' declares remote sites but does not have a RELAY2 protocol", id = 547)
+   @Message(value = "JGroups stack '%s' declares remote sites but does not include the RELAY2 protocol.", id = 547)
+   @Description("Cross-site replication requires the JGroups RELAY2 protocol. Modify the JGroups configuration to include a RELAY2 stack.")
    CacheConfigurationException jgroupsRemoteSitesWithoutRelay(String name);
 
-   @Message(value = "JGroups stack '%s' has a RELAY2 protocol without remote sites", id = 548)
+   @Message(value = "JGroups stack '%s' has a RELAY2 protocol without remote sites.", id = 548)
+   @Description("Each cluster that participates in cross-site replication must be identified with a site name in the RELAY2 stack. Modify JGroups configuration and specify a unique site name for each backup location.")
    CacheConfigurationException jgroupsRelayWithoutRemoteSites(String name);
 
    @Message(value = "A store cannot be shared when utilised with a local cache.", id = 549)
@@ -1942,7 +1960,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unexpected response from %s: %s", id = 570)
    IllegalArgumentException unexpectedResponse(Address target, Response response);
 
-   @Message(value = "RELAY2 not found in ProtocolStack. Unable to do cross-site requests.", id = 571)
+   @Message(value = "RELAY2 not found in the protocol stack. Cannot perform cross-site operations.", id = 571)
+   @Description("To back up caches from one site to another the cluster transport uses the JGroups RELAY2 protocol. Add RELAY2 to your cluster transport configuration.")
    CacheConfigurationException crossSiteUnavailable();
 
    @LogMessage(level = WARN)
@@ -1959,7 +1978,8 @@ public interface Log extends BasicLogger {
    @Message(value = "PartitionStrategy must be ALLOW_READ_WRITES when numOwners is 1", id = 575)
    CacheConfigurationException singleOwnerNotSetToAllowReadWrites();
 
-   @Message(value = "Cross-site Replication not available for local cache.", id = 576)
+   @Message(value = "Cross-site replication not available for local cache.", id = 576)
+   @Description("Cross-site replication capabilities do not apply to local cache mode. Either remove the backup configuration from the local cache or use a distributed or replicated cache mode.")
    CacheConfigurationException xsiteInLocalCache();
 
    @Message(value = "Converting from unwrapped protostream payload requires the 'type' parameter to be supplied in the destination MediaType", id = 577)
@@ -2056,24 +2076,30 @@ public interface Log extends BasicLogger {
          "'application/x-protostream' as MediaType", id = 602)
    void jsonObjectConversionDeprecated();
 
-   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' not found.", id = 603)
+   @Message(value = "Cannot handle cross-site request from site '%s'. Cache '%s' not found.", id = 603)
+   @Description("A remote cluster attempted to replicate data to a cache that does not exist on the local cluster. Either create the cache or modify the backup configuration for the cache on the remote site.")
    CacheConfigurationException xsiteCacheNotFound(String remoteSite, ByteString cacheName);
 
-   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' is stopped.", id = 604)
+   @Message(value = "Cannot handle cross-site request from site '%s'. Cache '%s' is stopped.", id = 604)
+   @Description("A remote cluster attempted to replicate data to a cache that is not available. Start, or restart, the cache.")
    CacheConfigurationException xsiteCacheNotStarted(String origin, ByteString cacheName);
 
-   @Message(value = "Unable to handle cross-site request from site '%s'. Cache '%s' is not clustered.", id = 605)
+   @Message(value = "Cannot handle cross-site request from site '%s'. Cache '%s' is not clustered.", id = 605)
+   @Description("A remote cluster attempted to replicate data to a local cache. Either recreate the cache with a distributed or replicated mode or remove the backup configuration.")
    CacheConfigurationException xsiteInLocalCache(String origin, ByteString cacheName);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Remote site '%s' has an invalid cache configuration. Changing to offline.", id = 606)
+   @Message(value = "Remote site '%s' has an invalid cache configuration. Taking the backup location offline.", id = 606)
+   @Description("An attempt was made to replicate data to a cache that does not have a valid configuration. Check the cache at the remote site and recreate it with a valid distributed or replicated configuration.")
    void xsiteInvalidConfigurationRemoteSite(String siteName, @Cause CacheConfigurationException exception);
 
-   @Message(value = "The XSiteEntryMergePolicy is missing! Must be non-null.", id = 607)
+   @Message(value = "The XSiteEntryMergePolicy is missing. The cache configuration must include a merge policy.", id = 607)
+   @Description("To resolve conflicting entries between backup locations cache configuration must include a merge policy. Recreate the cache and specify a merge policy from the org.infinispan.xsite.spi.XSiteMergePolicy enum or use a conflict resolution algorithm.")
    CacheConfigurationException missingXSiteEntryMergePolicy();
 
    @LogMessage(level = FATAL)
    @Message(value = "[IRAC] Unexpected error occurred.", id = 608)
+   @Description("During conflict resolution for cross-site replication an unexpected error occurred. To ensure data consistency between backup locations you should initiate state transfer to synchronize data between clusters.")
    void unexpectedErrorFromIrac(@Cause Throwable t);
 
    @LogMessage(level = DEBUG)
@@ -2108,17 +2134,21 @@ public interface Log extends BasicLogger {
    PersistenceException persistedDataMigrationUnsupportedVersion(String magic);
 
    @Message(value = "Site '%s' not found.", id = 617)
+   @Description("A backup location that is configured as a site in the JGroups RELAY2 stack is not available. Check the JGroups configuration and cache configuration to ensure that the remote site is configured correctly. If the configuration is correct then check that the backup location is online.")
    IllegalArgumentException siteNotFound(String siteName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Cleanup failed for Cross-Site state transfer. In case of issues, invoke operation cancel-push-state(%s).", id = 618)
+   @Message(value = "Cleanup failed for cross-site state transfer. Invoke the cancel-push-state(%s) command if any nodes indicate pending operations to push state.", id = 618)
+   @Description("When cross-site state transfer operations complete or fail due to a network timeout or other exception, the coordinator node sends a cancel-push-state command to other nodes. If any nodes indicate that there are pending operations to push state to a remote site, you can invoke the cancel-push-state command again on those nodes.")
    void xsiteCancelSendFailed(@Cause Throwable throwable, String remoteSite);
 
    @LogMessage(level = WARN)
-   @Message(value = "Cleanup failed for Cross-Site state transfer. In case of issues, invoke operation cancel-receive(%s) in site %s.", id = 619)
+   @Message(value = "Cleanup failed for cross-site state transfer. Invoke the cancel-receive(%s) command in site %s if any nodes indicate pending operations to receive state.", id = 619)
+   @Description("When cross-site state transfer operations complete or fail due to a network timeout or other exception, the coordinator node sends a cancel-receive command to nodes. If any nodes indicate that there are pending operations to receive state from a remote site, you can invoke the cancel-receive command again.")
    void xsiteCancelReceiveFailed(@Cause Throwable throwable, String localSite, String remoteSite);
 
-   @Message(value = "Cross-Site state transfer to '%s' already started!", id = 620)
+   @Message(value = "Cross-site state transfer to '%s' already started", id = 620)
+   @Description("An attempt was made to initiate cross-site state transfer while the operation was already in progress. Wait for the state transfer operation to complete before initiating a subsequent operation. Alternatively you can cancel the cross-site state transfer operation that is in progress.")
    CacheException xsiteStateTransferAlreadyInProgress(String site);
 
    @Message(value = "Element '%s' has been removed. Please use element '%s' instead", id = 621)
@@ -2155,14 +2185,17 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Another partition or topology changed for while completing partial completed transaction. Retrying later.", id = 630)
 //   void topologyChangedPartitionHandlingTxCompletion();
 
-   @Message(value = "Cross-Site state transfer mode cannot be null.", id = 633)
+   @Message(value = "Cross-site state transfer mode cannot be null.", id = 633)
+   @Description("The mode attribute for cross-site state transfer configuration must have a value of AUTO or MANUAL. Modify the cache configuration with a valid value for the mode attribute.")
    CacheConfigurationException invalidXSiteStateTransferMode();
 
-   @Message(value = "Cross-Site automatic state transfer is not compatible with SYNC backup strategy.", id = 634)
+   @Message(value = "Cross-site automatic state transfer is not compatible with SYNC backup strategy.", id = 634)
+   @Description("Automatic state transfer is not possible if the backup strategy for cross-site replication is synchronous. Modify the cache configuration and set the state transfer mode to MANUAL. Alternatively you can change the backup strategy to use asynchronous mode.")
    CacheConfigurationException autoXSiteStateTransferModeNotAvailableInSync();
 
    @LogMessage(level = WARN)
    @Message(value = "[%s] Failed to receive a response from any nodes. Automatic cross-site state transfer to site '%s' is not started.", id = 635)
+   @Description("Before it starts automatic cross-site state transfer operations, the coordinator node checks all local nodes to determine if state transfer is necessary. This error occurs when the coordinator node gets an exception from one or more local nodes. Check that nodes in the cluster are online and operating as expected.")
    void unableToStartXSiteAutStateTransfer(String cacheName, String targetSite, @Cause Throwable t);
 
    @Message(value = "State transfer timeout (%d) must be greater than or equal to the remote timeout (%d)", id = 636)
@@ -2174,9 +2207,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Timeout waiting for topology %d transaction data", id = 638)
    TimeoutException transactionDataTimeout(int expectedTopologyId);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed to send remove request to remote site(s). Reason: tombstone was lost. Key='%s'", id = 639)
-   void sendFailMissingTombstone(Object key);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Failed to send remove request to remote site(s). Reason: tombstone was lost. Key='%s'", id = 639)
+//   void sendFailMissingTombstone(Object key);
 
    @LogMessage(level = WARN)
    @Message(value = "SingleFileStore has been deprecated and will be removed in a future version, replaced by SoftIndexFileStore", id = 640)
@@ -2232,9 +2265,11 @@ public interface Log extends BasicLogger {
    EncodingException invalidJson(String s);
 
    @Message(value = "The backup '%s' configuration 'failure-policy=%s' is not valid with an ASYNC backup strategy.", id = 656)
+   @Description("Only the 'WARN' and 'IGNORE' failure policies are compatible with asynchronous backups for cross-site replication. Modify the backup configuration for the cache to change the failure policy or use the synchronous backup strategy.")
    CacheConfigurationException invalidPolicyWithAsyncStrategy(String remoteSite, BackupFailurePolicy policy);
 
    @Message(value = "The backup '%s' configuration 'failure-policy-class' is not compatible with 'failure-policy=%s'. Use 'failure-policy=\"CUSTOM\"'", id = 657)
+   @Description("The backup configuration for the cache specifies the fully qualified class of a custom failure policy implementation. This is valid with the custom failure policy only. Change the cache configuration to use 'failure-policy=\"CUSTOM\"' or remove the failure policy class.")
    CacheConfigurationException failurePolicyClassNotCompatibleWith(String remoteSite, BackupFailurePolicy policy);
 
    @Message(value = "Initial state transfer timed out for cache %s on %s", id = 658)
@@ -2253,6 +2288,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
+   @Description("Cross-site tombstones are metadata that ensure data consistency. This error indicates that it was not possible to replicate tombstones for some segments during normal operations. Recommended action?")
    void failedToTransferTombstones(Address requestor, IntSet segments, @Cause Throwable t);
 
    @Message(value = "Name must be less than 256 bytes, current name '%s' exceeds the size.", id = 663)

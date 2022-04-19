@@ -39,6 +39,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-logging-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>io.micrometer</groupId>
          <artifactId>micrometer-core</artifactId>
          <optional>true</optional>
