@@ -60,6 +60,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.impl.ComponentRef;
+import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -1522,7 +1523,10 @@ public class JGroupsTransport implements Transport, ChannelListener {
          }
          Set<Object> metrics = new HashSet<>();
          for (Protocol protocol : c.getProtocolStack().getProtocols()) {
-            metrics.addAll(mc.registerMetrics(protocol, JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass()), METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null, nodeName));
+            Collection<MBeanMetadata.AttributeMetadata> attributes = JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass());
+               if (attributes != null && !attributes.isEmpty()) {
+                  metrics.addAll(mc.registerMetrics(protocol, attributes, METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null, nodeName));
+               }
             }
             return metrics;
          });
