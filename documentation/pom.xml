@@ -288,7 +288,7 @@
                                         <exec dir="${project.build.directory}/generated/${infinispan.base.version}" executable="rsync">
                                             <arg value="-rvm"/>
                                             <arg line="--protocol=29"/>
-                                            <arg line="-e &quot;ssh -i ${upload.keyFile}&quot;"/>
+                                            <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
                                             <arg line="--exclude='*.png'"/>
                                             <arg line="--exclude='*.svg'"/>
                                             <arg line="--include='*.pdf'"/>

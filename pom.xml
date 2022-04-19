@@ -226,13 +226,16 @@
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>
-      <upload.username>infinispan</upload.username>
-      <upload.host>filemgmt.jboss.org</upload.host>
-      <upload.downloadsDir>${upload.username}@${upload.host}:/downloads_htdocs/infinispan/${project.version}</upload.downloadsDir>
-      <upload.docsPath>/docs_htdocs/infinispan/${infinispan.base.version}</upload.docsPath>
-      <upload.docsDir>${upload.username}@${upload.host}:${upload.docsPath}</upload.docsDir>
       <upload.keyFile>${env.HOME}/.ssh/infinispan</upload.keyFile>
-      <upload.schemaDir>${upload.username}@${upload.host}:/schema_htdocs/infinispan</upload.schemaDir>
+      <upload.username>infinispan</upload.username>
+      <upload.host>filemgmt-prod-sync.jboss.org</upload.host>
+      <upload.remotePort>2222</upload.remotePort>
+      <upload.downloadsRemotePath>/downloads_htdocs/infinispan/${project.version}</upload.downloadsRemotePath>
+      <upload.downloadsDir>${upload.username}@${upload.host}:${upload.downloadsRemotePath}</upload.downloadsDir>
+      <upload.docsRemotePath>/docs_htdocs/infinispan/${infinispan.base.version}</upload.docsRemotePath>
+      <upload.docsDir>${upload.username}@${upload.host}:${upload.docsRemotePath}</upload.docsDir>
+      <upload.schemaRemotePath>/schema_htdocs/infinispan</upload.schemaRemotePath>
+      <upload.schemaDir>${upload.username}@${upload.host}:${upload.schemaRemotePath}</upload.schemaDir>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
@@ -2871,11 +2874,14 @@
                               <available file="${project.build.outputDirectory}/schema" type="dir" property="hasSchema"/>
 
                               <echo level="info" message="Uploading Schema files to ${upload.schemaDir}" if:set="hasSchema" xmlns:if="ant:if"/>
-                              <scp todir="${upload.schemaDir}" keyfile="${upload.keyFile}" verbose="true" compressed="true" sftp="true" if:set="hasSchema" xmlns:if="ant:if">
-                                 <fileset dir="${project.build.outputDirectory}/schema">
-                                    <include name="*-${infinispan.core.schema.version}.xsd" />
-                                 </fileset>
-                              </scp>
+                              <exec dir="${project.build.outputDirectory}/schema" executable="rsync" if:set="hasSchema" xmlns:if="ant:if">
+                                 <arg value="-rvm"/>
+                                 <arg line="--protocol=29"/>
+                                 <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
+                                 <arg line="--include='*-${infinispan.core.schema.version}.xsd'"/>
+                                 <arg value="."/>
+                                 <arg value="${upload.schemaDir}"/>
+                              </exec>
                            </target>
                         </configuration>
                      </execution>
