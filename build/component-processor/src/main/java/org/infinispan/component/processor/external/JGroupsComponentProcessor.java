@@ -20,6 +20,7 @@ import javax.lang.model.type.DeclaredType;
 import org.infinispan.external.JGroupsProtocolComponent;
 import org.jgroups.annotations.ManagedAttribute;
 import org.jgroups.conf.ClassConfigurator;
+import org.jgroups.protocols.RED;
 import org.jgroups.stack.Protocol;
 import org.kohsuke.MetaInfServices;
 
@@ -70,19 +71,15 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       w.println("   static {");
       w.println("      List<AttributeMetadata> attributes;");
       for (short id = 0; id < 256; id++) {
-         Class protocol = ClassConfigurator.getProtocol(id);
-         if (protocol != null && Protocol.class.isAssignableFrom(protocol)) {
-            w.println("      attributes = new ArrayList<>();");
-            for (Method method : protocol.getMethods()) {
-               ManagedAttribute annotation = method.getAnnotation(ManagedAttribute.class);
-               if (annotation != null && !Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0 && isNumber(method.getReturnType())) {
-                  w.printf("      attributes.add(new AttributeMetadata(\"%s\", \"%s\", false, false, \"%s\",\n" +
-                              "                               false, (Function<%s, ?>) %s::%s, null));%n",
-                        method.getName(), annotation.description().replace('"', '\''), method.getReturnType().getName(), protocol.getName(), protocol.getName(), method.getName());
-               }
-            }
-            w.printf("      PROTOCOL_METADATA.put(%s.class, attributes);%n", protocol.getName());
-         }
+         Class<?> protocol = ClassConfigurator.getProtocol(id);
+         addProtocol(protocol, w);
+      }
+
+      // RED protocol does not have an ID
+      // Reason: protocol that does not send headers around does not need an ID.
+      // Add it manually if an ID is not found.
+      if (ClassConfigurator.getProtocolId(RED.class) == 0) {
+         addProtocol(RED.class, w);
       }
 
       w.println("   }");
@@ -90,6 +87,30 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       w.println();
       w.flush();
       w.close();
+   }
+
+   private static void addProtocol(Class<?> protocol, PrintWriter w) {
+      if (protocol == null || !Protocol.class.isAssignableFrom(protocol)) {
+         return;
+      }
+      boolean hasAttributes = false;
+
+      for (Method method : protocol.getMethods()) {
+         ManagedAttribute annotation = method.getAnnotation(ManagedAttribute.class);
+         if (annotation != null && !Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0 && isNumber(method.getReturnType())) {
+            if (!hasAttributes) {
+               w.println("      attributes = new ArrayList<>();");
+               hasAttributes = true;
+            }
+            w.printf("      attributes.add(new AttributeMetadata(\"%s\", \"%s\", false, false, \"%s\",\n" +
+                        "                               false, (Function<%s, ?>) %s::%s, null));%n",
+                  method.getName(), annotation.description().replace('"', '\''), method.getReturnType().getName(), protocol.getName(), protocol.getName(), method.getName());
+         }
+      }
+      if (hasAttributes) {
+         // only put the protocol in PROTOCOL_METADATA if we have attributes available
+         w.printf("      PROTOCOL_METADATA.put(%s.class, attributes);%n", protocol.getName());
+      }
    }
 
    private static boolean isNumber(Class<?> type) {
