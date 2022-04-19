@@ -20,7 +20,7 @@ public class BaseEventLog implements EventLog {
    protected final String scope;
 
    public BaseEventLog(Instant when, EventLogLevel level, EventLogCategory category, String message, String detail,
-                       String who, String context, String scope) {
+                       String context, String who, String scope) {
       this.when = when;
       this.level = level;
       this.category = category;

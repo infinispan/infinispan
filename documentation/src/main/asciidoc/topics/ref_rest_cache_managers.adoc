@@ -499,3 +499,17 @@ GET /rest/v2/container/config?action=listen
 |OPTIONAL
 |Sets the required format to return content. Supported formats are `application/yaml`, `application/json` and `application/xml`. The default is `application/yaml`. See link:#rest_accept[Accept] for more information.
 |===
+
+[id='rest_v2_container_listen']
+= Listening to container events
+
+Receive events from the container using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
+The emitted events come from logged information, so each event contains an identifier associated with the message.
+The `event` value will be `lifecycle-event`. The `data` has the logged information, which includes the `message`,
+`category`, `level`, `timestamp`, `owner`, `context`, and `scope`, some of which may be empty.
+Currently, we expose only `LIFECYCLE` events.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/container?action=listen
+----
