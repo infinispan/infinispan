@@ -472,6 +472,22 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testCacheNameLength() {
+      final String cacheName = new String(new char[256]);
+      final String exceptionMessage = String.format("ISPN000663: Name must be less than 256 bytes, current name '%s' exceeds the size.", cacheName);
+      final Configuration configuration = new ConfigurationBuilder().build();
+
+      withCacheManager(new CacheManagerCallable(createCacheManager()) {
+         @Override
+         public void call() {
+            expectException(exceptionMessage, () -> cm.createCache(cacheName, configuration),
+                  CacheConfigurationException.class);
+            expectException(exceptionMessage, () -> cm.defineConfiguration(cacheName, configuration),
+                  CacheConfigurationException.class);
+         }
+      });
+   }
+
    private EmbeddedCacheManager getManagerWithStore(Method m, boolean isClustered, boolean isStoreShared) {
       return getManagerWithStore(m, isClustered, isStoreShared, "store-");
    }
