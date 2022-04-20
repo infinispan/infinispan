@@ -12,7 +12,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
+import java.util.concurrent.CompletionException;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
@@ -234,6 +236,30 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          cm2.stop();
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testNameSize(Method m) {
+      final String cacheName = new String(new char[256]);
+      final String exceptionMessage = String.format("ISPN000663: Name must be less than 256 bytes, current name '%s' exceeds the size.", cacheName);
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName());
+      GlobalConfigurationBuilder gcb = statefulGlobalBuilder(state1, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, gcb, null, new TransportFlags());
+      final Configuration configuration = new ConfigurationBuilder().build();
+
+      try {
+         cm.start();
+         expectException(exceptionMessage,
+               () -> cm.administration().getOrCreateCache(cacheName, configuration),
+               CacheConfigurationException.class);
+         expectException(exceptionMessage,
+               () -> cm.administration().createTemplate(cacheName, configuration),
+               CacheConfigurationException.class);
+         expectException(exceptionMessage,
+               () -> cm.administration().getOrCreateTemplate(cacheName, configuration),
+               CompletionException.class, CacheConfigurationException.class);
+      } finally {
+         TestingUtil.killCacheManagers(cm);
       }
    }
 

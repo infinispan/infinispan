@@ -3,6 +3,7 @@ package org.infinispan.globalstate.impl;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -160,6 +161,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          throw CONFIG.incompatiblePersistedConfiguration(name, configuration, staticConfiguration);
    }
 
+   private static void assertNameLength(String name) {
+      if (name.getBytes(StandardCharsets.UTF_8).length > 255) {
+         throw CONFIG.invalidNameSize(name);
+      }
+   }
+
    @Override
    public Cache<ScopedState, Object> getStateCache() {
       if (stateCache == null) {
@@ -170,6 +177,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @Override
    public CompletionStage<Void> createTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      assertNameLength(name);
+
       Cache<ScopedState, Object> cache = getStateCache();
       ScopedState key = new ScopedState(TEMPLATE_SCOPE, name);
       return cache.containsKeyAsync(key).thenCompose(exists -> {
@@ -183,8 +192,11 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    public CompletionStage<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       localConfigurationManager.validateFlags(flags);
       try {
-         CacheState state = new CacheState(null, parserRegistry.serialize(name, configuration), flags);
-         return getStateCache().putIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), state).thenApply((v) -> configuration);
+         final CacheState state = new CacheState(null, parserRegistry.serialize(name, configuration), flags);
+         return getStateCache().computeIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), k -> {
+            assertNameLength(name);
+            return state;
+         }).thenApply((v) -> configuration);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(name, configuration, e);
       }
@@ -242,6 +254,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      assertNameLength(cacheName);
+
       localConfigurationManager.validateFlags(flags);
       final CacheState state;
       try {

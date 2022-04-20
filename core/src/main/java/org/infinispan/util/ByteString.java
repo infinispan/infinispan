@@ -33,7 +33,7 @@ public final class ByteString implements Comparable<ByteString> {
    @ProtoFactory
    ByteString(byte[] bytes) {
       if (bytes.length > 255) {
-         throw new IllegalArgumentException("ByteString must be shorter than 255 bytes");
+         throw new IllegalArgumentException("ByteString must be less than 256 bytes");
       }
       this.bytes = bytes;
       this.hash = Arrays.hashCode(bytes);
