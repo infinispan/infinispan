@@ -2254,4 +2254,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
    void failedToTransferTombstones(Address requestor, IntSet segments, @Cause Throwable t);
+
+   @Message(value = "Name must be less than 256 bytes, current name '%s' exceeds the size.", id = 663)
+   CacheConfigurationException invalidNameSize(String name);
 }

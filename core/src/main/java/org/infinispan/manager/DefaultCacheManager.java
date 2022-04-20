@@ -7,6 +7,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -442,6 +443,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       assertIsNotTerminated();
       if (name == null || configurations == null)
          throw new NullPointerException("Null arguments not allowed");
+      if (name.getBytes(StandardCharsets.UTF_8).length > 255)
+         throw CONFIG.invalidNameSize(name);
 
       Configuration existing = configurationManager.getConfiguration(name, false);
       if (existing != null) {
