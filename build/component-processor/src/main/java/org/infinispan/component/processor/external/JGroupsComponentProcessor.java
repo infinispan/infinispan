@@ -90,7 +90,7 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
    }
 
    private static void addProtocol(Class<?> protocol, PrintWriter w) {
-      if (protocol == null || !Protocol.class.isAssignableFrom(protocol)) {
+      if (protocol == null || !Protocol.class.isAssignableFrom(protocol) || Modifier.isAbstract(protocol.getModifiers())) {
          return;
       }
       boolean hasAttributes = false;
