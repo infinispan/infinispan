@@ -3,8 +3,12 @@ package org.infinispan.test.integration.thirdparty.remote;
 import static org.infinispan.test.integration.GenericDeploymentHelper.addLibrary;
 import static org.infinispan.test.integration.thirdparty.DeploymentHelper.createDeployment;
 
+import java.io.IOException;
+
+import org.infinispan.test.integration.data.Book;
 import org.infinispan.test.integration.data.Person;
 import org.infinispan.test.integration.remote.AbstractHotRodQueryIT;
+import org.infinispan.test.integration.remote.proto.BookQuerySchema;
 import org.infinispan.test.integration.util.ITestUtils;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -24,15 +28,17 @@ public class HotRodQueryIT extends AbstractHotRodQueryIT {
 
    @Deployment
    @TargetsContainer("server-1")
-   public static Archive<?> deployment() {
+   public static Archive<?> deployment() throws IOException {
       WebArchive war = createDeployment();
       war.addClass(AbstractHotRodQueryIT.class);
       war.addClass(Person.class);
       war.addClass(ITestUtils.class);
+      war.addClass(Book.class);
+      war.addPackage(BookQuerySchema.class.getPackage().getName());
+      war.addAsResource("proto/book.proto");
       addLibrary(war, "org.infinispan:infinispan-query-dsl");
       addLibrary(war, "org.infinispan:infinispan-remote-query-client");
       addLibrary(war, "org.infinispan:infinispan-client-hotrod");
       return war;
    }
-
 }
