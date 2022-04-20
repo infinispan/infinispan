@@ -1,8 +1,12 @@
 package org.infinispan.test.integration.as.client;
 
+import java.io.IOException;
+
 import org.infinispan.commons.util.Version;
-import org.infinispan.test.integration.remote.AbstractHotRodQueryIT;
+import org.infinispan.test.integration.data.Book;
 import org.infinispan.test.integration.data.Person;
+import org.infinispan.test.integration.remote.AbstractHotRodQueryIT;
+import org.infinispan.test.integration.remote.proto.BookQuerySchema;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -24,10 +28,12 @@ import org.junit.runner.RunWith;
 public class HotRodQueryIT extends AbstractHotRodQueryIT {
 
    @Deployment
-   public static Archive<?> deployment() {
+   public static Archive<?> deployment() throws IOException {
       return ShrinkWrap
             .create(WebArchive.class, "remote-query.war")
-            .addClasses(HotRodQueryIT.class, AbstractHotRodQueryIT.class, Person.class)
+            .addClasses(HotRodQueryIT.class, AbstractHotRodQueryIT.class, Person.class, Book.class)
+            .addPackage(BookQuerySchema.class.getPackage().getName())
+            .addAsResource("proto/book.proto")
             .add(manifest(), "META-INF/MANIFEST.MF");
    }
 
