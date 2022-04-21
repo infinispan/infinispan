@@ -1,5 +1,9 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Arrays;
+
+import org.infinispan.util.logging.Log;
+
 /**
  * Allows to define some mass indexing operations (e.g.: purge or reindex) to trigger when the cache starts.
  * These actions are usually needed to keep data and indexes aligned (consistent).
@@ -29,6 +33,12 @@ public enum IndexStartupMode {
    /**
     * No mass-indexing operation is triggered at cache startup time. This is the default.
     */
-   NONE
+   NONE;
 
+   public static IndexStartupMode requireValid(String value, Log logger) {
+      return Arrays.stream(IndexStartupMode.values())
+            .filter(i -> i.name().equalsIgnoreCase(value))
+            .findFirst()
+            .orElseThrow(() -> logger.invalidIndexStartUpMode(value));
+   }
 }
