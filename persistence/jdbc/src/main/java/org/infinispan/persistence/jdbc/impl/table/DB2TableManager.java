@@ -15,7 +15,6 @@ import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactor
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,12 +61,10 @@ class DB2TableManager<K, V> extends AbstractTableManager<K, V> {
    }
 
    @Override
-   protected void prepareValueStatement(PreparedStatement ps, int segment, MarshallableEntry<? extends K, ? extends V> entry) throws SQLException {
-      String key = key2Str(entry.getKey());
-      ByteBuffer byteBuffer = entry.getValueBytes();
-      ps.setString(1, key);
-      ps.setLong(2, entry.expiryTime());
-      ps.setBinaryStream(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+   protected void prepareValueStatement(PreparedStatement ps, int segment, String keyStr, ByteBuffer valueBytes, long expiryTime) throws SQLException {
+      ps.setString(1, keyStr);
+      ps.setLong(2, expiryTime);
+      ps.setBinaryStream(3, new ByteArrayInputStream(valueBytes.getBuf(), valueBytes.getOffset(), valueBytes.getLength()), valueBytes.getLength());
       if (!dbMetadata.isSegmentedDisabled()) {
          ps.setInt(4, segment);
       }
