@@ -1,5 +1,6 @@
 package org.infinispan.configuration.parsing;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -34,6 +35,8 @@ import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfiguration;
+import org.infinispan.configuration.cache.IndexStartupMode;
+import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
@@ -116,6 +119,16 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_140(14, 0) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            IndexingConfiguration indexed = getConfiguration(holder, "indexed-reindex-at-startup").indexing();
+            assertThat(indexed.enabled()).isTrue();
+            assertThat(indexed.storage()).isEqualTo(IndexStorage.LOCAL_HEAP);
+            assertThat(indexed.startupMode()).isEqualTo(IndexStartupMode.REINDEX);
+            assertThat(indexed.indexedEntityTypes()).containsExactly("TheEntity");
+         }
+      },
       INFINISPAN_130(13, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
