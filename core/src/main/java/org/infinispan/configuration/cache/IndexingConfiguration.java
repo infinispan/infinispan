@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
@@ -46,25 +45,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH);
    }
 
-   /**
-    * @deprecated since 11.0
-    */
-   @Deprecated
-   private final Attribute<Index> index;
-
-   /**
-    * @deprecated since 11.0
-    */
-   @Deprecated
-   private final Attribute<Boolean> autoConfig;
-
-   private final Attribute<Map<Class<?>, Class<?>>> keyTransformers;
-   private final Attribute<Set<String>> indexedEntities;
    private final Set<Class<?>> resolvedIndexedClasses;
-   private final Attribute<Boolean> enabled;
-   private final Attribute<IndexStorage> storage;
-   private final Attribute<IndexStartupMode> startupMode;
-   private final Attribute<String> path;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
 
@@ -74,14 +55,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       this.readerConfiguration = readerConfiguration;
       this.writerConfiguration = writerConfiguration;
       this.resolvedIndexedClasses = resolvedIndexedClasses;
-      index = attributes.attribute(INDEX);
-      autoConfig = attributes.attribute(AUTO_CONFIG);
-      keyTransformers = attributes.attribute(KEY_TRANSFORMERS);
-      indexedEntities = attributes.attribute(INDEXED_ENTITIES);
-      enabled = attributes.attribute(ENABLED);
-      storage = attributes.attribute(STORAGE);
-      startupMode = attributes.attribute(STARTUP_MODE);
-      path = attributes.attribute(PATH);
    }
 
    /**
@@ -111,14 +84,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    @Deprecated
    public Index index() {
-      return index.get();
+      return attributes.attribute(INDEX).get();
    }
 
    /**
     * Determines if indexing is enabled for this cache configuration.
     */
    public boolean enabled() {
-      return enabled.get();
+      return attributes.attribute(ENABLED).get();
    }
 
    /**
@@ -127,19 +100,19 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    @Deprecated
    public boolean autoConfig() {
-      return autoConfig.get();
+      return attributes.attribute(AUTO_CONFIG).get();
    }
 
    public IndexStorage storage() {
-      return storage.get();
+      return attributes.attribute(STORAGE).get();
    }
 
    public IndexStartupMode startupMode() {
-      return startupMode.get();
+      return attributes.attribute(STARTUP_MODE).get();
    }
 
    public String path() {
-      return path.get();
+      return attributes.attribute(PATH).get();
    }
 
    /**
@@ -148,7 +121,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * @return a {@link Map} in which the map key is the key class and the value is the Transformer class.
     */
    public Map<Class<?>, Class<?>> keyTransformers() {
-      return keyTransformers.get();
+      return attributes.attribute(KEY_TRANSFORMERS).get();
    }
 
    /**
@@ -168,7 +141,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * configuration corresponds to the {@code <indexed-entities>} XML configuration element.
     */
    public Set<String> indexedEntityTypes() {
-      return indexedEntities.get();
+      return attributes.attribute(INDEXED_ENTITIES).get();
    }
 
    public AttributeSet attributes() {
@@ -198,7 +171,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * Does the index use a provider that does not persist upon restart?
     */
    public boolean isVolatile() {
-      return storage.get().equals(IndexStorage.LOCAL_HEAP);
+      return attributes.attribute(STORAGE).get().equals(IndexStorage.LOCAL_HEAP);
    }
 
    @Override
