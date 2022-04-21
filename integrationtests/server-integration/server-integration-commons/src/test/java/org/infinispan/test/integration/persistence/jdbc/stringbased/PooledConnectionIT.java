@@ -27,7 +27,7 @@ public class PooledConnectionIT {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil( true, true);
         cm = jdbcUtil.getCacheManager();
         Cache<String, String> cache = cm.getCache(CACHE_NAME);
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
 

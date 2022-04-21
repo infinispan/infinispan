@@ -31,9 +31,13 @@ public class TableManipulation implements AutoCloseable {
    private static final String TABLE_NAME_PREFIX = "tbl";
    private final String tableName;
 
-   public TableManipulation(String cacheName, PooledConnectionFactoryConfigurationBuilder persistenceConfiguration, ConfigurationBuilder configurationBuilder) {
-      this.persistenceConfiguration = persistenceConfiguration;
-      this.tableName = new TableName(DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName).getName();
+   public TableManipulation(String cacheName, JdbcConfigurationUtil jdbcConfigurationUtil) {
+      this.persistenceConfiguration = jdbcConfigurationUtil.getPersistenceConfiguration();
+      if(jdbcConfigurationUtil.driverClass.contains("oracle") || jdbcConfigurationUtil.driverClass.contains("db2")) {
+         this.tableName = String.format("%s%s_%s%s", DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING);
+      } else {
+         this.tableName = new TableName(DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName).getName();
+      }
       this.countRowsSql = "SELECT COUNT(*) FROM " + tableName;
       this.selectIdRowSqlWithLike = String.format("SELECT %s FROM %s WHERE %s LIKE ?", ID_COLUMN_NAME, tableName, ID_COLUMN_NAME);
    }
