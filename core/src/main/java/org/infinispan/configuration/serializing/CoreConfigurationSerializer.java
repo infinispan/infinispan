@@ -709,6 +709,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          attributes.write(writer, IndexingConfiguration.AUTO_CONFIG, Attribute.AUTO_CONFIG);
          attributes.write(writer, IndexingConfiguration.ENABLED, Attribute.ENABLED);
          attributes.write(writer, IndexingConfiguration.STORAGE, Attribute.STORAGE);
+         attributes.write(writer, IndexingConfiguration.STARTUP_MODE, Attribute.STARTUP_MODE);
          attributes.write(writer, IndexingConfiguration.PATH, Attribute.PATH);
          long refreshInterval = indexing.reader().getRefreshInterval();
          if (refreshInterval != 0) {

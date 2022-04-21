@@ -100,6 +100,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes.attribute(PROPERTIES).reset();
       attributes.attribute(KEY_TRANSFORMERS).reset();
       attributes.attribute(STORAGE).reset();
+      attributes.attribute(STARTUP_MODE).reset();
       attributes.attribute(PATH).reset();
    }
 

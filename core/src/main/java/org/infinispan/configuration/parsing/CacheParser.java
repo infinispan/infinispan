@@ -35,6 +35,7 @@ import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.cache.GroupsConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.IndexMergeConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexWriterConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -1891,6 +1892,9 @@ public class CacheParser implements ConfigurationParser {
                break;
             case STORAGE:
                builder.indexing().storage(IndexStorage.requireValid(value, CONFIG));
+               break;
+            case STARTUP_MODE:
+               builder.indexing().startupMode(IndexStartupMode.requireValid(value, CONFIG));
                break;
             case PATH:
                builder.indexing().path(value);
