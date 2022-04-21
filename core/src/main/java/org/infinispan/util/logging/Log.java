@@ -2257,4 +2257,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Name must be less than 256 bytes, current name '%s' exceeds the size.", id = 663)
    CacheConfigurationException invalidNameSize(String name);
+
+   @Message(value = "Invalid index startup mode: %s", id = 664)
+   CacheConfigurationException invalidIndexStartUpMode(String invalidValue);
 }
