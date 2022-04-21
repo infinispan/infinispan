@@ -214,6 +214,13 @@
             </indexed-entities>
          </indexing>
       </distributed-cache>
+      <distributed-cache name="indexed-reindex-at-startup">
+         <indexing storage="local-heap" startup-mode="reindex">
+            <indexed-entities>
+               <indexed-entity>TheEntity</indexed-entity>
+            </indexed-entities>
+         </indexing>
+      </distributed-cache>
       <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
