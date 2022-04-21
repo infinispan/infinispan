@@ -15,6 +15,7 @@ public class JdbcConfigurationUtil {
     private PooledConnectionFactoryConfigurationBuilder persistenceConfiguration;
     private ConfigurationBuilder configurationBuilder;
     public static final String CACHE_NAME = "jdbc";
+    public String driverClass;
 
     public JdbcConfigurationUtil(boolean passivation, boolean preload) {
         configurationBuilder = new ConfigurationBuilder();
@@ -23,6 +24,7 @@ public class JdbcConfigurationUtil {
 
     private JdbcConfigurationUtil createPersistenceConfiguration(boolean passivation, boolean preload) {
         Properties props = loadDBProperties();
+        driverClass = props.getProperty("driver.class");
         configurationBuilder.memory().maxCount(2);
         persistenceConfiguration = configurationBuilder
                 .persistence()
@@ -37,7 +39,7 @@ public class JdbcConfigurationUtil {
                 .dataColumnName("DATA_COLUMN").dataColumnType(props.getProperty("data.column.type"))
                 .timestampColumnName("TIMESTAMP_COLUMN").timestampColumnType(props.getProperty("timestamp.column.type"))
                 .connectionPool()
-                .driverClass(props.getProperty("driver.class"))
+                .driverClass(driverClass)
                 .connectionUrl(props.getProperty("connection.url"))
                 .username(props.getProperty("db.username"))
                 .password(props.getProperty("db.password"));
@@ -47,10 +49,6 @@ public class JdbcConfigurationUtil {
 
     public PooledConnectionFactoryConfigurationBuilder getPersistenceConfiguration() {
         return this.persistenceConfiguration;
-    }
-
-    public ConfigurationBuilder getConfigurationBuilder() {
-        return configurationBuilder;
     }
 
     public DefaultCacheManager getCacheManager() {

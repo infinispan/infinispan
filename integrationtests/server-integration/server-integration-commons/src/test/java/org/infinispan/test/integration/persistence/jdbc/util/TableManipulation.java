@@ -1,15 +1,5 @@
 package org.infinispan.test.integration.persistence.jdbc.util;
 
-import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.jdbc.common.JdbcUtil;
-import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
-import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
-import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
-
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -17,6 +7,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Enumeration;
+
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.persistence.jdbc.common.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.table.TableManager;
+import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 
 public class TableManipulation implements AutoCloseable {
 
@@ -26,13 +26,10 @@ public class TableManipulation implements AutoCloseable {
    private final String countRowsSql;
    private final String selectIdRowSqlWithLike;
    private static final String ID_COLUMN_NAME = "ID_COLUMN";
-   private static final String DEFAULT_IDENTIFIER_QUOTE_STRING = "\"";
-   private static final String TABLE_NAME_PREFIX = "tbl";
-   private final String tableName;
 
-   public TableManipulation(String cacheName, PooledConnectionFactoryConfigurationBuilder persistenceConfiguration, ConfigurationBuilder configurationBuilder) {
+   public TableManipulation(TableManager tableManager, PooledConnectionFactoryConfigurationBuilder persistenceConfiguration) {
       this.persistenceConfiguration = persistenceConfiguration;
-      this.tableName = String.format("%s%s_%s%s", DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING);
+      String tableName = tableManager.getDataTableName().toString();
       this.countRowsSql = "SELECT COUNT(*) FROM " + tableName;
       this.selectIdRowSqlWithLike = String.format("SELECT %s FROM %s WHERE %s LIKE ?", ID_COLUMN_NAME, tableName, ID_COLUMN_NAME);
    }
