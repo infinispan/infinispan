@@ -684,12 +684,14 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
    }
 
    @Override
-   protected void prepareValueStatement(PreparedStatement ps, int segment, MarshallableEntry<? extends K, ? extends V> entry) throws SQLException {
-      String keyStr = key2Str(entry.getKey());
-      ByteBuffer byteBuffer = marshall(entry.getMarshalledValue(), marshaller);
-      ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(),
-            byteBuffer.getLength()), byteBuffer.getLength());
-      ps.setLong(2, entry.expiryTime());
+   protected final void prepareValueStatement(PreparedStatement ps, int segment, MarshallableEntry<? extends K, ? extends V> entry) throws SQLException {
+      prepareValueStatement(ps, segment, key2Str(entry.getKey()), marshall(entry.getMarshalledValue(), marshaller), entry.expiryTime());
+   }
+
+   protected void prepareValueStatement(PreparedStatement ps, int segment, String keyStr, ByteBuffer valueBytes, long expiryTime) throws SQLException {
+      ps.setBinaryStream(1, new ByteArrayInputStream(valueBytes.getBuf(), valueBytes.getOffset(),
+            valueBytes.getLength()), valueBytes.getLength());
+      ps.setLong(2, expiryTime);
       ps.setString(3, keyStr);
       if (!dbMetadata.isSegmentedDisabled()) {
          ps.setInt(4, segment);
