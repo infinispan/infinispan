@@ -5,9 +5,6 @@ import java.time.LocalDate;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Decimal;
 import org.infinispan.api.annotations.indexing.Text;
-import org.infinispan.api.annotations.indexing.option.Aggregable;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 
 /**
  * Example of use of the new Infinispan indexing annotations.
@@ -19,13 +16,13 @@ import org.infinispan.api.annotations.indexing.option.Sortable;
  */
 public class Review {
 
-   @Basic(sortable = Sortable.YES)
+   @Basic(sortable = true)
    private LocalDate date;
 
    @Text
    private String content;
 
-   @Decimal(decimalScale = 1, sortable = Sortable.YES, projectable = Projectable.YES, aggregable = Aggregable.YES)
+   @Decimal(decimalScale = 1, sortable = true, projectable = true, aggregable = true)
    private Float score;
 
 }

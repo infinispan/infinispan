@@ -11,10 +11,6 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.model.Values;
-import org.infinispan.api.annotations.indexing.option.Aggregable;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Searchable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 import org.infinispan.api.common.annotations.indexing.BasicProcessor;
 
 /**
@@ -46,26 +42,39 @@ public @interface Basic {
    String name() default "";
 
    /**
+    * Whether we want to be able to obtain the value of the field as a projection.
+    * <p>
+    * This usually means that the field will be stored in the index, but it is more subtle than that, for instance in the
+    * case of projection by distance.
+    *
     * @return Whether projections are enabled for this field.
     */
-   Projectable projectable() default Projectable.NO;
+   boolean projectable() default false;
 
    /**
+    * Whether a field can be used in sorts.
+    *
     * @return Whether this field should be sortable.
     */
-   Sortable sortable() default Sortable.NO;
+   boolean sortable() default false;
 
    /**
+    * Whether we want to be able to search the document using this field.
+    * <p>
+    * If the field is not searchable, search predicates cannot be applied to it.
+    *
     * @return Whether this field should be searchable.
-    * @see Searchable
     */
-   Searchable searchable() default Searchable.YES;
+   boolean searchable() default true;
 
    /**
+    * Whether the field can be used in aggregations.
+    * <p>
+    * This usually means that the field will have doc-values stored in the index.
+    *
     * @return Whether aggregations are enabled for this field.
-    * @see Aggregable
     */
-   Aggregable aggregable() default Aggregable.NO;
+   boolean aggregable() default false;
 
    /**
     * @return A value used instead of null values when indexing.

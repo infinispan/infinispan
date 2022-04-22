@@ -11,9 +11,6 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.model.Values;
-import org.infinispan.api.annotations.indexing.option.Norms;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Searchable;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 import org.infinispan.api.common.annotations.indexing.TextProcessor;
 
@@ -62,10 +59,14 @@ public @interface Text {
    String searchAnalyzer() default "";
 
    /**
+    * Whether index-time scoring information for the field should be stored or not.
+    * <p>
+    * Enabling norms will improve the quality of scoring.
+    * Disabling norms will reduce the disk space used by the index.
+    *
     * @return Whether index-time scoring information should be stored or not.
-    * @see Norms
     */
-   Norms norms() default Norms.YES;
+   boolean norms() default true;
 
    /**
     * @return The term vector storing strategy.
@@ -76,16 +77,14 @@ public @interface Text {
    /**
     * @return Whether projections are enabled for this field.
     * @see Basic#projectable()
-    * @see Projectable
     */
-   Projectable projectable() default Projectable.NO;
+   boolean projectable() default false;
 
    /**
     * @return Whether this field should be searchable.
     * @see Basic#searchable()
-    * @see Searchable
     */
-   Searchable searchable() default Searchable.YES;
+   boolean searchable() default true;
 
    @Documented
    @Target({ElementType.METHOD, ElementType.FIELD})

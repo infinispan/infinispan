@@ -1,11 +1,6 @@
 package org.infinispan.api.common.annotations.indexing;
 
 import org.hibernate.search.util.common.AssertionFailure;
-import org.infinispan.api.annotations.indexing.option.Aggregable;
-import org.infinispan.api.annotations.indexing.option.Norms;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Searchable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 
 public final class Options {
@@ -13,32 +8,32 @@ public final class Options {
    private Options() {
    }
 
-   public static org.hibernate.search.engine.backend.types.Norms norms(Norms norms) {
-      return (Norms.YES.equals(norms)) ?
+   public static org.hibernate.search.engine.backend.types.Norms norms(boolean norms) {
+      return (norms) ?
             org.hibernate.search.engine.backend.types.Norms.YES :
             org.hibernate.search.engine.backend.types.Norms.NO;
    }
 
-   public static org.hibernate.search.engine.backend.types.Sortable sortable(Sortable sortable) {
-      return (Sortable.YES.equals(sortable)) ?
+   public static org.hibernate.search.engine.backend.types.Sortable sortable(boolean sortable) {
+      return (sortable) ?
             org.hibernate.search.engine.backend.types.Sortable.YES :
             org.hibernate.search.engine.backend.types.Sortable.NO;
    }
 
-   public static org.hibernate.search.engine.backend.types.Aggregable aggregable(Aggregable aggregable) {
-      return (Aggregable.YES.equals(aggregable)) ?
+   public static org.hibernate.search.engine.backend.types.Aggregable aggregable(boolean aggregable) {
+      return (aggregable) ?
             org.hibernate.search.engine.backend.types.Aggregable.YES :
             org.hibernate.search.engine.backend.types.Aggregable.NO;
    }
 
-   public static org.hibernate.search.engine.backend.types.Projectable projectable(Projectable projectable) {
-      return (Projectable.YES.equals(projectable)) ?
+   public static org.hibernate.search.engine.backend.types.Projectable projectable(boolean projectable) {
+      return (projectable) ?
             org.hibernate.search.engine.backend.types.Projectable.YES :
             org.hibernate.search.engine.backend.types.Projectable.NO;
    }
 
-   public static org.hibernate.search.engine.backend.types.Searchable searchable(Searchable searchable) {
-      return (Searchable.YES.equals(searchable)) ?
+   public static org.hibernate.search.engine.backend.types.Searchable searchable(boolean searchable) {
+      return (searchable) ?
             org.hibernate.search.engine.backend.types.Searchable.YES :
             org.hibernate.search.engine.backend.types.Searchable.NO;
    }

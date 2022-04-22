@@ -10,11 +10,6 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.api.annotations.indexing.model.Point;
-import org.infinispan.api.annotations.indexing.option.Aggregable;
-import org.infinispan.api.annotations.indexing.option.Norms;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Searchable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 
@@ -29,17 +24,17 @@ import org.infinispan.api.annotations.indexing.option.TermVector;
 @Indexed(index = "books")
 public class Book {
 
-   @Keyword(normalizer = "lowercase", projectable = Projectable.YES)
+   @Keyword(normalizer = "lowercase", projectable = true)
    private String keyword;
 
-   @Basic(name = "year", searchable = Searchable.YES)
+   @Basic(name = "year", searchable = true)
    private Integer yearOfPublication;
 
-   @Text(name = "descriptionText", analyzer = "english", termVector = TermVector.YES, norms = Norms.YES)
-   @Basic(name = "description", projectable = Projectable.YES, sortable = Sortable.YES)
+   @Text(name = "descriptionText", analyzer = "english", termVector = TermVector.WITH_POSITIONS_OFFSETS_PAYLOADS, norms = false)
+   @Basic(name = "description", projectable = true, sortable = true)
    private String description;
 
-   @Decimal(decimalScale = 2, aggregable = Aggregable.YES)
+   @Decimal(decimalScale = 2, aggregable = true)
    private Float price;
 
    @Embedded(structure = Structure.FLATTENED)

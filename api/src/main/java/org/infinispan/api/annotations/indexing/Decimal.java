@@ -11,10 +11,6 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.model.Values;
-import org.infinispan.api.annotations.indexing.option.Aggregable;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Searchable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 import org.infinispan.api.common.annotations.indexing.DecimalProcessor;
 
 /**
@@ -59,30 +55,26 @@ public @interface Decimal {
    /**
     * @return Whether projections are enabled for this field.
     * @see Basic#projectable()
-    * @see Projectable
     */
-   Projectable projectable() default Projectable.NO;
+   boolean projectable() default false;
 
    /**
     * @return Whether this field should be sortable.
     * @see Basic#sortable()
-    * @see Sortable
     */
-   Sortable sortable() default Sortable.NO;
+   boolean sortable() default false;
 
    /**
     * @return Whether this field should be searchable.
     * @see Basic#searchable()
-    * @see Searchable
     */
-   Searchable searchable() default Searchable.YES;
+   boolean searchable() default true;
 
    /**
     * @return Whether aggregations are enabled for this field.
     * @see Basic#aggregable()
-    * @see Aggregable
     */
-   Aggregable aggregable() default Aggregable.NO;
+   boolean aggregable() default false;
 
    /**
     * @return A value used instead of null values when indexing.

@@ -5,10 +5,6 @@ import org.infinispan.api.annotations.indexing.GeoCoordinates;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Latitude;
 import org.infinispan.api.annotations.indexing.Longitude;
-import org.infinispan.api.annotations.indexing.option.Aggregable;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Searchable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 
 /**
  * Example of use of the new Infinispan indexing annotations.
@@ -22,14 +18,14 @@ import org.infinispan.api.annotations.indexing.option.Sortable;
 @GeoCoordinates(fieldName = "placeOfDeath", marker = "death")
 public class Author {
 
-   @Keyword(sortable = Sortable.YES)
+   @Keyword(sortable = true)
    private String firstname;
 
    @Keyword
    private String surname;
 
    @Basic(name = "publications")
-   @Basic(name = "books", searchable = Searchable.NO, sortable = Sortable.YES, projectable = Projectable.YES, aggregable = Aggregable.YES)
+   @Basic(name = "books", searchable = false, sortable = true, projectable = true, aggregable = true)
    private Integer numberOfPublishedBooks;
 
    @Latitude(marker = "birth")

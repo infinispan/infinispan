@@ -14,8 +14,6 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMappingAnnotationProcessorRef;
 import org.infinispan.api.common.annotations.indexing.GeoCoordinatesProcessor;
 import org.infinispan.api.annotations.indexing.model.Point;
-import org.infinispan.api.annotations.indexing.option.Projectable;
-import org.infinispan.api.annotations.indexing.option.Sortable;
 
 /**
  * Defines a {@link Point} binding from a type or a property
@@ -65,16 +63,16 @@ public @interface GeoCoordinates {
    String fieldName() default "";
 
    /**
-    * @return Returns an instance of the {@link Projectable} enum, indicating whether projections are enabled for this
-    * field. Defaults to {@code Projectable.NO}.
+    * @return Whether projections are enabled for this field.
+    * @see Basic#projectable()
     */
-   Projectable projectable() default Projectable.NO;
+   boolean projectable() default false;
 
    /**
-    * @return Returns an instance of the {@link Sortable} enum, indicating whether sorts are enabled for this
-    * field. Defaults to {@code Sortable.NO}.
+    * @return Whether this field should be sortable.
+    * @see Basic#sortable()
     */
-   Sortable sortable() default Sortable.NO;
+   boolean sortable() default false;
 
    /**
     * @return The name of the marker this spatial should look into
