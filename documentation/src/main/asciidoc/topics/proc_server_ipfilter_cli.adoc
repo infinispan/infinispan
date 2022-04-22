@@ -15,7 +15,7 @@ Configure IP address filtering rules on {brandname} Server endpoints to accept o
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> server connector ipfilter ls endpoint-default
+server connector ipfilter ls endpoint-default
 ----
 +
 .. Set IP filtering rules across the cluster.
@@ -27,12 +27,12 @@ This command replaces any existing rules.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> server connector ipfilter set endpoint-default --rules=ACCEPT/192.168.0.0/16,REJECT/10.0.0.0/8`
+server connector ipfilter set endpoint-default --rules=ACCEPT/192.168.0.0/16,REJECT/10.0.0.0/8`
 ----
 +
 .. Remove all IP filtering rules on a connector across the cluster.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> server connector ipfilter clear endpoint-default
+server connector ipfilter clear endpoint-default
 ----

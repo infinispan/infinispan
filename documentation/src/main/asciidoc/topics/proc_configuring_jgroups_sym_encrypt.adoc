@@ -20,7 +20,7 @@ include::xml/jgroups_sym_encrypt.xml[]
 
 When you start your {brandname} cluster, the following log message indicates that the cluster is using the secure JGroups stack:
 
-[source,bash,options="nowrap"]
+[source,options="nowrap"]
 ----
 [org.infinispan.CLUSTER] ISPN000078: Starting JGroups channel cluster with stack <encrypted_stack_name>
 ----

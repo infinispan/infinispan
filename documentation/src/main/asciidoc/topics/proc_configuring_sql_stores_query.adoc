@@ -28,7 +28,7 @@ ifdef::community[]
 ====
 Use the [command]`install` command with the {brandname} Command Line Interface (CLI) to download the required drivers to the `server/lib` directory, for example:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 install org.postgresql:postgresql:42.1.3
 ----

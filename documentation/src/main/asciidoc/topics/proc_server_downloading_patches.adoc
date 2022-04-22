@@ -12,8 +12,7 @@ Download patches that you can apply to {brandname} Server installations.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh
-[disconnected]>
+bin/cli.sh
 ----
 +
 . Describe the patch file you downloaded.
@@ -35,7 +34,7 @@ argument, for example:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ sha256sum redhat-datagrid-$version-server-patch.zip
+sha256sum redhat-datagrid-$version-server-patch.zip
 ----
 +
 . Compare with the `MD5` or `SHA-256` checksum value on the {brandname} *Software Details* page.

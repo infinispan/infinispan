@@ -12,7 +12,7 @@ For example, set a custom bind port and IP address as follows:
 ifdef::embedded_caches[]
 [source,options="nowrap",subs=attributes+]
 ----
-$ java -cp ... -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
+java -cp ... -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
 ----
 
 [NOTE]
@@ -26,6 +26,6 @@ endif::embedded_caches[]
 ifdef::remote_caches[]
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/server.sh -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
+bin/server.sh -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
 ----
 endif::remote_caches[]

@@ -36,5 +36,5 @@ in a few easy steps.
 Clone the tutorial repository as follows:
 
 ----
-$ git clone git@github.com:infinispan/infinispan-simple-tutorials.git
+git clone git@github.com:infinispan/infinispan-simple-tutorials.git
 ----

@@ -1,1 +1,1 @@
-$ bin/cli.sh
+bin/cli.sh

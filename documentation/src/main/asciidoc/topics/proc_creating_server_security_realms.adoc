@@ -22,7 +22,7 @@ This procedure demonstrates how to configure multiple property realms.
 Before you begin, you need to create properties files that add users and assign permissions with the Command Line Interface (CLI).
 Use the [command]`user create` commands as follows:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 user create <username> -p <changeme> -g <role> \
      --users-file=application-users.properties \

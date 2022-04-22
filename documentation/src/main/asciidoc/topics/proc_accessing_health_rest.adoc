@@ -6,7 +6,7 @@ Get {brandname} cluster health via the REST API.
 .Procedure
 * Invoke a `GET` request to retrieve cluster health.
 +
-[source,bash]
+[source]
 ----
 GET /rest/v2/cache-managers/{cacheManagerName}/health
 ----

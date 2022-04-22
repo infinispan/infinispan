@@ -14,7 +14,7 @@ Specify the IP address to which {brandname} Server binds in one of the following
 
 * Open your {brandname} Server configuration and set the value for the `inet-address` element, for example:
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 include::xml/server-inet-address.xml[]
 ----
@@ -22,13 +22,13 @@ include::xml/server-inet-address.xml[]
 * Use the `-b` option or the `infinispan.bind.address` system property.
 +
 .Linux
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_bind_nix.adoc[]
 ----
 +
 .Windows
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_bind_win.adoc[]
 ----

@@ -7,6 +7,7 @@ Drop caches to remove them and delete all data they contain.
 . Create a CLI connection to {brandname}.
 . Remove caches with the [command]`drop` command.
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> drop cache mycache
+drop cache mycache
 ----
