@@ -35,7 +35,8 @@ public class SyncCacheAPIDemo {
          // set with options
          mycache.set("key", "anothervalue", writeOptions().lifespan(Duration.ofHours(1)).timeout(Duration.ofMillis(500)).build());
          // get with options
-         value = mycache.get("key", options().timeout(Duration.ofMillis(500)).flags(HotRodFlag.skipLoad(), HotRodFlag.skipNotification()).build());
+         DemoEnumFlags flags = DemoEnumFlags.of(DemoEnumFlag.skipLoad());
+         value = mycache.get("key", options().timeout(Duration.ofMillis(500)).flags(flags.add(DemoEnumFlag.skipNotification())).build());
          // get entry
          CacheEntry<String, String> entry = mycache.getEntry("key");
          // setIfAbsent
@@ -72,7 +73,7 @@ public class SyncCacheAPIDemo {
          mycache.process(Set.of("key1", "key2"), (e, ctx) -> {
             e.setValue(e.value().toLowerCase());
             return null;
-         }, processorOptions().flags(HotRodFlag.skipLoad()).build());
+         }, processorOptions().flags(DemoEnumFlags.of(DemoEnumFlag.skipLoad())).build());
 
          // Batch
          infinispan.sync().batch(sync -> {

@@ -1,9 +1,9 @@
 package org.infinispan.api.common.process;
 
 import java.time.Duration;
-import java.util.EnumSet;
 
 import org.infinispan.api.common.CacheOptions;
+import org.infinispan.api.common.Flags;
 
 /**
  * @since 14.0
@@ -24,7 +24,7 @@ public interface CacheProcessorOptions extends CacheOptions {
          this(null, null, null);
       }
 
-      private Impl(Duration timeout, EnumSet<?> flags, Object[] arguments) {
+      private Impl(Duration timeout, Flags<?, ?> flags, Object[] arguments) {
          super(timeout, flags);
          this.arguments = arguments;
       }
@@ -50,17 +50,12 @@ public interface CacheProcessorOptions extends CacheOptions {
       }
 
       @Override
-      public Builder flags(Flag flag) {
-         super.flags(flag);
-         return this;
-      }
-
-      @Override
-      public Builder flags(Flag... flags) {
+      public Builder flags(Flags<?, ?> flags) {
          super.flags(flags);
          return this;
       }
 
+      @Override
       public CacheProcessorOptions build() {
          return new Impl(timeout, flags, arguments);
       }
