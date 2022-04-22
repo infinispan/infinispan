@@ -14,21 +14,21 @@ the backed up state.
 . Run the [command]`backup restore` command with the appropriate options.
 * Restore all content from a backup archive accessible on the server.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup restore /some/path/on/the/server
+backup restore /some/path/on/the/server
 ----
 +
 * Restore all content from a local backup archive.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup restore -u /some/local/path
+backup restore -u /some/local/path
 ----
 +
 * Restore only cache content from a backup archive on the server.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup restore /some/path/on/the/server --caches=*
+backup restore /some/path/on/the/server --caches=*
 ----

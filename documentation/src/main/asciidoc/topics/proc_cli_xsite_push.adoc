@@ -11,8 +11,9 @@ Transfer cache state to backup locations.
 
 * Use the [command]`site push-site-state` command to push state transfer, as in the following example:
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> site push-site-state --cache=cacheName --site=NYC
+site push-site-state --cache=cacheName --site=NYC
 ----
 
 [TIP]

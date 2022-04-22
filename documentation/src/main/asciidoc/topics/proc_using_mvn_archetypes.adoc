@@ -16,9 +16,9 @@ these projects into your IDE and start building and running applications with
 . Generate projects from {brandname} archetypes with the following command:
 +
 ----
-$ mvn archetype:generate -DarchetypeGroupId=org.infinispan.archetypes \
-    -DarchetypeArtifactId=<archetype-name> \ <1>
-    -DarchetypeVersion=<infinispan-version> <2>
+mvn archetype:generate -DarchetypeGroupId=org.infinispan.archetypes \
+  -DarchetypeArtifactId=<archetype-name> \ <1>
+  -DarchetypeVersion=<infinispan-version> <2>
 ----
 +
 <1> Creates projects from one of the following archetypes:
@@ -31,13 +31,13 @@ $ mvn archetype:generate -DarchetypeGroupId=org.infinispan.archetypes \
 <2> Specifies the {brandname} version to use, for example:
 +
 `-DarchetypeVersion={ispn_version}`
-+
+
 . When prompted, define _artifactId_, _groupId_, and _version_ values for your project.
 . Import your new {brandname} project into your IDE.
 . Run your project application from the directory where the `pom.xml` file resides as follows:
 +
 ----
-$ mvn package exec:java
+mvn package exec:java
 ----
 +
 [NOTE]

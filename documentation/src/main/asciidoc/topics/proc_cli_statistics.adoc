@@ -3,63 +3,24 @@
 
 You can inspect server-collected statistics for some {brandname} Server resources with the [command]`stats` command.
 
-Use the [command]`stats` command either from the context of a resource which
-collects statistics (containers, caches) or with a path to such a resource:
+Use the [command]`stats` command either from the context of a resource that provides statistics (containers, caches) or with a path to such a resource:
 
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> stats
-{
-  "statistics_enabled" : true,
-  "number_of_entries" : 0,
-  "hit_ratio" : 0.0,
-  "read_write_ratio" : 0.0,
-  "time_since_start" : 0,
-  "time_since_reset" : 49,
-  "current_number_of_entries" : 0,
-  "current_number_of_entries_in_memory" : 0,
-  "total_number_of_entries" : 0,
-  "off_heap_memory_used" : 0,
-  "data_memory_used" : 0,
-  "stores" : 0,
-  "retrievals" : 0,
-  "hits" : 0,
-  "misses" : 0,
-  "remove_hits" : 0,
-  "remove_misses" : 0,
-  "evictions" : 0,
-  "average_read_time" : 0,
-  "average_read_time_nanos" : 0,
-  "average_write_time" : 0,
-  "average_write_time_nanos" : 0,
-  "average_remove_time" : 0,
-  "average_remove_time_nanos" : 0,
-  "required_minimum_number_of_nodes" : -1
-}
+stats
+----
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/cli_stats_container.json[]
 ----
 
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> stats /containers/default/caches/mycache
-{
-  "time_since_start" : -1,
-  "time_since_reset" : -1,
-  "current_number_of_entries" : -1,
-  "current_number_of_entries_in_memory" : -1,
-  "total_number_of_entries" : -1,
-  "off_heap_memory_used" : -1,
-  "data_memory_used" : -1,
-  "stores" : -1,
-  "retrievals" : -1,
-  "hits" : -1,
-  "misses" : -1,
-  "remove_hits" : -1,
-  "remove_misses" : -1,
-  "evictions" : -1,
-  "average_read_time" : -1,
-  "average_read_time_nanos" : -1,
-  "average_write_time" : -1,
-  "average_write_time_nanos" : -1,
-  "average_remove_time" : -1,
-  "average_remove_time_nanos" : -1,
-  "required_minimum_number_of_nodes" : -1
-}
+stats /containers/default/caches/mycache
+----
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/cli_stats_cache.json[]
 ----

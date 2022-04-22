@@ -27,7 +27,7 @@ Configure the CLI with the `autoconnect-url` property instead of using the `conn
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh -f batch
+bin/cli.sh -f batch
 ----
 
 [NOTE]

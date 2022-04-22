@@ -19,10 +19,9 @@ You can modify attributes in your cache configuration either one at a time or pr
 ====
 For more information and examples, run the [command]`help alter` command.
 ====
-+
 . Verify your changes with the [command]`describe` command, for example:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> describe caches/mycache
+describe caches/mycache
 ----

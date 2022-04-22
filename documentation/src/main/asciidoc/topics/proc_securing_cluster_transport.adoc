@@ -43,7 +43,7 @@ include::xml/server-transport-cache-container.xml[]
 
 When you start {brandname} Server, the following log message indicates that the cluster is using the security realm for cluster transport:
 
-[source,bash,options="nowrap"]
+[source,options="nowrap"]
 ----
 [org.infinispan.SERVER] ISPN080060: SSL Transport using realm <security_realm_name>
 ----

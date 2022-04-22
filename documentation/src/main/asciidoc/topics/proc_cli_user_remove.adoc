@@ -7,8 +7,9 @@ Delete users from property security realms.
 . Start the {brandname} CLI.
 . Delete users with the [command]`user remove` command.
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[disconnected]> user remove admin
+user remove admin
 ----
 
 For more information, run the [command]`help user` command.

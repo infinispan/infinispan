@@ -13,24 +13,28 @@ Server, the CLI can validate server certificates to verify the identity.
 
 . Specify the location of the server key store, as in the following example:
 +
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh config set truststore /home/user/my-trust-store.jks
+bin/cli.sh config set truststore /home/user/my-trust-store.jks
 ----
-+
+
 . Define the key store password, if necessary, as follows:
 +
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh config set truststore-password secret
+bin/cli.sh config set truststore-password secret
 ----
-+
+
 . Verify your CLI configuration.
 +
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh config get truststore
-truststore=/home/user/my-trust-store.jks
-
-$ bin/cli.sh config get truststore-password
-truststore-password=secret
+bin/cli.sh config get truststore
+----
++
+[source,options="nowrap",subs=attributes+]
+----
+bin/cli.sh config get truststore-password
 ----
 
 [role="_additional-resources"]

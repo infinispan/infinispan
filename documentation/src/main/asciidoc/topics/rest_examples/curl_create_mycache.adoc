@@ -1,4 +1,4 @@
-$ curl -v POST -d '{"distributed-cache":{"mode": "SYNC"}}' \
+curl -v POST -d '{"distributed-cache":{"mode": "SYNC"}}' \
 -H "Content-type: application/json" \
 http://127.0.0.1:11222/rest/v2/caches/mycache
 ...

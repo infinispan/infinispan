@@ -26,7 +26,7 @@ Add Protobuf schema to {brandname} Server in one of the following ways:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> schema --upload=person.proto person
+schema --upload=person.proto person
 ----
 
 * Include the Protobuf schema in the payload of a `POST` request with the REST API.

@@ -1,1 +1,1 @@
-$ sha1sum infinispan-server-${version}.zip
+sha1sum infinispan-server-${version}.zip

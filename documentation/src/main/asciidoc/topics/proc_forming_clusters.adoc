@@ -22,9 +22,9 @@ Have one instance of {brandname} Server running.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ cp -r server server2
+cp -r server server2
 ----
-+
+
 . Specify a port offset and the `server2` directory.
 +
 [source,options="nowrap",subs=attributes+]

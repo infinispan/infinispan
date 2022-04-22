@@ -12,7 +12,7 @@ Stop individually running servers or bring down clusters gracefully.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> shutdown cluster
+shutdown cluster
 ----
 +
 This command saves cluster state to the `data` folder for each node in the cluster.
@@ -22,7 +22,7 @@ If you use a cache store, the [command]`shutdown cluster` command also persists 
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> shutdown server <my_server01>
+shutdown server <my_server01>
 ----
 
 [IMPORTANT]
