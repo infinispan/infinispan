@@ -1,21 +1,17 @@
 [id='server-hinting_{context}']
 = Server hinting
 
-The following topology hints can be specified:
+Server hinting increases availability of data in distributed caches by replicating entries across as many servers, racks, and data centers as possible.
 
-Machine::
-  This is probably the most useful, when multiple JVM instances run on the
-  same node, or even when multiple virtual machines run on the same physical machine.
-Rack::
-  In larger clusters, nodes located on the same rack are more likely to experience a
-  hardware or network failure at the same time.
-Site::
-  Some clusters may have nodes in multiple physical locations for extra resilience.
-  Note that Cross site replication is another alternative for
-  clusters that need to span two or more data centres.
+NOTE: Server hinting applies only to distributed caches.
 
-All of the above are optional.
-When provided, the distribution algorithm will try to spread the ownership of each segment across as many sites, racks, and machines (in this order) as possible.
+When {brandname} distributes the copies of your data, it follows the order of precedence: site, rack, machine, and node.
+All of the configuration attributes are optional.
+For example, when you specify only the rack IDs, then {brandname} distributes the copies across different racks and nodes.
+
+Server hinting can impact cluster rebalancing operations by moving more segments than necessary if the number of segments for the cache is too low.
+
+TIP: An alternative for clusters in multiple data centers is cross-site replication.
 
 [discrete]
 == Server hinting configuration
@@ -43,3 +39,7 @@ include::yaml/server_hinting.yaml[]
 ----
 include::code_examples/ServerHinting.java[]
 ----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]
