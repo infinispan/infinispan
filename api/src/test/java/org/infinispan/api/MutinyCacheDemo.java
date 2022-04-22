@@ -32,7 +32,7 @@ public class MutinyCacheDemo {
          // set with options
          await(mycache.set("key", "anothervalue", writeOptions().lifespan(Duration.ofHours(1)).timeout(Duration.ofMillis(500)).build()));
          // get with options
-         value = await(mycache.get("key", options().timeout(Duration.ofMillis(500)).flags(HotRodFlag.skipLoad(), HotRodFlag.skipNotification()).build()));
+         value = await(mycache.get("key", options().timeout(Duration.ofMillis(500)).flags(DemoEnumFlags.of(DemoEnumFlag.skipLoad(), DemoEnumFlag.skipNotification())).build()));
          // get entry
          CacheEntry<String, String> entry = await(mycache.getEntry("key"));
          // query
