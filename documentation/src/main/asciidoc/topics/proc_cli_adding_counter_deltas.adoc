@@ -5,28 +5,28 @@ Increment or decrement counters with arbitrary values.
 
 . Select a counter.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> counter my-weak-counter
+counter my-weak-counter
 ----
 +
 . List the current count.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default/counters/my-weak-counter]> ls
 5
 ----
 . Increment the counter value by `2`.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default/counters/my-weak-counter]> add --delta=2
 ----
 +
 . Decrement the counter value by `-4`.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default/counters/my-weak-counter]> add --delta=-4
 ----
@@ -36,7 +36,7 @@ Increment or decrement counters with arbitrary values.
 Strong counters return values after the operation is applied. Use
 `--quiet=true` to hide the return value.
 
-For example, `my-strong-counter]> add --delta=3 --quiet=true`.
+For example, `add --delta=3 --quiet=true`.
 
 Weak counters return empty responses.
 ====

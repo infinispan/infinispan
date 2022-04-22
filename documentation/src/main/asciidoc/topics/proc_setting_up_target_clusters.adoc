@@ -30,7 +30,7 @@ include::json/remote_store_minimal.json[]
 +
 * CLI: Use the [command]`migrate cluster connect` command on the target cluster.
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> migrate cluster connect -c myCache --file=remote-store.json
 ----

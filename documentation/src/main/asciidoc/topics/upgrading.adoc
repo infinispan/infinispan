@@ -63,7 +63,7 @@ NOTE: This change has no effect for shared stores
 The RocksDB implementation is no longer included by default with the server. It can be installed via the CLI:
 
 ----
-$ cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
+cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
 ----
 
 == Micrometer Metrics

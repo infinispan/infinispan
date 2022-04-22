@@ -7,7 +7,7 @@ Use the standard input stream, *stdin*, to perform batch operations interactivel
 . Start the {brandname} CLI in interactive mode.
 +
 ----
-$ bin/cli.sh -c localhost:11222 -f -
+bin/cli.sh -c localhost:11222 -f -
 ----
 +
 [TIP]
@@ -33,7 +33,7 @@ Use [command]`echo` to add commands in interactive mode.
 The following example shows how to use [command]`echo describe` to get cluster information:
 
 ----
-$ echo describe|bin/cli.sh -c localhost:11222 -f -
+echo describe|bin/cli.sh -c localhost:11222 -f -
 {
   "name" : "default",
   "version" : "10.0.0-SNAPSHOT",

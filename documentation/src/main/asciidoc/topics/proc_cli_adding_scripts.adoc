@@ -17,7 +17,7 @@ For example, create a file named `multiplication.js` that runs on a single
 {brandname} server, has two parameters, and uses JavaScript to multiply a given
 value:
 +
-[source,javascript]
+[source,javascript,options="nowrap",subs=attributes+]
 ----
 // mode=local,language=javascript
 multiplicand * multiplier
@@ -26,13 +26,15 @@ multiplicand * multiplier
 . Create a CLI connection to {brandname}.
 . Use the [command]`task` command to upload scripts, as in the following example:
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> task upload --file=multiplication.js multiplication
+task upload --file=multiplication.js multiplication
 ----
 +
 . Verify that your scripts are available.
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> ls tasks
+ls tasks
 multiplication
 ----

@@ -38,5 +38,5 @@ See different capabilities in action with just a few simple steps.
 Clone the repository:
 
 ----
-$ git clone git@github.com:infinispan/infinispan-simple-tutorials.git
+git clone git@github.com:infinispan/infinispan-simple-tutorials.git
 ----

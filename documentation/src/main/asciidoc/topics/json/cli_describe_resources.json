@@ -1,0 +1,23 @@
+{
+  "name" : "default",
+  "version" : "xx.x.x-FINAL",
+  "cluster_name" : "cluster",
+  "coordinator" : true,
+  "cache_configuration_names" : [ "org.infinispan.REPL_ASYNC", "___protobuf_metadata", "org.infinispan.DIST_SYNC", "org.infinispan.LOCAL", "org.infinispan.INVALIDATION_SYNC", "org.infinispan.REPL_SYNC", "org.infinispan.SCATTERED_SYNC", "org.infinispan.INVALIDATION_ASYNC", "org.infinispan.DIST_ASYNC" ],
+  "physical_addresses" : "[192.0.2.0:7800]",
+  "coordinator_address" : "<hostname>",
+  "cache_manager_status" : "RUNNING",
+  "created_cache_count" : "1",
+  "running_cache_count" : "1",
+  "node_address" : "<hostname>",
+  "cluster_members" : [ "<hostname1>", "<hostname2>" ],
+  "cluster_members_physical_addresses" : [ "192.0.2.0:7800", "192.0.2.0:7801" ],
+  "cluster_size" : 2,
+  "defined_caches" : [ {
+    "name" : "mycache",
+    "started" : true
+  }, {
+    "name" : "___protobuf_metadata",
+    "started" : true
+  } ]
+}

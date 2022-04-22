@@ -11,19 +11,19 @@ Create a {brandname} cache that can store your data.
 . Create a CLI connection to {brandname}.
 . Add entries into your cache as follows:
 +
+* Use the [command]`--cache=` with the [command]`put` command:
++
+[source,options="nowrap",subs=attributes+]
+----
+put --cache=mycache hello world
+----
++
 * Use the [command]`put` command from the context of a cache:
 +
 [source,options="nowrap",subs=attributes+]
 ----
 [//containers/default/caches/mycache]> put hello world
 ----
-+
-* Use the [command]`--cache=` with the [command]`put` command:
-+
-----
-[//containers/default]> put --cache=mycache hello world
-----
-+
 . Use the [command]`get` command to verify entries.
 +
 [source,options="nowrap",subs=attributes+]

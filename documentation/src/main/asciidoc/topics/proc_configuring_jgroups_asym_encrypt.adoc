@@ -20,7 +20,7 @@ include::xml/jgroups_asym_encrypt.xml[]
 
 When you start your {brandname} cluster, the following log message indicates that the cluster is using the secure JGroups stack:
 
-[source,bash,options="nowrap"]
+[source,options="nowrap"]
 ----
 [org.infinispan.CLUSTER] ISPN000078: Starting JGroups channel cluster with stack <encrypted_stack_name>
 ----
@@ -28,7 +28,7 @@ When you start your {brandname} cluster, the following log message indicates tha
 {brandname} nodes can join the cluster only if they use `ASYM_ENCRYPT` and can obtain the secret key from the coordinator node.
 Otherwise the following message is written to {brandname} logs:
 
-[source,bash,options="nowrap"]
+[source,options="nowrap"]
 ----
 [org.jgroups.protocols.ASYM_ENCRYPT] <hostname>: received message without encrypt header from <hostname>; dropping it
 ----
