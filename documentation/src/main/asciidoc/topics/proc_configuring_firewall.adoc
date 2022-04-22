@@ -8,7 +8,7 @@ Adjust firewall rules to allow traffic between {brandname} Server and client app
 On Red Hat Enterprise Linux (RHEL) workstations, for example, you can allow
 traffic to port `11222` with firewalld as follows:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 # firewall-cmd --add-port=11222/tcp --permanent
 success

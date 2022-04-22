@@ -23,7 +23,7 @@ For example, create a cache named "mycache" from a file named `mycache.xml` as f
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> create cache --file=mycache.xml mycache
+create cache --file=mycache.xml mycache
 ----
 
 .Verification
@@ -32,7 +32,7 @@ For example, create a cache named "mycache" from a file named `mycache.xml` as f
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> ls caches
+ls caches
 mycache
 ----
 +
@@ -40,5 +40,5 @@ mycache
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> describe caches/mycache
+describe caches/mycache
 ----

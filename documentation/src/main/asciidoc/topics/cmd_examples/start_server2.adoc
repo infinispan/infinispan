@@ -1,1 +1,1 @@
-$ bin/server.sh -o 100 -s server2
+bin/server.sh -o 100 -s server2

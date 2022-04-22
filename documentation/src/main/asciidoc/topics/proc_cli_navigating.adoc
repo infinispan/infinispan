@@ -11,12 +11,14 @@ option to display help text.
 When you connect to a {brandname} cluster, it opens in the context of the
 default cache container.
 
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]>
 ----
 
 * Use [command]`ls` to list resources.
-
++
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> ls
 caches
@@ -27,36 +29,20 @@ tasks
 ----
 
 * Use [command]`cd` to navigate the resource tree.
-
++
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> cd caches
+cd caches
 ----
 
 * Use [command]`describe` to view information about resources.
-
++
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> describe
-{
-  "name" : "default",
-  "version" : "xx.x.x-FINAL",
-  "cluster_name" : "cluster",
-  "coordinator" : true,
-  "cache_configuration_names" : [ "org.infinispan.REPL_ASYNC", "___protobuf_metadata", "org.infinispan.DIST_SYNC", "org.infinispan.LOCAL", "org.infinispan.INVALIDATION_SYNC", "org.infinispan.REPL_SYNC", "org.infinispan.SCATTERED_SYNC", "org.infinispan.INVALIDATION_ASYNC", "org.infinispan.DIST_ASYNC" ],
-  "physical_addresses" : "[192.0.2.0:7800]",
-  "coordinator_address" : "<hostname>",
-  "cache_manager_status" : "RUNNING",
-  "created_cache_count" : "1",
-  "running_cache_count" : "1",
-  "node_address" : "<hostname>",
-  "cluster_members" : [ "<hostname1>", "<hostname2>" ],
-  "cluster_members_physical_addresses" : [ "192.0.2.0:7800", "192.0.2.0:7801" ],
-  "cluster_size" : 2,
-  "defined_caches" : [ {
-    "name" : "mycache",
-    "started" : true
-  }, {
-    "name" : "___protobuf_metadata",
-    "started" : true
-  } ]
-}
+describe
+----
++
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/cli_describe_resources.json[]
 ----

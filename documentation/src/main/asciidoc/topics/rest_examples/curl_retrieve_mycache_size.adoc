@@ -1,3 +1,1 @@
-$ curl -v http://127.0.0.1:11222/rest/v2/caches/mycache?action=size
-...
-0
+curl -v http://127.0.0.1:11222/rest/v2/caches/mycache?action=size

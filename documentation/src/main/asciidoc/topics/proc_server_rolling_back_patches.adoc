@@ -20,16 +20,18 @@ Before you roll back patches, you should ensure that your configuration is compa
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh
-[disconnected]>
+bin/cli.sh
 ----
 +
 . List the installed patches.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[disconnected]> patch ls
-
+patch ls
+----
++
+[source,options="nowrap",subs=attributes+]
+----
 {fullbrandname} patch target=$target_version source=$source_version
 created=$timestamp installed=$timestamp
 ----
@@ -41,22 +43,25 @@ created=$timestamp installed=$timestamp
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[disconnected]> patch rollback
+patch rollback
 ----
 +
 . Quit the CLI.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[disconnected]> quit
+quit
 ----
 +
 . Start the server to verify the patch is rolled back to the previous version.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/server.sh
-...
+bin/server.sh
+----
++
+[source,options="nowrap",subs=attributes+]
+----
 ISPN080001: {brandname} Server $version
 ----
 +
@@ -69,6 +74,6 @@ directory, for example:
 
 [source,options="nowrap",subs=attributes+]
 ----
-[disconnected]> patch rollback --server=path/to/server/home
+patch rollback --server=path/to/server/home
 ----
 ====

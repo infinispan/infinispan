@@ -9,12 +9,14 @@ Remove data from caches with the {brandname} CLI.
 +
 * Delete all entries with the [command]`clearcache` command.
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> clearcache mycache
+clearcache mycache
 ----
 +
 * Remove specific entries with the [command]`remove` command.
 +
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> remove --cache=mycache hello
+remove --cache=mycache hello
 ----

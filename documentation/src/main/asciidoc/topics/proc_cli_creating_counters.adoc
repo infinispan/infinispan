@@ -7,43 +7,44 @@ Create strong and weak counters with the {brandname} CLI.
 . Run the [command]`create counter` command with the appropriate arguments.
 .. Create `my-weak-counter`.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> create counter --concurrency-level=1 --initial-value=5 --storage=PERSISTENT --type=weak my-weak-counter
+create counter --concurrency-level=1 --initial-value=5 --storage=PERSISTENT --type=weak my-weak-counter
 ----
 +
 .. Create `my-strong-counter`.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> create counter --initial-value=3 --storage=PERSISTENT --type=strong my-strong-counter
+create counter --initial-value=3 --storage=PERSISTENT --type=strong my-strong-counter
 ----
 +
 . List available counters.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> ls counters
-my-strong-counter
-my-weak-counter
+ls counters
 ----
-+
 . Verify counter configurations.
-+
 .. Describe `my-weak-counter`.
 +
+[source,options="nowrap",subs=attributes+]
+----
+describe counters/my-weak-counter
+----
++
 [source,json,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> describe counters/my-weak-counter
-
 include::json/weak_counter.json[]
 ----
-+
 .. Describe `my-strong-counter`.
++
+[source,options="nowrap",subs=attributes+]
+----
+describe counters/my-strong-counter
+----
 +
 [source,json,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> describe counters/my-strong-counter
-
 include::json/strong_counter.json[]
 ----

@@ -35,7 +35,7 @@ Open `user.properties` and confirm the user exists.
 
 [source,options="nowrap",subs=attributes+]
 ----
-$ cat server/conf/users.properties
+cat server/conf/users.properties
 
 admin=scram-sha-1\:BYGcIAwvf6b...
 ----

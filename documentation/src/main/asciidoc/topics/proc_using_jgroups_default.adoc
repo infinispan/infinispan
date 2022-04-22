@@ -28,9 +28,9 @@ endif::embedded_caches[]
 ifdef::remote_caches[]
 * Use the `cluster-stack` argument to set the JGroups stack file when {brandname} Server starts:
 +
-[source,sh,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/server.sh --cluster-stack=udp
+bin/server.sh --cluster-stack=udp
 ----
 endif::remote_caches[]
 

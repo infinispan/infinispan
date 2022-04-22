@@ -24,7 +24,7 @@ From the {brandname} CLI, use the [command]`schema` command with the [command]`-
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> schema --upload=person.proto person.proto
+schema --upload=person.proto person.proto
 ----
 
 . Create a cache named **people** that uses ProtoStream encoding and configures {brandname} to index entities declared in your Protobuf schema.
@@ -40,7 +40,7 @@ From the CLI, use the [command]`create cache` command with the [command]`--file=
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> create cache --file=people.xml people
+create cache --file=people.xml people
 ----
 
 . Add entries to the cache.
@@ -70,7 +70,7 @@ From the CLI, use the [command]`put` command with the [command]`--file=` argumen
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default/caches/people]> put --encoding=application/json --file=personone.json personone
+put --encoding=application/json --file=personone.json personone
 ----
 +
 [TIP]
@@ -84,7 +84,7 @@ From the CLI, use the [command]`query` command from the context of the remote ca
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default/caches/people]> query "from org.infinispan.example.Person p WHERE p.name='Person' ORDER BY p.age ASC"
+query "from org.infinispan.example.Person p WHERE p.name='Person' ORDER BY p.age ASC"
 ----
 +
 The query returns all entries with a name that matches `Person` by age in ascending order.
