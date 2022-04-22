@@ -12,7 +12,7 @@ You can also get information about the Cache Manager through the Command Line In
 
 CLI:: Run the [command]`describe` command in the default container.
 +
-[source,sh,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 [//containers/default]> describe
 ----

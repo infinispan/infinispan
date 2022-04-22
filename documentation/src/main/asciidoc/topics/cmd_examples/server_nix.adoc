@@ -1,1 +1,1 @@
-$ bin/server.sh
+bin/server.sh

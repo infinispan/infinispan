@@ -12,13 +12,13 @@ Use the `-o` switch with the {brandname} CLI or the
 For example, start a server instance with an offset of `100` as follows. With the default configuration, this results in the {brandname} server listening on port `11322`.
 
 Linux::
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_offset_nix.adoc[]
 ----
 
 Windows::
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/server_offset_win.adoc[]
 ----

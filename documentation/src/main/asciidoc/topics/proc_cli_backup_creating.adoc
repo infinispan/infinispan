@@ -16,43 +16,43 @@ create backup archives.
 +
 * Back up all resources with an automatically generated name.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup create
+backup create
 ----
 +
 * Back up all resources in a backup archive named `example-backup`.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup create -n example-backup
+backup create -n example-backup
 ----
 +
 * Back up all resources to the `/some/server/dir` path on the server.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup create -d /some/server/dir
+backup create -d /some/server/dir
 ----
 +
 * Back up only caches and cache templates.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup create --caches=* --templates=*
+backup create --caches=* --templates=*
 ----
 * Back up named Protobuf schemas only.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup create --proto-schemas=schema1,schema2
+backup create --proto-schemas=schema1,schema2
 ----
 +
 . List available backup archives on the server.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup ls
+backup ls
 ----
 +
 . Download the `example-backup` archive from the server.
@@ -60,14 +60,14 @@ create backup archives.
 If the backup operation is still in progress, the command waits for it to
 complete.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup get example-backup
+backup get example-backup
 ----
 +
 . Optionally delete the `example-backup` archive from the server.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> backup delete example-backup
+backup delete example-backup
 ----

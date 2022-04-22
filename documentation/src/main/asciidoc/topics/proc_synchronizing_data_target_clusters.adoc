@@ -17,9 +17,9 @@ You must perform the synchronization for each cache that you want to migrate to 
 +
 * CLI: Use the [command]`migrate cluster synchronize` command.
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> migrate cluster synchronize -c myCache
+migrate cluster synchronize -c myCache
 ----
 +
 * REST API: Use the `?action=sync-data` parameter with a POST request.
@@ -36,9 +36,9 @@ entries copied to the target cluster.
 +
 * CLI: Use the [command]`migrate cluster disconnect` command.
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> migrate cluster disconnect -c myCache
+migrate cluster disconnect -c myCache
 ----
 +
 * REST API: Invoke a DELETE request.

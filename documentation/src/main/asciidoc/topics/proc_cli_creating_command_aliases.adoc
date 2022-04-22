@@ -10,14 +10,14 @@ For example, set `q` as an alias for the [command]`quit` command:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> alias q=quit
+alias q=quit
 ----
 +
 . Run the [command]`alias` command to check the defined aliases.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> alias
+alias
 alias q='quit'
 ----
 +
@@ -25,5 +25,5 @@ alias q='quit'
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> unalias q
+unalias q
 ----

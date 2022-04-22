@@ -45,7 +45,11 @@ For example, with the Redis CLI you can do the following to add an entry to the 
 
 [source,options="nowrap"]
 ----
-$ redis-cli -p 11222 --user username --pass password
+redis-cli -p 11222 --user username --pass password
+----
+
+[source,options="nowrap"]
+----
 127.0.0.1:11222> SET k v
 OK
 127.0.0.1:11222> GET k

@@ -33,7 +33,7 @@ Additionally, cache configuration that you pass to {brandname} Server on startup
 . Open a terminal in `{server_home}`.
 . Specify one or more configuration files with the `--server-config=` or `-c` argument, for example:
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
-$ bin/server.sh -c infinispan.xml -c datasources.yaml -c security-realms.json
+bin/server.sh -c infinispan.xml -c datasources.yaml -c security-realms.json
 ----
