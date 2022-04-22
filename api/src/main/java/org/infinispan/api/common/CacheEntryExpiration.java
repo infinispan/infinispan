@@ -1,24 +1,26 @@
 package org.infinispan.api.common;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * @since 14.0
  **/
 public interface CacheEntryExpiration {
-   CacheEntryExpiration IMMORTAL = new Impl();
+   CacheEntryExpiration DEFAULT = new Impl();
+   CacheEntryExpiration IMMORTAL = new Impl(Duration.ZERO, Duration.ZERO);
 
    static CacheEntryExpiration withLifespan(Duration lifespan) {
-      return lifespan == null ? IMMORTAL : new Impl(lifespan, null);
+      return lifespan == null ? DEFAULT : new Impl(lifespan, null);
    }
 
    static CacheEntryExpiration withMaxIdle(Duration maxIdle) {
-      return maxIdle == null ? IMMORTAL : new Impl(null, maxIdle);
+      return maxIdle == null ? DEFAULT : new Impl(null, maxIdle);
    }
 
    static CacheEntryExpiration withLifespanAndMaxIdle(Duration lifespan, Duration maxIdle) {
-      return (lifespan == null && maxIdle == null) ? IMMORTAL : new Impl(lifespan, maxIdle);
+      return (lifespan == null && maxIdle == null) ? DEFAULT : new Impl(lifespan, maxIdle);
    }
 
    Optional<Duration> lifespan();
@@ -26,6 +28,8 @@ public interface CacheEntryExpiration {
    Optional<Duration> maxIdle();
 
    boolean isImmortal();
+
+   boolean isDefault();
 
    class Impl implements CacheEntryExpiration {
       private final Duration lifespan;
@@ -62,6 +66,38 @@ public interface CacheEntryExpiration {
       @Override
       public boolean isImmortal() {
          return this == IMMORTAL;
+      }
+
+      @Override
+      public boolean isDefault() {
+         return this == DEFAULT;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         Impl that = (Impl) o;
+         return Objects.equals(lifespan, that.lifespan) && Objects.equals(maxIdle, that.maxIdle);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hash(lifespan, maxIdle);
+      }
+
+      @Override
+      public String toString() {
+         if (this == IMMORTAL) {
+            return "Impl{IMMORTAL}";
+         } else if (this == DEFAULT) {
+            return "Impl{DEFAULT}";
+         } else {
+            return "Impl{" +
+                  "lifespan=" + lifespan +
+                  ", maxIdle=" + maxIdle +
+                  '}';
+         }
       }
    }
 }

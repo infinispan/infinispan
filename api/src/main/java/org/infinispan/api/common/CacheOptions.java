@@ -1,7 +1,6 @@
 package org.infinispan.api.common;
 
 import java.time.Duration;
-import java.util.EnumSet;
 import java.util.Optional;
 
 /**
@@ -16,21 +15,17 @@ public interface CacheOptions {
 
    Optional<Duration> timeout();
 
-   Optional<EnumSet<?>> flags();
-
-   interface Flag<E extends Enum<E>> {
-      EnumSet<E> apply(EnumSet<E> flags);
-   }
+   Optional<Flags<?, ?>> flags();
 
    class Impl implements CacheOptions {
       private final Duration timeout;
-      private final EnumSet<?> flags;
+      private final Flags<?, ?> flags;
 
       protected Impl() {
          this(null, null);
       }
 
-      protected Impl(Duration timeout, EnumSet<?> flags) {
+      protected Impl(Duration timeout, Flags<?, ?> flags) {
          this.timeout = timeout;
          this.flags = flags;
       }
@@ -45,33 +40,26 @@ public interface CacheOptions {
       }
 
       @Override
-      public Optional<EnumSet<?>> flags() {
+      public Optional<Flags<?, ?>> flags() {
          return Optional.ofNullable(flags);
       }
 
-      public EnumSet<?> rawFlags() {
+      public Flags<?, ?> rawFlags() {
          return flags;
       }
    }
 
    class Builder {
       protected Duration timeout;
-      protected EnumSet<?> flags;
+      protected Flags<?, ?> flags;
 
       public Builder timeout(Duration timeout) {
          this.timeout = timeout;
          return this;
       }
 
-      public Builder flags(Flag flag) {
-         flags = flag.apply(flags);
-         return this;
-      }
-
-      public Builder flags(Flag... flags) {
-         for (Flag flag : flags) {
-            this.flags = flag.apply(this.flags);
-         }
+      public Builder flags(Flags<?, ?> flags) {
+         this.flags.addAll((Flags) flags);
          return this;
       }
 
