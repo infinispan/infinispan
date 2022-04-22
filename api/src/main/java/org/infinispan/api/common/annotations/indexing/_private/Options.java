@@ -1,4 +1,4 @@
-package org.infinispan.api.common.annotations.indexing;
+package org.infinispan.api.common.annotations.indexing._private;
 
 import org.hibernate.search.util.common.AssertionFailure;
 import org.infinispan.api.annotations.indexing.option.TermVector;

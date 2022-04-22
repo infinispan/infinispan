@@ -11,7 +11,7 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.model.Values;
-import org.infinispan.api.common.annotations.indexing.DecimalProcessor;
+import org.infinispan.api.common.annotations.indexing._private.DecimalProcessor;
 
 /**
  * Maps a property to a scaled number field in the index,

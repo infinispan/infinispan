@@ -11,7 +11,7 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.model.Values;
-import org.infinispan.api.common.annotations.indexing.KeywordProcessor;
+import org.infinispan.api.common.annotations.indexing._private.KeywordProcessor;
 
 /**
  * Maps a property to a keyword field in the index, holding a single token (word) of text.

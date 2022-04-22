@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
-import org.infinispan.api.common.annotations.indexing.LatitudeProcessor;
+import org.infinispan.api.common.annotations.indexing._private.LatitudeProcessor;
 
 /**
  * Mark the property hosting the latitude of a specific spatial coordinate.

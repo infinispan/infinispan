@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMappingAnnotationProcessorRef;
-import org.infinispan.api.common.annotations.indexing.IndexedProcessor;
+import org.infinispan.api.common.annotations.indexing._private.IndexedProcessor;
 
 /**
  * Maps an entity type to an index.

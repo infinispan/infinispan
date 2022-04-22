@@ -11,7 +11,7 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.option.TermVector;
-import org.infinispan.api.common.annotations.indexing.TextProcessor;
+import org.infinispan.api.common.annotations.indexing._private.TextProcessor;
 
 /**
  * Maps a property to a full-text field in the index, potentially holding multiple tokens (words) of text.

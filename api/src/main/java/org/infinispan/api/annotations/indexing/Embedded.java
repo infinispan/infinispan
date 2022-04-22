@@ -11,7 +11,7 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.option.Structure;
-import org.infinispan.api.common.annotations.indexing.EmbeddedProcessor;
+import org.infinispan.api.common.annotations.indexing._private.EmbeddedProcessor;
 
 /**
  * Maps a property to an object field whose fields are the same as those defined in the property type.

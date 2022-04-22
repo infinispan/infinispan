@@ -12,7 +12,7 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.TypeMappingAnnotationProcessorRef;
-import org.infinispan.api.common.annotations.indexing.GeoCoordinatesProcessor;
+import org.infinispan.api.common.annotations.indexing._private.GeoCoordinatesProcessor;
 import org.infinispan.api.annotations.indexing.model.Point;
 
 /**

@@ -11,7 +11,7 @@ import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
 import org.infinispan.api.annotations.indexing.model.Values;
-import org.infinispan.api.common.annotations.indexing.BasicProcessor;
+import org.infinispan.api.common.annotations.indexing._private.BasicProcessor;
 
 /**
  * Maps an entity property to a field in the index.

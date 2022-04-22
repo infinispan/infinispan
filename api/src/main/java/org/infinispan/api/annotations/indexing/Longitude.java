@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
-import org.infinispan.api.common.annotations.indexing.LongitudeProcessor;
+import org.infinispan.api.common.annotations.indexing._private.LongitudeProcessor;
 
 /**
  * Mark the property hosting the longitude of a specific spatial coordinate.
