@@ -1,4 +1,4 @@
-$ ktutil
+ktutil
 ktutil:  addent -password -p datagrid@INFINISPAN.ORG -k 1 -e aes256-cts
 Password for datagrid@INFINISPAN.ORG: [enter your password]
 ktutil:  wkt http.keytab

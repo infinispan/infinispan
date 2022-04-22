@@ -126,7 +126,7 @@ You must register a Protobuf schema for the conversion to work.
 
 To register protobuf schemas via REST, invoke a POST or PUT in the `____protobuf_metadata_` cache as in the following example:
 
-[source,bash]
+[source]
 ----
 curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:11222/rest/v2/caches/___protobuf_metadata/schema.proto
 ----

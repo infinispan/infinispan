@@ -17,77 +17,49 @@ operation, which means that changes:
 . Use the [command]`logging` to make the required adjustments.
 
 * List all appenders defined on the server:
-
++
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> logging list-appenders
+logging list-appenders
 ----
-
-The preceding command returns:
-
++
+The command provides a JSON response such as the following:
++
 [source,json,options="nowrap",subs=attributes+]
 ----
-{
-  "STDOUT" : {
-    "name" : "STDOUT"
-  },
-  "JSON-FILE" : {
-    "name" : "JSON-FILE"
-  },
-  "HR-ACCESS-FILE" : {
-    "name" : "HR-ACCESS-FILE"
-  },
-  "FILE" : {
-    "name" : "FILE"
-  },
-  "REST-ACCESS-FILE" : {
-    "name" : "REST-ACCESS-FILE"
-  }
-}
+include::json/server_logging_appenders.json[]
 ----
 
 * List all logger configurations defined on the server:
-
++
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> logging list-loggers
+logging list-loggers
 ----
-
-The preceding command returns:
-
++
+The command provides a JSON response such as the following:
++
 [source,json,options="nowrap",subs=attributes+]
 ----
-[ {
-  "name" : "",
-  "level" : "INFO",
-  "appenders" : [ "STDOUT", "FILE" ]
-}, {
-  "name" : "org.infinispan.HOTROD_ACCESS_LOG",
-  "level" : "INFO",
-  "appenders" : [ "HR-ACCESS-FILE" ]
-}, {
-  "name" : "com.arjuna",
-  "level" : "WARN",
-  "appenders" : [ ]
-}, {
-  "name" : "org.infinispan.REST_ACCESS_LOG",
-  "level" : "INFO",
-  "appenders" : [ "REST-ACCESS-FILE" ]
-} ]
+include::json/server_logging_list.json[]
 ----
 
 * Add and modify logger configurations with the [command]`set` subcommand
-
++
 For example, the following command sets the logging level for the
 `org.infinispan` package to `DEBUG`:
-
++
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> logging set --level=DEBUG org.infinispan
+logging set --level=DEBUG org.infinispan
 ----
 
 * Remove existing logger configurations with the [command]`remove` subcommand.
-
++
 For example, the following command removes the `org.infinispan` logger
 configuration, which means the root configuration is used instead:
-
++
+[source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> logging remove org.infinispan
+logging remove org.infinispan
 ----

@@ -1,2 +1,2 @@
-$ ktpass -princ HTTP/datagrid@INFINISPAN.ORG -pass * -mapuser INFINISPAN\USER_NAME
-$ ktab -k http.keytab -a HTTP/datagrid@INFINISPAN.ORG
+ktpass -princ HTTP/datagrid@INFINISPAN.ORG -pass * -mapuser INFINISPAN\USER_NAME
+ktab -k http.keytab -a HTTP/datagrid@INFINISPAN.ORG

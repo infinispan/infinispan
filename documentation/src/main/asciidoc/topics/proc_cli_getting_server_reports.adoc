@@ -13,9 +13,15 @@ routing, threads, in addition to configuration and log files.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> server report
+server report
 Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
 ----
 +
+The command responds with the name of the report, as in the following example:
++
+[source,options="nowrap",subs=attributes+]
+----
+Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
+----
 . Move the `tar.gz` file to a suitable location on your filesystem.
 . Extract the `tar.gz` file with any archiving tool.

@@ -29,10 +29,9 @@ patching.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh
-[disconnected]>
+bin/cli.sh
 ----
-+
+
 . Install the patch.
 +
 [source,options="nowrap",subs=attributes+]
@@ -45,12 +44,12 @@ created=$timestamp installed=$timestamp
 +
 * `$target_version` displays the {brandname} version that the patch installed.
 * `$source_version` displays the {brandname} version before you installed the patch.
-+
+
 . Start the server to verify the patch is installed.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/server.sh
+bin/server.sh
 ...
 ISPN080001: {fullbrandname} Server $version
 ----
@@ -64,6 +63,6 @@ directory, for example:
 
 [source,options="nowrap",subs=attributes+]
 ----
-[disconnected]> patch install path/to/patch.zip --server=path/to/server/home
+patch install path/to/patch.zip --server=path/to/server/home
 ----
 ====

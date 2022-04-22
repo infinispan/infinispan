@@ -1,0 +1,23 @@
+{
+  "time_since_start" : -1,
+  "time_since_reset" : -1,
+  "current_number_of_entries" : -1,
+  "current_number_of_entries_in_memory" : -1,
+  "total_number_of_entries" : -1,
+  "off_heap_memory_used" : -1,
+  "data_memory_used" : -1,
+  "stores" : -1,
+  "retrievals" : -1,
+  "hits" : -1,
+  "misses" : -1,
+  "remove_hits" : -1,
+  "remove_misses" : -1,
+  "evictions" : -1,
+  "average_read_time" : -1,
+  "average_read_time_nanos" : -1,
+  "average_write_time" : -1,
+  "average_write_time_nanos" : -1,
+  "average_remove_time" : -1,
+  "average_remove_time_nanos" : -1,
+  "required_minimum_number_of_nodes" : -1
+}

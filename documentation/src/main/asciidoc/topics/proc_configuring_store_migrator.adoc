@@ -9,7 +9,7 @@ file.
 . Configure the source cache store in `migrator.properties`.
 .. Prepend all configuration properties with `source.` as in the following example:
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 source.type=SOFT_INDEX_FILE_STORE
 source.cache_name=myCache
@@ -20,7 +20,7 @@ source.version=<version>
 . Configure the target cache store in `migrator.properties`.
 .. Prepend all configuration properties with `target.` as in the following example:
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 target.type=SINGLE_FILE_STORE
 target.cache_name=myCache

@@ -14,7 +14,7 @@ ifdef::community[]
 ====
 Use the [command]`install` command with the {brandname} Command Line Interface (CLI) to download the required drivers to the `server/lib` directory, for example:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,options="nowrap",subs=attributes+]
 ----
 install org.postgresql:postgresql:42.1.3
 ----
@@ -50,21 +50,21 @@ Use the {brandname} Command Line Interface (CLI) to test the datasource connecti
 +
 [source,options="nowrap",subs=attributes+]
 ----
-$ bin/cli.sh
+bin/cli.sh
 ----
 +
 . List all datasources and confirm the one you created is available.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> server datasource ls
+server datasource ls
 ----
 +
 . Test a datasource connection.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-[//containers/default]> server datasource test my-datasource
+server datasource test my-datasource
 ----
 
 [discrete]

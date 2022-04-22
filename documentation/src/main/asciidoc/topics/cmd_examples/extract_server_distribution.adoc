@@ -1,6 +1,6 @@
 ifdef::community[]
-$ unzip infinispan-server-{ispn_version}.zip
+unzip infinispan-server-{ispn_version}.zip
 endif::community[]
 ifdef::downstream[]
-$ unzip redhat-datagrid-{FullProductVersion}-server.zip
+unzip redhat-datagrid-{FullProductVersion}-server.zip
 endif::downstream[]
