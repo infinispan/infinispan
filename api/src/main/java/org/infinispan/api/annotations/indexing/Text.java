@@ -10,7 +10,6 @@ import java.lang.annotation.Target;
 import org.hibernate.search.engine.environment.bean.BeanRetrieval;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMapping;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorRef;
-import org.infinispan.api.annotations.indexing.model.Values;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 import org.infinispan.api.common.annotations.indexing.TextProcessor;
 
@@ -48,8 +47,9 @@ public @interface Text {
 
    /**
     * @return A reference to the analyzer to use for this field.
+    * By default, the Lucene standard analyzer will be applied.
     */
-   String analyzer() default Values.DEFAULT_ANALYZER;
+   String analyzer() default "standard";
 
    /**
     * @return A reference to a different analyzer, overriding the {@link #analyzer()},

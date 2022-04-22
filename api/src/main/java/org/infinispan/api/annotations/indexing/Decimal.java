@@ -49,8 +49,9 @@ public @interface Decimal {
     * effectively setting that many of the smaller digits to zero in the index.
     * Since numbers are indexed with a fixed number of bits,
     * this decrease in precision also means that the maximum value that can be indexed will be larger.
+    * By default, two decimals will be used.
     */
-   int decimalScale() default Values.DEFAULT_DECIMAL_SCALE;
+   int decimalScale() default 2;
 
    /**
     * @return Whether projections are enabled for this field.
