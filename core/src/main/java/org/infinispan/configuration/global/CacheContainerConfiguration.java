@@ -1,9 +1,12 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Features;
+import org.infinispan.util.ByteString;
 
 /*
  * @since 10.0
@@ -12,7 +15,12 @@ class CacheContainerConfiguration {
 
    private static final String ZERO_CAPACITY_NODE_FEATURE = "zero-capacity-node";
 
-   static final AttributeDefinition<String> DEFAULT_CACHE = AttributeDefinition.builder("defaultCache", null, String.class).immutable().build();
+   static final AttributeDefinition<String> DEFAULT_CACHE = AttributeDefinition.builder("defaultCache", null, String.class).immutable()
+         .validator(value -> {
+            if (value != null && !ByteString.isValid(value)) {
+               throw CONFIG.invalidNameSize(value);
+            }
+         }).build();
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "DefaultCacheManager").immutable().build();
    static final AttributeDefinition<Boolean> STATISTICS = AttributeDefinition.builder("statistics", false).immutable().build();
    static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zeroCapacityNode", Boolean.FALSE).immutable().build();
