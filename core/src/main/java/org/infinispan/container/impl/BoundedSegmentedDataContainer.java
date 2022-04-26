@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.ConcatIterator;
 import org.infinispan.commons.util.EntrySizeCalculator;
 import org.infinispan.commons.util.FlattenSpliterator;
@@ -23,10 +24,8 @@ import org.infinispan.eviction.EvictionType;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Policy;
-import com.github.benmanes.caffeine.cache.RemovalCause;
 
 /**
  * Bounded implementation of segmented data container. Bulk operations (iterator|spliterator) that are given segments
@@ -34,6 +33,7 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
  * <p>
  * Note this implementation supports both temporary non owned segments and not (L1). This map only utilizes heap based
  * (ie. ConcurrentHashMap) maps internally
+ *
  * @author wburns
  * @since 9.3
  */
@@ -58,8 +58,14 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
          default:
             throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
       }
-      DefaultEvictionListener evictionListener = new DefaultEvictionListener();
-      evictionCache = applyListener(caffeine, evictionListener, new SegmentMapUpdater()).build();
+      DefaultEvictionListener evictionListener = new DefaultEvictionListener() {
+         @Override
+         void onEntryChosenForEviction(K key, InternalCacheEntry<K, V> value) {
+            super.onEntryChosenForEviction(key, value);
+            computeEntryRemoved(key, value);
+         }
+      };
+      evictionCache = applyListener(caffeine, evictionListener).build();
       entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
@@ -70,31 +76,18 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
 
       evictionCache = applyListener(Caffeine.newBuilder()
             .weigher((K k, InternalCacheEntry<K, V> v) -> (int) sizeCalculator.calculateSize(k, v))
-            .maximumWeight(thresholdSize), evictionListener, new SegmentMapUpdater())
+            .maximumWeight(thresholdSize), evictionListener)
             .build();
 
       entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
-   /**
-    * CacheWriter that is invoked only when {@link java.util.Map#remove(Object)} or
-    * {@link java.util.Map#put(Object, Object)} are invoked. We have to handle compute* methods manually.
-    */
-   private class SegmentMapUpdater implements CacheWriter<K, InternalCacheEntry<K, V>> {
-      @Override
-      public void write(K key, InternalCacheEntry<K, V> value) {
-         computeEntryWritten(key, value);
-      }
-
-      @Override
-      public void delete(K key, InternalCacheEntry<K, V> value, RemovalCause cause) {
-         computeEntryRemoved(key, value);
-      }
-   }
-
    @Override
    protected void computeEntryWritten(K key, InternalCacheEntry<K, V> value) {
-      int segment = getSegmentForKey(key);
+      computeEntryWritten(getSegmentForKey(key), key, value);
+   }
+
+   protected void computeEntryWritten(int segment, K key, InternalCacheEntry<K, V> value) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> map = BoundedSegmentedDataContainer.super.getMapForSegment(segment);
       if (map != null) {
          map.put(key, value);
@@ -103,11 +96,33 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
 
    @Override
    protected void computeEntryRemoved(K key, InternalCacheEntry<K, V> value) {
-      int segment = getSegmentForKey(key);
+      computeEntryRemoved(getSegmentForKey(key), key, value);
+   }
+
+   protected void computeEntryRemoved(int segment, K key, InternalCacheEntry<K, V> value) {
       ConcurrentMap<K, InternalCacheEntry<K, V>> map = BoundedSegmentedDataContainer.super.getMapForSegment(segment);
       if (map != null) {
          map.remove(key, value);
       }
+   }
+
+   @Override
+   protected void putEntryInMap(PeekableTouchableMap<K, V> map, int segment, K key, InternalCacheEntry<K, V> ice) {
+      map.computeIfAbsent(key, k -> {
+         computeEntryWritten(segment, k, ice);
+         return ice;
+      });
+   }
+
+   @Override
+   protected InternalCacheEntry<K, V> removeEntryInMap(PeekableTouchableMap<K, V> map, int segment, Object key) {
+      ByRef<InternalCacheEntry<K, V>> ref = new ByRef<>(null);
+      map.computeIfPresent((K) key, (k, prev) -> {
+         computeEntryRemoved(segment, k, prev);
+         ref.set(prev);
+         return null;
+      });
+      return ref.get();
    }
 
    @Override
