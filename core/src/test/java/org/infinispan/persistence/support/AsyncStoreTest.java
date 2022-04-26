@@ -330,15 +330,11 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             try {
                cache.put("X", "2");
                // Needs to be in other thread as non blocking store is invoked in same thread
-               Future<Void> f = fork(() -> {
-                  cache.put("Y", "2"); // force eviction of "X"
-                  if (!passivation) {
-                     cache.put("Z", "1"); // force eviction of "Y"
-                  }
-               });
-
-               Thread.sleep(50);
-               assertFalse(f.isDone());
+               CompletionStage<String> stage = cache.putAsync("Y", "2"); // force eviction of "X"
+               if (!passivation) {
+                  CompletionStages.join(stage);
+                  cache.putAsync("Z", "1"); // force eviction of "Y"
+               }
 
                assertEquals("2", cache.get("X"));
                if (!passivation) {
