@@ -63,8 +63,6 @@ pipeline {
             }
             steps {
                 script {
-                    sh "rm -rf infinispan-images"
-                    sh "git clone --single-branch --branch ${pullRequest.base} --depth 1 https://github.com/infinispan/infinispan-images.git"
                     def mvnCmd = '-q -Dexec.executable=echo -Dexec.args=\'${project.version}\' --non-recursive exec:exec'
                     def SERVER_VERSION = sh(
                             script: "${MAVEN_HOME}/bin/mvn ${mvnCmd}",
@@ -72,6 +70,10 @@ pipeline {
                     ).trim()
                     def REPO = 'quay.io/infinispan-test/server'
                     def TAG = env.BRANCH_NAME
+                    def IMAGE_BRANCH = env.CHANGE_ID ? pullRequest.base : env.BRANCH_NAME
+
+                    sh "rm -rf infinispan-images"
+                    sh "git clone --single-branch --branch ${IMAGE_BRANCH} --depth 1 https://github.com/infinispan/infinispan-images.git"
 
 
                     dir('infinispan-images') {
