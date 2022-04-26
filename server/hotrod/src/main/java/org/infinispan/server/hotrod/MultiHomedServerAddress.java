@@ -37,7 +37,7 @@ public class MultiHomedServerAddress implements ServerAddress {
          for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
             NetworkInterface intf = en.nextElement();
             for (InterfaceAddress address : intf.getInterfaceAddresses()) {
-               addresses.add(new InetAddressWithNetMask(address, networkPrefixOverride));
+               addresses.add(new InetAddressWithNetMask(address.getAddress(), address.getNetworkPrefixLength(), networkPrefixOverride));
             }
          }
       } catch (IOException e) {
@@ -139,35 +139,37 @@ public class MultiHomedServerAddress implements ServerAddress {
       final InetAddress address;
       final short prefixLength;
 
-      public InetAddressWithNetMask(InterfaceAddress address, boolean networkPrefixOverride) {
-         this.address = address.getAddress();
+      public InetAddressWithNetMask(InetAddress address, short prefixLength, boolean networkPrefixOverride) {
+         this.address = address;
          if (networkPrefixOverride) {
-            byte[] a = address.getAddress().getAddress();
+            byte[] a = address.getAddress();
             if (a.length == 4) { // IPv4
                if (a[0] == 10) {
                   this.prefixLength = 8;
                } else if (a[0] == (byte) 192 && a[1] == (byte) 168) {
                   this.prefixLength = 16;
                } else if (a[0] == (byte) 172 && a[1] >= 16 && a[1] <= 31) {
-                  this.prefixLength = 20;
+                  this.prefixLength = 12;
                } else if (a[0] == (byte) 169 && a[1] == (byte) 254) {
                   this.prefixLength = 16;
+               } else if (a[0] >= (byte) 240 && a[0] <= (byte) 255) {
+                  this.prefixLength = 4;
                } else {
-                  this.prefixLength = address.getNetworkPrefixLength();
+                  this.prefixLength = prefixLength;
                }
             } else { // IPv6
                if (a[0] == (byte) 0xfd && a[1] == 0) {
                   this.prefixLength = 8;
                } else if (a[0] == (byte) 0xfc && a[1] == 0) {
                   this.prefixLength = 7;
-               } else if (a[0] == (byte) 0xfe && a[1] == (byte)80) {
+               } else if (a[0] == (byte) 0xfe && a[1] == (byte) 80) {
                   this.prefixLength = 10;
                } else {
-                  this.prefixLength = address.getNetworkPrefixLength();
+                  this.prefixLength = prefixLength;
                }
             }
          } else {
-            this.prefixLength = address.getNetworkPrefixLength();
+            this.prefixLength = prefixLength;
          }
       }
 

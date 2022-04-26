@@ -22,9 +22,9 @@ If a client connects to `192.168.0.0`, for example, it does not receive any clus
 Kubernetes, and some other environments, divide the IP address space into subnets and use those different subnets as a single network.
 For example, `10.129.2.100/23` and `10.129.4.100/23` are in different subnets but belong to the `10.0.0.0/8` network.
 
-For this reason, {brandname} Server overrides netmasks that the host system provides with netmasks that follow IANA conventions for private networks:
+For this reason, {brandname} Server overrides netmasks that the host system provides with netmasks that follow IANA conventions for private and reserved networks:
 
-* IPv4: `10.0.0.0/8`, `192.168.0.0/16`, `172.16.0.0/16`, and `169.254.0.0/16`
+* IPv4: `10.0.0.0/8`, `192.168.0.0/16`, `172.16.0.0/12`, `169.254.0.0/16` and `240.0.0.0/4`
 * IPv6: `fc00::/7` and `fe80::/10`
 
 See `RFC 1918` for IPv4 or `RFC 4193` and `RFC 3513` for IPv6.
