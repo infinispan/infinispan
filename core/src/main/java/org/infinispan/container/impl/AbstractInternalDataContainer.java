@@ -22,6 +22,7 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -36,13 +37,11 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
-import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
@@ -149,7 +148,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          copy.setInternalMetadata(internalMetadata);
          if (log.isTraceEnabled())
             log.tracef("Store %s=%s in container", k, copy);
-         entries.put(k, copy);
+         putEntryInMap(entries, segment, k, copy);
       } else {
          log.tracef("Insertion attempted for key: %s but there was no map created for it at segment: %d", k, segment);
       }
@@ -183,7 +182,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    public InternalCacheEntry<K, V> remove(int segment, Object k) {
       PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
-         InternalCacheEntry<K, V> e = entries.remove(k);
+         InternalCacheEntry<K, V> e = removeEntryInMap(entries, segment, k);
          if (log.isTraceEnabled()) {
             log.tracef("Removed %s=%s from container", k, e);
          }
@@ -266,11 +265,20 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    /**
     * This method is invoked every time an entry is removed inside a compute block
+    *
     * @param key key passed to compute method
     * @param value the old value
     */
    protected void computeEntryRemoved(K key, InternalCacheEntry<K, V> value) {
       // Do nothing by default
+   }
+
+   protected void putEntryInMap(PeekableTouchableMap<K, V> map, int segment, K key, InternalCacheEntry<K, V> ice) {
+      map.put(key, ice);
+   }
+
+   protected InternalCacheEntry<K, V> removeEntryInMap(PeekableTouchableMap<K, V> map, int segment, Object key) {
+      return map.remove(key);
    }
 
    @Override
@@ -324,23 +332,10 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    protected Caffeine<K, InternalCacheEntry<K, V>> applyListener(Caffeine<K, InternalCacheEntry<K, V>> caffeine,
-         DefaultEvictionListener listener, CacheWriter<K, InternalCacheEntry<K, V>> additionalWriter) {
-      return caffeine.executor(new WithinThreadExecutor()).writer(new CacheWriter<K, InternalCacheEntry<K, V>>() {
-         @Override
-         public void write(K key, InternalCacheEntry<K, V> value) {
-            if (additionalWriter != null) {
-               additionalWriter.write(key, value);
-            }
-         }
-
-         @Override
-         public void delete(K key, InternalCacheEntry<K, V> value, RemovalCause cause) {
-            if (additionalWriter != null) {
-               additionalWriter.delete(key, value, cause);
-            }
-            if (cause == RemovalCause.SIZE) {
-               listener.onEntryChosenForEviction(key, value);
-            }
+         DefaultEvictionListener listener) {
+      return caffeine.executor(new WithinThreadExecutor()).evictionListener((key, value, cause) -> {
+         if (cause == RemovalCause.SIZE) {
+            listener.onEntryChosenForEviction(key, value);
          }
       }).removalListener(listener);
    }
@@ -450,7 +445,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       return stage;
    }
 
-   final class DefaultEvictionListener implements RemovalListener<K, InternalCacheEntry<K, V>> {
+   class DefaultEvictionListener implements RemovalListener<K, InternalCacheEntry<K, V>> {
       Map<Object, CompletableFuture<Void>> ensureEvictionDone = new ConcurrentHashMap<>();
 
       void onEntryChosenForEviction(K key, InternalCacheEntry<K, V> value) {
