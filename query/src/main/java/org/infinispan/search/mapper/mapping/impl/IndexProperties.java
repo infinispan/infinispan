@@ -3,9 +3,10 @@ package org.infinispan.search.mapper.mapping.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.search.engine.cfg.ConfigurationPropertySource;
 import org.hibernate.search.engine.cfg.EngineSettings;
+import org.hibernate.search.engine.cfg.spi.AllAwareConfigurationPropertySource;
 import org.hibernate.search.engine.cfg.spi.ConfigurationPropertyChecker;
-import org.hibernate.search.engine.cfg.spi.ConfigurationPropertySource;
 
 /**
  * @author Fabio Massimo Ercoli
@@ -33,10 +34,10 @@ public class IndexProperties {
 
    public ConfigurationPropertySource createPropertySource(ConfigurationPropertyChecker propertyChecker) {
       ConfigurationPropertySource basePropertySource =
-            propertyChecker.wrap(ConfigurationPropertySource.fromMap(backendProperties))
+            propertyChecker.wrap(AllAwareConfigurationPropertySource.fromMap(backendProperties))
                   .withPrefix(EngineSettings.BACKEND);
       ConfigurationPropertySource propertySource =
-            basePropertySource.withOverride(ConfigurationPropertySource.fromMap(engineProperties));
+            basePropertySource.withOverride(AllAwareConfigurationPropertySource.fromMap(engineProperties));
       defaultProperties();
       return propertySource;
    }

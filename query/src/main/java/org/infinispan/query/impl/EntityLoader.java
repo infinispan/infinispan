@@ -5,49 +5,36 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import org.hibernate.search.engine.common.timing.spi.Deadline;
+import org.hibernate.search.engine.common.timing.Deadline;
+import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.infinispan.AdvancedCache;
-import org.infinispan.encoding.DataConversion;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.search.mapper.common.EntityReference;
 
 /**
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @author Marko Luksa
  * @since 5.0
  */
-public final class EntityLoader<E> implements QueryResultLoader<E> {
+public final class EntityLoader<E> implements PojoSelectionEntityLoader<E> {
 
-   private final LocalQueryStatistics queryStatistics;
    private final AdvancedCache<?, E> cache;
-   private final DataConversion keyDataConversion;
+   private final LocalQueryStatistics queryStatistics;
 
-   public EntityLoader(LocalQueryStatistics queryStatistics, AdvancedCache<?, E> cache,
-                       KeyTransformationHandler keyTransformationHandler) {   //TODO [anistor] KeyTransformationHandler no longer used?
+   public EntityLoader(AdvancedCache<?, E> cache, LocalQueryStatistics queryStatistics) {
       this.cache = cache;
-      this.keyDataConversion = cache.getKeyDataConversion();
       this.queryStatistics = queryStatistics;
    }
 
-   private Object decodeKey(EntityReference entityReference) {
-      return keyDataConversion.fromStorage(entityReference.key());
-   }
-
    @Override
-   public E loadBlocking(EntityReference entityReference) {
-      return cache.get(decodeKey(entityReference));
-   }
+   public List<E> loadBlocking(List<?> identifiers, Deadline deadline) {
+      if (identifiers.isEmpty()) return Collections.emptyList();
 
-   @Override
-   public List<E> loadBlocking(List<EntityReference> entityReferences, Deadline deadline) {
-      if (entityReferences.isEmpty()) return Collections.emptyList();
-
-      int entitiesSize = entityReferences.size();
+      int entitiesSize = identifiers.size();
       LinkedHashSet<Object> keys = new LinkedHashSet<>(entitiesSize);
-      for (EntityReference entityReference : entityReferences) {
-         keys.add(decodeKey(entityReference));
+      for (Object identifier : identifiers) {
+         keys.add(cache.getKeyDataConversion().fromStorage(identifier));
       }
 
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
@@ -66,5 +53,18 @@ public final class EntityLoader<E> implements QueryResultLoader<E> {
       }
 
       return result;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      EntityLoader<?> that = (EntityLoader<?>) o;
+      return Objects.equals(cache, that.cache) && Objects.equals(queryStatistics, that.queryStatistics);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(cache, queryStatistics);
    }
 }

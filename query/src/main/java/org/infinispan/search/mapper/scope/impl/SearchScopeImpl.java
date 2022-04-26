@@ -2,16 +2,16 @@ package org.infinispan.search.mapper.scope.impl;
 
 import org.hibernate.search.engine.backend.common.spi.DocumentReferenceConverter;
 import org.hibernate.search.engine.backend.mapping.spi.BackendMappingContext;
-import org.hibernate.search.engine.backend.session.spi.BackendSessionContext;
 import org.hibernate.search.engine.backend.session.spi.DetachedBackendSessionContext;
 import org.hibernate.search.engine.search.aggregation.dsl.SearchAggregationFactory;
-import org.hibernate.search.engine.search.loading.spi.EntityLoader;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.query.dsl.SearchQuerySelectStep;
 import org.hibernate.search.engine.search.sort.dsl.SearchSortFactory;
+import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
+import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeSessionContext;
 import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.SearchWorkspace;
@@ -21,11 +21,11 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
 
    private final BackendMappingContext mappingContext;
    private final PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate;
-   private final EntityLoader<EntityReference, E> entityLoader;
+   private final PojoSelectionEntityLoader<E> entityLoader;
 
    public SearchScopeImpl(BackendMappingContext mappingContext,
                           PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate,
-                          EntityLoader<EntityReference, E> entityLoader) {
+                          PojoSelectionEntityLoader<E> entityLoader) {
       this.mappingContext = mappingContext;
       this.delegate = delegate;
       this.entityLoader = entityLoader;
@@ -57,8 +57,8 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
    }
 
    public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(
-         BackendSessionContext sessionContext, DocumentReferenceConverter<EntityReference> documentReferenceConverter) {
-      return delegate.search(sessionContext,
-            new InfinispanLoadingContext.Builder<>(documentReferenceConverter, entityLoader));
+         PojoScopeSessionContext sessionContext, DocumentReferenceConverter<EntityReference> documentReferenceConverter) {
+      return delegate.search(sessionContext, documentReferenceConverter,
+            new InfinispanLoadingContext.Builder<>(entityLoader));
    }
 }

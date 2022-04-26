@@ -38,16 +38,6 @@ public final class ClassLoaderServiceImpl implements ClassResolver, ResourceReso
    }
 
    @Override
-   public URL locateResource(String name) {
-      try {
-         return classLoader.getResource(name);
-      } catch (Exception e) {
-         // ignored
-      }
-      return null;
-   }
-
-   @Override
    public InputStream locateResourceStream(String name) {
       try {
          InputStream is = classLoader.getResourceAsStream(name);
