@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.hibernate.search.engine.backend.work.execution.DocumentCommitStrategy;
 import org.hibernate.search.engine.backend.work.execution.DocumentRefreshStrategy;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
+import org.hibernate.search.mapper.pojo.route.DocumentRoutesDescriptor;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
@@ -34,7 +35,8 @@ public class SearchIndexerImpl implements SearchIndexer {
          return CompletableFuture.completedFuture(null);
       }
 
-      return delegate.add(convertedValue.typeIdentifier, providedId, routingKey, convertedValue.value,
+      return delegate.add(convertedValue.typeIdentifier, providedId,
+            DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
             DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
    }
 
@@ -45,7 +47,8 @@ public class SearchIndexerImpl implements SearchIndexer {
          return CompletableFuture.completedFuture(null);
       }
 
-      return delegate.addOrUpdate(convertedValue.typeIdentifier, providedId, routingKey, convertedValue.value,
+      return delegate.addOrUpdate(convertedValue.typeIdentifier, providedId,
+            DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
             DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
    }
 
@@ -56,14 +59,16 @@ public class SearchIndexerImpl implements SearchIndexer {
          return CompletableFuture.completedFuture(null);
       }
 
-      return delegate.delete(convertedValue.typeIdentifier, providedId, routingKey, convertedValue.value,
+      return delegate.delete(convertedValue.typeIdentifier, providedId,
+            DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
             DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
    }
 
    @Override
    public CompletableFuture<?> purge(Object providedId, String routingKey) {
       return CompletableFuture.allOf(typeContextProvider.allTypeIdentifiers().stream()
-            .map((typeIdentifier) -> delegate.purge(typeIdentifier, providedId, routingKey,
+            .map((typeIdentifier) -> delegate.delete(typeIdentifier, providedId,
+                  DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey),
                   DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE)).toArray(CompletableFuture[]::new));
    }
 

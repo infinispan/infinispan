@@ -305,7 +305,7 @@ public class LifecycleManager implements ModuleLifecycle {
       if (!types.isEmpty()) {
          // use the common builder to create the mapping now
          SearchMappingBuilder builder = commonBuilding.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
-         builder.setEntityLoader(new EntityLoader<>(queryStatistics, cache, keyTransformationHandler));
+         builder.setEntityLoader(new EntityLoader<>(cache, queryStatistics));
          builder.addEntityTypes(types);
          searchMapping = builder.build();
          cr.registerComponent(searchMapping, SearchMapping.class);

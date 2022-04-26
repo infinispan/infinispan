@@ -2,8 +2,9 @@ package org.infinispan.search.mapper.mapping.impl;
 
 import org.hibernate.search.engine.backend.index.IndexManager;
 import org.hibernate.search.engine.mapper.mapping.spi.MappedIndexManager;
-import org.hibernate.search.mapper.pojo.bridge.runtime.spi.IdentifierMapping;
+import org.hibernate.search.mapper.pojo.identity.spi.IdentifierMapping;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoIndexedTypeExtendedMappingCollector;
+import org.hibernate.search.mapper.pojo.model.path.spi.PojoPathFilter;
 import org.hibernate.search.mapper.pojo.model.spi.PojoPropertyModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
@@ -53,6 +54,7 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Infini
       private final String entityName;
       private IdentifierMapping identifierMapping;
       private MappedIndexManager indexManager;
+      private PojoPathFilter dirtyFilter;
 
       Builder(PojoRawTypeIdentifier<E> typeIdentifier, String entityName) {
          this.typeIdentifier = typeIdentifier;
@@ -67,6 +69,11 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Infini
       @Override
       public void identifierMapping(IdentifierMapping identifierMapping) {
          this.identifierMapping = identifierMapping;
+      }
+
+      @Override
+      public void dirtyFilter(PojoPathFilter dirtyFilter) {
+         // Nothing to do
       }
 
       @Override

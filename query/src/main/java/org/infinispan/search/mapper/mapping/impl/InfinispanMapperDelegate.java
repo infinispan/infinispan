@@ -1,22 +1,21 @@
 package org.infinispan.search.mapper.mapping.impl;
 
-import org.hibernate.search.engine.search.loading.spi.EntityLoader;
+import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoContainedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoIndexedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoMapperDelegate;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 
 public final class InfinispanMapperDelegate implements PojoMapperDelegate<InfinispanMappingPartialBuildState> {
 
    private final InfinispanTypeContextContainer.Builder typeContextContainerBuilder =
          new InfinispanTypeContextContainer.Builder();
-   private final EntityLoader<EntityReference, ?> entityLoader;
+   private final PojoSelectionEntityLoader<?> entityLoader;
    private final EntityConverter entityConverter;
 
-   public InfinispanMapperDelegate(EntityLoader<EntityReference, ?> entityLoader, EntityConverter entityConverter) {
+   public InfinispanMapperDelegate(PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter) {
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
    }
@@ -28,7 +27,7 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
 
    @Override
    public <E> PojoIndexedTypeExtendedMappingCollector createIndexedTypeExtendedMappingCollector(
-         PojoRawTypeModel<E> rawTypeModel, String entityName, String indexName) {
+         PojoRawTypeModel<E> rawTypeModel, String entityName) {
       return typeContextContainerBuilder.addIndexed(rawTypeModel, entityName);
    }
 

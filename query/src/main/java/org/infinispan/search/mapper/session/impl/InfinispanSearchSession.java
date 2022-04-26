@@ -4,8 +4,9 @@ import java.util.Collection;
 
 import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.hibernate.search.engine.backend.common.spi.DocumentReferenceConverter;
-import org.hibernate.search.engine.backend.common.spi.EntityReferenceFactory;
 import org.hibernate.search.engine.search.query.dsl.SearchQuerySelectStep;
+import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
+import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionLoadingContext;
 import org.hibernate.search.mapper.pojo.session.spi.AbstractPojoSearchSession;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.hibernate.search.util.common.AssertionFailure;
@@ -14,21 +15,24 @@ import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.model.impl.InfinispanRuntimeIntrospector;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.impl.SearchScopeImpl;
+import org.infinispan.search.mapper.search.loading.context.impl.InfinispanLoadingContext;
 import org.infinispan.search.mapper.session.SearchSession;
 
 /**
  * @author Fabio Massimo Ercoli
  */
-public class InfinispanSearchSession extends AbstractPojoSearchSession<EntityReference> implements SearchSession,
-      DocumentReferenceConverter<EntityReference>, EntityReferenceFactory<EntityReference> {
+public class InfinispanSearchSession extends AbstractPojoSearchSession implements SearchSession,
+      DocumentReferenceConverter<EntityReference> {
 
    private final InfinispanSearchSessionMappingContext mappingContext;
+   private final PojoSelectionEntityLoader<?> entityLoader;
    private final InfinispanTypeContextProvider typeContextProvider;
 
    public InfinispanSearchSession(InfinispanSearchSessionMappingContext mappingContext,
-                                   InfinispanTypeContextProvider typeContextProvider) {
+                                  PojoSelectionEntityLoader<?> entityLoader, InfinispanTypeContextProvider typeContextProvider) {
       super(mappingContext);
       this.mappingContext = mappingContext;
+      this.entityLoader = entityLoader;
       this.typeContextProvider = typeContextProvider;
    }
 
@@ -83,18 +87,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession<EntityRef
    }
 
    @Override
-   public EntityReferenceFactory<EntityReference> entityReferenceFactory() {
-      return this;
-   }
-
-   @Override
-   public EntityReference createEntityReference(String typeName, Object identifier) {
-      InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.indexedForEntityName(typeName);
-      if (typeContext == null) {
-         throw new AssertionFailure(
-               "Type name " + typeName + " refers to an unknown type"
-         );
-      }
-      return new EntityReferenceImpl(typeContext.typeIdentifier(), typeContext.name(), identifier);
+   public PojoSelectionLoadingContext defaultLoadingContext() {
+      return new InfinispanLoadingContext.Builder<>(entityLoader).build();
    }
 }
