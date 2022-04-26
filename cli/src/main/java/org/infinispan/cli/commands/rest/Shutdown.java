@@ -23,7 +23,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "shutdown", description = "Shuts down individual servers or the entire cluster", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class, Shutdown.Container.class})
+@GroupCommandDefinition(name = "shutdown", description = "Stops server instances and clusters.", activator = ConnectionActivator.class, groupCommands = {Shutdown.Server.class, Shutdown.Cluster.class, Shutdown.Container.class})
 public class Shutdown extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -41,10 +41,10 @@ public class Shutdown extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @CommandDefinition(name = "server", description = "Shuts down one or more individual servers", activator = ConnectionActivator.class)
+   @CommandDefinition(name = "server", description = "Stops one or more server instances.", activator = ConnectionActivator.class)
    public static class Server extends RestCliCommand {
 
-      @Arguments(description = "One or more servers to shutdown", completer = ServerCompleter.class)
+      @Arguments(description = "Specifies server instances to stop.", completer = ServerCompleter.class)
       List<String> servers;
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -61,7 +61,7 @@ public class Shutdown extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = "cluster", description = "Shuts down the entire cluster", activator = ConnectionActivator.class)
+   @CommandDefinition(name = "cluster", description = "Stops all nodes in the cluster after storing cluster state and persisting entries if there is a cache store.", activator = ConnectionActivator.class)
    public static class Cluster extends RestCliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -78,7 +78,7 @@ public class Shutdown extends CliCommand {
       }
    }
 
-   @CommandDefinition(name = "container", description = "Shuts down the container without terminating the server processes", activator = ConnectionActivator.class)
+   @CommandDefinition(name = "container", description = "Stops the data container without terminating the server process.", activator = ConnectionActivator.class)
    public static class Container extends RestCliCommand {
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
