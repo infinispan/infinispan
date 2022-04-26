@@ -7,7 +7,6 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -89,6 +88,7 @@ import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -443,7 +443,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       assertIsNotTerminated();
       if (name == null || configurations == null)
          throw new NullPointerException("Null arguments not allowed");
-      if (name.getBytes(StandardCharsets.UTF_8).length > 255)
+      if (!ByteString.isValid(name))
          throw CONFIG.invalidNameSize(name);
 
       Configuration existing = configurationManager.getConfiguration(name, false);

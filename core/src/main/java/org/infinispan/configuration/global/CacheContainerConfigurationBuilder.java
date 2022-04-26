@@ -225,6 +225,13 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
 
    public void validate() {
       List<RuntimeException> validationExceptions = new ArrayList<>();
+
+      try {
+         attributes.validate();
+      } catch (RuntimeException e) {
+         validationExceptions.add(e);
+      }
+
       Arrays.asList(
             metrics,
             jmx,
