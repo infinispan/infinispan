@@ -25,8 +25,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
@@ -254,22 +254,22 @@ class Index {
          aggregateCompletionStage.dependsOn(segment);
       }
 
-      try {
-         // Create the file first as it should not be present as we deleted during startup
-         indexSizeFile.createNewFile();
-         try (FileOutputStream indexCountStream = new FileOutputStream(indexSizeFile)) {
-            UnsignedNumeric.writeUnsignedInt(indexCountStream, segments.length);
-            UnsignedNumeric.writeUnsignedInt(indexCountStream, this.sizePerSegment.length());
-            for (int i = 0; i < sizePerSegment.length(); ++i) {
-               UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
+      // After all SIFS segments are complete we write the size
+      return aggregateCompletionStage.freeze().thenRun(() -> {
+         try {
+            // Create the file first as it should not be present as we deleted during startup
+            indexSizeFile.createNewFile();
+            try (FileOutputStream indexCountStream = new FileOutputStream(indexSizeFile)) {
+               UnsignedNumeric.writeUnsignedInt(indexCountStream, segments.length);
+               UnsignedNumeric.writeUnsignedInt(indexCountStream, this.sizePerSegment.length());
+               for (int i = 0; i < sizePerSegment.length(); ++i) {
+                  UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
+               }
             }
+         } catch (IOException e) {
+            aggregateCompletionStage.dependsOn(CompletableFutures.completedExceptionFuture(e));
          }
-      } catch (IOException e) {
-         aggregateCompletionStage.dependsOn(CompletableFutures.completedExceptionFuture(e));
-      }
-
-
-      return aggregateCompletionStage.freeze();
+      });
    }
 
    public long approximateSize(IntSet cacheSegments) {
