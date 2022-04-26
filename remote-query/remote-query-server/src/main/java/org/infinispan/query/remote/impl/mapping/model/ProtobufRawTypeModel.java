@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
@@ -13,6 +14,7 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoCaster;
 import org.hibernate.search.mapper.pojo.model.spi.PojoPropertyModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
+import org.hibernate.search.mapper.pojo.model.spi.PojoTypeModel;
 
 public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
 
@@ -65,6 +67,19 @@ public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
    }
 
    @Override
+   public PojoTypeModel<? extends byte[]> cast(PojoTypeModel<?> other) {
+      if ( other.rawType().isSubTypeOf( this ) ) {
+         // Redundant cast; no need to create a new type.
+         return (PojoTypeModel<? extends byte[]>) other;
+      }
+      else {
+         // There is no generic type information to retain for protobuf types; we can just return this.
+         // Also, calling other.castTo(...) would mean losing the type name, and we definitely don't want that.
+         return this;
+      }
+   }
+
+   @Override
    public PojoCaster<byte[]> caster() {
       return caster;
    }
@@ -83,6 +98,11 @@ public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
    public PojoPropertyModel<?> property(String propertyName) {
       // Properties are created by ProtobufMessageBinder
       return null;
+   }
+
+   @Override
+   public <U> Optional<PojoTypeModel<? extends U>> castTo(Class<U> target) {
+      return Optional.empty();
    }
 
    @Override

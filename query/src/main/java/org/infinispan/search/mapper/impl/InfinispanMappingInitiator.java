@@ -4,12 +4,11 @@ import java.util.Collection;
 
 import org.hibernate.search.engine.mapper.mapping.building.spi.MappingBuildContext;
 import org.hibernate.search.engine.mapper.mapping.building.spi.MappingConfigurationCollector;
-import org.hibernate.search.engine.search.loading.spi.EntityLoader;
+import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoMapperDelegate;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoTypeMetadataContributor;
 import org.hibernate.search.mapper.pojo.mapping.spi.AbstractPojoMappingInitiator;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.MappingConfigurationContext;
 import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
@@ -22,7 +21,7 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
    private final InfinispanTypeConfigurationContributor typeConfigurationContributor;
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
 
-   private EntityLoader<EntityReference, ?> entityLoader;
+   private PojoSelectionEntityLoader<?> entityLoader;
    private EntityConverter entityConverter;
 
    public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector,
@@ -37,7 +36,7 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
       typeConfigurationContributor.addEntityType(type, entityName);
    }
 
-   public void setEntityLoader(EntityLoader<EntityReference, ?> entityLoader) {
+   public void setEntityLoader(PojoSelectionEntityLoader<?> entityLoader) {
       this.entityLoader = entityLoader;
    }
 

@@ -28,10 +28,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.EntityLoader;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.impl.Externalizers.QueryRequestExternalizer;
@@ -151,9 +149,8 @@ public final class LifecycleManager implements ModuleLifecycle {
          if (commonBuilding != null && searchMapping == null) {
             AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
-            KeyTransformationHandler keyTransformationHandler = ComponentRegistryUtils.getKeyTransformationHandler(cache);
 
-            EntityLoader<?> entityLoader = new EntityLoader<>(queryStatistics, cache, keyTransformationHandler);
+            EntityLoader<?> entityLoader = new EntityLoader<>(cache, queryStatistics);
 
             searchMapping = new LazySearchMapping(commonBuilding, entityLoader, serCtx, cache, protobufMetadataManager);
 
