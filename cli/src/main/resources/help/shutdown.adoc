@@ -29,7 +29,7 @@ Stops the server with hostname `my_server01`.
 Stops all nodes in the cluster after storing cluster state and persisting entries if there is a cache store.
 
 `shutdown container` +
-Stops the data container without terminating the server process. Stores cluster state and persists entries if there is a cache store. Server instances remain running with active endpoints and clustering. REST calls to container resources will result in a 503 Service Unavailable response. The `shutdown container` command is intended for environments, such as Kubernetes, that automate resource lifecycle management. You should always use either the `shutdown server` or `shutdown cluster` command instead.
+Stops the data container without terminating the server process. Stores cluster state and persists entries if there is a cache store. Server instances remain running with active endpoints and clustering. REST calls to container resources will result in a 503 Service Unavailable response. The `shutdown container` command is intended for environments, such as Kubernetes, that automate resource lifecycle management. For self-managed environments you should use the `shutdown server` or `shutdown cluster` commands to stop servers.
 
 
 SEE ALSO
