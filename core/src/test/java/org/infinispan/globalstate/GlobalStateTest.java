@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
-import java.util.concurrent.CompletionException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -257,7 +256,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
                CacheConfigurationException.class);
          expectException(exceptionMessage,
                () -> cm.administration().getOrCreateTemplate(cacheName, configuration),
-               CompletionException.class, CacheConfigurationException.class);
+               CacheConfigurationException.class);
       } finally {
          TestingUtil.killCacheManagers(cm);
       }

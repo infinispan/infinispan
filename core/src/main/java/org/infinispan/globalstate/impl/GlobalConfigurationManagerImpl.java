@@ -3,7 +3,6 @@ package org.infinispan.globalstate.impl;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
-import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +31,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -161,8 +161,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          throw CONFIG.incompatiblePersistedConfiguration(name, configuration, staticConfiguration);
    }
 
-   private static void assertNameLength(String name) {
-      if (name.getBytes(StandardCharsets.UTF_8).length > 255) {
+   private void assertNameLength(String name) {
+      if (!ByteString.isValid(name)) {
          throw CONFIG.invalidNameSize(name);
       }
    }
@@ -190,13 +190,11 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @Override
    public CompletionStage<Configuration> getOrCreateTemplate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      assertNameLength(name);
       localConfigurationManager.validateFlags(flags);
       try {
          final CacheState state = new CacheState(null, parserRegistry.serialize(name, configuration), flags);
-         return getStateCache().computeIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), k -> {
-            assertNameLength(name);
-            return state;
-         }).thenApply((v) -> configuration);
+         return getStateCache().putIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), state).thenApply((v) -> configuration);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(name, configuration, e);
       }

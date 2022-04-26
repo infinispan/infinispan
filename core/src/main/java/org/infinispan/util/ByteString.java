@@ -24,6 +24,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public final class ByteString implements Comparable<ByteString> {
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
+   private static final int MAX_LENGTH = 255;
    private transient String s;
    private transient final int hash;
 
@@ -32,7 +33,7 @@ public final class ByteString implements Comparable<ByteString> {
 
    @ProtoFactory
    ByteString(byte[] bytes) {
-      if (bytes.length > 255) {
+      if (bytes.length > MAX_LENGTH) {
          throw new IllegalArgumentException("ByteString must be less than 256 bytes");
       }
       this.bytes = bytes;
@@ -44,6 +45,10 @@ public final class ByteString implements Comparable<ByteString> {
          return EMPTY;
       else
          return new ByteString(s.getBytes(CHARSET));
+   }
+
+   public static boolean isValid(String s) {
+      return s.getBytes(CHARSET).length <= MAX_LENGTH;
    }
 
    public static ByteString emptyString() {
