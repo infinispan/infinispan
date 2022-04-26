@@ -129,7 +129,7 @@
       <version.blockhound>1.0.6.RELEASE</version.blockhound>
       <version.bouncycastle>1.69</version.bouncycastle>
       <version.byteman>4.0.9</version.byteman>
-      <version.caffeine>2.8.4</version.caffeine>
+      <version.caffeine>2.9.3</version.caffeine>
       <version.commons.compress>1.21</version.commons.compress>
       <version.console>14.0.0.Dev02</version.console>
       <version.fabric8.kubernetes-client>5.7.4</version.fabric8.kubernetes-client>

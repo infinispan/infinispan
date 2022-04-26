@@ -69,7 +69,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
          default:
             throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
       }
-      evictionCache = applyListener(caffeine, evictionListener, null).build();
+      evictionCache = applyListener(caffeine, evictionListener).build();
       entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
@@ -95,7 +95,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
       evictionCache = applyListener(Caffeine.newBuilder()
             .weigher((K k, InternalCacheEntry<K, V> v) -> (int) sizeCalculator.calculateSize(k, v))
-            .maximumWeight(thresholdSize), evictionListener, null)
+            .maximumWeight(thresholdSize), evictionListener)
             .build();
 
       entries = new PeekableTouchableCaffeineMap<>(evictionCache);
