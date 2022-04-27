@@ -77,7 +77,7 @@ pipeline {
 
 
                     dir('infinispan-images') {
-                        sh "cekit -v --descriptor server-dev-jdk.yaml build --overrides '{\"name\":\"${REPO}\", \"version\":\"${TAG}\"}' --overrides '{\"artifacts\":[{\"name\":\"server\",\"path\":\"../distribution/target/distribution/infinispan-server-${SERVER_VERSION}.zip\"}]}' docker\n"
+                        sh "cekit -v --descriptor server-dev-jdk.yaml build --overrides '{\"name\":\"${REPO}\", \"version\":\"${TAG}\"}' --overrides '{\"artifacts\":[{\"name\":\"server\",\"path\":\"../distribution/target/distribution/infinispan-server-${SERVER_VERSION}.zip\"}, {\"name\":\"config-generator\",\"url\":\"https://repo1.maven.org/maven2/org/infinispan/images/config-generator/2.2.1.Final/config-generator-2.2.1.Final.jar\"}]}' docker\n"
 
                         withDockerRegistry(credentialsId: 'Quay-InfinispanTest', url: 'https://quay.io') {
                             sh "docker push ${REPO}:${TAG}"
