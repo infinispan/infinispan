@@ -13,9 +13,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BoostQuery;
-import org.apache.lucene.search.RegexpQuery;
 import org.hibernate.search.backend.lucene.LuceneBackend;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.predicate.dsl.LuceneSearchPredicateFactory;
@@ -30,6 +27,7 @@ import org.hibernate.search.engine.search.predicate.dsl.PhrasePredicateOptionsSt
 import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateScoreStep;
 import org.hibernate.search.engine.search.predicate.dsl.RangePredicateFieldMoreStep;
+import org.hibernate.search.engine.search.predicate.dsl.RegexpQueryFlag;
 import org.hibernate.search.engine.search.predicate.dsl.SimpleQueryFlag;
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.FieldProjectionValueStep;
@@ -208,16 +206,15 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       BooleanExpr child = fullTextBoostExpr.getChild();
       float boost = fullTextBoostExpr.getBoost();
 
-      // TODO HSEARCH-3884 Support regexp queries
       if (child instanceof FullTextRegexpExpr) {
          FullTextRegexpExpr fullTextRegexpExpr = (FullTextRegexpExpr) child;
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
-         String regexp = fullTextRegexpExpr.getRegexp();
 
-         // boosting native queries
-         RegexpQuery nativeRegexQuery = new RegexpQuery(new Term(propertyValueExpr.getPropertyPath().asStringPath(), regexp));
-         BoostQuery nativeQuery = new BoostQuery(nativeRegexQuery, fullTextBoostExpr.getBoost());
-         return predicateFactory.fromLuceneQuery(nativeQuery);
+         return predicateFactory.regexp().field(propertyValueExpr.getPropertyPath().asStringPath())
+               .matching(fullTextRegexpExpr.getRegexp())
+               .flags(RegexpQueryFlag.COMPLEMENT, RegexpQueryFlag.INTERVAL,
+                     RegexpQueryFlag.INTERSECTION, RegexpQueryFlag.ANY_STRING)
+               .boost(boost);
       }
 
       PredicateFinalStep childPredicate = child.acceptVisitor(this);
@@ -327,11 +324,10 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    @Override
    public PredicateFinalStep visit(FullTextRegexpExpr fullTextRegexpExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
-      String regexp = fullTextRegexpExpr.getRegexp();
 
-      // TODO TODO HSEARCH-3884 Support regexp queries
-      RegexpQuery nativeQuery = new RegexpQuery(new Term(propertyValueExpr.getPropertyPath().asStringPath(), regexp));
-      return predicateFactory.fromLuceneQuery(nativeQuery);
+      return predicateFactory.regexp()
+            .field(propertyValueExpr.getPropertyPath().asStringPath())
+            .matching(fullTextRegexpExpr.getRegexp());
    }
 
    @Override
