@@ -941,7 +941,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate) {
+   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate, IntSet segments) {
       long stamp = acquireReadLock();
       try {
          checkStoreAvailability();
@@ -954,12 +954,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
             releaseReadLock(stamp);
             return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
          }
-         return nonBlockingStore.size(IntSets.immutableRangeSet(segmentCount))
+         if (segments == null) {
+            segments = IntSets.immutableRangeSet(segmentCount);
+         }
+         return nonBlockingStore.size(segments)
                .whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
       } catch (Throwable t) {
          releaseReadLock(stamp);
          throw t;
       }
+   }
+
+   @Override
+   public CompletionStage<Long> size(Predicate<? super StoreConfiguration> predicate) {
+      return size(predicate, null);
    }
 
    @Override

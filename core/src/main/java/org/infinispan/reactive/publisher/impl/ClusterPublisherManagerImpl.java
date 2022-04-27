@@ -27,8 +27,11 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
@@ -38,6 +41,7 @@ import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -52,6 +56,7 @@ import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.reactive.RxJavaInterop;
+import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
@@ -114,6 +119,11 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
    private <R> EntryComposedType<R> entryComposedType() {
       return ENTRY_COMPOSED;
+   }
+
+   private final SizeComposedType SIZE_COMPOSED = new SizeComposedType();
+   private SizeComposedType sizeComposedType() {
+      return SIZE_COMPOSED;
    }
 
    private int maxSegment;
@@ -272,7 +282,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          for (Map.Entry<Address, Set<K>> remoteTarget : keyTargets.entrySet()) {
             Address remoteAddress = remoteTarget.getKey();
             Set<K> remoteKeys = remoteTarget.getValue();
-            ReductionPublisherRequestCommand<K> command = composedType.remoteInvocation(parallelPublisher, null, remoteKeys,
+            TopologyAffectedCommand command = composedType.remoteInvocation(parallelPublisher, null, remoteKeys,
                   null, explicitFlags, deliveryGuarantee, transformer, finalizer);
             command.setTopologyId(topology.getTopologyId());
             CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, command,
@@ -348,7 +358,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          for (Map.Entry<Address, IntSet> remoteTarget : targets.entrySet()) {
             Address remoteAddress = remoteTarget.getKey();
             IntSet remoteSegments = remoteTarget.getValue();
-            ReductionPublisherRequestCommand<K> command = composedType.remoteInvocation(parallelPublisher, remoteSegments, null,
+            TopologyAffectedCommand command = composedType.remoteInvocation(parallelPublisher, remoteSegments, null,
                   keysToExcludeByAddress.get(remoteAddress), explicitFlags, deliveryGuarantee, transformer, finalizer);
             command.setTopologyId(topology.getTopologyId());
             CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, command,
@@ -611,12 +621,17 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
 
       @Override
       protected PublisherResult<R> addValidResponse(Address sender, ValidResponse response) {
-         PublisherResult<R> results = (PublisherResult<R>) response.getResponseValue();
-         if (log.isTraceEnabled()) {
-            log.tracef("Result was: %s for segments %s from %s with %s suspected segments", results.getResult(),
-                  targetSegments, sender, results.getSuspectedSegments());
+         Object value = response.getResponseValue();
+         if (value instanceof PublisherResult) {
+            PublisherResult<R> results = (PublisherResult<R>) value;
+            if (log.isTraceEnabled()) {
+               log.tracef("Result was: %s for segments %s from %s with %s suspected segments", results.getResult(),
+                     targetSegments, sender, results.getSuspectedSegments());
+            }
+            return results;
          }
-         return results;
+
+         return new SegmentPublisherResult<>(null, (R) value);
       }
 
       @Override
@@ -721,7 +736,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
             Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
 
-      ReductionPublisherRequestCommand<K> remoteInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
+      TopologyAffectedCommand remoteInvocation(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
             Set<K> keysToExclude, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
             Function<? super Publisher<I>, ? extends CompletionStage<R>> transformer,
             Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer);
@@ -825,6 +840,50 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
    }
 
+   private class SizeComposedType implements ComposedType<K, Long, Long> {
+
+      @Override
+      public CompletionStage<PublisherResult<Long>> localInvocation(boolean parallelPublisher,
+         IntSet segments, Set<K> keysToInclude, Set<K> keysToExclude, long explicitFlags,
+         DeliveryGuarantee deliveryGuarantee,
+         Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer,
+         Function<? super Publisher<Long>, ? extends CompletionStage<Long>> finalizer) {
+         return localPublisherManager.sizePublisher(segments, explicitFlags)
+               .thenApply(size -> new SegmentPublisherResult<>(null, size));
+      }
+
+      @Override
+      public SizeCommand remoteInvocation(boolean parallelPublisher, IntSet segments,
+                                          Set<K> keysToInclude, Set<K> keysToExclude,
+                                          long explicitFlags,
+                                          DeliveryGuarantee deliveryGuarantee,
+                                          Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer,
+                                          Function<? super Publisher<Long>, ? extends CompletionStage<Long>> finalizer) {
+         return commandsFactory.buildSizeCommand(segments, explicitFlags);
+      }
+
+      @Override
+      public CompletionStage<PublisherResult<Long>> contextInvocation(IntSet segments, Set<K> keysToInclude,
+         InvocationContext ctx, Function<? super Publisher<Long>, ? extends CompletionStage<Long>> transformer) {
+         throw new IllegalStateException("Should never be invoked!");
+      }
+
+      @Override
+      public boolean isEntry() {
+         return false;
+      }
+
+      @Override
+      public K toKey(Long value) {
+         throw new IllegalStateException("Should never be invoked!");
+      }
+
+      @Override
+      public Long fromCacheEntry(CacheEntry entry) {
+         throw new IllegalStateException("Should never be invoked!");
+      }
+   }
+
    private boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
       for (StoreConfiguration storeConfiguration : persistenceConfiguration.stores()) {
          if (storeConfiguration.shared() && storeConfiguration.async().enabled()) {
@@ -859,6 +918,13 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
       return new SegmentAwarePublisherImpl<>(segments, entryComposedType(), invocationContext, explicitFlags,
                                              deliveryGuarantee, batchSize, transformer);
+   }
+
+   @Override
+   public CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags) {
+      long addedFlags = EnumUtil.mergeBitSets(flags, FlagBitSets.CACHE_MODE_LOCAL);
+      return reduction(false, segments, null, ctx, addedFlags, DeliveryGuarantee.EXACTLY_ONCE,
+            sizeComposedType(), null, PublisherReducers.add());
    }
 
    private final static AtomicInteger requestCounter = new AtomicInteger();

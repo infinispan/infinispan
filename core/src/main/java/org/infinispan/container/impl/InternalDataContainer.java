@@ -139,7 +139,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
       int size = 0;
       // We have to loop through and count the entries
       for (Iterator<InternalCacheEntry<K, V>> iter = iterator(segments); iter.hasNext(); ) {
-         iter.next();
+         if (iter.next().getValue() == null) continue;
          if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
       }
       return size;

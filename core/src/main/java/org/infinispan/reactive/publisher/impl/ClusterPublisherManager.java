@@ -94,4 +94,6 @@ public interface ClusterPublisherManager<K, V> {
    <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext,
          long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize,
          Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer);
+
+   CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags);
 }

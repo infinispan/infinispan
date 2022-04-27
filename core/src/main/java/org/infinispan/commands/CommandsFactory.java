@@ -269,7 +269,7 @@ public interface CommandsFactory {
     * @param flagsBitSet Command flags provided by cache
     * @return a SizeCommand
     */
-   SizeCommand buildSizeCommand(long flagsBitSet);
+   SizeCommand buildSizeCommand(IntSet segments, long flagsBitSet);
 
    /**
     * Builds a GetKeyValueCommand
