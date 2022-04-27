@@ -1,19 +1,24 @@
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
+
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@ProtoDoc("@Indexed")
+@Indexed
 public class Book {
 
-   @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
+   @Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)
    @ProtoField(number = 1)
    final String title;
 
-   @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
+   @Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)
    @ProtoField(number = 2)
    final String description;
 
-   @ProtoDoc("@Field(index=Index.YES, store = Store.NO)")
+   @Field(index=Index.YES, store = Store.NO)
    @ProtoField(number = 3, defaultValue = "0")
    final int publicationYear;
 
