@@ -307,9 +307,6 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          }
 
          if (questionPos == -1 && asteriskPos == text.length() - 1) {
-            // term prefix query
-            // TODO HSEARCH-3906 use a term prefix predicate
-            // even if simpleQueryString + prefix flag should work as well
             return predicateFactory.simpleQueryString()
                   .field(absoluteFieldPath).matching(text)
                   .flags(SimpleQueryFlag.PREFIX);
