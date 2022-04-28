@@ -65,8 +65,7 @@ public class JdbcStringBasedCacheStorePassivation {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
-            cache.put("k1", "v1");
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             cache.put("k2", "v2");
             // test passivation==false, database should contain all entries which are in the cache
             assertNotNull(table.getValueByKey("k1"));
@@ -93,7 +92,7 @@ public class JdbcStringBasedCacheStorePassivation {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             cache.clear();
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -120,7 +119,7 @@ public class JdbcStringBasedCacheStorePassivation {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<Object, Object> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             Double doubleKey = 10.0;
             Double doubleValue = 20.0;
             assertEquals(0, cache.size());
@@ -138,7 +137,7 @@ public class JdbcStringBasedCacheStorePassivation {
               .setEvition()
               .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
             //not yet in store (eviction.max-entries=2, LRU)
@@ -172,7 +171,7 @@ public class JdbcStringBasedCacheStorePassivation {
               .setEvition()
               .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
             assertNull(table.getValueByKey("k1"));

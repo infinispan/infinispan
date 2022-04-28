@@ -12,6 +12,7 @@ public class JdbcConfigurationUtil {
     private PooledConnectionFactoryConfigurationBuilder persistenceConfiguration;
     private ConfigurationBuilder configurationBuilder;
     private CacheMode cacheMode;
+    public String driverClass;
 
     public JdbcConfigurationUtil(CacheMode cacheMode, Database database, boolean passivation, boolean preload) {
         configurationBuilder = new ConfigurationBuilder();
@@ -20,6 +21,7 @@ public class JdbcConfigurationUtil {
     }
 
     private JdbcConfigurationUtil createPersistenceConfiguration(Database database, boolean passivation, boolean preload) {
+        driverClass = database.driverClassName();
         persistenceConfiguration = configurationBuilder.clustering().cacheMode(cacheMode).hash().numOwners(1)
                 .persistence()
                 .passivation(passivation)
