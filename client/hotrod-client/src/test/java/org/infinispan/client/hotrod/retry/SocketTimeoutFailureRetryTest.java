@@ -64,8 +64,10 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
       interceptor.delayNextRequest(delay);
 
       assertEquals(0, remoteCacheManager.getChannelFactory().getRetries());
+      int connectionsBefore = channelFactory.getNumActive() + channelFactory.getNumIdle();
       assertEquals("v1", remoteCache.get(key));
       assertEquals(1, remoteCacheManager.getChannelFactory().getRetries());
+      assertEquals(connectionsBefore, channelFactory.getNumActive() + channelFactory.getNumIdle());
 
       delay.complete(null);
    }
