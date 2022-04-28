@@ -2260,4 +2260,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid index startup mode: %s", id = 664)
    CacheConfigurationException invalidIndexStartUpMode(String invalidValue);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "There was an error in submitted periodic task with %s, not rescheduling.", id = 665)
+   void scheduledTaskEncounteredThrowable(Object identifier, @Cause Throwable t);
 }
