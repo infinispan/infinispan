@@ -111,15 +111,24 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
          cause = cause.getCause();
       }
       try {
-         if (cause instanceof HotRodClientException && ((HotRodClientException) cause).isServerError()) {
-            // don't close the channel, server just sent an error, there's nothing wrong with the channel
-         } else {
+         if (closeChannelForCause(cause)) {
             HOTROD.closingChannelAfterError(channel, cause);
             channel.close();
          }
       } finally {
          completeExceptionally(cause);
       }
+   }
+
+   protected final boolean isServerError(Throwable t) {
+      return t instanceof HotRodClientException && ((HotRodClientException) t).isServerError();
+   }
+
+   protected final boolean closeChannelForCause(Throwable t) {
+      // don't close the channel, server just sent an error, there's nothing wrong with the channel
+      return !(isServerError(t)
+            // The request just timed out, the channel still ok.
+            || t instanceof SocketTimeoutException);
    }
 
    protected void sendArrayOperation(Channel channel, byte[] array) {

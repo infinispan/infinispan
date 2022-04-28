@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -161,7 +160,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          if (address != null) {
             addFailedServer(address);
          }
-         if (channel != null) {
+         if (channel != null && closeChannelForCause(cause)) {
             // We need to remove decoder even if we're about to close the channel
             // because otherwise we would be notified through channelInactive and we would retry (again).
             HeaderDecoder headerDecoder = (HeaderDecoder)channel.pipeline().get(HeaderDecoder.NAME);
@@ -180,7 +179,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          // TODO Clients should never receive a RemoteNodeSuspectException, see ISPN-11636
          logAndRetryOrFail(cause);
          return null;
-      } else if (cause instanceof HotRodClientException && ((HotRodClientException) cause).isServerError()) {
+      } else if (isServerError(cause)) {
          // fail the operation (don't retry) but don't close the channel
          completeExceptionally(cause);
          return null;
