@@ -55,7 +55,7 @@ public class AsyncJdbcStringBasedCacheStore {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil)) {
             // test PUT operation
             for (int i = 0; i < numEntries; i++) {
                 cache.putAsync(keyPrefix+i, valuePrefix+i).toCompletableFuture().get();

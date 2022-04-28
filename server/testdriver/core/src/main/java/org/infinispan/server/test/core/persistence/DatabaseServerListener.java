@@ -69,6 +69,7 @@ public class DatabaseServerListener implements InfinispanServerListener {
 
    private Database initDatabase(String databaseType) {
       String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES);
+
       try (InputStream inputStream = property != null ? Files.newInputStream(Paths.get(property).resolve(databaseType + ".properties")) : getClass().getResourceAsStream(String.format("/database/%s.properties", databaseType))) {
          Properties properties = new Properties();
          properties.load(inputStream);
