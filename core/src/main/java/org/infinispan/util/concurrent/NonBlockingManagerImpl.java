@@ -7,6 +7,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.infinispan.factories.KnownComponentNames;
@@ -29,8 +30,9 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
    @Inject Executor executor;
 
    @Override
-   public AutoCloseable scheduleWithFixedDelay(Supplier<CompletionStage<?>> supplier, long initialDelay, long delay, TimeUnit unit) {
-      ReschedulingTask task = new ReschedulingTask(supplier, delay, unit);
+   public AutoCloseable scheduleWithFixedDelay(Supplier<CompletionStage<?>> supplier, long initialDelay, long delay,
+         TimeUnit unit, Predicate<? super Throwable> mayRepeatOnThrowable) {
+      ReschedulingTask task = new ReschedulingTask(supplier, delay, unit, mayRepeatOnThrowable);
       synchronized (task) {
          task.future = scheduler.schedule(task, initialDelay, unit);
       }
@@ -54,44 +56,51 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
       private final Supplier<CompletionStage<?>> supplier;
       private final long delay;
       private final TimeUnit unit;
+      private final Predicate<? super Throwable> mayRepeatOnThrowable;
 
-      private ReschedulingTask(Supplier<CompletionStage<?>> supplier, long delay, TimeUnit unit) {
+      private ReschedulingTask(Supplier<CompletionStage<?>> supplier, long delay, TimeUnit unit,
+            Predicate<? super Throwable> mayRepeatOnThrowable) {
          this.supplier = supplier;
          this.delay = delay;
          this.unit = unit;
+         this.mayRepeatOnThrowable = mayRepeatOnThrowable;
       }
 
       @Override
       public void run() {
          CompletionStage<?> stage = supplier.get();
          stage.whenComplete((v, t) -> {
-            if (t == null) {
-               boolean isRunning;
-               synchronized (this) {
-                  isRunning = future != null;
+            if (t != null) {
+               if (mayRepeatOnThrowable == null || !mayRepeatOnThrowable.test(t)) {
+                  log.scheduledTaskEncounteredThrowable(supplier, t);
+                  return;
                }
-               if (isRunning) {
-                  Future<?> newFuture = scheduler.schedule(this, delay, unit);
-                  boolean shouldCancel = false;
-                  synchronized (this) {
-                     if (future == null) {
-                        shouldCancel = true;
-                     } else {
-                        future = newFuture;
-                     }
-                  }
-                  if (shouldCancel) {
-                     if (log.isTraceEnabled()) {
-                        log.tracef( "Periodic non blocking task with supplier %s was cancelled while rescheduling.", supplier);
-                     }
-                     newFuture.cancel(true);
-                  }
-               } else if (log.isTraceEnabled()) {
-                  log.tracef("Periodic non blocking task with supplier %s was cancelled prior.", supplier);
-               }
-            } else if (log.isDebugEnabled()) {
-               log.debugf(t, "There was an error in submitted periodic non blocking task with supplier %s, not rescheduling!", supplier);
+               log.tracef(t, "There was an error in submitted periodic non blocking task with supplier %s, configured to resubmit", supplier);
             }
+            boolean isRunning;
+            synchronized (this) {
+               isRunning = future != null;
+            }
+            if (isRunning) {
+               Future<?> newFuture = scheduler.schedule(this, delay, unit);
+               boolean shouldCancel = false;
+               synchronized (this) {
+                  if (future == null) {
+                     shouldCancel = true;
+                  } else {
+                     future = newFuture;
+                  }
+               }
+               if (shouldCancel) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Periodic non blocking task with supplier %s was cancelled while rescheduling.", supplier);
+                  }
+                  newFuture.cancel(true);
+               }
+            } else if (log.isTraceEnabled()) {
+               log.tracef("Periodic non blocking task with supplier %s was cancelled prior to execution.", supplier);
+            }
+
          });
       }
 

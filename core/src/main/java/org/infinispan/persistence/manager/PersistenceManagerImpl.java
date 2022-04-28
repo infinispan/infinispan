@@ -35,6 +35,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -81,7 +82,6 @@ import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.Log;
@@ -207,7 +207,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long interval = configuration.persistence().availabilityInterval();
       if (interval > 0 && availabilityTask == null) {
          storeStartup = storeStartup.doOnComplete(() ->
-               availabilityTask = nonBlockingManager.scheduleWithFixedDelay(this::pollStoreAvailability, interval, interval, MILLISECONDS));
+               availabilityTask = nonBlockingManager.scheduleWithFixedDelay(this::pollStoreAvailability, interval,
+                     interval, MILLISECONDS, t -> !(t instanceof Error)));
       }
       return storeStartup.doOnComplete(() -> {
          // If a store is not writeable, then max idle works fine as it only expires in memory, thus refreshing
