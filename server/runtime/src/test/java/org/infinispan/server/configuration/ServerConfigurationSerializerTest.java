@@ -1,5 +1,9 @@
 package org.infinispan.server.configuration;
 
+import static org.infinispan.server.configuration.ServerConfigurationParserTest.PASSWORD;
+import static org.infinispan.server.configuration.ServerConfigurationParserTest.SECRET;
+import static org.infinispan.server.configuration.ServerConfigurationParserTest.createCredentialStore;
+import static org.infinispan.server.configuration.ServerConfigurationParserTest.getConfigPath;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -9,6 +13,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,8 +34,10 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.server.Server;
+import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,11 +51,18 @@ public class ServerConfigurationSerializerTest {
    static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final Path config;
    private final MediaType type;
+   @BeforeClass
+   public static void setup() throws GeneralSecurityException, IOException {
+      KeyStoreUtils.generateSelfSignedCertificate(getConfigPath().resolve("ServerConfigurationSerializerTest-keystore.pfx").toString(), null, PASSWORD,
+            PASSWORD, "server", "localhost");
+      KeyStoreUtils.generateEmptyKeyStore(getConfigPath().resolve("ServerConfigurationSerializerTest-truststore.pfx").toString(), SECRET);
+      createCredentialStore(getConfigPath().resolve("ServerConfigurationSerializerTest-credentials.pfx"), SECRET);
+   }
 
    @Parameterized.Parameters(name = "{0} > [{2}]")
    public static Iterable<Object[]> data() throws IOException {
       Path configDir = Paths.get(System.getProperty("build.directory"), "test-classes", "configuration", "versions");
-      ServerConfigurationParserTest.createCredentialStore(configDir.getParent().resolve("credentials.pfx"), "secret");
+      createCredentialStore(configDir.getParent().resolve("ServerConfigurationSerializerTest-credentials.pfx"), SECRET);
       return Files.list(configDir).flatMap(p -> types.stream().map(t -> new Object[]{p.getFileName(), p, t})).collect(Collectors.toList());
    }
 

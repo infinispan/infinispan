@@ -27,13 +27,13 @@
 
       <security>
          <credential-stores>
-            <credential-store name="credentials" path="credentials.pfx">
+            <credential-store name="credentials" path="ServerConfigurationParserTest-credentials.pfx">
                <clear-text-credential clear-text="secret"/>
             </credential-store>
-            <credential-store name="masked" path="credentials.pfx">
+            <credential-store name="masked" path="ServerConfigurationParserTest-credentials.pfx">
                <masked-credential masked="1Hc4Feq2wJs;pepper99;100"/>
             </credential-store>
-            <credential-store name="command" path="credentials.pfx">
+            <credential-store name="command" path="ServerConfigurationParserTest-credentials.pfx">
                <command-credential command="${build.directory}/test-classes/bin/credential.sh"/>
             </credential-store>
          </credential-stores>
@@ -44,8 +44,8 @@
                      <keystore path="ServerConfigurationParserTest-keystore.pfx"
                                relative-to="infinispan.server.config.path"
                                password="password" alias="server" key-password="password"
-                               generate-self-signed-certificate-host="localhost" provider="SunJSSE"/>
-                     <truststore path="truststore.p12" provider="SunJSSE"
+                               generate-self-signed-certificate-host="localhost"/>
+                     <truststore path="ServerConfigurationParserTest-truststore.pfx"
                                  relative-to="infinispan.server.config.path"
                                  password="secret"/>
                      <engine enabled-protocols="TLSV1.1 TLSV1.2 TLSV1.3"
@@ -93,10 +93,10 @@
                   <ssl>
                      <keystore path="ServerConfigurationParserTest-keystore.pfx"
                                relative-to="infinispan.server.config.path"
-                               alias="server" provider="SunJSSE">
+                               alias="server">
                         <credential-reference store="credentials" alias="keystore"/>
                      </keystore>
-                     <truststore path="truststore.p12" provider="SunJSSE"
+                     <truststore path="ServerConfigurationParserTest-truststore.pfx"
                                  relative-to="infinispan.server.config.path">
                         <credential-reference store="credentials" alias="trust"/>
                      </truststore>

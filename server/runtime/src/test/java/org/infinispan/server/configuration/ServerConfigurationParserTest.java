@@ -37,6 +37,7 @@ import org.infinispan.server.memcached.configuration.MemcachedServerConfiguratio
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 import org.infinispan.server.security.ElytronPasswordProviderSupplier;
+import org.infinispan.server.security.KeyStoreUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -58,12 +59,17 @@ public class ServerConfigurationParserTest {
 
    @ClassRule
    public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
+   public static final char[] PASSWORD = "password".toCharArray();
+   public static final char[] SECRET = "secret".toCharArray();
 
    private final MediaType type;
 
    @BeforeClass
-   public static void setup() {
-      createCredentialStore(getConfigPath().resolve("credentials.pfx"), "secret");
+   public static void setup() throws Exception {
+      KeyStoreUtils.generateSelfSignedCertificate(getConfigPath().resolve("ServerConfigurationParserTest-keystore.pfx").toString(), null, PASSWORD,
+            PASSWORD, "server", "localhost");
+      KeyStoreUtils.generateEmptyKeyStore(getConfigPath().resolve("ServerConfigurationParserTest-truststore.pfx").toString(), SECRET);
+      createCredentialStore(getConfigPath().resolve("ServerConfigurationParserTest-credentials.pfx"), SECRET);
    }
 
    @Parameterized.Parameters(name = "{0}")
@@ -172,7 +178,7 @@ public class ServerConfigurationParserTest {
       }
    }
 
-   static KeyStoreCredentialStore newCredentialStore(Path location, String secret) {
+   static KeyStoreCredentialStore newCredentialStore(Path location, char[] secret) {
       Exceptions.unchecked(() -> {
          Files.deleteIfExists(location);
          Files.createDirectories(location.getParent());
@@ -185,7 +191,7 @@ public class ServerConfigurationParserTest {
          credentialStore.initialize(
                map,
                new CredentialStore.CredentialSourceProtectionParameter(
-                     IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, secret.toCharArray())))),
+                     IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, secret)))),
                ElytronPasswordProviderSupplier.PROVIDERS
          );
          return credentialStore;
@@ -194,7 +200,7 @@ public class ServerConfigurationParserTest {
       }
    }
 
-   static void createCredentialStore(Path location, String secret) {
+   static void createCredentialStore(Path location, char[] secret) {
       KeyStoreCredentialStore credentialStore = newCredentialStore(location, secret);
       addCredential(credentialStore, "ldap", "strongPassword");
       addCredential(credentialStore, "db", "test");

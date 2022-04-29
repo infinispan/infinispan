@@ -56,4 +56,12 @@ public class KeyStoreUtils {
          keyStore.store(stream, keyStorePassword);
       }
    }
+
+   public static void generateEmptyKeyStore(String keyStoreFileName, char[] keyStorePassword) throws IOException, GeneralSecurityException {
+      KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      keyStore.load(null, keyStorePassword);
+      try (FileOutputStream stream = new FileOutputStream(keyStoreFileName)) {
+         keyStore.store(stream, keyStorePassword);
+      }
+   }
 }
