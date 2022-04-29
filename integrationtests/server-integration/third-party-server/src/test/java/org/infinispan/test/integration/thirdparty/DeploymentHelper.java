@@ -4,6 +4,7 @@ import static org.infinispan.test.integration.GenericDeploymentHelper.addLibrary
 
 import java.io.File;
 
+import org.infinispan.test.integration.remote.AbstractHotRodQueryIT;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.FileAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -33,7 +34,8 @@ public class DeploymentHelper {
    }
 
    private static void wildfly(WebArchive war) {
-      war.add(new FileAsset(new File("src/test/resources/wildfly/jboss-deployment-structure.xml")), "WEB-INF/jboss-deployment-structure.xml");
+      File file = new File(AbstractHotRodQueryIT.class.getClassLoader().getResource("wildfly/jboss-deployment-structure.xml").getFile());
+      war.add(new FileAsset(file), "WEB-INF/jboss-deployment-structure.xml");
    }
 
    private static void tomcat(WebArchive war) {

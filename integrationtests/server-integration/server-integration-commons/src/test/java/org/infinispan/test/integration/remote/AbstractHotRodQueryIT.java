@@ -10,17 +10,19 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.configuration.XMLStringConfiguration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.test.integration.data.Book;
 import org.infinispan.test.integration.data.Person;
-import org.junit.After;
+import org.infinispan.test.integration.remote.proto.BookQuerySchema;
+import org.infinispan.test.integration.remote.proto.BookQuerySchemaImpl;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,54 +31,73 @@ import org.junit.Test;
  */
 public abstract class AbstractHotRodQueryIT {
 
-   private RemoteCacheManager rcm;
+   private static final String HOST = "127.0.0.1";
 
-   private static RemoteCacheManager createCacheManager() {
-      return new RemoteCacheManager(createConfiguration(), true);
-   }
+   @Test
+   public void testIndexed() {
+      BookQuerySchema schema = new BookQuerySchemaImpl();
+      ConfigurationBuilder config = localServerConfiguration();
+      config.addContextInitializer(schema);
+      try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(config.build())) {
 
-   private static Configuration createConfiguration() {
-      ConfigurationBuilder config = new ConfigurationBuilder();
-      config.addServer().host("127.0.0.1");
-      config.marshaller(new ProtoStreamMarshaller());
-      return config.build();
-   }
+         // register schema
+         registerSchema(remoteCacheManager, schema.getProtoFileName(), schema.getProtoFile());
 
-   @After
-   public void cleanUp() {
-      if (rcm != null)
-         rcm.stop();
+         String xmlConfig = "" +
+               "<distributed-cache name=\"books\">\n" +
+               "  <indexing path=\"${java.io.tmpdir}/index\">\n" +
+               "    <indexed-entities>\n" +
+               "      <indexed-entity>book_sample.Book</indexed-entity>\n" +
+               "    </indexed-entities>\n" +
+               "  </indexing>\n" +
+               "</distributed-cache>";
+         RemoteCache<Object, Object> remoteCache =
+               remoteCacheManager.administration().getOrCreateCache("books", new XMLStringConfiguration(xmlConfig));
+
+         // Add some Books
+         Book book1 = new Book("Infinispan in Action", "Learn Infinispan with using it", 2015);
+         Book book2 = new Book("Cloud-Native Applications with Java and Quarkus", "Build robust and reliable cloud applications", 2019);
+
+         remoteCache.put(1, book1);
+         remoteCache.put(2, book2);
+
+         QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
+         Query<Book> query = queryFactory.create("FROM book_sample.Book WHERE title:'java'");
+         List<Book> list = query.execute().list();
+         assertEquals(1, list.size());
+      }
    }
 
    @Test
    public void testRemoteQuery() throws Exception {
-      rcm = createCacheManager();
+      ConfigurationBuilder config = localServerConfiguration();
+      config.marshaller(new ProtoStreamMarshaller());
+      try (RemoteCacheManager rcm = new RemoteCacheManager(config.build())) {
+         // register schema
+         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
+         String protoKey = "test.proto";
+         ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+         String protoFile = protoSchemaBuilder.fileName(protoKey)
+               .addClass(Person.class)
+               .build(serializationContext);
+         registerSchema(rcm, protoKey, protoFile);
 
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoFile = protoSchemaBuilder.fileName("test.proto")
-            .addClass(Person.class)
-            .build(serializationContext);
+         RemoteCache<String, Person> cache = rcm.getCache();
+         cache.clear();
+         cache.put("Adrian", new Person("Adrian"));
 
-      RemoteCache<String, String> metadataCache = rcm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("test.proto", protoFile);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+         assertTrue(cache.containsKey("Adrian"));
 
-      RemoteCache<String, Person> cache = rcm.getCache();
-      cache.clear();
-      cache.put("Adrian", new Person("Adrian"));
-
-      assertTrue(cache.containsKey("Adrian"));
-
-      QueryFactory qf = Search.getQueryFactory(cache);
-      Query<Person> query = qf.from(Person.class)
-            .having("name").eq("Adrian")
-            .build();
-      List<Person> list = query.execute().list();
-      assertNotNull(list);
-      assertEquals(1, list.size());
-      assertEquals(Person.class, list.get(0).getClass());
-      assertEquals("Adrian", list.get(0).name);
+         QueryFactory qf = Search.getQueryFactory(cache);
+         Query<Person> query = qf.from(Person.class)
+               .having("name").eq("Adrian")
+               .build();
+         List<Person> list = query.execute().list();
+         assertNotNull(list);
+         assertEquals(1, list.size());
+         assertEquals(Person.class, list.get(0).getClass());
+         assertEquals("Adrian", list.get(0).name);
+      }
    }
 
    /**
@@ -86,26 +107,39 @@ public abstract class AbstractHotRodQueryIT {
     */
    @Test
    public void testUninverting() throws Exception {
-      rcm = createCacheManager();
+      ConfigurationBuilder config = localServerConfiguration();
+      config.marshaller(new ProtoStreamMarshaller());
+      try (RemoteCacheManager rcm = new RemoteCacheManager(config.build())) {
+         // register schema
+         SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
+         String protoKey = "test.proto";
+         ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+         String protoFile = protoSchemaBuilder.fileName(protoKey)
+               .addClass(Person.class)
+               .build(serializationContext);
+         registerSchema(rcm, protoKey, protoFile);
 
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(rcm);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoFile = protoSchemaBuilder.fileName("test.proto")
-            .addClass(Person.class)
-            .build(serializationContext);
+         RemoteCache<String, Person> cache = rcm.getCache();
+         cache.clear();
 
+         QueryFactory qf = Search.getQueryFactory(cache);
+         Query<Person> query = qf.from(Person.class)
+               .having("name").eq("John")
+               .orderBy("id")
+               .build();
+         Assert.assertEquals(0, query.execute().list().size());
+      }
+   }
+
+   private ConfigurationBuilder localServerConfiguration() {
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.addServer().host(HOST);
+      return config;
+   }
+
+   private void registerSchema(RemoteCacheManager rcm, String key, String protoFile) {
       RemoteCache<String, String> metadataCache = rcm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("test.proto", protoFile);
+      metadataCache.put(key, protoFile);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
-      RemoteCache<String, Person> cache = rcm.getCache();
-      cache.clear();
-
-      QueryFactory qf = Search.getQueryFactory(cache);
-      Query<Person> query = qf.from(Person.class)
-            .having("name").eq("John")
-            .orderBy("id")
-            .build();
-      Assert.assertEquals(0, query.execute().list().size());
    }
 }

@@ -1,3 +1,5 @@
+package org.infinispan.test.integration.data;
+
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -11,7 +13,7 @@ public class Book {
 
    @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
    @ProtoField(number = 2)
-   final String description;
+   final String author;
 
    @ProtoDoc("@Field(index=Index.YES, store = Store.NO)")
    @ProtoField(number = 3, defaultValue = "0")
@@ -19,10 +21,9 @@ public class Book {
 
 
    @ProtoFactory
-   Book(String title, String description, int publicationYear) {
+   public Book(String title, String author, int publicationYear) {
       this.title = title;
-      this.description = description;
+      this.author = author;
       this.publicationYear = publicationYear;
    }
-   // public Getter methods omitted for brevity
 }
