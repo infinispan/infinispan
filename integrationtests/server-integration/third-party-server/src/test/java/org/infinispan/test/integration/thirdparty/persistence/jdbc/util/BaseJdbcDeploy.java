@@ -1,10 +1,10 @@
 package org.infinispan.test.integration.thirdparty.persistence.jdbc.util;
 
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import static org.infinispan.test.integration.GenericDeploymentHelper.addLibrary;
 
 import java.io.File;
 
-import static org.infinispan.test.integration.GenericDeploymentHelper.addLibrary;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 public class BaseJdbcDeploy {
 
@@ -14,6 +14,12 @@ public class BaseJdbcDeploy {
         addLibrary(war, "com.h2database:h2");
         addLibrary(war, "org.jgroups:jgroups");
         war.addAsResource("connection.properties");
-        war.addAsLibrary(new File(System.getProperty("driver.path")));
+        String driverPath = System.getProperty("driver.path");
+        if (driverPath != null) {
+            File driverFile = new File(driverPath);
+            if (driverFile.exists()) {
+                war.addAsLibrary(driverFile);
+            }
+        }
     }
 }
