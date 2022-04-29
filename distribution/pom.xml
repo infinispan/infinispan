@@ -261,7 +261,7 @@
                            </fileset>
                         </checksum>
                         <echo level="info" message="Uploading Distributions to ${upload.downloadsDir}"/>
-                        <exec dir="${project.build.directory}/distribution" executable="rsync">
+                        <exec dir="${project.build.directory}/distribution" executable="rsync" failonerror="${rsync.failonerror}">
                            <arg value="-rvm"/>
                            <arg line="--protocol=29"/>
                            <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
@@ -272,14 +272,14 @@
                            <arg value="${upload.downloadsDir}"/>
                         </exec>
                         <echo level="info" message="Uploading Schema docs to ${upload.docsDir}"/>
-                        <exec dir="${project.build.directory}/site" executable="rsync">
+                        <exec dir="${project.build.directory}/site" executable="rsync" failonerror="${rsync.failonerror}">
                            <arg value="-rvm"/>
                            <arg line="--protocol=29"/>
                            <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
                            <arg value="configdocs"/>
                            <arg value="${upload.docsDir}"/>
                         </exec>
-                        <exec dir="${project.build.directory}/site" executable="rsync">
+                        <exec dir="${project.build.directory}/site" executable="rsync" failonerror="${rsync.failonerror}">
                            <arg value="-rvm"/>
                            <arg line="--protocol=29"/>
                            <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>

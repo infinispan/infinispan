@@ -285,7 +285,7 @@
                                     <skip>${skipArtifactUpload}</skip>
                                     <target>
                                         <echo level="info" message="Uploading PDF docs"/>
-                                        <exec dir="${project.build.directory}/generated/${infinispan.base.version}" executable="rsync">
+                                        <exec dir="${project.build.directory}/generated/${infinispan.base.version}" executable="rsync" failonerror="${rsync.failonerror}">
                                             <arg value="-rvm"/>
                                             <arg line="--protocol=29"/>
                                             <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
