@@ -28,15 +28,15 @@ infinispan:
     security:
       credentialStores:
         - name: credentials
-          path: credentials.pfx
+          path: ServerConfigurationParserTest-credentials.pfx
           clearTextCredential:
             clearText: secret
         - name: masked
-          path: credentials.pfx
+          path: ServerConfigurationParserTest-credentials.pfx
           maskedCredential:
             masked: "1Hc4Feq2wJs;pepper99;100"
         - name: command
-          path: credentials.pfx
+          path: ServerConfigurationParserTest-credentials.pfx
           commandCredential:
             command: "${build.directory}/test-classes/bin/credential.sh"
       securityRealms:
@@ -49,11 +49,9 @@ infinispan:
                 keyPassword: password
                 password: password
                 path: ServerConfigurationParserTest-keystore.pfx
-                provider: SunJSSE
               truststore:
                 password: secret
-                path: truststore.p12
-                provider: SunJSSE
+                path: ServerConfigurationParserTest-truststore.pfx
               engine:
                 enabledProtocols:
                   - TLSV1.1
@@ -126,13 +124,11 @@ infinispan:
               keystore:
                 alias: server
                 path: ServerConfigurationParserTest-keystore.pfx
-                provider: SunJSSE
                 credentialReference:
                   store: credentials
                   alias: keystore
               truststore:
-                path: truststore.p12
-                provider: SunJSSE
+                path: ServerConfigurationParserTest-truststore.pfx
                 credentialReference:
                   store: credentials
                   alias: trust
