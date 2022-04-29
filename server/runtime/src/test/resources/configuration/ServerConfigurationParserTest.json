@@ -48,21 +48,21 @@
         "credential-stores": [
           {
             "name": "credentials",
-            "path": "credentials.pfx",
+            "path": "ServerConfigurationParserTest-credentials.pfx",
             "clear-text-credential": {
               "clear-text": "secret"
             }
           },
           {
             "name": "masked",
-            "path": "credentials.pfx",
+            "path": "ServerConfigurationParserTest-credentials.pfx",
             "masked-credential": {
               "masked": "1Hc4Feq2wJs;pepper99;100"
             }
           },
           {
             "name": "command",
-            "path": "credentials.pfx",
+            "path": "ServerConfigurationParserTest-credentials.pfx",
             "command-credential": {
               "command": "${build.directory}/test-classes/bin/credential.sh"
             }
@@ -78,13 +78,11 @@
                   "generate-self-signed-certificate-host": "localhost",
                   "key-password": "password",
                   "password": "password",
-                  "path": "ServerConfigurationParserTest-keystore.pfx",
-                  "provider": "SunJSSE"
+                  "path": "ServerConfigurationParserTest-keystore.pfx"
                 },
                 "truststore": {
                   "password": "secret",
-                  "path": "truststore.p12",
-                  "provider": "SunJSSE"
+                  "path": "ServerConfigurationParserTest-truststore.pfx"
                 },
                 "engine": {
                   "enabled-protocols": [
@@ -185,15 +183,13 @@
                 "keystore": {
                   "alias": "server",
                   "path": "ServerConfigurationParserTest-keystore.pfx",
-                  "provider": "SunJSSE",
                   "credential-reference": {
                     "store": "credentials",
                     "alias": "keystore"
                   }
                 },
                 "truststore": {
-                  "path": "truststore.p12",
-                  "provider": "SunJSSE",
+                  "path": "ServerConfigurationParserTest-truststore.pfx",
                   "credential-reference": {
                     "store": "credentials",
                     "alias": "trust"
