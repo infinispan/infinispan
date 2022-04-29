@@ -25,6 +25,14 @@
         <db.username>sa</db.username>
         <db.password>sa</db.password>
         <database>h2</database>
+        <serverMemoryJvmArgs>-Xmx300m</serverMemoryJvmArgs>
+        <jvm.x64.args />
+        <!-- infinispan-custom.xml ignores the infinispan.cluster.stack system property and uses the test-tcp stack -->
+        <transport.stack/>
+        <mcast.ip>234.99.54.14</mcast.ip>
+        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
+        <server.jvm>${env.JAVA_HOME}</server.jvm>
+        <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
     </properties>
 
     <dependencies>
@@ -110,9 +118,6 @@
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
                         <driver.path>${driver.dir}/${driver.jar}</driver.path>
                     </systemPropertyVariables>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>${driver.dir}/${driver.jar}</additionalClasspathElement>
-                    </additionalClasspathElements>
                 </configuration>
                 <executions>
                     <execution>
@@ -123,7 +128,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
@@ -152,7 +156,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
