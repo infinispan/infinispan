@@ -1,0 +1,10 @@
+[id='remotecache_multimapcachemanager-{context}']
+= Counter API
+The `MultimapCacheManager` interface is the entry point to get a `RemoteMultimapCache`.
+
+Hot Rod clients can retrieve the `MultimapCacheManager` interface as in the following example:
+
+[source,java]
+----
+include::code_examples/MultimapCacheManagerRemote.java[]
+----
