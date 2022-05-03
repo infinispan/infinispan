@@ -1046,6 +1046,8 @@ public final class Util {
          return Boolean.valueOf(value);
       } else if (klass == String.class) {
          return value;
+      } else if (klass == String[].class) {
+         return value != null ? value.split(" ") : null;
       } else if (klass == char[].class) {
          return value.toCharArray();
       } else if (klass == Float.class) {
