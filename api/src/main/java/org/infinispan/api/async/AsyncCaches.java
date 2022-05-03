@@ -1,7 +1,7 @@
 package org.infinispan.api.async;
 
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Flow;
 
 import org.infinispan.api.configuration.CacheConfiguration;
 
@@ -17,11 +17,11 @@ public interface AsyncCaches {
 
    CompletionStage<Void> remove(String name);
 
-   Flow.Publisher<String> names();
+   CompletionStage<Set<String>> names();
 
    CompletionStage<Void> createTemplate(String name, CacheConfiguration cacheConfiguration);
 
    CompletionStage<Void> removeTemplate(String name);
 
-   Flow.Publisher<String> templateNames();
+   CompletionStage<Set<String>> templateNames();
 }
