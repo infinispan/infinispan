@@ -33,14 +33,14 @@
          <artifactId>jakarta.persistence-api</artifactId>
          <!-- Version is specified as it requires a different version than
               we use in Infinispan -->
-         <version>3.0.0</version>
+         <version>${version.jakarta.persistence}</version>
       </dependency>
       <dependency>
          <groupId>jakarta.transaction</groupId>
          <artifactId>jakarta.transaction-api</artifactId>
          <!-- Version is specified as it requires a different version than
               we use in Infinispan -->
-         <version>2.0.0</version>
+         <version>${version.jakarta.transaction}</version>
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>

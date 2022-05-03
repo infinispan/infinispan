@@ -171,8 +171,14 @@
 
       <!-- transitives -->
       <dependency>
-         <groupId>org.hibernate.javax.persistence</groupId>
-         <artifactId>hibernate-jpa-2.1-api</artifactId>
+         <groupId>jakarta.persistence</groupId>
+         <artifactId>jakarta.persistence-api</artifactId>
+         <version>${version.jakarta.persistence}</version>
+      </dependency>
+      <dependency>
+         <groupId>jakarta.transaction</groupId>
+         <artifactId>jakarta.transaction-api</artifactId>
+         <version>${version.jakarta.transaction}</version>
       </dependency>
 
       <dependency>
