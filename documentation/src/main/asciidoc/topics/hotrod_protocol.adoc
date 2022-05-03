@@ -2034,8 +2034,23 @@ Here are the current values for each flag: +
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 9.2
 
-This Hot Rod protocol version adds support for transaction operations.
-It includes 3 new operations:
+This Hot Rod protocol version adds support for transaction operations and multimap caches.
+
+It includes 9 new operations to manipulate multimap caches:
+
+* request 0x67 - response 0x68 = Get a key and retrieve multiple values
+* request 0x69 - response 0x6A = Get a key with metadata and retrieve multiple values
+* request 0x6B - response 0x6C = Put a key/value
+* request 0x6D - response 0x6E = Remove a key
+* request 0x6F - response 0x70 = Remove an entry
+* request 0x71 - response 0x72 = Size
+* request 0x73 - response 0x74 = Contains entry
+* request 0x75 - response 0x76 = Contains key
+* request 0x77 - response 0x78 = Contains value
+
+Multimap operations request and response follow the cache operations request and response formats.
+
+It includes 3 new operations for transactions:
 
 * Prepare, with the transaction write set (i.e. modified keys), it tries to prepare and validate the transaction in the server.
 * Commit, commits a prepared transaction.
