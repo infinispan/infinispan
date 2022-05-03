@@ -54,6 +54,7 @@ public class RestMetricsResource {
          checkIsOpenmetrics(response.contentType());
          String metricsText = response.getBody();
          assertTrue(metricsText.contains("# TYPE vendor_" + metricName + " gauge\n"));
+         assertTrue(metricsText.contains("vendor_" + metricName + "{cache=\"" + SERVER_TEST.getMethodName()));
       }
    }
 
@@ -84,7 +85,8 @@ public class RestMetricsResource {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
-      String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_stores";
+      String cacheName = SERVER_TEST.getMethodName();
+      String metricName = String.format("cache_manager_default_cache_%s_statistics_stores{cache=\"%s\"", cacheName, cacheName);
       int NUM_PUTS = 10;
 
       try (RestResponse response = sync(metricsClient.metrics())) {
@@ -185,7 +187,8 @@ public class RestMetricsResource {
       RestClient client = SERVER_TEST.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
-      String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_stores";
+      String cacheName = SERVER_TEST.getMethodName();
+      String metricName = String.format("cache_manager_default_cache_%s_statistics_stores{cache=\"%s\"", cacheName, cacheName);
 
       try (RestResponse response = sync(metricsClient.metricsMetadata())) {
          assertEquals(200, response.getStatus());
