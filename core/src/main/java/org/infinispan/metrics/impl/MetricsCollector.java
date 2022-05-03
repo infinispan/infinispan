@@ -1,13 +1,16 @@
 package org.infinispan.metrics.impl;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -138,39 +141,18 @@ public class MetricsCollector implements Constants {
 
    @SuppressWarnings("unchecked")
    public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
-      return registerMetrics(instance, attributes, namePrefix, cacheName, nodeTag);
+      return registerMetrics(instance, attributes, namePrefix, asTag(CACHE_TAG_NAME, cacheName), nodeTag);
    }
 
    public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName, String nodeName) {
-      return registerMetrics(instance, attributes, namePrefix, cacheName, nodeName == null ? null : Tag.of(NODE_TAG_NAME, nodeName));
+      return registerMetrics(instance, attributes, namePrefix, asTag(CACHE_TAG_NAME, cacheName), asTag(NODE_TAG_NAME, nodeName));
    }
 
-   private Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName, Tag nodeTag) {
+   private Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, Tag ...initialTags) {
       Set<Object> metricIds = new HashSet<>(attributes.size());
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
-      int numTags = 1;
-      if (cacheManagerTag != null) {
-         numTags++;
-         if (cacheName != null) {
-            numTags++;
-         }
-      }
-
-      ArrayList<Tag> tags = new ArrayList<>(numTags);
-      if (nodeTag != null) {
-         // in some case this can be null,
-         // e.g. if it is called:
-         // from org.infinispan.remoting.transport.jgroups.JGroupsTransport.lambda$channelConnected
-         tags.add(nodeTag);
-      }
-
-      if (cacheManagerTag != null) {
-         tags.add(cacheManagerTag);
-         if (cacheName != null) {
-            tags.add(Tag.of(CACHE_TAG_NAME, cacheName));
-         }
-      }
+      List<Tag> tags = prepareTags(initialTags);
 
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
          Supplier<Number> getter = (Supplier<Number>) attr.getter(instance);
@@ -219,6 +201,19 @@ public class MetricsCollector implements Constants {
       }
 
       return metricIds;
+   }
+
+   private List<Tag> prepareTags(Tag ...tags) {
+      List<Tag> allTags = Arrays.stream(tags).filter(Objects::nonNull).collect(Collectors.toList());
+      if (cacheManagerTag != null) allTags.add(cacheManagerTag);
+
+      return allTags;
+   }
+
+   private Tag asTag(String key, String value) {
+      return value != null
+            ? Tag.of(key, value)
+            : null;
    }
 
    public void unregisterMetric(Object metricId) {
