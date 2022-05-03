@@ -166,7 +166,7 @@
       <version.jgroups>4.2.21.Final</version.jgroups>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.1</version.junit>
-      <version.junit5>5.6.3</version.junit5>
+      <version.junit5>5.8.2</version.junit5>
       <version.log4j>2.17.1</version.log4j>
       <version.lucene>8.7.0</version.lucene>
       <version.metainf-services>1.7</version.metainf-services>

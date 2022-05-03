@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of {@link
@@ -387,5 +388,15 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          Attribute<?> attr = attrs.getValue();
          return attr.isNull() || !attr.isModified();
       });
+   }
+
+   public TypedProperties fromProperties(TypedProperties properties, String prefix) {
+      for (Attribute<?> attr : attributes.values()) {
+         String name = prefix + attr.name();
+         if (properties.containsKey(name)) {
+            attr.fromString(properties.getProperty(name, true));
+         }
+      }
+      return properties;
    }
 }
