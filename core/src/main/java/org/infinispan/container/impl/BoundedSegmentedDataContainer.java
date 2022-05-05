@@ -10,6 +10,7 @@ import java.util.PrimitiveIterator;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.ByRef;
@@ -108,7 +109,7 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
 
    @Override
    protected void putEntryInMap(PeekableTouchableMap<K, V> map, int segment, K key, InternalCacheEntry<K, V> ice) {
-      map.computeIfAbsent(key, k -> {
+      map.compute(key, (k, __) -> {
          computeEntryWritten(segment, k, ice);
          return ice;
       });
@@ -139,11 +140,22 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    @Override
    public void clear() {
       entries.clear();
+      for (int i = 0; i < maps.length(); ++i) {
+         clearMapIfPresent(i);
+      }
    }
 
    @Override
    public void clear(IntSet segments) {
       clear(segments, false);
+      segments.forEach((IntConsumer) this::clearMapIfPresent);
+   }
+
+   private void clearMapIfPresent(int segment) {
+      ConcurrentMap<?, ?> map = maps.get(segment);
+      if (map != null) {
+         map.clear();
+      }
    }
 
    @Override
