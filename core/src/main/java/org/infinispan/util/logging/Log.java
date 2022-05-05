@@ -2288,7 +2288,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
-   @Description("Cross-site tombstones are metadata that ensure data consistency. This error indicates that it was not possible to replicate tombstones for some segments during normal operations. Recommended action?")
+   @Description("Cross-site tombstones are metadata that ensure data consistency. This error indicates that it was not possible to replicate tombstones for some segments during normal operations. No action necessary.")
    void failedToTransferTombstones(Address requestor, IntSet segments, @Cause Throwable t);
 
    @Message(value = "Name must be less than 256 bytes, current name '%s' exceeds the size.", id = 663)
