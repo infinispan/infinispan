@@ -5,15 +5,21 @@ import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.NotifierLatch;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
+@Scope(Scopes.GLOBAL)
 public class BlockingInboundInvocationHandler implements InboundInvocationHandler {
    private final Address address;
    private final NotifierLatch latch;
    private final InboundInvocationHandler delegate;
+   @Inject BlockingManager blockingManager;
    private volatile Predicate<ReplicableCommand> predicate;
 
    public static BlockingInboundInvocationHandler replace(EmbeddedCacheManager manager) {
@@ -32,13 +38,17 @@ public class BlockingInboundInvocationHandler implements InboundInvocationHandle
                                  Reply reply, DeliverOrder order) {
       Predicate<ReplicableCommand> predicate = this.predicate;
       if (predicate != null && predicate.test(command)) {
-         latch.blockIfNeeded();
+         blockingManager.runBlocking(() -> {
+            latch.blockIfNeeded();
+            delegate.handleFromCluster(origin, command, reply, order);
+         }, "blocking-inbound-handler");
+         return;
       }
       delegate.handleFromCluster(origin, command, reply, order);
    }
 
    @Override
-   public void handleFromRemoteSite(String origin, XSiteReplicateCommand command,
+   public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command,
                                     Reply reply, DeliverOrder order) {
       delegate.handleFromRemoteSite(origin, command, reply, order);
    }

@@ -1,33 +1,37 @@
 package org.infinispan.partitionhandling;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.topology.CacheStatusRequestCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
 import org.infinispan.commands.topology.RebalanceStartCommand;
-import org.infinispan.commands.topology.TopologyUpdateCommand;
-import org.infinispan.commands.topology.TopologyUpdateStableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
-import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.topology.HeartBeatCommand;
-import org.infinispan.util.ControlledTransport;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
@@ -107,35 +111,25 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
       // Block rebalance phase confirmations on the coordinator
       // Must replace the IIH first so it's updated in the transport
-      BlockingInboundInvocationHandler blockedRebalanceConfirmations =
-            TestingUtil.wrapGlobalComponent(coordinator.getCacheManager(), InboundInvocationHandler.class,
-                                            iih -> new BlockingInboundInvocationHandler(iih, address(coordinator)),
-                                            true);
+      BlockingInboundInvocationHandler blockedRebalanceConfirmations = BlockingInboundInvocationHandler.replace(coordinator.getCacheManager());
       blockedRebalanceConfirmations.blockBefore(RebalancePhaseConfirmCommand.class, c -> c.getCacheName().equals(getDefaultCacheName()));
 
-      ControlledTransport controlledTransportCoord = ControlledTransport.replace(coordinator);
-      controlledTransportCoord.excludeCacheCommands();
-      controlledTransportCoord.excludeCommands(CacheStatusRequestCommand.class, TopologyUpdateCommand.class,
-                                               TopologyUpdateStableCommand.class, HeartBeatCommand.class);
+      BlockRebalanceTransport controlledTransportCoord = replace(coordinator.getCacheManager());
 
       try {
          // Isolate c1, install view [c2, a1, a2] on the other nodes
          // The new view will trigger a rebalance
+         BlockedRequest request = controlledTransportCoord.block(coordinator.getName());
          discard1.setDiscardAll(true);
          Stream<Address> newMembers1 = manager(c2).getTransport().getMembers().stream()
                                                   .filter(n -> !n.equals(manager(c1).getAddress()));
          TestingUtil.installNewView(newMembers1, manager(c2), manager(a1), manager(a2));
          TestingUtil.installNewView(manager(c1));
 
-         // Wait for the coordinator to start the rebalance for both the default cache and the CONFIG cache
+         // Wait for the coordinator to start the rebalance for the default cache
          // The confirmation commands will be blocked on the coordinator
-         ControlledTransport.BlockedRequest<RebalanceStartCommand> rebalanceStart1 =
-               controlledTransportCoord.expectCommand(RebalanceStartCommand.class);
-         ControlledTransport.BlockedRequest<RebalanceStartCommand> rebalanceStart2 =
-               controlledTransportCoord.expectCommand(RebalanceStartCommand.class);
+         assertTrue(request.commandBlocked.await(10, TimeUnit.SECONDS));
          controlledTransportCoord.stopBlocking();
-         rebalanceStart1.send();
-         rebalanceStart2.send();
 
          assertKeysAvailableForRead(cache(c2), keys);
          assertKeysAvailableForRead(cache(a1), keys);
@@ -223,5 +217,82 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       }
       expectException(AvailabilityException.class,
                       () -> cache.getAdvancedCache().getAll(new HashSet<>(Arrays.asList(keys))));
+   }
+
+   private static BlockRebalanceTransport replace(EmbeddedCacheManager manager) {
+      Transport transport = extractGlobalComponent(manager, Transport.class);
+      if (transport instanceof BlockRebalanceTransport) {
+         throw new IllegalStateException("One ControlledTransport per cache should be enough");
+      }
+      BlockRebalanceTransport controlledTransport = new BlockRebalanceTransport(transport);
+      log.tracef("Installing BlockRebalanceTransport on %s", controlledTransport.getAddress());
+      TestingUtil.replaceComponent(manager, Transport.class, controlledTransport, true);
+      return controlledTransport;
+   }
+
+   @Scope(Scopes.GLOBAL)
+   static class BlockRebalanceTransport extends AbstractDelegatingTransport {
+
+      volatile BlockedRequest blockedRequest;
+
+      BlockRebalanceTransport(Transport actual) {
+         super(actual);
+      }
+
+      @Override
+      public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+         BlockedRequest current = blockedRequest;
+         if (current != null && rpcCommand instanceof RebalanceStartCommand) {
+            RebalanceStartCommand rebalanceStartCommand = (RebalanceStartCommand) rpcCommand;
+            if (current.cacheName.equals(rebalanceStartCommand.getCacheName())) {
+               blockedRequest.commandBlocked.countDown();
+               blockedRequest.sendCommand.thenRun(() -> {
+                  try {
+                     super.sendToAll(rpcCommand, deliverOrder);
+                  } catch (Exception e) {
+                     log.error(e);
+                  }
+               });
+            }
+         }
+         super.sendToAll(rpcCommand, deliverOrder);
+      }
+
+      BlockedRequest block(String cacheName) {
+         assert blockedRequest == null;
+         blockedRequest = new BlockedRequest(cacheName);
+         return blockedRequest;
+      }
+
+      void stopBlocking() {
+         BlockedRequest current = blockedRequest;
+         blockedRequest = null;
+         if (current != null) {
+            current.sendCommand.complete(null);
+         }
+      }
+
+      @Override
+      public void start() {
+         // Do nothing, the wrapped transport is already started
+      }
+
+      @Override
+      public void stop() {
+         stopBlocking();
+         super.stop();
+      }
+   }
+
+   private static class BlockedRequest {
+      final String cacheName;
+      final CountDownLatch commandBlocked;
+      final CompletableFuture<Void> sendCommand;
+
+      BlockedRequest(String cacheName) {
+         this.cacheName = cacheName;
+         commandBlocked = new CountDownLatch(1);
+         sendCommand = new CompletableFuture<>();
+      }
    }
 }
