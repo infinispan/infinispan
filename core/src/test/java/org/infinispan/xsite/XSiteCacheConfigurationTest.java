@@ -61,7 +61,7 @@ public class XSiteCacheConfigurationTest {
       assertEquals(b2.strategy(), BackupConfiguration.BackupStrategy.ASYNC);
    }
 
-   @Test (expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Multiple sites with name 'LON-1' are configured. That is not allowed!")
+   @Test (expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Multiple sites have the same name 'LON-1'. This configuration is not valid.")
    public void testSameBackupDefinedMultipleTimes() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -76,7 +76,7 @@ public class XSiteCacheConfigurationTest {
       cb.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: The 'site' must be specified!")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Backup configuration must include a 'site'.")
    public void testBackupSiteNotSpecified() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -124,21 +124,21 @@ public class XSiteCacheConfigurationTest {
       cb.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Cross-site Replication not available for local cache.")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Cross-site replication not available for local cache.")
    public void testLocalCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.sites().addBackup().site(LON);
       builder.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Cross-site Replication not available for local cache.")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: Cross-site replication not available for local cache.")
    public void testLocalCacheWithBackupFor() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.sites().backupFor().remoteCache("remote").remoteSite(LON);
       builder.build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: The XSiteEntryMergePolicy is missing! Must be non-null.")
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN\\d+: The XSiteEntryMergePolicy is missing. The cache configuration must include a merge policy.")
    public void testNullXSiteEntryMergePolicy() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.sites().mergePolicy(null);
