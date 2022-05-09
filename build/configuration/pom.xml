@@ -222,7 +222,7 @@
       <version.maven.resources>3.2.0</version.maven.resources>
       <version.maven.shade>3.2.4</version.maven.shade>
       <version.maven.source>3.2.0</version.maven.source>
-      <version.maven.surefire>3.0.0-M5</version.maven.surefire>
+      <version.maven.surefire>3.0.0-M6</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.owasp-dependency-check-plugin>6.1.0</version.owasp-dependency-check-plugin>
