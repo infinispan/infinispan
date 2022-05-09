@@ -91,11 +91,6 @@
             <artifactId>infinispan-cachestore-rocksdb</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cachestore-jpa</artifactId>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>jakarta.persistence</groupId>

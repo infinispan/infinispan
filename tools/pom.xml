@@ -66,11 +66,6 @@
 
       <dependency>
         <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-cachestore-jpa</artifactId>
-      </dependency>
-
-      <dependency>
-        <groupId>org.infinispan</groupId>
         <artifactId>infinispan-cachestore-remote</artifactId>
       </dependency>
 
