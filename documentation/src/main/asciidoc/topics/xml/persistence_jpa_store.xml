@@ -1,8 +1,0 @@
-<local-cache name="vehicleCache">
-   <persistence passivation="false">
-      <jpa-store xmlns="urn:infinispan:config:store:jpa:{schemaversion}"
-         persistence-unit="org.infinispan.persistence.jpa.configurationTest"
-         entity-class="org.infinispan.persistence.jpa.entity.Vehicle">
-		/>
-   </persistence>
-</local-cache>

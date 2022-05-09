@@ -95,11 +95,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-cachestore-jpa</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-cachestore-remote</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>

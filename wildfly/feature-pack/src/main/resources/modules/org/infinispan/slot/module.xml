@@ -5,7 +5,6 @@
 
       <artifact name="${org.infinispan:infinispan-cachestore-jdbc}"/>
       <artifact name="${org.infinispan:infinispan-cachestore-jdbc-common}"/>
-      <artifact name="${org.infinispan:infinispan-cachestore-jpa}"/>
       <artifact name="${org.infinispan:infinispan-cachestore-remote}"/>
       <artifact name="${org.infinispan:infinispan-cachestore-rocksdb}"/>
       <artifact name="${org.infinispan:infinispan-cdi-common}"/>
