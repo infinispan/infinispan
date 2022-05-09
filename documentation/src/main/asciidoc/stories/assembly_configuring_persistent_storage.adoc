@@ -54,8 +54,6 @@ include::{topics}/proc_configuring_jdbc_cache_stores.adoc[leveloffset=+2]
 //Other cache store implementations
 include::{topics}/ref_cache_store_rocksdb.adoc[leveloffset=+1]
 include::{topics}/ref_cache_store_remote.adoc[leveloffset=+1]
-include::{topics}/ref_cache_store_jpa.adoc[leveloffset=+1]
-include::{topics}/ref_cache_store_jpa_example.adoc[leveloffset=+2]
 include::{topics}/ref_cache_store_cluster.adoc[leveloffset=+1]
 
 // Restore the parent context.
