@@ -30,9 +30,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -81,17 +79,6 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       public ListenerInvocation<Event> build() {
          return new ListenerInvocationImpl<>(target, method, sync, classLoader, subject);
       }
-   }
-
-   private CompletionStage<Void> invokeListeners(EventImpl event, List<ListenerInvocation<Event>> listeners) {
-      AggregateCompletionStage<Void> aggregateCompletionStage = null;
-      for (ListenerInvocation<Event> listener : listeners) {
-         aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage, invokeListener(listener, event));
-      }
-      if (aggregateCompletionStage != null) {
-         return resumeOnCPU(aggregateCompletionStage.freeze(), event);
-      }
-      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -164,25 +151,11 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       return CompletableFutures.completedNull();
    }
 
-   private void handleException(Throwable t) {
+   @Override
+   protected void handleException(Throwable t) {
       // Only cache entry-related listeners should be able to throw an exception to veto the operation.
       // Just log the exception thrown by the invoker, it should contain all the relevant information.
       log.failedInvokingCacheManagerListener(t);
-   }
-
-   private CompletionStage<Void> invokeListener(ListenerInvocation<Event> listener, EventImpl e) {
-      try {
-         CompletionStage<Void> stage = listener.invoke(e);
-         if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
-            return stage.exceptionally(t -> {
-               handleException(t);
-               return null;
-            });
-         }
-      } catch (Exception x) {
-         handleException(x);
-      }
-      return null;
    }
 
    @Override

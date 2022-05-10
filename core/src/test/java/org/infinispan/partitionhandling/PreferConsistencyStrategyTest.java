@@ -14,7 +14,7 @@ import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.topology.RebalancingStatus;
 import org.infinispan.util.logging.events.EventLogManager;
-import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
+import org.infinispan.util.logging.events.TestingEventLogManager;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,7 +27,7 @@ public class PreferConsistencyStrategyTest {
 
    @BeforeMethod
    public void beforeMethod() {
-      EventLogManager eventLogManager = new EventLogManagerImpl();
+      EventLogManager eventLogManager = new TestingEventLogManager();
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       ClusterTopologyManagerImpl topologyManager = new ClusterTopologyManagerImpl();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);

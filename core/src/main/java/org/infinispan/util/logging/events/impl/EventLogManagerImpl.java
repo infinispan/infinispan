@@ -1,9 +1,13 @@
 package org.infinispan.util.logging.events.impl;
 
+import org.infinispan.commons.time.TimeService;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
+import org.infinispan.util.logging.events.EventLoggerNotifier;
 
 /**
  * EventLogManagerImpl. The default implementation of the EventLogManager.
@@ -14,7 +18,15 @@ import org.infinispan.util.logging.events.EventLogger;
 @Scope(Scopes.GLOBAL)
 public class EventLogManagerImpl implements EventLogManager {
 
-   private EventLogger logger = new BasicEventLogger();
+   @Inject protected EventLoggerNotifier notifier;
+   @Inject protected TimeService timeService;
+
+   private EventLogger logger;
+
+   @Start
+   public void start() {
+      this.logger = new BasicEventLogger(notifier, timeService);
+   }
 
    @Override
    public EventLogger replaceEventLogger(EventLogger newLogger) {

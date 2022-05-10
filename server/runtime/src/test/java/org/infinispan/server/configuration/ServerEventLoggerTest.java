@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -27,11 +29,14 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
+import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.server.logging.events.ServerEventImpl;
 import org.infinispan.server.logging.events.ServerEventLogger;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.topology.LocalTopologyManagerImpl;
@@ -62,20 +67,31 @@ public class ServerEventLoggerTest {
    public void testLocalServerEventLogging() {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(amendGlobalConfiguration(new GlobalConfigurationBuilder()), new ConfigurationBuilder())) {
          @Override
-         public void call() {
+         public void call() throws InterruptedException {
+            final CountDownLatch countDown = new CountDownLatch(4);
+            TestLogListener listener = new TestLogListener(countDown);
             cm.getCache();
             EventLogger eventLogger = EventLogManager.getEventLogger(cm);
             assertTrue(eventLogger.getClass().getName(), eventLogger instanceof ServerEventLogger);
+
+            eventLogger.addListener(listener);
             eventLogger.info(EventLogCategory.CLUSTER, "message #1");
             eventLogger.info(EventLogCategory.TASKS, "message #2");
             eventLogger.warn(EventLogCategory.CLUSTER, "message #3");
             eventLogger.warn(EventLogCategory.TASKS, "message #4");
+            eventLogger.removeListener(listener);
+
+            if (!countDown.await(10, TimeUnit.SECONDS)) {
+               throw new TestException("Not received events on listener");
+            }
+
             List<EventLog> events = waitForEvents(2, eventLogger, EventLogCategory.CLUSTER, null);
             assertEquals(2, events.size());
             assertEquals("message #3", events.get(0).getMessage());
             assertEquals(EventLogLevel.WARN, events.get(0).getLevel());
             assertEquals("message #1", events.get(1).getMessage());
             assertEquals(EventLogLevel.INFO, events.get(1).getLevel());
+
             events = waitForEvents(2, eventLogger, null, EventLogLevel.INFO);
             assertEquals(2, events.size());
             assertEquals("message #2", events.get(0).getMessage());
@@ -111,18 +127,30 @@ public class ServerEventLoggerTest {
             TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder),
             TestCacheManagerFactory.createClusteredCacheManager(amendGlobalConfiguration(GlobalConfigurationBuilder.defaultClusteredBuilder()), builder)) {
          @Override
-         public void call() {
+         public void call() throws InterruptedException {
+            final CountDownLatch countDown = new CountDownLatch(4 * cms.length);
+            TestLogListener listener = new TestLogListener(countDown);
             int msg = 1;
             blockUntilViewReceived(cms[0].getCache(), 3);
             // Fill all nodes with logs
             for (int i = 0; i < cms.length; i++) {
                EventLogger eventLogger = EventLogManager.getEventLogger(cms[i]);
                assertTrue(eventLogger.getClass().getName(), eventLogger instanceof ServerEventLogger);
+
+               eventLogger.addListener(listener);
+
                eventLogger.info(EventLogCategory.SECURITY, "message #" + msg++);
                eventLogger.warn(EventLogCategory.SECURITY, "message #" + msg++);
                eventLogger.info(EventLogCategory.TASKS, "message #" + msg++);
                eventLogger.warn(EventLogCategory.TASKS, "message #" + msg++);
+
+               eventLogger.removeListener(listener);
             }
+
+            if (!countDown.await(10, TimeUnit.SECONDS)) {
+               throw new TestException("Not received events on listener");
+            }
+
             // query all nodes
             for (int i = 0; i < cms.length; i++) {
                log.debugf("Checking logs on %s", cms[i].getAddress());
@@ -209,4 +237,17 @@ public class ServerEventLoggerTest {
       new File(globalCfg.globalState().persistentLocation() + "/___event_log_cache.dat").delete();
    }
 
+   @Listener
+   static class TestLogListener {
+      private final CountDownLatch latch;
+
+      TestLogListener(CountDownLatch latch) {
+         this.latch = latch;
+      }
+
+      @Logged
+      public void onDataLogged(EventLog ignore) {
+         latch.countDown();
+      }
+   }
 }

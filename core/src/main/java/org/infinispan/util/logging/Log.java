@@ -2330,4 +2330,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "There was an error when resetting the SIFS index for cache %s", id = 674)
    PersistenceException issueEncounteredResettingIndex(String cacheName, @Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Caught exception while invoking a event logger listener!", id = 675)
+   void failedInvokingEventLoggerListener(@Cause Throwable e);
 }

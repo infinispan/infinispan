@@ -8,6 +8,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -367,6 +368,34 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void or CompletionStage.");
       }
    }
+
+   protected CompletionStage<Void> invokeListeners(T event, Collection<L> listeners) {
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      for (L listener : listeners) {
+         aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage, invokeListener(listener, event));
+      }
+      if (aggregateCompletionStage != null) {
+         return resumeOnCPU(aggregateCompletionStage.freeze(), event);
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   private CompletionStage<Void> invokeListener(L listener, T e) {
+      try {
+         CompletionStage<Void> stage = listener.invoke(e);
+         if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
+            return stage.exceptionally(t -> {
+               handleException(t);
+               return null;
+            });
+         }
+      } catch (Exception x) {
+         handleException(x);
+      }
+      return null;
+   }
+
+   protected void handleException(Throwable t) { }
 
    protected abstract Transaction suspendIfNeeded();
 

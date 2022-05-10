@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,13 +20,14 @@ import org.infinispan.query.core.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogger;
-
+import org.infinispan.util.logging.events.EventLoggerNotifier;
 
 /**
  * ServerEventLogger. This event logger takes care of maintaining the server event log cache and
@@ -38,13 +41,16 @@ import org.infinispan.util.logging.events.EventLogger;
 public class ServerEventLogger implements EventLogger {
    public static final String EVENT_LOG_CACHE = "___event_log_cache";
    public static final Log log = LogFactory.getLog(ServerEventLogger.class);
+
    private final EmbeddedCacheManager cacheManager;
    private final TimeService timeService;
+   private final EventLoggerNotifier notifier;
    private Cache<UUID, ServerEventImpl> eventCache;
 
-   public ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService) {
+   public ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService, EventLoggerNotifier notifier) {
       this.cacheManager = cacheManager;
       this.timeService = timeService;
+      this.notifier = notifier;
    }
 
    private Cache<UUID, ServerEventImpl> getEventCache() {
@@ -65,7 +71,8 @@ public class ServerEventLogger implements EventLogger {
    }
 
    void eventLog(ServerEventImpl event) {
-      getEventCache().putAsync(Util.threadLocalRandomUUID(), event);
+      getEventCache().putAsync(Util.threadLocalRandomUUID(), event)
+            .thenAccept(ignore -> CompletionStages.join(notifier.notifyEventLogged(event)));
    }
 
    @Override
@@ -142,5 +149,20 @@ public class ServerEventLogger implements EventLogger {
       return count > 0
             ? events.subList(0, Math.min(events.size(), count))
             : events;
+   }
+
+   @Override
+   public CompletionStage<Void> addListenerAsync(Object listener) {
+      return notifier.addListenerAsync(listener);
+   }
+
+   @Override
+   public CompletionStage<Void> removeListenerAsync(Object listener) {
+      return notifier.removeListenerAsync(listener);
+   }
+
+   @Override
+   public Set<Object> getListeners() {
+      return notifier.getListeners();
    }
 }
