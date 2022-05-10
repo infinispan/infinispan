@@ -25,7 +25,9 @@ import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.NonBlockingManagerImpl;
 import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLoggerNotifier;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
+import org.infinispan.util.logging.events.impl.EventLoggerNotifierImpl;
 
 /**
  * Factory for building global-scope components which have default empty constructors
@@ -40,7 +42,7 @@ import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
-      RankCalculator.class
+      RankCalculator.class, EventLoggerNotifier.class,
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -71,6 +73,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new NonBlockingManagerImpl();
       else if (componentName.equals(RankCalculator.class.getName()))
          return new RankCalculator();
+      else if (componentName.equals(EventLoggerNotifier.class.getName()))
+         return new EventLoggerNotifierImpl();
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }

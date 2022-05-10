@@ -10,6 +10,7 @@ import java.util.Optional;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
 
@@ -19,7 +20,7 @@ import org.infinispan.security.Security;
  * @author Tristan Tarrant
  * @since 8.2
  */
-public interface EventLogger {
+public interface EventLogger extends Listenable {
    /**
     * Logs a message to the event log with the specified level
     *

@@ -21,7 +21,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.events.EventLogManager;
-import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
+import org.infinispan.util.logging.events.TestingEventLogManager;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
@@ -48,7 +48,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    public void setup() {
       mockitoSession = Mockito.mockitoSession().strictness(Strictness.STRICT_STUBS).startMocking();
 
-      EventLogManager eventLogManager = new EventLogManagerImpl();
+      EventLogManager eventLogManager = new TestingEventLogManager();
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
       topologyManager = mock(ClusterTopologyManagerImpl.class);

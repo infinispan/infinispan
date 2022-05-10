@@ -7,9 +7,9 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
+import org.infinispan.util.logging.events.impl.BaseEventLog;
 
 /**
  * ServerEvent.
@@ -18,47 +18,18 @@ import org.infinispan.util.logging.events.EventLogLevel;
  * @since 8.2
  */
 @ProtoTypeId(ProtoStreamTypeIds.SERVER_EVENT_IMPL)
-public final class ServerEventImpl implements EventLog {
-
-   private final Instant when;
-
-   private final EventLogLevel level;
-
-   private final EventLogCategory category;
-
-   private final String message;
-
-   private final String detail;
-
-   private final String who;
-
-   private final String context;
-
-   private final String scope;
-
+public final class ServerEventImpl extends BaseEventLog {
    @ProtoFactory
    ServerEventImpl(long whenMs, EventLogLevel level, EventLogCategory category, String message, String detail, String context, String who, String scope) {
       this(Instant.ofEpochMilli(whenMs), level, category, message, detail, context, who, scope);
    }
 
    ServerEventImpl(Instant when, EventLogLevel level, EventLogCategory category, String message, String detail, String context, String who, String scope) {
-      this.level = level;
-      this.category = category;
-      this.message = message;
-      this.when = when;
-      this.detail = detail;
-      this.context = context;
-      this.who = who;
-      this.scope = scope;
+      super(when, level, category, message, detail, who, context, scope);
    }
 
    ServerEventImpl(Instant when, EventLogLevel level, EventLogCategory category, String message) {
       this(when, level, category, message, null, null, null, null);
-   }
-
-   @Override
-   public Instant getWhen() {
-      return when;
    }
 
    /**
@@ -109,12 +80,6 @@ public final class ServerEventImpl implements EventLog {
    @Override
    public Optional<String> getScope() {
       return Optional.ofNullable(scope);
-   }
-
-   @Override
-   public int compareTo(EventLog that) {
-      // Intentionally backwards
-      return that.getWhen().compareTo(this.when);
    }
 
    @Override

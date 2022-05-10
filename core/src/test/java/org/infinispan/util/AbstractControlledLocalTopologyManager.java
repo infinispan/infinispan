@@ -21,6 +21,7 @@ import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.RebalancingStatus;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.events.EventLogManager;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
@@ -38,6 +39,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    @Inject
    void inject(BasicComponentRegistry bcr) {
       bcr.wireDependencies(delegate, false);
+      bcr.getComponent(EventLogManager.class).running();
    }
 
    @Start

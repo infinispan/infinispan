@@ -32,7 +32,8 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.topology.TestClusterCacheStatus;
-import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.TestingEventLogManager;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
@@ -72,7 +73,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    private static final Address D = new TestAddress(4, "D");
    public static final String CACHE_NAME = "test";
 
-   private EventLogManagerImpl eventLogManager;
+   private EventLogManager eventLogManager;
    private PersistentUUIDManagerImpl persistentUUIDManager;
    private AvailabilityStrategyContext context;
    private PreferAvailabilityStrategy strategy;
@@ -94,7 +95,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
                               .strictness(Strictness.STRICT_STUBS)
                               .startMocking();
       persistentUUIDManager = new PersistentUUIDManagerImpl();
-      eventLogManager = new EventLogManagerImpl();
+      eventLogManager = new TestingEventLogManager();
       context = mock(AvailabilityStrategyContext.class);
 
       persistentUUIDManager.addPersistentAddressMapping(A, persistentUUID(A));

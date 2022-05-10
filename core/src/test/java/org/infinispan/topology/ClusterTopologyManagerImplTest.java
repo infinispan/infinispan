@@ -41,6 +41,8 @@ import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.TestingEventLogManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -74,6 +76,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
                                                                 TestModuleRepository.defaultModuleRepository(),
                                                                 mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
+      gbcr.replaceComponent(EventLogManager.class.getName(), new TestingEventLogManager(), false);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();
       gbcr.replaceComponent(CacheManagerNotifier.class.getName(), managerNotifier, false);
@@ -158,6 +161,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
                                                                 TestModuleRepository.defaultModuleRepository(),
                                                                 mock(ConfigurationManager.class));
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
+      gbcr.replaceComponent(EventLogManager.class.getName(), new TestingEventLogManager(), false);
 
       CacheManagerNotifierImpl managerNotifier = new CacheManagerNotifierImpl();
       gbcr.replaceComponent(CacheManagerNotifier.class.getName(), managerNotifier, false);
