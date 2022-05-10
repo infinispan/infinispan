@@ -28,24 +28,36 @@ jobs:
     - name: Clone infinispan.github.io
       uses: actions/checkout@master
       with:
-        name: infinispan/infinispan.github.io
+        repository: infinispan/infinispan.github.io
         ref: master
+        path: infinispan.github.io
 
     - if: github.ref == 'refs/heads/main'
       name: Copy docs to dev
       run: |
-        cp -r infinispan/documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
+        cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
 
     - if: github.ref == 'refs/heads/13.0.x'
       name: Copy docs to stable
       run: |
         cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/stable/
 
-    - name: Commit and push changes
+    - name: Commit files
       run: |
         cd infinispan.github.io
-        git config --global user.email "dnaro@redhat.com"
-        git config --global user.name "dnaro"
+        git config -l | grep 'http\..*\.extraheader' | cut -d= -f1 | xargs -L1 git config --unset-all
+        git config --global user.email "infinispan@infinispan.org"
+        git config --global user.name "Infinispan"
         git add . --all
-        git commit -m "Synchronized docs from infinispan ${{ github.ref }}"
-        git push origin master
+        git commit -m "Synchronized core docs from ${{ github.ref }}"
+
+    - name: Push to the community site
+      uses: cpina/github-action-push-to-another-repository@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source-directory: 'infinispan.github.io'
+        destination-github-username: 'infinispan'
+        destination-repository-name: 'infinispan.github.io'
+        user-email: infinispan@infinispan.org
+        target-branch: master
