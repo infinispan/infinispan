@@ -103,6 +103,10 @@ dependency to use the jakarta scope
 Hibernate 6.0 is now supported and is the only implementation supported moving forward.
 If Hibernate 5.3 support is needed, you must use an older version of Infinispan.
 
+== JPAStore has been removed
+
+The JPAStore has been removed in Infinispan 14.0.
+It is suggested instead to use the new SQL Table or Query Stores that were added in Infinispan 13.0.
 
 = Upgrading from 12.1 to 13.0
 
