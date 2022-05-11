@@ -34,6 +34,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.security.Security;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,6 +58,7 @@ public class SearchAdminResource implements ResourceHandler {
       return new Invocations.Builder()
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").deprecated().withAction("mass-index").handleWith(this::reindex)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("reindex").handleWith(this::reindex)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("updateSchema").handleWith(this::updateSchema)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").deprecated().handleWith(this::indexStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").deprecated().handleWith(this::queryStats)
@@ -123,6 +125,25 @@ public class SearchAdminResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> clearIndexes(RestRequest request) {
       return runIndexer(request, Indexer::remove, false);
+   }
+
+   private CompletionStage<RestResponse> updateSchema(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
+      int status = responseBuilder.getStatus();
+      if (status < OK.code() || status >= MULTIPLE_CHOICES.code()) {
+         return completedFuture(responseBuilder.build());
+      }
+
+      responseBuilder.status(NO_CONTENT);
+      try {
+         SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
+         searchMapping.restart();
+      } catch (Exception e) {
+         responseBuilder.status(INTERNAL_SERVER_ERROR).entity("Error updating the index schema " + e.getCause());
+      }
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> indexStats(RestRequest request) {
