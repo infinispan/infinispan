@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -309,7 +310,7 @@ public class LifecycleManager implements ModuleLifecycle {
          SearchMappingBuilder builder = commonBuilding.builder(SearchMappingBuilder.introspector(MethodHandles.lookup()));
          builder.setEntityLoader(new EntityLoader<>(cache, queryStatistics));
          builder.addEntityTypes(types);
-         searchMapping = builder.build();
+         searchMapping = builder.build(Optional.empty());
          cr.registerComponent(searchMapping, SearchMapping.class);
       }
 

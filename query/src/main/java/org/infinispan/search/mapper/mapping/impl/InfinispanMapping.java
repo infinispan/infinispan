@@ -204,6 +204,10 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       return new EntityReferenceImpl(typeContext.typeIdentifier(), typeContext.name(), identifier);
    }
 
+   public SearchIntegration getIntegration() {
+      return integration;
+   }
+
    public void setIntegration(SearchIntegration integration) {
       this.integration = integration;
    }

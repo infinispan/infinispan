@@ -3,9 +3,11 @@ package org.infinispan.query.remote.impl;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
 
+import org.hibernate.search.engine.common.spi.SearchIntegration;
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -21,6 +23,7 @@ import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.search.mapper.mapping.impl.InfinispanMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
@@ -126,6 +129,18 @@ public class LazySearchMapping implements SearchMapping {
       }
    }
 
+   @Override
+   public void restart() {
+      long stamp = stampedLock.writeLock();
+      try {
+         InfinispanMapping mapping = (InfinispanMapping) searchMappingRef.get();
+         searchMappingRef = new LazyRef<>(() -> createMapping(Optional.of(mapping.getIntegration())));
+         searchMappingRef.get(); // create it now
+      } finally {
+         stampedLock.unlockWrite(stamp);
+      }
+   }
+
    private SearchMapping mapping() {
       long stamp = stampedLock.tryOptimisticRead();
       SearchMapping searchMapping = searchMappingRef.get();
@@ -141,6 +156,10 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    private SearchMapping createMapping() {
+      return createMapping(Optional.empty());
+   }
+
+   private SearchMapping createMapping(Optional<SearchIntegration> previousIntegration) {
       IndexingConfiguration indexingConfiguration = cache.getCacheConfiguration().indexing();
       Set<String> indexedEntityTypes = indexingConfiguration.indexedEntityTypes();
       DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
@@ -148,7 +167,7 @@ public class LazySearchMapping implements SearchMapping {
       SearchMapping searchMapping = null;
       if (commonBuilding != null) {
          SearchMappingBuilder builder = SerializationContextSearchMapping.createBuilder(commonBuilding, entityLoader, indexedEntityTypes, serCtx);
-         searchMapping = builder != null ? builder.build() : null;
+         searchMapping = builder != null ? builder.build(previousIntegration) : null;
       }
       if (indexingConfiguration.enabled()) {
          if (valueDataConversion.getStorageMediaType().match(APPLICATION_PROTOSTREAM)) {

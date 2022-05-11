@@ -74,9 +74,17 @@ public interface SearchMapping extends AutoCloseable {
    Set<Class<?>> allIndexedEntityJavaClasses();
 
    /**
-    * Releases all used resources (IO, threads) and restarts from the mapping configuration.
+    * Releases all used resources (IO, threads)
+    * and restarts from the mapping configuration.
     */
    default void reload() {
+   }
+
+   /**
+    * Releases some used resources (e.g.: threads), preserving some others (e.g.: IO)
+    * and restarts from the mapping configuration.
+    */
+   default void restart() {
    }
 
    /**

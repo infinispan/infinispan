@@ -102,4 +102,14 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @throws HotRodClientException
     */
    void reindexCache(String name) throws HotRodClientException;
+
+   /**
+    * Update the index schema state for the given cache,
+    * the cache engine is hot restarted so that index persisted or not persisted state will be preserved.
+    *
+    * @param cacheName the name of the cache on which the index schema will be updated
+    * @throws HotRodClientException
+    */
+   void updateIndexSchema(String cacheName) throws HotRodClientException;
+
 }
