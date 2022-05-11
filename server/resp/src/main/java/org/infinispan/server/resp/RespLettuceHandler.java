@@ -28,7 +28,7 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
       PushOutput<byte[], byte[]> pushOutput = new PushOutput<>(ByteArrayCodec.INSTANCE);
       if (stateMachine.decode(in, pushOutput)) {
-         String type = pushOutput.getType();
+         String type = pushOutput.getType().toUpperCase();
          List content = pushOutput.getContent();
          requestHandler = requestHandler.handleRequest(ctx, type, content.subList(1, content.size()));
       }
