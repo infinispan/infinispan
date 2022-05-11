@@ -3,10 +3,9 @@ package org.infinispan.query.blackbox;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -96,7 +95,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
          return name != null ? name.equals(that.name) : that.name == null;
       }
 
-      @Field(store = Store.YES)
+      @Text
       public String getName() {
          return name;
       }

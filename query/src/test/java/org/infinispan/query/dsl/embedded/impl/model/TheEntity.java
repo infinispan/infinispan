@@ -1,11 +1,8 @@
 package org.infinispan.query.dsl.embedded.impl.model;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
 
 /**
  * @author anistor@redhat.com
@@ -26,13 +23,12 @@ public class TheEntity {
       this.embeddedEntity = embeddedEntity;
    }
 
-   @SortableField(forField = "theField")
-   @Field(name = "theField", store = Store.YES, analyze = Analyze.NO)
+   @Basic(name = "theField", projectable = true, sortable = true)
    public String getField() {
       return fieldX;
    }
 
-   @IndexedEmbedded
+   @Embedded
    public TheEmbeddedEntity getEmbeddedEntity() {
       return embeddedEntity;
    }
@@ -45,7 +41,7 @@ public class TheEntity {
          this.fieldY = fieldY;
       }
 
-      @Field(name = "anotherField", store = Store.YES, analyze = Analyze.NO)
+      @Basic(name = "anotherField", projectable = true)
       public String getFieldY() {
          return fieldY;
       }

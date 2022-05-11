@@ -1,9 +1,7 @@
 package org.infinispan.query.api;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -33,13 +31,13 @@ public class TestEntity {
       this.note = note;
    }
 
-   @Field(store = Store.YES, analyze=Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(1)
    public String getName() {
       return name;
    }
 
-   @Field(store = Store.YES)
+   @Basic(projectable = true)
    @ProtoField(2)
    public String getSurname() {
       return surname;

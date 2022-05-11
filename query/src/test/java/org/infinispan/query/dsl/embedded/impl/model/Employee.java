@@ -3,13 +3,13 @@ package org.infinispan.query.dsl.embedded.impl.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.api.annotations.indexing.option.Structure;
 
 /**
  * @author anistor@redhat.com
@@ -38,58 +38,60 @@ public class Employee {
 
    public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
 
+   // When an entity is created with Infinispan,
+   // the document id is reserved to link the cache entry key to the value.
+   // In this case Hibernate Search is used standalone,
+   // so we need to provide explicitly the document id,
+   // using the Search annotation.
    @DocumentId
-   @Field(analyze = Analyze.NO, store = Store.YES)
+   @Basic(projectable = true)
    public String getId() {
       return id;
    }
 
-   @Field(analyze = Analyze.NO, store = Store.YES)
+   @Keyword(projectable = true)
    public String getName() {
       return name;
    }
 
-   @SortableField
-   @Field(analyze = Analyze.NO)
+   @Basic(sortable = true)
    public Long getPosition() {
       return position;
    }
 
-   @SortableField
-   @Field(indexNullAs = "-1", analyze = Analyze.NO)
+   @Basic(sortable = true, indexNullAs = "-1")
    public Long getCode() {
       return code;
    }
 
-   @Field(store = Store.YES)
+   @Text(projectable = true)
    public String getText() {
       return text;
    }
 
-   @SortableField
-   @Field(analyze = Analyze.NO)
+   @Basic(sortable = true)
    public String getTitle() {
       return title;
    }
 
-   @Field(name = "analyzedInfo", analyze = Analyze.YES)
-   @Field(name = "someMoreInfo", analyze = Analyze.NO)
-   @Field(name = "sameInfo", analyze = Analyze.NO)
+   @Text(name = "analyzedInfo")
+   @Basic(name = "someMoreInfo")
+   @Basic(name = "sameInfo")
    public String getOtherInfo() {
       return otherInfo;
    }
 
-   @IndexedEmbedded
+   @Embedded(structure = Structure.FLATTENED)
    public Company getAuthor() {
       return author;
    }
 
-   @IndexedEmbedded
+   @Embedded(structure = Structure.FLATTENED)
    public List<ContactDetails> getContactDetails() {
       return contactDetails;
    }
 
-   @IndexedEmbedded
+   @Embedded(structure = Structure.FLATTENED)
    public List<ContactDetails> getAlternativeContactDetails() {
       return alternativeContactDetails;
    }
@@ -102,17 +104,17 @@ public class Employee {
 
       public ContactAddress address;
 
-      @Field(analyze = Analyze.NO, store = Store.YES)
+      @Basic(projectable = true)
       public String getEmail() {
          return email;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public String getPhoneNumber() {
          return phoneNumber;
       }
 
-      @IndexedEmbedded
+      @Embedded(structure = Structure.FLATTENED)
       public ContactAddress getAddress() {
          return address;
       }
@@ -125,17 +127,17 @@ public class Employee {
 
          public List<ContactAddress> alternatives = new ArrayList<>();
 
-         @Field(analyze = Analyze.NO)
+         @Basic
          public String getAddress() {
             return address;
          }
 
-         @Field(analyze = Analyze.NO)
+         @Basic
          public String getPostCode() {
             return postCode;
          }
 
-         @IndexedEmbedded(depth = 3)
+         @Embedded(structure = Structure.FLATTENED)
          public List<ContactAddress> getAlternatives() {
             return alternatives;
          }

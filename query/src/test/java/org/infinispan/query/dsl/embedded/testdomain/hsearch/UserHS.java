@@ -7,14 +7,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
-
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
@@ -49,8 +44,7 @@ public class UserHS extends UserBase {
    private String notes;
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 2, defaultValue = "0")
    public int getId() {
       return id;
@@ -62,7 +56,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 3, collectionImplementation = HashSet.class)
    public Set<Integer> getAccountIds() {
       return accountIds;
@@ -74,8 +68,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 4)
    public String getSurname() {
       return surname;
@@ -87,7 +80,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 5)
    public String getSalutation() {
       return salutation;
@@ -99,8 +92,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 6)
    public Integer getAge() {
       return age;
@@ -112,7 +104,7 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 7)
    public Gender getGender() {
       return gender;
@@ -124,7 +116,6 @@ public class UserHS extends UserBase {
    }
 
    @Override
-   @IndexedEmbedded(targetType = AddressHS.class)
    public List<Address> getAddresses() {
       return addresses;
    }
@@ -134,7 +125,7 @@ public class UserHS extends UserBase {
       this.addresses = addresses;
    }
 
-   @IndexedEmbedded(targetType = AddressHS.class)
+   @Embedded(name = "addresses")
    @ProtoField(number = 8, collectionImplementation = ArrayList.class)
    public List<AddressHS> getHSAddresses() {
       return addresses == null ? null : addresses.stream().map(AddressHS.class::cast).collect(Collectors.toList());
@@ -158,7 +149,7 @@ public class UserHS extends UserBase {
 
    @Override
    @ProtoField(number = 10)
-   @Field(analyze = Analyze.NO, store = Store.YES, index = Index.YES)
+   @Basic(projectable = true)
    public Instant getCreationDate() {
       return creationDate;
    }

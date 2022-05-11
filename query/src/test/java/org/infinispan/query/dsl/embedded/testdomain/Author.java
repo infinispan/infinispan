@@ -2,8 +2,7 @@ package org.infinispan.query.dsl.embedded.testdomain;
 
 import java.io.Serializable;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Store;
+import org.infinispan.api.annotations.indexing.Basic;
 
 /**
  * @author anistor@redhat.com
@@ -20,7 +19,7 @@ public class Author implements Serializable {
       this.surname = surname;
    }
 
-   @Field(store = Store.YES)
+   @Basic(projectable = true)
    public String getName() {
       return name;
    }
@@ -29,7 +28,7 @@ public class Author implements Serializable {
       this.name = name;
    }
 
-   @Field
+   @Basic
    public String getSurname() {
       return surname;
    }

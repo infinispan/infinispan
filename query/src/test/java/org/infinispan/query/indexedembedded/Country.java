@@ -3,9 +3,9 @@ package org.infinispan.query.indexedembedded;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -23,12 +23,12 @@ public class Country {
    @ProtoField(number = 3, collectionImplementation = HashSet.class)
    public Set<City> cities = new HashSet<>();
 
-   @Field
+   @Text
    public String getCountryName() {
       return countryName;
    }
 
-   @IndexedEmbedded
+   @Embedded
    public Set<City> getCities() {
       return cities;
    }

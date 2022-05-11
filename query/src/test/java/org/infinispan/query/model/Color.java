@@ -1,19 +1,19 @@
 package org.infinispan.query.model;
 
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.Text;
 
 @Indexed
 public class Color {
 
-   @GenericField
+   @Basic
    private final String name;
 
-   @GenericField(name = "desc1")
-   @KeywordField(name = "desc2")
-   @FullTextField(name = "desc3")
+   @Basic(name = "desc1")
+   @Keyword(name = "desc2")
+   @Text(name = "desc3")
    private final String description;
 
    public Color(String name, String description) {

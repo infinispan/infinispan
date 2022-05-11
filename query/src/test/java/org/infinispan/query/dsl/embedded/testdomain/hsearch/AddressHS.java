@@ -3,11 +3,7 @@ package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 import java.io.Serializable;
 import java.util.Objects;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-
+import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
@@ -27,7 +23,7 @@ public class AddressHS implements Address, Serializable {
 
    @Override
    @ProtoField(number = 1)
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public String getStreet() {
       return street;
    }
@@ -39,8 +35,7 @@ public class AddressHS implements Address, Serializable {
 
    @Override
    @ProtoField(number = 2)
-   @SortableField
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true, sortable = true)
    public String getPostCode() {
       return postCode;
    }
@@ -52,7 +47,7 @@ public class AddressHS implements Address, Serializable {
 
    @Override
    @ProtoField(number = 3, defaultValue = "0")
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public int getNumber() {
       return number;
    }

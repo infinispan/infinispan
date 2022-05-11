@@ -2,8 +2,9 @@ package org.infinispan.query.test;
 
 import java.util.Objects;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 
 @Indexed
 public class Author {
@@ -17,7 +18,7 @@ public class Author {
       this.surname = surname;
    }
 
-   @Field
+   @Text
    public String getName() {
       return name;
    }
@@ -26,7 +27,7 @@ public class Author {
       this.name = name;
    }
 
-   @Field
+   @Basic
    public String getSurname() {
       return surname;
    }

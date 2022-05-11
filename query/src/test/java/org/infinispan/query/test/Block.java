@@ -2,19 +2,18 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed(index = "blockIndex")
 public class Block implements Serializable {
 
-   @Field(analyze = Analyze.NO)
+   @Basic
    private final int height;
 
    private final Transaction latest;
@@ -30,7 +29,7 @@ public class Block implements Serializable {
       return height;
    }
 
-   @IndexedEmbedded
+   @Embedded
    @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.NO)
    @ProtoField(number = 2)
    public Transaction getLatest() {

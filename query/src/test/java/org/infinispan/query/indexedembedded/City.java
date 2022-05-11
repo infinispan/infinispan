@@ -1,6 +1,6 @@
 package org.infinispan.query.indexedembedded;
 
-import org.hibernate.search.annotations.Field;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -11,7 +11,7 @@ public class City {
    @ProtoField(1)
    public String name;
 
-   @Field
+   @Text
    public String getName() {
       return name;
    }
