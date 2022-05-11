@@ -43,6 +43,10 @@ public interface SearchMapping extends AutoCloseable {
 
    boolean isClose();
 
+   default boolean isRestarting() {
+      return false;
+   }
+
    SearchSession getMappingSession();
 
    SearchIndexer getSearchIndexer();

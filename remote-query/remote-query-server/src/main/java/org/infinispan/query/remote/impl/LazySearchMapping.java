@@ -43,6 +43,8 @@ public class LazySearchMapping implements SearchMapping {
    private LazyRef<SearchMapping> searchMappingRef = new LazyRef<>(this::createMapping);
    private final StampedLock stampedLock = new StampedLock();
 
+   private volatile boolean restarting = false;
+
    public LazySearchMapping(SearchMappingCommonBuilding commonBuilding, EntityLoader<?> entityLoader,
                             SerializationContext serCtx, AdvancedCache<?, ?> cache,
                             ProtobufMetadataManagerImpl protobufMetadataManager) {
@@ -76,6 +78,11 @@ public class LazySearchMapping implements SearchMapping {
    @Override
    public boolean isClose() {
       return mapping().isClose();
+   }
+
+   @Override
+   public boolean isRestarting() {
+      return restarting;
    }
 
    @Override
@@ -133,10 +140,12 @@ public class LazySearchMapping implements SearchMapping {
    public void restart() {
       long stamp = stampedLock.writeLock();
       try {
+         restarting = true;
          InfinispanMapping mapping = (InfinispanMapping) searchMappingRef.get();
          searchMappingRef = new LazyRef<>(() -> createMapping(Optional.of(mapping.getIntegration())));
          searchMappingRef.get(); // create it now
       } finally {
+         restarting = false;
          stampedLock.unlockWrite(stamp);
       }
    }
