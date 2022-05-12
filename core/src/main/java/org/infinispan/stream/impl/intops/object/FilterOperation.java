@@ -3,6 +3,8 @@ package org.infinispan.stream.impl.intops.object;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -30,5 +32,19 @@ public class FilterOperation<S> implements IntermediateOperation<S, Stream<S>, S
    @Override
    public Flowable<S> mapFlowable(Flowable<S> input) {
       return input.filter(predicate::test);
+   }
+
+   @Override
+   public void handleInjection(ComponentRegistry registry) {
+      if (predicate instanceof InjectableComponent) {
+         ((InjectableComponent) predicate).inject(registry);
+      }
+   }
+
+   @Override
+   public String toString() {
+      return "FilterOperation{" +
+            "predicate=" + predicate +
+            '}';
    }
 }

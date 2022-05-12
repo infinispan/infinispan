@@ -204,7 +204,6 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
          includeClasses = {
                GroupKey.class,
                CacheMode.class,
-               StateTransferGetGroupKeysTest.CustomConsistentHashFactory.class
          },
          schemaFileName = "test.core.GroupTestsSCI.proto",
          schemaFilePath = "proto/generated",

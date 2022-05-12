@@ -1,5 +1,7 @@
 package org.infinispan.distribution.groups;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.Map;
 
 import javax.transaction.HeuristicMixedException;
@@ -12,7 +14,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -25,10 +26,10 @@ import org.testng.annotations.Test;
 public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
+      return new Object[]{
+            new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
+            new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
+            new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).isolationLevel(IsolationLevel.READ_COMMITTED),
       };
    }
 
@@ -41,112 +42,101 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    }
 
    public void testGetGroupsInTransaction() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
+      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
+
+      TransactionManager tm = tm(testCache.testCache);
       tm.begin();
       testCache.testCache.put(key(10), value(10));
       testCache.testCache.put(key(11), value(11));
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
-      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
+      // make sure that uncommitted value are shown in the transaction
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
       tm.commit();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      expectedGroupSet = createMap(0, 12);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(createMap(0, 12), testCache.testCache.getGroup(GROUP));
    }
 
    public void testGetGroupsWithConcurrentPut() throws Exception {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
+      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
+
+      TransactionManager tm = tm(testCache.testCache);
       tm.begin();
       testCache.testCache.put(key(10), value(10));
       testCache.testCache.put(key(11), value(11));
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
-      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
-      final Transaction tx = tm.suspend();
-
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.put(key(12), value(12));
       expectedGroupSet.put(key(12), value(12));
 
       tm.resume(tx);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
+      // k12 is committed, should be visible now
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
       tm.commit();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      expectedGroupSet = createMap(0, 13);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      // after commit, everything is visible
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
    }
 
    public void testGetGroupsWithConcurrentRemove() throws Exception {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
+      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
+
+      TransactionManager tm = tm(testCache.testCache);
       tm.begin();
       testCache.testCache.put(key(10), value(10));
       testCache.testCache.put(key(11), value(11));
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
-      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
-      final Transaction tx = tm.suspend();
-
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.remove(key(1));
 
       tm.resume(tx);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
+      // previous getGroup() read k1, so the remove is not visible
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
       tm.commit();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-
-      groupKeySet = testCache.testCache.getGroup(GROUP);
+      // after commit, everything is visible
       expectedGroupSet.remove(key(1));
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
    }
 
    public void testGetGroupsWithConcurrentReplace() throws Exception {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
+      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
+
+      TransactionManager tm = tm(testCache.testCache);
       tm.begin();
       testCache.testCache.put(key(10), value(10));
       testCache.testCache.put(key(11), value(11));
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
-      Map<GroupKey, String> expectedGroupSet = createMap(0, 12);
-      final Transaction tx = tm.suspend();
-
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.put(key(1), value(-1));
 
-      if (isolationLevel == IsolationLevel.READ_COMMITTED) {
-         //in ReadCommitted the entries are not wrapped (for read). So the changes are made immediately visible.
+      if (isolationLevel == IsolationLevel.READ_COMMITTED && factory != TestCacheFactory.NON_OWNER) {
+         // in ReadCommitted the entries are not wrapped (for read). So the changes are made immediately visible in write owners
+         // non owners, will use the entry in the context
          expectedGroupSet.put(key(1), value(-1));
-         // GetKeysInGroupCommand will be always replicated to owner nodes and will return all entries, including
-         // those we already have in context. With RC, the context gets overwritten by these updated values.
-         // If we ran regular testCache.get(key(1)), it would still return just v1 (we wouldn't fetch remote value)
       }
 
       tm.resume(tx);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
+      // cacheStream wraps entries; even with read-committed, we are unable to see entry k1=v-1
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
       tm.commit();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-
-      groupKeySet = testCache.testCache.getGroup(GROUP);
+      // after commit, everything is visible
       expectedGroupSet.put(key(1), value(-1));
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
    }
 
 

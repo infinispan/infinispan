@@ -46,7 +46,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -543,15 +542,6 @@ public interface CommandsFactory {
     * @return the SingleXSiteRpcCommand created
     */
    SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command);
-
-   /**
-    * Builds {@link org.infinispan.commands.remote.GetKeysInGroupCommand} used to fetch all the keys belonging to a group.
-    *
-    * @param flagsBitSet Command flags provided by cache
-    * @param groupName the group name.
-    * @return the GetKeysInGroup created.
-    */
-   GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName);
 
    <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f,
          int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);

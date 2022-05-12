@@ -25,7 +25,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -103,28 +102,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // Can't rely on the super injectConfiguration() to be called before our injectDependencies() method2
       isL1Enabled = cacheConfiguration.clustering().l1().enabled();
       isReplicated = cacheConfiguration.clustering().cacheMode().isReplicated();
-   }
-
-   @Override
-   public final Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command)
-         throws Throwable {
-      if (command.isGroupOwner()) {
-         //don't go remote if we are an owner.
-         return invokeNext(ctx, command);
-      }
-      Address primaryOwner = distributionManager.getCacheTopology().getDistribution(command.getGroupName()).primary();
-      CompletionStage<ValidResponse> future = rpcManager.invokeCommand(primaryOwner, command,
-                                                                       SingleResponseCollector.validOnly(),
-                                                                       rpcManager.getSyncRpcOptions());
-      return asyncInvokeNext(ctx, command, future.thenAccept(response -> {
-         if (response instanceof SuccessfulResponse) {
-            //noinspection unchecked
-            List<CacheEntry> cacheEntries = (List<CacheEntry>) response.getResponseValue();
-            for (CacheEntry entry : cacheEntries) {
-               wrapRemoteEntry(ctx, entry.getKey(), entry, false);
-            }
-         }
-      }));
    }
 
    @Override
