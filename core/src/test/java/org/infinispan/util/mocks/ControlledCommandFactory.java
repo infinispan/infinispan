@@ -53,7 +53,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -496,11 +495,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command) {
       return actual.buildSingleXSiteRpcCommand(command);
-   }
-
-   @Override
-   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName) {
-      return actual.buildGetKeysInGroupCommand(flagsBitSet, groupName);
    }
 
    @Override

@@ -46,7 +46,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -782,20 +781,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return command.invoke();
-   }
-
-   @Override
-   public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
-      final KeyValueCollector collector = ctx.isOriginLocal() ?
-            new LocalContextKeyValueCollector() :
-            new RemoteContextKeyValueCollector();
-      Object groupName = command.getGroupName();
-      ctx.forEachValue((key, entry) -> {
-         if (groupName.equals(groupManager.getGroup(key))) {
-            collector.addCacheEntry(entry);
-         }
-      });
-      return collector.getResult();
    }
 
    @Override

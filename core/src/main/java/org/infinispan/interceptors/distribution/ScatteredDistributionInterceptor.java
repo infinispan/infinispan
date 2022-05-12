@@ -39,7 +39,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -368,7 +367,6 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private Object commitSingleEntryOnReturn(InvocationContext ctx, DataWriteCommand command, RepeatableReadEntry cacheEntry,
                                             EntryVersion nextVersion) {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (nextVersion != null) {
             cacheEntry.setMetadata(addVersion(cacheEntry.getMetadata(), nextVersion));
          }
@@ -376,10 +374,10 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          if (command.loadType() != DONT_LOAD) {
             stage = commitSingleEntryIfNoChange(cacheEntry, rCtx, rCommand);
          } else {
-            stage = commitSingleEntryIfNewer(cacheEntry, rCtx, dataWriteCommand);
+            stage = commitSingleEntryIfNewer(cacheEntry, rCtx, rCommand);
          }
          if (cacheEntry.isCommitted() && rCtx.isOriginLocal() && nextVersion != null) {
-            scheduleKeyInvalidation(dataWriteCommand.getKey(), nextVersion, cacheEntry.isRemoved());
+            scheduleKeyInvalidation(rCommand.getKey(), nextVersion, cacheEntry.isRemoved());
          }
 
          return delayedValue(stage, rv);
@@ -1202,31 +1200,6 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, readWriteManyEntriesHelper);
-   }
-
-   @Override
-   public final Object visitGetKeysInGroupCommand(InvocationContext ctx,
-                                                                   GetKeysInGroupCommand command) throws Throwable {
-      final Object groupName = command.getGroupName();
-      if (command.isGroupOwner()) {
-         //don't go remote if we are an owner.
-         return invokeNext(ctx, command);
-      }
-      Address primary = distributionManager.getCacheTopology().getDistribution(groupName).primary();
-      CompletionStage<Void> future =
-            rpcManager.invokeCommand(primary, command, SingleResponseCollector.validOnly(),
-                                     rpcManager.getSyncRpcOptions())
-                  .thenAccept(response -> {
-                     if (response instanceof SuccessfulResponse) {
-                        //noinspection unchecked
-                        List<CacheEntry> cacheEntries =
-                              (List<CacheEntry>) response.getResponseValue();
-                        for (CacheEntry entry : cacheEntries) {
-                           entryFactory.wrapExternalEntry(ctx, entry.getKey(), entry, true, false);
-                        }
-                     }
-                  });
-      return asyncInvokeNext(ctx, command, future);
    }
 
    @Override

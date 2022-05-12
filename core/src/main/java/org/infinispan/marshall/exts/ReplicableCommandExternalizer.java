@@ -23,7 +23,6 @@ import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
 import org.infinispan.commands.topology.CacheJoinCommand;
 import org.infinispan.commands.topology.CacheLeaveCommand;
@@ -139,7 +138,6 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             PutMapCommand.class, RemoveCommand.class, RemoveExpiredCommand.class,
             ReplaceCommand.class,
             ComputeCommand.class, ComputeIfAbsentCommand.class,
-            GetKeysInGroupCommand.class,
             ReadOnlyKeyCommand.class, ReadOnlyManyCommand.class,
             ReadWriteKeyCommand.class, ReadWriteKeyValueCommand.class,
             WriteOnlyKeyCommand.class, WriteOnlyKeyValueCommand.class,

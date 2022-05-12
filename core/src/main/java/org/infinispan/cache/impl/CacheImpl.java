@@ -33,6 +33,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
@@ -44,7 +45,6 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -64,6 +64,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.format.PropertyFormatter;
@@ -77,6 +78,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.eviction.EvictionManager;
@@ -123,7 +125,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -172,6 +173,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject StorageConfigurationManager storageConfigurationManager;
    // TODO Remove after all ISPN-11584 is fixed and the AdvancedCache methods are implemented in EncoderCache
    @Inject ComponentRef<AdvancedCache> encoderCache;
+   @Inject GroupManager groupManager;
 
    protected Metadata defaultMetadata;
    private final String name;
@@ -616,13 +618,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final Map<K, V> getGroup(String groupName, long explicitFlags) {
-      InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
-      return Collections.unmodifiableMap(internalGetGroup(groupName, explicitFlags, ctx));
+      return Collections.unmodifiableMap(internalGetGroup(groupName, explicitFlags, invocationContextFactory.createInvocationContext(false, UNBOUNDED)));
    }
 
    private Map<K, V> internalGetGroup(String groupName, long explicitFlagsBitSet, InvocationContext ctx) {
-      GetKeysInGroupCommand command = commandsFactory.buildGetKeysInGroupCommand(explicitFlagsBitSet, groupName);
-      return invocationHelper.invoke(ctx, command);
+      if (groupManager == null) {
+         return Collections.emptyMap();
+      }
+      try (CacheStream<CacheEntry<K, V>> stream = cacheEntrySet(explicitFlagsBitSet, null).stream()) {
+         return groupManager.collect(stream, ctx, groupName);
+      }
    }
 
    @Override
