@@ -13,6 +13,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :numbered:
 :sectanchors:
 :stem: asciimath
+:context: hot_rod
 
 //
 // Conditional statements
