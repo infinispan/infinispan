@@ -1,6 +1,7 @@
 package org.infinispan.api.common.annotations.indexing._private;
 
 import org.hibernate.search.engine.backend.types.ObjectStructure;
+import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessor;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.processing.PropertyMappingAnnotationProcessorContext;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.PropertyMappingStep;
@@ -16,6 +17,7 @@ public class EmbeddedProcessor implements PropertyMappingAnnotationProcessor<Emb
          name = null;
       }
 
+      mapping.indexingDependency().reindexOnUpdate(ReindexOnUpdate.NO);
       mapping.indexedEmbedded(name)
             .structure((annotation.structure() == Structure.NESTED) ? ObjectStructure.NESTED : ObjectStructure.FLATTENED)
             .includeDepth(annotation.includeDepth());

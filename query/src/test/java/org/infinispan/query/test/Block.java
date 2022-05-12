@@ -2,8 +2,6 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
-import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -30,7 +28,6 @@ public class Block implements Serializable {
    }
 
    @Embedded
-   @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.NO)
    @ProtoField(number = 2)
    public Transaction getLatest() {
       return latest;

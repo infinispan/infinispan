@@ -3,8 +3,6 @@ package org.infinispan.query.test;
 import java.util.Objects;
 import java.util.Set;
 
-import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -44,7 +42,6 @@ public class Book {
    }
 
    @Embedded
-   @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.NO)
    public Set<Author> getAuthors() {
       return authors;
    }
