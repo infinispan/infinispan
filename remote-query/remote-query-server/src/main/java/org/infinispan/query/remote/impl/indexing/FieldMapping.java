@@ -49,7 +49,7 @@ public final class FieldMapping {
 
    private Object indexNullAsObj;
 
-   FieldMapping(String name, boolean index, boolean analyze, boolean store, boolean sortable, String analyzer,
+   public FieldMapping(String name, boolean index, boolean analyze, boolean store, boolean sortable, String analyzer,
                 String indexNullAs,
                 FieldDescriptor fieldDescriptor) {
       if (name == null) {

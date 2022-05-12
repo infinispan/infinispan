@@ -1,6 +1,5 @@
-package org.infinispan.query.remote.impl.indexing;
+package org.infinispan.query.remote.impl.indexing.search5;
 
-import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.LEGACY_ANNOTATION_PACKAGE;
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findAnnotation;
 
 import java.util.HashMap;
@@ -11,6 +10,8 @@ import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.query.remote.impl.indexing.FieldMapping;
+import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.logging.Log;
 
 //todo [anistor] Should be able to have multiple mappings per field like in Hibernate Search, ie. have a @Fields plural annotation
@@ -22,9 +23,9 @@ import org.infinispan.query.remote.impl.logging.Log;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class IndexingMetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
+final class Search5MetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
 
-   private static final Log log = LogFactory.getLog(IndexingMetadataCreator.class, Log.class);
+   private static final Log log = LogFactory.getLog(Search5MetadataCreator.class, Log.class);
 
    // Recognized annotations:
    // @Indexed ('index' optional string attribute; defaults to empty string)
@@ -39,9 +40,9 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
       }
 
       String entityAnalyzer = null;
-      AnnotationElement.Annotation entityAnalyzerAnnotation = findAnnotation(descriptor.getAnnotations(), IndexingMetadata.ANALYZER_ANNOTATION);
+      AnnotationElement.Annotation entityAnalyzerAnnotation = findAnnotation(descriptor.getAnnotations(), Search5Annotations.ANALYZER_ANNOTATION);
       if (entityAnalyzerAnnotation != null) {
-         String v = (String) entityAnalyzerAnnotation.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
+         String v = (String) entityAnalyzerAnnotation.getAttributeValue(Search5Annotations.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
          if (!v.isEmpty()) {
             entityAnalyzer = v;
          }
@@ -50,41 +51,41 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
       Map<String, FieldMapping> fields = new HashMap<>(descriptor.getFields().size());
       for (FieldDescriptor fd : descriptor.getFields()) {
          String fieldLevelAnalyzer = null;
-         AnnotationElement.Annotation fieldAnalyzerAnnotation = findAnnotation(fd.getAnnotations(), IndexingMetadata.ANALYZER_ANNOTATION);
+         AnnotationElement.Annotation fieldAnalyzerAnnotation = findAnnotation(fd.getAnnotations(), Search5Annotations.ANALYZER_ANNOTATION);
          if (fieldAnalyzerAnnotation != null) {
-            String v = (String) fieldAnalyzerAnnotation.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
+            String v = (String) fieldAnalyzerAnnotation.getAttributeValue(Search5Annotations.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
             if (!v.isEmpty()) {
                fieldLevelAnalyzer = v;
             }
          }
 
-         boolean isSortable = findAnnotation(fd.getAnnotations(), IndexingMetadata.SORTABLE_FIELD_ANNOTATION) != null;
+         boolean isSortable = findAnnotation(fd.getAnnotations(), Search5Annotations.SORTABLE_FIELD_ANNOTATION) != null;
 
-         AnnotationElement.Annotation fieldAnnotation = findAnnotation(fd.getAnnotations(), IndexingMetadata.FIELD_ANNOTATION);
+         AnnotationElement.Annotation fieldAnnotation = findAnnotation(fd.getAnnotations(), Search5Annotations.FIELD_ANNOTATION);
          if (fieldAnnotation != null) {
             String fieldName = fd.getName();
-            String v = (String) fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_NAME_ATTRIBUTE).getValue();
+            String v = (String) fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_NAME_ATTRIBUTE).getValue();
             if (!v.isEmpty()) {
                fieldName = v;
             }
 
-            AnnotationElement.Value indexAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_INDEX_ATTRIBUTE);
-            boolean isIndexed = attributeMatches(indexAttribute, LEGACY_ANNOTATION_PACKAGE, IndexingMetadata.INDEX_YES, IndexingMetadata.YES);
+            AnnotationElement.Value indexAttribute = fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_INDEX_ATTRIBUTE);
+            boolean isIndexed = IndexingMetadata.attributeMatches(indexAttribute, Search5Annotations.LEGACY_ANNOTATION_PACKAGE, Search5Annotations.INDEX_YES, IndexingMetadata.YES);
 
-            AnnotationElement.Value analyzeAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_ANALYZE_ATTRIBUTE);
-            boolean isAnalyzed = attributeMatches(analyzeAttribute, LEGACY_ANNOTATION_PACKAGE, IndexingMetadata.ANALYZE_YES, IndexingMetadata.YES);
+            AnnotationElement.Value analyzeAttribute = fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_ANALYZE_ATTRIBUTE);
+            boolean isAnalyzed = IndexingMetadata.attributeMatches(analyzeAttribute, Search5Annotations.LEGACY_ANNOTATION_PACKAGE, Search5Annotations.ANALYZE_YES, IndexingMetadata.YES);
 
-            AnnotationElement.Value storeAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_STORE_ATTRIBUTE);
-            boolean isStored = attributeMatches(storeAttribute, LEGACY_ANNOTATION_PACKAGE, IndexingMetadata.STORE_YES, IndexingMetadata.YES);
+            AnnotationElement.Value storeAttribute = fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_STORE_ATTRIBUTE);
+            boolean isStored = IndexingMetadata.attributeMatches(storeAttribute, Search5Annotations.LEGACY_ANNOTATION_PACKAGE, Search5Annotations.STORE_YES, IndexingMetadata.YES);
 
-            AnnotationElement.Value indexNullAsAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_INDEX_NULL_AS_ATTRIBUTE);
+            AnnotationElement.Value indexNullAsAttribute = fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_INDEX_NULL_AS_ATTRIBUTE);
             String indexNullAs = (String) indexNullAsAttribute.getValue();
-            if (IndexingMetadata.DO_NOT_INDEX_NULL.equals(indexNullAs)) {
+            if (Search5Annotations.DO_NOT_INDEX_NULL.equals(indexNullAs)) {
                indexNullAs = null;
             }
 
-            AnnotationElement.Annotation fieldLevelAnalyzerAnnotationAttribute = (AnnotationElement.Annotation) fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_ANALYZER_ATTRIBUTE).getValue();
-            String fieldLevelAnalyzerAttribute = (String) fieldLevelAnalyzerAnnotationAttribute.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
+            AnnotationElement.Annotation fieldLevelAnalyzerAnnotationAttribute = (AnnotationElement.Annotation) fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_ANALYZER_ATTRIBUTE).getValue();
+            String fieldLevelAnalyzerAttribute = (String) fieldLevelAnalyzerAnnotationAttribute.getAttributeValue(Search5Annotations.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
             if (fieldLevelAnalyzerAttribute.isEmpty()) {
                fieldLevelAnalyzerAttribute = null;
             } else {
@@ -110,15 +111,5 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
       return indexingMetadata;
-   }
-
-   private static boolean attributeMatches(AnnotationElement.Value attr, String packageName, String... validValues) {
-      String v = String.valueOf(attr.getValue());
-      for(String valid : validValues) {
-         if (valid.equals(v) || (packageName+'.'+valid).equals(v)) {
-            return true;
-         }
-      }
-      return false;
    }
 }
