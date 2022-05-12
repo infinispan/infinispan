@@ -57,4 +57,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Segmentation is not supported for a RemoteStore when the configured key media type %s does not match the remote servers key media type %s", id = 10011)
    CacheConfigurationException segmentationRequiresEqualMediaTypes(MediaType cacheMediaType, MediaType serverMediaType);
+
+   @Message(value = "The RemoteCacheStore cannot be segmented when grouping is enabled", id = 10012)
+   CacheConfigurationException segmentationNotSupportedWithGroups();
 }

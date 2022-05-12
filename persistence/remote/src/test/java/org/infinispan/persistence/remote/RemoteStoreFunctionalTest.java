@@ -65,4 +65,13 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
       cb.build();
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testSegmentedWithGroups() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().hash().groups().enabled();
+      cb.persistence()
+            .addStore(RemoteStoreConfigurationBuilder.class)
+            .segmented(true);
+      cb.build();
+   }
 }
