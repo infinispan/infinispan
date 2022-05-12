@@ -13,6 +13,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :numbered:
 :sectanchors:
 :stem: asciimath
+:context: starter
 
 = Infinispan Spring Boot Starter
 
