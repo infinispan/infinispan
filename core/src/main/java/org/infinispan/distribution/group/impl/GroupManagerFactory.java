@@ -1,6 +1,5 @@
 package org.infinispan.distribution.group.impl;
 
-import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -13,10 +12,9 @@ public class GroupManagerFactory extends AbstractNamedCacheComponentFactory impl
 
    @Override
    public Object construct(String componentName) {
-      GroupsConfiguration groupsConfiguration = configuration.clustering().hash().groups();
-      if (!groupsConfiguration.enabled())
-         return null;
+      return configuration.clustering().hash().groups().enabled() ?
+            new GroupManagerImpl(configuration) :
+            null;
 
-      return new GroupManagerImpl(groupsConfiguration.groupers());
    }
 }

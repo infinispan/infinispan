@@ -35,7 +35,6 @@ import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.interceptors.impl.GroupingInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
@@ -188,10 +187,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       // This needs to be added after the locking interceptor (for tx caches) but before the wrapping interceptor.
       if (configuration.clustering().l1().enabled()) {
          interceptorChain.appendInterceptor(createInterceptor(new L1LastChanceInterceptor(), L1LastChanceInterceptor.class), false);
-      }
-
-      if (configuration.clustering().hash().groups().enabled()) {
-         interceptorChain.appendInterceptor(createInterceptor(new GroupingInterceptor(), GroupingInterceptor.class), false);
       }
 
       if (cacheMode.isScattered()) {

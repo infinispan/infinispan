@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.container.impl.EntryFactory.expirationCheckDelay;
-import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +30,6 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
@@ -51,12 +49,12 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -83,8 +81,8 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -129,7 +127,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
       cacheEntry.setSkipLookup(true);
       if (isVersioned && ((MVCCEntry) cacheEntry).isRead()) {
-         addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
+         WriteSkewHelper.addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey(), versionGenerator, log);
       }
    }
 
@@ -455,42 +453,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
-   public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command)
-         throws Throwable {
-      if (command.isGroupOwner()) {
-         dataContainer.forEach(internalCacheEntry -> {
-            Object key = internalCacheEntry.getKey();
-            if (!command.getGroupName().equals(groupManager.getGroup(key)) || ctx.lookupEntry(key) != null)
-               return;
-
-            // Don't wrap tombstones into context; we want to be able to eventually read these values from
-            // cache store and the filter in CacheLoaderInterceptor ignores keys already in context
-            if (internalCacheEntry.getValue() != null) {
-               synchronized (ctx) {
-                  //the process can be made in multiple threads, so we need to synchronize in the context.
-                  entryFactory.wrapExternalEntry(ctx, key, internalCacheEntry, true, false);
-               }
-            }
-         });
-      }
-      // We don't make sure that all read entries have skipLookup here, since EntryFactory does that
-      // for those we have really read, and there shouldn't be any null-read entries.
-      if (ctx.isInTxScope() && useRepeatableRead) {
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-            rCtx.forEachEntry((key, entry) -> {
-               entry.setSkipLookup(true);
-               if (isVersioned && ((MVCCEntry) entry).isRead()) {
-                  addVersionRead(txCtx, entry, key);
-               }
-            });
-         });
-      } else {
-         return invokeNext(ctx, command);
-      }
-   }
-
-   @Override
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
       CompletionStage<Void> stage;
       if (command instanceof TxReadOnlyKeyCommand) {
@@ -755,25 +717,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
                if (addVersionRead && ((MVCCEntry) cacheEntry).isRead()) {
-                  addVersionRead(txCtx, cacheEntry, key);
+                  WriteSkewHelper.addVersionRead(txCtx, cacheEntry, key, versionGenerator, log);
                }
             }
          }
       }
       return rv;
-   }
-
-   private void addVersionRead(TxInvocationContext<?> rCtx, CacheEntry<?, ?> cacheEntry, Object key) {
-      IncrementableEntryVersion version = versionFromEntry(cacheEntry);
-      if (version == null) {
-         version = versionGenerator.nonExistingVersion();
-         if (log.isTraceEnabled()) {
-            log.tracef("Adding non-existent version read for key %s", key);
-         }
-      } else if (log.isTraceEnabled()) {
-         log.tracef("Adding version read %s for key %s", version, key);
-      }
-      rCtx.getCacheTransaction().addVersionRead(key, version);
    }
 
    /**
@@ -798,7 +747,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             cacheEntry.setSkipLookup(true);
             if (isVersioned && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
                   && ((MVCCEntry) cacheEntry).isRead()) {
-               addVersionRead((TxInvocationContext) ctx, cacheEntry, dataWriteCommand.getKey());
+               WriteSkewHelper.addVersionRead((TxInvocationContext) ctx, cacheEntry, dataWriteCommand.getKey(), versionGenerator, log);
             }
          }
       }

@@ -1,35 +1,25 @@
 package org.infinispan.distribution.groups;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.util.logging.Log;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -49,12 +39,12 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER),
-         new GetGroupKeysTest(false, TestCacheFactory.BACKUP_OWNER),
-         new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER),
-         new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
-         new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
+      return new Object[]{
+            new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER),
+            new GetGroupKeysTest(false, TestCacheFactory.BACKUP_OWNER),
+            new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER),
+            new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
+            new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 
@@ -68,34 +58,33 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testGetKeysInGroup() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
    }
 
    public void testGetKeysInGroupWithPersistence() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
+      TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
    }
 
    public void testGetKeysInGroupWithPersistenceAndPassivation() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_PASSIVATION_CACHE));
+      TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_PASSIVATION_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
    }
 
    public void testGetKeysInGroupWithPersistenceAndSkipCacheLoader() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
+      TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.withFlags(Flag.SKIP_CACHE_LOAD).getGroup(GROUP);
-      //noinspection unchecked
       Map<GroupKey, String> expectedGroupSet = new HashMap<>();
       //noinspection unchecked
       for (InternalCacheEntry<GroupKey, String> entry :
@@ -104,87 +93,58 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
             expectedGroupSet.put(entry.getKey(), entry.getValue());
          }
       }
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-   }
-
-   public void testGetKeyInGroupWithConcurrentActivation() throws TimeoutException, InterruptedException, ExecutionException {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_PASSIVATION_CACHE));
-      initCache(testCache.primaryOwner);
-      final BlockCommandInterceptor interceptor = injectIfAbsent(extractTargetCache(testCache));
-
-      interceptor.open = false;
-      Future<Map<GroupKey, String>> future = fork(new Callable<Map<GroupKey, String>>() {
-         @Override
-         public Map<GroupKey, String> call() throws Exception {
-            return testCache.testCache.getGroup(GROUP);
-         }
-      });
-      interceptor.awaitCommandBlock();
-
-      PersistenceManager persistenceManager = TestingUtil.extractComponent(extractTargetCache(testCache), PersistenceManager.class);
-      GroupKey groupKey = (GroupKey) Flowable.fromPublisher(persistenceManager.publishKeys(null, PersistenceManager.AccessMode.BOTH)).take(1).blockingSingle();
-      AssertJUnit.assertNotNull(extractTargetCache(testCache).get(groupKey)); //activates the key
-
-
-      interceptor.unblockCommand();
-
-      //it should able to pick the remove key
-      Map<GroupKey, String> groupKeySet = future.get();
-      Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
    }
 
    public void testRemoveGroupKeys() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.removeGroup(GROUP);
-      AssertJUnit.assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
+      assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
    }
 
    public void testRemoveGroupKeysWithPersistence() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
+      TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.removeGroup(GROUP);
-      AssertJUnit.assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
+      assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
    }
 
    public void testRemoveGroupKeysWithPersistenceAndPassivation() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_PASSIVATION_CACHE));
+      TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_PASSIVATION_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.removeGroup(GROUP);
-      AssertJUnit.assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
+      assertEquals(Collections.emptyMap(), testCache.testCache.getGroup(GROUP));
    }
 
    public void testRemoveGroupKeysWithPersistenceAndSkipCacheWriter() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
+      SkipTestNG.skipIf(cacheMode == CacheMode.SCATTERED_SYNC, "Streams does not work with scattered cache because of tombstones");
+      TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, groupKeySet);
 
       testCache.testCache.withFlags(Flag.SKIP_CACHE_STORE).removeGroup(GROUP);
-      final Map<GroupKey, String> expectedGroupSet2 = new ConcurrentHashMap<>();
+      Map<GroupKey, String> expectedGroupSet2 = new ConcurrentHashMap<>();
       Flowable<MarshallableEntry<GroupKey, String>> flowable = Flowable.fromPublisher(
             TestingUtil.extractComponent(extractTargetCache(testCache), PersistenceManager.class)
                   .publishEntries(true, true));
       flowable.filter(me -> GROUP.equals(me.getKey().getGroup()))
             .blockingForEach(me -> expectedGroupSet2.put(me.getKey(), me.getValue()));
-
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      expectedGroupSet = new HashMap<>(expectedGroupSet2);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(new HashMap<>(expectedGroupSet2), testCache.testCache.getGroup(GROUP));
    }
 
 
@@ -192,10 +152,10 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
    protected void createCacheManagers() throws Throwable {
       createClusteredCaches(3, GroupTestsSCI.INSTANCE, amendConfiguration(createConfigurationBuilder(transactional)));
       defineConfigurationOnAllManagers(PERSISTENCE_CACHE,
-                                       amendConfiguration(createConfigurationBuilderWithPersistence(transactional, false)));
+            amendConfiguration(createConfigurationBuilderWithPersistence(transactional, false)));
       waitForClusterToForm(PERSISTENCE_CACHE);
       defineConfigurationOnAllManagers(PERSISTENCE_PASSIVATION_CACHE,
-                                       amendConfiguration(createConfigurationBuilderWithPersistence(transactional, true)));
+            amendConfiguration(createConfigurationBuilderWithPersistence(transactional, true)));
       waitForClusterToForm(PERSISTENCE_PASSIVATION_CACHE);
    }
 
@@ -205,13 +165,6 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
 
    @Override
    protected final void resetCaches(List<Cache<BaseUtilGroupTest.GroupKey, String>> cacheList) {
-      for (Cache cache : cacheList) {
-         AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
-         BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
-         if (interceptor != null) {
-            interceptor.reset();
-         }
-      }
    }
 
    private ConfigurationBuilder createConfigurationBuilder(boolean transactional) {
@@ -224,60 +177,11 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
    private ConfigurationBuilder createConfigurationBuilderWithPersistence(boolean transactional, boolean passivation) {
       ConfigurationBuilder builder = createConfigurationBuilder(transactional);
       if (passivation) {
-         builder.memory().size(2);
+         builder.memory().maxCount(2);
       }
       builder.persistence().passivation(passivation)
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .fetchPersistentState(false);
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       return builder;
    }
 
-   private BlockCommandInterceptor injectIfAbsent(Cache<?, ?> cache) {
-      log.debugf("Injecting BlockCommandInterceptor in %s", cache);
-      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
-      BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
-      if (interceptor == null) {
-         interceptor = new BlockCommandInterceptor(log);
-         EntryWrappingInterceptor ewi = chain.findInterceptorExtending(EntryWrappingInterceptor.class);
-         AssertJUnit.assertTrue(chain.addInterceptorAfter(interceptor, ewi.getClass()));
-      }
-      interceptor.reset();
-      log.debugf("Injected BlockCommandInterceptor in %s. Interceptor=%s", cache, interceptor);
-      return interceptor;
-   }
-
-   static class BlockCommandInterceptor extends DDAsyncInterceptor {
-
-      private volatile CheckPoint checkPoint;
-      private volatile boolean open;
-      private final Log log;
-
-      private BlockCommandInterceptor(Log log) {
-         this.log = log;
-         checkPoint = new CheckPoint();
-      }
-
-      @Override
-      public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
-         log.debugf("Visit Get Keys in Group. Open? %s. CheckPoint=%s", open, checkPoint);
-         if (!open) {
-            checkPoint.trigger("before");
-            checkPoint.awaitStrict("after", 30, TimeUnit.SECONDS);
-         }
-         return invokeNext(ctx, command);
-      }
-
-      public final void awaitCommandBlock() throws TimeoutException, InterruptedException {
-         checkPoint.awaitStrict("before", 30, TimeUnit.SECONDS);
-      }
-
-      public final void unblockCommand() {
-         checkPoint.trigger("after");
-      }
-
-      public final void reset() {
-         open = true;
-         checkPoint = new CheckPoint();
-      }
-   }
 }

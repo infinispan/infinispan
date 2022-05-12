@@ -39,7 +39,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -491,27 +490,6 @@ public class PrefetchInterceptor<K, V> extends DDAsyncInterceptor {
          boolean ignoreOwnership = rCommand.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.STATE_TRANSFER_PROGRESS);
          return new BackingEntrySet(ignoreOwnership, (CacheSet<CacheEntry<K, V>>) rv);
       });
-   }
-
-   @Override
-   public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
-      if (command.isGroupOwner()) {
-         int segment = keyPartitioner.getSegment(command.getGroupName());
-         switch (svm.getSegmentState(segment)) {
-            case NOT_OWNED:
-               // if we're not a primary owner of this segment, we don't have to wait for it
-               break;
-            case BLOCKED:
-            case KEY_TRANSFER:
-            case VALUE_TRANSFER:
-               return asyncInvokeNext(ctx, command, svm.valuesFuture(command.getTopologyId()));
-            case OWNED:
-               break;
-            default:
-               throw new IllegalStateException();
-         }
-      }
-      return invokeNext(ctx, command);
    }
 
    private Publisher<CacheEntry<K, V>> getPublisher(int segment, boolean ignoreOwnership,

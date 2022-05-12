@@ -36,7 +36,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
@@ -59,7 +58,6 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -199,25 +197,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          stage = loadIfNeeded(ctx, key, command);
       }
       return asyncInvokeNext(ctx, command, stage);
-   }
-
-   @Override
-   public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) {
-      if (!command.isGroupOwner() || hasSkipLoadFlag(command)) {
-         return invokeNext(ctx, command);
-      }
-
-      final Predicate<? super K> keyFilter = new GroupFilter<>(command.getGroupName(), groupManager)
-                                                .and(k -> ctx.lookupEntry(k) == null);
-
-      Publisher<MarshallableEntry<K, V>> publisher = persistenceManager.publishEntries(keyFilter, true, false,
-            PersistenceManager.AccessMode.BOTH);
-      CompletionStage<InternalCacheEntry<K, V>> publisherStage = Flowable.fromPublisher(publisher)
-            .map(me -> PersistenceUtil.convert(me, iceFactory))
-            .doOnNext(ice -> entryFactory.wrapExternalEntry(ctx, ice.getKey(), ice, true, false))
-            .lastElement()
-            .toCompletionStage(null);
-      return asyncInvokeNext(ctx, command, publisherStage);
    }
 
    @Override

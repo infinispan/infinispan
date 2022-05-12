@@ -18,7 +18,6 @@ import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -64,8 +63,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private long transactionDataTimeout;
    private boolean isScattered;
 
-   private final InvocationFinallyFunction<GetKeysInGroupCommand> handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
-
    @Start
    public void start() {
       isScattered = configuration.clustering().cacheMode().isScattered();
@@ -74,53 +71,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
                    .addListener((a, ignored) -> {
                       transactionDataTimeout = a.get();
                    });
-   }
-
-   @Override
-   public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
-      updateTopologyId(command);
-
-      if (ctx.isOriginLocal()) {
-         return invokeNextAndHandle(ctx, command, handleLocalGetKeysInGroupReturn);
-      } else {
-         return invokeNextThenAccept(ctx, command, (rCtx, cmd, rv) -> {
-            final int commandTopologyId = cmd.getTopologyId();
-            if (currentTopologyId() != commandTopologyId &&
-                !distributionManager.getCacheTopology().isReadOwner(cmd.getGroupName())) {
-               throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-            }
-         });
-      }
-   }
-
-   private Object handleLocalGetKeysInGroupReturn(InvocationContext ctx, GetKeysInGroupCommand cmd, Object rv,
-                                                  Throwable throwable) throws Throwable {
-      final int commandTopologyId = cmd.getTopologyId();
-      boolean shouldRetry;
-      if (throwable != null) {
-         // Must retry if we got an OutdatedTopologyException or SuspectException
-         Throwable ce = throwable;
-         while (ce instanceof RemoteException) {
-            ce = ce.getCause();
-         }
-         shouldRetry = ce instanceof OutdatedTopologyException || ce instanceof SuspectException;
-      } else {
-         // Only check the topology id if if we are an owner
-         shouldRetry = currentTopologyId() != commandTopologyId &&
-               distributionManager.getCacheTopology().isWriteOwner(cmd.getGroupName());
-      }
-      if (shouldRetry) {
-         logRetry(currentTopologyId(), cmd);
-         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
-         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-         int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
-         cmd.setTopologyId(newTopologyId);
-         CompletionStage<Void> transactionDataStage = stateTransferLock.transactionDataFuture(newTopologyId);
-         return retryWhenDone(transactionDataStage, newTopologyId, ctx, cmd, handleLocalGetKeysInGroupReturn);
-      } else {
-         return valueOrException(rv, throwable);
-      }
-
    }
 
    protected final void logRetry(int currentTopologyId, TopologyAffectedCommand cmd) {

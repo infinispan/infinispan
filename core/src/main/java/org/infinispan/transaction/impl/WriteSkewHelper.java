@@ -22,6 +22,7 @@ import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.logging.Log;
 
 /**
  * Encapsulates write skew logic in maintaining version maps, etc.
@@ -110,6 +111,20 @@ public class WriteSkewHelper {
             versionGenerator.increment(oldVersion);
    }
 
+   public static void addVersionRead(TxInvocationContext<?> ctx, CacheEntry<? ,?> entry, Object key, VersionGenerator versionGenerator, Log log) {
+      IncrementableEntryVersion version = versionFromEntry(entry);
+      if (version == null) {
+         version = versionGenerator.nonExistingVersion();
+         if (log.isTraceEnabled()) {
+            log.tracef("Adding non-existent version read for key %s", key);
+         }
+      } else if (log.isTraceEnabled()) {
+         log.tracef("Adding version read %s for key %s", version, key);
+      }
+      ctx.getCacheTransaction().addVersionRead(key, version);
+   }
+
+   @FunctionalInterface
    public interface KeySpecificLogic {
       boolean performCheckOnSegment(int segment);
    }

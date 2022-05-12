@@ -34,7 +34,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.RenewBiasCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -179,9 +178,6 @@ public class RemoteCommandsFactory {
                break;
             case InvalidateL1Command.COMMAND_ID:
                command = new InvalidateL1Command();
-               break;
-            case GetKeysInGroupCommand.COMMAND_ID:
-               command = new GetKeysInGroupCommand();
                break;
             case GetCacheEntryCommand.COMMAND_ID:
                command = new GetCacheEntryCommand();

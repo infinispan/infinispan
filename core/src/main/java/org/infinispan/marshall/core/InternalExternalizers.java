@@ -48,6 +48,7 @@ import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
+import org.infinispan.distribution.group.impl.CacheEntryGroupPredicate;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
@@ -252,6 +253,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new InternalMetadataImpl.Externalizer(), exts);
       addInternalExternalizer(AutoStateTransferResponse.EXTERNALIZER, exts);
       addInternalExternalizer(CommandInvocationId.EXTERNALIZER, exts);
+      addInternalExternalizer(CacheEntryGroupPredicate.EXTERNALIZER, exts);
 
       return exts;
    }

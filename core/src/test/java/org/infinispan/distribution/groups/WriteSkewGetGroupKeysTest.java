@@ -1,5 +1,8 @@
 package org.infinispan.distribution.groups;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import java.util.Map;
 
 import javax.transaction.HeuristicMixedException;
@@ -11,7 +14,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -24,10 +26,10 @@ import org.testng.annotations.Test;
 public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER),
-         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER),
+      return new Object[]{
+            new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER),
+            new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER),
+            new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER),
       };
    }
 
@@ -40,103 +42,102 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
       isolationLevel = IsolationLevel.REPEATABLE_READ;
    }
 
-
-   public void testRemoveGroupWithConcurrentConflictingUpdate() throws Exception{
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+   public void testRemoveGroupWithConcurrentConflictingUpdate() throws Exception {
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
-      tm.begin();
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      final Transaction tx = tm.suspend();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      TransactionManager tm = tm(testCache.testCache);
+      tm.begin();
+      // all keys (and versions) in group stay in context
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.put(key(1), value(-1));
 
       tm.resume(tx);
       try {
          testCache.testCache.removeGroup(GROUP);
-         groupKeySet = testCache.testCache.getGroup(GROUP);
          expectedGroupSet.clear();
-         AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-         assertCommitFail(tm); //write skew should abort the transaction
+         // all keys in group are removed. It is visible inside the transaction
+         assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+
+         // removeGroup() conflicts with put(k1, v-1) and a WriteSkewException is expected!
+         assertCommitFail(tm);
       } catch (WriteSkewException e) {
          // On non-owner, the second retrieval of keys within the group will find out that one of the entries
          // has different value and will throw WSE
          tm.rollback();
       }
 
-
-      groupKeySet = testCache.testCache.getGroup(GROUP);
+      // transaction rolled back, we should see all keys in group again.
+      //noinspection ReuseOfLocalVariable
       expectedGroupSet = createMap(0, 10);
       expectedGroupSet.put(key(1), value(-1));
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
    }
 
-   public void testRemoveGroupWithConcurrentAdd() throws Exception{
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+   public void testRemoveGroupWithConcurrentAdd() throws Exception {
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
-      tm.begin();
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      final Transaction tx = tm.suspend();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      TransactionManager tm = tm(testCache.testCache);
+      tm.begin();
+      // all keys (and versions) in group stay in context
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.put(key(11), value(11));
 
       tm.resume(tx);
+      // removeGroup sees k11 and it will be removed
       testCache.testCache.removeGroup(GROUP);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
       expectedGroupSet.clear();
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-      assertCommitOk(tm); //write skew should *not* abort the transaction
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      assertCommitOk(tm); //no write skew expected!
 
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      // no keys in group
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
    }
 
-   public void testRemoveGroupWithConcurrentConflictingRemove() throws Exception{
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+   public void testRemoveGroupWithConcurrentConflictingRemove() throws Exception {
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
-      tm.begin();
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      final Transaction tx = tm.suspend();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      TransactionManager tm = tm(testCache.testCache);
+      tm.begin();
+      // all keys (and versions) in group stay in context
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.remove(key(9));
 
       tm.resume(tx);
       testCache.testCache.removeGroup(GROUP);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
       expectedGroupSet.clear();
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
-      assertCommitFail(tm); //write skew should *not* abort the transaction
+      // inside the transaction, no keys should be visible
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      assertCommitFail(tm); // write skew expected! 2 transactions removed k9 concurrently
 
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      expectedGroupSet = createMap(0, 9);
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      // keys [0,8] not removed
+      assertEquals(createMap(0, 9), testCache.testCache.getGroup(GROUP));
    }
 
-   public void testRemoveGroupWithConcurrentRemove() throws Exception{
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
+   public void testRemoveGroupWithConcurrentRemove() throws Exception {
+      TestCache testCache = createTestCacheAndReset(GROUP, caches());
       initCache(testCache.primaryOwner);
 
-      final TransactionManager tm = tm(testCache.testCache);
-      tm.begin();
-      Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
-      final Transaction tx = tm.suspend();
 
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      TransactionManager tm = tm(testCache.testCache);
+      tm.begin();
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
+      Transaction tx = tm.suspend();
 
       testCache.primaryOwner.put(key(11), value(11));
       testCache.primaryOwner.put(key(12), value(12));
@@ -144,20 +145,19 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
 
       tm.resume(tx);
       testCache.testCache.removeGroup(GROUP);
-      groupKeySet = testCache.testCache.getGroup(GROUP);
       expectedGroupSet.clear();
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      // everything is removed including the new keys
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
       assertCommitOk(tm); //write skew should *not* abort the transaction
 
-      groupKeySet = testCache.testCache.getGroup(GROUP);
-      expectedGroupSet.clear();
-      AssertJUnit.assertEquals(expectedGroupSet, groupKeySet);
+      // everything is removed
+      assertEquals(expectedGroupSet, testCache.testCache.getGroup(GROUP));
    }
 
    private static void assertCommitFail(TransactionManager tm) throws SystemException {
       try {
          tm.commit();
-         AssertJUnit.fail("Commit should fail!");
+         fail("Commit should fail!");
       } catch (RollbackException | HeuristicMixedException | HeuristicRollbackException e) {
          //ignored, it is expected
       }
