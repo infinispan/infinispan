@@ -71,12 +71,11 @@ public class CacheKeySerializationTest extends BaseUnitTestCase {
 		testId(DefaultCacheKeysFactory.INSTANCE, WithSimpleId.class.getName(), 1L);
 	}
 
-	// TEST disabled until https://hibernate.atlassian.net/browse/HHH-15150 can be resolved
-//	@Test
-//	@TestForIssue(jiraKey = "HHH-11202")
-//	public void testDefaultCacheKeyEmbeddedId() throws Exception {
-//		testId(DefaultCacheKeysFactory.INSTANCE, WithEmbeddedId.class.getName(), new PK(1L));
-//	}
+	@Test
+	@TestForIssue(jiraKey = "HHH-11202")
+	public void testDefaultCacheKeyEmbeddedId() throws Exception {
+		testId(DefaultCacheKeysFactory.INSTANCE, WithEmbeddedId.class.getName(), new PK(1L));
+	}
 
 	private void testId(CacheKeysFactory cacheKeysFactory, String entityName, Object id) throws Exception {
 		final SessionFactoryImplementor sessionFactory = getSessionFactory(cacheKeysFactory.getClass().getName());
