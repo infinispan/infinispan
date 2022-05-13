@@ -30,7 +30,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    @Override
    public boolean isIndexed(String[] propertyPath) {
-      return getFlag(propertyPath, IndexingMetadata::isFieldIndexed);
+      return getFlag(propertyPath, IndexingMetadata::isFieldSearchable);
    }
 
    @Override
@@ -40,13 +40,12 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    @Override
    public boolean isProjectable(String[] propertyPath) {
-      return getFlag(propertyPath, IndexingMetadata::isFieldStored);
+      return getFlag(propertyPath, IndexingMetadata::isFieldProjectable);
    }
 
    @Override
    public boolean isSortable(String[] propertyPath) {
-      return getFlag(propertyPath, IndexingMetadata::isFieldStored) &&
-            !getFlag(propertyPath, IndexingMetadata::isFieldAnalyzed);
+      return getFlag(propertyPath, IndexingMetadata::isFieldSortable);
    }
 
    @Override

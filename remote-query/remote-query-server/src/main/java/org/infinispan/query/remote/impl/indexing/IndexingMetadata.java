@@ -1,9 +1,6 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -40,20 +37,11 @@ public final class IndexingMetadata {
     */
    private final Map<String, FieldMapping> fields;
 
-   /**
-    * The collection of sortable field names. Cab be empty but never {@code null}.
-    */
-   private final Set<String> sortableFields;
-
    public IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields) {
       this.isIndexed = isIndexed;
       this.indexName = indexName;
       this.analyzer = analyzer;
       this.fields = fields;
-      this.sortableFields = fields == null ? Collections.emptySet() : fields.values().stream()
-            .filter(FieldMapping::sortable)
-            .map(FieldMapping::name)
-            .collect(Collectors.toSet());
    }
 
    public boolean isIndexed() {
@@ -69,12 +57,12 @@ public final class IndexingMetadata {
       return analyzer;
    }
 
-   public boolean isFieldIndexed(String fieldName) {
+   public boolean isFieldSearchable(String fieldName) {
       if (fields == null) {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.index();
+      return fieldMapping != null && fieldMapping.searchable();
    }
 
    public boolean isFieldAnalyzed(String fieldName) {
@@ -82,15 +70,23 @@ public final class IndexingMetadata {
          return false;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.analyze();
+      return fieldMapping != null && fieldMapping.analyzed();
    }
 
-   public boolean isFieldStored(String fieldName) {
+   public boolean isFieldProjectable(String fieldName) {
       if (fields == null) {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.store();
+      return fieldMapping != null && fieldMapping.projectable();
+   }
+
+   public boolean isFieldSortable(String fieldName) {
+      if (fields == null) {
+         return isIndexed;
+      }
+      FieldMapping fieldMapping = fields.get(fieldName);
+      return fieldMapping != null && fieldMapping.sortable();
    }
 
    public Object getNullMarker(String fieldName) {
@@ -108,10 +104,6 @@ public final class IndexingMetadata {
       return fields.get(name);
    }
 
-   public Set<String> getSortableFields() {
-      return sortableFields;
-   }
-
    @Override
    public String toString() {
       return "IndexingMetadata{" +
@@ -119,7 +111,6 @@ public final class IndexingMetadata {
             ", indexName='" + indexName + '\'' +
             ", analyzer='" + analyzer + '\'' +
             ", fields=" + fields +
-            ", sortableFields=" + sortableFields +
             '}';
    }
 

@@ -10,9 +10,11 @@ import org.infinispan.protostream.AnnotationMetadataCreator;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
 
 //todo [anistor] Should be able to have multiple mappings per field like in Hibernate Search, ie. have a @Fields plural annotation
 
@@ -98,7 +100,11 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
                throw new IllegalStateException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
             }
 
-            FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, fd);
+            String analyzer = analyzer(fd.getType(), isAnalyzed, fieldLevelAnalyzer);
+            FieldMapping fieldMapping = new FieldMapping(
+                  fieldName,
+                  isIndexed, isStored, false, sortable(analyzer, isStored, isSortable),
+                  analyzer, null, indexNullAs, fd);
             fields.put(fieldName, fieldMapping);
             if (log.isDebugEnabled()) {
                log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);
@@ -111,5 +117,22 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
       return indexingMetadata;
+   }
+
+   private static boolean sortable(String fieldLevelAnalyzer, boolean isStored, boolean isSortable) {
+      if (fieldLevelAnalyzer != null) {
+         return false;
+      }
+
+      return (isSortable || isStored);
+   }
+
+   private String analyzer(Type type, boolean analyze, String fieldLevelAnalyzer) {
+      if (!Type.STRING.equals(type) || !analyze) {
+         return null;
+      }
+
+      return (fieldLevelAnalyzer != null) ? fieldLevelAnalyzer :
+            DefaultAnalysisConfigurer.STANDARD_ANALYZER_NAME;
    }
 }

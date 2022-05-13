@@ -45,7 +45,7 @@ public class MessageReferenceProvider {
          if (Type.MESSAGE.equals(fieldDescriptor.getType())) {
             // If a protobuf field is a Message reference, only take it into account
             // if the Message is @Indexed and has at least one @Field annotation
-            if (fieldMapping.index() && isIndexable(fieldDescriptor.getMessageType())) {
+            if (fieldMapping.searchable() && isIndexable(fieldDescriptor.getMessageType())) {
                // Hibernate Search can handle the @Field regardless of its attributes
                embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
             }

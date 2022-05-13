@@ -11,32 +11,19 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  */
 public final class FieldMapping {
 
-   /**
-    * The name of the field in the index.
-    */
    private final String name;
 
-   /**
-    * Enable indexing.
-    */
-   private final boolean index;
+   private final boolean searchable;
 
-   /**
-    * Enable analysis.
-    */
-   private final boolean analyze;
+   private final boolean projectable;
 
-   /**
-    * Enable storage.
-    */
-   private final boolean store;
+   private final boolean aggregable;
 
    private final boolean sortable;
 
-   /**
-    * The name of the analyzer definition.
-    */
    private final String analyzer;
+
+   private final String normalizer;
 
    private final String indexNullAs;
 
@@ -49,9 +36,8 @@ public final class FieldMapping {
 
    private Object indexNullAsObj;
 
-   public FieldMapping(String name, boolean index, boolean analyze, boolean store, boolean sortable, String analyzer,
-                String indexNullAs,
-                FieldDescriptor fieldDescriptor) {
+   public FieldMapping(String name, boolean searchable, boolean projectable, boolean aggregable, boolean sortable,
+                       String analyzer, String normalizer, String indexNullAs, FieldDescriptor fieldDescriptor) {
       if (name == null) {
          throw new IllegalArgumentException("name argument cannot be null");
       }
@@ -59,11 +45,12 @@ public final class FieldMapping {
          throw new IllegalArgumentException("fieldDescriptor argument cannot be null");
       }
       this.name = name;
-      this.index = index;
-      this.analyze = analyze;
-      this.store = store;
+      this.searchable = searchable;
+      this.projectable = projectable;
+      this.aggregable = aggregable;
       this.sortable = sortable;
       this.analyzer = analyzer;
+      this.normalizer = normalizer;
       this.indexNullAs = indexNullAs;
       this.fieldDescriptor = fieldDescriptor;
    }
@@ -72,16 +59,16 @@ public final class FieldMapping {
       return name;
    }
 
-   public boolean index() {
-      return index;
+   public boolean searchable() {
+      return searchable;
    }
 
-   public boolean analyze() {
-      return analyze;
+   public boolean projectable() {
+      return projectable;
    }
 
-   public boolean store() {
-      return store;
+   public boolean aggregable() {
+      return aggregable;
    }
 
    public boolean sortable() {
@@ -92,13 +79,17 @@ public final class FieldMapping {
       return analyzer;
    }
 
+   public String normalizer() {
+      return normalizer;
+   }
+
+   public boolean analyzed() {
+      return analyzer != null;
+   }
+
    public Object indexNullAs() {
       init();
       return indexNullAsObj;
-   }
-
-   public String notParsedIndexNull() {
-      return indexNullAs;
    }
 
    private void init() {
@@ -148,12 +139,15 @@ public final class FieldMapping {
    public String toString() {
       return "FieldMapping{" +
             "name='" + name + '\'' +
-            ", index=" + index +
-            ", analyze=" + analyze +
-            ", store=" + store +
+            ", searchable=" + searchable +
+            ", projectable=" + projectable +
+            ", aggregable=" + aggregable +
             ", sortable=" + sortable +
             ", analyzer='" + analyzer + '\'' +
-            ", indexNullAs=" + indexNullAs +
+            ", normalizer='" + normalizer + '\'' +
+            ", indexNullAs='" + indexNullAs + '\'' +
+            ", fieldDescriptor=" + fieldDescriptor +
+            ", indexNullAsObj=" + indexNullAsObj +
             '}';
    }
 }
