@@ -35,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import net.jcip.annotations.Immutable;
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -79,6 +78,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogSerializer;
 
 /**
  * REST resource to manage the cache container.
@@ -571,6 +571,14 @@ public class ContainerResource implements ResourceHandler {
       return sw.toString();
    }
 
+   private String serializeEvent(EventLog event, MediaType mediaType) {
+      StringWriter sw = new StringWriter();
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).build()) {
+         parserRegistry.serializeWith(writer, new EventLogSerializer(), event);
+      }
+      return sw.toString();
+   }
+
    @Listener
    public class ConfigurationListener {
       final EmbeddedCacheManager cacheManager;
@@ -603,8 +611,7 @@ public class ContainerResource implements ResourceHandler {
       public CompletionStage<Void> onDataLogged(EventLog event) {
          if (event.getCategory() != EventLogCategory.LIFECYCLE) return CompletableFutures.completedNull();
 
-         final LifecycleEvent lifecycleEvent = new LifecycleEvent(event);
-         final ServerSentEvent sse = new ServerSentEvent("lifecycle-event", lifecycleEvent.toJson().toString());
+         final ServerSentEvent sse = new ServerSentEvent("lifecycle-event", serializeEvent(event, mediaType));
          return eventStream.sendEvent(sse);
       }
 
@@ -627,32 +634,6 @@ public class ContainerResource implements ResourceHandler {
             }
          }
          return eventStream.sendEvent(sse);
-      }
-   }
-
-   @Immutable
-   private static class LifecycleEvent implements JsonSerialization {
-      private final Json representation;
-
-      LifecycleEvent(EventLog event) {
-         this.representation = Json.object()
-               .set("message", event.getMessage())
-               .set("category", event.getCategory().name())
-               .set("level", event.getLevel().name())
-               .set("time", event.getWhen().toEpochMilli())
-               .set("owner", event.getWho().orElse(""))
-               .set("context", event.getContext().orElse(""))
-               .set("scope", event.getScope().orElse(""));
-      }
-
-      @Override
-      public Json toJson() {
-         return representation;
-      }
-
-      @Override
-      public String toString() {
-         return representation.toPrettyString();
       }
    }
 }

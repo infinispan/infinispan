@@ -513,3 +513,13 @@ Currently, we expose only `LIFECYCLE` events.
 ----
 GET /rest/v2/container?action=listen
 ----
+
+.Headers
+
+|===
+|Header |Required or Optional |Parameter
+
+|`Accept`
+|OPTIONAL
+|Sets the required format to return content. Supported formats are `application/yaml`, `application/json` and `application/xml`. The default is `application/yaml`. See link:#rest_accept[Accept] for more information.
+|===

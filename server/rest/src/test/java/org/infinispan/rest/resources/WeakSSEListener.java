@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.test.TestException;
@@ -19,14 +20,15 @@ import org.infinispan.util.KeyValuePair;
 public class WeakSSEListener extends SSEListener {
    private final ConcurrentMap<String, List<String>> backup = new ConcurrentHashMap<>();
 
-   public void expectEvent(String type, String subString) throws InterruptedException {
-      CompletableFuture<Void> waitEvent = CompletableFuture.supplyAsync(() -> {
-         ByRef.Boolean contains = new ByRef.Boolean(false);
+   @Override
+   public void expectEvent(String type, String subString, Consumer<KeyValuePair<String, String>> consumer) throws InterruptedException {
+      CompletableFuture<KeyValuePair<String, String>> waitEvent = CompletableFuture.supplyAsync(() -> {
+         ByRef<KeyValuePair<String, String>> pair = new ByRef<>(null);
          backup.computeIfPresent(type, (k, v) -> {
             int index = -1;
-            for (int i = 0; i < v.size() && !contains.get(); i++) {
+            for (int i = 0; i < v.size() && pair.get() == null; i++) {
                if (v.get(i).contains(subString)) {
-                  contains.set(true);
+                  pair.set(new KeyValuePair<>(k, v.get(i)));
                   index = i;
                   break;
                }
@@ -36,13 +38,13 @@ public class WeakSSEListener extends SSEListener {
             return v;
          });
 
-         while (!contains.get()) {
+         while (pair.get() == null) {
             try {
                KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
                assert event != null : "No event received";
 
                if (type.equals(event.getKey()) && event.getValue().contains(subString)) {
-                  contains.set(true);
+                  pair.set(event);
                   break;
                } else {
                   backup.compute(event.getKey(), (k, v) -> {
@@ -58,12 +60,13 @@ public class WeakSSEListener extends SSEListener {
             }
          }
 
-         assert contains.get() : "Should contain event with: " + subString;
-         return null;
+         assert pair.get() != null : "Should contain event with: " + subString;
+         return pair.get();
       });
 
       try {
-         waitEvent.get(10, TimeUnit.SECONDS);
+         KeyValuePair<String, String> pair = waitEvent.get(10, TimeUnit.SECONDS);
+         consumer.accept(pair);
       } catch (ExecutionException | TimeoutException e) {
          throw new TestException(e);
       }

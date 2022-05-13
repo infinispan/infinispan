@@ -155,9 +155,13 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
          }
          array = false;
          writer.write(rename ? naming.convert(name) : name);
-         writer.write(": \"");
-         writer.write(value);
-         writer.write('"');
+         if (value != null) {
+            writer.write(": \"");
+            writer.write(value);
+            writer.write('"');
+         } else {
+            writer.write(": ~");
+         }
          nl();
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);

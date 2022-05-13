@@ -233,7 +233,9 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
          writer.write(' ');
          writer.write(rename ? naming.convert(name) : name);
          writer.write("=\"");
-         writer.write(value.replaceAll("&", "&amp;"));
+         if (value != null) {
+            writer.write(value.replaceAll("&", "&amp;"));
+         }
          writer.write('"');
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
