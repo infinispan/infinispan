@@ -8,6 +8,7 @@ import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 
 /**
@@ -72,22 +73,28 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun) {
       Descriptor md = messageDescriptor;
-      int i = 0;
       for (String p : propertyPath) {
-         i++;
          FieldDescriptor field = md.findFieldByName(p);
          if (field == null) {
-            break;
+            return false;
          }
+
          IndexingMetadata indexingMetadata = findProcessedAnnotation(md, IndexingMetadata.INDEXED_ANNOTATION);
-         if (indexingMetadata == null || !metadataFun.apply(indexingMetadata, field.getName())) {
-            break;
+         if (indexingMetadata == null || !indexingMetadata.isIndexed()){
+            return false;
          }
+
          if (field.getJavaType() == JavaType.MESSAGE) {
+            FieldMapping embeddedMapping = indexingMetadata.getFieldMapping(p);
+            if (embeddedMapping == null || !embeddedMapping.searchable()) {
+               return false;
+            }
+
             md = field.getMessageType();
-         } else {
-            return i == propertyPath.length;
+            continue;
          }
+
+         return metadataFun.apply(indexingMetadata, field.getName());
       }
       return false;
    }
