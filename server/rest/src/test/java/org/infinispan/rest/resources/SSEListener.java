@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.infinispan.client.rest.RestEventListener;
 import org.infinispan.client.rest.RestResponse;
@@ -20,6 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 13.0
  **/
 public class SSEListener implements RestEventListener {
+   protected static final Consumer<KeyValuePair<String, String>> NO_OP = ignore -> {};
    private static final Log log = LogFactory.getLog(SSEListener.class);
 
    BlockingDeque<KeyValuePair<String, String>> events = new LinkedBlockingDeque<>();
@@ -42,9 +44,14 @@ public class SSEListener implements RestEventListener {
    }
 
    public void expectEvent(String type, String subString) throws InterruptedException {
+      expectEvent(type, subString, NO_OP);
+   }
+
+   public void expectEvent(String type, String subString, Consumer<KeyValuePair<String, String>> consumer) throws InterruptedException {
       KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
       assertNotNull(event);
       assertEquals(type, event.getKey());
       assertTrue(event.getValue().contains(subString));
+      consumer.accept(event);
    }
 }

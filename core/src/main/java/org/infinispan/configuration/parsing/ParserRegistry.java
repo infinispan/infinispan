@@ -40,6 +40,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.serializing.ConfigurationHolder;
+import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.CoreConfigurationSerializer;
 
 /**
@@ -283,9 +284,12 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param configurations a map of named configurations
     */
    public void serialize(ConfigurationWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
+      serializeWith(writer, new CoreConfigurationSerializer(), new ConfigurationHolder(globalConfiguration, configurations));
+   }
+
+   public <T> void serializeWith(ConfigurationWriter writer, ConfigurationSerializer<T> serializer, T t) {
       writer.writeStartDocument();
-      CoreConfigurationSerializer serializer = new CoreConfigurationSerializer();
-      serializer.serialize(writer, new ConfigurationHolder(globalConfiguration, configurations));
+      serializer.serialize(writer, t);
       writer.writeEndDocument();
    }
 
