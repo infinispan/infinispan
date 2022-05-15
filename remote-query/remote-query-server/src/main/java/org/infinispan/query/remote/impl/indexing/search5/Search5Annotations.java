@@ -3,6 +3,7 @@ package org.infinispan.query.remote.impl.indexing.search5;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 
 public final class Search5Annotations {
 
@@ -50,6 +51,9 @@ public final class Search5Annotations {
                .attribute(IndexingMetadata.INDEXED_INDEX_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
+               .attribute(InfinispanAnnotations.ENABLED_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(true)
                .metadataCreator(new Search5MetadataCreator())
             .annotation(ANALYZER_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE, AnnotationElement.AnnotationTarget.FIELD)
                .packageName(LEGACY_ANNOTATION_PACKAGE)

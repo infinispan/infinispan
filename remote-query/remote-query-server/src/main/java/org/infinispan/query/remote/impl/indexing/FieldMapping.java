@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.indexing;
 
+import org.infinispan.api.annotations.indexing.option.Structure;
+import org.infinispan.api.annotations.indexing.option.TermVector;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 
@@ -53,6 +55,16 @@ public final class FieldMapping {
       this.normalizer = normalizer;
       this.indexNullAs = indexNullAs;
       this.fieldDescriptor = fieldDescriptor;
+   }
+
+   public FieldMapping(String name, Boolean searchable, Boolean projectable, Boolean aggregable, Boolean sortable,
+                       String analyzer, String normalizer, String indexNullAs,
+                       Boolean norms, String searchAnalyzer, TermVector termVector, Integer decimalScale,
+                       Integer includeDepth, Structure structure,
+                       FieldDescriptor fieldDescriptor) {
+      // TODO ISPN-13648 Support new annotations further features:
+      //  norms, searchAnalyzer, termVector, decimalScale, includeDepth, structure
+      this(name, searchable, projectable, aggregable, sortable, analyzer, normalizer, indexNullAs, fieldDescriptor);
    }
 
    public String name() {

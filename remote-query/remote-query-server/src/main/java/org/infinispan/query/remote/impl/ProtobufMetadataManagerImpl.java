@@ -46,6 +46,7 @@ import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.client.impl.MarshallerRegistration;
+import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.query.remote.impl.indexing.search5.Search5Annotations;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -81,6 +82,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    public ProtobufMetadataManagerImpl() {
       Configuration.Builder protostreamCfgBuilder = Configuration.builder();
       Search5Annotations.configure(protostreamCfgBuilder);
+      InfinispanAnnotations.configure(protostreamCfgBuilder);
       serCtx = ProtobufUtil.newSerializationContext(protostreamCfgBuilder.build());
       try {
          MarshallerRegistration.init(serCtx);
