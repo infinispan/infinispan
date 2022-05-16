@@ -106,7 +106,7 @@ If you use this annotation for:
 
 `@ProtoDoc` and `@ProtoDocs` are human-readable text that document message types, enums, or fields for the generated schema.
 
-You use these annotation to configure indexing for Ickle queries.
+You use these annotations to add comments.
 
 [discrete]
 == ProtoName
@@ -142,6 +142,11 @@ You should not add this annotation to classes because {brandname} uses it intern
 ====
 {brandname} does not recommend using this annotation because it is no longer supported by Google and is likely to be removed in future.
 ====
+
+[discrete]
+== Other annotations
+{brandname} copies any other annotations on classes, fields, and methods as comments in the generated Protobuf schema.
+This includes indexing annotations such as `@Indexed` and `@Field`.
 
 [role="_additional-resources"]
 .Additional resources

@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.mapping.reference;
 
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findProcessedAnnotation;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -68,7 +70,7 @@ public class GlobalReferenceHolder {
       private final String indexName;
 
       private RootMessageInfo(Descriptor descriptor) {
-         IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+         IndexingMetadata indexingMetadata =  findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION);
          this.fullName = descriptor.getFullName();
          this.indexName = (indexingMetadata.indexName() != null) ? indexingMetadata.indexName() : fullName;
       }

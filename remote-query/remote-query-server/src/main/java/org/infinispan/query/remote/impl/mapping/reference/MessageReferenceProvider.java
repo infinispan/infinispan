@@ -2,7 +2,8 @@ package org.infinispan.query.remote.impl.mapping.reference;
 
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.FIELD_ANNOTATION;
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.FIELD_INDEX_ATTRIBUTE;
-import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.INDEXED_ANNOTATION;
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findAnnotation;
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findProcessedAnnotation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ public class MessageReferenceProvider {
       this.fields = new ArrayList<>(descriptor.getFields().size());
       this.embedded = new ArrayList<>();
 
-      IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(INDEXED_ANNOTATION);
+      IndexingMetadata indexingMetadata =  findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION);
       // Skip if not annotated with @Indexed
       if (indexingMetadata == null) {
          return;
@@ -63,13 +64,13 @@ public class MessageReferenceProvider {
    }
 
    private boolean indexEmbedded(FieldDescriptor fieldDescriptor) {
-      AnnotationElement.Annotation fieldAnnotation = fieldDescriptor.getAnnotations().get(FIELD_ANNOTATION);
+      AnnotationElement.Annotation fieldAnnotation = findAnnotation(fieldDescriptor.getAnnotations(), FIELD_ANNOTATION);
       if (fieldAnnotation == null) {
          return false;
       }
 
       AnnotationElement.Value indexAttribute = fieldAnnotation.getAttributeValue(FIELD_INDEX_ATTRIBUTE);
-      boolean isIndexed = IndexingMetadata.INDEX_YES.equals(indexAttribute.getValue());
+      boolean isIndexed = IndexingMetadata.INDEX_YES.equals(indexAttribute.getValue()) || IndexingMetadata.YES.equals(indexAttribute.getValue());
       if (!isIndexed) {
          return false;
       }
@@ -81,8 +82,8 @@ public class MessageReferenceProvider {
     * Checks if a Descriptors has the @Indexed annotation and at least one @Field
     */
    private boolean isIndexable(Descriptor descriptor) {
-      IndexingMetadata indexingMetadata = descriptor.getProcessedAnnotation(INDEXED_ANNOTATION);
-      return indexingMetadata != null && descriptor.getFields().stream().anyMatch(f -> f.getAnnotations().containsKey(FIELD_ANNOTATION));
+      IndexingMetadata indexingMetadata =  findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION);
+      return indexingMetadata != null && descriptor.getFields().stream().anyMatch(f -> findAnnotation(f.getAnnotations(), FIELD_ANNOTATION) != null);
    }
 
    public boolean isEmpty() {

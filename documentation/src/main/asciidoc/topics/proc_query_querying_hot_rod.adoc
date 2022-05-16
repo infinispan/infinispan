@@ -8,7 +8,7 @@ This procedure explains how to index query a remote cache that stores `Book` ins
 
 * Add the ProtoStream processor to your `pom.xml`.
 
-{brandname} provides this processor for the `@ProtoField` and `@ProtoDoc` annotations so you can generate Protobuf schemas and perform queries.
+{brandname} provides this processor for the `@ProtoField` annotations so you can generate Protobuf schemas and perform queries.
 
 [source,xml]
 ----
@@ -25,7 +25,7 @@ include::code_examples/BookIndexed.java[]
 ----
 +
 . Implement the `SerializationContextInitializer` interface in a new class and then add the `@AutoProtoSchemaBuilder` annotation.
-.. Reference the class that includes the `@ProtoField` and `@ProtoDoc` annotations with the `includeClasses` parameter.
+.. Reference the class that includes the `@ProtoField` annotations with the `includeClasses` parameter.
 .. Define a name for the Protobuf schema that you generate and filesystem path with the `schemaFileName` and `schemaFilePath` parameters.
 .. Specify the package name for the Protobuf schema with the `schemaPackageName` parameter.
 +
