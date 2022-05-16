@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaElement;
+import org.hibernate.search.engine.backend.types.ObjectStructure;
+import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
@@ -47,7 +49,8 @@ public class MessageReferenceProvider {
             // if the Message is @Indexed and has at least one @Field annotation
             if (fieldMapping.searchable() && isIndexable(fieldDescriptor.getMessageType())) {
                // Hibernate Search can handle the @Field regardless of its attributes
-               embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(), fieldDescriptor.isRepeated()));
+               embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(),
+                     fieldDescriptor.isRepeated(), fieldMapping));
             }
             continue;
          }
@@ -98,11 +101,16 @@ public class MessageReferenceProvider {
       private final String fieldName;
       private final String typeFullName;
       private final boolean repeated;
+      private final Integer includeDepth;
+      private final ObjectStructure structure;
 
-      public Embedded(String fieldName, String typeFullName, boolean repeated) {
+      public Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
          this.repeated = repeated;
+         this.includeDepth = fieldMapping.includeDepth();
+         this.structure = (fieldMapping.structure() == null) ? null:
+               (Structure.NESTED.equals(fieldMapping.structure())) ? ObjectStructure.NESTED : ObjectStructure.FLATTENED;
       }
 
       public String getFieldName() {
@@ -115,6 +123,14 @@ public class MessageReferenceProvider {
 
       public boolean isRepeated() {
          return repeated;
+      }
+
+      public Integer getIncludeDepth() {
+         return includeDepth;
+      }
+
+      public ObjectStructure getStructure() {
+         return structure;
       }
 
       @Override
