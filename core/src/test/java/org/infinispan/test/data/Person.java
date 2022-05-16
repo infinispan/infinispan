@@ -21,7 +21,6 @@ public class Person implements Serializable, JsonSerialization {
 
    public Person() {
       // Needed for serialization
-      birthDate = new Date(0);
    }
 
    public Person(String name) {
@@ -34,8 +33,7 @@ public class Person implements Serializable, JsonSerialization {
       this.address = address;
       this.picture = picture;
       this.sex = sex;
-      // This is only required until we can remove the default 0
-      this.birthDate = birthDate == null ? new Date(0) : birthDate;
+      this.birthDate = birthDate;
       this.acceptedToS = acceptedToS;
    }
 
@@ -75,7 +73,7 @@ public class Person implements Serializable, JsonSerialization {
       this.sex = sex;
    }
 
-   @ProtoField(value = 5, defaultValue = "0")
+   @ProtoField(value = 5)
    public Date getBirthDate() {
       return birthDate;
    }
