@@ -23,23 +23,23 @@ public class EnumUtil {
       }
       long flagBitSet = EMPTY_BIT_SET;
       for (Enum<?> f : enums) {
-         flagBitSet |= 1 << f.ordinal();
+         flagBitSet |= bitSetOf(f);
       }
       return flagBitSet;
    }
 
    public static long bitSetOf(Enum<?> first) {
-      return 1 << first.ordinal();
+      return 1L << first.ordinal();
    }
 
    public static long bitSetOf(Enum<?> first, Enum<?> second) {
-      return 1 << first.ordinal() | 1 << second.ordinal();
+      return bitSetOf(first) | bitSetOf(second);
    }
 
    public static long bitSetOf(Enum<?> first, Enum<?> second, Enum<?>... remaining) {
-      long bitSet = 1 << first.ordinal() | 1 << second.ordinal();
+      long bitSet = bitSetOf(first, second);
       for (Enum<?> f : remaining) {
-         bitSet |= 1 << f.ordinal();
+         bitSet |= bitSetOf(f);
       }
       return bitSet;
    }
@@ -47,7 +47,7 @@ public class EnumUtil {
    public static long bitSetOf(Enum<?>[] flags) {
       long bitSet = EMPTY_BIT_SET;
       for (Enum<?> flag : flags) {
-         bitSet |= 1 << flag.ordinal();
+         bitSet |= bitSetOf(flag);
       }
       return bitSet;
    }
@@ -66,11 +66,11 @@ public class EnumUtil {
    }
 
    public static boolean hasEnum(long bitSet, Enum<?> anEnum) {
-      return (bitSet & (1 << anEnum.ordinal())) != 0;
+      return (bitSet & bitSetOf(anEnum)) != 0;
    }
 
-   public static long setEnum(long bitSet, Enum<?> anEn) {
-      return bitSet | (1 << anEn.ordinal());
+   public static long setEnum(long bitSet, Enum<?> anEnum) {
+      return bitSet | bitSetOf(anEnum);
    }
 
    public static <E extends Enum<E>> long setEnums(long bitSet, Collection<E> enums) {
@@ -78,13 +78,13 @@ public class EnumUtil {
          return bitSet;
       }
       for (Enum<?> f : enums) {
-         bitSet |= 1 << f.ordinal();
+         bitSet |= bitSetOf(f);
       }
       return bitSet;
    }
 
    public static long unsetEnum(long bitSet, Enum<?> anEnum) {
-      return bitSet & ~(1 << anEnum.ordinal());
+      return bitSet & ~bitSetOf(anEnum);
    }
 
    public static <E extends Enum<E>> String prettyPrintBitSet(long bitSet, Class<E> eClass) {
@@ -110,6 +110,7 @@ public class EnumUtil {
    public static int bitSetSize(long bitSet) {
       return Long.bitCount(bitSet);
    }
+
    public static <E extends Enum<E>> E[] enumArrayOf(long bitSet, Class<E> eClass) {
       if (bitSet == EMPTY_BIT_SET) {
          return null;
