@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findProcessedAnnotation;
+
 import java.util.function.BiFunction;
 
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -57,7 +59,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
             break;
          }
          if (i == propertyPath.length) {
-            IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+            IndexingMetadata indexingMetadata = findProcessedAnnotation(md, IndexingMetadata.INDEXED_ANNOTATION);
             return indexingMetadata == null ? null : indexingMetadata.getNullMarker(field.getName());
          }
          if (field.getJavaType() != JavaType.MESSAGE) {
@@ -77,9 +79,8 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
          if (field == null) {
             break;
          }
-         IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         boolean res = indexingMetadata == null ? false : metadataFun.apply(indexingMetadata, field.getName());
-         if (!res) {
+         IndexingMetadata indexingMetadata = findProcessedAnnotation(md, IndexingMetadata.INDEXED_ANNOTATION);
+         if (indexingMetadata == null || !metadataFun.apply(indexingMetadata, field.getName())) {
             break;
          }
          if (field.getJavaType() == JavaType.MESSAGE) {

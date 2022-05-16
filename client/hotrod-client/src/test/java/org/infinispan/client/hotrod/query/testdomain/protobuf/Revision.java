@@ -6,7 +6,7 @@ import java.util.List;
 import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@ProtoDoc("@Indexed")
+@ProtoDoc("@org.hibernate.search.annotations.Indexed")
 public class Revision {
 
    private String messageId;
@@ -22,7 +22,7 @@ public class Revision {
    }
 
    @ProtoField(number = 1, required = true)
-   @ProtoDoc("@Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
+   @ProtoDoc("@org.hibernate.search.annotations.Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
    public String getKey() {
       return messageId;
    }
@@ -32,7 +32,7 @@ public class Revision {
    }
 
    @ProtoField(number = 2, required = true)
-   @ProtoDoc("@Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)")
+   @ProtoDoc("@org.hibernate.search.annotations.Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)")
    public String getMessage() {
       return message;
    }
@@ -42,7 +42,7 @@ public class Revision {
    }
 
    @ProtoField(number = 3, collectionImplementation = ArrayList.class)
-   @ProtoDoc("@Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)")
+   @ProtoDoc("@org.hibernate.search.annotations.Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)")
    public List<Reviewer> getReviewers() {
       if (reviewers == null) {
          reviewers = new ArrayList<>();

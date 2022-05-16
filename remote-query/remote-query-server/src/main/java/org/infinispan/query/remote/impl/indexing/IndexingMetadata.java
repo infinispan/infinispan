@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.descriptors.Descriptor;
 
 /**
  * All fields of Protobuf types are indexed and stored by default if no indexing annotations are present. This behaviour
@@ -81,6 +82,7 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  * @since 7.0
  */
 public final class IndexingMetadata {
+   public static final String LEGACY_ANNOTATION_PACKAGE = "org.hibernate.search.annotations";
 
    /**
     * Similar to org.hibernate.search.annotations.Indexed. Indicates if a type will be indexed or not.
@@ -107,6 +109,10 @@ public final class IndexingMetadata {
    public static final String FIELD_STORE_ATTRIBUTE = "store";
    public static final String FIELD_ANALYZER_ATTRIBUTE = "analyzer";
    public static final String FIELD_INDEX_NULL_AS_ATTRIBUTE = "indexNullAs";
+
+   public static final String YES = "YES";
+
+   public static final String NO = "NO";
 
    public static final String INDEX_YES = "Index.YES";
    public static final String INDEX_NO = "Index.NO";
@@ -237,30 +243,36 @@ public final class IndexingMetadata {
    public static void configure(Configuration.Builder builder) {
       builder.annotationsConfig()
             .annotation(INDEXED_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
+               .packageName(LEGACY_ANNOTATION_PACKAGE)
                .attribute(INDEXED_INDEX_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
                .metadataCreator(new IndexingMetadataCreator())
             .annotation(ANALYZER_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE, AnnotationElement.AnnotationTarget.FIELD)
+               .packageName(LEGACY_ANNOTATION_PACKAGE)
                .attribute(ANALYZER_DEFINITION_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
             .annotation(FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .packageName(LEGACY_ANNOTATION_PACKAGE)
                .repeatable(FIELDS_ANNOTATION)
                .attribute(FIELD_NAME_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue("")
                .attribute(FIELD_INDEX_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
-                  .allowedValues(INDEX_YES, INDEX_NO)
+                  .packageName(LEGACY_ANNOTATION_PACKAGE)
+                  .allowedValues(INDEX_YES, INDEX_NO, YES, NO)
                   .defaultValue(INDEX_YES)
                .attribute(FIELD_ANALYZE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
-                  .allowedValues(ANALYZE_YES, ANALYZE_NO)
+                  .packageName(LEGACY_ANNOTATION_PACKAGE)
+                  .allowedValues(ANALYZE_YES, ANALYZE_NO, YES, NO)
                   .defaultValue(ANALYZE_NO)  //NOTE: this differs from Hibernate Search's default which is Analyze.YES !
                .attribute(FIELD_STORE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
-                  .allowedValues(STORE_YES, STORE_NO)
+                  .packageName(LEGACY_ANNOTATION_PACKAGE)
+                  .allowedValues(STORE_YES, STORE_NO, YES, NO)
                   .defaultValue(STORE_NO)
                .attribute(FIELD_ANALYZER_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.ANNOTATION)
@@ -270,6 +282,15 @@ public final class IndexingMetadata {
                   .type(AnnotationElement.AttributeType.STRING)
                   .defaultValue(DO_NOT_INDEX_NULL)
             .annotation(SORTABLE_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .packageName(LEGACY_ANNOTATION_PACKAGE)
                .repeatable(SORTABLE_FIELDS_ANNOTATION);
+   }
+
+   public static AnnotationElement.Annotation findAnnotation(Map<String, AnnotationElement.Annotation> annotations, String name) {
+      return annotations.get(name);
+   }
+
+   public static <T> T findProcessedAnnotation(Descriptor descriptor, String name) {
+      return descriptor.getProcessedAnnotation(name);
    }
 }

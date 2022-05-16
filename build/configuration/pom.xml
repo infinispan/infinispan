@@ -185,7 +185,7 @@
       <version.org.wildfly.openssl.natives.linux_x86_64>2.2.0.SP01</version.org.wildfly.openssl.natives.linux_x86_64>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
-      <version.protostream>4.4.3.Final</version.protostream>
+      <version.protostream>4.5.0.Dev01</version.protostream>
       <version.protostuff>1.6.2</version.protostuff>
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>7.1.2</version.rocksdb>

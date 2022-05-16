@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Analyzer;
@@ -77,7 +78,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field
+   @Field(analyze = Analyze.YES)
    @Analyzer(definition = "ngram")
    @ProtoField(number = 4)
    public String getNotes() {
@@ -150,42 +151,6 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TransactionHS other = (TransactionHS) o;
-
-      if (accountId != other.accountId) return false;
-      if (Double.compare(other.amount, amount) != 0) return false;
-      if (id != other.id) return false;
-      if (isDebit != other.isDebit) return false;
-      if (isValid != other.isValid) return false;
-      if (date != null ? !date.equals(other.date) : other.date != null) return false;
-      if (description != null ? !description.equals(other.description) : other.description != null) return false;
-      if (longDescription != null ? !longDescription.equals(other.longDescription) : other.longDescription != null)
-         return false;
-      if (notes != null ? !notes.equals(other.notes) : other.notes != null) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = id;
-      result = 31 * result + (description != null ? description.hashCode() : 0);
-      result = 31 * result + (longDescription != null ? longDescription.hashCode() : 0);
-      result = 31 * result + (notes != null ? notes.hashCode() : 0);
-      result = 31 * result + accountId;
-      result = 31 * result + (date != null ? date.hashCode() : 0);
-      long temp = Double.doubleToLongBits(amount);
-      result = 31 * result + (int) (temp ^ (temp >>> 32));
-      result = 31 * result + (isDebit ? 1 : 0);
-      result = 31 * result + (isValid ? 1 : 0);
-      return result;
-   }
-
-   @Override
    public String toString() {
       return "TransactionHS{" +
             "id=" + id +
@@ -198,5 +163,19 @@ public class TransactionHS implements Transaction, Serializable {
             ", isDebit=" + isDebit +
             ", isValid=" + isValid +
             '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      TransactionHS that = (TransactionHS) o;
+      return id == that.id && accountId == that.accountId && Double.compare(that.amount, amount) == 0 && isDebit == that.isDebit && isValid == that.isValid &&
+            Objects.equals(description, that.description) && Objects.equals(longDescription, that.longDescription) && Objects.equals(notes, that.notes) && Objects.equals(date, that.date);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, description, longDescription, notes, accountId, date, amount, isDebit, isValid);
    }
 }

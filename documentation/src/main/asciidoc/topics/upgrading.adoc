@@ -108,6 +108,11 @@ If Hibernate 5.3 support is needed, you must use an older version of Infinispan.
 The JPAStore has been removed in Infinispan 14.0.
 It is suggested instead to use the new SQL Table or Query Stores that were added in Infinispan 13.0.
 
+== ProtoDoc annotations are no longer necessary
+
+It is no longer necessary to wrap annotations, such as those required for indexing, within `@ProtoDoc` annotations.
+Any annotations will simply be copied as comments to the generated `.proto` files.
+
 = Upgrading from 12.1 to 13.0
 
 == Search
