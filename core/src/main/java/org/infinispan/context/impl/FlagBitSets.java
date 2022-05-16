@@ -60,7 +60,7 @@ public class FlagBitSets {
       if (command == null) {
          //commit command
          return ctx instanceof TxInvocationContext ?
-               ((TxInvocationContext) ctx).getCacheTransaction().getStateTransferFlag() :
+               ((TxInvocationContext<?>) ctx).getCacheTransaction().getStateTransferFlag() :
                null;
       } else {
          if (command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
