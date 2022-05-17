@@ -85,30 +85,8 @@ public final class InfinispanMetadataCreator {
       }
       Boolean norms = (Boolean) fieldAnnotation.getAttributeValue(InfinispanAnnotations.NORMS_ATTRIBUTE).getValue();
 
-      TermVector termVector;
-      switch ( (String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.TERM_VECTOR_ATTRIBUTE).getValue() ) {
-         case InfinispanAnnotations.TERM_VECTOR_YES:
-            termVector = TermVector.YES;
-            break;
-         case InfinispanAnnotations.TERM_VECTOR_WITH_POSITIONS:
-            termVector = TermVector.WITH_POSITIONS;
-            break;
-         case InfinispanAnnotations.TERM_VECTOR_WITH_OFFSETS:
-            termVector = TermVector.WITH_OFFSETS;
-            break;
-         case InfinispanAnnotations.TERM_VECTOR_WITH_POSITIONS_OFFSETS:
-            termVector = TermVector.WITH_POSITIONS_OFFSETS;
-            break;
-         case InfinispanAnnotations.TERM_VECTOR_WITH_POSITIONS_PAYLOADS:
-            termVector = TermVector.WITH_POSITIONS_PAYLOADS;
-            break;
-         case InfinispanAnnotations.TERM_VECTOR_WITH_POSITIONS_OFFSETS_PAYLOADS:
-            termVector = TermVector.WITH_POSITIONS_OFFSETS_PAYLOADS;
-            break;
-         case InfinispanAnnotations.TERM_VECTOR_NO:
-         default:
-            termVector = TermVector.NO;
-      }
+      TermVector termVector = InfinispanAnnotations
+            .termVector((String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.TERM_VECTOR_ATTRIBUTE).getValue());
 
       return new FieldMapping(name, searchable, projectable, false, false,
             analyzer, null, null, norms, searchAnalyzer, termVector, null, null, null, fieldDescriptor);
@@ -134,15 +112,8 @@ public final class InfinispanMetadataCreator {
 
       Integer includeDepth = (Integer) fieldAnnotation.getAttributeValue(InfinispanAnnotations.INCLUDE_DEPTH_ATTRIBUTE).getValue();
 
-      Structure structure;
-      switch ( (String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.STRUCTURE_ATTRIBUTE).getValue() ) {
-         case InfinispanAnnotations.STRUCTURE_FLATTENED:
-            structure = Structure.FLATTENED;
-            break;
-         case InfinispanAnnotations.STRUCTURE_NESTED:
-         default:
-            structure = Structure.NESTED;
-      }
+      Structure structure = InfinispanAnnotations
+            .structure((String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.STRUCTURE_ATTRIBUTE).getValue());
 
       return new FieldMapping(name, true, false, false, false,
             null, null, null, null, null, null, null, includeDepth, structure, fieldDescriptor);

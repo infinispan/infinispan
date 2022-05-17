@@ -1,10 +1,16 @@
 package org.infinispan.query.remote.impl.indexing.infinispan;
 
+import java.util.ArrayList;
+
 import org.infinispan.api.annotations.indexing.model.Values;
+import org.infinispan.api.annotations.indexing.option.Structure;
+import org.infinispan.api.annotations.indexing.option.TermVector;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
 public class InfinispanAnnotations {
+
+   public static final String ANNOTATIONS_OPTIONS_PACKAGE = "org.infinispan.api.annotations.indexing.option";
 
    public static final String ENABLED_ATTRIBUTE = "enabled";
 
@@ -30,17 +36,6 @@ public class InfinispanAnnotations {
    public static final String EMBEDDED_ANNOTATION = "Embedded";
    public static final String INCLUDE_DEPTH_ATTRIBUTE = "includeDepth";
    public static final String STRUCTURE_ATTRIBUTE = "structure";
-
-   public static final String TERM_VECTOR_YES = "YES";
-   public static final String TERM_VECTOR_NO = "NO";
-   public static final String TERM_VECTOR_WITH_POSITIONS = "WITH_POSITIONS";
-   public static final String TERM_VECTOR_WITH_OFFSETS = "WITH_OFFSETS";
-   public static final String TERM_VECTOR_WITH_POSITIONS_OFFSETS = "WITH_POSITIONS_OFFSETS";
-   public static final String TERM_VECTOR_WITH_POSITIONS_PAYLOADS = "WITH_POSITIONS_PAYLOADS";
-   public static final String TERM_VECTOR_WITH_POSITIONS_OFFSETS_PAYLOADS = "WITH_POSITIONS_OFFSETS_PAYLOADS";
-
-   public static final String STRUCTURE_FLATTENED = "FLATTENED";
-   public static final String STRUCTURE_NESTED = "NESTED";
 
    public static void configure(Configuration.Builder builder) {
       builder.annotationsConfig()
@@ -109,10 +104,9 @@ public class InfinispanAnnotations {
                   .defaultValue(true)
                .attribute(TERM_VECTOR_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
-                  .allowedValues(TERM_VECTOR_YES, TERM_VECTOR_NO, TERM_VECTOR_WITH_POSITIONS, TERM_VECTOR_WITH_OFFSETS,
-                        TERM_VECTOR_WITH_POSITIONS_OFFSETS, TERM_VECTOR_WITH_POSITIONS_PAYLOADS,
-                        TERM_VECTOR_WITH_POSITIONS_OFFSETS_PAYLOADS)
-                  .defaultValue(TERM_VECTOR_NO)
+                  .packageName(ANNOTATIONS_OPTIONS_PACKAGE)
+                  .allowedValues(termVectorAllowedValues())
+                  .defaultValue(TermVector.NO.name())
             .annotation(DECIMAL_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(NAME_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
@@ -144,7 +138,44 @@ public class InfinispanAnnotations {
                   .defaultValue(3)
                .attribute(STRUCTURE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
-                  .allowedValues(STRUCTURE_FLATTENED, STRUCTURE_NESTED)
-                  .defaultValue(STRUCTURE_NESTED);
+                  .packageName(ANNOTATIONS_OPTIONS_PACKAGE)
+                  .allowedValues(structureAllowedValues())
+                  .defaultValue(Structure.NESTED.name());
+   }
+
+   public static final TermVector termVector(String value) {
+      int beginIndex = value.lastIndexOf(".");
+      if (beginIndex >= 0) {
+         value = value.substring(beginIndex + 1);
+      }
+      return TermVector.valueOf(value);
+   }
+
+   public static final Structure structure(String value) {
+      int beginIndex = value.lastIndexOf(".");
+      if (beginIndex >= 0) {
+         value = value.substring(beginIndex + 1);
+      }
+      return Structure.valueOf(value);
+   }
+
+   private static final String[] termVectorAllowedValues() {
+      int capacity = TermVector.values().length * 2;
+      ArrayList<String> result = new ArrayList<>(capacity);
+      for (TermVector value : TermVector.values()) {
+         result.add(value.name());
+         result.add("TermVector." + value.name());
+      }
+      return result.toArray(new String[capacity]);
+   }
+
+   private static final String[] structureAllowedValues() {
+      int capacity = Structure.values().length * 2;
+      ArrayList<String> result = new ArrayList<>(capacity);
+      for (Structure value : Structure.values()) {
+         result.add(value.name());
+         result.add("Structure." + value.name());
+      }
+      return result.toArray(new String[capacity]);
    }
 }
