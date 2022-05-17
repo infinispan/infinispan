@@ -204,6 +204,17 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-api</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-query</artifactId>
             <exclusions>
                 <exclusion>
