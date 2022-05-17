@@ -16,7 +16,7 @@ import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
-import org.infinispan.api.common.process.CacheProcessor;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.common.process.CacheProcessorOptions;
 import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.commons.util.CloseableIterator;
@@ -74,25 +74,27 @@ public interface RemoteCache<K, V> extends AutoCloseable {
 
    CompletionStage<Void> putAll(Flow.Publisher<CacheEntry<K, V>> entries, CacheWriteOptions options);
 
-   Flow.Publisher<CacheEntry<K,V>> getAll(Set<K> keys, CacheOptions options);
+   Flow.Publisher<CacheEntry<K, V>> getAll(Set<K> keys, CacheOptions options);
 
-   Flow.Publisher<CacheEntry<K,V>> getAll(CacheOptions options, K[] keys);
+   Flow.Publisher<CacheEntry<K, V>> getAll(CacheOptions options, K[] keys);
 
-   Flow.Publisher<K> removeAll(Set<K> keys, CacheOptions options);
+   Flow.Publisher<K> removeAll(Set<K> keys, CacheWriteOptions options);
 
    Flow.Publisher<K> removeAll(Flow.Publisher<K> keys, CacheWriteOptions options);
 
-   Flow.Publisher<CacheEntry<K,V>> getAndRemoveAll(Set<K> keys, CacheOptions options);
+   Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options);
+
+   Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys, CacheWriteOptions options);
 
    CompletionStage<Long> estimateSize(CacheOptions options);
 
    CompletionStage<Void> clear(CacheOptions options);
 
-   Flow.Publisher<CacheEntryEvent<K,V>> listen(CacheListenerOptions options, CacheEntryEventType[] types);
+   Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType[] types);
 
-   <T> CompletionStage<Void> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options);
+   <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options);
 
-   <T> CompletionStage<T> processAll(CacheProcessor processor, CacheProcessorOptions options);
+   <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> processAll(AsyncCacheEntryProcessor<K, V, T> processor, CacheProcessorOptions options);
 
    default CloseableIterator<CacheEntry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize) {
       return retrieveEntries(filterConverterFactory, null, segments, batchSize);

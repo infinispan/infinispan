@@ -12,6 +12,7 @@ import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.common.process.CacheProcessor;
 import org.infinispan.api.common.process.CacheProcessorOptions;
 import org.infinispan.api.configuration.CacheConfiguration;
@@ -359,7 +360,7 @@ public interface AsyncCache<K, V> {
     * @return
     */
    default Flow.Publisher<K> removeAll(Set<K> keys) {
-      return removeAll(keys, CacheOptions.DEFAULT);
+      return removeAll(keys, CacheWriteOptions.DEFAULT);
    }
 
    /**
@@ -369,7 +370,7 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return
     */
-   Flow.Publisher<K> removeAll(Set<K> keys, CacheOptions options);
+   Flow.Publisher<K> removeAll(Set<K> keys, CacheWriteOptions options);
 
    /**
     * @param keys
@@ -393,7 +394,7 @@ public interface AsyncCache<K, V> {
     * @return
     */
    default Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys) {
-      return getAndRemoveAll(keys, CacheOptions.DEFAULT);
+      return getAndRemoveAll(keys, CacheWriteOptions.DEFAULT);
    }
 
    /**
@@ -403,7 +404,26 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return
     */
-   Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheOptions options);
+   Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options);
+
+   /**
+    * Removes a set of keys. Returns the keys that were removed.
+    *
+    * @param keys
+    * @return
+    */
+   default Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys) {
+      return getAndRemoveAll(keys, CacheWriteOptions.DEFAULT);
+   }
+
+   /**
+    * Removes a set of keys. Returns the keys that were removed.
+    *
+    * @param keys
+    * @param options
+    * @return
+    */
+   Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys, CacheWriteOptions options);
 
    /**
     * Estimate the size of the store
@@ -484,7 +504,7 @@ public interface AsyncCache<K, V> {
     * @param processor
     * @return
     */
-   default <T> CompletionStage<Void> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> processor) {
+   default <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> processor) {
       return process(keys, processor, CacheOptions.DEFAULT);
    }
 
@@ -496,7 +516,7 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return
     */
-   <T> CompletionStage<Void> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options);
+   <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options);
 
    /**
     * Execute a {@link CacheProcessor} on a cache
@@ -505,7 +525,7 @@ public interface AsyncCache<K, V> {
     * @param processor
     * @return
     */
-   default <T> CompletionStage<T> processAll(CacheProcessor processor) {
+   default <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> processAll(AsyncCacheEntryProcessor<K, V, T> processor) {
       return processAll(processor, CacheProcessorOptions.DEFAULT);
    }
 
@@ -517,7 +537,7 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return
     */
-   <T> CompletionStage<T> processAll(CacheProcessor processor, CacheProcessorOptions options);
+   <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> processAll(AsyncCacheEntryProcessor<K, V, T> processor, CacheProcessorOptions options);
 
    /**
     * @return
