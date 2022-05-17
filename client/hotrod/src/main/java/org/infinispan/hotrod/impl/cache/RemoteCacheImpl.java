@@ -20,7 +20,7 @@ import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
-import org.infinispan.api.common.process.CacheProcessor;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.common.process.CacheProcessorOptions;
 import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.commons.time.TimeService;
@@ -246,7 +246,7 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Flow.Publisher<K> removeAll(Set<K> keys, CacheOptions options) {
+   public Flow.Publisher<K> removeAll(Set<K> keys, CacheWriteOptions options) {
       throw new UnsupportedOperationException();
    }
 
@@ -256,7 +256,12 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheOptions options) {
+   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
       throw new UnsupportedOperationException();
    }
 
@@ -276,12 +281,12 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public <T> CompletionStage<Void> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options) {
+   public <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public <T> CompletionStage<T> processAll(CacheProcessor processor, CacheProcessorOptions options) {
+   public <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> processAll(AsyncCacheEntryProcessor<K, V, T> processor, CacheProcessorOptions options) {
       throw new UnsupportedOperationException();
    }
 

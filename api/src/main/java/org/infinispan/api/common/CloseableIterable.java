@@ -1,16 +1,16 @@
 package org.infinispan.api.common;
 
+import java.util.function.Consumer;
+
 /**
- * Interface that provides semantics of a {@link Iterable} and {@link AutoCloseable} interfaces.  This is useful when
- * you have data that must be iterated on and may hold resources in the underlying implementation that must be closed.
- * <p>The close method will close any existing iterators that may be open to free resources</p>
+ * Interface that provides semantics of a {@link Iterable} but produces {@link CloseableIterator} instances.
+ * Note that the iterators produced via {@link #iterator()} do not need to be closed if fully iterated upon.
+ * Therefore, methods like {@link Iterable#forEach(Consumer)} and {@link java.util.Iterator#forEachRemaining(Consumer)}
+ * can be used without any worry to closing any iterators.
  *
  * @since 14.0
  */
-public interface CloseableIterable<E> extends AutoCloseable, Iterable<E> {
-   @Override
-   void close();
-
+public interface CloseableIterable<E> extends Iterable<E> {
    @Override
    CloseableIterator<E> iterator();
 }

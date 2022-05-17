@@ -12,7 +12,6 @@ import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.api.common.process.CacheEntryProcessorResult;
-import org.infinispan.api.common.process.CacheProcessor;
 import org.infinispan.api.configuration.CacheConfiguration;
 
 import io.smallrye.mutiny.Multi;
@@ -331,7 +330,7 @@ public interface MutinyCache<K, V> {
     * @return
     */
    default Multi<K> removeAll(Set<K> keys) {
-      return removeAll(keys, CacheOptions.DEFAULT);
+      return removeAll(keys, CacheWriteOptions.DEFAULT);
    }
 
    /**
@@ -341,7 +340,7 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return
     */
-   Multi<K> removeAll(Set<K> keys, CacheOptions options);
+   Multi<K> removeAll(Set<K> keys, CacheWriteOptions options);
 
    /**
     * Removes a set of keys. Returns the keys that were removed.
@@ -350,7 +349,7 @@ public interface MutinyCache<K, V> {
     * @return
     */
    default Multi<K> removeAll(Multi<K> keys) {
-      return removeAll(keys, CacheOptions.DEFAULT);
+      return removeAll(keys, CacheWriteOptions.DEFAULT);
    }
 
    /**
@@ -360,7 +359,7 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return
     */
-   Multi<K> removeAll(Multi<K> keys, CacheOptions options);
+   Multi<K> removeAll(Multi<K> keys, CacheWriteOptions options);
 
    /**
     * Removes a set of keys. Returns the keys that were removed.
@@ -369,7 +368,7 @@ public interface MutinyCache<K, V> {
     * @return
     */
    default Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys) {
-      return getAndRemoveAll(keys, CacheOptions.DEFAULT);
+      return getAndRemoveAll(keys, CacheWriteOptions.DEFAULT);
    }
 
    /**
@@ -379,7 +378,7 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return
     */
-   Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys, CacheOptions options);
+   Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys, CacheWriteOptions options);
 
    /**
     * Estimate the size of the store
@@ -473,23 +472,6 @@ public interface MutinyCache<K, V> {
     * @param options
     */
    <T> Multi<CacheEntryProcessorResult<K, T>> process(Set<K> keys, MutinyCacheEntryProcessor<K, V, T> processor, CacheOptions options);
-
-   /**
-    * Process all entries using the supplied task
-    *
-    * @param task
-    */
-   default <T> Multi<CacheEntryProcessorResult<K, T>> processAll(CacheProcessor task) {
-      return processAll(task, CacheOptions.DEFAULT);
-   }
-
-   /**
-    * Process all entries using the supplied task
-    *
-    * @param task
-    * @param options
-    */
-   <T> Multi<CacheEntryProcessorResult<K, T>> processAll(CacheProcessor task, CacheOptions options);
 
    /**
     * @return
