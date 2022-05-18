@@ -6,27 +6,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
-import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.rest.configuration.RestServerConfiguration;
-import org.infinispan.server.Server;
 import org.infinispan.server.configuration.security.LdapRealmConfiguration;
 import org.infinispan.server.configuration.security.RealmConfiguration;
 import org.infinispan.server.configuration.security.RealmProvider;
@@ -41,8 +31,6 @@ import org.infinispan.server.security.KeyStoreUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -54,45 +42,38 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@RunWith(Parameterized.class)
-public class ServerConfigurationParserTest {
+public class ServerConfigurationParserTest extends AbstractConfigurationParserTest {
 
    @ClassRule
    public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
    public static final char[] PASSWORD = "password".toCharArray();
    public static final char[] SECRET = "secret".toCharArray();
 
-   private final MediaType type;
-
    @BeforeClass
    public static void setup() throws Exception {
-      KeyStoreUtils.generateSelfSignedCertificate(getConfigPath().resolve("ServerConfigurationParserTest-keystore.pfx").toString(), null, PASSWORD,
-            PASSWORD, "server", "localhost");
+      KeyStoreUtils.generateSelfSignedCertificate(pathToKeystore(), null, PASSWORD, PASSWORD, "server", "localhost");
       KeyStoreUtils.generateEmptyKeyStore(getConfigPath().resolve("ServerConfigurationParserTest-truststore.pfx").toString(), SECRET);
       createCredentialStore(getConfigPath().resolve("ServerConfigurationParserTest-credentials.pfx"), SECRET);
    }
 
-   @Parameterized.Parameters(name = "{0}")
-   public static Iterable<MediaType> data() {
-      return Arrays.asList(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, MediaType.APPLICATION_YAML);
+   public ServerConfigurationParserTest(MediaType type) {
+      super(type);
    }
 
-   public ServerConfigurationParserTest(MediaType type) {
-      this.type = type;
+   @Override
+   public String path() {
+      return "configuration/" + getClass().getSimpleName() + "." + type.getSubType().toLowerCase(Locale.ROOT);
    }
 
    @Test
    public void testParser() throws IOException {
-      FileLookup fileLookup = FileLookupFactory.newInstance();
-      URL url = fileLookup.lookupFileLocation("configuration/" + getClass().getSimpleName() + "." + type.getSubType().toLowerCase(Locale.ROOT), ServerConfigurationParserTest.class.getClassLoader());
-      Properties properties = new Properties();
-      properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, getConfigPath().toString());
-      properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, Paths.get(System.getProperty("build.directory")).toString());
-      ParserRegistry registry = new ParserRegistry(this.getClass().getClassLoader(), false, properties);
-      ConfigurationBuilderHolder holder = registry.parse(url);
-      GlobalConfiguration global = holder.getGlobalConfigurationBuilder().build();
-      ServerConfiguration serverConfiguration = global.module(ServerConfiguration.class);
+      ServerConfiguration serverConfiguration = loadAndParseConfiguration();
       validateConfiguration(serverConfiguration);
+   }
+
+   public static String pathToKeystore() {
+      Path path = getConfigPath().resolve("ServerConfigurationParserTest-keystore.pfx");
+      return path.toString();
    }
 
    private void validateConfiguration(ServerConfiguration configuration) {
@@ -163,10 +144,6 @@ public class ServerConfigurationParserTest {
 
    <T extends RealmProvider> T realmProvider(RealmConfiguration realm, Class<T> providerClass) {
       return (T) realm.realmProviders().stream().filter(r -> providerClass.isAssignableFrom(r.getClass())).findFirst().get();
-   }
-
-   public static Path getConfigPath() {
-      return Paths.get(System.getProperty("build.directory"), "test-classes", "configuration");
    }
 
    static void addCredential(KeyStoreCredentialStore store, String alias, String credential) {
