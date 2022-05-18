@@ -5,8 +5,8 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.Date;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
@@ -63,9 +63,9 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
 
 @Indexed(index = "instruments")
 class Bond {
-   @Field
+   @Basic
    Date maturity;
-   @Field
+   @Basic
    Long price;
 
    public Bond(Date maturity, Long price) {
@@ -77,10 +77,10 @@ class Bond {
 @Indexed(index = "instruments_")
 class Debenture {
 
-   @Field
+   @Basic
    String issuer;
 
-   @Field
+   @Basic
    Double rate;
 
    public Debenture(String issuer, Double rate) {

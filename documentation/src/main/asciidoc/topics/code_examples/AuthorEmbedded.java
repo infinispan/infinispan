@@ -1,11 +1,11 @@
 package org.infinispan.sample;
 
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.infinispan.api.annotations.indexing.Text;
 
 public class Author {
-   @FullTextField
+   @Text
    String name;
 
-   @FullTextField
+   @Text
    String surname;
 }

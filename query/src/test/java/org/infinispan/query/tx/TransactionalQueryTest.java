@@ -6,8 +6,8 @@ import static org.infinispan.test.TestingUtil.withTx;
 
 import java.util.concurrent.Callable;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -71,7 +71,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
          m_id = id;
       }
 
-      @Field(name = "Id")
+      @Text(name = "Id")
       @ProtoField(number = 1)
       public String getId() {
          return m_id;

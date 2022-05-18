@@ -8,13 +8,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
-
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
@@ -54,8 +50,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    public int getId() {
       return id;
    }
@@ -66,8 +61,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    public String getDescription() {
       return description;
    }
@@ -78,8 +72,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    public Date getCreationDate() {
       return creationDate;
    }
@@ -90,7 +83,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   @IndexedEmbedded
+   @Embedded
    public LimitsHS getLimits() {
       return limits;
    }
@@ -101,7 +94,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   @IndexedEmbedded
+   @Embedded
    public LimitsHS getHardLimits() {
       return hardLimits;
    }
@@ -137,7 +130,7 @@ public class AccountHS implements Account, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public Currency[] getCurrencies() {
       return currencies;
    }

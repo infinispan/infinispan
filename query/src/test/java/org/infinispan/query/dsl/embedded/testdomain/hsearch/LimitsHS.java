@@ -4,10 +4,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Store;
-
+import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
@@ -25,7 +22,7 @@ public class LimitsHS implements Limits, Serializable {
 
    @Override
    @ProtoField(number = 1)
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public Double getMaxDailyLimit() {
       return maxDailyLimit;
    }
@@ -37,7 +34,7 @@ public class LimitsHS implements Limits, Serializable {
 
    @Override
    @ProtoField(number = 2)
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public Double getMaxTransactionLimit() {
       return maxTransactionLimit;
    }
@@ -49,7 +46,7 @@ public class LimitsHS implements Limits, Serializable {
 
    @Override
    @ProtoField(number = 3)
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public String[] getPayees() {
       return payees;
    }

@@ -45,6 +45,11 @@
          <artifactId>blockhound</artifactId>
       </dependency>
 
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-api</artifactId>
+      </dependency>
+
       <!-- Add Micrometer dependencies to all tests -->
       <dependency>
          <groupId>io.micrometer</groupId>

@@ -6,9 +6,11 @@ import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaElement;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaFieldOptionsStep;
 import org.hibernate.search.engine.backend.types.Aggregable;
+import org.hibernate.search.engine.backend.types.Norms;
 import org.hibernate.search.engine.backend.types.Projectable;
 import org.hibernate.search.engine.backend.types.Searchable;
 import org.hibernate.search.engine.backend.types.Sortable;
+import org.hibernate.search.engine.backend.types.TermVector;
 import org.hibernate.search.engine.backend.types.dsl.IndexFieldTypeFactory;
 import org.hibernate.search.engine.backend.types.dsl.IndexFieldTypeFinalStep;
 import org.hibernate.search.engine.backend.types.dsl.StandardIndexFieldTypeOptionsStep;
@@ -18,7 +20,6 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.logging.Log;
-import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
 
 public class FieldReferenceProvider {
 
@@ -26,34 +27,63 @@ public class FieldReferenceProvider {
 
    private final String name;
    private final Type type;
+   private final boolean repeated;
 
    private final Searchable searchable;
    private final Projectable projectable;
    private final Aggregable aggregable;
    private final Sortable sortable;
-
    private final String analyzer;
+   private final String normalizer;
    private final Object indexNullAs;
-   private final boolean repeated;
+
+   private final Norms norms;
+   private final String searchAnalyzer;
+   private final TermVector termVector;
+   // TODO ISPN-13890 Use this value to BigDecimal mapped (annotated) fields
+   private final Integer decimalScale;
 
    public FieldReferenceProvider(FieldDescriptor fieldDescriptor, FieldMapping fieldMapping) {
       // the property name and type are taken from the model
       name = fieldDescriptor.getName();
       type = fieldDescriptor.getType();
-
-      analyzer = getAnalyzer(fieldMapping);
-
-      // the rest from the mapping
-      searchable = (fieldMapping.index()) ? Searchable.YES : Searchable.NO;
-      sortable = getSortable(fieldMapping);
-
-      projectable = (fieldMapping.store()) ? Projectable.YES : Projectable.NO;
-      // aggregation at the moment are implemented by ISPN
-      aggregable = Aggregable.NO;
-
-      indexNullAs = fieldMapping.parseIndexNullAs();
-
       repeated = fieldDescriptor.isRepeated();
+
+      searchable = (fieldMapping.searchable()) ? Searchable.YES : Searchable.NO;
+      projectable = (fieldMapping.projectable()) ? Projectable.YES : Projectable.NO;
+      aggregable = (fieldMapping.aggregable()) ? Aggregable.YES : Aggregable.NO;
+      sortable = (fieldMapping.sortable()) ? Sortable.YES : Sortable.NO;
+      analyzer = fieldMapping.analyzer();
+      normalizer = fieldMapping.normalizer();
+      indexNullAs = fieldMapping.parseIndexNullAs();
+      norms = (fieldMapping.norms() == null) ? null : (fieldMapping.norms()) ? Norms.YES : Norms.NO;
+      searchAnalyzer = fieldMapping.searchAnalyzer();
+      termVector = termVector(fieldMapping.termVector());
+      decimalScale = fieldMapping.decimalScale();
+   }
+
+   private static TermVector termVector(org.infinispan.api.annotations.indexing.option.TermVector termVector) {
+      if (termVector == null) {
+         return null;
+      }
+
+      switch (termVector) {
+         case YES:
+            return TermVector.YES;
+         case NO:
+            return TermVector.NO;
+         case WITH_POSITIONS:
+            return TermVector.WITH_POSITIONS;
+         case WITH_OFFSETS:
+            return TermVector.WITH_OFFSETS;
+         case WITH_POSITIONS_OFFSETS:
+            return TermVector.WITH_POSITIONS_OFFSETS;
+         case WITH_POSITIONS_PAYLOADS:
+            return TermVector.WITH_POSITIONS_PAYLOADS;
+         case WITH_POSITIONS_OFFSETS_PAYLOADS:
+            return TermVector.WITH_POSITIONS_OFFSETS_PAYLOADS;
+      }
+      return null;
    }
 
    public String getName() {
@@ -75,23 +105,6 @@ public class FieldReferenceProvider {
    public boolean nothingToBind() {
       return Searchable.NO.equals(searchable) && Projectable.NO.equals(projectable) &&
             Aggregable.NO.equals(aggregable) && Sortable.NO.equals(sortable);
-   }
-
-   private String getAnalyzer(FieldMapping fieldMapping) {
-      if (!Type.STRING.equals(type) || !fieldMapping.analyze()) {
-         return null;
-      }
-
-      return (fieldMapping.analyzer() != null) ? fieldMapping.analyzer() :
-            DefaultAnalysisConfigurer.STANDARD_ANALYZER_NAME;
-   }
-
-   private Sortable getSortable(FieldMapping fieldMapping) {
-      if (analyzer != null) {
-         return Sortable.NO;
-      }
-
-      return (fieldMapping.sortable() || fieldMapping.store()) ? Sortable.YES : Sortable.NO;
    }
 
    private <F> IndexFieldTypeFinalStep<F> bind(IndexFieldTypeFactory typeFactory) {
@@ -119,7 +132,7 @@ public class FieldReferenceProvider {
             return typeFactory.asBoolean();
          case STRING: {
             StringIndexFieldTypeOptionsStep<?> step = typeFactory.asString();
-            bindAnalyzer(typeFactory, step);
+            bindStringTypeOptions(typeFactory, step);
             return step;
          }
          case BYTE_STRING:
@@ -129,15 +142,33 @@ public class FieldReferenceProvider {
       }
    }
 
-   private void bindAnalyzer(IndexFieldTypeFactory typeFactory, StringIndexFieldTypeOptionsStep<?> step) {
+   private void bindStringTypeOptions(IndexFieldTypeFactory typeFactory, StringIndexFieldTypeOptionsStep<?> step) {
+      bindNormalizerOrAnalyzer((LuceneIndexFieldTypeFactoryImpl) typeFactory, step);
+
+      if (norms != null) {
+         step.norms(norms);
+      }
+      if (searchAnalyzer != null) {
+         step.searchAnalyzer(searchAnalyzer);
+      }
+      if (termVector != null) {
+         step.termVector(termVector);
+      }
+   }
+
+   private void bindNormalizerOrAnalyzer(LuceneIndexFieldTypeFactoryImpl typeFactory, StringIndexFieldTypeOptionsStep<?> step) {
+      if (normalizer != null) {
+         step.normalizer(normalizer);
+         return;
+      }
+
+      // TODO the following algorithm is used to support normalizer using legacy annotation,
+      //      this won't be necessary when they are removed.
       if (analyzer == null) {
          return;
       }
 
-      @SuppressWarnings("uncheked")
-      LuceneAnalysisDefinitionRegistry analysisDefinitionRegistry =
-            ((LuceneIndexFieldTypeFactoryImpl) typeFactory).getAnalysisDefinitionRegistry();
-
+      LuceneAnalysisDefinitionRegistry analysisDefinitionRegistry = typeFactory.getAnalysisDefinitionRegistry();
       if (analysisDefinitionRegistry.getNormalizerDefinition(analyzer) != null) {
          step.normalizer(analyzer);
       } else {

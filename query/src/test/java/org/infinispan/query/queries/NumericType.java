@@ -1,9 +1,7 @@
 package org.infinispan.query.queries;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 
 /**
  * A new additional entity type for testing Infinispan Querying.
@@ -24,17 +22,17 @@ public class NumericType {
       this.num2 = num2;
    }
 
-   @Field(store = Store.YES, analyze = Analyze.YES)
+   @Basic(projectable = true)
    public int getNum1() {
       return num1;
    }
 
-   @Field(store = Store.YES, analyze = Analyze.YES)
+   @Basic(projectable = true)
    public int getNum2() {
       return num2;
    }
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    public String getName() {
       return name;
    }

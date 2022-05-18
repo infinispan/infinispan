@@ -1,11 +1,8 @@
 package org.infinispan.query.queries.faceting;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.engine.backend.types.Aggregable;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -20,7 +17,7 @@ public class Car {
    private String make;
 
    // the Search6's aggregation is the new HS5's faceting
-   @GenericField(aggregable = Aggregable.YES)
+   @Basic(aggregable = true)
    private int cubicCapacity;
 
    @ProtoFactory
@@ -30,13 +27,13 @@ public class Car {
       this.make = make;
    }
 
-   @Field(store = Store.YES)
+   @Text
    @ProtoField(number = 1)
    public String getMake() {
       return make;
    }
 
-   @Field(analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 2)
    public String getColor() {
       return color;

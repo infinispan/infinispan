@@ -2,10 +2,10 @@ package org.infinispan.query.dsl.embedded.testdomain;
 
 import java.io.Serializable;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 
 /**
  * @author anistor@redhat.com
@@ -31,7 +31,7 @@ public class Book implements Serializable {
       this.preface = preface;
    }
 
-   @Field
+   @Basic
    public String getTitle() {
       return title;
    }
@@ -40,7 +40,7 @@ public class Book implements Serializable {
       this.title = title;
    }
 
-   @Field
+   @Text
    public String getPublisher() {
       return publisher;
    }
@@ -49,7 +49,7 @@ public class Book implements Serializable {
       this.publisher = publisher;
    }
 
-   @Field(analyze = Analyze.NO)
+   @Basic
    public String getIsbn() {
       return isbn;
    }
@@ -58,7 +58,7 @@ public class Book implements Serializable {
       this.isbn = isbn;
    }
 
-   @Field
+   @Text
    public String getPreface() {
       return preface;
    }
@@ -67,7 +67,7 @@ public class Book implements Serializable {
       this.preface = preface;
    }
 
-   @IndexedEmbedded
+   @Embedded
    public Author getAuthor() {
       return author;
    }

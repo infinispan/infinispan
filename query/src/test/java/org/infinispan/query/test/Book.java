@@ -3,11 +3,10 @@ package org.infinispan.query.test;
 import java.util.Objects;
 import java.util.Set;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.IndexedEmbedded;
-import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 
 @Indexed
 public class Book {
@@ -24,7 +23,7 @@ public class Book {
       this.authors = authors;
    }
 
-   @Field
+   @Basic
    public String getTitle() {
       return title;
    }
@@ -33,7 +32,7 @@ public class Book {
       this.title = title;
    }
 
-   @Field
+   @Text
    public String getDescription() {
       return description;
    }
@@ -42,8 +41,7 @@ public class Book {
       this.description = description;
    }
 
-   @IndexedEmbedded
-   @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.NO)
+   @Embedded
    public Set<Author> getAuthors() {
       return authors;
    }

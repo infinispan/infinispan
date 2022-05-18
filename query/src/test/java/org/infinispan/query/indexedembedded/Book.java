@@ -2,8 +2,9 @@ package org.infinispan.query.indexedembedded;
 
 import java.io.Serializable;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 
 @Indexed
 public class Book implements Serializable {
@@ -18,17 +19,17 @@ public class Book implements Serializable {
       this.editor = editor;
    }
 
-   @Field
+   @Text
    public String getTitle() {
       return title;
    }
 
-   @Field
+   @Basic
    public String getAuthor() {
       return author;
    }
 
-   @Field
+   @Basic
    public String getEditor() {
       return editor;
    }

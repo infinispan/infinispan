@@ -3,11 +3,9 @@ package org.infinispan.query.test;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
@@ -43,7 +41,7 @@ public class Person implements Serializable {
       this.dateOfGraduation = dateOfGraduation;
    }
 
-   @Field(store = Store.YES)
+   @Text
    @ProtoField(number = 1)
    public String getName() {
       return name;
@@ -53,7 +51,7 @@ public class Person implements Serializable {
       this.name = name;
    }
 
-   @Field(store = Store.YES)
+   @Text
    @ProtoField(number = 2)
    public String getBlurb() {
       return blurb;
@@ -63,8 +61,7 @@ public class Person implements Serializable {
       this.blurb = blurb;
    }
 
-   @SortableField
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 3, defaultValue = "0")
    public int getAge() {
       return age;
@@ -83,7 +80,7 @@ public class Person implements Serializable {
       this.nonIndexedField = nonIndexedField;
    }
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 5)
    public Date getDateOfGraduation() {
       return dateOfGraduation;
