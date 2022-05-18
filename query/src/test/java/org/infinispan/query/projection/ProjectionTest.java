@@ -5,11 +5,11 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import java.util.List;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.Cache;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -103,12 +103,12 @@ public class ProjectionTest extends SingleCacheManagerTest {
          this.baz = baz;
       }
 
-      @Field(name = "bar", store = Store.YES)
+      @Text
       public String getBar() {
          return bar;
       }
 
-      @Field(name = "baz", store = Store.YES)
+      @Basic(projectable = true)
       public String getBaz() {
          return baz;
       }

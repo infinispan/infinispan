@@ -2,10 +2,9 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed(index = "anotherclass")
@@ -25,7 +24,7 @@ public class AnotherGrassEater implements Serializable {
       this.blurb = blurb;
    }
 
-   @Field(store = Store.YES)
+   @Basic(projectable = true)
    @ProtoField(number = 1)
    public String getName() {
       return name;
@@ -35,7 +34,7 @@ public class AnotherGrassEater implements Serializable {
       this.name = name;
    }
 
-   @Field(store = Store.YES)
+   @Text
    @ProtoField(number = 2)
    public String getBlurb() {
       return blurb;
@@ -45,8 +44,7 @@ public class AnotherGrassEater implements Serializable {
       this.blurb = blurb;
    }
 
-   @SortableField
-   @Field(store = Store.NO)
+   @Basic(projectable = true, sortable = true)
    public int getAge() {
       return age;
    }

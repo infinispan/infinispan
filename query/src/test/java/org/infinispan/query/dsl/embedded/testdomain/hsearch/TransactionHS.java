@@ -4,12 +4,9 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Analyzer;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
@@ -40,8 +37,7 @@ public class TransactionHS implements Transaction, Serializable {
    private boolean isValid;
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
       return id;
@@ -53,8 +49,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 2)
    public String getDescription() {
       return description;
@@ -66,7 +61,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field
+   @Text
    @ProtoField(number = 3)
    public String getLongDescription() {
       return longDescription;
@@ -78,8 +73,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field(analyze = Analyze.YES)
-   @Analyzer(definition = "ngram")
+   @Text(analyzer = "ngram")
    @ProtoField(number = 4)
    public String getNotes() {
       return notes;
@@ -91,7 +85,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 5, defaultValue = "0")
    public int getAccountId() {
       return accountId;
@@ -103,7 +97,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 6)
    public Date getDate() {
       return date;
@@ -115,8 +109,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @SortableField
+   @Basic(projectable = true, sortable = true)
    @ProtoField(number = 7, defaultValue = "0")
    public double getAmount() {
       return amount;
@@ -128,7 +121,7 @@ public class TransactionHS implements Transaction, Serializable {
    }
 
    @Override
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Basic(projectable = true)
    @ProtoField(number = 8, defaultValue = "false")
    public boolean isDebit() {
       return isDebit;

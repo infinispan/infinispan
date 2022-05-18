@@ -5,9 +5,8 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.List;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
@@ -141,18 +140,18 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
          this.age = age;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       @Override
       public String getName() {
          return name;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public String getSurname() {
          return surname;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public int getAge() {
          return age;
       }
@@ -171,12 +170,12 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
          this.gender = gender;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public String getDriverLicenseId() {
          return driverLicenseId;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       @Override
       public String getGender() {
          return gender;

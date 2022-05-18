@@ -7,9 +7,9 @@ import java.io.IOException;
 
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.store.Directory;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
 import org.infinispan.Cache;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -137,7 +137,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    @Indexed(index = "theIndex1")
    public static class Entity1 {
 
-      @Field
+      @Basic
       private final String attribute;
 
       public Entity1(String attribute) {
@@ -152,7 +152,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    @Indexed(index = "theIndex2")
    public static class Entity2 {
 
-      @Field
+      @Basic
       private final String attribute;
 
       public Entity2(String attribute) {

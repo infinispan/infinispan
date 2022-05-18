@@ -68,6 +68,8 @@
       <artifact name="${org.apache.lucene:lucene-queryparser}"/>
       <artifact name="${org.apache.lucene:lucene-join}"/>
       <artifact name="${org.apache.lucene:lucene-facet}"/>
+
+      <artifact name="${org.infinispan:infinispan-api}"/>
    </resources>
 
    <dependencies>

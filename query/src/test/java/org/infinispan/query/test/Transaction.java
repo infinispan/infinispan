@@ -2,9 +2,8 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -21,13 +20,13 @@ public class Transaction implements Serializable {
       this.script = script;
    }
 
-   @Field(analyze = Analyze.NO)
+   @Basic
    @ProtoField(number = 1, defaultValue = "0")
    public int getSize() {
       return size;
    }
 
-   @Field
+   @Basic
    @ProtoField(number = 2)
    public String getScript() {
       return script;

@@ -7,11 +7,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.List;
 import java.util.Random;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.SortableField;
-import org.hibernate.search.annotations.Store;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;
@@ -33,16 +30,13 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
    @Indexed
    static class Person {
 
-      @Field(store = Store.YES, analyze = Analyze.NO)
-      @SortableField
+      @Basic(projectable = true, sortable = true)
       final int id;
 
-      @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "_null_")
-      @SortableField
+      @Basic(projectable = true, sortable = true, indexNullAs = "_null_")
       final String firstName;
 
-      @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "_null_")
-      @SortableField
+      @Basic(projectable = true, sortable = true, indexNullAs = "_null_")
       final String lastName;
 
       Person(int id, String firstName, String lastName) {

@@ -80,6 +80,11 @@
          <optional>true</optional>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-api</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>io.micrometer</groupId>
          <artifactId>micrometer-core</artifactId>
       </dependency>

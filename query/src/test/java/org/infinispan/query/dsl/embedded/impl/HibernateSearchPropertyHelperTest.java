@@ -3,11 +3,10 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -92,10 +91,10 @@ public class HibernateSearchPropertyHelperTest {
 
       public String id;
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public String name;
 
-      @Field(analyze = Analyze.YES, store = Store.YES)
+      @Text(projectable = true)
       public String description;
 
       public int i;
@@ -106,27 +105,32 @@ public class HibernateSearchPropertyHelperTest {
 
       public double d;
 
+      // When an entity is created with Infinispan,
+      // the document id is reserved to link the cache entry key to the value.
+      // In this case Hibernate Search is used standalone,
+      // so we need to provide explicitly the document id,
+      // using the Search annotation.
       @DocumentId
       public String getId() {
          return id;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public int getI() {
          return i;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public long getL() {
          return l;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public float getF() {
          return f;
       }
 
-      @Field(analyze = Analyze.NO)
+      @Basic
       public double getD() {
          return d;
       }

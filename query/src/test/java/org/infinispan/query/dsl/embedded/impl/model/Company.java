@@ -2,10 +2,10 @@ package org.infinispan.query.dsl.embedded.impl.model;
 
 import java.util.Set;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.annotations.IndexedEmbedded;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.api.annotations.indexing.option.Structure;
 
 /**
  * @author anistor@redhat.com
@@ -21,7 +21,7 @@ public class Company {
 
    private Address address;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Keyword(projectable = true)
    public String getName() {
       return name;
    }
@@ -30,7 +30,7 @@ public class Company {
       return employees;
    }
 
-   @IndexedEmbedded
+   @Embedded(structure = Structure.FLATTENED)
    public Address getAddress() {
       return address;
    }
@@ -45,12 +45,12 @@ public class Company {
 
       public Set<Company> companies;
 
-      @Field(store = Store.YES)
+      @Text(projectable = true)
       public String getStreet() {
          return street;
       }
 
-      @Field
+      @Text
       public String getCity() {
          return city;
       }

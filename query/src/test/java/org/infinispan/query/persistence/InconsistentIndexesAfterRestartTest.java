@@ -8,10 +8,10 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -128,13 +128,13 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
          return id;
       }
 
-      @Field(store = Store.YES)
+      @Text
       @ProtoField(number = 2)
       public String getName() {
          return name;
       }
 
-      @Field(store = Store.YES)
+      @Basic(projectable = true)
       @ProtoField(number = 3)
       public String getSurname() {
          return surname;

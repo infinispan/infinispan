@@ -2,26 +2,26 @@ package org.infinispan.query.model;
 
 import java.io.Serializable;
 
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed
 public class Developer implements Serializable {
 
-   @KeywordField
+   @Keyword
    private String nick;
 
-   @GenericField
+   @Keyword
    private String email;
 
-   @FullTextField
+   @Text
    private String biography;
 
-   @GenericField
+   @Basic
    private Integer contributions = 0;
 
    @ProtoFactory
