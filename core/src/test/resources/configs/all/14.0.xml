@@ -159,7 +159,9 @@
             <binary size="20500"/>
          </memory>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="SYNC" statistics="true">
+      <replicated-cache name="repl" mode="SYNC" statistics="true" segments="10"
+                        consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+                        key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <encoding>
             <key media-type="application/x-java-object"/>
             <value media-type="application/x-java-object"/>
@@ -173,7 +175,7 @@
          <memory>
             <object size="21000"/>
          </memory>
-         <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
+         <state-transfer enabled="false" timeout="60000" chunk-size="10000"/>
       </replicated-cache>
       <distributed-cache name="indexed">
          <indexing>
