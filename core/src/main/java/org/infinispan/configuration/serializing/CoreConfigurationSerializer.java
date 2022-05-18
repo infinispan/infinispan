@@ -41,6 +41,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
+import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.cache.IndexMergeConfiguration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
@@ -409,6 +410,11 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       } else {
          writer.writeMapItem(configuration.isTemplate() ? Element.REPLICATED_CACHE_CONFIGURATION : Element.REPLICATED_CACHE, Attribute.NAME, name);
       }
+      AttributeSet hashAttributes = configuration.clustering().hash().attributes();
+      hashAttributes.write(writer, HashConfiguration.NUM_SEGMENTS);
+      hashAttributes.write(writer, HashConfiguration.CONSISTENT_HASH_FACTORY);
+      hashAttributes.write(writer, HashConfiguration.KEY_PARTITIONER);
+
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
       writeExtraConfiguration(writer, configuration.modules());
