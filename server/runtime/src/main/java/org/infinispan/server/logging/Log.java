@@ -254,4 +254,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Wrong masked password format", id = 80068)
    CacheConfigurationException wrongMaskedPasswordFormat();
+
+   @Message(value = "Alias '%s' not in keystore '%s'", id = 80069)
+   CacheConfigurationException aliasNotInKeystore(String alias, String keystore);
 }

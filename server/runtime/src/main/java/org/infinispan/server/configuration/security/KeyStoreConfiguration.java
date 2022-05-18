@@ -101,6 +101,9 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
       }
       KeyStore keyStore = KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, provider, new FileInputStream(keyStoreFileName), keyStoreFileName, keyStorePassword);
       if (keyAlias != null) {
+         if (!keyStore.containsAlias(keyAlias)) {
+            throw Server.log.aliasNotInKeystore(keyAlias, keyStoreFileName);
+         }
          keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(keyAlias));
       }
       return keyStore;
