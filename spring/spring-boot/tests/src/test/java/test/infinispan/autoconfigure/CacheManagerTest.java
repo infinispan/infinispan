@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationContext;
             InfinispanEmbeddedCacheManagerAutoConfiguration.class
       },
       properties = {
+            "spring.main.banner-mode=off",
             "infinispan.remote.server-list=127.0.0.1:6667"
       })
 public class CacheManagerTest {

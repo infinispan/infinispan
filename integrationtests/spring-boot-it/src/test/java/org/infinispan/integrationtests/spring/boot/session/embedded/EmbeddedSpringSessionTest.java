@@ -7,7 +7,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = EmbeddedConfiguration.class, webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = EmbeddedConfiguration.class,
+      webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT,
+      properties = "spring.main.banner-mode=off")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class EmbeddedSpringSessionTest extends AbstractSpringSessionTCK {
 
