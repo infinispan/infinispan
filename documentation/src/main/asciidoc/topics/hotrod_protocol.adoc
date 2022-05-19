@@ -2043,7 +2043,7 @@ It includes 9 new operations to manipulate multimap caches:
 * request 0x6B - response 0x6C = Put a key/value
 * request 0x6D - response 0x6E = Remove a key
 * request 0x6F - response 0x70 = Remove an entry
-* request 0x71 - response 0x72 = Size
+* request 0x71 - response 0x72 = Get the cache size
 * request 0x73 - response 0x74 = Contains entry
 * request 0x75 - response 0x76 = Contains key
 * request 0x77 - response 0x78 = Contains value
