@@ -219,6 +219,9 @@
                         <java classname="org.infinispan.tools.xsd.XSDoc">
                            <arg value="-o" />
                            <arg value="${project.build.directory}/site/configdocs" />
+                           <arg value="-s" />
+                           <!-- file contains only abstract types. Skip rendering to HTML-->
+                           <arg value="infinispan-cachestore-jdbc-common-config-${infinispan.core.schema.version}.xsd" />
                            <arg line="${xsd.fileset}" />
                            <classpath>
                               <pathelement path="${plugin_classpath}" />
