@@ -184,7 +184,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
    private final ThreadPoolProbeHandler probeHandler;
    private final ChannelCallbacks channelCallbacks = new ChannelCallbacks();
-   private final Map<JChannel, Set<Object>> clusters = new HashMap<>();
+   private final Map<JChannel, Set<Object>> clusters = new ConcurrentHashMap<>();
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
    protected TypedProperties props;
    protected JChannel channel;
