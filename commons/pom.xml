@@ -14,15 +14,17 @@
    <packaging>pom</packaging>
 
    <modules>
-      <module>jdk11</module>
       <module>all</module>
    </modules>
 
    <profiles>
       <profile>
-         <id>loom</id>
+         <id>jdk19</id>
+         <activation>
+            <jdk>[19,)</jdk>
+         </activation>
          <modules>
-            <module>loom</module>
+            <module>jdk19</module>
          </modules>
       </profile>
    </profiles>

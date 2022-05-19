@@ -7,7 +7,7 @@ package org.infinispan.commons.jdkspecific;
 public class ThreadCreator {
    public static Thread createThread(ThreadGroup threadGroup, Runnable target, boolean lightweight) {
       if (lightweight) {
-         return Thread.builder().virtual().group(threadGroup).task(target).build();
+         return Thread.ofVirtual().unstarted(target);
       } else {
          return new Thread(threadGroup, target);
       }

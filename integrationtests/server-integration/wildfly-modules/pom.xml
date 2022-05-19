@@ -331,16 +331,5 @@
             </plugins>
          </build>
       </profile>
-
-      <profile>
-         <id>java8-test</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <server.jvm>${env.JAVA8_HOME}</server.jvm>
-            <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
-         </properties>
-      </profile>
    </profiles>
 </project>

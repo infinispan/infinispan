@@ -1,9 +1,5 @@
 #!/bin/sh
 
-setModularJdk() {
-  "$JAVA" --add-modules=java.se -version > /dev/null 2>&1 && MODULAR_JDK=true || MODULAR_JDK=false
-}
-
 # Use --debug to activate debug mode with an optional argument to specify the port.
 # Usage : server.sh --debug
 #         server.sh --debug 9797
@@ -273,8 +269,8 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         fi
     fi
 
-    # Set flag if JVM is modular
-    setModularJdk
+    # Enable export for LDAP (needed for JDK 17+)
+    PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
 
     if [ "$GC_LOG" = "true" ]; then
         # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled

@@ -27,7 +27,7 @@ import org.kohsuke.MetaInfServices;
 /**
  * @since 14.0
  **/
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes("org.infinispan.external.JGroupsProtocolComponent")
 @MetaInfServices(Processor.class)
 public class JGroupsComponentProcessor extends AbstractProcessor {

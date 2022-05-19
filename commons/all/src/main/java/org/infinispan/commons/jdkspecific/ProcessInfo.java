@@ -1,7 +1,6 @@
 package org.infinispan.commons.jdkspecific;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -9,25 +8,24 @@ import java.util.List;
  * @since 11.0
  **/
 public class ProcessInfo {
-
    private final String name;
    private final long pid;
+   private final long ppid;
    private final List<String> arguments;
 
-   private ProcessInfo() {
-      RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
-      String[] nameParts = runtimeMxBean.getName().split("@");
-      name = runtimeMxBean.getName();
-      pid = Long.parseLong(nameParts[0]);
-      arguments = runtimeMxBean.getInputArguments();
+   private ProcessInfo(ProcessHandle handle) {
+      name = handle.info().command().orElse("-");
+      pid = handle.pid();
+      ppid = handle.parent().map(ProcessHandle::pid).orElse(-1l);
+      arguments = Arrays.asList(handle.info().arguments().orElse(new String[]{}));
    }
 
    public static ProcessInfo getInstance() {
-      return new ProcessInfo();
+      return new ProcessInfo(ProcessHandle.current());
    }
 
    public static ProcessInfo of(Process process) {
-      throw new UnsupportedOperationException();
+      return new ProcessInfo(process.toHandle());
    }
 
    public String getName() {
@@ -43,14 +41,19 @@ public class ProcessInfo {
    }
 
    public ProcessInfo getParent() {
-      return null; // Java 8 cannot retrieve this
+      if (ppid > 0) {
+         return new ProcessInfo(ProcessHandle.of(ppid).get());
+      } else {
+         return null;
+      }
    }
 
    @Override
    public String toString() {
-      return "Process[jdk8]{" +
+      return "Process[jdk11]{" +
             "name='" + name + '\'' +
             ", pid=" + pid +
+            ", ppid=" + ppid +
             ", arguments=" + arguments +
             '}';
    }
