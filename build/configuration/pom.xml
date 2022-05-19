@@ -84,8 +84,8 @@
    </distributionManagement>
 
    <properties>
-      <maven.compiler.source>1.8</maven.compiler.source>
-      <maven.compiler.target>1.8</maven.compiler.target>
+      <maven.compiler.source>11</maven.compiler.source>
+      <maven.compiler.target>11</maven.compiler.target>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -183,6 +183,7 @@
       <version.org.wildfly.openssl>2.2.0.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.2.0.Final</version.org.wildfly.openssl.natives>
       <version.org.wildfly.openssl.natives.linux_x86_64>2.2.0.SP01</version.org.wildfly.openssl.natives.linux_x86_64>
+      <version.ow2.asm>9.3</version.ow2.asm>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>4.5.0.Dev01</version.protostream>
@@ -220,7 +221,7 @@
       <version.maven.release>3.0.0-M1</version.maven.release>
       <version.maven.remote.resource>1.5</version.maven.remote.resource>
       <version.maven.resources>3.2.0</version.maven.resources>
-      <version.maven.shade>3.2.4</version.maven.shade>
+      <version.maven.shade>3.3.0</version.maven.shade>
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.surefire>3.0.0-M6</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>

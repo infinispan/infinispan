@@ -14,4 +14,4 @@ Available profiles
 ==================
 
 * *distribution* Builds the full distribution
-* *java8-test*   Runs the testsuite using a Java 8 installation (the JAVA8_HOME environment variable must point to it)
+

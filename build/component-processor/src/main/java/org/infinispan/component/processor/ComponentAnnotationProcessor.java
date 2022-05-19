@@ -57,7 +57,7 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
 import org.kohsuke.MetaInfServices;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ComponentAnnotationProcessor.INFINISPAN_MODULE,
                            ComponentAnnotationProcessor.DEFAULT_FACTORY_FOR,
                            ComponentAnnotationProcessor.SURVIVES_RESTARTS,
