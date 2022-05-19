@@ -2,6 +2,8 @@ package org.infinispan.tools.xsd;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -23,7 +25,7 @@ import gnu.getopt.Getopt;
 
 public class XSDoc {
 
-   public class Schema {
+   public static class Schema {
       final String namespace;
       final String name;
       final Document doc;
@@ -50,16 +52,39 @@ public class XSDoc {
       public boolean since(Schema schema) {
          return (schema == null) || (this.major > schema.major) || ((this.major == schema.major) && (this.minor >= schema.minor));
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Schema schema = (Schema) o;
+
+         if (major != schema.major) return false;
+         if (minor != schema.minor) return false;
+         if (!namespace.equals(schema.namespace)) return false;
+         return name.equals(schema.name);
+      }
+
+      @Override
+      public int hashCode() {
+         int result = namespace.hashCode();
+         result = 31 * result + name.hashCode();
+         result = 31 * result + major;
+         result = 31 * result + minor;
+         return result;
+      }
    }
 
-   private final Map<String, Document> xmls = new LinkedHashMap<>();
-   private final Map<String, Schema> latestSchemas = new LinkedHashMap<>();
+   private final Map<String, Document> xmls = new LinkedHashMap<>(32);
+   private final Map<String, Schema> latestSchemas = new LinkedHashMap<>(32);
+   private final Collection<Schema> skipSchemas = new HashSet<>(32);
 
    private final Transformer xslt;
    private final DocumentBuilder docBuilder;
    private final Document indexDoc;
-   private Element indexRoot;
-   private TransformerFactory factory;
+   private final Element indexRoot;
+   private final TransformerFactory factory;
 
    XSDoc() throws Exception {
       factory = TransformerFactory.newInstance();
@@ -83,7 +108,7 @@ public class XSDoc {
       indexDoc.appendChild(indexRoot);
    }
 
-   void load(String fileName) throws Exception {
+   void load(String fileName, boolean skipTransform) throws Exception {
       Document doc = docBuilder.parse(new File(fileName));
       String name = ToolUtils.getBaseFileName(fileName);
       xmls.put(name, doc);
@@ -91,6 +116,9 @@ public class XSDoc {
       Schema current = latestSchemas.get(schema.namespace);
       if (schema.since(current)) {
          latestSchemas.put(schema.namespace, schema);
+      }
+      if (skipTransform) {
+         skipSchemas.add(schema);
       }
    }
 
@@ -110,13 +138,13 @@ public class XSDoc {
    public static String getDocumentNamespace(Document doc) {
       Node child = doc.getFirstChild();
       while (!(child instanceof Element)) child = child.getNextSibling();
-      return ((Element)child).getAttribute("targetNamespace");
+      return ((Element) child).getAttribute("targetNamespace");
    }
 
    void transformAll(File outputDir) {
-      latestSchemas.values().forEach(schema -> {
-         transform(schema.name, schema.doc, outputDir);
-      });
+      latestSchemas.values().stream()
+            .filter(schema -> !skipSchemas.contains(schema))
+            .forEach(schema -> transform(schema.name, schema.doc, outputDir));
    }
 
    private void generateIndex(File outputDir) throws Exception {
@@ -129,22 +157,25 @@ public class XSDoc {
    }
 
 
-
-   public static void main(String argv[]) throws Exception {
+   public static void main(String[] argv) throws Exception {
       XSDoc xsDoc = new XSDoc();
       String outputDir = System.getProperty("user.dir");
-      Getopt opts = new Getopt("xsdoc", argv, "o:");
+      Collection<String> skipSchema = new HashSet<>(32);
+      Getopt opts = new Getopt("xsdoc", argv, "o:s:");
       for (int opt = opts.getopt(); opt > -1; opt = opts.getopt()) {
          switch (opt) {
-         case 'o':
-            outputDir = opts.getOptarg();
-            break;
+            case 'o':
+               outputDir = opts.getOptarg();
+               break;
+            case 's':
+               skipSchema.add(ToolUtils.getBaseFileName(opts.getOptarg()));
+               break;
          }
       }
       File outDir = new File(outputDir);
       outDir.mkdirs();
       for (int i = opts.getOptind(); i < argv.length; i++) {
-         xsDoc.load(argv[i]);
+         xsDoc.load(argv[i], skipSchema.contains(ToolUtils.getBaseFileName(argv[i])));
       }
       xsDoc.transformAll(outDir);
       xsDoc.generateIndex(outDir);
