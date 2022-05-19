@@ -18,7 +18,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = RemoteConfiguration.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = RemoteConfiguration.class,
+      webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+      properties = "spring.main.banner-mode=off")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
 
