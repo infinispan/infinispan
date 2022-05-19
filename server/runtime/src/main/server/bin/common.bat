@@ -61,7 +61,7 @@ shift
 goto ARGS_LOOP_START
 
 :ARGS_LOOP_END
-set "JAVA_OPTS=%JAVA_OPTS% %JAVA_OPTS_EXTRA%"
+set "JAVA_OPTS=--add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED %JAVA_OPTS% %JAVA_OPTS_EXTRA%"
 rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul

@@ -8,10 +8,10 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-commons-loom</artifactId>
+   <artifactId>infinispan-commons-jdk19</artifactId>
    <packaging>jar</packaging>
-   <name>Infinispan Commons JDK Loom</name>
-   <description>Infinispan Commons JDK Loom</description>
+   <name>Infinispan Commons JDK 19</name>
+   <description>Infinispan Commons JDK 19</description>
 
    <build>
       <plugins>
@@ -21,7 +21,8 @@
             <configuration>
                <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork combine.children="append">true</fork>
-               <release>15</release>
+               <release>19</release>
+               <compilerArgument>--enable-preview</compilerArgument>
             </configuration>
          </plugin>
          <plugin>

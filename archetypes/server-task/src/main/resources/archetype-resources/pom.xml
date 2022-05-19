@@ -43,7 +43,7 @@
 
     <build>
         <plugins>
-            <!-- enforce java 1.8 and maven 3.2 -->
+            <!-- enforce java 11 and maven 3.2 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -68,7 +68,7 @@
                 </executions>
             </plugin>
 
-            <!-- by default, compile to JDK 1.8 compatibility -->
+            <!-- by default, compile to JDK 11 compatibility -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
