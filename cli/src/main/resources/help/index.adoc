@@ -31,7 +31,7 @@ Reindexes a cache.
 Clears a cache index.
 
 `index update-schema mycache` +
-Update index schema for the given cache
+Updates the index schema for a cache.
 
 `index stats mycache` +
 Shows indexing and search statistics for a cache.
