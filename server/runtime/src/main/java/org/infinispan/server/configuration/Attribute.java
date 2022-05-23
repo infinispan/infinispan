@@ -35,7 +35,6 @@ public enum Attribute {
    DRIVER,
    ENABLED_CIPHERSUITES,
    ENABLED_PROTOCOLS,
-   ENCODED,
    EXTRACT_RDN,
    FAIL_CACHE,
    FILTER,

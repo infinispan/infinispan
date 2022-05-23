@@ -65,11 +65,6 @@ infinispan:
               debug: false
               failCache: '1000'
               required: false
-          filesystemRealm:
-            name: filesystem
-            path: security
-            levels: '3'
-            encoded: false
           ldapRealm:
             credential: strongPassword
             name: ldap

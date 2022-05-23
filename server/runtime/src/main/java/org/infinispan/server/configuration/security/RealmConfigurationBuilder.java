@@ -49,10 +49,6 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       return addBuilder(Element.DISTRIBUTED_REALM, new DistributedRealmConfigurationBuilder());
    }
 
-   public FileSystemRealmConfigurationBuilder fileSystemConfiguration() {
-      return addBuilder(Element.FILESYSTEM_REALM, new FileSystemRealmConfigurationBuilder());
-   }
-
    public LdapRealmConfigurationBuilder ldapConfiguration() {
       return addBuilder(Element.LDAP_REALM, new LdapRealmConfigurationBuilder());
    }

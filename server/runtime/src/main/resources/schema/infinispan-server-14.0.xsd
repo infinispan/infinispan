@@ -1061,7 +1061,6 @@
    <xs:complexType name="security-realm">
       <xs:sequence>
          <xs:element type="tns:security-realm-server-identities" name="server-identities" minOccurs="0"/>
-         <xs:element type="tns:security-realm-filesystem" name="filesystem-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-ldap" name="ldap-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-local" name="local-realm" minOccurs="0"/>
          <xs:element type="tns:security-realm-properties" name="properties-realm" minOccurs="0"/>
@@ -1775,14 +1774,6 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-   </xs:complexType>
-
-   <xs:complexType name="security-realm-filesystem">
-      <xs:attribute type="xs:string" name="name" default="filesystem"/>
-      <xs:attribute type="xs:string" name="path" use="required"/>
-      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.data.path"/>
-      <xs:attribute type="xs:int" name="levels" default="0"/>
-      <xs:attribute type="xs:boolean" name="encoded" default="true"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-local">

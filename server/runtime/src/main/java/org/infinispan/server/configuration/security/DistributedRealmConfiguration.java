@@ -17,7 +17,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 13.0
  **/
-public class DistributedRealmConfiguration extends ConfigurationElement<FileSystemRealmConfiguration> implements RealmProvider {
+public class DistributedRealmConfiguration extends ConfigurationElement<DistributedRealmConfiguration> implements RealmProvider {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "distributed", String.class).build();
    static final AttributeDefinition<List<String>> REALMS = AttributeDefinition.builder("realms", null, (Class<List<String>>) (Class<?>) List.class)
          .initializer(ArrayList::new).immutable().build();
