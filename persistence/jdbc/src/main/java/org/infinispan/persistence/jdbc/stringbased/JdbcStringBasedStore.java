@@ -751,7 +751,7 @@ public class JdbcStringBasedStore<K,V> implements SegmentedAdvancedLoadWriteStor
                upsertBatch.executeBatch();
 
             if (!batchModification.getKeysToRemove().isEmpty())
-               deleteBatch.executeUpdate();
+               deleteBatch.executeBatch();
          }
          // We do not call connection.close() in the event of an exception, as close() on active Tx behaviour is implementation
          // dependent. See https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html#close--
