@@ -42,6 +42,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -104,7 +105,6 @@ import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
@@ -258,17 +258,7 @@ public class Server implements ServerManagement, AutoCloseable {
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
 
       // Register our simple naming context factory builder
-      try {
-         if (!NamingManager.hasInitialContextFactoryBuilder()) {
-            initialContextFactoryBuilder = new ServerInitialContextFactoryBuilder();
-            SecurityActions.setInitialContextFactoryBuilder(initialContextFactoryBuilder);
-         } else {
-            // This will only happen when running multiple server instances in the same JVM (i.e. embedded tests)
-            log.warn("Could not register the ServerInitialContextFactoryBuilder. JNDI will not be available");
-         }
-      } catch (PrivilegedActionException e) {
-         throw new RuntimeException(e.getCause());
-      }
+      registerInitialContextFactoryBuilder();
 
       // Register only the providers that matter to us
       SecurityActions.addSecurityProvider(WildFlyElytronHttpBasicProvider.getInstance());
@@ -284,6 +274,20 @@ public class Server implements ServerManagement, AutoCloseable {
       SecurityActions.addSecurityProvider(WildFlyElytronSaslOAuth2Provider.getInstance());
       SecurityActions.addSecurityProvider(WildFlyElytronSaslGssapiProvider.getInstance());
       SecurityActions.addSecurityProvider(WildFlyElytronSaslGs2Provider.getInstance());
+   }
+
+   private void registerInitialContextFactoryBuilder() {
+      try {
+         if (!NamingManager.hasInitialContextFactoryBuilder()) {
+            initialContextFactoryBuilder = new ServerInitialContextFactoryBuilder();
+            SecurityActions.setInitialContextFactoryBuilder(initialContextFactoryBuilder);
+         } else {
+            // This will only happen when running multiple server instances in the same JVM (i.e. embedded tests)
+            log.warn("Could not register the ServerInitialContextFactoryBuilder. JNDI will not be available");
+         }
+      } catch (PrivilegedActionException e) {
+         throw new RuntimeException(e.getCause());
+      }
    }
 
    private void parseConfiguration(List<Path> configurationFiles) {
