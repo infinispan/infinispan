@@ -26,6 +26,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.metadata.Metadata;
@@ -45,7 +46,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -129,19 +129,21 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
             // If meta exists, then ensure that the stored configuration is compatible with the current settings
             if (tableManager.metaTableExists(connection)) {
                TableManager.Metadata meta = tableManager.getMetadata(connection);
-               int storedSegments = meta.getSegments();
-               if (!configuration.segmented()) {
-                  // ISPN-13135 number of segments was previously written incorrectly, so don't validate number for older versions
-                  String versionStr = Version.decodeVersion(meta.getVersion());
-                  List<Integer> versionParts = Arrays.stream(versionStr.split("\\.")).map(Integer::parseInt).collect(Collectors.toList());
-                  // Ignore check if version < 12.1.5. Meta table only created since 12.0.0
-                  if ((versionParts.get(0) > 12 || versionParts.get(2) > 4) && storedSegments != -1)
-                     throw log.existingStoreNoSegmentation();
-               }
+               if (meta != null) {
+                  int storedSegments = meta.getSegments();
+                  if (!configuration.segmented()) {
+                     // ISPN-13135 number of segments was previously written incorrectly, so don't validate number for older versions
+                     String versionStr = Version.decodeVersion(meta.getVersion());
+                     List<Integer> versionParts = Arrays.stream(versionStr.split("\\.")).map(Integer::parseInt).collect(Collectors.toList());
+                     // Ignore check if version < 12.1.5. Meta table only created since 12.0.0
+                     if ((versionParts.get(0) > 12 || versionParts.get(2) > 4) && storedSegments != -1)
+                        throw log.existingStoreNoSegmentation();
+                  }
 
-               int configuredSegments = numSegments;
-               if (configuration.segmented() && storedSegments != configuredSegments)
-                  throw log.existingStoreSegmentMismatch(storedSegments, configuredSegments);
+                  int configuredSegments = numSegments;
+                  if (configuration.segmented() && storedSegments != configuredSegments)
+                     throw log.existingStoreSegmentMismatch(storedSegments, configuredSegments);
+               }
                tableManager.updateMetaTable(connection);
             } else {
                // The meta table does not exist, therefore we must be reading from a 11.x store. Migrate the old data
