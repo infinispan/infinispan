@@ -1,0 +1,26 @@
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:{schemaversion} https://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd
+                          urn:infinispan:server:{schemaversion} https://infinispan.org/schemas/infinispan-server-{schemaversion}.xsd"
+      xmlns="urn:infinispan:config:{schemaversion}"
+      xmlns:server="urn:infinispan:server:{schemaversion}">
+  <cache-container name="default"
+                   statistics="true">
+    <distributed-cache name="mycacheone"
+                       mode="ASYNC"
+                       statistics="true">
+      <encoding media-type="application/x-protostream"/>
+      <expiration lifespan="300000"/>
+      <memory max-size="400MB"
+              when-full="REMOVE"/>
+    </distributed-cache>
+    <distributed-cache name="mycachetwo"
+                       mode="SYNC"
+                       statistics="true">
+      <encoding media-type="application/x-protostream"/>
+      <expiration lifespan="300000"/>
+      <memory max-size="400MB"
+              when-full="REMOVE"/>
+    </distributed-cache>
+  </cache-container>
+</infinispan>
