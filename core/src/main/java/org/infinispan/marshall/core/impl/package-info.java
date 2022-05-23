@@ -1,4 +1,4 @@
 /**
- * @private
+ * @api.private
  */
 package org.infinispan.marshall.core.impl;

@@ -4,6 +4,6 @@
  * @author anistor@redhat.com
  * @since 6.0
  * @deprecated since 10.1. This will be removed in 11.
- * @private
+ * @api.private
  */
 package org.infinispan.query.dsl.impl;

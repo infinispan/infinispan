@@ -3,6 +3,6 @@
  * transfer on startup is disabled, this {@link org.infinispan.persistence.spi.CacheLoader} implementation allows for lazily loading state from
  * remote nodes, on demand and on a per-entry basis.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.persistence.cluster;

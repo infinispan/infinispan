@@ -1,6 +1,6 @@
 /**
  * {@link org.infinispan.manager.EmbeddedCacheManager}-specific listener events
  *
- * @public
+ * @api.public
  */
 package org.infinispan.notifications.cachemanagerlistener.event;

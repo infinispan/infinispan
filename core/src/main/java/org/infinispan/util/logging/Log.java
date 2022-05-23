@@ -101,7 +101,7 @@ import org.jgroups.View;
  * <p/>
  *
  * @author Manik Surtani
- * @private
+ * @api.private
  * @since 4.0
  */
 @MessageLogger(projectCode = "ISPN")

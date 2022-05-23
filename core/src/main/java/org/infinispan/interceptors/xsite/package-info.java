@@ -1,6 +1,6 @@
 /**
  * Interceptors dealing with cross-site replication.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.interceptors.xsite;

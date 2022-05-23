@@ -1,6 +1,6 @@
 /**
  * Classes relating to the distributed cache mode.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.distribution;

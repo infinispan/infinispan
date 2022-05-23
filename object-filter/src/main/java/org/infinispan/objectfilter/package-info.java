@@ -4,6 +4,6 @@
  * @author anistor@redhat.com
  * @since 7.0
  *
- * @public
+ * @api.public
  */
 package org.infinispan.objectfilter;

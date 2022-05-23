@@ -1,6 +1,6 @@
 /**
  * {@link org.infinispan.Cache} configuration
  *
- * @public
+ * @api.public
  */
 package org.infinispan.configuration.cache;

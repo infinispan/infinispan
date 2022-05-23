@@ -1,7 +1,7 @@
 /**
  * Functional API package
  *
- * @public
+ * @api.public
  */
 @Experimental
 package org.infinispan.functional;

@@ -1,7 +1,7 @@
 /**
  * Global configuration state.
  *
- * @public
+ * @api.public
  */
 
 package org.infinispan.globalstate;

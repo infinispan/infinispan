@@ -5,6 +5,6 @@
  *
  * @author Manik Surtani
  * @since 4.0
- * @private
+ * @api.private
  */
 package org.infinispan.commands.remote;

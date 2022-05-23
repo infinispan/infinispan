@@ -1,6 +1,6 @@
 /**
  * Query DSL implementation internals.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.query.dsl.embedded.impl;

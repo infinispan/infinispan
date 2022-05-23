@@ -16,7 +16,7 @@ import org.jboss.logging.Logger;
  *
  * @author Tristan Tarrant
  * @since 7.0
- * @public
+ * @api.public
  */
 public class LoggingAuditLogger implements AuditLogger {
    static final AuditMessages auditLog = Logger.getMessageLogger(AuditMessages.class, "org.infinispan.AUDIT");
