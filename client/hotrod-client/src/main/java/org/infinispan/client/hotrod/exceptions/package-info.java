@@ -1,6 +1,6 @@
 /**
  * Hot Rod client exceptions.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.client.hotrod.exceptions;

@@ -1,6 +1,6 @@
 /**
  * This package contains implementations of the conflict resolution API.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.conflict.impl;

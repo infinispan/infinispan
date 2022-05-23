@@ -1,6 +1,6 @@
 /**
  * {@link Cache}-specific listener events
  *
- * @public
+ * @api.public
  */
 package org.infinispan.notifications.cachelistener.event;

@@ -461,6 +461,6 @@
  *    </tbody>
  * </table>
  *
- * @public
+ * @api.public
  */
 package org.infinispan.hotrod.configuration;

@@ -1,6 +1,6 @@
 /**
  * {@link org.infinispan.manager.EmbeddedCacheManager}-specific listener annotations
  *
- * @public
+ * @api.public
  */
 package org.infinispan.notifications.cachemanagerlistener.annotation;

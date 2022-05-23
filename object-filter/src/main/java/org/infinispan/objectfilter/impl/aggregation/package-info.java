@@ -4,6 +4,6 @@
  * @author anistor@redhat.com
  * @since 8.0
  *
- * @private
+ * @api.private
  */
 package org.infinispan.objectfilter.impl.aggregation;

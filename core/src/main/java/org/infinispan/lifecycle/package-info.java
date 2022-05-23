@@ -1,6 +1,6 @@
 /**
  * Module and component lifecycle.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.lifecycle;

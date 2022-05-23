@@ -1,6 +1,6 @@
 /**
  * HotRod Server Configuration API
  *
- * @public
+ * @api.public
  */
 package org.infinispan.server.hotrod.configuration;

@@ -1,6 +1,6 @@
 /**
  * Embedded Multimap Cache.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.multimap.api.embedded;

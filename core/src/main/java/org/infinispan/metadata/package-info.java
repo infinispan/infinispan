@@ -1,6 +1,6 @@
 /**
  * Metadata interfaces
  *
- * @public
+ * @api.public
  */
 package org.infinispan.metadata;

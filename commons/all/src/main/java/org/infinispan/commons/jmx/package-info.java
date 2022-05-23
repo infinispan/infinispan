@@ -1,6 +1,6 @@
 /**
  * Pluggable lookup for MBeanServer.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.commons.jmx;

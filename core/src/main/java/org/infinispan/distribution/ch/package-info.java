@@ -1,5 +1,5 @@
 /**
  * Consistent Hash interfaces
- * @public
+ * @api.public
  */
 package org.infinispan.distribution.ch;

@@ -1,6 +1,6 @@
 /**
  * Clustered Counters API.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.counter.api;

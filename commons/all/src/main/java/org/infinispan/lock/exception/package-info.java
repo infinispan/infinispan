@@ -1,6 +1,6 @@
 /**
  * Clustered Locks Exceptions.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.lock.exception;

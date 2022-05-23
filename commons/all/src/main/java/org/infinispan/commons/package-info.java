@@ -1,6 +1,6 @@
 /**
  * Commons package
  *
- * @public
+ * @api.public
  */
 package org.infinispan.commons;

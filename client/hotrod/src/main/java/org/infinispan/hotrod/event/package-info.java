@@ -1,6 +1,6 @@
 /**
  * Hot Rod client remote event API.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.hotrod.event;

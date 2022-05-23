@@ -1,6 +1,6 @@
 /**
  * REST Server bootstrap and Netty bridge classes.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.rest;
