@@ -278,4 +278,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Table name must be non null", id = 8071)
    CacheConfigurationException tableNameMissing();
+
+   @LogMessage(level = WARN)
+   @Message(value = "There was no JDBC metadata present in table %s, unable to confirm if segments are properly configured! Segments are assumed to be properly configured.", id = 8072)
+   void sqlMetadataNotPresent(String tableName);
 }
