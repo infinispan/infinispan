@@ -1,0 +1,27 @@
+infinispan:
+  cacheContainer:
+    name: "default"
+    statistics: "true"
+    caches:
+      mycacheone:
+       distributedCache:
+          mode: "ASYNC"
+          statistics: "true"
+          encoding:
+            mediaType: "application/x-protostream"
+          expiration:
+            lifespan: "300000"
+          memory:
+            maxSize: "400MB"
+            whenFull: "REMOVE"
+      mycachetwo:
+        distributedCache:
+          mode: "SYNC"
+          statistics: "true"
+          encoding:
+            mediaType: "application/x-protostream"
+          expiration:
+            lifespan: "300000"
+          memory:
+            maxSize: "400MB"
+            whenFull: "REMOVE"
