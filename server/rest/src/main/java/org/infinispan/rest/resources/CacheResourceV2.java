@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
@@ -84,6 +85,7 @@ import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
+import org.infinispan.rest.distribution.CacheDistributionInfo;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -128,6 +130,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Config and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("distribution").handleWith(this::getCacheDistribution)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attributes").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttributes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttribute)
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("set-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::setCacheConfigMutableAttribute)
@@ -552,6 +555,14 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return CompletableFuture.supplyAsync(() ->
             asJsonResponse(cache.getAdvancedCache().getStats().toJson()), invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> getCacheDistribution(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      RestCacheManager<?> cache = invocationHelper.getRestCacheManager();
+      return CompletableFuture.supplyAsync(() -> cache.cacheDistribution(cacheName, request), invocationHelper.getExecutor())
+            .thenCompose(Function.identity())
+            .thenApply(distributions -> asJsonResponse(Json.array(distributions.stream().map(CacheDistributionInfo::toJson).toArray())));
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {

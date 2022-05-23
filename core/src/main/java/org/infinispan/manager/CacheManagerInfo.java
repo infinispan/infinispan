@@ -85,6 +85,11 @@ public class CacheManagerInfo implements JsonSerialization {
       return configurationManager.getGlobalConfiguration().cacheManagerName();
    }
 
+   public String getNodeName() {
+      if (cacheManager.getTransport() == null) return getNodeAddress();
+      return cacheManager.getTransport().localNodeName();
+   }
+
    public String getNodeAddress() {
       return cacheManager.getLogicalAddressString();
    }
@@ -93,6 +98,14 @@ public class CacheManagerInfo implements JsonSerialization {
       if (cacheManager.getTransport() == null) return "local";
       List<Address> address = cacheManager.getTransport().getPhysicalAddresses();
       return address == null ? "local" : address.toString();
+   }
+
+   public List<String> getPhysicalAddressesRaw() {
+      if (cacheManager.getTransport() == null) return LOCAL_NODE;
+      List<Address> address = cacheManager.getTransport().getPhysicalAddresses();
+      return address == null
+            ? LOCAL_NODE
+            : address.stream().map(Object::toString).collect(Collectors.toList());
    }
 
    public List<String> getClusterMembers() {

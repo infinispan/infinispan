@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -417,6 +418,50 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
       response = cacheClient.stats();
       assertThat(response).isOk().hasJson().hasProperty("current_number_of_entries").is(0);
+   }
+
+   @Test
+   public void testCacheV2Distribution() {
+      String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
+      RestCacheClient cacheClient = client.cache("distributionCache");
+
+      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, cacheJson);
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(jsonEntity, VOLATILE);
+      assertThat(response).isOk();
+
+      putStringValueInCache("distributionCache", "key1", "data");
+      putStringValueInCache("distributionCache", "key2", "data");
+
+      response = cacheClient.distribution();
+      assertThat(response).isOk();
+
+      Json jsonNode = Json.read(join(response).getBody());
+      assertTrue(jsonNode.isArray());
+      List<Json> jsons = jsonNode.asJsonList();
+
+      assertEquals(NUM_SERVERS, jsons.size());
+      Pattern pattern = Pattern.compile(this.getClass().getSimpleName() + "-Node[a-zA-Z]$");
+      for (Json node : jsons) {
+         assertEquals(node.at("memory_entries").asInteger(), 2);
+         assertEquals(node.at("total_entries").asInteger(), 2);
+         assertEquals(node.at("node_addresses").asJsonList().size(), 1);
+         assertTrue(pattern.matcher(node.at("node_name").asString()).matches());
+      }
+
+      response = cacheClient.clear();
+      assertThat(response).isOk();
+
+      response = cacheClient.distribution();
+      assertThat(response).isOk();
+      jsonNode = Json.read(join(response).getBody());
+
+      assertTrue(jsonNode.isArray());
+      jsons = jsonNode.asJsonList();
+      assertEquals(NUM_SERVERS, jsons.size());
+      for (Json node : jsons) {
+         assertEquals(node.at("memory_entries").asInteger(), 0);
+         assertEquals(node.at("total_entries").asInteger(), 0);
+      }
    }
 
    @Test

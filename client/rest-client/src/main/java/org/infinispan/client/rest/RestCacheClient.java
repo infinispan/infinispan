@@ -261,6 +261,13 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> stats();
 
    /**
+    * Obtain metrics about the distribution of data of the cache.
+    *
+    * @return
+    */
+   CompletionStage<RestResponse> distribution();
+
+   /**
     * Creates the cache using the supplied configuration
     *
     * @param configuration the configuration, in XML, JSON or YAML format

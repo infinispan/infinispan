@@ -72,7 +72,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
    protected RestClient client;
    protected RestClient adminClient;
-   private static final int NUM_SERVERS = 2;
+   protected static final int NUM_SERVERS = 2;
    private final List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
    protected boolean security;

@@ -1,0 +1,18 @@
+[
+  {
+    "node_name": "NodeA",
+    "node_addresses": [
+      "127.0.0.1:44175"
+    ],
+    "memory_entries": 0,
+    "total_entries": 0
+  },
+  {
+    "node_name":"NodeB",
+    "node_addresses": [
+      "127.0.0.1:44187"
+    ],
+    "memory_entries": 0,
+    "total_entries": 0
+  }
+]
