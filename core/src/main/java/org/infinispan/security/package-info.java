@@ -1,6 +1,6 @@
 /**
  * Security API.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.security;

@@ -1,6 +1,6 @@
 /**
  * Transfer of state to new caches in a cluster.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.statetransfer;

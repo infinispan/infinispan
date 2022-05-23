@@ -3,6 +3,6 @@
  * All io.micrometer.* references must be contained in MetricsCollector/MetricsCollectorFactory classes in a way
  * that allows the application to run without these dependencies.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.metrics.impl;

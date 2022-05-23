@@ -3,6 +3,6 @@
  * of how infinispan interacts with external stores.
  *
  * @author Ryan Emerson
- * @private
+ * @api.private
  */
 package org.infinispan.persistence.manager;

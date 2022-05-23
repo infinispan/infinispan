@@ -1,6 +1,6 @@
 /**
  * MultimapCache API.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.multimap.api;

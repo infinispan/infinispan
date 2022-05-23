@@ -1,6 +1,6 @@
 /**
  * Clustered Counters Exceptions.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.counter.exception;

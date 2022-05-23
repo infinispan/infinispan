@@ -1,6 +1,6 @@
 /**
  * Classes and interfaces related to task execution
  *
- * @public
+ * @api.public
  */
 package org.infinispan.tasks;

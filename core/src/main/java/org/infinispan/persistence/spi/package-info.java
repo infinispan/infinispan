@@ -1,6 +1,6 @@
 /**
  * The Persistence SPI.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.persistence.spi;

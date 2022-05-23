@@ -1,6 +1,6 @@
 /**
  * Cache statistics.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.stats;

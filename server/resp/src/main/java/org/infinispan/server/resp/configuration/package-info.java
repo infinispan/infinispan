@@ -1,6 +1,6 @@
 /**
  * Resp Protocol Server Configuration API
  *
- * @public
+ * @api.public
  */
 package org.infinispan.server.resp.configuration;

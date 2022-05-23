@@ -1,7 +1,7 @@
 /**
  * Classes related to eviction.
  *
- * @public
+ * @api.public
  */
 
 package org.infinispan.eviction;

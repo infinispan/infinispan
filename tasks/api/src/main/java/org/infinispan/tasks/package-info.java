@@ -1,6 +1,6 @@
 /**
  * Server tasks API.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.tasks;

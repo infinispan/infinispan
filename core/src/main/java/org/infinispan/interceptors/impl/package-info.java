@@ -3,6 +3,6 @@
  *
  * @since 9.0
  *
- * @private
+ * @api.private
  */
 package org.infinispan.interceptors.impl;

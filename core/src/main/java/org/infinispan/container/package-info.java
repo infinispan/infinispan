@@ -1,6 +1,6 @@
 /**
  * Package that contains the interface describing the underlyling API for storage in Infinispan
  *
- * @public
+ * @api.public
  */
 package org.infinispan.container;

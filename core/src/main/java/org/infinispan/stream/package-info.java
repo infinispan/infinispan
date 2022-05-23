@@ -1,6 +1,6 @@
 /**
  * Cache stream processing.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.stream;
