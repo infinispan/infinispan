@@ -1,6 +1,6 @@
 /**
  * Commons Executors package
  *
- * @public
+ * @api.public
  */
 package org.infinispan.commons.executors;

@@ -4,6 +4,6 @@
  * @author anistor@redhat.com
  * @since 8.2
  *
- * @public
+ * @api.public
  */
 package org.infinispan.query.api.continuous;

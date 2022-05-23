@@ -1,6 +1,6 @@
 /**
  * Configuration for {@link org.infinispan.persistence.rocksdb.RocksDBStore}.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.persistence.rocksdb.configuration;

@@ -4,6 +4,6 @@
  * contained in MetricsCollector/MetricsCollectorFactory classes in way that allows the application to also be able to
  * run without these dependencies.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.metrics.impl;

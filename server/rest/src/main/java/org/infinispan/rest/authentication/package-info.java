@@ -1,6 +1,6 @@
 /**
  * Authentication API for REST.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.rest.authentication;

@@ -1,6 +1,6 @@
 /**
  * REST Server Configuration API
  *
- * @public
+ * @api.public
  */
 package org.infinispan.rest.configuration;

@@ -1,6 +1,6 @@
 /**
  * Handling of inbound commands on remote nodes.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.remoting.inboundhandler;

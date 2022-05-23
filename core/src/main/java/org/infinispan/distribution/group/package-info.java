@@ -8,6 +8,6 @@
  * and extrinsic grouping (see {@link org.infinispan.distribution.group.Grouper}).
  * </p>
  *
- * @public
+ * @api.public
  */
 package org.infinispan.distribution.group;

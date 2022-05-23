@@ -1,6 +1,6 @@
 /**
  * Configuration for {@link org.infinispan.persistence.remote.RemoteStore}.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.persistence.remote.configuration;

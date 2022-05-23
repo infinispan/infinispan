@@ -1,6 +1,6 @@
 /**
  * Query client support classes.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.query.remote.client;

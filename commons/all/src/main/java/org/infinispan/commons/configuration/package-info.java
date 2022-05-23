@@ -1,6 +1,6 @@
 /**
  * Commons Configuration package
  *
- * @public
+ * @api.public
  */
 package org.infinispan.commons.configuration;

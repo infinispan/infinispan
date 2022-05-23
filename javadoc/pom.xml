@@ -326,18 +326,19 @@
                         <!-- Custom doclet needs access to javadoc module internals -->
                         <additionalJOption>-J--add-opens</additionalJOption>
                         <additionalJOption>-Jjdk.javadoc/jdk.javadoc.internal.tool=ALL-UNNAMED</additionalJOption>
-
+                        <additionalJOption>-J--add-opens</additionalJOption>
+                        <additionalJOption>-Jjava.base/java.util=ALL-UNNAMED</additionalJOption>
                         <!--additionalJOption>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787</additionalJOption-->
                      </additionalJOptions>
                      <!-- Declare our custom javadoc tags and provide a replacement text for them to be used just in case exclusion fails. -->
                      <tags>
                         <tag>
-                           <name>public</name>
+                           <name>api.public</name>
                            <placement>a</placement>
                            <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;Public API&lt;/b&gt;&lt;/div&gt;</head>
                         </tag>
                         <tag>
-                           <name>private</name>
+                           <name>api.private</name>
                            <placement>a</placement>
                            <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;</head>
                         </tag>

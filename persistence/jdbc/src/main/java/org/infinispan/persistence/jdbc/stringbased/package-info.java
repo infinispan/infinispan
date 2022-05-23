@@ -4,6 +4,6 @@
  * Strings as keys, then this implementation will perform better than binary or mixed
  * implementations.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.persistence.jdbc.stringbased;

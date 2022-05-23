@@ -1,6 +1,6 @@
 /**
  * Commons Hash package
  *
- * @public
+ * @api.public
  */
 package org.infinispan.commons.hash;

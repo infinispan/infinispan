@@ -1,6 +1,6 @@
 /**
  * Externalizers for several Lucene objects.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.query.impl.externalizers;

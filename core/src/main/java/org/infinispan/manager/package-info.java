@@ -1,6 +1,6 @@
 /**
  * Cache manager API.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.manager;

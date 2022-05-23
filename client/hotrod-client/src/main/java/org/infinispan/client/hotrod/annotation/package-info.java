@@ -1,6 +1,6 @@
 /**
  * Hot Rod client annotations.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.client.hotrod.annotation;

@@ -503,6 +503,6 @@
  *    </tbody>
  * </table>
  *
- * @public
+ * @api.public
  */
 package org.infinispan.client.hotrod.configuration;
