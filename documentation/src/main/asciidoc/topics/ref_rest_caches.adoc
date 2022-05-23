@@ -125,7 +125,7 @@ Invoke a `GET` request to retrieve all details for {brandname} caches.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/caches/{name}
+GET /rest/v2/caches/{name}?action=stats
 ----
 
 {brandname} provides a JSON response such as the following:
@@ -153,6 +153,30 @@ include::json/rest_full_cache_detail.json[]
 [NOTE]
 `key_storage` and `value_storage` matches encoding configuration of the cache.
 For server caches with no encoding, {brandname} assumes `application/x-protostream` when a cache is indexed and `application/unknown` otherwise.
+
+[id='rest_v2_cache_distribution']
+= Retrieving Data Distribution of a Cache
+
+Invoke a `GET` request to retrieve all details for data distribution of {brandname} caches.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{name}?action=distribution
+----
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_full_cache_data_distribution.json[]
+----
+
+Each element in the list represents a node. The properties are:
+
+* `node_name` is the node name
+* `node_addresses` is a list with all the node's physical addresses.
+* `memory_entries` the number of entries the node holds in memory belonging to the cache.
+* `total_entries` the number of entries the node has in memory and disk belonging to the cache.
 
 [id='rest_v2_cache_mutable_attributes']
 = Retrieving all mutable cache configuration attributes

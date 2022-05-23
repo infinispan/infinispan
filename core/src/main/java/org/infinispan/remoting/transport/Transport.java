@@ -259,6 +259,13 @@ public interface Transport extends Lifecycle {
     */
    String localSiteName();
 
+   /**
+    * @return The local node name, defaults to the local node address.
+    */
+   default String localNodeName() {
+      return getAddress().toString();
+   }
+
    @Override
    void start();
 

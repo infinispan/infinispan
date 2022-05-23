@@ -26,6 +26,23 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+         <version>${version.protostream}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+         <version>${version.protostream}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-component-processor</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>io.micrometer</groupId>
          <artifactId>micrometer-core</artifactId>
       </dependency>
@@ -89,18 +106,6 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
          <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-
-       <dependency>
-           <groupId>org.infinispan.protostream</groupId>
-           <artifactId>protostream</artifactId>
-           <scope>test</scope>
-       </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream-processor</artifactId>
          <scope>test</scope>
       </dependency>
 
@@ -178,11 +183,6 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-rest</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-component-processor</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -283,6 +283,18 @@
                   <dependency>org.infinispan:infinispan-commons-test</dependency>
                </dependenciesToScan>
             </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.infinispan.maven-plugins</groupId>
+            <artifactId>proto-schema-compatibility</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>proto-schema-compatibility-check</goal>
+                  </goals>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>

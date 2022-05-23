@@ -6,6 +6,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 /**
  * {@link InfinispanModule} annotation is required for component annotation processing
  */
-@InfinispanModule(name = "server-rest-tests")
+@InfinispanModule(name = "server-rest-tests", requiredModules = {"server-rest"})
 public class TestModule implements ModuleLifecycle {
 }

@@ -463,6 +463,14 @@ public class JGroupsTransport implements Transport, ChannelListener {
       return localSite;
    }
 
+   @Override
+   public String localNodeName() {
+      if (channel == null) {
+         return Transport.super.localNodeName();
+      }
+      return channel.getName();
+   }
+
    @Start
    @Override
    public void start() {

@@ -4,7 +4,9 @@ import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 
 import java.security.PrivilegedAction;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -19,6 +21,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.notifications.Listener;
@@ -28,6 +31,8 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.rest.distribution.CacheDistributionInfo;
+import org.infinispan.rest.distribution.CacheDistributionRunnable;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.security.Security;
@@ -201,6 +206,31 @@ public class RestCacheManager<V> {
 
    public void resetCacheInfo(String cacheName) {
       knownCaches.remove(cacheName);
+   }
+
+   public CompletionStage<Collection<CacheDistributionInfo>> cacheDistribution(String cacheName, RestRequest request) {
+      DistributionManager dm = SecurityActions.getDistributionManager(getCache(cacheName, request));
+      if (dm == null) {
+         CacheDistributionInfo local = CacheDistributionInfo.resolve(instance.getCache(cacheName).getAdvancedCache());
+         return CompletableFuture.completedStage(Collections.singletonList(local));
+      }
+
+      CompletableFuture<Collection<CacheDistributionInfo>> future = new CompletableFuture<>();
+      Map<Address, CacheDistributionInfo> distributions = new ConcurrentHashMap<>();
+      ClusterExecutor executor = instance.executor();
+      Collection<Address> members = dm.getCacheTopology().getMembers();
+      executor.filterTargets(members).submitConsumer(new CacheDistributionRunnable(cacheName), (address, info, t) -> {
+         if (t != null) {
+            future.completeExceptionally(t);
+            return;
+         }
+
+         distributions.putIfAbsent(address, info);
+         if (distributions.size() == members.size() && !future.isCompletedExceptionally()) {
+            future.complete(distributions.values());
+         }
+      });
+      return future;
    }
 
    @Listener
