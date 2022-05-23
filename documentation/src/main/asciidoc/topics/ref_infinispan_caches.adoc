@@ -48,6 +48,27 @@ include::json/replicated_cache.json[]
 include::yaml/replicated_cache.yaml[]
 ----
 
+[discrete]
+== Multiple caches
+
+.XML
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/infinispan_caches.xml[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/infinispan_caches.yaml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/infinispan_caches.json[]
+----
+
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}[{brandname} configuration schema reference]
