@@ -49,8 +49,6 @@
                             fail-cache="1000" mechanism-names="KRB5 SPNEGO"
                             relative-to="infinispan.server.config.path"/>
                </server-identities>
-               <filesystem-realm path="security" levels="3" encoded="false"
-                                 relative-to="infinispan.server.config.path"/>
                <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
                            principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
                   <name-rewriter>

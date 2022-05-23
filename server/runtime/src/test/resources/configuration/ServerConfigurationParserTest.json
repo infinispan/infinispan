@@ -102,12 +102,6 @@
                 "required": false
               }
             },
-            "filesystem-realm": {
-              "name": "filesystem",
-              "path": "security",
-              "levels": "3",
-              "encoded": false
-            },
             "ldap-realm": {
               "credential": "strongPassword",
               "name": "ldap",

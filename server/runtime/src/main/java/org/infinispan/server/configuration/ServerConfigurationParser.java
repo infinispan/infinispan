@@ -28,7 +28,6 @@ import org.infinispan.server.configuration.security.CredentialStoreConfiguration
 import org.infinispan.server.configuration.security.CredentialStoreConfigurationBuilder;
 import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
 import org.infinispan.server.configuration.security.DistributedRealmConfigurationBuilder;
-import org.infinispan.server.configuration.security.FileSystemRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.GroupsPropertiesConfigurationBuilder;
 import org.infinispan.server.configuration.security.JwtConfigurationBuilder;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfigurationBuilder;
@@ -453,9 +452,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case DISTRIBUTED_REALM:
                parseDistributedRealm(reader, securityRealmBuilder.distributedConfiguration());
                break;
-            case FILESYSTEM_REALM:
-               parseFileSystemRealm(reader, securityRealmBuilder.fileSystemConfiguration());
-               break;
             case LDAP_REALM:
                parseLdapRealm(reader, builder, securityRealmBuilder.ldapConfiguration());
                break;
@@ -479,43 +475,6 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader, element);
          }
       }
-   }
-
-   private void parseFileSystemRealm(ConfigurationReader reader, FileSystemRealmConfigurationBuilder fileRealmBuilder) {
-      String path = ParseUtils.requireAttributes(reader, Attribute.PATH)[0];
-      fileRealmBuilder.path(path);
-      String relativeTo = Server.INFINISPAN_SERVER_DATA_PATH;
-      boolean encoded = true;
-      int levels = 0;
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case NAME:
-               fileRealmBuilder.name(value);
-               break;
-            case ENCODED:
-               encoded = Boolean.parseBoolean(value);
-               fileRealmBuilder.encoded(encoded);
-               break;
-            case LEVELS:
-               levels = Integer.parseInt(value);
-               fileRealmBuilder.levels(levels);
-               break;
-            case PATH:
-               // Already seen
-               break;
-            case RELATIVE_TO:
-               relativeTo = ParseUtils.requireAttributeProperty(reader, i);
-               fileRealmBuilder.relativeTo(relativeTo);
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-      ParseUtils.requireNoContent(reader);
-      fileRealmBuilder.path(path).relativeTo(relativeTo).levels(levels).encoded(encoded);
    }
 
    private void parseTokenRealm(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, TokenRealmConfigurationBuilder tokenRealmConfigBuilder) {

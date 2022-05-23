@@ -113,6 +113,10 @@ It is suggested instead to use the new SQL Table or Query Stores that were added
 It is no longer necessary to wrap annotations, such as those required for indexing, within `@ProtoDoc` annotations.
 Any annotations will simply be copied as comments to the generated `.proto` files.
 
+== The (undocumented) server filesystem-realm has been removed
+
+The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
+
 = Upgrading from 12.1 to 13.0
 
 == Search
