@@ -19,7 +19,6 @@ import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoreConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoresConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
-import org.infinispan.server.configuration.security.FileSystemRealmConfiguration;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration;
 import org.infinispan.server.configuration.security.LdapAttributeConfiguration;
 import org.infinispan.server.configuration.security.LdapIdentityMappingConfiguration;
@@ -124,9 +123,7 @@ public class ServerConfigurationSerializer
             realm.attributes().write(writer);
             writeServerIdentities(writer, realm.serverIdentitiesConfiguration());
             for (RealmProvider provider : realm.realmProviders()) {
-               if (provider instanceof FileSystemRealmConfiguration) {
-                  writeRealm(writer, (FileSystemRealmConfiguration) provider);
-               } else if (provider instanceof LdapRealmConfiguration) {
+               if (provider instanceof LdapRealmConfiguration) {
                   writeRealm(writer, (LdapRealmConfiguration) provider);
                } else if (provider instanceof LocalRealmConfiguration) {
                   writeRealm(writer, (LocalRealmConfiguration) provider);
@@ -180,10 +177,6 @@ public class ServerConfigurationSerializer
 
    private void writeRealm(ConfigurationWriter writer, LocalRealmConfiguration realm) {
       realm.attributes().write(writer, Element.LOCAL_REALM);
-   }
-
-   private void writeRealm(ConfigurationWriter writer, FileSystemRealmConfiguration realm) {
-      realm.write(writer);
    }
 
    private void writeRealm(ConfigurationWriter writer, TokenRealmConfiguration realm) {
