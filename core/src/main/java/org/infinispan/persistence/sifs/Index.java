@@ -1,6 +1,5 @@
 package org.infinispan.persistence.sifs;
 
-import java.io.DataInput;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,6 +14,7 @@ import java.util.PrimitiveIterator;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
@@ -86,13 +86,11 @@ class Index {
       indexDir.toFile().mkdirs();
       this.indexSizeFile = new File(indexDir.toFile(), "index-count");
 
-      boolean validCount = checkForExistingIndexSizeFile(segments, cacheSegments);
-
       this.segments = new Segment[segments];
       this.flowableProcessors = new FlowableProcessor[segments];
       for (int i = 0; i < segments; ++i) {
          UnicastProcessor<IndexRequest> flowableProcessor = UnicastProcessor.create();
-         Segment segment = new Segment(this, i, temporaryTable, validCount);
+         Segment segment = new Segment(this, i, temporaryTable);
 
          this.segments[i] = segment;
          // It is possible to write from multiple threads
@@ -100,8 +98,9 @@ class Index {
       }
    }
 
-   // This method is here for blockhound
-   private boolean checkForExistingIndexSizeFile(int storeSegments, int cacheSegments) {
+   private boolean checkForExistingIndexSizeFile() {
+      int storeSegments = flowableProcessors.length;
+      int cacheSegments = sizePerSegment.length();
       boolean validCount = false;
       try (RandomAccessFile indexCount = new RandomAccessFile(indexSizeFile, "r")) {
          int storeSegmentsCount = UnsignedNumeric.readUnsignedInt(indexCount);
@@ -147,11 +146,51 @@ class Index {
    /**
     * @return True if the index was loaded from well persisted state
     */
-   public boolean isLoaded() {
-      for (Segment segment : segments) {
-         if (!segment.loaded) return false;
+   public boolean load() {
+      if (!checkForExistingIndexSizeFile()) {
+         return false;
       }
-      return true;
+      try {
+         File statsFile = new File(indexDir.toFile(), "index.stats");
+         if (!statsFile.exists()) {
+            return false;
+         }
+         try (FileChannel statsChannel = new RandomAccessFile(statsFile, "rw").getChannel()) {
+
+            // id / length / free / expirationTime
+            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 4 + 8);
+            while (read(statsChannel, buffer)) {
+               buffer.flip();
+               int id = buffer.getInt();
+               int length = buffer.getInt();
+               int free = buffer.getInt();
+               long expirationTime = buffer.getLong();
+               if (!compactor.addFreeFile(id, length, free, expirationTime)) {
+                  log.tracef("Unable to add free file: %s ", id);
+                  return false;
+               }
+               log.tracef("Loading file info for file: %s with total: %s, free: %s", id, length, free);
+               buffer.flip();
+            }
+         }
+
+         // No reason to keep around after loading
+         statsFile.delete();
+
+         for (Segment segment : segments) {
+            if (!segment.load()) return false;
+         }
+         return true;
+      } catch (IOException e) {
+         log.trace("Exception encountered while attempting to load index, assuming index is bad", e);
+         return false;
+      }
+   }
+
+   public void reset() throws IOException {
+      for (Segment segment : segments) {
+         segment.reset();
+      }
    }
 
    /**
@@ -266,8 +305,38 @@ class Index {
                   UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
                }
             }
+
+            ConcurrentMap<Integer, Compactor.Stats> map = compactor.getFileStats();
+            File statsFile = new File(indexDir.toFile(), "index.stats");
+
+            try (FileChannel statsChannel = new RandomAccessFile(statsFile, "rw").getChannel()) {
+               statsChannel.truncate(0);
+               // Maximum size that all ints and long can add up to
+               ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 4 + 8);
+               for (Map.Entry<Integer, Compactor.Stats> entry : map.entrySet()) {
+                  int file = entry.getKey();
+                  int total = entry.getValue().getTotal();
+                  if (total == -1) {
+                     total = (int) fileProvider.getFileSize(file);
+                  }
+                  int free = entry.getValue().getFree();
+                  if (total == free) {
+                     log.tracef("Deleting file %s since it has no free bytes in it", file);
+                     // No reason to keep an empty file around
+                     fileProvider.deleteFile(file);
+                     continue;
+                  }
+                  buffer.putInt(file);
+                  buffer.putInt(total);
+                  buffer.putInt(free);
+                  buffer.putLong(entry.getValue().getNextExpirationTime());
+                  buffer.flip();
+                  write(statsChannel, buffer);
+                  buffer.flip();
+               }
+            }
          } catch (IOException e) {
-            aggregateCompletionStage.dependsOn(CompletableFutures.completedExceptionFuture(e));
+            throw CompletableFutures.asCompletionException(e);
          }
       });
    }
@@ -299,7 +368,6 @@ class Index {
    }
 
    public void start(Executor executor) {
-
       for (int i = 0; i < segments.length; ++i) {
          Segment segment = segments[i];
          flowableProcessors[i]
@@ -308,36 +376,53 @@ class Index {
       }
    }
 
+   static boolean read(FileChannel channel, ByteBuffer buffer) throws IOException {
+      do {
+         int read = channel.read(buffer);
+         if (read < 0) {
+            return false;
+         }
+      } while (buffer.position() < buffer.limit());
+      return true;
+   }
+
+   private static void write(FileChannel indexFile, ByteBuffer buffer) throws IOException {
+      do {
+         int written = indexFile.write(buffer);
+         if (written < 0) {
+            throw new IllegalStateException("Cannot write to index file!");
+         }
+      } while (buffer.position() < buffer.limit());
+   }
+
    static class Segment extends CompletableFuture<Void> implements Consumer<IndexRequest>, Action {
       final Index index;
       private final TemporaryTable temporaryTable;
       private final TreeMap<Short, List<IndexSpace>> freeBlocks = new TreeMap<>();
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
-      private final boolean loaded;
       private final FileChannel indexFile;
       private long indexFileSize;
 
       private volatile IndexNode root;
 
-      private Segment(Index index, int id, TemporaryTable temporaryTable, boolean attemptLoad) throws IOException {
+      private Segment(Index index, int id, TemporaryTable temporaryTable) throws IOException {
          this.index = index;
          this.temporaryTable = temporaryTable;
 
-         int segmentMax = temporaryTable.getSegmentMax();
          File indexFileFile = new File(index.indexDir.toFile(), "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
+
+         // Just to init to empty
+         root = IndexNode.emptyWithLeaves(this);
+      }
+
+      boolean load() throws IOException {
+         int segmentMax = temporaryTable.getSegmentMax();
          indexFile.position(0);
          ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
-         int gracefulValue = -1, segmentValue = -1;
-         boolean validIndex = false;
-         if (attemptLoad && indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
-               && (gracefulValue = buffer.getInt(0)) == GRACEFULLY
-               && (segmentValue = buffer.getInt(4)) == segmentMax) {
-               validIndex = true;
-         } else {
-            log.tracef("Index %d is not valid must rebuild, gracefulValue=%s segments=%d attemptLoad=%s", id, gracefulValue, segmentValue, attemptLoad);
-         }
-         if (validIndex) {
+         boolean loaded;
+         if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer)
+               && buffer.getInt(0) == GRACEFULLY && buffer.getInt(4) == segmentMax) {
             long rootOffset = buffer.getLong(8);
             short rootOccupied = buffer.getShort(16);
             long freeBlocksOffset = buffer.getLong(18);
@@ -356,37 +441,28 @@ class Index {
          buffer.position(0);
          buffer.limit(4);
          indexFile.position(0);
+         write(indexFile, buffer);
+
+         return loaded;
+      }
+
+      void reset() throws IOException {
+         this.indexFile.truncate(0);
+         root = IndexNode.emptyWithLeaves(this);
+         // reserve space for shutdown
+         indexFileSize = INDEX_FILE_HEADER_SIZE;
+         ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
+         buffer.putInt(0, DIRTY);
+         buffer.position(0);
+         buffer.limit(4);
+         indexFile.position(0);
 
          write(indexFile, buffer);
       }
 
-      // Here solely for BlockHound
-      private long readUnsignedLong(DataInput input) throws IOException {
-         return UnsignedNumeric.readUnsignedLong(input);
-      }
-
-      private void write(FileChannel indexFile, ByteBuffer buffer) throws IOException {
-         do {
-            int written = indexFile.write(buffer);
-            if (written < 0) {
-               throw new IllegalStateException("Cannot write to index file!");
-            }
-         } while (buffer.position() < buffer.limit());
-      }
-
-      private boolean read(FileChannel indexFile, ByteBuffer buffer) throws IOException {
-         do {
-            int read = indexFile.read(buffer);
-            if (read < 0) {
-               return false;
-            }
-         } while (buffer.position() < buffer.limit());
-         return true;
-      }
-
       @Override
       public void accept(IndexRequest request) throws Throwable {
-         if (log.isTraceEnabled()) log.trace("Indexing " + request);
+         if (log.isTraceEnabled()) log.tracef("Indexing %s", request);
          IndexNode.OverwriteHook overwriteHook;
          IndexNode.RecordChange recordChange;
          switch (request.getType()) {

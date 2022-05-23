@@ -1,18 +1,29 @@
 package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
+import java.io.File;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.lambda.NamedLambdas;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.distribution.BaseDistStoreTest;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.LOCAL})
@@ -34,8 +45,11 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       super.createBeforeClass();
    }
 
+
    @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
+   @Override
+   protected void destroy() {
+      super.destroy();
       Util.recursiveFileRemove(tmpDirectory);
    }
 
@@ -66,5 +80,98 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       for (int i = 0; i < size; i++) {
          assertEquals("value-" + i, cache(0, cacheName).get(i));
       }
+   }
+
+   static <K, V> NonBlockingSoftIndexFileStore<K, V> getStoreFromCache(Cache<K, V> cache) {
+      WaitDelegatingNonBlockingStore<K, V> storeDel = TestingUtil.getFirstStoreWait(cache);
+      return (NonBlockingSoftIndexFileStore<K, V>) storeDel.delegate();
+   }
+
+   @DataProvider(name = "restart")
+   Object[][] restartProvider() {
+      return new Object[][]{
+            {NamedLambdas.of("DELETE", () -> {
+               Path path = Path.of(tmpDirectory, "index", cacheName, "index", "index.stats");
+               path.toFile().delete();
+            })},
+            {NamedLambdas.of("NO-DELETE", () -> {
+            })}
+      };
+   }
+
+   long dataDirectorySize() {
+      Path dataPath = Path.of(tmpDirectory, "data", cacheName, "data");
+      File[] dataFiles = dataPath.toFile().listFiles();
+
+      long length = 0;
+      for (File file : dataFiles) {
+         length += file.length();
+      }
+      return length;
+   }
+
+   @Test(dataProvider = "restart")
+   public void testStatsUponRestart(Runnable runnable) throws Throwable {
+      int attempts = 5;
+      long previousSize = -1;
+
+      for (int i = 0; i < attempts; ++i) {
+         previousSize = performRestart(runnable, previousSize, i);
+      }
+   }
+
+   long performRestart(Runnable runnable, long previousUsedSize, int iterationCount) throws Throwable {
+      log.debugf("Iteration: %s", iterationCount);
+      int size = 10;
+      Cache<Integer, String> cache = cache(0, cacheName);
+      for (int i = 0; i < size; i++) {
+         // Skip a different insert each time (after first)
+         if (iterationCount > 0 && i != iterationCount) {
+            continue;
+         }
+         String prev = cache.put(i, "iteration-" + iterationCount + " value-" + i);
+         if (iterationCount > 0) {
+            assertNotNull(prev);
+            // TODO: https://issues.redhat.com/browse/ISPN-13969 to fix this
+//            assertEquals("iteration-" + (iterationCount - 1) + " value-" + i, prev);
+         }
+      }
+      assertEquals(size, cache.size());
+
+      killMember(0, cacheName);
+
+      long actualSize = dataDirectorySize();
+
+      long statsSize = 0;
+      long freeSize = 0;
+      try (FileChannel statsChannel = new RandomAccessFile(
+            Path.of(tmpDirectory, "index", cacheName, "index", "index.stats").toFile(), "r").getChannel()) {
+         ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 4 + 8);
+         while (Index.read(statsChannel, buffer)) {
+            buffer.flip();
+            // Ignore id
+            int file = buffer.getInt();
+            int length = buffer.getInt();
+            int free = buffer.getInt();
+            // Ignore expiration
+            buffer.getLong();
+            buffer.flip();
+
+            statsSize += length;
+            freeSize += free;
+            log.debugf("File: %s Length: %s free: %s", file, length, free);
+         }
+      }
+
+      assertEquals(actualSize, statsSize);
+
+      // Make sure the previous size is the same
+      if (previousUsedSize >= 0) {
+         assertEquals("Restart attempt: " + iterationCount, previousUsedSize, actualSize - freeSize);
+      }
+      runnable.run();
+      // Recreate the cache manager for next run(s)
+      createCacheManagers();
+      return actualSize - freeSize;
    }
 }

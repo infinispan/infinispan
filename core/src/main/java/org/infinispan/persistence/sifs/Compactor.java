@@ -20,11 +20,11 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
@@ -121,6 +121,30 @@ class Compactor implements Consumer<Object> {
       if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
          schedule(file, stats);
       }
+   }
+
+   ConcurrentMap<Integer, Stats> getFileStats() {
+      return fileStats;
+   }
+
+   boolean addFreeFile(int file, int expectedSize, int freeSize, long expirationTime) {
+      int fileSize = (int) fileProvider.getFileSize(file);
+      if (fileSize != expectedSize) {
+         log.tracef("Unable to add file %s as it its size %s does not match expected %s, index may be dirty", fileSize, expectedSize);
+         return false;
+      }
+      Stats stats = new Stats(fileSize, freeSize, expirationTime);
+
+      if (fileStats.putIfAbsent(file, stats) != null) {
+         log.tracef("Unable to add file %s as it is already present, index may be dirty", file);
+         return false;
+      }
+      log.tracef("Added new file %s to compactor manually with total size %s and free size %s", file, fileSize, freeSize);
+      stats.setCompleted();
+      if (stats.readyToBeScheduled(compactionThreshold, freeSize)) {
+         schedule(file, stats);
+      }
+      return true;
    }
 
    public interface CompactionExpirationSubscriber {
@@ -629,7 +653,7 @@ class Compactor implements Consumer<Object> {
    }
 
 
-   private static class Stats {
+   static class Stats {
       private final AtomicInteger free;
       private volatile int total;
       private final long nextExpirationTime;
@@ -662,6 +686,10 @@ class Compactor implements Consumer<Object> {
 
       public int getFree() {
          return free.get();
+      }
+
+      public long getNextExpirationTime() {
+         return nextExpirationTime;
       }
 
       public boolean readyToBeScheduled(double compactionThreshold, int free) {

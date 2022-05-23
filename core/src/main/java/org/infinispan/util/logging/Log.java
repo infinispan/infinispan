@@ -2327,4 +2327,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot persist RAFT data as global state is disabled", id = 673)
    CacheConfigurationException raftGlobalStateDisabled();
+
+   @Message(value = "There was an error when resetting the SIFS index for cache %s", id = 674)
+   PersistenceException issueEncounteredResettingIndex(String cacheName, @Cause Throwable t);
 }

@@ -32,6 +32,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -46,7 +47,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -225,9 +225,14 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
                   configuration.maxFileSize());
             if (oldFileProvider.hasFiles()) {
+               try {
+                  index.reset();
+               } catch (IOException e) {
+                  throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+               }
                migrateFromOldFormat(oldFileProvider);
                migrateData = true;
-            } else if (index.isLoaded()) {
+            } else if (index.load()) {
                log.debug("Not building the index - loaded from persisted state");
                try {
                   maxSeqId.set(index.getMaxSeqId());
@@ -237,6 +242,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                }
             } else {
                log.debug("Building the index");
+               try {
+                  index.reset();
+               } catch (IOException e) {
+                  throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+               }
                buildIndex(maxSeqId);
             }
             if (!migrateData) {
@@ -244,7 +254,12 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
 
          }, "soft-index-start");
-
+      } else {
+         try {
+            index.reset();
+         } catch (IOException e) {
+            throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+         }
       }
       log.debug("Not building the index - purge will be executed");
       return CompletableFutures.completedNull();
@@ -384,7 +399,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                   int segment = keyPartitioner.getSegment(key);
                   // We may check the seqId safely as we are the only thread writing to index
                   if (isSeqIdOld(seqId, segment, key, serializedKey)) {
-                     index.handleRequest(IndexRequest.foundOld(segment, key, ByteBufferImpl.create(serializedKey), file, offset));
+                     index.handleRequest(IndexRequest.foundOld(segment, key, ByteBufferImpl.create(serializedKey), file, offset, size));
                      return null;
                   }
                   if (temporaryTable.set(segment, key, file, offset)) {
@@ -394,11 +409,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get()));
       }).ignoreElements().toCompletionStage(null);
       CompletionStages.join(stage);
-   }
-
-   // Package protected for tests only
-   FileProvider getFileProvider() {
-      return fileProvider;
    }
 
    private Path getDataLocation() {
@@ -433,7 +443,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                   throw new IOException("Cannot read " + entry.file + ":" + entryOffset);
                }
                if (log.isTraceEnabled()) {
-                  log.tracef("SeqId on %d:%d is %d", entry.file, entry.offset, header.seqId());
+                  log.tracef("SeqId on %d:%d for key %s is %d", entry.file, entry.offset, key, header.seqId());
                }
                return seqId < header.seqId();
             } finally {
@@ -446,10 +456,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    protected void startIndex() {
       // this call is extracted for better testability
       index.start(blockingManager.asExecutor("sifs-index"));
-   }
-
-   protected boolean isIndexLoaded() {
-      return index.isLoaded();
    }
 
    @Override

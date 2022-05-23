@@ -713,6 +713,10 @@ class IndexNode {
                   if (log.isTraceEnabled()) {
                      log.trace(String.format("Updating num records for %d:%d to %d", oldLeafNode.file, oldLeafNode.offset, numRecords));
                   }
+                  if (recordChange == RecordChange.INCREASE_FOR_OLD) {
+                     // Mark old files as freed for compactor when rebuilding index
+                     segment.getCompactor().free(file, size);
+                  }
                   // We don't need to update the file as the file and position are the same, only the numRecords
                   // has been updated for REMOVED
                   file = oldLeafNode.file;

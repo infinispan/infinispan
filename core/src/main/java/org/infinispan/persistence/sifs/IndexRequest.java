@@ -56,8 +56,8 @@ class IndexRequest extends CompletableFuture<Object> {
       return new IndexRequest(Type.DROPPED, segment, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
-   public static IndexRequest foundOld(int segment, Object key, ByteBuffer serializedKey, int prevFile, int prevOffset) {
-      return new IndexRequest(Type.FOUND_OLD, segment, Objects.requireNonNull(key), serializedKey, -1, -1, -1, prevFile, prevOffset);
+   public static IndexRequest foundOld(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size) {
+      return new IndexRequest(Type.FOUND_OLD, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
    }
 
    public static IndexRequest clearRequest() {
