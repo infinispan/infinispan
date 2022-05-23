@@ -13,6 +13,10 @@ public class NamedLambdas {
       return new NamedPredicate(description, predicate);
    }
 
+   public static Runnable of(String description, Runnable runnable) {
+      return new NamedRunnable(description, runnable);
+   }
+
    private static class NamedPredicate<T> implements Predicate<T> {
 
       private String description;
@@ -67,6 +71,27 @@ public class NamedLambdas {
       @Override
       public BiConsumer<T, U> andThen(BiConsumer<? super T, ? super U> after) {
          return this.biConsumer.andThen(after);
+      }
+
+      @Override
+      public String toString() {
+         return this.description;
+      }
+   }
+
+   private static class NamedRunnable implements Runnable {
+
+      private final String description;
+      private final Runnable runnable;
+
+      private NamedRunnable(String description, Runnable runnable) {
+         this.description = description;
+         this.runnable = runnable;
+      }
+
+      @Override
+      public void run() {
+         runnable.run();
       }
 
       @Override

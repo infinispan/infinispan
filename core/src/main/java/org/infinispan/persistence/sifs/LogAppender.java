@@ -83,6 +83,13 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
             e -> log.warn("Exception encountered while handling log request for log appender", e), () -> {
                writeProcessor.onComplete();
                writeProcessor = null;
+               if (logFile != null) {
+                  Util.close(logFile);
+                  // add the current appended file - note this method will fail if it is already present, which will
+                  // happen if there are some free entries
+                  compactor.addFreeFile(logFile.fileId, (int) fileProvider.getFileSize(logFile.fileId), 0, nextExpirationTime);
+                  logFile = null;
+               }
             });
    }
 
@@ -90,8 +97,6 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       assert requestProcessor != null;
       requestProcessor.onComplete();
       requestProcessor = null;
-      Util.close(logFile);
-      logFile = null;
    }
 
    static class WriteOperation {
