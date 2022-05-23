@@ -2,6 +2,6 @@
  * Query-core implementation.
  *
  * @since 10.1
- * @private
+ * @api.private
  */
 package org.infinispan.query.core.impl;

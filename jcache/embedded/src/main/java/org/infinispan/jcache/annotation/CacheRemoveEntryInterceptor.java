@@ -21,7 +21,7 @@ import org.infinispan.jcache.logging.Log;
  *
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
  * @author Galder Zamarreño
- * @public
+ * @api.public
  */
 @Interceptor
 @CacheRemove

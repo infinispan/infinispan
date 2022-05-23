@@ -1,6 +1,6 @@
 /**
  * JTA transaction support.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.transaction;

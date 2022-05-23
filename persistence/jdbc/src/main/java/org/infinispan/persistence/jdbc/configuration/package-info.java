@@ -1,6 +1,6 @@
 /**
  * Configuration for the JDBC CacheStore.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.persistence.jdbc.configuration;

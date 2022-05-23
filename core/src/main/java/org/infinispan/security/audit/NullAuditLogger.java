@@ -12,7 +12,7 @@ import org.infinispan.security.AuthorizationPermission;
  *
  * @author Tristan Tarrant
  * @since 7.0
- * @public
+ * @api.public
  */
 public class NullAuditLogger implements AuditLogger {
 

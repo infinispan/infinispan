@@ -1,6 +1,6 @@
 /**
  * Embedded Clustered Locks.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.lock;

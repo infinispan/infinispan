@@ -1,6 +1,6 @@
 /**
  * Core Server Configuration API
  *
- * @public
+ * @api.public
  */
 package org.infinispan.server.core.configuration;

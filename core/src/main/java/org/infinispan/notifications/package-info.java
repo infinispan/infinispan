@@ -1,6 +1,6 @@
 /**
  * Notifications and eventing for listeners on both the Cache and CacheManager interfaces.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.notifications;

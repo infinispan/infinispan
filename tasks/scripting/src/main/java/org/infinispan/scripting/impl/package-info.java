@@ -1,5 +1,5 @@
 /**
  * Scripting Implementation
- * @private
+ * @api.private
  */
 package org.infinispan.scripting.impl;

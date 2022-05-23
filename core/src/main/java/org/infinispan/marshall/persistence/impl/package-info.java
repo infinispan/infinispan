@@ -5,6 +5,6 @@
  *
  * @author Ryan Emerson
  * @since 10.0
- * @private
+ * @api.private
  */
 package org.infinispan.marshall.persistence.impl;

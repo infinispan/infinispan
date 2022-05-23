@@ -1,6 +1,6 @@
 /**
  * This is the private xsite package.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.xsite;

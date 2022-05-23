@@ -23,7 +23,7 @@ import org.infinispan.util.DependencyGraph;
  * <b>NOTE:</b> Not public API: It exists in package {@code org.infinispan.manager}
  * so that only {@code DefaultCacheManager} can instantiate it.
  *
- * @private
+ * @api.private
  * @author Dan Berindei
  * @since 10.0
  */

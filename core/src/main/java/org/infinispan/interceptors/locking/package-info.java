@@ -1,6 +1,6 @@
 /**
  * Interceptors dealing with locking.
  *
- * @private
+ * @api.private
  */
 package org.infinispan.interceptors.locking;

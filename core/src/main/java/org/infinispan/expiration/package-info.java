@@ -1,7 +1,7 @@
 /**
  * Cache expiration.
  *
- * @public
+ * @api.public
  */
 
 package org.infinispan.expiration;

@@ -1,6 +1,6 @@
 /**
  * Cross-Site Replication conflict resolution.
  *
- * @public
+ * @api.public
  */
 package org.infinispan.xsite.spi;
