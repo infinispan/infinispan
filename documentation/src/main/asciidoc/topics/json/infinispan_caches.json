@@ -1,0 +1,42 @@
+{
+  "infinispan" : {
+    "cache-container" : {
+      "name" : "default",
+      "statistics" : "true",
+      "caches" : {
+        "mycacheone" : {
+          "distributed-cache" : {
+            "mode": "ASYNC",
+            "statistics": "true",
+            "encoding": {
+              "media-type": "application/x-protostream"
+            },
+            "expiration" : {
+              "lifespan" : "300000"
+            },
+            "memory": {
+              "max-size": "400MB",
+              "when-full": "REMOVE"
+            }
+          }
+        },
+        "mycachetwo" : {
+          "distributed-cache" : {
+            "mode": "SYNC",
+            "statistics": "true",
+            "encoding": {
+              "media-type": "application/x-protostream"
+            },
+            "expiration" : {
+              "lifespan" : "300000"
+            },
+            "memory": {
+              "max-size": "400MB",
+              "when-full": "REMOVE"
+            }
+          }
+        }
+      }
+    }
+  }
+}
