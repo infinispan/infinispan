@@ -161,6 +161,9 @@ public abstract class AbstractTableManager implements TableManager {
 
    @Override
    public void updateMetaTable(Connection conn) throws PersistenceException {
+      String clearTable = "DELETE FROM " + metaTableName;
+      executeUpdateSql(conn, clearTable);
+
       short version = Version.getVersionShort();
       int segments = ctx.getConfiguration().segmented() ? ctx.getCache().getCacheConfiguration().clustering().hash().numSegments() : -1;
       this.metadata = new MetadataImpl(version, segments);
@@ -187,7 +190,10 @@ public abstract class AbstractTableManager implements TableManager {
          try {
             String sql = String.format("SELECT %s FROM %s", META_TABLE_DATA_COLUMN, metaTableName.toString());
             rs = connection.createStatement().executeQuery(sql);
-            rs.next();
+            if (!rs.next()) {
+               log.sqlMetadataNotPresent(metaTableName.toString());
+               return null;
+            }
             this.metadata = unmarshall(rs.getBinaryStream(1), ctx.getPersistenceMarshaller());
          } catch (SQLException e) {
             PERSISTENCE.sqlFailureMetaRetrieval(e);
