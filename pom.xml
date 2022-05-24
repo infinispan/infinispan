@@ -2192,7 +2192,7 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-pmd-plugin</artifactId>
                <!-- See also reporting plugins -->
-               <version>3.13.0</version>
+               <version>${version.pmd.plugin}</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
                   <targetJdk>${jdk.min.version}</targetJdk>
@@ -2203,28 +2203,6 @@
                      <excludeRoot>target/generated-sources</excludeRoot>
                   </excludeRoots>
                </configuration>
-               <dependencies>
-                  <dependency>
-                     <groupId>net.sourceforge.pmd</groupId>
-                     <artifactId>pmd-core</artifactId>
-                     <version>${versionx.net.sourceforge.pmd}</version>
-                  </dependency>
-                  <dependency>
-                     <groupId>net.sourceforge.pmd</groupId>
-                     <artifactId>pmd-java</artifactId>
-                     <version>${versionx.net.sourceforge.pmd}</version>
-                  </dependency>
-                  <dependency>
-                     <groupId>net.sourceforge.pmd</groupId>
-                     <artifactId>pmd-javascript</artifactId>
-                     <version>${versionx.net.sourceforge.pmd}</version>
-                  </dependency>
-                  <dependency>
-                     <groupId>net.sourceforge.pmd</groupId>
-                     <artifactId>pmd-jsp</artifactId>
-                     <version>${versionx.net.sourceforge.pmd}</version>
-                  </dependency>
-               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2354,7 +2332,7 @@
             <plugin>
                <groupId>com.github.spotbugs</groupId>
                <artifactId>spotbugs-maven-plugin</artifactId>
-               <version>4.0.4</version>
+               <version>${version.spotbugs.plugin}</version>
                <configuration>
                   <addSourceDirs>true</addSourceDirs>
                   <excludeFilterFile>${infinispan.root}/etc/spotbugs-exclusions.xml</excludeFilterFile>
