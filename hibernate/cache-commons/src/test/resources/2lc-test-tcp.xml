@@ -28,12 +28,6 @@
    <MERGE3 max_interval="10000"
            min_interval="3000"/>
    <FD_SOCK/>
-   <!--
-       Note that this is an atypically short timeout and a small number of retries
-       configured this way to speed up unit testing, since we know all nodes run in the same JVM
-       and hence failure detections will be very quick.
-          -->
-   <FD timeout="3000" max_tries="3"/>
    <pbcast.NAKACK2 use_mcast_xmit="false"
                    xmit_interval="1000"
                    xmit_table_num_rows="50"
