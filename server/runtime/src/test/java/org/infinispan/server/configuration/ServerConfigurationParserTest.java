@@ -6,15 +6,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.security.LdapRealmConfiguration;
@@ -26,17 +22,8 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
-import org.infinispan.server.security.ElytronPasswordProviderSupplier;
-import org.infinispan.server.security.KeyStoreUtils;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.wildfly.security.auth.server.IdentityCredentials;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.CredentialStoreException;
-import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
-import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -46,15 +33,6 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
 
    @ClassRule
    public static final JUnitThreadTrackerRule tracker = new JUnitThreadTrackerRule();
-   public static final char[] PASSWORD = "password".toCharArray();
-   public static final char[] SECRET = "secret".toCharArray();
-
-   @BeforeClass
-   public static void setup() throws Exception {
-      KeyStoreUtils.generateSelfSignedCertificate(pathToKeystore(), null, PASSWORD, PASSWORD, "server", "localhost");
-      KeyStoreUtils.generateEmptyKeyStore(getConfigPath().resolve("ServerConfigurationParserTest-truststore.pfx").toString(), SECRET);
-      createCredentialStore(getConfigPath().resolve("ServerConfigurationParserTest-credentials.pfx"), SECRET);
-   }
 
    public ServerConfigurationParserTest(MediaType type) {
       super(type);
@@ -69,11 +47,6 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
    public void testParser() throws IOException {
       ServerConfiguration serverConfiguration = loadAndParseConfiguration();
       validateConfiguration(serverConfiguration);
-   }
-
-   public static String pathToKeystore() {
-      Path path = getConfigPath().resolve("ServerConfigurationParserTest-keystore.pfx");
-      return path.toString();
    }
 
    private void validateConfiguration(ServerConfiguration configuration) {
@@ -144,45 +117,5 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
 
    <T extends RealmProvider> T realmProvider(RealmConfiguration realm, Class<T> providerClass) {
       return (T) realm.realmProviders().stream().filter(r -> providerClass.isAssignableFrom(r.getClass())).findFirst().get();
-   }
-
-   static void addCredential(KeyStoreCredentialStore store, String alias, String credential) {
-      try {
-         store.store(alias, new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, credential.toCharArray())), null);
-         store.flush();
-      } catch (CredentialStoreException e) {
-         throw new RuntimeException(e);
-      }
-   }
-
-   static KeyStoreCredentialStore newCredentialStore(Path location, char[] secret) {
-      Exceptions.unchecked(() -> {
-         Files.deleteIfExists(location);
-         Files.createDirectories(location.getParent());
-      });
-      KeyStoreCredentialStore credentialStore = new KeyStoreCredentialStore();
-      final Map<String, String> map = new HashMap<>();
-      map.put("location", location.toString());
-      map.put("create", "true");
-      try {
-         credentialStore.initialize(
-               map,
-               new CredentialStore.CredentialSourceProtectionParameter(
-                     IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, secret)))),
-               ElytronPasswordProviderSupplier.PROVIDERS
-         );
-         return credentialStore;
-      } catch (CredentialStoreException e) {
-         throw new RuntimeException(e);
-      }
-   }
-
-   static void createCredentialStore(Path location, char[] secret) {
-      KeyStoreCredentialStore credentialStore = newCredentialStore(location, secret);
-      addCredential(credentialStore, "ldap", "strongPassword");
-      addCredential(credentialStore, "db", "test");
-      addCredential(credentialStore, "keystore", "password");
-      addCredential(credentialStore, "oauth2", "1fdca4ec-c416-47e0-867a-3d471af7050f");
-      addCredential(credentialStore, "trust", "secret");
    }
 }
