@@ -250,7 +250,7 @@
 
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
-      <versionx.com.amazonaws>1.12.180</versionx.com.amazonaws>
+      <versionx.com.amazonaws>1.12.228</versionx.com.amazonaws>
       <versionx.com.bouncycastle>${version.bouncycastle}</versionx.com.bouncycastle>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
@@ -373,7 +373,7 @@
       <versionx.org.jboss.weld.se.weld-se-core>3.1.2.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>3.1.2.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>3.1.SP1</versionx.org.jboss.weld.weld-api>
-      <versionx.org.jgroups.aws.s3.native-s3-ping>1.0.0.Final</versionx.org.jgroups.aws.s3.native-s3-ping>
+      <versionx.org.jgroups.aws.jgroups-aws>2.0.1.Final</versionx.org.jgroups.aws.jgroups-aws>
       <versionx.org.jgroups.azure.jgroups-azure>2.0.2.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
       <versionx.org.jgroups.jgroups-raft>${version.jgroups.raft}</versionx.org.jgroups.jgroups-raft>
@@ -1535,9 +1535,9 @@
             </exclusions>
          </dependency>
          <dependency>
-            <groupId>org.jgroups.aws.s3</groupId>
-            <artifactId>native-s3-ping</artifactId>
-            <version>${versionx.org.jgroups.aws.s3.native-s3-ping}</version>
+            <groupId>org.jgroups.aws</groupId>
+            <artifactId>jgroups-aws</artifactId>
+            <version>${versionx.org.jgroups.aws.jgroups-aws}</version>
          </dependency>
          <dependency>
             <groupId>org.jgroups.azure</groupId>

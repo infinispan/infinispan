@@ -1,6 +1,6 @@
 <!--
-   This configuration file uses NATIVE_S3_PING which requires artifacts that are not included with the default JGroups distribution.
-   To use NATIVE_S3_PING you must add the org.jgroups.aws.s3:native-s3-ping:1.0.0.Final dependency.
+   This configuration file uses aws.S3_PING which requires artifacts that are not included with the default JGroups distribution.
+   To use aws.S3_PING you must add the org.jgroups.aws:jgroups-aws:2.0.1.Final dependency.
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -21,10 +21,9 @@
         thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
    <RED/>
-   <org.jgroups.aws.s3.NATIVE_S3_PING
-         region_name="${jgroups.s3.region_name}"
-         bucket_name="${jgroups.s3.bucket_name}"
-         num_discovery_runs="3"
+   <aws.S3_PING region_name="${jgroups.s3.region_name}"
+                bucket_name="${jgroups.s3.bucket_name}"
+                num_discovery_runs="3"
    />
    <MERGE3 min_interval="10000"
            max_interval="30000"
