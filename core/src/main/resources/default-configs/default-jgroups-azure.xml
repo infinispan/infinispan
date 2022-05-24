@@ -1,5 +1,5 @@
 <!--
-   This configuration file uses AZURE_PING which requires artifacts that are not included with the default JGroups distribution.
+   This configuration file uses azure.AZURE_PING which requires artifacts that are not included with the default JGroups distribution.
    To use AZURE_PING you must add the org.jgroups.azure:jgroups-azure:1.3.0.Final dependency.
 -->
 <config xmlns="urn:org:jgroups"
@@ -21,11 +21,10 @@
         thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
    />
    <RED/>
-   <azure.AZURE_PING
-         storage_account_name="${jboss.jgroups.azure_ping.storage_account_name}"
-         storage_access_key="${jboss.jgroups.azure_ping.storage_access_key}"
-         container="${jboss.jgroups.azure_ping.container:ping}"
-         num_discovery_runs="3"
+   <azure.AZURE_PING storage_account_name="${jboss.jgroups.azure_ping.storage_account_name}"
+                     storage_access_key="${jboss.jgroups.azure_ping.storage_access_key}"
+                     container="${jboss.jgroups.azure_ping.container:ping}"
+                     num_discovery_runs="3"
    />
    <MERGE3 min_interval="10000"
            max_interval="30000"
