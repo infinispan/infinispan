@@ -226,7 +226,10 @@
       <version.maven.surefire>3.0.0-M6</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
-      <version.owasp-dependency-check-plugin>6.1.0</version.owasp-dependency-check-plugin>
+      <!-- overwrite version in jboss-parent -->
+      <version.pmd.plugin>3.16.0</version.pmd.plugin>
+      <version.owasp-dependency-check-plugin>7.1.0</version.owasp-dependency-check-plugin>
+      <version.spotbugs.plugin>4.7.0.0</version.spotbugs.plugin>
       <version.weld-servlet>2.4.8.Final</version.weld-servlet>
 
       <!-- versionx -->
@@ -243,10 +246,12 @@
             <plugin>
                <groupId>com.github.spotbugs</groupId>
                <artifactId>spotbugs-maven-plugin</artifactId>
+               <version>${version.spotbugs.plugin}</version>
             </plugin>
             <plugin>
                <groupId>org.owasp</groupId>
                <artifactId>dependency-check-maven</artifactId>
+               <version>${version.owasp-dependency-check-plugin}</version>
             </plugin>
          </plugins>
       </pluginManagement>
