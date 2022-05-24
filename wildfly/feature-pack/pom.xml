@@ -521,8 +521,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jgroups.aws.s3</groupId>
-            <artifactId>native-s3-ping</artifactId>
+            <groupId>org.jgroups.aws</groupId>
+            <artifactId>jgroups-aws</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
