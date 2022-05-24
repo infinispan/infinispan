@@ -186,7 +186,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error retrieving JDBC metadata", id = 8041)
    void sqlFailureMetaRetrieval(@Cause SQLException e);
 
+   // Note the id here is much higher as it has to match main for upgrading purposes
    @LogMessage(level = WARN)
-   @Message(value = "There was no JDBC metadata present in table %s, unable to confirm if segments are properly configured! Segments are assumed to be properly configured.", id = 8042)
+   @Message(value = "There was no JDBC metadata present in table %s, unable to confirm if segments are properly configured! Segments are assumed to be properly configured.", id = 8072)
    void sqlMetadataNotPresent(String tableName);
 }
