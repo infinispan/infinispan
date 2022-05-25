@@ -14,6 +14,8 @@ SYNOPSIS
 
 *index clear* 'cache-name'
 
+*index update-schema* 'cache-name'
+
 *index stats* 'cache-name'
 
 *index clear-stats* 'cache-name'
@@ -27,6 +29,9 @@ Reindexes a cache.
 
 `index clear mycache` +
 Clears a cache index.
+
+`index update-schema mycache` +
+Updates the index schema for a cache.
 
 `index stats mycache` +
 Shows indexing and search statistics for a cache.

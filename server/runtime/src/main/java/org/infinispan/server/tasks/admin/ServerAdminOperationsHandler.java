@@ -6,6 +6,7 @@ import org.infinispan.server.core.admin.AdminServerTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheNamesTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheReindexTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheRemoveTask;
+import org.infinispan.server.core.admin.embeddedserver.CacheUpdateIndexSchemaTask;
 import org.infinispan.server.core.admin.embeddedserver.TemplateCreateTask;
 import org.infinispan.server.core.admin.embeddedserver.TemplateRemoveTask;
 
@@ -30,6 +31,7 @@ public class ServerAdminOperationsHandler extends AdminOperationsHandler {
                new CacheNamesTask(),
                new CacheRemoveTask(),
                new CacheReindexTask(),
+               new CacheUpdateIndexSchemaTask(),
                new LoggingSetTask(),
                new LoggingRemoveTask(),
                new TemplateCreateTask(),

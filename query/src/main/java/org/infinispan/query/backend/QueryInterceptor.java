@@ -402,6 +402,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    CompletableFuture<?> processChange(InvocationContext ctx, FlagAffectedCommand command, Object storedKey, Object storedOldValue, Object storedNewValue) {
+      if (searchMapping.isRestarting()) {
+         log.mappingIsRestarting();
+         return CompletableFutures.completedNull();
+      }
+
       int segment = SegmentSpecificCommand.extractSegment(command, storedKey, keyPartitioner);
       Object key = extractKey(storedKey);
       Object oldValue = storedOldValue == UNKNOWN ? UNKNOWN : extractValue(storedOldValue);

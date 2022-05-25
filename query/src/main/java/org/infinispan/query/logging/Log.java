@@ -183,5 +183,9 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "Cannot index entry since the search mapping failed to initialize.", id = 14055)
    CacheException searchMappingUnavailable();
 
+   @LogMessage(level = WARN)
+   @Message(value = "The indexing engine is restarting, index updates will be skipped for the current data changes.", id = 14059)
+   void mappingIsRestarting();
+
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

@@ -481,6 +481,11 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> updateIndexSchema() {
+      return executeIndexOperation("updateSchema", false);
+   }
+
+   @Override
    public CompletionStage<RestResponse> queryStats() {
       return executeSearchStatOperation("query", null);
    }
