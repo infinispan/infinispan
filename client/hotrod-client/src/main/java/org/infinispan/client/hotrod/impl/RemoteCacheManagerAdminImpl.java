@@ -119,6 +119,11 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
+   public void updateIndexSchema(String name) throws HotRodClientException {
+      await(operationsFactory.newAdminOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))).execute());
+   }
+
+   @Override
    public void createTemplate(String name, BasicConfiguration configuration) {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));

@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -29,9 +30,13 @@ public final class EmbeddedCounterManagerFactory {
       if (cacheManager.getStatus() != ComponentStatus.RUNNING)
          throw new IllegalLifecycleStateException();
 
-      return SecurityActions.getGlobalComponentRegistry(cacheManager)
-                            .getComponent(BasicComponentRegistry.class)
-                            .getComponent(CounterManager.class)
-                            .running();
+      ComponentRef<CounterManager> component = SecurityActions.getGlobalComponentRegistry(cacheManager)
+            .getComponent(BasicComponentRegistry.class)
+            .getComponent(CounterManager.class);
+      if (component == null) {
+         return null;
+      }
+
+      return component.running();
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.search.mapper.mapping;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.search.engine.cfg.ConfigurationPropertySource;
@@ -115,7 +116,7 @@ public final class SearchMappingBuilder {
       return this;
    }
 
-   public SearchMapping build() {
+   public SearchMapping build(Optional<SearchIntegration> previousIntegration) {
       SearchIntegrationEnvironment.Builder envBuilder = SearchIntegrationEnvironment.builder(propertySource, propertyChecker);
       if (classLoaderService != null) {
          envBuilder.classResolver(classLoaderService);
@@ -128,7 +129,10 @@ public final class SearchMappingBuilder {
       SearchMapping mapping;
       SearchIntegration integration;
       try {
-         SearchIntegration.Builder integrationBuilder = SearchIntegration.builder(environment);
+         SearchIntegration.Builder integrationBuilder = (previousIntegration.isPresent()) ?
+               previousIntegration.get().restartBuilder(environment) :
+               SearchIntegration.builder(environment);
+
          integrationBuilder.addMappingInitiator(mappingKey, mappingInitiator);
          integrationPartialBuildState = integrationBuilder.prepareBuild();
 

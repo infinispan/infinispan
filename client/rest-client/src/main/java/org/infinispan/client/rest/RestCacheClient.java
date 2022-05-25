@@ -434,6 +434,11 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> clearIndex();
 
    /**
+    * Update index schema for the current cache.
+    */
+   CompletionStage<RestResponse> updateIndexSchema();
+
+   /**
     * Obtain statistics about queries.
     *
     * @deprecated Use {@link #searchStats()} instead.

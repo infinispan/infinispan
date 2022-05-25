@@ -31,6 +31,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -128,7 +129,12 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
 
       log.debug("Register EmbeddedCounterManager");
       // required to instantiate and start the EmbeddedCounterManager.
-      CounterManager cm = bcr.getComponent(CounterManager.class).wired();
+      ComponentRef<CounterManager> component = bcr.getComponent(CounterManager.class);
+      if ( component == null ) {
+         return;
+      }
+
+      CounterManager cm = component.wired();
       if (globalConfiguration.jmx().enabled()) {
          try {
             CacheManagerJmxRegistration jmxRegistration = bcr.getComponent(CacheManagerJmxRegistration.class).running();

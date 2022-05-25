@@ -285,6 +285,27 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().removeCache(cacheName);
    }
 
+   public void updateIndexSchemaTest(Method m) {
+      String cacheName = m.getName();
+      // Create the cache
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
+      RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
+      verifyQuery(cache, 0);
+      Transaction tx = new TransactionPB();
+      tx.setId(1);
+      tx.setAccountId(777);
+      tx.setAmount(500);
+      tx.setDate(new Date(1));
+      tx.setDescription("February rent");
+      tx.setLongDescription("February rent");
+      tx.setNotes("card was not present");
+      cache.put("tx", tx);
+      verifyQuery(cache, 1);
+      client(0).administration().updateIndexSchema(cacheName);
+      verifyQuery(cache, 1);
+      client(0).administration().removeCache(cacheName);
+   }
+
    private void verifyQuery(RemoteCache<String, Transaction> cache, int count) {
       List<User> users = Search.getQueryFactory(cache)
                                .<User>create("from sample_bank_account.Transaction where longDescription:'RENT'")

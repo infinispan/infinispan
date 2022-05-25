@@ -79,6 +79,26 @@ public class Index extends CliCommand {
       }
    }
 
+   @CommandDefinition(name = "update-schema", description = "Update index schema for a given cache.", activator = ConnectionActivator.class)
+   public static class UpdateIndex extends RestCliCommand {
+
+      @Argument(description = "Specifies which cache to update its index schema.", completer = CacheCompleter.class, required = true)
+      String cache;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.cache(cache).updateIndexSchema();
+      }
+   }
+
    @CommandDefinition(name = "stats", description = "Displays indexing and search statistics for a cache.", activator = ConnectionActivator.class)
    public static class Stats extends RestCliCommand {
 

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
@@ -30,6 +31,6 @@ public class SearchMappingHelper {
       return SearchMapping.builder(introspector, null, Collections.emptyList())
                    .setProperties(properties)
                    .addEntityTypes(new HashSet<>(Arrays.asList(types)))
-                   .build();
+                   .build(Optional.empty());
    }
 }
