@@ -13,6 +13,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -122,6 +123,11 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       INFINISPAN_140(14, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            GlobalConfiguration config = getGlobalConfiguration(holder);
+            Collection<String> raftMembers = config.transport().raftMembers();
+            assertEquals(2, raftMembers.size());
+            assertTrue(raftMembers.contains("a-node"));
+            assertTrue(raftMembers.contains("b-node"));
             IndexingConfiguration indexed = getConfiguration(holder, "indexed-reindex-at-startup").indexing();
             assertThat(indexed.enabled()).isTrue();
             assertThat(indexed.storage()).isEqualTo(IndexStorage.LOCAL_HEAP);

@@ -34,7 +34,9 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.transport.impl.EmptyRaftManager;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
+import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -336,6 +338,11 @@ public class MockTransport implements Transport {
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets, Function<Address, ReplicableCommand>
       commandGenerator, ResponseCollector<T> responseCollector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public RaftManager raftManager() {
+      return EmptyRaftManager.INSTANCE;
    }
 
    private <T> CompletableFuture<T> blockRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<T> collector) {

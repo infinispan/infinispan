@@ -47,6 +47,10 @@ public class ByteBufferImpl implements ByteBuffer {
       return new ByteBufferImpl(javaBuffer.array(), javaBuffer.arrayOffset(), remaining);
    }
 
+   public static ByteBufferImpl create(byte b) {
+      return new ByteBufferImpl(new byte[] {b}, 0, 1);
+   }
+
    private ByteBufferImpl(byte[] buf, int offset, int length) {
       this.buf = buf;
       this.offset = offset;
@@ -132,7 +136,7 @@ public class ByteBufferImpl implements ByteBuffer {
       }
 
       @Override
-      public ByteBufferImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ByteBufferImpl readObject(ObjectInput input) throws IOException {
          int length = UnsignedNumeric.readUnsignedInt(input);
          if (length == 0) { //no need to allocate new objects
             return EMPTY_INSTANCE;
