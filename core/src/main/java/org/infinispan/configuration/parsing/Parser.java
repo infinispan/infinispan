@@ -1203,6 +1203,9 @@ public class Parser extends CacheParser {
                   }
                   break;
                }
+               case RAFT_MEMBERS:
+                  transport.raftMembers(ParseUtils.getListAttributeValue(value));
+                  break;
                default: {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }

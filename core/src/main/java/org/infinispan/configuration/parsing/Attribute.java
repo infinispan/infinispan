@@ -151,6 +151,7 @@ public enum Attribute {
     QUEUE_SIZE,
     RACK_ID("rack"),
     RAM_BUFFER_SIZE,
+    RAFT_MEMBERS,
     READ_ONLY,
     REAPER_WAKE_UP_INTERVAL("reaper-interval"),
     RECOVERY_INFO_CACHE_NAME("recovery-cache"),

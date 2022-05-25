@@ -1,5 +1,7 @@
 package org.infinispan.configuration.global;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -28,10 +30,18 @@ public class TransportConfiguration {
    public static final AttributeDefinition<String> STACK = AttributeDefinition.builder("stack", null, String.class).build();
    public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", "transport-pool", String.class).build();
    public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", "remote-command-pool", String.class).build();
+   @SuppressWarnings("unchecked")
+   public static final AttributeDefinition<Set<String>> RAFT_MEMBERS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.RAFT_MEMBERS, null, (Class<Set<String>>) (Class<?>) Set.class)
+         .initializer(Collections::emptySet)
+         // unable to use AttributeSerializer.STRING_COLLECTION because it breaks the parser for JSON and YAML
+         .serializer((writer, name, value) -> writer.writeAttribute(name, String.join(" ", value)))
+         .immutable()
+         .build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TransportConfiguration.class, CLUSTER_NAME, MACHINE_ID, RACK_ID, SITE_ID, NODE_NAME,
-            DISTRIBUTED_SYNC_TIMEOUT, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, STACK, TRANSPORT_EXECUTOR, REMOTE_EXECUTOR);
+            DISTRIBUTED_SYNC_TIMEOUT, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, STACK, TRANSPORT_EXECUTOR, REMOTE_EXECUTOR,
+            RAFT_MEMBERS);
    }
 
    private final Attribute<String> clusterName;
@@ -138,6 +148,10 @@ public class TransportConfiguration {
 
    public JGroupsConfiguration jgroups() {
       return jgroupsConfiguration;
+   }
+
+   public Set<String> raftMembers() {
+      return attributes.attribute(RAFT_MEMBERS).get();
    }
 
    public AttributeSet attributes() {

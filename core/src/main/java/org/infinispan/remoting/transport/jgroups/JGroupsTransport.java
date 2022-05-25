@@ -48,6 +48,7 @@ import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
@@ -82,6 +83,7 @@ import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.remoting.transport.impl.EmptyRaftManager;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
@@ -92,7 +94,7 @@ import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -114,11 +116,13 @@ import org.jgroups.View;
 import org.jgroups.blocks.RequestCorrelator;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.FORK;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.stack.Protocol;
+import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.MessageBatch;
 import org.jgroups.util.SocketFactory;
@@ -199,11 +203,16 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private RequestRepository requests;
    private final Map<String, SiteUnreachableReason> unreachableSites;
    private String localSite;
+   private volatile RaftManager raftManager = EmptyRaftManager.INSTANCE;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
    private boolean running;
+
+   public static FORK findFork(JChannel channel) {
+      return channel.getProtocolStack().findProtocol(FORK.class);
+   }
 
    /**
     * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
@@ -526,6 +535,53 @@ public class JGroupsTransport implements Transport, ChannelListener {
             }
          }
       }
+      initRaftManager();
+   }
+
+   private void initRaftManager() {
+      TransportConfiguration transportCfg = configuration.transport();
+      if (RaftUtil.isRaftAvailable()) {
+         if (transportCfg.nodeName() == null || transportCfg.nodeName().isEmpty()) {
+            log.raftProtocolUnavailable("transport.node-name is not set.");
+            return;
+         }
+         if (transportCfg.raftMembers().isEmpty()) {
+            log.raftProtocolUnavailable("transport.raft-members is not set.");
+            return;
+         }
+         // HACK!
+         // TODO improve JGroups code so we have access to the key stored
+         byte[] key = org.jgroups.util.Util.stringToBytes("raft-id");
+         byte[] value = org.jgroups.util.Util.stringToBytes(transportCfg.nodeName());
+         if (connectChannel) {
+            channel.addAddressGenerator(() -> ExtendedUUID.randomUUID(channel.getName()).put(key, value));
+         } else {
+            org.jgroups.Address addr = channel.getAddress();
+            if (addr instanceof ExtendedUUID) {
+               if (!Arrays.equals(((ExtendedUUID) addr).get(key), value)) {
+                  log.raftProtocolUnavailable("non-managed JGroups channel does not have 'raft-id' set.");
+                  return;
+               }
+            }
+         }
+         insertForkIfMissing();
+         raftManager = new JGroupsRaftManager(configuration, channel);
+         raftManager.start();
+         log.raftProtocolAvailable();
+      }
+   }
+
+   private void insertForkIfMissing() {
+      if (findFork(channel) != null) {
+         return;
+      }
+      ProtocolStack protocolStack = channel.getProtocolStack();
+      RELAY2 relay2 = findRelay2();
+      if (relay2 != null) {
+         protocolStack.insertProtocolInStack(new FORK(), relay2, ProtocolStack.Position.BELOW);
+      } else {
+         protocolStack.addProtocol(new FORK());
+      }
    }
 
    private void setXSiteViewListener(RouteStatusListener listener) {
@@ -814,6 +870,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (channel != null) {
          channel.getProtocolStack().getTransport().unregisterProbeHandler(probeHandler);
       }
+      raftManager.stop();
       String clusterName = configuration.transport().clusterName();
       try {
          if (disconnectChannel && channel != null && channel.isConnected()) {
@@ -1103,6 +1160,11 @@ public class JGroupsTransport implements Transport, ChannelListener {
          request.setTimeout(timeoutExecutor, timeout, timeUnit);
       }
       return request;
+   }
+
+   @Override
+   public RaftManager raftManager() {
+      return raftManager;
    }
 
    private void addRequest(AbstractRequest<?> request) {

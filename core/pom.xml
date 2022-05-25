@@ -61,6 +61,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.jgroups</groupId>
+         <artifactId>jgroups-raft</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
         <groupId>com.github.ben-manes.caffeine</groupId>
         <artifactId>caffeine</artifactId>
       </dependency>

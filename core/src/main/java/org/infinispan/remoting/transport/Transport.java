@@ -26,6 +26,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -471,7 +472,7 @@ public interface Transport extends Lifecycle {
                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                  long timeout, TimeUnit timeUnit) {
       AtomicReference<Object> result = new AtomicReference<>(null);
-      ResponseCollector<T> partCollector = new ResponseCollector<T>() {
+      ResponseCollector<T> partCollector = new ResponseCollector<>() {
          @Override
          public T addResponse(Address sender, Response response) {
             synchronized (this) {
@@ -505,4 +506,9 @@ public interface Transport extends Lifecycle {
          }
       });
    }
+
+   /**
+    * @return The {@link RaftManager} instance,
+    */
+   RaftManager raftManager();
 }
