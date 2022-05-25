@@ -19,6 +19,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -222,5 +223,10 @@ public abstract class AbstractDelegatingTransport implements Transport {
                                                 long timeout,
                                                 TimeUnit timeUnit) {
       return actual.invokeCommands(targets, commandGenerator, collector, deliverOrder, timeout, timeUnit);
+   }
+
+   @Override
+   public RaftManager raftManager() {
+      return actual.raftManager();
    }
 }

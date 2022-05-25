@@ -241,11 +241,11 @@ public abstract class AbstractInfinispanTest {
       }
    }
 
-   protected void eventually(Condition ec, long timeoutMillis) {
+   protected static void eventually(Condition ec, long timeoutMillis) {
       eventually(ec, timeoutMillis, TimeUnit.MILLISECONDS);
    }
 
-   protected void eventually(Condition ec, long timeout, TimeUnit unit) {
+   protected static void eventually(Condition ec, long timeout, TimeUnit unit) {
       eventually(() -> "Condition is still false after " + timeout + " " + unit, ec, timeout, unit);
    }
 
@@ -382,7 +382,7 @@ public abstract class AbstractInfinispanTest {
          Arrays.stream(tasks).<ExceptionRunnable>map(task -> task::call).toArray(ExceptionRunnable[]::new));
    }
 
-   protected void eventually(Condition ec) {
+   protected static void eventually(Condition ec) {
       eventually(ec, 10000, TimeUnit.MILLISECONDS);
    }
 

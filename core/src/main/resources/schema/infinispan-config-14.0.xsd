@@ -491,6 +491,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="raft-members" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          The list of raft members separated by space.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:anyAttribute/>
   </xs:complexType>
 

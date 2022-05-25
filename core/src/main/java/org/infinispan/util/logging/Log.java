@@ -2300,4 +2300,31 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "There was an error in submitted periodic task with %s, not rescheduling.", id = 665)
    void scheduledTaskEncounteredThrowable(Object identifier, @Cause Throwable t);
+
+   @Message(value = "Transport clusterName cannot be null.", id = 666)
+   CacheConfigurationException requireNonNullClusterName();
+
+   @Message(value = "Transport node-name is not set.", id = 667)
+   CacheConfigurationException requireNodeName();
+
+   @Message(value = "Transport node-name must be present in raft-members: %s", id = 668)
+   CacheConfigurationException nodeNameNotInRaftMembers(String members);
+
+   @Message(value = "FORK protocol required on JGroups channel.", id = 669)
+   IllegalArgumentException forkProtocolRequired();
+
+   @Message(value = "Error creating fork channel for %s", id = 670)
+   @LogMessage(level = ERROR)
+   void errorCreatingForkChannel(String name, @Cause Throwable throwable);
+
+   @Message(value = "RAFT protocol is not available. Reason: %s", id = 671)
+   @LogMessage(level = WARN)
+   void raftProtocolUnavailable(String reason);
+
+   @Message(value = "RAFT protocol is available.", id = 672)
+   @LogMessage(level = INFO)
+   void raftProtocolAvailable();
+
+   @Message(value = "Cannot persist RAFT data as global state is disabled", id = 673)
+   CacheConfigurationException raftGlobalStateDisabled();
 }

@@ -1,5 +1,6 @@
 package org.infinispan.configuration;
 
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -11,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -362,6 +364,50 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       try (DefaultCacheManager cm = new DefaultCacheManager("configs/config-with-jgroups-stack.xml")) {
          assertTrue(cm.isCoordinator());
       }
+   }
+
+   public void testRaftMembersParsing() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            "<cache-container>" +
+                  "   <transport cluster=\"node-name-missing\" raft-members=\"a b c\" node-name=\"a\"/>\n" +
+                  "</cache-container>"
+      );
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseStream(is, false);
+      GlobalConfiguration configuration = holder.getGlobalConfigurationBuilder().build();
+      Collection<String> raftMembers = configuration.transport().raftMembers();
+
+      assertEquals(3, raftMembers.size());
+      assertTrue(raftMembers.contains("a"));
+      assertTrue(raftMembers.contains("b"));
+      assertTrue(raftMembers.contains("c"));
+
+      assertEquals("a", configuration.transport().nodeName());
+   }
+
+   public void testNodeNameMissingWithRaft() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            "<cache-container>\n" +
+                  "   <transport cluster=\"node-name-missing\" raft-members=\"a b c\"/>\n" +
+                  "</cache-container>"
+      );
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      expectException(CacheConfigurationException.class, "ISPN000667:.*", () -> TestCacheManagerFactory.parseStream(is, false));
+
+   }
+
+   public void testNodeNameNotInRaftMembers() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            "<cache-container>" +
+                  "   <transport cluster=\"node-name-missing\" raft-members=\"a b c\" node-name=\"d\"/>\n" +
+                  "</cache-container>"
+      );
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      expectException(CacheConfigurationException.class, "ISPN000668:.*", () -> TestCacheManagerFactory.parseStream(is, false));
+
    }
 
    private void assertNamedCacheFile(ConfigurationBuilderHolder holder, boolean deprecated) {

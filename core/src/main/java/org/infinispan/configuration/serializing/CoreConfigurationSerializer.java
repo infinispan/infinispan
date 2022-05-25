@@ -8,6 +8,7 @@ import static org.infinispan.configuration.parsing.Attribute.EXTENDS;
 import static org.infinispan.configuration.parsing.Attribute.INVALIDATION_BATCH_SIZE;
 import static org.infinispan.configuration.parsing.Attribute.NAME;
 import static org.infinispan.configuration.parsing.Attribute.PATH;
+import static org.infinispan.configuration.parsing.Attribute.RAFT_MEMBERS;
 import static org.infinispan.configuration.parsing.Attribute.STACK;
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -522,6 +523,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_TIMEOUT, Attribute.INITIAL_CLUSTER_TIMEOUT);
+         if (!transport.raftMembers().isEmpty()) {
+            attributes.write(writer, TransportConfiguration.RAFT_MEMBERS, RAFT_MEMBERS);
+         }
          writer.writeEndElement();
       }
    }

@@ -7,15 +7,21 @@ import static org.infinispan.configuration.global.TransportConfiguration.INITIAL
 import static org.infinispan.configuration.global.TransportConfiguration.MACHINE_ID;
 import static org.infinispan.configuration.global.TransportConfiguration.NODE_NAME;
 import static org.infinispan.configuration.global.TransportConfiguration.RACK_ID;
+import static org.infinispan.configuration.global.TransportConfiguration.RAFT_MEMBERS;
 import static org.infinispan.configuration.global.TransportConfiguration.REMOTE_EXECUTOR;
 import static org.infinispan.configuration.global.TransportConfiguration.SITE_ID;
 import static org.infinispan.configuration.global.TransportConfiguration.STACK;
 import static org.infinispan.configuration.global.TransportConfiguration.TRANSPORT_EXECUTOR;
+import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
@@ -195,9 +201,10 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    void validate() {
-      if(attributes.attribute(CLUSTER_NAME).get() == null){
-          throw new CacheConfigurationException("Transport clusterName cannot be null");
+      if(attributes.attribute(CLUSTER_NAME).isNull()){
+         throw CONFIG.requireNonNullClusterName();
       }
+      validateRaftMembers();
    }
 
    public JGroupsConfigurationBuilder jgroups() {
@@ -229,6 +236,41 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   /**
+    * Adds a single member to the {@code raft-members}.
+    *
+    * @param member The member to add
+    */
+   public TransportConfigurationBuilder raftMember(String member) {
+      Set<String> newMembers = new HashSet<>(attributes.attribute(RAFT_MEMBERS).get());
+      if (newMembers.add(member)) {
+         attributes.attribute(RAFT_MEMBERS).set(Collections.unmodifiableSet(newMembers));
+      }
+      return this;
+   }
+
+   /**
+    * Adds multiple members to the {@code raft-members}.
+    *
+    * @param members The members to add
+    */
+   public TransportConfigurationBuilder raftMembers(String... members) {
+      return raftMembers(Arrays.asList(members));
+   }
+
+   /**
+    * Adds multiple members to the {@code raft-members}.
+    *
+    * @param members The members to add
+    */
+   public TransportConfigurationBuilder raftMembers(Collection<String> members) {
+      Set<String> newMembers = new HashSet<>(attributes.attribute(RAFT_MEMBERS).get());
+      if (newMembers.addAll(members)) {
+         attributes.attribute(RAFT_MEMBERS).set(Collections.unmodifiableSet(newMembers));
+      }
+      return this;
+   }
+
    @Override
    public
    TransportConfigurationBuilder read(TransportConfiguration template) {
@@ -255,5 +297,20 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
             ", jgroupsConfigurationBuilder=" + jgroupsConfigurationBuilder +
             ", typedProperties=" + typedProperties +
             '}';
+   }
+
+   private void validateRaftMembers() {
+      Set<String> raftMembers = attributes.attribute(RAFT_MEMBERS).get();
+      if (raftMembers.isEmpty()) {
+         //RAFT not enabled
+         return;
+      }
+      String raftId = attributes.attribute(NODE_NAME).get();
+      if (raftId == null || raftId.isEmpty()) {
+         throw CONFIG.requireNodeName();
+      }
+      if (!raftMembers.contains(raftId)) {
+         throw CONFIG.nodeNameNotInRaftMembers(String.valueOf(raftMembers));
+      }
    }
 }

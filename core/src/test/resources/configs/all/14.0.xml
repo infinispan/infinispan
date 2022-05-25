@@ -100,7 +100,7 @@
                     blocking-executor="infinispan-blocking"
                     statistics="true" shutdown-hook="DONT_REGISTER" zero-capacity-node="false">
       <transport cluster="maximal-cluster" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
-                 initial-cluster-size="4" initial-cluster-timeout="30000">
+                 initial-cluster-size="4" initial-cluster-timeout="30000" raft-members="a-node b-node">
          <property name="key">value</property>
       </transport>
       <security>
