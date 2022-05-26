@@ -10,26 +10,26 @@
 |Artifact
 |Version
 
-|`NATIVE_S3_PING`
+|`aws.S3_PING`
 |`default-jgroups-ec2.xml`
-|`org.jgroups.aws.s3:native-s3-ping`
-|`1.0.0.Final`
+|`org.jgroups.aws:jgroups-aws`
+|`2.0.1.Final`
 
 |`GOOGLE_PING2`
 |`default-jgroups-google.xml`
 |`org.jgroups.google:jgroups-google`
 |`1.0.0.Final`
 
-|`AZURE_PING`
+|`azure.AZURE_PING`
 |`default-jgroups-azure.xml`
 |`org.jgroups.azure:jgroups-azure`
-|`1.3.0.Final`
+|`2.0.0.Final`
 |===
 
 [discrete]
 == Providing dependencies for cloud discovery protocols
 
-To use `NATIVE_S3_PING`, `GOOGLE_PING2`, or `AZURE_PING` cloud discovery protocols, you need to provide dependent libraries to {brandname}.
+To use `aws.S3_PING`, `GOOGLE_PING2`, or `azure.AZURE_PING` cloud discovery protocols, you need to provide dependent libraries to {brandname}.
 
 .Procedure
 
@@ -48,6 +48,6 @@ You can then configure the cloud discovery protocol as part of a JGroups stack f
 
 [role="_additional-resources"]
 .Additional resources
-* link:{jgroups_extras}/native-s3-ping[JGroups NATIVE_S3_PING]
+* link:{jgroups_extras}/jgroups-aws[JGroups aws.S3_PING]
 * link:{jgroups_extras}/jgroups-google[JGroups GOOGLE_PING2]
-* link:{jgroups_extras}/jgroups-azure[JGroups AZURE_PING]
+* link:{jgroups_extras}/jgroups-azure[JGroups azure.AZURE_PING]

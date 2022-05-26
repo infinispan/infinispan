@@ -5,7 +5,7 @@ Use the following properties to configure JGroups discovery protocols for hosted
 
 == Amazon EC2
 
-System properties for configuring `NATIVE_S3_PING`.
+System properties for configuring `aws.S3_PING`.
 
 [%header,cols="1,3,2,1"]
 |===
@@ -48,7 +48,7 @@ System properties for configuring `GOOGLE_PING2`.
 
 == Azure
 
-System properties for `AZURE_PING`.
+System properties for azure.AZURE_PING`.
 
 [%header,cols="1,3,2,1"]
 |===
