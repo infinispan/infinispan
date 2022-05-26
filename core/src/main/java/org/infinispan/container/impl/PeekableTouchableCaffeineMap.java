@@ -24,7 +24,7 @@ public class PeekableTouchableCaffeineMap<K, V> extends AbstractDelegatingConcur
 
    @Override
    public InternalCacheEntry<K, V> peek(Object key) {
-      return caffeineCache.policy().getIfPresentQuietly(key);
+      return caffeineCache.policy().getIfPresentQuietly((K) key);
    }
 
    @Override
