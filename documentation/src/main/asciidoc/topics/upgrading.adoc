@@ -1022,10 +1022,10 @@ With the introduction of inline XML JGroups stacks in the configuration, two def
 If you are declaring your own stacks with the same names, an exception reporting the conflict will be thrown. Simply rename
 your own configurations to avoid the conflict.
 
-== JGroups S3_PING replaced with NATIVE_S3_PING
+== JGroups legacy S3_PING replaced with aws.S3_PING
 
-Because of changes in AWS's access policy regarding signatures, S3_PING will not work in newer regions and will stop working in older regions too.
-For this reason, you should migrate to using NATIVE_S3_PING instead.
+Because of changes in AWS's access policy regarding signatures, legacy S3_PING will not work in newer regions and will stop working in older regions too.
+For this reason, you should migrate to using aws.S3_PING instead.
 
 == Cache and Cache Manager Listeners can now be configured to be non blocking
 Listeners in the past that were sync, always ran in the thread that caused the event. We now allow a Listener method to
