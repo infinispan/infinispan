@@ -28,7 +28,7 @@ endif::remote_caches[]
 
 |`default-jgroups-ec2.xml`
 |`ec2`
-|Uses TCP for transport and `NATIVE_S3_PING` for discovery. Suitable for Amazon EC2 nodes where UDP multicast is not available. Requires additional dependencies.
+|Uses TCP for transport and `aws.S3_PING` for discovery. Suitable for Amazon EC2 nodes where UDP multicast is not available. Requires additional dependencies.
 
 |`default-jgroups-google.xml`
 |`google`
