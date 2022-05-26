@@ -264,7 +264,7 @@
                   <artifactId>nexus-staging-maven-plugin</artifactId>
                   <version>1.6.12</version>
                   <configuration>
-                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                      <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
                      <serverId>${jboss.releases.repo.id}</serverId>
                      <stagingProfileId>2161b7b8da0080</stagingProfileId>
