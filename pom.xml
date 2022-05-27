@@ -376,7 +376,7 @@
       <versionx.org.jgroups.aws.jgroups-aws>2.0.1.Final</versionx.org.jgroups.aws.jgroups-aws>
       <versionx.org.jgroups.azure.jgroups-azure>2.0.2.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
-      <versionx.org.jgroups.jgroups-raft>1.0.8.Final</versionx.org.jgroups.jgroups-raft>
+      <versionx.org.jgroups.jgroups-raft>${version.jgroups.raft}</versionx.org.jgroups.jgroups-raft>
       <versionx.org.jgroups.kubernetes.jgroups-kubernetes>2.0.1.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
       <versionx.org.jsoup>1.14.2</versionx.org.jsoup>
       <versionx.org.kohsuke.metainf-services.metainf-services>${version.metainf-services}</versionx.org.kohsuke.metainf-services.metainf-services>
