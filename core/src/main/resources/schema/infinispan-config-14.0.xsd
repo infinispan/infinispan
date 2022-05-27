@@ -1963,16 +1963,6 @@
         <xs:documentation>If true, when the cache starts, data stored in the cache store will be pre-loaded into memory. This is particularly useful when data in the cache store will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Likewise in some cases you cannot pre-load data in caches stores, such as when using shared remote stores.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="fetch-state" type="xs:boolean" default="${AbstractStore.fetch-state}">
-      <xs:annotation>
-        <xs:documentation>Fetches the persistent state of a cache when joining
-          a cluster. Values are true / false (default). The purpose of this
-          property is to retrieve the persistent state of a cache and apply it to the local cache store of a node when it joins a cluster. Fetching
-          the persistent state does not apply if a cache store is shared because it accesses the same data as the other stores. This property can be `true` for one configured cache loader only. If more than
-          one cache loader fetches the persistent state, a configuration exception is thrown when the cache service starts.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="purge" type="xs:boolean" default="${AbstractStore.purge}">
       <xs:annotation>
         <xs:documentation>
