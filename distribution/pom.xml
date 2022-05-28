@@ -282,13 +282,6 @@
                            <arg value="configdocs"/>
                            <arg value="${upload.docsDir}"/>
                         </exec>
-                        <exec dir="${project.build.directory}/site" executable="rsync" failonerror="${rsync.failonerror}">
-                           <arg value="-rvm"/>
-                           <arg line="--protocol=29"/>
-                           <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
-                           <arg value="serverconfigdocs"/>
-                           <arg value="${upload.docsDir}"/>
-                        </exec>
                      </target>
                   </configuration>
                </execution>
