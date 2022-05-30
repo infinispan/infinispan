@@ -328,7 +328,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.auth_realm</b></td>
  *          <td>String</td>
- *          <td>ApplicationRealm</td>
+ *          <td>default</td>
  *          <td>The {@link org.infinispan.hotrod.configuration.AuthenticationConfigurationBuilder#realm(String) realm} (for DIGEST-MD5 authentication).</td>
  *       </tr>
  *       <tr>
