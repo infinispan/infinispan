@@ -3,14 +3,14 @@
     <!-- Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack. -->
     <stack name="encrypt-tcp" extends="tcp">
       <!-- Adds a keystore from which nodes obtain secret keys. -->
-      <!-- Uses the stack.combine and stack.position attributes to insert SYM_ENCRYPT into the default TCP stack after VERIFY_SUSPECT. -->
+      <!-- Uses the stack.combine and stack.position attributes to insert SYM_ENCRYPT into the default TCP stack after VERIFY_SUSPECT2. -->
       <SYM_ENCRYPT keystore_name="myKeystore.p12"
                    keystore_type="PKCS12"
                    store_password="changeit"
                    key_password="changeit"
                    alias="myKey"
                    stack.combine="INSERT_AFTER"
-                   stack.position="VERIFY_SUSPECT"/>
+                   stack.position="VERIFY_SUSPECT2"/>
     </stack>
   </jgroups>
   <cache-container name="default" statistics="true">

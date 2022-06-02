@@ -30,12 +30,12 @@
    <LOCAL_PING/>
 
    <MERGE3 min_interval="1000" max_interval="5000"/>
-   <FD_SOCK sock_conn_timeout="3000"/>
+   <FD_SOCK2 connect_timeout="3000"/>
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
    <FD_ALL3 timeout="3000"
            interval="1000"
    />
-   <VERIFY_SUSPECT timeout="1000"/>
+   <VERIFY_SUSPECT2 timeout="1000"/>
 
    <pbcast.NAKACK2
          xmit_interval="100"
@@ -54,12 +54,11 @@
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"
                max_join_attempts="3"
-               max_leave_attempts="3"
    />
 
    <UFC max_credits="4m" min_threshold="0.40"/>
    <MFC max_credits="4m" min_threshold="0.40"/>
-   <FRAG3 frag_size="8000"  />
+   <FRAG4 frag_size="8000"  />
 
    <org.infinispan.test.fwk.TEST_RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml"
                  relay_multicasts="true" />

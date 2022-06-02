@@ -3,11 +3,11 @@
     <!-- Creates a secure JGroups stack named "encrypt-tcp" that extends the default TCP stack. -->
     <stack name="encrypt-tcp" extends="tcp">
       <!-- Adds a keystore that nodes use to perform certificate authentication. -->
-      <!-- Uses the stack.combine and stack.position attributes to insert SSL_KEY_EXCHANGE into the default TCP stack after VERIFY_SUSPECT. -->
+      <!-- Uses the stack.combine and stack.position attributes to insert SSL_KEY_EXCHANGE into the default TCP stack after VERIFY_SUSPECT2. -->
       <SSL_KEY_EXCHANGE keystore_name="mykeystore.jks"
                         keystore_password="changeit"
                         stack.combine="INSERT_AFTER"
-                        stack.position="VERIFY_SUSPECT"/>
+                        stack.position="VERIFY_SUSPECT2"/>
       <!-- Configures ASYM_ENCRYPT -->
       <!-- Uses the stack.combine and stack.position attributes to insert ASYM_ENCRYPT into the default TCP stack before pbcast.NAKACK2. -->
       <!-- The use_external_key_exchange = "true" attribute configures nodes to use the `SSL_KEY_EXCHANGE` protocol for certificate authentication. -->

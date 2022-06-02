@@ -7,11 +7,11 @@
       <TCPGOSSIP initial_hosts="${jgroups.tunnel.gossip_router_hosts:localhost[12001]}"
              stack.combine="REPLACE"
              stack.position="MPING" />
-      <!-- Removes the FD_SOCK protocol from the stack. -->
-      <FD_SOCK stack.combine="REMOVE"/>
-      <!-- Modifies the timeout value for the VERIFY_SUSPECT protocol. -->
-      <VERIFY_SUSPECT timeout="2000"/>
-      <!-- Adds SYM_ENCRYPT to the stack after VERIFY_SUSPECT. -->
+      <!-- Removes the FD_SOCK2 protocol from the stack. -->
+      <FD_SOCK2 stack.combine="REMOVE"/>
+      <!-- Modifies the timeout value for the VERIFY_SUSPECT2 protocol. -->
+      <VERIFY_SUSPECT2 timeout="2000"/>
+      <!-- Adds SYM_ENCRYPT to the stack after VERIFY_SUSPECT2. -->
       <SYM_ENCRYPT sym_algorithm="AES"
                    keystore_name="mykeystore.p12"
                    keystore_type="PKCS12"
@@ -19,7 +19,7 @@
                    key_password="changeit"
                    alias="myKey"
                    stack.combine="INSERT_AFTER"
-                   stack.position="VERIFY_SUSPECT" />
+                   stack.position="VERIFY_SUSPECT2" />
     </stack>
     <cache-container name="default" statistics="true">
       <!-- Uses "my-stack" for cluster transport. -->

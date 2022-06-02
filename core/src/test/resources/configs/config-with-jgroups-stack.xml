@@ -21,12 +21,12 @@
                 ip_ttl="${jgroups.udp.ip_ttl:2}"
                 xmlns="urn:org:jgroups"/>
          <MERGE3 xmlns="urn:org:jgroups"/>
-         <FD_SOCK xmlns="urn:org:jgroups"/>
+         <FD_SOCK2 xmlns="urn:org:jgroups"/>
          <FD_ALL3 timeout="3000"
                   interval="1000"
                   xmlns="urn:org:jgroups"
          />
-         <VERIFY_SUSPECT timeout="1000" xmlns="urn:org:jgroups"/>
+         <VERIFY_SUSPECT2 timeout="1000" xmlns="urn:org:jgroups"/>
          <pbcast.NAKACK2
                use_mcast_xmit="false"
                xmit_interval="200"
@@ -51,7 +51,7 @@
                      xmlns="urn:org:jgroups"/>
          <UFC max_credits="4m" min_threshold="0.40" xmlns="urn:org:jgroups"/>
          <MFC max_credits="4m" min_threshold="0.40" xmlns="urn:org:jgroups"/>
-         <FRAG3 xmlns="urn:org:jgroups"/>
+         <FRAG4 xmlns="urn:org:jgroups"/>
       </stack>
    </jgroups>
    <cache-container name="default" statistics="true">

@@ -25,11 +25,11 @@
          <LOCAL_PING/>
          <MERGE3 max_interval="5000"
                  min_interval="3000"/>
-         <FD_SOCK/>
+         <FD_SOCK2/>
          <FD_ALL3 timeout="3000"
                   interval="1000"
          />
-         <VERIFY_SUSPECT timeout="1000"/>
+         <VERIFY_SUSPECT2 timeout="1000"/>
          <pbcast.NAKACK2 xmit_interval="200"
                          xmit_table_num_rows="50"
                          xmit_table_msgs_per_row="1024"
@@ -49,13 +49,12 @@
          <pbcast.GMS print_local_addr="false"
                      join_timeout="${jgroups.join_timeout:2000}"
                      max_join_attempts="3"
-                     max_leave_attempts="3"
          />
          <UFC max_credits="4m"
               min_threshold="0.40"/>
          <MFC max_credits="4m"
               min_threshold="0.40"/>
-         <FRAG3/>
+         <FRAG4/>
       </stack>
       <stack name="xsite" extends="udp">
          <relay.RELAY2 site="LON" xmlns="urn:org:jgroups"/>
