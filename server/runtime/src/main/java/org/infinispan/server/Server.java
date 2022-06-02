@@ -137,7 +137,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String INFINISPAN_PORT_OFFSET = "infinispan.socket.binding.port-offset";
    public static final String JGROUPS_BIND_ADDRESS = "jgroups.bind.address";
    public static final String JGROUPS_BIND_PORT = "jgroups.bind.port";
-   public static final String JGROUPS_FD_BIND_PORT = "jgroups.fd.port";
+   public static final String JGROUPS_FD_PORT_OFFSET = "jgroups.fd.port-offset";
 
    /**
     * Property name indicating the path to the server installation. If unspecified, the current working directory will
@@ -184,7 +184,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String DEFAULT_CLUSTER_STACK = "tcp";
    public static final int DEFAULT_BIND_PORT = 11222;
    public static final int DEFAULT_JGROUPS_BIND_PORT = 7800;
-   public static final int DEFAULT_JGROUPS_FD_BIND_PORT = 57600;
+   public static final int DEFAULT_JGROUPS_FD_PORT_OFFSET = 50000;
 
    private static final int SHUTDOWN_DELAY_SECONDS = 3;
 

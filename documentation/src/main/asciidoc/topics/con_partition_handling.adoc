@@ -19,7 +19,7 @@ This can happen not only when there is a network failure but also for other reas
 
 [source]
 ----
-FD_ALL.timeout + FD_ALL.interval + VERIFY_SUSPECT.timeout + GMS.view_ack_collection_timeout
+FD_ALL[2|3].timeout + FD_ALL[2|3].interval + VERIFY_SUSPECT[2].timeout + GMS.view_ack_collection_timeout
 ----
 
 When it detects that the cluster is split into network partitions, {brandname} uses a strategy for handling cache operations.

@@ -27,7 +27,7 @@
 
    <MERGE3 max_interval="10000"
            min_interval="3000"/>
-   <FD_SOCK/>
+   <FD_SOCK2/>
    <pbcast.NAKACK2 use_mcast_xmit="false"
                    xmit_interval="1000"
                    xmit_table_num_rows="50"
@@ -46,7 +46,6 @@
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"
                max_join_attempts="3"
-               max_leave_attempts="3"
    />
 
     <!-- At this place we can react on DISCONNECTs immediatelly -->
@@ -59,5 +58,5 @@
    <MFC max_credits="4m"
         min_threshold="0.40"
     />
-   <FRAG2 frag_size="60000" />
+   <FRAG4 frag_size="60000" />
 </config>

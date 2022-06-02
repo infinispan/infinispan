@@ -6,6 +6,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.LOCAL_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MPING;
@@ -15,6 +16,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_RELAY2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +48,7 @@ public class JGroupsConfigBuilder {
    public static final String JGROUPS_STACK;
    private static final Map<String, ProtocolStackConfigurator> protocolStackConfigurator = new HashMap<>();
 
-   private static final ThreadLocal<Integer> threadTcpIndex = new ThreadLocal<Integer>() {
+   private static final ThreadLocal<Integer> threadTcpIndex = new ThreadLocal<>() {
       private final AtomicInteger counter = new AtomicInteger(0);
 
       @Override
@@ -58,7 +60,7 @@ public class JGroupsConfigBuilder {
    /**
     * Holds unique mcast_addr for each thread used for JGroups channel construction.
     */
-   private static final ThreadLocal<Integer> threadUdpIndex = new ThreadLocal<Integer>() {
+   private static final ThreadLocal<Integer> threadUdpIndex = new ThreadLocal<>() {
       private final AtomicInteger counter = new AtomicInteger(0);
 
       @Override
@@ -144,9 +146,9 @@ public class JGroupsConfigBuilder {
     * protocols from the given JGroups stack.
     */
    private static void removeFailureDetection(JGroupsProtocolCfg jgroupsCfg) {
-      jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK)
+      jgroupsCfg.removeProtocol(FD).removeProtocol(FD_SOCK).removeProtocol(FD_SOCK2)
                 .removeProtocol(FD_ALL).removeProtocol(FD_ALL2).removeProtocol(FD_ALL3)
-                .removeProtocol(VERIFY_SUSPECT);
+                .removeProtocol(VERIFY_SUSPECT).removeProtocol(VERIFY_SUSPECT2);
    }
 
    private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {
@@ -294,7 +296,7 @@ public class JGroupsConfigBuilder {
       RED,
       MPING, PING, TCPPING, LOCAL_PING, SHARED_LOOPBACK_PING,
       MERGE2, MERGE3,
-      FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2, FD_ALL3,
+      FD_SOCK, FD, VERIFY_SUSPECT, VERIFY_SUSPECT2, FD_ALL, FD_ALL2, FD_ALL3, FD_SOCK2,
       BARRIER,
       UNICAST, UNICAST2, UNICAST3,
       NAKACK, NAKACK2,
@@ -302,7 +304,7 @@ public class JGroupsConfigBuilder {
       STABLE,
       GMS,
       UFC, MFC, FC, UFC_NB, MFC_NB,
-      FRAG2, FRAG3,
+      FRAG2, FRAG3, FRAG4,
       STREAMING_STATE_TRANSFER,
       TEST_RELAY2
    }
