@@ -113,7 +113,7 @@ public abstract class DelegatingRemoteCache<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> getAndRemove(K key, CacheOptions options) {
+   public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
       return delegate.getAndRemove(key, options);
    }
 

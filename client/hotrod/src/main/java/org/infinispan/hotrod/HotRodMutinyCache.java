@@ -85,7 +85,7 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
    }
 
    @Override
-   public Uni<V> getAndRemove(K key, CacheOptions options) {
+   public Uni<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
       return Uni.createFrom().completionStage(() -> remoteCache.getAndRemove(key, options));
    }
 

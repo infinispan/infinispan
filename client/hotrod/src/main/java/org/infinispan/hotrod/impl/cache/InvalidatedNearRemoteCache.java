@@ -187,7 +187,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    @Override
-   public CompletionStage<V> getAndRemove(K key, CacheOptions options) {
+   public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
       return super.getAndRemove(key, options).thenApply(v -> {
          nearcache.remove(key);
          return v;

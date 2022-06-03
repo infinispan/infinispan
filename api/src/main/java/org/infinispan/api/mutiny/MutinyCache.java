@@ -1,6 +1,7 @@
 package org.infinispan.api.mutiny;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.api.Experimental;
@@ -63,7 +64,10 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return the value
     */
-   Uni<V> get(K key, CacheOptions options);
+   default Uni<V> get(K key, CacheOptions options) {
+      return getEntry(key, options)
+            .map(CacheEntry::value);
+   }
 
    /**
     * @param key
@@ -171,7 +175,10 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return true if the key existed and was removed, false if the key did not exist.
     */
-   Uni<Boolean> remove(K key, CacheOptions options);
+   default Uni<Boolean> remove(K key, CacheOptions options) {
+      return getAndRemove(key, options)
+            .map(Objects::nonNull);
+   }
 
    /**
     * Removes the key and returns its value if present.
@@ -179,7 +186,7 @@ public interface MutinyCache<K, V> {
     * @param key
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   default Uni<V> getAndRemove(K key) {
+   default Uni<CacheEntry<K, V>> getAndRemove(K key) {
       return getAndRemove(key, CacheOptions.DEFAULT);
    }
 
@@ -190,7 +197,7 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   Uni<V> getAndRemove(K key, CacheOptions options);
+   Uni<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options);
 
    /**
     * Retrieve all keys
@@ -206,7 +213,9 @@ public interface MutinyCache<K, V> {
     *
     * @return @{@link Multi} which produces keys as items.
     */
-   Multi<K> keys(CacheOptions options);
+   default Multi<K> keys(CacheOptions options) {
+      return entries(options).map(CacheEntry::key);
+   }
 
    /**
     * Retrieve all entries
@@ -302,7 +311,10 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return
     */
-   Uni<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options);
+   default Uni<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      return getOrReplaceEntry(key, value, version, options)
+            .map(ce -> ce != null && version.equals(ce.metadata().version()));
+   }
 
    /**
     * @param key
@@ -378,7 +390,10 @@ public interface MutinyCache<K, V> {
     * @param options
     * @return
     */
-   Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys, CacheWriteOptions options);
+   default Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys, CacheWriteOptions options) {
+      return keys.onItem().transformToUni(this::getAndRemove)
+            .concatenate();
+   }
 
    /**
     * Estimate the size of the store

@@ -105,7 +105,7 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
    }
 
    @Override
-   public V getAndRemove(K key, CacheOptions options) {
+   public CacheEntry<K, V> getAndRemove(K key, CacheOptions options) {
       return await(remoteCache.getAndRemove(key, options));
    }
 
@@ -143,9 +143,9 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
    }
 
    @Override
-   public Map<K, V> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
+   public Map<K, CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
       return blockingGet(Flowable.fromPublisher(FlowAdapters.toPublisher(remoteCache.getAndRemoveAll(keys, options)))
-            .collect(Collectors.toMap(CacheEntry::key, CacheEntry::value)));
+            .collect(Collectors.toMap(CacheEntry::key, ce -> ce)));
    }
 
    @Override

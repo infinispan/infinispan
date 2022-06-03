@@ -100,7 +100,7 @@ public class HotRodAsyncCache<K, V> implements AsyncCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> getAndRemove(K key, CacheOptions options) {
+   public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
       return remoteCache.getAndRemove(key, options);
    }
 

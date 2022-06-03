@@ -3,12 +3,14 @@ package org.infinispan.hotrod.impl.cache;
 import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+import java.util.stream.Collectors;
 
 import javax.transaction.TransactionManager;
 
@@ -26,6 +28,7 @@ import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.Util;
 import org.infinispan.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.hotrod.filter.Filters;
 import org.infinispan.hotrod.impl.DataFormat;
@@ -34,14 +37,20 @@ import org.infinispan.hotrod.impl.iteration.RemotePublisher;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.hotrod.impl.operations.ClearOperation;
+import org.infinispan.hotrod.impl.operations.GetAllParallelOperation;
 import org.infinispan.hotrod.impl.operations.GetOperation;
 import org.infinispan.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.hotrod.impl.operations.PingResponse;
+import org.infinispan.hotrod.impl.operations.PutAllParallelOperation;
 import org.infinispan.hotrod.impl.operations.PutIfAbsentOperation;
 import org.infinispan.hotrod.impl.operations.PutOperation;
+import org.infinispan.hotrod.impl.operations.RemoveIfUnmodifiedOperation;
 import org.infinispan.hotrod.impl.operations.RemoveOperation;
+import org.infinispan.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
 import org.infinispan.hotrod.impl.operations.RetryAwareCompletionStage;
 import org.infinispan.hotrod.near.NearCacheService;
+import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -185,13 +194,26 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletionStage<Void> set(K key, V value, CacheWriteOptions options) {
+      // TODO: Need to pass flag to prevent return of value?
       PutOperation<K, Void> op = cacheOperationsFactory.newPutKeyValueOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value), options, dataFormat);
       return op.execute();
    }
 
    @Override
-   public CompletionStage<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
       throw new UnsupportedOperationException();
+   }
+
+
+   @Override
+   public CompletionStage<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl)) {
+         throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
+      }
+      ReplaceIfUnmodifiedOperation<K, V> op = cacheOperationsFactory.newReplaceIfUnmodifiedOperation(key, keyToBytes(key), valueToBytes(value),
+            ((CacheEntryVersionImpl) version).version(), options, dataFormat);
+      // TODO: add new op to prevent requiring return value?
+      return op.execute().thenApply(r -> r.getValue() != null);
    }
 
    @Override
@@ -207,27 +229,37 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletionStage<Boolean> remove(K key, CacheEntryVersion version, CacheOptions options) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletionStage<V> getAndRemove(K key, CacheOptions options) {
-      throw new UnsupportedOperationException();
+      if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl)) {
+         throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
+      }
+      RemoveIfUnmodifiedOperation<K, V> op = cacheOperationsFactory.newRemoveIfUnmodifiedOperation(key, keyToBytes(key),
+            ((CacheEntryVersionImpl) version).version(), options, dataFormat);
+      // TODO: add new op to prevent requiring return value?
+      return op.execute().thenApply(r -> r.getValue() != null);
    }
 
    @Override
    public Flow.Publisher<K> keys(CacheOptions options) {
-      throw new UnsupportedOperationException();
+      assertRemoteCacheManagerIsStarted();
+      Flowable<K> flowable = Flowable.fromPublisher(new RemotePublisher<K, Object>(cacheOperationsFactory,
+                  "org.infinispan.server.hotrod.ToEmptyBytesKeyValueFilterConverter",
+                  Util.EMPTY_BYTE_ARRAY_ARRAY, null, 128, false, dataFormat))
+            .map(CacheEntry::key);
+      return FlowAdapters.toFlowPublisher(flowable);
    }
 
    @Override
    public Flow.Publisher<CacheEntry<K, V>> entries(CacheOptions options) {
-      throw new UnsupportedOperationException();
+      assertRemoteCacheManagerIsStarted();
+      return FlowAdapters.toFlowPublisher(new RemotePublisher<>(cacheOperationsFactory, null,
+            Util.EMPTY_BYTE_ARRAY_ARRAY, null, 128, false, dataFormat));
+
    }
 
    @Override
    public CompletionStage<Void> putAll(Map<K, V> entries, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      PutAllParallelOperation putAllParallelOperation = cacheOperationsFactory.newPutAllOperation(null, options, dataFormat);
+      return putAllParallelOperation.execute();
    }
 
    @Override
@@ -237,12 +269,22 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
 
    @Override
    public Flow.Publisher<CacheEntry<K, V>> getAll(Set<K> keys, CacheOptions options) {
-      throw new UnsupportedOperationException();
+      GetAllParallelOperation<K, V> op = cacheOperationsFactory.newGetAllOperation(keys.stream().map(this::keyToBytes).collect(Collectors.toSet()), options, dataFormat);
+      Flowable<CacheEntry<K, V>> flowable = Flowable.defer(() -> Flowable.fromCompletionStage(op.execute())
+            .concatMapIterable(Map::entrySet)
+            // TODO: need to worry about metadata
+            .map(e -> new CacheEntryImpl<>(e.getKey(), e.getValue(), null)));
+      return FlowAdapters.toFlowPublisher(flowable);
    }
 
    @Override
    public Flow.Publisher<CacheEntry<K, V>> getAll(CacheOptions options, K[] keys) {
-      throw new UnsupportedOperationException();
+      GetAllParallelOperation<K, V> op = cacheOperationsFactory.newGetAllOperation(Arrays.stream(keys).map(this::keyToBytes).collect(Collectors.toSet()), options, dataFormat);
+      Flowable<CacheEntry<K, V>> flowable = Flowable.defer(() -> Flowable.fromCompletionStage(op.execute())
+            .concatMapIterable(Map::entrySet)
+            // TODO: need to worry about metadata
+            .map(e -> new CacheEntryImpl<>(e.getKey(), e.getValue(), null)));
+      return FlowAdapters.toFlowPublisher(flowable);
    }
 
    @Override
@@ -272,7 +314,9 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletionStage<Void> clear(CacheOptions options) {
-      throw new UnsupportedOperationException();
+      // Currently, no options are used by clear (what about timeout?)
+      ClearOperation op = cacheOperationsFactory.newClearOperation();
+      return op.execute();
    }
 
    @Override
