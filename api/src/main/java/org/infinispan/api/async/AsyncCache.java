@@ -59,7 +59,10 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return the value
     */
-   CompletionStage<V> get(K key, CacheOptions options);
+   default CompletionStage<V> get(K key, CacheOptions options) {
+      return getEntry(key, options)
+            .thenApply(ce -> ce != null ? ce.value() : null);
+   }
 
    /**
     * Get the entry of the Key if such exists
@@ -171,7 +174,10 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return
     */
-   CompletionStage<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options);
+   default CompletionStage<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      return getOrReplaceEntry(key, value, version, options)
+            .thenApply(ce -> ce != null && version.equals(ce.metadata().version()));
+   }
 
    /**
     * @param key
@@ -238,7 +244,7 @@ public interface AsyncCache<K, V> {
     * @param key
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   default CompletionStage<V> getAndRemove(K key) {
+   default CompletionStage<CacheEntry<K, V>> getAndRemove(K key) {
       return getAndRemove(key, CacheOptions.DEFAULT);
    }
 
@@ -249,7 +255,7 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   CompletionStage<V> getAndRemove(K key, CacheOptions options);
+   CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options);
 
    /**
     * Retrieve all keys

@@ -64,7 +64,7 @@ public interface RemoteCache<K, V> extends AutoCloseable {
 
    CompletionStage<Boolean> remove(K key, CacheEntryVersion version, CacheOptions options);
 
-   CompletionStage<V> getAndRemove(K key, CacheOptions options);
+   CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options);
 
    Flow.Publisher<K> keys(CacheOptions options);
 

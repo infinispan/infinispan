@@ -1,5 +1,6 @@
 package org.infinispan.api.sync;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,8 +47,7 @@ public interface SyncCache<K, V> {
     * @return the value
     */
    default V get(K key) {
-      CacheEntry<K, V> entry = getEntry(key, CacheOptions.DEFAULT);
-      return entry == null ? null : entry.value();
+      return get(key, CacheOptions.DEFAULT);
    }
 
    /**
@@ -171,7 +171,10 @@ public interface SyncCache<K, V> {
     * @param options
     * @return
     */
-   boolean replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options);
+   default boolean replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      CacheEntry<K, V> ce = getOrReplaceEntry(key, value, version, options);
+      return ce != null && version.equals(ce.metadata().version());
+   }
 
    /**
     * @param key
@@ -209,7 +212,10 @@ public interface SyncCache<K, V> {
     * @param options
     * @return true if the entry was removed
     */
-   boolean remove(K key, CacheOptions options);
+   default boolean remove(K key, CacheOptions options) {
+      CacheEntry<K, V> ce = getAndRemove(key, options);
+      return ce != null;
+   }
 
    /**
     * Delete the key only if the version matches
@@ -238,7 +244,7 @@ public interface SyncCache<K, V> {
     * @param key
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   default V getAndRemove(K key) {
+   default CacheEntry<K, V> getAndRemove(K key) {
       return getAndRemove(key, CacheOptions.DEFAULT);
    }
 
@@ -249,7 +255,7 @@ public interface SyncCache<K, V> {
     * @param options
     * @return the value of the key before removal. Returns null if the key didn't exist.
     */
-   V getAndRemove(K key, CacheOptions options);
+   CacheEntry<K, V> getAndRemove(K key, CacheOptions options);
 
    /**
     * Retrieve all keys
@@ -364,7 +370,7 @@ public interface SyncCache<K, V> {
     * @param keys
     * @return
     */
-   default Map<K, V> getAndRemoveAll(Set<K> keys) {
+   default Map<K, CacheEntry<K, V>> getAndRemoveAll(Set<K> keys) {
       return getAndRemoveAll(keys, CacheWriteOptions.DEFAULT);
    }
 
@@ -374,7 +380,13 @@ public interface SyncCache<K, V> {
     * @param keys
     * @return
     */
-   Map<K, V> getAndRemoveAll(Set<K> keys, CacheWriteOptions options);
+   default Map<K, CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
+      Map<K, CacheEntry<K, V>> map = new HashMap<>(keys.size());
+      for (K key : keys) {
+         map.put(key, getAndRemove(key));
+      }
+      return map;
+   }
 
    /**
     * Estimate the size of the store
