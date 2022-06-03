@@ -59,6 +59,9 @@ public class Create extends CliCommand {
       @Option(shortName = 'r', description = "Specifies the number of replicas. Defaults to 1.", defaultValue = "1")
       int replicas;
 
+      @Option(shortName = 'v', description = "Specifies the server version. If omitted, the latest available version will be used.")
+      String version;
+
       @Option(name = "expose-type", completer = ExposeCompleter.class, description = "Makes the service available on the network through a LoadBalancer, NodePort, or Route.")
       String exposeType;
 
@@ -101,6 +104,9 @@ public class Create extends CliCommand {
          GenericKubernetesResource spec = new GenericKubernetesResource();
          infinispan.setAdditionalProperty("spec", spec);
          spec.setAdditionalProperty("replicas", replicas);
+         if (version != null) {
+            spec.setAdditionalProperty("version", version);
+         }
          if (exposeType != null) {
             GenericKubernetesResource expose = new GenericKubernetesResource();
             spec.setAdditionalProperty("expose", expose);
