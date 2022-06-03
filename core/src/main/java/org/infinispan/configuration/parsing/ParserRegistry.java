@@ -321,7 +321,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    public void serialize(ConfigurationWriter writer, String name, Configuration configuration) {
       writer.writeStartDocument();
       CoreConfigurationSerializer serializer = new CoreConfigurationSerializer();
-      serializer.writeCache(writer, name, configuration, true);
+      serializer.writeCache(writer, name, configuration, name == null || name.isBlank());
       writer.writeEndDocument();
    }
 
