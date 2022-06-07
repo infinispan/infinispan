@@ -57,7 +57,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
    // percentiles to print
    public static final double[] PERCENTILES = { .999 };
 
-   protected ConsistentHashFactory<DefaultConsistentHash> createFactory() {
+   protected ConsistentHashFactory createFactory() {
       return new SyncConsistentHashFactory();
    }
 
@@ -132,7 +132,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
       int distIndex = 0;
       ConsistentHashFactory<DefaultConsistentHash> chf = createFactory();
       for (int i = 0; i < LOOPS; i++) {
-         DefaultConsistentHash ch = chf.create(numOwners, numSegments, members, null);
+         ConsistentHash ch = chf.create(numOwners, numSegments, members, null);
          OwnershipStatistics stats = new OwnershipStatistics(ch, ch.getMembers());
          assertEquals(numSegments * numOwners, stats.sumOwned());
          for (Address node : ch.getMembers()) {
@@ -160,14 +160,14 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
       double[] largestRatio = new double[LOOPS];
       int distIndex = 0;
 
-      ConsistentHashFactory<DefaultConsistentHash> chf = createFactory();
-      DefaultConsistentHash ch = chf.create(numOwners, numSegments, members, null);
+      ConsistentHashFactory<ConsistentHash> chf = createFactory();
+      ConsistentHash ch = chf.create(numOwners, numSegments, members, null);
 
       // loop leave/join and rebalance
       for (int i = 0; i < LOOPS; i++) {
          // leave
          members.remove(0);
-         DefaultConsistentHash rebalancedCH = chf.updateMembers(ch, members, null);
+         ConsistentHash rebalancedCH = chf.updateMembers(ch, members, null);
          ch = chf.rebalance(rebalancedCH);
          // join
          Address joiner = createSingleAddress(numNodes + i);
@@ -250,7 +250,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
       return new IndexedJGroupsAddress(UUID.randomUUID(), nodeIndex);
    }
 
-   protected double getSegmentsPerNodesMinMaxRatio(DefaultConsistentHash ch) {
+   protected double getSegmentsPerNodesMinMaxRatio(ConsistentHash ch) {
       int max = 0;
       int min = Integer.MAX_VALUE;
       for (Address addr : ch.getMembers()) {

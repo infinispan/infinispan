@@ -25,6 +25,7 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.conflict.impl.InternalConflictManager;
+import org.infinispan.distribution.Member;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -545,15 +546,15 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          newCurrentMembers = getExpectedMembers();
          actualMembers = newCurrentMembers;
          newCurrentCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
-               joinInfo.getNumSegments(), newCurrentMembers, getCapacityFactors());
+               joinInfo.getNumSegments(), createMembers(newCurrentMembers, getCapacityFactors()));
       } else {
          // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
-         newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
+         newCurrentCH = consistentHashFactory.updateMembers(currentCH, createMembers(newCurrentMembers, getCapacityFactors()));
          actualMembers = newCurrentMembers;
          if (pendingCH != null) {
             newPhase = currentTopology.getPhase();
             List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
-            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
+            newPendingCH = consistentHashFactory.updateMembers(pendingCH, createMembers(newPendingMembers, getCapacityFactors()));
             actualMembers = pruneInvalidMembers(newPendingMembers);
          }
       }
@@ -592,6 +593,16 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       log.tracef("Cache %s availability changed: %s -> %s", cacheName, availabilityMode, newAvailabilityMode);
       availabilityMode = newAvailabilityMode;
       return true;
+   }
+
+   private List<Member> createMembers(List<Address> addresses, Map<Address, Float> capacityFactors) {
+      final List<Member> members = new ArrayList<>(addresses.size());
+      for (Address address: addresses) {
+         Member member = new Member(address, persistentUUIDManager.getPersistentUuid(address), capacityFactors.getOrDefault(address, 1.0f));
+         members.add(member);
+      }
+
+      return members;
    }
 
    // Helpers for working with immutable lists
@@ -796,7 +807,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       log.tracef("Initializing status for cache %s", cacheName);
       List<Address> initialMembers = getExpectedMembers();
       ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
-            joinInfo.getNumSegments(), initialMembers, getCapacityFactors());
+            joinInfo.getNumSegments(), createMembers(initialMembers, getCapacityFactors()));
       CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, initialCH, null,
             CacheTopology.Phase.NO_REBALANCE, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));
       setCurrentTopology(initialTopology);
@@ -881,7 +892,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       ConsistentHashFactory chFactory = getJoinInfo().getConsistentHashFactory();
       // This update will only add the joiners to the CH, we have already checked that we don't have leavers
-      ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers, getCapacityFactors());
+      ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, createMembers(newMembers, getCapacityFactors()));
       ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
 
       boolean removeMembers = !expectedMembers.containsAll(currentCH.getMembers());
@@ -1022,7 +1033,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       ConsistentHashFactory chf = getJoinInfo().getConsistentHashFactory();
       ConsistentHash unionHash = distinctHashes.stream().reduce(preferredHash, chf::union);
       unionHash = chf.union(unionHash, chf.rebalance(unionHash));
-      return chf.updateMembers(unionHash, actualMembers, capacityFactors);
+      return chf.updateMembers(unionHash, createMembers(actualMembers, capacityFactors));
    }
 
    @Override
@@ -1081,7 +1092,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       CacheTopology conflictTopology = conflictResolution.topology;
       ConsistentHashFactory chf = getJoinInfo().getConsistentHashFactory();
-      ConsistentHash newHash = chf.updateMembers(conflictTopology.getCurrentCH(), members, capacityFactors);
+      ConsistentHash newHash = chf.updateMembers(conflictTopology.getCurrentCH(), createMembers(members, capacityFactors));
 
       conflictTopology = new CacheTopology(currentTopology.getTopologyId() + 1, currentTopology.getRebalanceId(),
             newHash, null, CacheTopology.Phase.CONFLICT_RESOLUTION, members, persistentUUIDManager.mapAddresses(members));

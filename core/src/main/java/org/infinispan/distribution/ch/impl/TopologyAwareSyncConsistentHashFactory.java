@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distribution.Member;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.marshall.core.Ids;
@@ -30,13 +32,14 @@ import org.infinispan.remoting.transport.Address;
  */
 public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFactory {
    @Override
-   protected Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
-      return new Builder(numOwners, numSegments, members, capacityFactors);
+   protected Builder createBuilder(int numOwners, int numSegments, List<Member> members) {
+      return new Builder(numOwners, numSegments, members);
    }
 
    protected static class Builder extends SyncConsistentHashFactory.Builder {
       final Map<Address, Float> capacityFactorsMap;
       protected final TopologyInfo topologyInfo;
+      private final List<Address> addresses;
       // Speed up the site/rack/machine checks by mapping each to an integer
       // and comparing only integers in nodeCanOwnSegment()
       final int numSites;
@@ -49,11 +52,12 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       final int[][] ownerRackIndices;
       final int[][] ownerMachineIndices;
 
-      protected Builder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
-         super(numOwners, numSegments, members, capacityFactors);
+      protected Builder(int numOwners, int numSegments, List<Member> members) {
+         super(numOwners, numSegments, members);
 
-         capacityFactorsMap = capacityFactors;
-         topologyInfo = new TopologyInfo(numSegments, this.actualNumOwners, members, capacityFactors);
+         addresses = sortedMembers.stream().map(Member::address).collect(Collectors.toList());
+         capacityFactorsMap = members.stream().collect(Collectors.toMap(Member::address, Member::capacityFactor));
+         topologyInfo = new TopologyInfo(numSegments, this.actualNumOwners, addresses, capacityFactorsMap);
 
          numSites = topologyInfo.getDistinctLocationsCount(TopologyLevel.SITE);
          numRacks = topologyInfo.getDistinctLocationsCount(TopologyLevel.RACK);
@@ -62,7 +66,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
          rackLookup = new int[numNodes];
          machineLookup = new int[numNodes];
          for (int n = 0; n < numNodes; n++) {
-            Address address = sortedMembers.get(n);
+            Address address = addresses.get(n);
             siteLookup[n] = topologyInfo.getSiteIndex(address);
             rackLookup[n] = topologyInfo.getRackIndex(address);
             machineLookup[n] = topologyInfo.getMachineIndex(address);
@@ -78,19 +82,19 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       }
 
       @Override
-      int[] computeExpectedSegments(int expectedOwners, float totalCapacity, int iteration) {
-         TopologyInfo topologyInfo = new TopologyInfo(numSegments, expectedOwners, sortedMembers, capacityFactorsMap);
+      protected int[] computeExpectedSegments(int expectedOwners, float totalCapacity, int iteration) {
+         TopologyInfo topologyInfo = new TopologyInfo(numSegments, expectedOwners, addresses, capacityFactorsMap);
          int[] expectedSegments = new int[numNodes];
          float averageSegments = (float) numSegments * expectedOwners / numNodes;
          for (int n = 0; n < numNodes; n++) {
-            float idealOwnedSegments = topologyInfo.getExpectedOwnedSegments(sortedMembers.get(n));
+            float idealOwnedSegments = topologyInfo.getExpectedOwnedSegments(addresses.get(n));
             expectedSegments[n] = fudgeExpectedSegments(idealOwnedSegments, averageSegments, iteration);
          }
          return expectedSegments;
       }
 
       @Override
-      boolean nodeCanOwnSegment(int segment, int ownerPosition, int nodeIndex) {
+      protected boolean nodeCanOwnSegment(int segment, int ownerPosition, int nodeIndex) {
          if (ownerPosition == 0) {
             return true;
          } else if (ownerPosition < numSites) {

@@ -146,6 +146,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       return segmentOwners[segmentId].get(0);
    }
 
+   @Override
    public int getNumOwners() {
       return numOwners;
    }

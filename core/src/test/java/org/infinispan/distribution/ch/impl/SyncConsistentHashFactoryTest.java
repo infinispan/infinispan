@@ -3,6 +3,17 @@ package org.infinispan.distribution.ch.impl;
 import static org.infinispan.distribution.ch.impl.SyncConsistentHashFactory.Builder.fudgeExpectedSegments;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.infinispan.distribution.Member;
+import org.infinispan.distribution.TestAddress;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.PersistentUUID;
+import org.infinispan.topology.PersistentUUIDManager;
+import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.testng.annotations.Test;
 
 /**
@@ -13,9 +24,35 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "distribution.ch.SyncConsistentHashFactoryTest")
 public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryTest {
+
+   private final PersistentUUIDManager uuidManager = new PersistentUUIDManagerImpl();
+
    @Override
    protected SyncConsistentHashFactory createConsistentHashFactory() {
       return new SyncConsistentHashFactory();
+   }
+
+   @Override
+   protected TestAddress createAddress(int num, String name) {
+      TestAddress address = super.createAddress(num, name);
+      PersistentUUID uuid = uuidManager.getPersistentUuid(address);
+      if (uuid == null) {
+         uuidManager.addPersistentAddressMapping(address, PersistentUUID.randomUUID());
+      }
+
+      return address;
+   }
+
+   @Override
+   protected List<Member> toMembers(List<Address> addresses, Map<Address, Float> capacities) {
+      List<Member> members = new ArrayList<>();
+      for (Address address: addresses) {
+         float factor = capacities != null ? capacities.getOrDefault(address, 1.0f) : 1.0f;
+         Member member = new Member(address, uuidManager.getPersistentUuid(address), factor);
+         members.add(member);
+      }
+
+      return members;
    }
 
    // Disclaimer: These numbers just happen to work with our test addresses, they are by no means guaranteed
@@ -28,7 +65,7 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
       float averageOwned = 1f * numSegments * actualNumOwners / numNodes;
       float maxDiff;
       if (expectedOwned >= averageOwned) {
-         maxDiff = .10f * expectedOwned;
+         maxDiff = .18f * expectedOwned;
       } else {
          maxDiff = .10f * (expectedOwned + averageOwned);
       }
@@ -42,20 +79,20 @@ public class SyncConsistentHashFactoryTest extends DefaultConsistentHashFactoryT
       float averageOwned = 1f * numSegments * actualNumOwners / numNodes;
       float maxDiff;
       if (expectedOwned >= averageOwned) {
-         maxDiff = .15f * expectedOwned;
+         maxDiff = .18f * expectedOwned;
       } else {
-         maxDiff = .05f * (expectedOwned + averageOwned);
+         maxDiff = .10f * (expectedOwned + averageOwned);
       }
       return expectedOwned - Math.max(maxDiff, 1);
    }
 
    @Override
-   protected float allowedExtraMoves(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
+   protected float allowedExtraMoves(ConsistentHash oldCH, ConsistentHash newCH,
                                      int joinerSegments, int leaverSegments) {
       int oldSize = nodesWithLoad(oldCH.getMembers(), oldCH.getCapacityFactors());
       int newSize = nodesWithLoad(newCH.getMembers(), newCH.getCapacityFactors());
       int maxSize = Math.max(oldSize, newSize);
-      return Math.max(maxSize, 0.15f * newCH.getNumOwners() * newCH.getNumSegments());
+      return Math.max(maxSize, 0.22f * newCH.getNumOwners() * newCH.getNumSegments());
    }
 
    public void testFudgeExpectedSegments() {

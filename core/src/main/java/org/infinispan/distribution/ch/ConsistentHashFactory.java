@@ -1,9 +1,11 @@
 package org.infinispan.distribution.ch;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.Member;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
@@ -38,29 +40,34 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     * @param capacityFactors The capacity factor of each member. Determines the relative capacity of each node compared
     *                        to the others. The implementation may ignore this parameter.
     *                        If {@code null}, all the members are assumed to have a capacity factor of 1.
-    * @deprecated since 11.0. hashFunction is ignored, use {@link #create(int, int, List, Map)} instead.
     */
-   @Deprecated
-   default CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
-                     Map<Address, Float> capacityFactors) {
-      return create(numOwners, numSegments, members, capacityFactors);
-   }
+   CH create(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors);
 
    /**
-    * Create a new consistent hash instance.
-    *
-    * The consistent hash will be <em>balanced</em>.
+    * Creates a new consistent hash instance.
+    * <p/>
+    * Default behavior delegates to {@link ConsistentHashFactory#create(int, int, List, Map)}, meaning that some
+    * information in the {@link Member} class is discarded.
     *
     * @param numOwners The ideal number of owners for each key. The created consistent hash
     *                  can have more or less owners, but each key will have at least one owner.
     * @param numSegments Number of hash-space segments. The implementation may round up the number
     *                    of segments for performance, or may ignore the parameter altogether.
-    * @param members A list of addresses representing the new cache members.
-    * @param capacityFactors The capacity factor of each member. Determines the relative capacity of each node compared
-    *                        to the others. The implementation may ignore this parameter.
-    *                        If {@code null}, all the members are assumed to have a capacity factor of 1.
+    * @param members A list representing the new cache members.
+    * @see ConsistentHashFactory#create(int, int, List, Map)
+    * @since 14.0
     */
-   CH create(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors);
+   default CH create(int numOwners, int numSegments, List<Member> members) {
+      List<Address> addresses = new ArrayList<>(members.size());
+      Map<Address, Float> capacityFactors = new HashMap<>(members.size());
+
+      for (Member member: members) {
+         addresses.add(member.address());
+         capacityFactors.put(member.address(), member.capacityFactor());
+      }
+
+      return create(numOwners, numSegments, addresses, capacityFactors);
+   }
 
    /**
     * Updates an existing consistent hash instance to remove owners that are not in the {@code newMembers} list.
@@ -82,6 +89,31 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     *         does not need any changes.
     */
    CH updateMembers(CH baseCH, List<Address> newMembers, Map<Address, Float> capacityFactors);
+
+   /**
+    * Updates an existing {@link ConsistentHash} to removing owners that are not in {@code members} list.
+    * <p/>
+    * Default behavior delegates to {@link ConsistentHashFactory#updateMembers(ConsistentHash, List, Map)},
+    * meaning that some information in the {@link Member} class is discarded.
+    *
+    * @param baseCH An existing consistent hash instance, should not be {@code null}
+    * @param members A list of {@link Member} representing the new cache members.
+    * @return A new {@link ConsistentHash} instance, or {@code baseCH} if the existing instance
+    *         does not need any changes.
+    * @see ConsistentHashFactory#updateMembers(ConsistentHash, List, Map)
+    * @since 14.0
+    */
+   default CH updateMembers(CH baseCH, List<Member> members) {
+      List<Address> addresses = new ArrayList<>(members.size());
+      Map<Address, Float> capacityFactors = new HashMap<>(members.size());
+
+      for (Member member: members) {
+         addresses.add(member.address());
+         capacityFactors.put(member.address(), member.capacityFactor());
+      }
+
+      return updateMembers(baseCH, addresses, capacityFactors);
+   }
 
    /**
     * Create a new consistent hash instance, based on an existing instance, but <em>balanced</em> according to

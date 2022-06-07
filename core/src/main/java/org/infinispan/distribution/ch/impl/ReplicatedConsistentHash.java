@@ -173,6 +173,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return primaryOwners.length;
    }
 
+   @Override
    public int getNumOwners() {
       return membersWithState.size();
    }

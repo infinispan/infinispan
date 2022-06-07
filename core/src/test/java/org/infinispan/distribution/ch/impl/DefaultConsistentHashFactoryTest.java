@@ -18,7 +18,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.distribution.Member;
 import org.infinispan.distribution.TestAddress;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -44,17 +46,33 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    private int iterationCount = 0;
 
-   protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
-      return new DefaultConsistentHashFactory();
+   @SuppressWarnings("unchecked")
+   protected <T extends ConsistentHash> ConsistentHashFactory<T> createConsistentHashFactory() {
+      return (ConsistentHashFactory<T>) new DefaultConsistentHashFactory();
+   }
+
+   protected TestAddress createAddress(int num, String name) {
+      return new TestAddress(num, name);
+   }
+
+   protected List<Member> toMembers(List<Address> addresses, Map<Address, Float> capacities) {
+      List<Member> members = new ArrayList<>();
+      for (Address address: addresses) {
+         float factor = capacities != null ? capacities.getOrDefault(address, 1.0f) : 1.0f;
+         Member member = new Member(address, null, factor);
+         members.add(member);
+      }
+
+      return members;
    }
 
    public void testConsistentHashDistribution() {
-      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
+      ConsistentHashFactory<ConsistentHash> chf = createConsistentHashFactory();
 
       for (int nn : NUM_NODES) {
          List<Address> nodes = new ArrayList<>(nn);
          for (int j = 0; j < nn; j++) {
-            nodes.add(new TestAddress(j, "TA"));
+            nodes.add(createAddress(j, "TA"));
          }
 
          for (int ns : NUM_SEGMENTS) {
@@ -76,17 +94,17 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       }
    }
 
-   private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf,
+   private void testConsistentHashModifications(ConsistentHashFactory<ConsistentHash> chf,
                                                 List<Address> nodes, int ns, int no, Map<Address, Float> capacityFactors) {
       log.tracef("Creating consistent hash with ns=%d, no=%d, members=(%d)%s",
                  ns, no, nodes.size(), membersString(nodes, capacityFactors));
-      DefaultConsistentHash baseCH = chf.create(no, ns, nodes, capacityFactors);
+      ConsistentHash baseCH = chf.create(no, ns, toMembers(nodes, capacityFactors));
       assertEquals(baseCH.getCapacityFactors(), capacityFactors);
       checkDistribution(baseCH, capacityFactors);
 
       // check that the base CH is already balanced
       List<Address> baseMembers = baseCH.getMembers();
-      assertSame(baseCH, chf.updateMembers(baseCH, baseMembers, capacityFactors));
+      assertSame(baseCH, chf.updateMembers(baseCH, toMembers(baseMembers, capacityFactors)));
       assertSame(baseCH, chf.rebalance(baseCH));
 
       // starting point, so that we don't confuse nodes
@@ -110,7 +128,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             newMembers.remove(indexToRemove);
          }
          for (int k = 0; k < nodesToAdd; k++) {
-            TestAddress address = new TestAddress(nodeIndex++, "TA");
+            TestAddress address = createAddress(nodeIndex++, "TA");
             newMembers.add(address);
             if (newCapacityFactors != null) {
                newCapacityFactors.put(address, capacityFactors.get(baseMembers.get(k % baseMembers.size())));
@@ -137,15 +155,15 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return capacityFactors != null ? capacityFactors.get(a) : 1f;
    }
 
-   private DefaultConsistentHash rebalanceIteration(ConsistentHashFactory<DefaultConsistentHash> chf,
-                                                    DefaultConsistentHash baseCH, int nodesToAdd,
+   private ConsistentHash rebalanceIteration(ConsistentHashFactory<ConsistentHash> chf,
+                                                    ConsistentHash baseCH, int nodesToAdd,
                                                     int nodesToRemove, List<Address> newMembers,
                                                     Map<Address, Float> lfMap) {
       int actualNumOwners = computeActualNumOwners(baseCH.getNumOwners(), newMembers, lfMap);
 
       // first phase: just update the members list, removing the leavers
       // and adding new owners, but not necessarily assigning segments to them
-      DefaultConsistentHash updatedMembersCH = chf.updateMembers(baseCH, newMembers, lfMap);
+      ConsistentHash updatedMembersCH = chf.updateMembers(baseCH, toMembers(newMembers, lfMap));
       assertEquals(lfMap, updatedMembersCH.getCapacityFactors());
       if (nodesToRemove > 0) {
          for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
@@ -156,7 +174,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
       // second phase: rebalance with the new members list
       long startNanos = System.nanoTime();
-      DefaultConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
+      ConsistentHash rebalancedCH = chf.rebalance(updatedMembersCH);
       long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
       if (durationMillis >= 5) {
          log.tracef("Rebalance took %dms", durationMillis);
@@ -170,7 +188,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       checkMovedSegments(baseCH, rebalancedCH, nodesToAdd, nodesToRemove);
 
       // union doesn't have to keep the CH balanced, but it does have to include owners from both CHs
-      DefaultConsistentHash unionCH = chf.union(updatedMembersCH, rebalancedCH);
+      ConsistentHash unionCH = chf.union(updatedMembersCH, rebalancedCH);
       for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
          assertTrue(unionCH.locateOwnersForSegment(l).containsAll(updatedMembersCH.locateOwnersForSegment(l)));
          assertTrue(unionCH.locateOwnersForSegment(l).containsAll(rebalancedCH.locateOwnersForSegment(l)));
@@ -184,7 +202,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return baseCH;
    }
 
-   protected void checkDistribution(DefaultConsistentHash ch, Map<Address, Float> lfMap) {
+   protected void checkDistribution(ConsistentHash ch, Map<Address, Float> lfMap) {
       int numSegments = ch.getNumSegments();
       List<Address> nodes = ch.getMembers();
       int numNodesWithLoad = nodesWithLoad(nodes, lfMap);
@@ -299,12 +317,12 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       return totalCapacity;
    }
 
-   protected float allowedExtraMoves(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
+   protected float allowedExtraMoves(ConsistentHash oldCH, ConsistentHash newCH,
                                      int joinerSegments, int leaverSegments) {
       return Math.max(1, 0.1f * oldCH.getNumOwners() * oldCH.getNumSegments());
    }
 
-   private void checkMovedSegments(DefaultConsistentHash oldCH, DefaultConsistentHash newCH,
+   private void checkMovedSegments(ConsistentHash oldCH, ConsistentHash newCH,
                                    int nodesAdded, int nodesRemoved) {
       int numSegments = oldCH.getNumSegments();
       int numOwners = oldCH.getNumOwners();
@@ -379,64 +397,64 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    }
 
    public void testNullCapacityFactors() {
-      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      TestAddress A = new TestAddress(0, "A");
-      TestAddress B = new TestAddress(1, "B");
-      TestAddress C = new TestAddress(2, "C");
-      TestAddress D = new TestAddress(3, "D");
+      ConsistentHashFactory<ConsistentHash> chf = createConsistentHashFactory();
+      TestAddress A = createAddress(0, "A");
+      TestAddress B = createAddress(1, "B");
+      TestAddress C = createAddress(2, "C");
+      TestAddress D = createAddress(3, "D");
       Map<Address, Float> cf = new HashMap<>();
       cf.put(A, 1f);
       cf.put(B, 1f);
       cf.put(C, 1f);
       cf.put(D, 1f);
 
-      DefaultConsistentHash ch1 = chf.create(2, 60, Arrays.asList(A), cf);
-      DefaultConsistentHash ch1NoCF = chf.create(2, 60, Arrays.asList(A), null);
+      ConsistentHash ch1 = chf.create(2, 60, toMembers(Arrays.asList(A), cf));
+      ConsistentHash ch1NoCF = chf.create(2, 60, toMembers(Arrays.asList(A), null));
       assertEquals(ch1, ch1NoCF);
 
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), cf);
+      ConsistentHash ch2 = chf.updateMembers(ch1, toMembers(Arrays.asList(A, B), cf));
       ch2 = chf.rebalance(ch2);
-      DefaultConsistentHash ch2NoCF = chf.updateMembers(ch1, Arrays.asList(A, B), null);
+      ConsistentHash ch2NoCF = chf.updateMembers(ch1, toMembers(Arrays.asList(A, B), null));
       ch2NoCF = chf.rebalance(ch2NoCF);
       assertEquals(ch2, ch2NoCF);
 
-      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), cf);
+      ConsistentHash ch3 = chf.updateMembers(ch2, toMembers(Arrays.asList(A, B, C), cf));
       ch3 = chf.rebalance(ch3);
-      DefaultConsistentHash ch3NoCF = chf.updateMembers(ch2, Arrays.asList(A, B, C), null);
+      ConsistentHash ch3NoCF = chf.updateMembers(ch2, toMembers(Arrays.asList(A, B, C), null));
       ch3NoCF = chf.rebalance(ch3NoCF);
       assertEquals(ch3, ch3NoCF);
 
-      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), cf);
+      ConsistentHash ch4 = chf.updateMembers(ch3, toMembers(Arrays.asList(A, B, C, D), cf));
       ch4 = chf.rebalance(ch4);
-      DefaultConsistentHash ch4NoCF = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), null);
+      ConsistentHash ch4NoCF = chf.updateMembers(ch3, toMembers(Arrays.asList(A, B, C, D), null));
       ch4NoCF = chf.rebalance(ch4NoCF);
       assertEquals(ch4, ch4NoCF);
    }
 
    public void testDifferentCapacityFactors() {
-      ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      TestAddress A = new TestAddress(0, "A");
-      TestAddress B = new TestAddress(1, "B");
-      TestAddress C = new TestAddress(2, "C");
-      TestAddress D = new TestAddress(3, "D");
+      ConsistentHashFactory<ConsistentHash> chf = createConsistentHashFactory();
+      TestAddress A = createAddress(0, "A");
+      TestAddress B = createAddress(1, "B");
+      TestAddress C = createAddress(2, "C");
+      TestAddress D = createAddress(3, "D");
       Map<Address, Float> cf = new HashMap<>();
       cf.put(A, 1f);
       cf.put(B, 1f);
       cf.put(C, 1f);
       cf.put(D, 100f);
 
-      DefaultConsistentHash ch1 = chf.create(2, 60, Arrays.asList(A), cf);
+      ConsistentHash ch1 = chf.create(2, 60, toMembers(Arrays.asList(A), cf));
       checkDistribution(ch1, cf);
 
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.asList(A, B), cf);
+      ConsistentHash ch2 = chf.updateMembers(ch1, toMembers(Arrays.asList(A, B), cf));
       ch2 = chf.rebalance(ch2);
       checkDistribution(ch2, cf);
 
-      DefaultConsistentHash ch3 = chf.updateMembers(ch2, Arrays.asList(A, B, C), cf);
+      ConsistentHash ch3 = chf.updateMembers(ch2, toMembers(Arrays.asList(A, B, C), cf));
       ch3 = chf.rebalance(ch3);
       checkDistribution(ch3, cf);
 
-      DefaultConsistentHash ch4 = chf.updateMembers(ch3, Arrays.asList(A, B, C, D), cf);
+      ConsistentHash ch4 = chf.updateMembers(ch3, toMembers(Arrays.asList(A, B, C, D), cf));
       ch4 = chf.rebalance(ch4);
       checkDistribution(ch4, cf);
    }

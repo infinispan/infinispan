@@ -38,12 +38,14 @@ import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheVal
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.Member;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.SyncConsistentHash;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
@@ -154,6 +156,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new CollectionExternalizer(), exts);
       addInternalExternalizer(new CompositeKeyValueFilter.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new DefaultConsistentHash.Externalizer(), exts);
+      addInternalExternalizer(new SyncConsistentHash.Externalizer(), exts);
+      addInternalExternalizer(new Member.Externalizer(), exts);
       addInternalExternalizer(new DefaultConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new DoubleSummaryStatisticsExternalizer(), exts);
       addInternalExternalizer(new EmbeddedMetadata.Externalizer(), exts);

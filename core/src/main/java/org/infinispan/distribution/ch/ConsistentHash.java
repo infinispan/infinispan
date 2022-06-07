@@ -47,6 +47,11 @@ public interface ConsistentHash {
    int getNumSegments();
 
    /**
+    * @return the number of owners each segment have.
+    */
+   int getNumOwners();
+
+   /**
     * Should return the addresses of the nodes used to create this consistent hash.
     *
     * @return set of node addresses.

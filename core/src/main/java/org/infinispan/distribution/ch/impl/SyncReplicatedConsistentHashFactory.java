@@ -1,5 +1,6 @@
 package org.infinispan.distribution.ch.impl;
 
+import static org.infinispan.distribution.ch.impl.AbstractConsistentHashFactory.createMembers;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.ObjectInput;
@@ -9,8 +10,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.distribution.Member;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
@@ -30,8 +33,15 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
    @Override
    public ReplicatedConsistentHash create(int numOwners, int numSegments,
          List<Address> members, Map<Address, Float> capacityFactors) {
-      DefaultConsistentHash dch = syncCHF.create(1, numSegments, members, capacityFactors);
-      List<Address> membersWithoutState = computeMembersWithoutState(members, null, capacityFactors);
+      return create(numOwners, numSegments, createMembers(members,capacityFactors));
+   }
+
+   @Override
+   public ReplicatedConsistentHash create(int numOwners, int numSegments, List<Member> members) {
+      SyncConsistentHash dch = syncCHF.create(1, numSegments, members);
+      List<Address> addresses = members.stream().map(Member::address).collect(Collectors.toList());
+      Map<Address, Float> capacityFactors = members.stream().collect(Collectors.toMap(Member::address, Member::capacityFactor));
+      List<Address> membersWithoutState = computeMembersWithoutState(addresses, null, capacityFactors);
       return replicatedFromDefault(dch, membersWithoutState);
    }
 
@@ -43,7 +53,7 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
       return new ReplicatedConsistentHash(state);
    }
 
-   private ReplicatedConsistentHash replicatedFromDefault(DefaultConsistentHash dch,
+   private ReplicatedConsistentHash replicatedFromDefault(SyncConsistentHash dch,
                                                           List<Address> membersWithoutState) {
       int numSegments = dch.getNumSegments();
       List<Address> members = dch.getMembers();
@@ -57,20 +67,26 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
    @Override
    public ReplicatedConsistentHash updateMembers(ReplicatedConsistentHash baseCH, List<Address> newMembers,
          Map<Address, Float> actualCapacityFactors) {
-      DefaultConsistentHash baseDCH = defaultFromReplicated(baseCH);
-      DefaultConsistentHash dch = syncCHF.updateMembers(baseDCH, newMembers, actualCapacityFactors);
-      List<Address> membersWithoutState = computeMembersWithoutState(newMembers, baseCH.getMembers(), actualCapacityFactors);
+      return updateMembers(baseCH, createMembers(newMembers, actualCapacityFactors));
+   }
+
+   @Override
+   public ReplicatedConsistentHash updateMembers(ReplicatedConsistentHash baseCH, List<Member> members) {
+      SyncConsistentHash baseDCH = defaultFromReplicated(baseCH);
+      SyncConsistentHash dch = syncCHF.updateMembers(baseDCH, members);
+      List<Address> addresses = members.stream().map(Member::address).collect(Collectors.toList());
+      Map<Address, Float> capacityFactors = members.stream().collect(Collectors.toMap(Member::address, Member::capacityFactor));
+      List<Address> membersWithoutState = computeMembersWithoutState(addresses, baseCH.getMembers(), capacityFactors);
       return replicatedFromDefault(dch, membersWithoutState);
    }
 
-   private DefaultConsistentHash defaultFromReplicated(ReplicatedConsistentHash baseCH) {
+   private SyncConsistentHash defaultFromReplicated(ReplicatedConsistentHash baseCH) {
       int numSegments = baseCH.getNumSegments();
       List<Address>[] baseSegmentOwners = new List[numSegments];
       for (int segment = 0; segment < numSegments; segment++) {
          baseSegmentOwners[segment] = Collections.singletonList(baseCH.locatePrimaryOwnerForSegment(segment));
       }
-      return new DefaultConsistentHash(1,
-            numSegments, baseCH.getMembers(), baseCH.getCapacityFactors(), baseSegmentOwners);
+      return new SyncConsistentHash(createMembers(baseCH.getMembers(), baseCH.getCapacityFactors()), 1, numSegments, baseSegmentOwners);
    }
 
    @Override

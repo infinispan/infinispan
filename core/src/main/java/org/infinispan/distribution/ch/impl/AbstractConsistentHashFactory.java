@@ -1,9 +1,12 @@
 package org.infinispan.distribution.ch.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.distribution.Member;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
@@ -24,6 +27,30 @@ public abstract class AbstractConsistentHashFactory<CH extends ConsistentHash> i
          if (totalCapacity == 0)
             throw new IllegalArgumentException("There must be at least one node with a non-zero capacity factor");
       }
+   }
+
+   static List<Member> createMembers(List<Address> addresses, Map<Address, Float> capacityFactors) {
+      if (capacityFactors == null) capacityFactors = Collections.emptyMap();
+
+      final List<Member> members = new ArrayList<>();
+      for (Address address: addresses) {
+         Member member = new Member(address, null, capacityFactors.getOrDefault(address, 1.0f));
+         members.add(member);
+      }
+
+      return members;
+   }
+
+   protected void checkCapacityFactors(List<Member> members) {
+      float totalCapacity = 0;
+      for (Member member: members) {
+         if (member.capacityFactor() < 0)
+            throw new IllegalArgumentException("Invalid capacity factor for node " + member.address());
+         totalCapacity += member.capacityFactor();
+      }
+
+      if (totalCapacity == 0)
+         throw new IllegalArgumentException("There must be at least one node with a non-zero capacity factor");
    }
 
    /**

@@ -1,6 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
 import static java.lang.Math.min;
+import static org.infinispan.distribution.ch.impl.ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.ObjectInput;
@@ -14,10 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.Member;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -42,32 +44,38 @@ import org.jgroups.util.UUID;
  * @author Dan Berindei
  * @since 5.2
  */
-public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+public class SyncConsistentHashFactory extends AbstractConsistentHashFactory<SyncConsistentHash> {
 
    @Override
-   public DefaultConsistentHash create(int numOwners, int numSegments, List<Address> members,
+   public SyncConsistentHash create(int numOwners, int numSegments, List<Address> members,
                                        Map<Address, Float> capacityFactors) {
-      checkCapacityFactors(members, capacityFactors);
+      return create(numOwners, numSegments, createMembers(members, capacityFactors));
+   }
 
-      Builder builder = createBuilder(numOwners, numSegments, members, capacityFactors);
+   @Override
+   public SyncConsistentHash create(int numOwners, int numSegments, List<Member> members) {
+      checkCapacityFactors(members);
+
+      Builder builder = createBuilder(numOwners, numSegments, members);
       builder.populateOwners();
 
-      return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
+      return new SyncConsistentHash(numOwners, numSegments, members, builder.segmentOwners);
    }
 
    @Override
-   public DefaultConsistentHash fromPersistentState(ScopedPersistentState state) {
-      String consistentHashClass = state.getProperty("consistentHash");
-      if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
+   public SyncConsistentHash fromPersistentState(ScopedPersistentState state) {
+      String consistentHashClass = state.getProperty(STATE_CONSISTENT_HASH);
+      if (!SyncConsistentHash.class.getName().equals(consistentHashClass))
          throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
-      return new DefaultConsistentHash(state);
+      return new SyncConsistentHash(state);
    }
 
-   Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
-      return new Builder(numOwners, numSegments, members, capacityFactors);
+   protected Builder createBuilder(int numOwners, int numSegments, List<Member> members) {
+      return new Builder(numOwners, numSegments, members);
    }
 
-   void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
+   @Override
+   protected void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
       if (capacityFactors != null) {
          float totalCapacity = 0;
          for (Address node : members) {
@@ -82,25 +90,29 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    }
 
    @Override
-   public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> newMembers,
-                                              Map<Address, Float> actualCapacityFactors) {
-      checkCapacityFactors(newMembers, actualCapacityFactors);
+   public SyncConsistentHash updateMembers(SyncConsistentHash baseCH, List<Address> newMembers,
+                                           Map<Address, Float> actualCapacityFactors) {
+      return updateMembers(baseCH, createMembers(newMembers, actualCapacityFactors));
+   }
+
+   @Override
+   public SyncConsistentHash updateMembers(SyncConsistentHash baseCH, List<Member> members) {
+      checkCapacityFactors(members);
 
       // The ConsistentHashFactory contract says we should return the same instance if we're not making changes
-      boolean sameCapacityFactors = actualCapacityFactors == null ? baseCH.getCapacityFactors() == null :
-            actualCapacityFactors.equals(baseCH.getCapacityFactors());
-      if (newMembers.equals(baseCH.getMembers()) && sameCapacityFactors)
+      if (members.equals(baseCH.completeMembers()))
          return baseCH;
 
       int numSegments = baseCH.getNumSegments();
       int numOwners = baseCH.getNumOwners();
 
       // We assume leavers are far fewer than members, so it makes sense to check for leavers
+      List<Address> newMembers = members.stream().map(Member::address).collect(Collectors.toList());
       HashSet<Address> leavers = new HashSet<>(baseCH.getMembers());
-      leavers.removeAll(newMembers);
+      newMembers.forEach(leavers::remove);
 
       // Create a new "balanced" CH in case we need to allocate new owners for segments with 0 owners
-      DefaultConsistentHash rebalancedCH = null;
+      SyncConsistentHash rebalancedCH = null;
 
       // Remove leavers
       List<Address>[] newSegmentOwners = new List[numSegments];
@@ -112,20 +124,18 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          } else {
             // this segment has 0 owners, fix it
             if (rebalancedCH == null) {
-               rebalancedCH = create(numOwners, numSegments, newMembers, actualCapacityFactors);
+               rebalancedCH = create(numOwners, numSegments, members);
             }
             newSegmentOwners[s] = rebalancedCH.locateOwnersForSegment(s);
          }
       }
 
-      return new DefaultConsistentHash(numOwners, numSegments, newMembers,
-            actualCapacityFactors, newSegmentOwners);
+      return new SyncConsistentHash(members, numOwners, numSegments, newSegmentOwners);
    }
 
    @Override
-   public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
-      DefaultConsistentHash rebalancedCH = create(baseCH.getNumOwners(), baseCH.getNumSegments(), baseCH.getMembers(),
-            baseCH.getCapacityFactors());
+   public SyncConsistentHash rebalance(SyncConsistentHash baseCH) {
+      SyncConsistentHash rebalancedCH = create(baseCH.getNumOwners(), baseCH.getNumSegments(), baseCH.completeMembers());
 
       // the ConsistentHashFactory contract says we should return the same instance if we're not making changes
       if (rebalancedCH.equals(baseCH))
@@ -135,7 +145,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    }
 
    @Override
-   public DefaultConsistentHash union(DefaultConsistentHash ch1, DefaultConsistentHash ch2) {
+   public SyncConsistentHash union(SyncConsistentHash ch1, SyncConsistentHash ch2) {
       return ch1.union(ch2);
    }
 
@@ -149,38 +159,35 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       return -10007;
    }
 
-   static class Builder {
+   protected static class Builder {
       static final int NO_NODE = -1;
 
       // Input
-      final int numOwners;
-      final int numSegments;
+      protected final int numSegments;
 
       // Output
-      final List<Address>[] segmentOwners;
-      final int[][] ownerIndices;
+      private final List<Member>[] segmentOwners;
+      protected final int[][] ownerIndices;
 
       // Constant data
-      final List<Address> sortedMembers;
-      final int numNodes;
-      final float[] sortedCapacityFactors;
-      final float[] distanceFactors;
-      final float totalCapacity;
-      final int actualNumOwners;
-      final int numNodeHashes;
+      protected final List<Member> sortedMembers;
+      protected final int numNodes;
+      protected final int actualNumOwners;
+      private final float[] sortedCapacityFactors;
+      private final float[] distanceFactors;
+      private final float totalCapacity;
+      private final int numNodeHashes;
       // Hashes use only 63 bits, or the interval 0..2^63-1
-      final long segmentSize;
-      final long[] segmentHashes;
-      final long[][] nodeHashes;
+      private final long segmentSize;
+      private final long[] segmentHashes;
+      private final long[][] nodeHashes;
 
-      int nodeDistanceUpdates;
-      final OwnershipStatistics stats;
+      private final OwnershipStatistics stats;
 
-      Builder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+      Builder(int numOwners, int numSegments, List<Member> members) {
          this.numSegments = numSegments;
-         this.numOwners = numOwners;
-         this.sortedMembers = sortMembersByCapacity(members, capacityFactors);
-         this.sortedCapacityFactors = capacityFactorsToArray(sortedMembers, capacityFactors);
+         this.sortedMembers = sortMembersByCapacity(members);
+         this.sortedCapacityFactors = capacityFactorsToArray(sortedMembers);
          this.totalCapacity = computeTotalCapacity();
 
          numNodes = sortedMembers.size();
@@ -200,7 +207,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          numNodeHashes = 32 - Integer.numberOfLeadingZeros(numSegments);
          nodeHashes = computeNodeHashes();
 
-         stats = new OwnershipStatistics(sortedMembers);
+         stats = new OwnershipStatistics(sortedMembers.stream().map(Member::address).collect(Collectors.toList()));
       }
 
       private float[] capacityFactorsToDistanceFactors() {
@@ -213,31 +220,28 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return distanceFactors;
       }
 
-      private float[] capacityFactorsToArray(List<Address> sortedMembers, Map<Address, Float> capacityFactors) {
+      private float[] capacityFactorsToArray(List<Member> sortedMembers) {
          float[] capacityFactorsArray = new float[sortedMembers.size()];
          for (int n = 0; n < sortedMembers.size(); n++) {
-            capacityFactorsArray[n] = capacityFactors != null ? capacityFactors.get(sortedMembers.get(n)) : 1f;
+            capacityFactorsArray[n] = sortedMembers.get(n).capacityFactor();
          }
          return capacityFactorsArray;
       }
 
-      private List<Address> sortMembersByCapacity(List<Address> members, Map<Address, Float> capacityFactors) {
-         if (capacityFactors == null)
-            return members;
-
+      private List<Member> sortMembersByCapacity(List<Member> members) {
          // Only add members with non-zero capacity
-         List<Address> sortedMembers = new ArrayList<>();
-         for (Address member : members) {
-            if (!capacityFactors.get(member).equals(0f)) {
+         List<Member> sortedMembers = new ArrayList<>();
+         for (Member member : members) {
+            if (member.capacityFactor() != 0.0f) {
                sortedMembers.add(member);
             }
          }
          // Sort in descending order
-         sortedMembers.sort((a1, a2) -> Float.compare(capacityFactors.get(a2), capacityFactors.get(a1)));
+         sortedMembers.sort((a1, a2) -> Float.compare(a2.capacityFactor(), a1.capacityFactor()));
          return sortedMembers;
       }
 
-      int[] computeExpectedSegments(int expectedOwners, float totalCapacity, int iteration) {
+      protected int[] computeExpectedSegments(int expectedOwners, float totalCapacity, int iteration) {
          int[] expected = new int[numNodes];
          float remainingCapacity = totalCapacity;
          int remainingCopies = expectedOwners * numSegments;
@@ -295,7 +299,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return nodeHashes;
       }
 
-      float computeTotalCapacity() {
+      private float computeTotalCapacity() {
          if (sortedCapacityFactors == null)
             return sortedMembers.size();
 
@@ -306,9 +310,12 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return totalCapacity;
       }
 
-      long nodeHash(Address address, int virtualNode) {
+      private long nodeHash(Member member, int virtualNode) {
          // 64-bit hashes from 32-bit hashes have a non-negligible chance of collision,
          // so we try to get all 128 bits from UUID addresses
+         final Address address = member.uuid() != null
+               ? member.uuid()
+               : member.address();
          long[] key = new long[2];
          if (address instanceof JGroupsAddress) {
             org.jgroups.Address jGroupsAddress = ((JGroupsAddress) address).getJGroupsAddress();
@@ -330,7 +337,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       /**
        * @return distance between 2 points in the 0..2^63-1 range, max 2^62-1
        */
-      long distance(long a, long b) {
+      private long distance(long a, long b) {
          long distance = a < b ? b - a : a - b;
          if ((distance & (1L << 62)) != 0) {
             distance = -distance - Long.MIN_VALUE;
@@ -342,7 +349,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return distance;
       }
 
-      void populateOwners() {
+      private void populateOwners() {
          // List k contains each segment's kth closest available node
          PriorityQueue<SegmentInfo>[] segmentQueues = new PriorityQueue[Math.max(1, actualNumOwners)];
          for (int i = 0; i < segmentQueues.length; i++) {
@@ -477,7 +484,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       }
 
       private long nodeSegmentDistance(int nodeIndex, long segmentHash) {
-         nodeDistanceUpdates++;
          long[] currentNodeHashes = nodeHashes[nodeIndex];
          int hashIndex = Arrays.binarySearch(currentNodeHashes, segmentHash);
          long scaledDistance;
@@ -509,12 +515,12 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 //         System.out.printf("owners[%d][%d] = %s (%d)\n", segment, ownerPosition, sortedMembers.get(nodeIndex), nodeIndex);
       }
 
-      boolean nodeCanOwnSegment(int segment, int ownerPosition, int nodeIndex) {
+      protected boolean nodeCanOwnSegment(int segment, int ownerPosition, int nodeIndex) {
          // Return false the node exists in the owners list
          return !intArrayContains(ownerIndices[segment], ownerPosition, nodeIndex);
       }
 
-      boolean intArrayContains(int[] array, int end, int value) {
+      protected boolean intArrayContains(int[] array, int end, int value) {
          for (int i = 0; i < end; i++) {
             if (array[i] == value)
                return true;
@@ -522,12 +528,12 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          return false;
       }
 
-      static class SegmentInfo implements Comparable<SegmentInfo> {
+      private static class SegmentInfo implements Comparable<SegmentInfo> {
          static final int NO_AVAILABLE_OWNERS = -2;
 
-         final int segment;
-         int nodeIndex;
-         long distance;
+         private final int segment;
+         private int nodeIndex;
+         private long distance;
 
          SegmentInfo(int segment) {
             this.segment = segment;

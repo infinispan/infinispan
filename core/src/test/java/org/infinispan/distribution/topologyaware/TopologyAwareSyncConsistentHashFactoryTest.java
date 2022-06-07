@@ -5,7 +5,6 @@ import static org.testng.Assert.assertTrue;
 import java.util.List;
 
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -23,7 +22,7 @@ public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareCon
    private final Log log = LogFactory.getLog(TopologyAwareSyncConsistentHashFactoryTest.class);
 
    @Override
-   protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
+   protected ConsistentHashFactory createConsistentHashFactory() {
       return new TopologyAwareSyncConsistentHashFactory();
    }
 

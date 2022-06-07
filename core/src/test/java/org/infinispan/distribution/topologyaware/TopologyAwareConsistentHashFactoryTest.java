@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.infinispan.distribution.TestTopologyAwareAddress;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
@@ -41,9 +41,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private TestTopologyAwareAddress[] testAddresses;
    private List<Address> chMembers;
    private Map<Address, Float> capacityFactors;
-   private ConsistentHashFactory<DefaultConsistentHash> chf;
+   private ConsistentHashFactory<ConsistentHash> chf;
    private KeyPartitioner keyPartitioner;
-   protected DefaultConsistentHash ch;
+   protected ConsistentHash ch;
 
    @BeforeMethod()
    public void setUp() {
@@ -58,7 +58,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       keyPartitioner = new HashFunctionPartitioner(numSegments);
    }
 
-   protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
+   protected ConsistentHashFactory createConsistentHashFactory() {
       return new TopologyAwareConsistentHashFactory();
    }
 
@@ -305,7 +305,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          capacityFactors.put(testAddresses[7], 0.0f);
          capacityFactors.put(testAddresses[8], 1.0f);
 
-         // {s0: {r0: {m0, m1, m2}, r1: {m3, m4, m5}, r1: {m6, m7, m8}}}
+         // {s0: {r0: {m0, m1, m2}, r1: {m3, m4, m5}, r2: {m6, m7, m8}}}
          addNode(testAddresses[0], "m0", "r0", "s0");
          addNode(testAddresses[1], "m1", "r0", "s0");
          addNode(testAddresses[2], "m2", "r0", "s0");
@@ -440,7 +440,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          log.debugf("Removing node %s", addr);
          List<Address> addressCopy = new ArrayList<>(chMembers);
          addressCopy.remove(addr);
-         DefaultConsistentHash newCH = chf.updateMembers(ch, addressCopy, null);
+         ConsistentHash newCH = chf.updateMembers(ch, addressCopy, null);
          newCH = chf.rebalance(newCH);
 
          // Allow a small number of segment moves, even though this is a leave, because the CH factory
@@ -456,7 +456,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    private void checkConsistency(int segment, int replCount, Address removedAddress,
-         DefaultConsistentHash newCH, AtomicInteger movedSegmentsCount) {
+         ConsistentHash newCH, AtomicInteger movedSegmentsCount) {
       List<Address> removedOwners = new ArrayList<>(ch.locateOwnersForSegment(segment));
       List<Address> currentOwners = newCH.locateOwnersForSegment(segment);
       removedOwners.remove(removedAddress);
@@ -544,7 +544,7 @@ class TopologyAwareOwnershipStatistics {
    private final int numSegments;
    private final int numOwners;
 
-   public TopologyAwareOwnershipStatistics(DefaultConsistentHash ch) {
+   public TopologyAwareOwnershipStatistics(ConsistentHash ch) {
       numSegments = ch.getNumSegments();
       numOwners = ch.getNumOwners();
       topologyInfo = new TopologyInfo(numSegments, numOwners, ch.getMembers(), ch.getCapacityFactors());
