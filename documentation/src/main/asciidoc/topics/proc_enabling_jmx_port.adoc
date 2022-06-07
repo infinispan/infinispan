@@ -1,0 +1,22 @@
+[id='enabling-jmx-port_{context}']
+= Enabling JMX remote ports
+Provide unique remote JMX ports to expose {brandname} MBeans through connections in JMXServiceURL format.
+
+//Server Guide
+ifdef::remote_caches[]
+[NOTE]
+====
+{brandname} Server does not expose JMX remotely via the single port endpoint.
+If you want to remotely access {brandname} Server via JMX you must enable a remote port.
+====
+endif::remote_caches[]
+
+.Procedure
+
+* Pass the following system properties to {brandname} at startup:
++
+[source,options="nowrap",subs=attributes+]
+----
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.port=9999
+----
