@@ -309,6 +309,11 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
       Util.close(reader);
    }
 
+   @Override
+   public void saveCacheName(String name) {
+      attributes.add(new SimpleImmutableEntry<>("name", Json.factory().string(name)));
+   }
+
    private static class ElementEntry {
       final String k;
       final Json v;

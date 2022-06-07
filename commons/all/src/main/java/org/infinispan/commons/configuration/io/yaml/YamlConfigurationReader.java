@@ -566,6 +566,13 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
       Util.close(reader);
    }
 
+   @Override
+   public void saveCacheName(String name) {
+      this.attributeNames.add("name");
+      this.attributeNamespaces.add(next.nsPrefix);
+      this.attributeValues.add(replaceProperties(name));
+   }
+
    public static class Parsed {
       final int row;
       int indent;

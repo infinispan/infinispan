@@ -227,6 +227,8 @@ public interface ConfigurationReader extends AutoCloseable {
    @Override
    void close();
 
+   void saveCacheName(String name);
+
    enum ElementType {
       START_DOCUMENT,
       END_DOCUMENT,

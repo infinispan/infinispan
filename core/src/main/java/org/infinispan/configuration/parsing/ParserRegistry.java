@@ -182,6 +182,13 @@ public class ParserRegistry implements NamespaceMappingParser {
          holder.setNamespaceMappingParser(this);
          reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
          ConfigurationReader.ElementType elementType = reader.nextElement();
+
+         if (!isValidNameInNamespace(reader.getLocalName(), reader.getNamespace())) {
+            String name = reader.getLocalName();
+            reader.nextElement();
+            if (isValidNameInNamespace(reader.getLocalName(), reader.getNamespace()))
+               reader.saveCacheName(name);
+         }
          if (elementType == ConfigurationReader.ElementType.START_ELEMENT) {
             parseElement(reader, holder);
          }
@@ -195,6 +202,20 @@ public class ParserRegistry implements NamespaceMappingParser {
             reader.close();
          } catch (Exception e) {
          }
+      }
+   }
+
+   private boolean isValidNameInNamespace(String name, String namespace) {
+      NamespaceParserPair parser = parserMappings.get(new QName(namespace, name));
+      if (parser == null) {
+         int lastColon = namespace.lastIndexOf(':');
+         // Next we strip off the version from the URI and look for a wildcard match
+         String baseUri = namespace.substring(0,  lastColon + 1) + "*";
+         parser = parserMappings.get(new QName(baseUri, name));
+         return parser != null && isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1));
+      }
+      else {
+         return true;
       }
    }
 
