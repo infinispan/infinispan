@@ -183,13 +183,13 @@ public class ParserRegistry implements NamespaceMappingParser {
          reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
          ConfigurationReader.ElementType elementType = reader.nextElement();
 
-         if (!isValidNameInNamespace(reader.getLocalName(), reader.getNamespace())) {
-            String name = reader.getLocalName();
-            reader.nextElement();
-            if (isValidNameInNamespace(reader.getLocalName(), reader.getNamespace()))
-               reader.saveCacheName(name);
-         }
          if (elementType == ConfigurationReader.ElementType.START_ELEMENT) {
+            if (!isValidNameInNamespace(reader.getLocalName(), reader.getNamespace())) {
+               String name = reader.getLocalName();
+               reader.nextElement();
+               if (isValidNameInNamespace(reader.getLocalName(), reader.getNamespace()))
+                  reader.saveCacheName(name);
+            }
             parseElement(reader, holder);
          }
          while (elementType != ConfigurationReader.ElementType.END_DOCUMENT) {
