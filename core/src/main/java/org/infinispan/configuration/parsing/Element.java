@@ -175,6 +175,20 @@ public enum Element {
         return element == null ? UNKNOWN : element;
     }
 
+    public static boolean isCacheElement(String localName) {
+        final Element element = forName(localName);
+        return element == LOCAL_CACHE
+                || element == LOCAL_CACHE_CONFIGURATION
+                || element == INVALIDATION_CACHE
+                || element == INVALIDATION_CACHE_CONFIGURATION
+                || element == REPLICATED_CACHE
+                || element == REPLICATED_CACHE_CONFIGURATION
+                || element == DISTRIBUTED_CACHE
+                || element == DISTRIBUTED_CACHE_CONFIGURATION
+                || element == SCATTERED_CACHE
+                || element == SCATTERED_CACHE_CONFIGURATION;
+    }
+
    @Override
    public String toString() {
       return name;

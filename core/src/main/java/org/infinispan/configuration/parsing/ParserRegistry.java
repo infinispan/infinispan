@@ -186,8 +186,8 @@ public class ParserRegistry implements NamespaceMappingParser {
          if (elementType == ConfigurationReader.ElementType.START_ELEMENT) {
             if (!isValidNameInNamespace(reader.getLocalName(), reader.getNamespace())) {
                String name = reader.getLocalName();
-               reader.nextElement();
-               if (isValidNameInNamespace(reader.getLocalName(), reader.getNamespace()))
+               elementType = reader.nextElement();
+               if (elementType == ConfigurationReader.ElementType.START_ELEMENT && Element.isCacheElement(reader.getLocalName()))
                   reader.saveCacheName(name);
             }
             parseElement(reader, holder);
