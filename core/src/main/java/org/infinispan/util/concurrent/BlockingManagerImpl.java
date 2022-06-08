@@ -123,7 +123,7 @@ public class BlockingManagerImpl implements BlockingManager {
       } else {
          stage = CompletableFuture.runAsync(runnable, executor);
       }
-      return requireReturnOnNonBlockingThread ? continueOnNonBlockingThread(stage, traceId) : CompletableFutures.completedNull();
+      return requireReturnOnNonBlockingThread ? continueOnNonBlockingThread(stage, traceId) : stage;
    }
 
    @Override
