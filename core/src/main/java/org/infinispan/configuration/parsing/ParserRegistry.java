@@ -184,12 +184,6 @@ public class ParserRegistry implements NamespaceMappingParser {
          ConfigurationReader.ElementType elementType = reader.nextElement();
 
          if (elementType == ConfigurationReader.ElementType.START_ELEMENT) {
-            if (!isValidNameInNamespace(reader.getLocalName(), reader.getNamespace())) {
-               String name = reader.getLocalName();
-               elementType = reader.nextElement();
-               if (elementType == ConfigurationReader.ElementType.START_ELEMENT && Element.isCacheElement(reader.getLocalName()))
-                  reader.saveCacheName(name);
-            }
             parseElement(reader, holder);
          }
          while (elementType != ConfigurationReader.ElementType.END_DOCUMENT) {
@@ -205,25 +199,20 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
-   private boolean isValidNameInNamespace(String name, String namespace) {
-      NamespaceParserPair parser = parserMappings.get(new QName(namespace, name));
-      if (parser == null) {
-         int lastColon = namespace.lastIndexOf(':');
-         // Next we strip off the version from the URI and look for a wildcard match
-         String baseUri = namespace.substring(0,  lastColon + 1) + "*";
-         parser = parserMappings.get(new QName(baseUri, name));
-         return parser != null && isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1));
-      }
-      else {
-         return true;
-      }
-   }
-
    @Override
    public void parseElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String namespace = reader.getNamespace();
       String name = reader.getLocalName();
       NamespaceParserPair parser = findNamespaceParser(namespace, name);
+      if (parser == null) {
+         ConfigurationReader.ElementType elementType = reader.nextElement();
+         if (elementType != ConfigurationReader.ElementType.START_ELEMENT || !Element.isCacheElement(reader.getLocalName()))
+            throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
+         reader.saveCacheName(name);
+         namespace = reader.getNamespace();
+         name = reader.getLocalName();
+         parser = findNamespaceParser(namespace, name);
+      }
       ConfigurationSchemaVersion oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(namespace));
       parser.parser.readElement(reader, holder);
@@ -250,7 +239,7 @@ public class ParserRegistry implements NamespaceMappingParser {
          parser = parserMappings.get(new QName(baseUri, name));
          // See if we can get a default parser instead
          if (parser == null || !isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1)))
-            throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
+            return null;
       }
       return parser;
    }
