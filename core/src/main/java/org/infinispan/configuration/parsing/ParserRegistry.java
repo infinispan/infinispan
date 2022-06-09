@@ -203,21 +203,24 @@ public class ParserRegistry implements NamespaceMappingParser {
       String namespace = reader.getNamespace();
       String name = reader.getLocalName();
       NamespaceParserPair parser = findNamespaceParser(namespace, name);
+      // If there's no name in that namespace, maybe it found a cache name
       if (parser == null) {
-         if (reader.hasNext()) {
-            reader.nextElement();
-         }
-         if (!Element.isCacheElement(reader.getLocalName()))
-            throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
-         reader.saveCacheName(name);
-         namespace = reader.getNamespace();
-         name = reader.getLocalName();
-         parser = findNamespaceParser(namespace, name);
+         parser = parseCacheName(reader, name, namespace);
       }
       ConfigurationSchemaVersion oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(namespace));
       parser.parser.readElement(reader, holder);
       reader.setSchema(oldSchema);
+   }
+
+   private NamespaceParserPair parseCacheName(ConfigurationReader reader, String name, String namespace) {
+      if (reader.hasNext()) {
+         reader.nextElement();
+      }
+      if (!Element.isCacheElement(reader.getLocalName()))
+         throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
+      reader.saveCacheName(name);
+      return findNamespaceParser(reader.getNamespace(), reader.getLocalName());
    }
 
    @Override
