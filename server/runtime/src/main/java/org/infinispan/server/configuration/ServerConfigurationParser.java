@@ -51,6 +51,7 @@ import org.infinispan.server.configuration.security.UserPropertiesConfigurationB
 import org.infinispan.server.core.configuration.IpFilterConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
@@ -1532,6 +1533,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private void configureDefaultEndpoint(ConfigurationReader reader, String socketBinding, EndpointConfigurationBuilder endpoint) {
       if (endpoint.connectors().isEmpty()) {
          endpoint.addConnector(HotRodServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
+         endpoint.addConnector(RespServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          configureEndpoint(reader.getProperties(), endpoint, rest);
       }
