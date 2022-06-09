@@ -182,7 +182,6 @@ public class ParserRegistry implements NamespaceMappingParser {
          holder.setNamespaceMappingParser(this);
          reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
          ConfigurationReader.ElementType elementType = reader.nextElement();
-
          if (elementType == ConfigurationReader.ElementType.START_ELEMENT) {
             parseElement(reader, holder);
          }
@@ -205,8 +204,10 @@ public class ParserRegistry implements NamespaceMappingParser {
       String name = reader.getLocalName();
       NamespaceParserPair parser = findNamespaceParser(namespace, name);
       if (parser == null) {
-         ConfigurationReader.ElementType elementType = reader.nextElement();
-         if (elementType != ConfigurationReader.ElementType.START_ELEMENT || !Element.isCacheElement(reader.getLocalName()))
+         if (reader.hasNext()) {
+            reader.nextElement();
+         }
+         if (!Element.isCacheElement(reader.getLocalName()))
             throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
          reader.saveCacheName(name);
          namespace = reader.getNamespace();
