@@ -3,6 +3,7 @@ package org.infinispan.server.resp;
 import static org.infinispan.commons.logging.Log.CONFIG;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -44,8 +45,12 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
             builder.read(defaultCacheConfiguration);
-         } else if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
-            builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+         } else {
+            if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
+               builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+            }
+            builder.encoding().key().mediaType(MediaType.TEXT_PLAIN_TYPE);
+            builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
