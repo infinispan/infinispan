@@ -167,7 +167,7 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       } else if (e instanceof Errors.NativeIoException) {
          // Native IO exceptions happen on HAProxy disconnect. It sends RST instead of FIN, which cases
          // a Netty IO Exception. The only solution is to ignore it, just like Tomcat does.
-         logger.debug("Native IO Exception", e);
+         logger.debugf(e, "Native IO Exception from %s", ctx.channel().remoteAddress());
          ctx.close();
       } else if (!ctx.channel().isActive() && e instanceof IllegalStateException &&
                  e.getMessage().equals("ssl is null")) {
