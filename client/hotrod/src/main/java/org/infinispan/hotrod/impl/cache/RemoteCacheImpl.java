@@ -39,6 +39,7 @@ import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.hotrod.impl.operations.ClearOperation;
 import org.infinispan.hotrod.impl.operations.GetAllParallelOperation;
+import org.infinispan.hotrod.impl.operations.GetAndRemoveOperation;
 import org.infinispan.hotrod.impl.operations.GetOperation;
 import org.infinispan.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.hotrod.impl.operations.PingResponse;
@@ -49,6 +50,8 @@ import org.infinispan.hotrod.impl.operations.RemoveIfUnmodifiedOperation;
 import org.infinispan.hotrod.impl.operations.RemoveOperation;
 import org.infinispan.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
 import org.infinispan.hotrod.impl.operations.RetryAwareCompletionStage;
+import org.infinispan.hotrod.impl.operations.SetIfAbsentOperation;
+import org.infinispan.hotrod.impl.operations.SetOperation;
 import org.infinispan.hotrod.near.NearCacheService;
 import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
@@ -175,33 +178,36 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> putIfAbsent(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
       PutIfAbsentOperation<K, V> op = cacheOperationsFactory.newPutIfAbsentOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value), options, dataFormat);
       return op.execute();
    }
 
    @Override
    public CompletionStage<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options) {
-      PutIfAbsentOperation<K, Boolean> op = cacheOperationsFactory.newPutIfAbsentOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value), options, dataFormat);
+      SetIfAbsentOperation<K> op = cacheOperationsFactory.newSetIfAbsentOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value), options, dataFormat);
       return op.execute();
    }
 
    @Override
-   public CompletionStage<V> put(K key, V value, CacheWriteOptions options) {
-      PutOperation<K, V> op = cacheOperationsFactory.newPutKeyValueOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value), options, dataFormat);
+   public CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
+      PutOperation<K, V> op = cacheOperationsFactory.newPutKeyValueOperation(keyAsObjectIfNeeded(key), keyToBytes(key),
+            valueToBytes(value), options, dataFormat);
       return op.execute();
    }
 
    @Override
    public CompletionStage<Void> set(K key, V value, CacheWriteOptions options) {
-      // TODO: Need to pass flag to prevent return of value?
-      PutOperation<K, Void> op = cacheOperationsFactory.newPutKeyValueOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value), options, dataFormat);
+      SetOperation<K> op = cacheOperationsFactory.newSetKeyValueOperation(keyAsObjectIfNeeded(key), keyToBytes(key),
+            valueToBytes(value), options, dataFormat);
       return op.execute();
    }
 
    @Override
    public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
-      throw new UnsupportedOperationException();
+      GetAndRemoveOperation<K, V> op = cacheOperationsFactory.newGetAndRemoveOperation(keyAsObjectIfNeeded(key),
+            keyToBytes(key), options, dataFormat);
+      return op.execute();
    }
 
 
@@ -223,7 +229,7 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletionStage<Boolean> remove(K key, CacheOptions options) {
-      RemoveOperation<K, Boolean> op = cacheOperationsFactory.newRemoveOperation(keyAsObjectIfNeeded(key), keyToBytes(key), options, dataFormat);
+      RemoveOperation<K> op = cacheOperationsFactory.newRemoveOperation(keyAsObjectIfNeeded(key), keyToBytes(key), options, dataFormat);
       return op.execute();
    }
 

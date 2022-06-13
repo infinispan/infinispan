@@ -36,7 +36,7 @@ public class ASyncCacheDemo {
          // get
          String value = await(mycache.get("key"));
          // put
-         String previous = await(mycache.put("key", "newvalue"));
+         CacheEntry<String, String> previous = await(mycache.put("key", "newvalue"));
          // set with options
          await(mycache.set("key", "anothervalue", writeOptions().lifespan(Duration.ofHours(1)).timeout(Duration.ofMillis(500)).build()));
          // get with options
@@ -46,7 +46,7 @@ public class ASyncCacheDemo {
          // setIfAbsent
          await(mycache.setIfAbsent("anotherkey", "value"));
          // putIfAbsent
-         String existing = await(mycache.putIfAbsent("anotherkey", "anothervalue"));
+         CacheEntry<String, String> existing = await(mycache.putIfAbsent("anotherkey", "anothervalue"));
          // remove
          boolean removed = await(mycache.remove("anotherkey"));
          // query

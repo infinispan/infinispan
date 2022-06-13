@@ -8,8 +8,6 @@ import org.infinispan.api.common.Flags;
  * <p />
  * Available flags:
  * <ul>
- *    <li>{@link #FORCE_RETURN_VALUE} - By default, previously existing values for {@link java.util.Map} operations are not
- *                                      returned.
  *    <li>{@link #DEFAULT_LIFESPAN}     This flag can either be used as a request flag during a put operation to mean
  *                                      that the default server lifespan should be applied or as a response flag meaning that
  *                                      the return entry has a default lifespan value</li>
@@ -27,7 +25,6 @@ import org.infinispan.api.common.Flags;
  */
 public enum HotRodFlag implements Flag {
 
-   FORCE_RETURN_VALUE(0x0001),
    /**
     * This flag can either be used as a request flag during a put operation to mean that the default
     * server lifespan should be applied or as a response flag meaning that the return entry has a

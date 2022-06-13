@@ -99,10 +99,6 @@ public class PingResponse {
                   keyMediaType = codec.readKeyType(buf);
                   valueMediaType = codec.readKeyType(buf);
                   decoder.checkpoint();
-                  if (version.compareTo(ProtocolVersion.PROTOCOL_VERSION_30) < 0) {
-                     decoderState = 4;
-                     break;
-                  }
                   ++decoderState;
                case 1:
                   serverVersion = ProtocolVersion.getBestVersion(buf.readUnsignedByte());

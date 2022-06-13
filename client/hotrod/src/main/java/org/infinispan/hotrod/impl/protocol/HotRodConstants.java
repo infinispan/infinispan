@@ -19,18 +19,7 @@ public interface HotRodConstants {
    short REQUEST_MAGIC = 0xA0;
    short RESPONSE_MAGIC = 0xA1;
 
-   byte VERSION_20 = 20;
-   byte VERSION_21 = 21;
-   byte VERSION_22 = 22;
-   byte VERSION_23 = 23;
-   byte VERSION_24 = 24;
-   byte VERSION_25 = 25;
-   byte VERSION_26 = 26;
-   byte VERSION_27 = 27;
-   byte VERSION_28 = 28;
-   byte VERSION_29 = 29;
-   byte VERSION_30 = 30;
-   byte VERSION_31 = 31;
+   byte VERSION_40 = 40;
 
    //requests
    byte ILLEGAL_OP_CODE = 0x00;

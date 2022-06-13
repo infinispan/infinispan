@@ -789,6 +789,8 @@ class Decoder extends ReplayingDecoder<Void> {
             boolean checkPrevious;
             if (op.version >= 10 && op.version <= 13) {
                checkPrevious = (op.flags & ProtocolFlag.ForceReturnPreviousValue.getValue()) == 1;
+            } else if (op.version >= 40) {
+               checkPrevious = status == SuccessWithPrevious || status == NotExecutedWithPrevious;
             } else {
                checkPrevious = status == SuccessWithPrevious || status == NotExecutedWithPrevious;
             }

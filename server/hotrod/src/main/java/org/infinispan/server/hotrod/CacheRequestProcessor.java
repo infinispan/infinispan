@@ -225,15 +225,15 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
                             Metadata metadata, Object span) {
-      cache.putAsync(key, value, metadata)
-            .whenComplete((result, throwable) -> handlePut(header, result, throwable, span));
+      cache.putAsyncReturnEntry(key, value, metadata)
+            .whenComplete((ce, throwable) -> handlePut(header, ce, throwable, span));
    }
 
-   private void handlePut(HotRodHeader header, byte[] result, Throwable throwable, Object span) {
+   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
-         writeSuccess(header, result);
+         writeSuccess(header, ce);
       }
       RequestTracer.requestEnd(span);
    }
@@ -261,22 +261,21 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          writeException(header, throwable);
          RequestTracer.requestEnd(span);
       } else if (entry != null) {
-         byte[] prev = entry.getValue();
          NumericVersion streamVersion = new NumericVersion(version);
          if (entry.getMetadata().version().equals(streamVersion)) {
-            cache.replaceAsync(entry.getKey(), prev, value, metadata)
+            cache.replaceAsync(entry.getKey(), entry.getValue(), value, metadata)
                   .whenComplete((replaced, throwable2) -> {
                      if (throwable2 != null) {
                         writeException(header, throwable2);
                      } else if (replaced) {
-                        writeSuccess(header, prev);
+                        writeSuccess(header, entry);
                      } else {
-                        writeNotExecuted(header, prev);
+                        writeNotExecuted(header, entry);
                      }
                      RequestTracer.requestEnd(span);
                   });
          } else {
-            writeNotExecuted(header, prev);
+            writeNotExecuted(header, entry);
             RequestTracer.requestEnd(span);
          }
       } else {
@@ -310,15 +309,15 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          RequestTracer.requestEnd(span);
       } else if (prev != null) {
          // Generate new version only if key present
-         cache.replaceAsync(key, value, metadata)
-               .whenComplete((result, throwable1) -> handleReplace(header, result, throwable1, span));
+         cache.replaceAsyncReturnEntry(key, value, metadata)
+               .whenComplete((ce, throwable1) -> handleReplace(header, ce, throwable1, span));
       } else {
          writeNotExecuted(header);
          RequestTracer.requestEnd(span);
       }
    }
 
-   private void handleReplace(HotRodHeader header, byte[] result, Throwable throwable, Object span) {
+   private void handleReplace(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else if (result != null) {
@@ -339,28 +338,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
                                     Metadata metadata, Object span) {
-      cache.getAsync(key).whenComplete((prev, throwable) -> {
-         handleGetForPutIfAbsent(header, cache, key, prev, value, metadata, throwable, span);
+      cache.putIfAbsentAsyncReturnEntry(key, value, metadata).whenComplete((prev, throwable) -> {
+         handlePutIfAbsent(header, prev, throwable, span);
       });
    }
 
-   private void handleGetForPutIfAbsent(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                        byte[] prev, byte[] value, Metadata metadata, Throwable throwable,
-                                        Object span) {
-      if (throwable != null) {
-         writeException(header, throwable);
-         RequestTracer.requestEnd(span);
-      } else if (prev == null) {
-         // Generate new version only if key not present
-         cache.putIfAbsentAsync(key, value, metadata)
-               .whenComplete((result, throwable1) -> handlePutIfAbsent(header, result, throwable1, span));
-      } else {
-         writeNotExecuted(header, prev);
-         RequestTracer.requestEnd(span);
-      }
-   }
-
-   private void handlePutIfAbsent(HotRodHeader header, byte[] result, Throwable throwable, Object span) {
+   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, throwable);
       } else if (result == null) {
@@ -380,14 +363,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
                                Object span) {
-      cache.removeAsync(key).whenComplete((prev, throwable) -> handleRemove(header, prev, throwable, span));
+      cache.removeAsyncReturnEntry(key).whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
    }
 
-   private void handleRemove(HotRodHeader header, byte[] prev, Throwable throwable, Object span) {
+   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, throwable);
-      } else if (prev != null) {
-         writeSuccess(header, prev);
+      } else if (ce != null) {
+         writeSuccess(header, ce);
       } else {
          writeNotExist(header);
       }
@@ -423,14 +406,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                if (throwable2 != null) {
                   writeException(header, throwable2);
                } else if (removed) {
-                  writeSuccess(header, prev);
+                  writeSuccess(header, entry);
                } else {
-                  writeNotExecuted(header, prev);
+                  writeNotExecuted(header, entry);
                }
                RequestTracer.requestEnd(span);
             });
          } else {
-            writeNotExecuted(header, prev);
+            writeNotExecuted(header, entry);
             RequestTracer.requestEnd(span);
          }
       } else {

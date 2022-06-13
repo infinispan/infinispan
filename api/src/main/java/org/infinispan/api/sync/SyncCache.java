@@ -87,7 +87,7 @@ public interface SyncCache<K, V> {
     * @param value
     * @return Void
     */
-   default V put(K key, V value) {
+   default CacheEntry<K, V> put(K key, V value) {
       return put(key, value, CacheWriteOptions.DEFAULT);
    }
 
@@ -97,7 +97,7 @@ public interface SyncCache<K, V> {
     * @param options
     * @return Void
     */
-   V put(K key, V value, CacheWriteOptions options);
+   CacheEntry<K, V> put(K key, V value, CacheWriteOptions options);
 
    /**
     * Similar to {@link #put(Object, Object)} but does not return the previous value.
@@ -112,7 +112,9 @@ public interface SyncCache<K, V> {
     * @param options
     * @return
     */
-   void set(K key, V value, CacheWriteOptions options);
+   default void set(K key, V value, CacheWriteOptions options) {
+      put(key, value, options);
+   }
 
    /**
     * Save the key/value.
@@ -121,7 +123,7 @@ public interface SyncCache<K, V> {
     * @param value
     * @return the previous value if present
     */
-   default V putIfAbsent(K key, V value) {
+   default CacheEntry<K, V> putIfAbsent(K key, V value) {
       return putIfAbsent(key, value, CacheWriteOptions.DEFAULT);
    }
 
@@ -133,7 +135,7 @@ public interface SyncCache<K, V> {
     * @param options
     * @return the previous value if present
     */
-   V putIfAbsent(K key, V value, CacheWriteOptions options);
+   CacheEntry<K, V> putIfAbsent(K key, V value, CacheWriteOptions options);
 
    /**
     * Save the key/value.
@@ -154,7 +156,10 @@ public interface SyncCache<K, V> {
     * @param options
     * @return Void
     */
-   boolean setIfAbsent(K key, V value, CacheWriteOptions options);
+   default boolean setIfAbsent(K key, V value, CacheWriteOptions options) {
+      CacheEntry<K, V> ce = putIfAbsent(key, value, options);
+      return ce == null;
+   }
 
    /**
     * @param key

@@ -1,5 +1,6 @@
 package org.infinispan.hotrod.impl.operations;
 
+import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheEntryExpiration;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.impl.DataFormat;
@@ -18,12 +19,12 @@ import io.netty.channel.Channel;
  *
  * @since 14.0
  */
-public class ReplaceIfUnmodifiedOperation<K, V> extends AbstractKeyValueOperation<K, VersionedOperationResponse<V>> {
+public class ReplaceIfUnmodifiedOperation<K, V> extends AbstractKeyValueOperation<K, VersionedOperationResponse<CacheEntry<K, V>>> {
    private final long version;
 
    public ReplaceIfUnmodifiedOperation(OperationContext operationContext, K key, byte[] keyBytes,
-                                       byte[] value,
-                                       long version, CacheWriteOptions options, DataFormat dataFormat) {
+         byte[] value,
+         long version, CacheWriteOptions options, DataFormat dataFormat) {
       super(operationContext, REPLACE_IF_UNMODIFIED_REQUEST, REPLACE_IF_UNMODIFIED_RESPONSE, key, keyBytes, value, options, dataFormat);
       this.version = version;
    }

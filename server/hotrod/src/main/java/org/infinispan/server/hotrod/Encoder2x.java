@@ -91,7 +91,7 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private Encoder2x() {
+   protected Encoder2x() {
    }
 
    public static Encoder2x instance() {
@@ -129,7 +129,7 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] prev) {
+   public ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> prev) {
       return valueResponse(header, server, channel, OperationStatus.NotExecutedWithPrevious, prev);
    }
 
@@ -153,7 +153,12 @@ class Encoder2x implements VersionedEncoder {
    }
 
    @Override
-   public ByteBuf successResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] result) {
+   public ByteBuf valueResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<byte[], byte[]> prev) {
+      return valueResponse(header, server, channel, status, prev != null ? prev.getValue() : null);
+   }
+
+   @Override
+   public ByteBuf successResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> result) {
       return valueResponse(header, server, channel, OperationStatus.SuccessWithPrevious, result);
    }
 
@@ -274,10 +279,14 @@ class Encoder2x implements VersionedEncoder {
 
    @Override
    public ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> entry) {
-      ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
+      return writeMetadataResponse(header, server, channel, OperationStatus.Success, entry);
+   }
+
+   protected ByteBuf writeMetadataResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<byte[], byte[]> entry) {
+      ByteBuf buf = writeHeader(header, server, channel, status);
       MetadataUtils.writeMetadata(MetadataUtils.extractLifespan(entry), MetadataUtils.extractMaxIdle(entry),
             MetadataUtils.extractCreated(entry), MetadataUtils.extractLastUsed(entry), MetadataUtils.extractVersion(entry), buf);
-      ExtendedByteBuf.writeRangedBytes(entry.getValue(), buf);
+      ExtendedByteBuf.writeRangedBytes(entry != null ? entry.getValue() : Util.EMPTY_BYTE_ARRAY, buf);
       return buf;
    }
 
@@ -470,7 +479,7 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private ByteBuf writeHeader(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status) {
+   protected ByteBuf writeHeader(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status) {
       return writeHeader(header, server, channel, status, false);
    }
 

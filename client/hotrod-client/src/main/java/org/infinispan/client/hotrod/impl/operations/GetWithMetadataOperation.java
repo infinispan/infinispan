@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.ClassAllowList;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -70,10 +71,15 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (HotRodConstants.isNotExist(status) || !HotRodConstants.isSuccess(status)) {
-         statsDataRead(false);
-         complete(null);
-         return;
+      MetadataValue<V> metadataValue = readMetadataValue(buf, status, dataFormat, cfg.getClassAllowList());
+      statsDataRead(metadataValue != null);
+      complete(metadataValue);
+   }
+
+   public static <V> MetadataValue<V> readMetadataValue(ByteBuf buf, short status, DataFormat dataFormat,
+         ClassAllowList classAllowList) {
+      if (HotRodConstants.isNotExist(status) || (!HotRodConstants.isSuccess(status) && !HotRodConstants.hasPrevious(status))) {
+         return null;
       }
       short flags = buf.readUnsignedByte();
       long creation = -1;
@@ -92,9 +98,9 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
       if (log.isTraceEnabled()) {
          log.tracef("Received version: %d", version);
       }
-      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
-      statsDataRead(true);
-      complete(new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value));
+      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), classAllowList);
+
+      return new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
    }
 
    @Override

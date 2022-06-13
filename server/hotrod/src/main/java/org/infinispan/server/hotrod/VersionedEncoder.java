@@ -31,13 +31,15 @@ public interface VersionedEncoder {
 
    ByteBuf authMechListResponse(HotRodHeader header, HotRodServer server, Channel channel, Set<String> mechs);
 
-   ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] prev);
+   ByteBuf notExecutedResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> prev);
 
    ByteBuf notExistResponse(HotRodHeader header, HotRodServer server, Channel channel);
 
    ByteBuf valueResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, byte[] prev);
 
-   ByteBuf successResponse(HotRodHeader header, HotRodServer server, Channel channel, byte[] result);
+   ByteBuf valueResponse(HotRodHeader header, HotRodServer server, Channel channel, OperationStatus status, CacheEntry<byte[], byte[]> prev);
+
+   ByteBuf successResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> result);
 
    ByteBuf errorResponse(HotRodHeader header, HotRodServer server, Channel channel, String message, OperationStatus status);
 

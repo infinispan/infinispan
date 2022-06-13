@@ -1,5 +1,6 @@
 package org.infinispan.hotrod.impl.operations;
 
+import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
@@ -14,7 +15,7 @@ import io.netty.channel.Channel;
  *
  * @since 14.0
  */
-public class ReplaceOperation<K, V> extends AbstractKeyValueOperation<K, V> {
+public class ReplaceOperation<K, V> extends AbstractKeyValueOperation<K, CacheEntry<K, V>> {
 
    public ReplaceOperation(OperationContext operationContext, K key, byte[] keyBytes, byte[] value, CacheWriteOptions options, DataFormat dataFormat) {
       super(operationContext, REPLACE_REQUEST, REPLACE_RESPONSE, key, keyBytes, value, options, dataFormat);
