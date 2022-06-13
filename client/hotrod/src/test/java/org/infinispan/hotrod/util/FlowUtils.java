@@ -1,5 +1,6 @@
 package org.infinispan.hotrod.util;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
@@ -7,6 +8,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.smallrye.mutiny.Multi;
 import org.reactivestreams.FlowAdapters;
 
 public final class FlowUtils {
@@ -45,5 +47,9 @@ public final class FlowUtils {
     */
    public static <T> List<T> blockingCollect(Flow.Publisher<T> publisher) {
       return blockingCollect(publisher, Collectors.toList());
+   }
+
+   public static <T> List<T> blockingCollect(Multi<T> multi) {
+      return multi.collect().asList().await().atMost(Duration.ofSeconds(30));
    }
 }
