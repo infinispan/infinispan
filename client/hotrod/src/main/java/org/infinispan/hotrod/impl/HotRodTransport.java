@@ -238,7 +238,7 @@ public class HotRodTransport implements AutoCloseable {
          channelFactory.start(codec, configuration, marshaller, asyncExecutorService,
                listenerNotifier, marshallerRegistry);
          counterManager.start(channelFactory, codec, configuration, listenerNotifier);
-         listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration);
+         listenerNotifier = new ClientListenerNotifier(codec, channelFactory, configuration);
          TransactionOperationFactory txOperationFactory = new TransactionOperationFactory(configuration, channelFactory, codec);
          syncTransactionTable.start(txOperationFactory);
          xaTransactionTable.start(txOperationFactory);

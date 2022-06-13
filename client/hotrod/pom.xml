@@ -97,6 +97,12 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-params</artifactId>
+         <version>${versionx.junit.junit5}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons-test</artifactId>
          <scope>test</scope>

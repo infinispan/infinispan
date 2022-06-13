@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -43,14 +42,11 @@ public class ClientListenerNotifier {
    private final ScheduledThreadPoolExecutor reconnectExecutor;
 
    private final Codec codec;
-   private final Marshaller marshaller;
    private final ChannelFactory channelFactory;
    private final ClassAllowList allowList;
 
-   public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory,
-                                 HotRodConfiguration configuration) {
+   public ClientListenerNotifier(Codec codec, ChannelFactory channelFactory, HotRodConfiguration configuration) {
       this.codec = codec;
-      this.marshaller = marshaller;
       this.channelFactory = channelFactory;
       this.allowList = configuration.getClassAllowList();
 
@@ -66,10 +62,6 @@ public class ClientListenerNotifier {
       });
       reconnectExecutor.setKeepAliveTime(2 * RECONNECT_PERIOD, TimeUnit.MILLISECONDS);
       reconnectExecutor.allowCoreThreadTimeOut(true);
-   }
-
-   public Marshaller marshaller() {
-      return marshaller;
    }
 
    public void addDispatcher(EventDispatcher<?> dispatcher) {

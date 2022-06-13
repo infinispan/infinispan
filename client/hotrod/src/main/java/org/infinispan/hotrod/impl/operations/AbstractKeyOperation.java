@@ -48,8 +48,16 @@ public abstract class AbstractKeyOperation<K, T> extends StatsAffectingRetryingO
 
    // This T is only ever Void or CacheEntry so the cast is safe
    protected <V> CacheEntry<K, V> returnPossiblePrevValue(ByteBuf buf, short status) {
-      return operationContext.getCodec().returnPossiblePrevValue(key, buf, status, dataFormat(), flags(),
+      return operationContext.getCodec().returnPossiblePrevValue(operationKey(), buf, status, dataFormat(), flags(),
             operationContext.getConfiguration().getClassAllowList(), operationContext.getChannelFactory().getMarshaller());
+   }
+
+   protected K operationKey() {
+      if (key == null) {
+         return dataFormat().keyToObj(keyBytes, operationContext.getConfiguration().getClassAllowList());
+      }
+
+      return key;
    }
 
    protected <V> VersionedOperationResponse<CacheEntry<K, V>> returnVersionedOperationResponse(ByteBuf buf, short status) {
@@ -102,7 +110,7 @@ public abstract class AbstractKeyOperation<K, T> extends StatsAffectingRetryingO
       }
       CacheEntryVersion version = new CacheEntryVersionImpl(buf.readLong());
       if (log.isTraceEnabled()) {
-         log.tracef("Received version: %d", version);
+         log.tracef("Received version: %s", version);
       }
       V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), allowList);
       return new CacheEntryImpl<>(key, value, new CacheEntryMetadataImpl(creation, lastUsed, expiration, version));

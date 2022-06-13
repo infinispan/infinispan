@@ -226,7 +226,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
                             Metadata metadata, Object span) {
-      cache.putAsyncReturnEntry(key, value, metadata)
+      cache.putAsyncEntry(key, value, metadata)
             .whenComplete((ce, throwable) -> handlePut(header, ce, throwable, span));
    }
 
@@ -310,7 +310,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          telemetryService.requestEnd(span);
       } else if (prev != null) {
          // Generate new version only if key present
-         cache.replaceAsyncReturnEntry(key, value, metadata)
+         cache.replaceAsyncEntry(key, value, metadata)
                .whenComplete((ce, throwable1) -> handleReplace(header, ce, throwable1, span));
       } else {
          writeNotExecuted(header);
@@ -339,7 +339,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
                                     Metadata metadata, Object span) {
-      cache.putIfAbsentAsyncReturnEntry(key, value, metadata).whenComplete((prev, throwable) -> {
+      cache.putIfAbsentAsyncEntry(key, value, metadata).whenComplete((prev, throwable) -> {
          handlePutIfAbsent(header, prev, throwable, span);
       });
    }
@@ -365,7 +365,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
                                Object span) {
-      cache.removeAsyncReturnEntry(key).whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
+      cache.removeAsyncEntry(key).whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
    }
 
    private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
