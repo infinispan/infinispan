@@ -75,6 +75,7 @@ public class HotRodServerExtension implements BeforeAllCallback, AfterAllCallbac
          EmbeddedCacheManager cacheManager = hotRodServer.getCacheManager();
          hotRodServer.stop();
          cacheManager.stop();
+         hotRodServer = null;
       }
    }
 

@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import io.smallrye.mutiny.Uni;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.junit.jupiter.api.Assertions;
 
@@ -16,6 +17,10 @@ public class AwaitAssertions {
       Assertions.assertEquals(expected, actual);
    }
 
+   public static <T> void assertAwaitEquals(T expected, Uni<T> uni) {
+      assertAwaitEquals(expected, uni.convert().toCompletionStage());
+   }
+
    public static <T> T await(CompletionStage<T> actual) {
       CompletableFuture<T> future = actual.toCompletableFuture();
       boolean completed = CompletableFutures.uncheckedAwait(future, 30, TimeUnit.SECONDS);
@@ -23,5 +28,9 @@ public class AwaitAssertions {
          Assertions.fail("Timeout obtaining responses");
       }
       return future.getNow(null);
+   }
+
+   public static <T> T await(Uni<T> actual) {
+      return await(actual.convert().toCompletionStage());
    }
 }
