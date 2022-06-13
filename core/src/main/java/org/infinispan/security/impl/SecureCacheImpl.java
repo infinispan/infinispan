@@ -1093,26 +1093,26 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CompletionStage<CacheEntry<K, V>> putAsyncReturnEntry(K key, V value, Metadata metadata) {
+   public CompletionStage<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
       authzManager.checkPermission(subject, writePermission);
-      return delegate.putAsyncReturnEntry(key, value, metadata);
+      return delegate.putAsyncEntry(key, value, metadata);
    }
 
    @Override
-   public CompletionStage<CacheEntry<K, V>> replaceAsyncReturnEntry(K key, V value, Metadata metadata) {
+   public CompletionStage<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
       authzManager.checkPermission(subject, writePermission);
-      return delegate.replaceAsyncReturnEntry(key, value, metadata);
+      return delegate.replaceAsyncEntry(key, value, metadata);
    }
 
    @Override
-   public CompletionStage<CacheEntry<K, V>> removeAsyncReturnEntry(K key) {
+   public CompletionStage<CacheEntry<K, V>> removeAsyncEntry(K key) {
       authzManager.checkPermission(subject, writePermission);
-      return delegate.removeAsyncReturnEntry(key);
+      return delegate.removeAsyncEntry(key);
    }
 
    @Override
-   public CompletionStage<CacheEntry<K, V>> putIfAbsentAsyncReturnEntry(K key, V value, Metadata metadata) {
+   public CompletionStage<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
       authzManager.checkPermission(subject, writePermission);
-      return delegate.putIfAbsentAsyncReturnEntry(key, value, metadata);
+      return delegate.putIfAbsentAsyncEntry(key, value, metadata);
    }
 }

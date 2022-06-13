@@ -977,24 +977,4 @@ public class SecureCacheTestDriver {
    public void testComputeAsync_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeAsync("a", (k, v) -> "yes", metadata).get();
    }
-
-   @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testRemoveAsyncReturnEntry_Object(SecureCache<String, String> cache) {
-      CompletionStages.join(cache.removeAsyncReturnEntry("a"));
-   }
-
-   @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testPutAsyncReturnEntry_Object_Object_Metadata(SecureCache<String, String> cache) {
-      CompletionStages.join(cache.putAsyncReturnEntry("a", "yes", metadata));
-   }
-
-   @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testReplaceAsyncReturnEntry_Object_Object_Metadata(SecureCache<String, String> cache) {
-      CompletionStages.join(cache.replaceAsyncReturnEntry("a", "yes", metadata));
-   }
-
-   @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testPutIfAbsentAsyncReturnEntry_Object_Object_Metadata(SecureCache<String, String> cache) {
-      CompletionStages.join(cache.putIfAbsentAsyncReturnEntry("a", "yes", metadata));
-   }
 }

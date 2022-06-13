@@ -1379,8 +1379,16 @@ public class TestingUtil {
       return "k" + index + '-' + method.getName();
    }
 
+   public static String k(String method, int index) {
+      return "k" + index + '-' + method;
+   }
+
    public static String v(Method method, int index) {
       return "v" + index + '-' + method.getName();
+   }
+
+   public static String v(String method, int index) {
+      return "v" + index + '-' + method;
    }
 
    public static String k(Method method) {
