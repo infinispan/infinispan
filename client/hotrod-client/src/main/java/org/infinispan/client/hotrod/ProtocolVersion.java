@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec28;
 import org.infinispan.client.hotrod.impl.protocol.Codec29;
 import org.infinispan.client.hotrod.impl.protocol.Codec30;
 import org.infinispan.client.hotrod.impl.protocol.Codec31;
+import org.infinispan.client.hotrod.impl.protocol.Codec40;
 
 /**
  * Enumeration of supported Hot Rod client protocol VERSIONS.
@@ -37,10 +38,11 @@ public enum ProtocolVersion {
    PROTOCOL_VERSION_29(2, 9, new Codec29()),
    PROTOCOL_VERSION_30(3, 0, new Codec30()),
    PROTOCOL_VERSION_31(3, 1, new Codec31()),
+   PROTOCOL_VERSION_40(4, 0, new Codec40()),
    // New VERSIONS go above this line to satisfy compareTo of enum working for VERSIONS
 
    // The version here doesn't matter as long as it is >= 3.0. It must be the LAST version
-   PROTOCOL_VERSION_AUTO(3, 1, new Codec31()),
+   PROTOCOL_VERSION_AUTO(4, 0, new Codec40()),
    ;
 
    private static final ProtocolVersion[] VERSIONS = values();

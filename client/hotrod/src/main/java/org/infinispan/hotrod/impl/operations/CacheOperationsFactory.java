@@ -71,7 +71,11 @@ public class CacheOperationsFactory implements HotRodConstants {
       return new GetAllParallelOperation<>(cacheContext, keys, options, dataFormat);
    }
 
-   public <K, V> RemoveOperation<K, V> newRemoveOperation(K key, byte[] keyBytes, CacheOptions options, DataFormat dataFormat) {
+   public <K, V> GetAndRemoveOperation<K, V> newGetAndRemoveOperation(K key, byte[] keyBytes, CacheOptions options, DataFormat dataFormat) {
+      return new GetAndRemoveOperation<>(cacheContext, key, keyBytes, options, dataFormat);
+   }
+
+   public <K> RemoveOperation<K> newRemoveOperation(K key, byte[] keyBytes, CacheOptions options, DataFormat dataFormat) {
       return new RemoveOperation<>(cacheContext, key, keyBytes, options, dataFormat);
    }
 
@@ -99,12 +103,20 @@ public class CacheOperationsFactory implements HotRodConstants {
       return new PutOperation<>(cacheContext, key, keyBytes, value, options, dataFormat);
    }
 
+   public <K> SetOperation<K> newSetKeyValueOperation(K key, byte[] keyBytes, byte[] value, CacheWriteOptions options, DataFormat dataFormat) {
+      return new SetOperation<>(cacheContext, key, keyBytes, value, options, dataFormat);
+   }
+
    public PutAllParallelOperation newPutAllOperation(Map<byte[], byte[]> map, CacheWriteOptions options, DataFormat dataFormat) {
       return new PutAllParallelOperation(cacheContext, map, options, dataFormat);
    }
 
    public <K, V> PutIfAbsentOperation<K, V> newPutIfAbsentOperation(K key, byte[] keyBytes, byte[] value, CacheWriteOptions options, DataFormat dataFormat) {
       return new PutIfAbsentOperation<>(cacheContext, key, keyBytes, value, options, dataFormat);
+   }
+
+   public <K> SetIfAbsentOperation<K> newSetIfAbsentOperation(K key, byte[] keyBytes, byte[] value, CacheWriteOptions options, DataFormat dataFormat) {
+      return new SetIfAbsentOperation<>(cacheContext, key, keyBytes, value, options, dataFormat);
    }
 
    public <K, V> ReplaceOperation<K, V> newReplaceOperation(K key, byte[] keyBytes, byte[] value, CacheWriteOptions options, DataFormat dataFormat) {

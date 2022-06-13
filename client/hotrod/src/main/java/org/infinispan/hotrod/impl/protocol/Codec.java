@@ -34,31 +34,9 @@ public interface Codec {
 
    static Codec forProtocol(ProtocolVersion version) {
       switch (version) {
-         case PROTOCOL_VERSION_20:
-            return new Codec20();
-         case PROTOCOL_VERSION_21:
-            return new Codec21();
-         case PROTOCOL_VERSION_22:
-            return new Codec22();
-         case PROTOCOL_VERSION_23:
-            return new Codec23();
-         case PROTOCOL_VERSION_24:
-            return new Codec24();
-         case PROTOCOL_VERSION_25:
-            return new Codec25();
-         case PROTOCOL_VERSION_26:
-            return new Codec26();
-         case PROTOCOL_VERSION_27:
-            return new Codec27();
-         case PROTOCOL_VERSION_28:
-            return new Codec28();
-         case PROTOCOL_VERSION_29:
-            return new Codec29();
-         case PROTOCOL_VERSION_30:
-            return new Codec30();
-         case PROTOCOL_VERSION_31:
+         case PROTOCOL_VERSION_40:
          case PROTOCOL_VERSION_AUTO:
-            return new Codec31();
+            return new Codec40();
          default:
             throw new IllegalArgumentException(version.toString());
       }
@@ -97,7 +75,7 @@ public interface Codec {
 
    AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress);
 
-   Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller);
+   <K, V> CacheEntry<K, V> returnPossiblePrevValue(K key, ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller);
 
    void writeClientListenerInterests(ByteBuf buf, EnumSet<CacheEntryEventType> types);
 

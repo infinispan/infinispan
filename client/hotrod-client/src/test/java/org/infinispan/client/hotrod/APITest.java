@@ -8,9 +8,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -19,6 +21,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
 /**
@@ -35,14 +38,28 @@ public class APITest<K, V> extends MultiHotRodServersTest {
 
    private KeyValueGenerator<K, V> kvGenerator;
    private boolean useJavaSerialization;
+   private ProtocolVersion protocolVersion;
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new APITest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR),
-            new APITest<String, String>().keyValueGenerator(STRING_GENERATOR),
-            new APITest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).javaSerialization(),
-      };
+      return Arrays.stream(ProtocolVersion.values())
+            // Don't include auto as it is a duplicate
+            .filter(pv -> !pv.name().equals("PROTOCOL_VERSION_AUTO"))
+            .flatMap(pv ->
+                  Stream.of(
+                        new APITest<byte[], byte[]>().keyValueGenerator(BYTE_ARRAY_GENERATOR).protocolVersion(pv),
+                        new APITest<String, String>().keyValueGenerator(STRING_GENERATOR).protocolVersion(pv),
+                        new APITest<Object[], Object[]>().keyValueGenerator(GENERIC_ARRAY_GENERATOR).javaSerialization().protocolVersion(pv)
+                  )
+            ).toArray(Object[]::new);
+   }
+
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder
+         (HotRodServer server) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = super.createHotRodClientConfigurationBuilder(server);
+      builder.version(protocolVersion);
+      return builder;
    }
 
    public void testCompute(Method method) {
@@ -128,26 +145,56 @@ public class APITest<K, V> extends MultiHotRodServersTest {
 
       Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction));
       Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS,  10, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.merge(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
 
       Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction));
       Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS,  10, TimeUnit.SECONDS));
+      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.mergeAsync(targetKey, targetValue, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+   }
+
+   public void testPut(Method method) {
+      RemoteCache<K, V> cache = remoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+      V targetValue = kvGenerator.generateValue(method, 0);
+
+      assertNull(cache.put(targetKey, targetValue));
+
+      kvGenerator.assertValueEquals(targetValue, cache.withFlags(Flag.FORCE_RETURN_VALUE).put(targetKey,
+            kvGenerator.generateValue(method, 2)));
+   }
+
+   public void testPutIfAbsent(Method method) {
+      RemoteCache<K, V> cache = remoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+      V targetValue = kvGenerator.generateValue(method, 0);
+
+      assertNull(cache.putIfAbsent(targetKey, targetValue));
+
+      kvGenerator.assertValueEquals(targetValue, cache.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(targetKey,
+            kvGenerator.generateValue(method, 2)));
+   }
+
+   public void testRemove(Method method) {
+      RemoteCache<K, V> cache = remoteCache();
+
+      final K targetKey = kvGenerator.generateKey(method, 0);
+      V targetValue = kvGenerator.generateValue(method, 0);
+
+      assertNull(cache.put(targetKey, targetValue));
+
+      kvGenerator.assertValueEquals(targetValue, cache.withFlags(Flag.FORCE_RETURN_VALUE).remove(targetKey));
    }
 
    @Override
    protected String[] parameterNames() {
-      return concat(super.parameterNames(), null);
+      return concat(super.parameterNames(), "kv", "protocolVersion");
    }
 
    @Override
    protected Object[] parameterValues() {
-      return concat(super.parameterValues(), kvGenerator.toString());
-   }
-
-   @Override
-   protected String parameters() {
-      return "[" + kvGenerator + "]";
+      return concat(super.parameterValues(), kvGenerator.toString(), protocolVersion.getVersion());
    }
 
    @Override
@@ -176,6 +223,11 @@ public class APITest<K, V> extends MultiHotRodServersTest {
 
    public APITest<K, V> javaSerialization() {
       useJavaSerialization = true;
+      return this;
+   }
+
+   public APITest<K, V> protocolVersion(ProtocolVersion protocolVersion) {
+      this.protocolVersion = protocolVersion;
       return this;
    }
 

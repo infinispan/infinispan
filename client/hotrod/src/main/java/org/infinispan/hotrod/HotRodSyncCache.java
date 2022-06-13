@@ -65,7 +65,7 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
    }
 
    @Override
-   public V put(K key, V value, CacheWriteOptions options) {
+   public CacheEntry<K, V> put(K key, V value, CacheWriteOptions options) {
       return await(remoteCache.put(key, value, options));
    }
 
@@ -75,7 +75,7 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
    }
 
    @Override
-   public V putIfAbsent(K key, V value, CacheWriteOptions options) {
+   public CacheEntry<K, V> putIfAbsent(K key, V value, CacheWriteOptions options) {
       return await(remoteCache.putIfAbsent(key, value, options));
    }
 

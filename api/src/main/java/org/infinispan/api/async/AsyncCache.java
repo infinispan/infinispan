@@ -1,6 +1,7 @@
 package org.infinispan.api.async;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
@@ -90,7 +91,7 @@ public interface AsyncCache<K, V> {
     * @param value
     * @return the previous value if present
     */
-   default CompletionStage<V> putIfAbsent(K key, V value) {
+   default CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value) {
       return putIfAbsent(key, value, CacheWriteOptions.DEFAULT);
    }
 
@@ -102,7 +103,7 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return the previous value if present
     */
-   CompletionStage<V> putIfAbsent(K key, V value, CacheWriteOptions options);
+   CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options);
 
    /**
     * Insert the key/value if such key does not exist
@@ -123,14 +124,17 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return Void
     */
-   CompletionStage<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options);
+   default CompletionStage<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options) {
+      return putIfAbsent(key, value, options)
+            .thenApply(Objects::isNull);
+   }
 
    /**
     * @param key
     * @param value
     * @return Void
     */
-   default CompletionStage<V> put(K key, V value) {
+   default CompletionStage<CacheEntry<K, V>> put(K key, V value) {
       return put(key, value, CacheWriteOptions.DEFAULT);
    }
 
@@ -140,7 +144,7 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return Void
     */
-   CompletionStage<V> put(K key, V value, CacheWriteOptions options);
+   CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options);
 
    /**
     * @param key
@@ -157,7 +161,10 @@ public interface AsyncCache<K, V> {
     * @param options
     * @return
     */
-   CompletionStage<Void> set(K key, V value, CacheWriteOptions options);
+   default CompletionStage<Void> set(K key, V value, CacheWriteOptions options) {
+      return put(key, value, options)
+            .thenApply(__ -> null);
+   }
 
    /**
     * @param key

@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
@@ -285,12 +286,18 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    V put(K key, V value, Metadata metadata);
 
+   default CompletionStage<CacheEntry<K, V>> putAsyncReturnEntry(K key, V value, Metadata metadata) {
+      // TODO: implement later
+      return putAsync(key, value, metadata)
+            .thenApply(prev -> prev != null ? new ImmortalCacheEntry(key, prev) : null);
+   }
+
    /**
     * An overloaded form of {@link #putAll(Map)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
     * which can be used to provide metadata information for the entries being stored, such as lifespan, version of
     * value...etc.
     *
-    * @param map      the values to store
+    * @param map the values to store
     * @param metadata information to store alongside the value(s)
     * @since 7.2
     */
@@ -328,6 +335,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    default CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
       return replaceAsync(key, value, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
+   }
+
+   default CompletionStage<CacheEntry<K, V>> replaceAsyncReturnEntry(K key, V value, Metadata metadata) {
+      // TODO: implement later
+      return replaceAsync(key, value, metadata)
+            .thenApply(prev -> new ImmortalCacheEntry(key, prev));
    }
 
    /**
@@ -376,6 +389,23 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    default CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
       return putIfAbsentAsync(key, value, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
+   }
+
+   default CompletionStage<CacheEntry<K, V>> putIfAbsentAsyncReturnEntry(K key, V value, Metadata metadata) {
+      // TODO: replace with a concurrent operation to do this
+      return getCacheEntryAsync(key)
+            .thenCompose(ce -> {
+               if (ce != null) {
+                  return CompletableFuture.completedFuture(ce);
+               }
+               return putIfAbsentAsync(key, value, metadata)
+                     .thenApply(prev -> {
+                        if (prev == null) {
+                           return null;
+                        }
+                        return new ImmortalCacheEntry(key, prev);
+                     });
+            });
    }
 
    /**
@@ -812,10 +842,16 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value);
 
+   default CompletionStage<CacheEntry<K, V>> removeAsyncReturnEntry(K key) {
+      // TODO: replace this with an actual impl
+      return removeAsync(key)
+            .thenApply(prev -> prev == null ? null : new ImmortalCacheEntry(key, prev));
+   }
+
    /**
     * Performs any cache operations using the specified pair of {@link Encoder}.
     *
-    * @param keyEncoder   {@link Encoder} for the keys.
+    * @param keyEncoder {@link Encoder} for the keys.
     * @param valueEncoder {@link Encoder} for the values.
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoders.
     * @deprecated Since 12.1, to be removed in a future version.

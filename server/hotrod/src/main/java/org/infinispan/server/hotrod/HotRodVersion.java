@@ -23,6 +23,7 @@ public enum HotRodVersion {
    HOTROD_29(2, 9), // since 9.4
    HOTROD_30(3, 0), // since 10.0
    HOTROD_31(3, 1), // since 12.0
+   HOTROD_40(4, 0), // since 14.0
    ;
 
    private final int major;
@@ -79,6 +80,9 @@ public enum HotRodVersion {
    }
 
    public static VersionedEncoder getEncoder(byte version) {
+      if (HotRodVersion.HOTROD_40.isAtLeast(version)) {
+         return Encoder4x.instance();
+      }
       return Encoder2x.instance();
    }
 }

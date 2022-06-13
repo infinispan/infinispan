@@ -56,7 +56,7 @@ public interface CacheWriteOptions extends CacheOptions {
       }
 
       @Override
-      public CacheOptions.Builder flags(Flags<?, ?> flags) {
+      public Builder flags(Flags<?, ?> flags) {
          super.flags(flags);
          return this;
       }

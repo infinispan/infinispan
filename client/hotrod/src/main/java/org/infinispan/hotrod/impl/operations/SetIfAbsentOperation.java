@@ -1,6 +1,5 @@
 package org.infinispan.hotrod.impl.operations;
 
-import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.logging.LogFactory;
@@ -15,11 +14,11 @@ import io.netty.buffer.ByteBuf;
  *
  * @since 14.0
  */
-public class PutIfAbsentOperation<K, V> extends AbstractPutIfAbsentOperation<K, CacheEntry<K, V>> {
+public class SetIfAbsentOperation<K> extends AbstractPutIfAbsentOperation<K, Boolean> {
 
-   private static final BasicLogger log = LogFactory.getLog(PutIfAbsentOperation.class);
+   private static final BasicLogger log = LogFactory.getLog(SetIfAbsentOperation.class);
 
-   public PutIfAbsentOperation(OperationContext operationContext,
+   public SetIfAbsentOperation(OperationContext operationContext,
          K key, byte[] keyBytes, byte[] value,
          CacheWriteOptions options,
          DataFormat dataFormat) {
@@ -28,18 +27,10 @@ public class PutIfAbsentOperation<K, V> extends AbstractPutIfAbsentOperation<K, 
 
    @Override
    void completeResponse(ByteBuf buf, short status) {
-      CacheEntry<K, V> prevValue = returnPossiblePrevValue(buf, status);
-      if (HotRodConstants.hasPrevious(status)) {
-         statsDataRead(true);
-      }
+      boolean wasSuccess = HotRodConstants.isSuccess(status);
       if (log.isTraceEnabled()) {
-         log.tracef("Returning from putIfAbsent: %s", prevValue);
+         log.tracef("Returning from setIfAbsent: %s", wasSuccess);
       }
-      complete(prevValue);
-   }
-
-   @Override
-   protected int flags() {
-      return super.flags() | PrivateHotRodFlag.FORCE_RETURN_VALUE.getFlagInt();
+      complete(wasSuccess);
    }
 }

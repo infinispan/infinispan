@@ -60,7 +60,7 @@ public class HotRodAsyncCache<K, V> implements AsyncCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> putIfAbsent(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
       return remoteCache.putIfAbsent(key, value, options);
    }
 
@@ -70,7 +70,7 @@ public class HotRodAsyncCache<K, V> implements AsyncCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> put(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
       return remoteCache.put(key, value, options);
    }
 

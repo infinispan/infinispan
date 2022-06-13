@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -101,9 +102,9 @@ public class BaseRequestProcessor {
       }
    }
 
-   void writeSuccess(HotRodHeader header, byte[] result) {
+   void writeSuccess(HotRodHeader header, CacheEntry<byte[], byte[]> entry) {
       if (header.hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
-         writeResponse(header, header.encoder().successResponse(header, server, channel, result));
+         writeResponse(header, header.encoder().successResponse(header, server, channel, entry));
       } else {
          writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.Success));
       }
@@ -113,7 +114,7 @@ public class BaseRequestProcessor {
       writeResponse(header, header.encoder().emptyResponse(header, server, channel, OperationStatus.Success));
    }
 
-   void writeNotExecuted(HotRodHeader header, byte[] prev) {
+   void writeNotExecuted(HotRodHeader header, CacheEntry<byte[], byte[]> prev) {
       if (header.hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
          writeResponse(header, header.encoder().notExecutedResponse(header, server, channel, prev));
       } else {

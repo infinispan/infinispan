@@ -73,7 +73,7 @@ public abstract class DelegatingRemoteCache<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> putIfAbsent(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
       return delegate.putIfAbsent(key, value, options);
    }
 
@@ -83,7 +83,7 @@ public abstract class DelegatingRemoteCache<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public CompletionStage<V> put(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
       return delegate.put(key, value, options);
    }
 

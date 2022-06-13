@@ -28,7 +28,7 @@ public class MutinyCacheDemo {
          // get
          String value = await(mycache.get("key"));
          // put
-         String previous = await(mycache.put("key", "newvalue"));
+         CacheEntry<String, String> previous = await(mycache.put("key", "newvalue"));
          // set with options
          await(mycache.set("key", "anothervalue", writeOptions().lifespan(Duration.ofHours(1)).timeout(Duration.ofMillis(500)).build()));
          // get with options

@@ -48,11 +48,11 @@ public interface RemoteCache<K, V> extends AutoCloseable {
 
    RetryAwareCompletionStage<CacheEntry<K, V>> getEntry(K key, CacheOptions options, SocketAddress listenerAddress);
 
-   CompletionStage<V> putIfAbsent(K key, V value, CacheWriteOptions options);
+   CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options);
 
    CompletionStage<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options);
 
-   CompletionStage<V> put(K key, V value, CacheWriteOptions options);
+   CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options);
 
    CompletionStage<Void> set(K key, V value, CacheWriteOptions options);
 

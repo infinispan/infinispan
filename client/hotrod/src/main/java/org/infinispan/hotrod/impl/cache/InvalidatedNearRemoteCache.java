@@ -111,7 +111,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    @Override
-   public CompletionStage<V> put(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
       options.expiration().maxIdle().ifPresent(m -> HOTROD.nearCacheMaxIdleUnsupported());
       return super.put(key, value, options).thenApply(v -> {
          nearcache.remove(key);
@@ -120,7 +120,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    @Override
-   public CompletionStage<V> putIfAbsent(K key, V value, CacheWriteOptions options) {
+   public CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
       options.expiration().maxIdle().ifPresent(m -> HOTROD.nearCacheMaxIdleUnsupported());
       return super.putIfAbsent(key, value, options).thenApply(v -> {
          nearcache.remove(key);

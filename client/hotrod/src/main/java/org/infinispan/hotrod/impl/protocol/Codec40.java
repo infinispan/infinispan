@@ -1,23 +1,30 @@
 package org.infinispan.hotrod.impl.protocol;
 
-import static org.infinispan.hotrod.impl.Util.await;
+import static org.infinispan.hotrod.impl.TimeUnitParam.encodeTimeUnits;
 import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 import static org.infinispan.hotrod.impl.transport.netty.ByteBufUtil.limitedHexDump;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.EnumSet;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 
+import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheEntryExpiration;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.hotrod.configuration.ClientIntelligence;
 import org.infinispan.hotrod.event.ClientEvent;
@@ -25,6 +32,7 @@ import org.infinispan.hotrod.event.ClientListener;
 import org.infinispan.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.hotrod.event.impl.CreatedEventImpl;
 import org.infinispan.hotrod.event.impl.CustomEventImpl;
+import org.infinispan.hotrod.event.impl.ExpiredEventImpl;
 import org.infinispan.hotrod.event.impl.ModifiedEventImpl;
 import org.infinispan.hotrod.event.impl.RemovedEventImpl;
 import org.infinispan.hotrod.exceptions.HotRodClientException;
@@ -35,7 +43,7 @@ import org.infinispan.hotrod.impl.cache.RemoteCache;
 import org.infinispan.hotrod.impl.counter.HotRodCounterEvent;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
-import org.infinispan.hotrod.impl.operations.BulkGetKeysOperation;
+import org.infinispan.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.hotrod.impl.operations.PingResponse;
 import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
@@ -44,58 +52,104 @@ import org.infinispan.hotrod.impl.transport.netty.ChannelFactory;
 import io.netty.buffer.ByteBuf;
 
 /**
- * A Hot Rod encoder/decoder for version 2.0 of the protocol.
- *
  * @since 14.0
  */
-public class Codec20 implements Codec, HotRodConstants {
+public class Codec40 implements Codec, HotRodConstants {
 
    static final Log log = LogFactory.getLog(Codec.class, Log.class);
 
-   public void writeClientListenerInterests(ByteBuf buf, EnumSet<CacheEntryEventType> types) {
-      // No-op
-   }
+   public static final String EMPTY_VALUE_CONVERTER = "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter";
 
    @Override
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
-      return writeHeader(buf, params, HotRodConstants.VERSION_20);
+      HeaderParams headerParams = writeHeader(buf, params, HotRodConstants.VERSION_40);
+      writeDataTypes(buf, params.dataFormat);
+      return headerParams;
+   }
+
+   protected void writeDataTypes(ByteBuf buf, DataFormat dataFormat) {
+      MediaType keyType = null, valueType = null;
+      if (dataFormat != null) {
+         keyType = dataFormat.getKeyType();
+         valueType = dataFormat.getValueType();
+      }
+      writeMediaType(buf, keyType);
+      writeMediaType(buf, valueType);
+   }
+
+   private void writeMediaType(ByteBuf buf, MediaType mediaType) {
+      if (mediaType == null) {
+         buf.writeByte(0);
+      } else {
+         Short id = MediaTypeIds.getId(mediaType);
+         if (id != null) {
+            buf.writeByte(1);
+            ByteBufUtil.writeVInt(buf, id);
+         } else {
+            buf.writeByte(2);
+            ByteBufUtil.writeString(buf, mediaType.toString());
+         }
+         Map<String, String> parameters = mediaType.getParameters();
+         ByteBufUtil.writeVInt(buf, parameters.size());
+         parameters.forEach((key, value) -> {
+            ByteBufUtil.writeString(buf, key);
+            ByteBufUtil.writeString(buf, value);
+         });
+      }
+   }
+
+   @Override
+   public void writeClientListenerInterests(ByteBuf buf, EnumSet<CacheEntryEventType> types) {
+      byte listenerInterests = 0;
+      if (types.contains(CacheEntryEventType.CREATED))
+         listenerInterests = (byte) (listenerInterests | 0x01);
+      if (types.contains(CacheEntryEventType.UPDATED))
+         listenerInterests = (byte) (listenerInterests | 0x02);
+      if (types.contains(CacheEntryEventType.REMOVED))
+         listenerInterests = (byte) (listenerInterests | 0x04);
+      if (types.contains(CacheEntryEventType.EXPIRED))
+         listenerInterests = (byte) (listenerInterests | 0x08);
+
+      ByteBufUtil.writeVInt(buf, listenerInterests);
    }
 
    @Override
    public void writeClientListenerParams(ByteBuf buf, ClientListener clientListener,
-                                         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       buf.writeByte((short) (clientListener.includeCurrentState() ? 1 : 0));
       writeNamedFactory(buf, clientListener.filterFactoryName(), filterFactoryParams);
       writeNamedFactory(buf, clientListener.converterFactoryName(), converterFactoryParams);
+      buf.writeByte((short) (clientListener.useRawData() ? 1 : 0));
    }
 
    @Override
    public void writeExpirationParams(ByteBuf buf, CacheEntryExpiration.Impl expiration) {
-      long lifespan = expiration.rawLifespan().toSeconds();
-      long maxIdle = expiration.rawMaxIdle().toSeconds();
-      if (!CodecUtils.isGreaterThan4bytes(lifespan)) {
-         HOTROD.warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+      byte timeUnits = encodeTimeUnits(expiration);
+      buf.writeByte(timeUnits);
+      Duration lifespan = expiration.rawLifespan();
+      if (lifespan != null && lifespan != Duration.ZERO) {
+         ByteBufUtil.writeVLong(buf, lifespan.toSeconds());
       }
-      if (!CodecUtils.isGreaterThan4bytes(maxIdle)) {
-         HOTROD.warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+      Duration maxIdle = expiration.rawMaxIdle();
+      if (maxIdle != null && lifespan != Duration.ZERO) {
+         ByteBufUtil.writeVLong(buf, maxIdle.toSeconds());
       }
-
-      ByteBufUtil.writeVInt(buf, (int) lifespan);
-      ByteBufUtil.writeVInt(buf, (int) maxIdle);
    }
 
    @Override
    public void writeBloomFilter(ByteBuf buf, int bloomFilterBits) {
-      if (bloomFilterBits > 0) {
-         throw new UnsupportedOperationException("Bloom Filter optimization is not available for versions before 3.1");
-      }
+      ByteBufUtil.writeVInt(buf, bloomFilterBits);
    }
 
    @Override
    public int estimateExpirationSize(CacheEntryExpiration.Impl expiration) {
-      int lifespanSeconds = (int) expiration.rawLifespan().toSeconds();
-      int maxIdleSeconds = (int) expiration.rawMaxIdle().toSeconds();
-      return ByteBufUtil.estimateVIntSize(lifespanSeconds) + ByteBufUtil.estimateVIntSize(maxIdleSeconds);
+      int lifespanSeconds = durationToSeconds(expiration.rawLifespan());
+      int maxIdleSeconds = durationToSeconds(expiration.rawMaxIdle());
+      return 1 + (lifespanSeconds > 0 ? ByteBufUtil.estimateVLongSize(lifespanSeconds) : 0) + (maxIdleSeconds > 0 ? ByteBufUtil.estimateVLongSize(maxIdleSeconds) : 0);
+   }
+
+   private int durationToSeconds(Duration duration) {
+      return duration == null ? 0 : (int) duration.toSeconds();
    }
 
    private void writeNamedFactory(ByteBuf buf, String factoryName, byte[][] params) {
@@ -217,18 +271,25 @@ public class Codec20 implements Codec, HotRodConstants {
 
    @Override
    public <K> CloseableIterator<K> keyIterator(RemoteCache<K, ?> remoteCache, CacheOperationsFactory cacheOperationsFactory,
-                                               CacheOptions options, IntSet segments, int batchSize) {
-      if (segments != null) {
-         throw new UnsupportedOperationException("This version doesn't support iterating upon keys by segment!");
-      }
-      BulkGetKeysOperation<K> op = cacheOperationsFactory.newBulkGetKeysOperation(0, options, remoteCache.getDataFormat());
-      Set<K> keys = await(op.execute());
-      return Closeables.iterator(keys.iterator());
+         CacheOptions options, IntSet segments, int batchSize) {
+      return new IteratorMapper<>(remoteCache.retrieveEntries(
+            // Use the ToEmptyBytesKeyValueFilterConverter to remove value payload
+            EMPTY_VALUE_CONVERTER, segments, batchSize), e -> (K) e.key());
+   }
+
+   @Override
+   public <K, V> CloseableIterator<CacheEntry<K, V>> entryIterator(RemoteCache<K, V> remoteCache, IntSet segments,
+         int batchSize) {
+      return castEntryIterator(remoteCache.retrieveEntries(null, segments, batchSize));
+   }
+
+   protected <K, V> CloseableIterator<CacheEntry<K, V>> castEntryIterator(CloseableIterator iterator) {
+      return iterator;
    }
 
    @Override
    public boolean isObjectStorageHinted(PingResponse pingResponse) {
-      return false;
+      return pingResponse.isObjectStorage();
    }
 
    @Override
@@ -246,41 +307,55 @@ public class Codec20 implements Codec, HotRodConstants {
          case CACHE_ENTRY_REMOVED_EVENT_RESPONSE:
             eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED;
             break;
+         case CACHE_ENTRY_EXPIRED_EVENT_RESPONSE:
+            eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED;
+            break;
          case ERROR_RESPONSE:
             checkForErrorsInResponseStatus(buf, null, status, serverAddress);
-            // Fall through if we didn't throw an exception already
          default:
             throw HOTROD.unknownEvent(eventTypeId);
       }
 
       byte[] listenerId = ByteBufUtil.readArray(buf);
-
       short isCustom = buf.readUnsignedByte();
       boolean isRetried = buf.readUnsignedByte() == 1;
       DataFormat dataFormat = listenerDataFormat.apply(listenerId);
+
       if (isCustom == 1) {
          final Object eventData = dataFormat.valueToObj(ByteBufUtil.readArray(buf), allowList);
          return createCustomEvent(listenerId, eventData, eventType, isRetried);
+      } else if (isCustom == 2) { // New in 2.1, dealing with raw custom events
+         return createCustomEvent(listenerId, ByteBufUtil.readArray(buf), eventType, isRetried); // Raw data
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
+               Object createdKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
                long createdDataVersion = buf.readLong();
-               return createCreatedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList), createdDataVersion, isRetried);
+               return createCreatedEvent(listenerId, createdKey, createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
+               Object modifiedKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
                long modifiedDataVersion = buf.readLong();
-               return createModifiedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList), modifiedDataVersion, isRetried);
+               return createModifiedEvent(listenerId, modifiedKey, modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               return createRemovedEvent(listenerId, dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList), isRetried);
+               Object removedKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
+               return createRemovedEvent(listenerId, removedKey, isRetried);
+            case CLIENT_CACHE_ENTRY_EXPIRED:
+               Object expiredKey = dataFormat.keyToObj(ByteBufUtil.readArray(buf), allowList);
+               return createExpiredEvent(listenerId, expiredKey);
             default:
                throw HOTROD.unknownEvent(eventTypeId);
          }
       }
    }
 
+   protected AbstractClientEvent createExpiredEvent(byte[] listenerId, final Object key) {
+      return new ExpiredEventImpl<>(listenerId, key);
+   }
+
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller) {
+   public <K, V> CacheEntry<K, V> returnPossiblePrevValue(K key, ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller) {
       if (HotRodConstants.hasPrevious(status)) {
-         return dataFormat.valueToObj(ByteBufUtil.readArray(buf), allowList);
+         return AbstractKeyOperation.readEntry(buf, key, dataFormat, allowList);
       } else {
          return null;
       }
@@ -331,8 +406,8 @@ public class Codec20 implements Codec, HotRodConstants {
                msgFromServer = ByteBufUtil.readString(buf);
                if (log.isTraceEnabled())
                   log.tracef("[%s] A remote node was suspected while executing messageId=%d. " +
-                             "Check if retry possible. Message from server: %s",
-                             new String(params.cacheName), params.messageId, msgFromServer);
+                              "Check if retry possible. Message from server: %s",
+                        new String(params.cacheName), params.messageId, msgFromServer);
 
                throw new RemoteNodeSuspectException(msgFromServer, params.messageId, status);
             default: {
@@ -389,7 +464,7 @@ public class Codec20 implements Codec, HotRodConstants {
       }
 
       channelFactory.receiveTopology(params.cacheName, params.topologyAge, newTopologyId, addresses, segmentOwners,
-                                     hashFunctionVersion);
+            hashFunctionVersion);
    }
 
    private InetSocketAddress[] readTopology(ByteBuf buf) {
@@ -401,5 +476,54 @@ public class Codec20 implements Codec, HotRodConstants {
          addresses[i] = InetSocketAddress.createUnresolved(host, port);
       }
       return addresses;
+   }
+
+   @Override
+   public void writeIteratorStartOperation(ByteBuf buf, IntSet segments, String filterConverterFactory,
+         int batchSize, boolean metadata, byte[][] filterParameters) {
+      if (segments == null) {
+         ByteBufUtil.writeSignedVInt(buf, -1);
+      } else {
+         // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
+         BitSet bitSet = new BitSet();
+         segments.forEach((IntConsumer) bitSet::set);
+         ByteBufUtil.writeOptionalArray(buf, bitSet.toByteArray());
+      }
+      ByteBufUtil.writeOptionalString(buf, filterConverterFactory);
+      if (filterConverterFactory != null) {
+         if (filterParameters != null && filterParameters.length > 0) {
+            buf.writeByte(filterParameters.length);
+            Arrays.stream(filterParameters).forEach(param -> ByteBufUtil.writeArray(buf, param));
+         } else {
+            buf.writeByte(0);
+         }
+      }
+      ByteBufUtil.writeVInt(buf, batchSize);
+      buf.writeByte(metadata ? 1 : 0);
+   }
+
+   @Override
+   public int readProjectionSize(ByteBuf buf) {
+      return ByteBufUtil.readVInt(buf);
+   }
+
+   @Override
+   public short readMeta(ByteBuf buf) {
+      return buf.readUnsignedByte();
+   }
+
+   @Override
+   public boolean allowOperationsAndEvents() {
+      return true;
+   }
+
+   @Override
+   public MediaType readKeyType(ByteBuf buf) {
+      return CodecUtils.readMediaType(buf);
+   }
+
+   @Override
+   public MediaType readValueType(ByteBuf buf) {
+      return CodecUtils.readMediaType(buf);
    }
 }

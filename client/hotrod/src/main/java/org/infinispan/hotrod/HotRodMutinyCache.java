@@ -60,7 +60,7 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
    }
 
    @Override
-   public Uni<V> putIfAbsent(K key, V value, CacheWriteOptions options) {
+   public Uni<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
       return Uni.createFrom().completionStage(() -> remoteCache.putIfAbsent(key, value, options));
    }
 
@@ -70,7 +70,7 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
    }
 
    @Override
-   public Uni<V> put(K key, V value, CacheWriteOptions options) {
+   public Uni<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
       return Uni.createFrom().completionStage(() -> remoteCache.put(key, value, options));
    }
 
