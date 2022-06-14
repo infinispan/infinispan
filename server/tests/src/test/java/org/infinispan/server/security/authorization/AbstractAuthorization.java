@@ -575,6 +575,20 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
+   public void testRestClusterDistributionPermission() {
+      EnumSet<TestUser> allowed = EnumSet.of(TestUser.ADMIN, TestUser.MONITOR);
+      for (TestUser user : allowed) {
+         RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
+         assertStatus(OK, client.distribution());
+      }
+
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, allowed.toArray(new TestUser[0])))) {
+         RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
+         assertStatus(FORBIDDEN, client.distribution());
+      }
+   }
+
+   @Test
    public void testRestAdminsMustAccessBackupsAndRestores() {
       String BACKUP_NAME = "backup";
       RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();

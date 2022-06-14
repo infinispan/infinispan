@@ -16,7 +16,7 @@ import org.infinispan.security.actions.GetCacheAction;
  *
  * @since 14.0
  */
-public class SecurityActions {
+public final class SecurityActions {
    private static <T> T doPrivileged(PrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
          return AccessController.doPrivileged(action);

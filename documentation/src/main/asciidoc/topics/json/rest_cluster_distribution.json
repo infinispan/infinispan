@@ -1,0 +1,18 @@
+[
+  {
+    "node_name": "NodeA",
+    "node_addresses": [
+      "127.0.0.1:39313"
+    ],
+    "memory_available": 466180016,
+    "memory_used": 56010832
+  },
+  {
+    "node_name": "NodeB",
+    "node_addresses": [
+      "127.0.0.1:47477"
+    ],
+    "memory_available": 467548568,
+    "memory_used": 54642280
+  }
+]

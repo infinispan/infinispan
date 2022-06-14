@@ -219,3 +219,27 @@ DELETE /rest/v2/cluster/restores/{restoreName}
 A `204` response indicates that the restore metadata is deleted.
 A `202` response indicates that the restore operation is in progress and will be deleted when the operation
 completes.
+
+[id='rest_v2_cluster_distribution']
+= Checking Cluster Distribution
+Retrieve the distribution details about all servers in the {brandname} cluster.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cluster?action=distribution
+----
+
+Returns a JSON array of each {brandname} server statistics in the cluster with the format:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_cluster_distribution.json[]
+----
+
+Each element in the array represents an {brandname} node. If the statistics collection is
+disabled, information about memory usage values is -1. The properties are:
+
+* `node_name` is the node name.
+* `node_addresses` is a list with all the node's physical addresses.
+* `memory_available` the node available memory in bytes.
+* `memory_used` the node used memory in bytes.

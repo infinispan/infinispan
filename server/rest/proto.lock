@@ -51,6 +51,44 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "NodeDistributionInfo",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "addresses",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "memoryAvailable",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "memoryUsed",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              }
+            ]
           }
         ],
         "package": {

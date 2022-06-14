@@ -8,6 +8,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = {
             CacheDistributionRunnable.class,
             CacheDistributionInfo.class,
+            NodeDistributionInfo.class,
       },
       schemaFileName = "persistence.distribution.proto",
       schemaFilePath = "proto/generated",

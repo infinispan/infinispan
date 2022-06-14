@@ -82,4 +82,9 @@ public interface RestClusterClient {
     * @param name the name of the restore.
     */
    CompletionStage<RestResponse> deleteRestore(String name);
+
+   /**
+    * @return The cluster distribution information.
+    */
+   CompletionStage<RestResponse> distribution();
 }

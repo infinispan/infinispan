@@ -17,6 +17,7 @@ import javax.security.auth.Subject;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
@@ -219,22 +220,15 @@ public class RestCacheManager<V> {
          return CompletableFuture.completedStage(Collections.singletonList(local));
       }
 
-      CompletableFuture<Collection<CacheDistributionInfo>> future = new CompletableFuture<>();
       Map<Address, CacheDistributionInfo> distributions = new ConcurrentHashMap<>();
       ClusterExecutor executor = SecurityActions.getClusterExecutor(instance);
       Collection<Address> members = dm.getCacheTopology().getMembers();
-      executor.filterTargets(members).submitConsumer(new CacheDistributionRunnable(cacheName), (address, info, t) -> {
+      return executor.filterTargets(members).submitConsumer(new CacheDistributionRunnable(cacheName), (address, info, t) -> {
          if (t != null) {
-            future.completeExceptionally(t);
-            return;
+            throw CompletableFutures.asCompletionException(t);
          }
-
          distributions.putIfAbsent(address, info);
-         if (distributions.size() == members.size() && !future.isCompletedExceptionally()) {
-            future.complete(distributions.values());
-         }
-      });
-      return future;
+      }).thenApply(ignore -> distributions.values());
    }
 
    private void checkCachePermission(AdvancedCache<?, ?> ac, Subject subject, AuthorizationPermission permission) {

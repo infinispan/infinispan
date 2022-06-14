@@ -1,7 +1,6 @@
 package org.infinispan.stats.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,17 +23,9 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 @MBean(objectName = ClusterContainerStats.OBJECT_NAME, description = "General container statistics aggregated across the cluster.")
-public class ClusterContainerStatsImpl extends AbstractClusterStats implements ClusterContainerStats {
+public class ClusterContainerStatsImpl extends AbstractContainerStats implements ClusterContainerStats {
 
    private static final Log log = LogFactory.getLog(ClusterContainerStatsImpl.class);
-
-   // Memory
-   private static final String MEMORY_AVAILABLE = "memoryAvailable";
-   private static final String MEMORY_MAX = "memoryMax";
-   private static final String MEMORY_TOTAL = "memoryTotal";
-   private static final String MEMORY_USED = "memoryUsed";
-
-   private static final String[] LONG_ATTRIBUTES = {MEMORY_AVAILABLE, MEMORY_MAX, MEMORY_TOTAL, MEMORY_USED};
 
    private ClusterExecutor clusterExecutor;
    private EmbeddedCacheManager cacheManager;
@@ -55,24 +46,12 @@ public class ClusterContainerStatsImpl extends AbstractClusterStats implements C
    }
 
    @Override
-   void updateStats() throws Exception {
-      List<Map<String, Number>> memoryMap = getClusterStatMaps();
-      for (String att : LONG_ATTRIBUTES)
-         putLongAttributes(memoryMap, att);
-   }
-
-   private List<Map<String, Number>> getClusterStatMaps() throws Exception {
+   protected List<Map<String, Number>> statistics() throws Exception {
       final List<Map<String, Number>> successfulResponseMaps = new ArrayList<>();
-      CompletableFutures.await(clusterExecutor.submit(() -> {
-         Map<String, Number> map = new HashMap<>();
-         long available = Runtime.getRuntime().freeMemory();
-         long total = Runtime.getRuntime().totalMemory();
-         long max = Runtime.getRuntime().maxMemory();
-         map.put(MEMORY_AVAILABLE, available);
-         map.put(MEMORY_MAX, max);
-         map.put(MEMORY_TOTAL, total);
-         map.put(MEMORY_USED, total - available);
-         successfulResponseMaps.add(map);
+      CompletableFutures.await(clusterExecutor.submitConsumer(ignore -> getLocalStatMaps(), (addr, stats, t) -> {
+         if (t == null) {
+            successfulResponseMaps.add(stats);
+         }
       }));
       return successfulResponseMaps;
    }
