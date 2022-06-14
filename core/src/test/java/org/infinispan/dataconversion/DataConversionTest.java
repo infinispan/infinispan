@@ -7,8 +7,10 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.expectThrows;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -20,6 +22,7 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
@@ -294,6 +297,51 @@ public class DataConversionTest extends AbstractInfinispanTest {
             Cache<byte[], byte[]> utf16ValueCache = cache.getAdvancedCache().withMediaType(MediaType.fromString("text/plain; charset=ISO-8859-1"), MediaType.fromString("text/plain; charset=UTF-16"));
 
             assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
+         }
+      });
+   }
+
+   public void testApplicationObjectToZip() {
+      // Assert that application/zip works with storage media type application/x-java-object
+      withCacheManager(new CacheManagerCallable(createCacheManager()){
+         @Override
+         public void call() {
+            String cacheName = "zip";
+            cm.defineConfiguration(cacheName, new ConfigurationBuilder()
+                  .memory()
+                  .encoding().key().mediaType(MediaType.TEXT_PLAIN_TYPE)
+                  .encoding().value().mediaType(MediaType.APPLICATION_ZIP_TYPE)
+                  .build()
+            );
+            Cache<String, Object> cache = cm.getCache("zip");
+            String key = "key";
+            byte[] zipValue = new byte[0];
+            // Storing bytes should succeed. Storing valid .zip bytes is the responsibility of the user.
+            cache.put(key, zipValue);
+            assertEquals(cache.get(key), zipValue);
+
+            // Storing non byte[] values should result in a transcoding error.
+            expectThrows(EncodingException.class, () -> cache.put(key, "FAIL"));
+         }
+      });
+   }
+
+   public void testApplicationUnknownToZip() {
+      // Assert that application/zip works with storage media type application/unknown
+      withCacheManager(new CacheManagerCallable(createServerModeCacheManager()) {
+         @Override
+         public void call() {
+            String cacheName = "zip";
+            cm.defineConfiguration(cacheName, new ConfigurationBuilder().build());
+            Cache<Object, Object> cache = cm.getCache("zip").getAdvancedCache().withMediaType(MediaType.TEXT_PLAIN, MediaType.APPLICATION_ZIP);
+            String key = "key";
+            byte[] zipValue = new byte[0];
+            // Storing bytes should succeed. Storing valid .zip bytes is the responsibility of the user.
+            cache.put(key, zipValue);
+            assertEquals(cache.get(key), zipValue);
+
+            // Storing non byte[] values should result in a transcoding error.
+            expectThrows(EncodingException.class, () -> cache.put(key, "FAIL"));
          }
       });
    }

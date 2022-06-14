@@ -10,6 +10,7 @@ import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
+import org.infinispan.commons.dataconversion.ZipTranscoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.encoding.ProtostreamTranscoder;
@@ -63,6 +64,7 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       // Make the user marshaller's media type available as well
       // As custom marshaller modules like Kryo and Protostuff do not define their own transcoder
       encoderRegistry.registerTranscoder(new TranscoderMarshallerAdapter(userMarshaller));
+      encoderRegistry.registerTranscoder(new ZipTranscoder());
 
       encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
       encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);
