@@ -110,6 +110,13 @@ public class RestClusterClientOkHttp implements RestClusterClient {
       return client.execute(restore(name).delete());
    }
 
+   @Override
+   public CompletionStage<RestResponse> distribution() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseClusterURL + "?action=distribution").get();
+      return client.execute(builder);
+   }
+
    private Request.Builder backup(String name) {
       return new Request.Builder().url(baseClusterURL + "/backups/" + name);
    }

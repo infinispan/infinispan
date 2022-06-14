@@ -10,6 +10,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.rest.InvocationHelper;
@@ -88,5 +89,9 @@ final class SecurityActions {
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
       authorizer.checkPermission(request.getSubject(), permission);
+   }
+
+   static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(cacheManager::executor);
    }
 }
