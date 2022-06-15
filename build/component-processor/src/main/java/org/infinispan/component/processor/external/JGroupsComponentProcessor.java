@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
@@ -20,8 +21,11 @@ import javax.lang.model.type.DeclaredType;
 import org.infinispan.external.JGroupsProtocolComponent;
 import org.jgroups.annotations.ManagedAttribute;
 import org.jgroups.conf.ClassConfigurator;
+import org.jgroups.protocols.MsgStats;
 import org.jgroups.protocols.RED;
+import org.jgroups.protocols.TP;
 import org.jgroups.stack.Protocol;
+import org.jgroups.util.ThreadPool;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -93,21 +97,26 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       if (protocol == null || !Protocol.class.isAssignableFrom(protocol) || Modifier.isAbstract(protocol.getModifiers())) {
          return;
       }
-      boolean hasAttributes = false;
+      AtomicBoolean hasAttributes = new AtomicBoolean(false);
 
       for (Method method : protocol.getMethods()) {
          ManagedAttribute annotation = method.getAnnotation(ManagedAttribute.class);
          if (annotation != null && !Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0 && isNumber(method.getReturnType())) {
-            if (!hasAttributes) {
+            if (hasAttributes.compareAndSet(false, true)) {
                w.println("      attributes = new ArrayList<>();");
-               hasAttributes = true;
             }
             w.printf("      attributes.add(new AttributeMetadata(\"%s\", \"%s\", false, false, \"%s\",\n" +
                         "                               false, (Function<%s, ?>) %s::%s, null));%n",
                   method.getName(), annotation.description().replace('"', '\''), method.getReturnType().getName(), protocol.getName(), protocol.getName(), method.getName());
          }
       }
-      if (hasAttributes) {
+
+      if (TP.class.isAssignableFrom(protocol)) {
+         addTPComponent("getThreadPool", protocol, ThreadPool.class, w, hasAttributes);
+         addTPComponent("getMessageStats", protocol, MsgStats.class, w, hasAttributes);
+      }
+
+      if (hasAttributes.get()) {
          // only put the protocol in PROTOCOL_METADATA if we have attributes available
          w.printf("      PROTOCOL_METADATA.put(%s.class, attributes);%n", protocol.getName());
       }
@@ -115,5 +124,19 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
 
    private static boolean isNumber(Class<?> type) {
       return short.class == type || byte.class == type || long.class == type || int.class == type || float.class == type || double.class == type || Number.class.isAssignableFrom(type);
+   }
+
+   private static void addTPComponent(String getterMethodName, Class<?> protocol, Class<?> component, PrintWriter w, AtomicBoolean hasAttributes) {
+      for (Method method : component.getMethods()) {
+         ManagedAttribute annotation = method.getAnnotation(ManagedAttribute.class);
+         if (annotation != null && !Modifier.isStatic(method.getModifiers()) && method.getParameterCount() == 0 && isNumber(method.getReturnType())) {
+            if (hasAttributes.compareAndSet(false, true)) {
+               w.println("      attributes = new ArrayList<>();");
+            }
+            w.printf("      attributes.add(new AttributeMetadata(\"%s\", \"%s\", false, false, \"%s\",\n" +
+                        "                               false, (Function<%s, ?>) p -> p.%s().%s(), null));%n",
+                  method.getName(), annotation.description().replace('"', '\''), method.getReturnType().getName(), protocol.getName(), getterMethodName, method.getName());
+         }
+      }
    }
 }
