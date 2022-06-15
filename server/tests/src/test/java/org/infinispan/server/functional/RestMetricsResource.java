@@ -10,7 +10,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -216,6 +220,20 @@ public class RestMetricsResource {
 
          // metric is not present anymore:
          assertThat(body).doesNotContain(metricName);
+      }
+   }
+
+   @Test
+   public void testJGroupsMetrics() throws IOException, URISyntaxException {
+      try (RestClient client = SERVER_TEST.rest().create()) {
+         RestMetricsClient metricsClient = client.metrics();
+         try (RestResponse response = sync(metricsClient.metricsMetadata())) {
+            assertEquals(200, response.getStatus());
+            checkIsPrometheus(response.contentType());
+
+            String body = response.getBody();
+            assertThat(body).contains(Files.readAllLines(Path.of(Thread.currentThread().getContextClassLoader().getResource("jgroups_metrics.txt").toURI())));
+         }
       }
    }
 
