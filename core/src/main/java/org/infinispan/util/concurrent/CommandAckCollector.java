@@ -224,8 +224,8 @@ public class CommandAckCollector {
       }
    }
 
-   private TimeoutException createTimeoutException(long id) {
-      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), id);
+   private TimeoutException createTimeoutException(String address, long id) {
+      return log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), address, id);
    }
 
    private abstract class BaseAckTarget<T> implements Callable<Void>, BiConsumer<T, Throwable> {
@@ -278,9 +278,11 @@ public class CommandAckCollector {
        */
       @Override
       public final synchronized Void call() {
-         future.completeExceptionally(createTimeoutException(id));
+         future.completeExceptionally(createTimeoutException(getAddress(), id));
          return null;
       }
+
+      protected abstract String getAddress();
 
       @Override
       public final CompletableFuture<T> getFuture() {
@@ -369,6 +371,11 @@ public class CommandAckCollector {
             log.tracef("[Collector#%s] Ready!", id);
          }
          future.complete(primaryResult);
+      }
+
+      @Override
+      protected synchronized String getAddress() {
+         return backupOwners.toString();
       }
    }
 
@@ -479,6 +486,11 @@ public class CommandAckCollector {
             }
             future.complete(primaryResult);
          }
+      }
+
+      @Override
+      protected synchronized String getAddress() {
+         return backups.keySet().toString();
       }
 
       @Override
@@ -633,8 +645,12 @@ public class CommandAckCollector {
 
       @Override
       public Void call() {
-         completeExceptionally(createTimeoutException(id), topologyId);
+         completeExceptionally(createTimeoutException(getPendingAcksString(), id), topologyId);
          return null;
+      }
+
+      private synchronized String getPendingAcksString() {
+         return pendingAcks.toString();
       }
 
       synchronized void checkComplete() {
