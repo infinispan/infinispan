@@ -110,6 +110,10 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.eclipse.transformer</groupId>
+                <artifactId>transformer-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
