@@ -1489,8 +1489,8 @@ public interface Log extends BasicLogger {
 
    //removed unused message (id=426)
 
-   @Message(value = "Timeout after %s waiting for acks. Id=%s", id = 427)
-   TimeoutException timeoutWaitingForAcks(String timeout, long id);
+   @Message(value = "Timeout after %s waiting for acks (%s). Id=%s", id = 427)
+   TimeoutException timeoutWaitingForAcks(String timeout, String address, long id);
 
    @LogMessage(level = WARN)
    @Message(value = "'%s' has been deprecated. Please use '%s' instead", id = 428)
