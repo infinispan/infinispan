@@ -31,10 +31,11 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    private final long maxIdle;
    private final TimeUnit lifespanTimeUnit;
    private final TimeUnit maxIdleTimeUnit;
+   private final boolean supportsDuplicates;
 
    protected ContainsValueMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                                             AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
-                                            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+                                            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, boolean supportsDuplicates) {
       super(CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName,
             topologyId, flags, cfg, null, null);
       this.value = value;
@@ -42,6 +43,7 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
       this.maxIdle = maxIdle;
       this.lifespanTimeUnit = lifespanTimeUnit;
       this.maxIdleTimeUnit = maxIdleTimeUnit;
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
@@ -62,10 +64,12 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    protected void sendValueOperation(Channel channel) {
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
             codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) +
-            ByteBufUtil.estimateArraySize(value));
+            ByteBufUtil.estimateArraySize(value) +
+            codec.estimateSizeMultimapSupportsDuplicated());
       codec.writeHeader(buf, header);
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       ByteBufUtil.writeArray(buf, value);
+      codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
       channel.writeAndFlush(buf);
    }
 }

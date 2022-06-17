@@ -54,51 +54,51 @@ public class MultimapOperationsFactory {
       this.clientStatistics = clientStatistics;
    }
 
-   public <K, V> GetKeyMultimapOperation<V> newGetKeyMultimapOperation(K key, byte[] keyBytes) {
+   public <K, V> GetKeyMultimapOperation<V> newGetKeyMultimapOperation(K key, byte[] keyBytes, boolean supportsDuplicates) {
       return new GetKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics, supportsDuplicates);
    }
 
-   public <K, V> GetKeyWithMetadataMultimapOperation<V> newGetKeyWithMetadataMultimapOperation(K key, byte[] keyBytes) {
+   public <K, V> GetKeyWithMetadataMultimapOperation<V> newGetKeyWithMetadataMultimapOperation(K key, byte[] keyBytes, boolean supportsDuplicates) {
       return new GetKeyWithMetadataMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics, supportsDuplicates);
    }
 
    public <K> PutKeyValueMultimapOperation newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value,
-                                                                   long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+                                                                   long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, boolean supportsDuplicates) {
       return new PutKeyValueMultimapOperation(
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, null, clientStatistics);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, null, clientStatistics, supportsDuplicates);
    }
 
-   public <K> RemoveKeyMultimapOperation newRemoveKeyOperation(K key, byte[] keyBytes) {
+   public <K> RemoveKeyMultimapOperation newRemoveKeyOperation(K key, byte[] keyBytes, boolean supportsDuplicates) {
       return new RemoveKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, clientStatistics);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, clientStatistics, supportsDuplicates);
    }
 
-   public <K> RemoveEntryMultimapOperation newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value) {
+   public <K> RemoveEntryMultimapOperation newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value, boolean supportsDuplicates) {
       return new RemoveEntryMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value, clientStatistics);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value, clientStatistics, supportsDuplicates);
    }
 
-   public <K> ContainsEntryMultimapOperation newContainsEntryOperation(K key, byte[] keyBytes, byte[] value) {
+   public <K> ContainsEntryMultimapOperation newContainsEntryOperation(K key, byte[] keyBytes, byte[] value, boolean supportsDuplicates) {
       return new ContainsEntryMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value, clientStatistics);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value, clientStatistics, supportsDuplicates);
    }
 
-   public <K> ContainsKeyMultimapOperation newContainsKeyOperation(K key, byte[] keyBytes) {
+   public <K> ContainsKeyMultimapOperation newContainsKeyOperation(K key, byte[] keyBytes, boolean supportsDuplicates) {
       return new ContainsKeyMultimapOperation(
-            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, clientStatistics);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, clientStatistics, supportsDuplicates);
    }
 
-   public ContainsValueMultimapOperation newContainsValueOperation(byte[] value) {
+   public ContainsValueMultimapOperation newContainsValueOperation(byte[] value, boolean supportsDuplicates) {
       return new ContainsValueMultimapOperation(
-            codec, transportFactory, cacheNameBytes, topologyId, flags(), cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS);
+            codec, transportFactory, cacheNameBytes, topologyId, flags(), cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, supportsDuplicates);
    }
 
-   public SizeMultimapOperation newSizeOperation() {
+   public SizeMultimapOperation newSizeOperation(boolean supportsDuplicates) {
       return new SizeMultimapOperation(
-            codec, transportFactory, cacheNameBytes, topologyId, flags(), cfg);
+            codec, transportFactory, cacheNameBytes, topologyId, flags(), cfg, supportsDuplicates);
    }
 
    public int flags() {

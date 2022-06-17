@@ -20,11 +20,11 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       super(channel, executor, server);
    }
 
-   void get(HotRodHeader header, Subject subject, byte[] key) {
+   void get(HotRodHeader header, Subject subject, byte[] key, boolean supportsDuplicates) {
       if (log.isTraceEnabled()) {
          log.trace("Call get");
       }
-      server.multimap(header, subject).get(key).whenComplete(
+      server.multimap(header, subject, supportsDuplicates).get(key).whenComplete(
             (result, throwable) -> handleGet(header, result, throwable));
    }
 
@@ -43,11 +43,11 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void getWithMetadata(HotRodHeader header, Subject subject, byte[] key) {
+   void getWithMetadata(HotRodHeader header, Subject subject, byte[] key, boolean supportsDuplicates) {
       if (log.isTraceEnabled()) {
          log.trace("Call getWithMetadata");
       }
-      server.multimap(header, subject).getEntry(key).whenComplete((entry, throwable) -> handleGetWithMetadata(header, entry, throwable));
+      server.multimap(header, subject, supportsDuplicates).getEntry(key).whenComplete((entry, throwable) -> handleGetWithMetadata(header, entry, throwable));
    }
 
    private void handleGetWithMetadata(HotRodHeader header, Optional<CacheEntry<byte[], Collection<byte[]>>> entry, Throwable throwable) {
@@ -66,11 +66,11 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void put(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
+   void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, boolean supportsDuplicates) {
       if (log.isTraceEnabled()) {
          log.trace("Call put");
       }
-      server.multimap(header, subject).put(key, value).whenComplete((result, throwable) -> {
+      server.multimap(header, subject, supportsDuplicates).put(key, value).whenComplete((result, throwable) -> {
          if (throwable != null) {
             writeException(header, throwable);
          } else {
@@ -79,21 +79,21 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       });
    }
 
-   void removeKey(HotRodHeader header, Subject subject, byte[] key) {
+   void removeKey(HotRodHeader header, Subject subject, byte[] key, boolean supportsDuplicates) {
       if (log.isTraceEnabled()) {
          log.trace("Call removeKey");
       }
-      server.multimap(header, subject).remove(key).whenComplete(handleBoolean(header));
+      server.multimap(header, subject, supportsDuplicates).remove(key).whenComplete(handleBoolean(header));
    }
 
-   void removeEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
+   void removeEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value, boolean supportsDuplicates) {
       log.trace("Call removeEntry");
-      server.multimap(header, subject).remove(key, value).whenComplete(handleBoolean(header));
+      server.multimap(header, subject, supportsDuplicates).remove(key, value).whenComplete(handleBoolean(header));
    }
 
-   void size(HotRodHeader header, Subject subject) {
+   void size(HotRodHeader header, Subject subject, boolean supportsDuplicates) {
       log.trace("Call size");
-      server.multimap(header, subject).size().whenComplete((result, throwable) -> {
+      server.multimap(header, subject, supportsDuplicates).size().whenComplete((result, throwable) -> {
          if (throwable != null) {
             writeException(header, throwable);
          } else {
@@ -102,19 +102,19 @@ class MultimapRequestProcessor extends BaseRequestProcessor {
       });
    }
 
-   void containsEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value) {
+   void containsEntry(HotRodHeader header, Subject subject, byte[] key, byte[] value, boolean supportsDuplicates) {
       log.trace("Call containsEntry");
-      server.multimap(header, subject).containsEntry(key, value).whenComplete(handleBoolean(header));
+      server.multimap(header, subject, supportsDuplicates).containsEntry(key, value).whenComplete(handleBoolean(header));
    }
 
-   void containsKey(HotRodHeader header, Subject subject, byte[] key) {
+   void containsKey(HotRodHeader header, Subject subject, byte[] key, boolean supportsDuplicates) {
       log.trace("Call containsKey");
-      server.multimap(header, subject).containsKey(key).whenComplete(handleBoolean(header));
+      server.multimap(header, subject, supportsDuplicates).containsKey(key).whenComplete(handleBoolean(header));
    }
 
-   void containsValue(HotRodHeader header, Subject subject, byte[] value) {
+   void containsValue(HotRodHeader header, Subject subject, byte[] value, boolean supportsDuplicates) {
       log.trace("Call containsValue");
-      server.multimap(header, subject).containsValue(value).whenComplete(handleBoolean(header));
+      server.multimap(header, subject, supportsDuplicates).containsValue(value).whenComplete(handleBoolean(header));
    }
 
    private BiConsumer<Boolean, Throwable> handleBoolean(HotRodHeader header) {

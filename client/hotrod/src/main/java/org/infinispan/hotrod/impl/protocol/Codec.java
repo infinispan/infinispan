@@ -164,4 +164,16 @@ public interface Codec {
     * Read the response code for hints of object storage in the server.
     */
    boolean isObjectStorageHinted(PingResponse pingResponse);
+
+   /**
+    * @return size that needs to be allocated in buffer for supportsDuplicates information.
+    */
+   int estimateSizeMultimapSupportsDuplicated();
+
+   /**
+    *
+    * @param buf, buffer which supportsDuplicates info will be written to.
+    * @param supportsDuplicates, to see whether multimap cache supports duplicates or not.
+    */
+   void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates);
 }

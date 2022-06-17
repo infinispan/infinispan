@@ -29,40 +29,40 @@ public class MultimapOperationsFactory {
       this.dataFormat = dataFormat;
    }
 
-   public <K, V> GetKeyMultimapOperation<K, V> newGetKeyMultimapOperation(K key, byte[] keyBytes, CacheOptions options) {
-      return new GetKeyMultimapOperation<>(operationContext, key, keyBytes, options, dataFormat);
+   public <K, V> GetKeyMultimapOperation<K, V> newGetKeyMultimapOperation(K key, byte[] keyBytes, CacheOptions options, boolean supportsDuplicates) {
+      return new GetKeyMultimapOperation<>(operationContext, key, keyBytes, options, dataFormat, supportsDuplicates);
    }
 
-   public <K, V> GetKeyWithMetadataMultimapOperation<K, V> newGetKeyWithMetadataMultimapOperation(K key, byte[] keyBytes, CacheOptions options) {
-      return new GetKeyWithMetadataMultimapOperation<>(operationContext, key, keyBytes, options, dataFormat);
+   public <K, V> GetKeyWithMetadataMultimapOperation<K, V> newGetKeyWithMetadataMultimapOperation(K key, byte[] keyBytes, CacheOptions options, boolean supportsDuplicates) {
+      return new GetKeyWithMetadataMultimapOperation<>(operationContext, key, keyBytes, options, dataFormat, supportsDuplicates);
    }
 
-   public <K> PutKeyValueMultimapOperation<K> newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value, CacheWriteOptions options) {
-      return new PutKeyValueMultimapOperation<>(operationContext, key, keyBytes, value, options, null);
+   public <K> PutKeyValueMultimapOperation<K> newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value, CacheWriteOptions options, boolean supportsDuplicates) {
+      return new PutKeyValueMultimapOperation<>(operationContext, key, keyBytes, value, options, null, supportsDuplicates);
    }
 
-   public <K> RemoveKeyMultimapOperation<K> newRemoveKeyOperation(K key, byte[] keyBytes, CacheOptions options) {
-      return new RemoveKeyMultimapOperation<>(operationContext, key, keyBytes, options);
+   public <K> RemoveKeyMultimapOperation<K> newRemoveKeyOperation(K key, byte[] keyBytes, CacheOptions options, boolean supportsDuplicates) {
+      return new RemoveKeyMultimapOperation<>(operationContext, key, keyBytes, options, supportsDuplicates);
    }
 
-   public <K> RemoveEntryMultimapOperation<K> newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value, CacheOptions options) {
-      return new RemoveEntryMultimapOperation<>(operationContext, key, keyBytes, value, options);
+   public <K> RemoveEntryMultimapOperation<K> newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value, CacheOptions options, boolean supportsDuplicates) {
+      return new RemoveEntryMultimapOperation<>(operationContext, key, keyBytes, value, options, supportsDuplicates);
    }
 
-   public <K> ContainsEntryMultimapOperation<K> newContainsEntryOperation(K key, byte[] keyBytes, byte[] value, CacheOptions options) {
-      return new ContainsEntryMultimapOperation<>(operationContext, key, keyBytes, value, options);
+   public <K> ContainsEntryMultimapOperation<K> newContainsEntryOperation(K key, byte[] keyBytes, byte[] value, CacheOptions options, boolean supportsDuplicates) {
+      return new ContainsEntryMultimapOperation<>(operationContext, key, keyBytes, value, options, supportsDuplicates);
    }
 
-   public <K> ContainsKeyMultimapOperation<K> newContainsKeyOperation(K key, byte[] keyBytes, CacheOptions options) {
-      return new ContainsKeyMultimapOperation<>(operationContext, key, keyBytes, options);
+   public <K> ContainsKeyMultimapOperation<K> newContainsKeyOperation(K key, byte[] keyBytes, CacheOptions options, boolean supportsDuplicates) {
+      return new ContainsKeyMultimapOperation<>(operationContext, key, keyBytes, options, supportsDuplicates);
    }
 
-   public ContainsValueMultimapOperation newContainsValueOperation(byte[] value, CacheOptions options) {
-      return new ContainsValueMultimapOperation(operationContext, flags(), value, options);
+   public ContainsValueMultimapOperation newContainsValueOperation(byte[] value, CacheOptions options, boolean supportsDuplicates) {
+      return new ContainsValueMultimapOperation(operationContext, flags(), value, options, supportsDuplicates);
    }
 
-   public SizeMultimapOperation newSizeOperation() {
-      return new SizeMultimapOperation(operationContext, CacheOptions.DEFAULT);
+   public SizeMultimapOperation newSizeOperation(boolean supportsDuplicates) {
+      return new SizeMultimapOperation(operationContext, CacheOptions.DEFAULT, supportsDuplicates);
    }
 
    public int flags() {

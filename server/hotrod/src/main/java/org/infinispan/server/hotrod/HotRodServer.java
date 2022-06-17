@@ -376,9 +376,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return cache;
    }
 
-   public EmbeddedMultimapCache<byte[], byte[]> multimap(HotRodHeader header, Subject subject) {
+   public EmbeddedMultimapCache<byte[], byte[]> multimap(HotRodHeader header, Subject subject, boolean supportsDuplicates) {
       AdvancedCache<byte[], byte[]> cache = cache(getCacheInfo(header), header, subject).withStorageMediaType();
-      return new EmbeddedMultimapCache(cache);
+      return new EmbeddedMultimapCache(cache, supportsDuplicates);
    }
 
    public ExtendedCacheInfo getCacheInfo(HotRodHeader header) {

@@ -231,6 +231,15 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
+   public int estimateSizeMultimapSupportsDuplicated() {
+      return 0;
+   }
+
+   @Override
+   public void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates) {
+   }
+
+   @Override
    public AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress) {
       short status = buf.readUnsignedByte();
       buf.readUnsignedByte(); // ignore, no topology expected

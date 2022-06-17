@@ -28,9 +28,9 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
    }
 
    @Override
-   public MultimapCache<K, V> get(String name) {
+   public MultimapCache<K, V> get(String name, boolean supportsDuplicates) {
       Cache<K, Collection<V>> cache = cacheManager.getCache(name, true);
-      EmbeddedMultimapCache multimapCache = new EmbeddedMultimapCache(cache);
+      EmbeddedMultimapCache multimapCache = new EmbeddedMultimapCache(cache, supportsDuplicates);
       return multimapCache;
    }
 }

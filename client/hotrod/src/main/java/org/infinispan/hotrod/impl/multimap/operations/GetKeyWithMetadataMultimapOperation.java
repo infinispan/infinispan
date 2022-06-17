@@ -19,14 +19,12 @@ import org.infinispan.hotrod.impl.cache.CacheEntryVersionImpl;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.multimap.metadata.CacheEntryCollectionImpl;
-import org.infinispan.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.hotrod.impl.operations.OperationContext;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -36,19 +34,13 @@ import net.jcip.annotations.Immutable;
  * @since 14.0
  */
 @Immutable
-public class GetKeyWithMetadataMultimapOperation<K, V> extends AbstractKeyOperation<K, CacheEntryCollection<K, V>> {
+public class GetKeyWithMetadataMultimapOperation<K, V> extends AbstractMultimapKeyOperation<K, CacheEntryCollection<K, V>> {
    private static final Log log = LogFactory.getLog(GetKeyWithMetadataMultimapOperation.class);
 
    public GetKeyWithMetadataMultimapOperation(OperationContext operationContext,
                                               K key, byte[] keyBytes, CacheOptions options,
-                                              DataFormat dataFormat) {
-      super(operationContext, GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, key, keyBytes, options, dataFormat);
-   }
-
-   @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+                                              DataFormat dataFormat, boolean supportsDuplicates) {
+      super(operationContext, GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, key, keyBytes, options, dataFormat, supportsDuplicates);
    }
 
    @Override

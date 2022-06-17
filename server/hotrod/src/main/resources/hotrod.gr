@@ -128,6 +128,10 @@ otherParamsRev returns Map<String, byte[]>
 
 key: array;
 value: array;
+supportsDuplicates
+   : { version >= VERSION_40 }? bool
+   | { false }
+   ;
 
 expiration returns Metadata.Builder
    : { version < VERSION_22 }? lifespanInt maxIdleInt {
@@ -355,15 +359,15 @@ parameters switch opCode
 
 // Multimap
 // TODO: for put and containsENtry expiration settings are included in the request but not used
-   | { GET_MULTIMAP_REQUEST }? key { multimapProcessor.get(getHeader(), auth.getSubject(operation), key); }
-   | { GET_MULTIMAP_WITH_METADATA_REQUEST }? key { multimapProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key); }
-   | { PUT_MULTIMAP_REQUEST }? key expiration value { multimapProcessor.put(getHeader(), auth.getSubject(operation), key, value); }
-   | { REMOVE_KEY_MULTIMAP_REQUEST }? key { multimapProcessor.removeKey(getHeader(), auth.getSubject(operation), key); }
-   | { REMOVE_ENTRY_MULTIMAP_REQUEST }? key expiration value { multimapProcessor.removeEntry(getHeader(), auth.getSubject(operation), key, value); }
-   | { SIZE_MULTIMAP_REQUEST }? { multimapProcessor.size(getHeader(), auth.getSubject(operation)); }
-   | { CONTAINS_ENTRY_REQUEST }? key expiration value { multimapProcessor.containsEntry(getHeader(), auth.getSubject(operation), key, value); }
-   | { CONTAINS_KEY_MULTIMAP_REQUEST }? key { multimapProcessor.containsKey(getHeader(), auth.getSubject(operation), key); }
-   | { CONTAINS_VALUE_MULTIMAP_REQUEST }? expiration value { multimapProcessor.containsValue(getHeader(), auth.getSubject(operation), value); }
+   | { GET_MULTIMAP_REQUEST }? key supportsDuplicates { multimapProcessor.get(getHeader(), auth.getSubject(operation), key, supportsDuplicates); }
+   | { GET_MULTIMAP_WITH_METADATA_REQUEST }? key supportsDuplicates { multimapProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, supportsDuplicates); }
+   | { PUT_MULTIMAP_REQUEST }? key expiration value supportsDuplicates { multimapProcessor.put(getHeader(), auth.getSubject(operation), key, value, supportsDuplicates); }
+   | { REMOVE_KEY_MULTIMAP_REQUEST }? key supportsDuplicates { multimapProcessor.removeKey(getHeader(), auth.getSubject(operation), key, supportsDuplicates); }
+   | { REMOVE_ENTRY_MULTIMAP_REQUEST }? key expiration value supportsDuplicates { multimapProcessor.removeEntry(getHeader(), auth.getSubject(operation), key, value, supportsDuplicates); }
+   | { SIZE_MULTIMAP_REQUEST }? supportsDuplicates { multimapProcessor.size(getHeader(), auth.getSubject(operation), supportsDuplicates); }
+   | { CONTAINS_ENTRY_REQUEST }? key expiration value supportsDuplicates { multimapProcessor.containsEntry(getHeader(), auth.getSubject(operation), key, value, supportsDuplicates); }
+   | { CONTAINS_KEY_MULTIMAP_REQUEST }? key supportsDuplicates { multimapProcessor.containsKey(getHeader(), auth.getSubject(operation), key, supportsDuplicates); }
+   | { CONTAINS_VALUE_MULTIMAP_REQUEST }? expiration value supportsDuplicates { multimapProcessor.containsValue(getHeader(), auth.getSubject(operation), value, supportsDuplicates); }
 
 // Unknown
    | { throw new HotRodUnknownOperationException("Unknown operation " + opCode, version, messageId); }

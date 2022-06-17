@@ -19,9 +19,9 @@ public class RemoteMultimapCacheManager<K, V> implements MultimapCacheManager<K,
    }
 
    @Override
-   public RemoteMultimapCache<K, V> get(String cacheName) {
+   public RemoteMultimapCache<K, V> get(String cacheName, boolean supportsDuplicates) {
       RemoteCache<K, Collection<V>> cache = remoteCacheManager.getCache(cacheName);
-      RemoteMultimapCacheImpl<K, V> multimapCache = new RemoteMultimapCacheImpl<>(remoteCacheManager, cache);
+      RemoteMultimapCacheImpl<K, V> multimapCache = new RemoteMultimapCacheImpl<>(remoteCacheManager, cache, supportsDuplicates);
       multimapCache.init();
       return multimapCache;
    }

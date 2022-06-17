@@ -46,9 +46,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#transactions">the Infinispan Documentation</a>.
  *
  * <h2>Duplicates</h2>
- * The current implementation does not support duplicate values on keys. {@link
- * Object#equals(Object)} method is used to check if a value is already present in the key. This means that the
- * following code.
+ * MultimapCache can optionally support duplicate values on keys. {@link
  *
  * <pre>
  *    multimapCache.put("k", "v1").join();
@@ -57,7 +55,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  *    multimapCache.put("k", "v2").join();
  *
  *    multimapCache.get("k").thenAccept(values -> System.out.println(values.size()));
- *    // prints the value 2. "k" -> ["v1", "v2"]
+ *    // prints the value 4. "k" -> ["v1", "v2", "v2", "v2"]
  * </pre>
  *
  *
@@ -69,38 +67,40 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    private final FunctionalMap.ReadWriteMap<K, Bucket<V>> readWriteMap;
    private final AdvancedCache<K, Bucket<V>> cache;
    private final InternalEntryFactory entryFactory;
+   private final boolean supportsDuplicates;
 
-   public EmbeddedMultimapCache(Cache<K, Bucket<V>> cache) {
+   public EmbeddedMultimapCache(Cache<K, Bucket<V>> cache, boolean supportsDuplicates) {
       //TODO: ISPN-11452 Multimaps don't support transcoding, so disable data conversions
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, Bucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
       this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
    public CompletableFuture<Void> put(K key, V value) {
       requireNonNull(key, "key can't be null");
       requireNonNull(value, "value can't be null");
-      return readWriteMap.eval(key, new PutFunction<>(value));
+      return readWriteMap.eval(key, new PutFunction<>(value, supportsDuplicates));
    }
 
    @Override
    public CompletableFuture<Collection<V>> get(K key) {
       requireNonNull(key, "key can't be null");
-      return readWriteMap.eval(key, new GetFunction<>());
+      return readWriteMap.eval(key, new GetFunction<>(supportsDuplicates));
    }
 
    @Override
    public CompletableFuture<Optional<CacheEntry<K, Collection<V>>>> getEntry(K key) {
       requireNonNull(key, "key can't be null");
       return cache.getAdvancedCache().getCacheEntryAsync(key)
-            .thenApply(entry -> {
-               if (entry == null)
-                  return Optional.empty();
+           .thenApply(entry -> {
+              if (entry == null)
+                 return Optional.empty();
 
-               return Optional.of(entryFactory.create(entry.getKey(), entry.getValue().toSet(), entry.getMetadata()));
-            });
+              return Optional.of(entryFactory.create(entry.getKey(),(supportsDuplicates ? entry.getValue().toList(): entry.getValue().toSet()) , entry.getMetadata()));
+           });
    }
 
    @Override
@@ -113,7 +113,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    public CompletableFuture<Boolean> remove(K key, V value) {
       requireNonNull(key, "key can't be null");
       requireNonNull(value, "value can't be null");
-      return readWriteMap.eval(key, new RemoveFunction<>(value));
+      return readWriteMap.eval(key, new RemoveFunction<>(value, supportsDuplicates));
    }
 
    @Override
@@ -122,8 +122,8 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
       try {
          // block on explicit tx
          return isExplicitTxContext() ?
-               completedFuture(this.removeInternal(p)) :
-               runAsync(() -> this.removeInternal(p));
+              completedFuture(this.removeInternal(p)) :
+              runAsync(() -> this.removeInternal(p));
       } catch (SystemException e) {
          throw CompletableFutures.asCompletionException(e);
       }
@@ -141,8 +141,8 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
       try {
          // block on explicit tx
          return isExplicitTxContext() ?
-               completedFuture(containsEntryInternal(value)) :
-               supplyAsync(() -> containsEntryInternal(value));
+              completedFuture(containsEntryInternal(value)) :
+              supplyAsync(() -> containsEntryInternal(value));
       } catch (SystemException e) {
          throw CompletableFutures.asCompletionException(e);
       }
@@ -160,8 +160,8 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
       try {
          // block on explicit tx
          return isExplicitTxContext() ?
-               completedFuture(sizeInternal()) :
-               supplyAsync(this::sizeInternal);
+              completedFuture(sizeInternal()) :
+              supplyAsync(this::sizeInternal);
       } catch (SystemException e) {
          throw CompletableFutures.asCompletionException(e);
       }
@@ -194,7 +194,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
 
    @Override
    public boolean supportsDuplicates() {
-      return false;
+      return supportsDuplicates;
    }
 
    public Cache<K, Bucket<V>> getCache() {

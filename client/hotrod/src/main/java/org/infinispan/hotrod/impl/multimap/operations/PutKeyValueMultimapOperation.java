@@ -6,13 +6,11 @@ import static org.infinispan.hotrod.impl.multimap.protocol.MultimapHotRodConstan
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.hotrod.impl.DataFormat;
-import org.infinispan.hotrod.impl.operations.AbstractKeyValueOperation;
 import org.infinispan.hotrod.impl.operations.OperationContext;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -22,19 +20,13 @@ import net.jcip.annotations.Immutable;
  * @since 14.0
  */
 @Immutable
-public class PutKeyValueMultimapOperation<K> extends AbstractKeyValueOperation<K, Void> {
+public class PutKeyValueMultimapOperation<K> extends AbstractMultimapKeyValueOperation<K, Void> {
 
    public PutKeyValueMultimapOperation(OperationContext operationContext,
                                        K key, byte[] keyBytes,
                                        byte[] value, CacheWriteOptions options,
-                                       DataFormat dataFormat) {
-      super(operationContext, PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, key, keyBytes, value, options, dataFormat);
-   }
-
-   @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendKeyValueOperation(channel);
+                                       DataFormat dataFormat, boolean supportsDuplicates) {
+      super(operationContext, PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, key, keyBytes, value, options, dataFormat, supportsDuplicates);
    }
 
    @Override

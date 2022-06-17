@@ -24,9 +24,12 @@ import io.netty.channel.Channel;
  */
 public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
 
-   protected SizeMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+   private final boolean supportsDuplicates;
+
+   protected SizeMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, boolean supportsDuplicates) {
       super(SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg,
             null, null);
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
@@ -37,5 +40,19 @@ public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       complete(ByteBufUtil.readVLong(buf));
+   }
+
+   @Override
+   protected void sendHeaderAndRead(Channel channel) {
+      scheduleRead(channel);
+      sendHeader(channel);
+   }
+
+   @Override
+   protected void sendHeader(Channel channel) {
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + codec.estimateSizeMultimapSupportsDuplicated());
+      codec.writeHeader(buf, header);
+      codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
+      channel.writeAndFlush(buf);
    }
 }

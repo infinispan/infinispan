@@ -61,13 +61,13 @@ public class Bucket<V> {
    }
 
    /**
-    * @return {@code null} if the element exists in this {@link Bucket}, otherwise, it returns a new {@link Bucket}
+    * @return {@code null} if the element exists and {@parameter supportsDuplicates is false} in this {@link Bucket}, otherwise, it returns a new {@link Bucket}
     * instance.
     */
-   public Bucket<V> add(V value) {
+   public Bucket<V> add(V value, boolean supportsDuplicates) {
       List<V> newBucket = new ArrayList<>(values.size() + 1);
       for (V v : values) {
-         if (Objects.deepEquals(v, value)) {
+         if (!supportsDuplicates && Objects.deepEquals(v, value)) {
             return null;
          }
          newBucket.add(v);
@@ -76,21 +76,32 @@ public class Bucket<V> {
       return new Bucket<>(newBucket);
    }
 
-   public Bucket<V> remove(V value) {
+   public Bucket<V> remove(V value, boolean supportsDuplicates) {
       List<V> newBucket = new ArrayList<>(values.size());
       boolean removed = false;
       Iterator<V> it = values.iterator();
-      while (it.hasNext()) {
-         V v = it.next();
-         if (Objects.deepEquals(v, value)) {
-            removed = true;
-            break;
+      if (supportsDuplicates) {
+         while (it.hasNext()){
+            V v = it.next();
+            if (Objects.deepEquals(v, value)) {
+               removed = true;
+            } else {
+               newBucket.add(v);
+            }
          }
-         newBucket.add(v);
-      }
-      //add remaining values
-      while (it.hasNext()) {
-         newBucket.add(it.next());
+      }else {
+         while (it.hasNext()) {
+            V v = it.next();
+            if (Objects.deepEquals(v, value)) {
+               removed = true;
+               break;
+            }
+            newBucket.add(v);
+         }
+         //add remaining values
+         while (it.hasNext()) {
+            newBucket.add(it.next());
+         }
       }
       return removed ? new Bucket<>(newBucket) : null;
    }
@@ -118,6 +129,13 @@ public class Bucket<V> {
     */
    public Set<V> toSet() {
       return new HashSet<>(values);
+   }
+
+   /**
+    * @return a defensive copy of the {@link #values} collection if the cache supports duplicates.
+    */
+   public List<V> toList() {
+      return new ArrayList<>(values);
    }
 
    @Override
