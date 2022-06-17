@@ -37,7 +37,7 @@ public class RequestTracingIT {
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
 
-   private static JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE);
+   private static final JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE);
 
    @ClassRule
    public static final InfinispanServerRule SERVER =

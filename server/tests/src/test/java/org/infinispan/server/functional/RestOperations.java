@@ -1,7 +1,11 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
-import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.Common.assertResponse;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -13,7 +17,6 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -31,8 +34,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -67,19 +68,13 @@ public class RestOperations {
       builder.protocol(protocol);
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
-      RestResponse response = sync(cache.put("k1", "v1"));
-      assertEquals(204, response.getStatus());
-      assertEquals(protocol, response.getProtocol());
-      response = sync(cache.get("k1"));
-      assertEquals(200, response.getStatus());
-      assertEquals(protocol, response.getProtocol());
-      assertEquals("v1", response.getBody());
-      response = sync(cache.remove("k1"));
-      assertEquals(204, response.getStatus());
-      assertEquals(protocol, response.getProtocol());
-      response = sync(cache.get("k1"));
-      assertEquals(404, response.getStatus());
-      assertEquals(protocol, response.getProtocol());
+      assertResponse(NO_CONTENT, cache.post("k1", "v1"), r -> assertEquals(protocol, r.getProtocol()));
+      assertResponse(OK, cache.get("k1"), r -> {
+         assertEquals(protocol, r.getProtocol());
+         assertEquals("v1", r.getBody());
+      });
+      assertResponse(NO_CONTENT, cache.remove("k1"), r -> assertEquals(protocol, r.getProtocol()));
+      assertResponse(NOT_FOUND, cache.get("k1"), r -> assertEquals(protocol, r.getProtocol()));
    }
 
    @Test
@@ -88,10 +83,10 @@ public class RestOperations {
       builder.protocol(protocol);
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
       RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
-      sync(cache.post("k1", "v1", 1, 1));
-      assertEquals(HttpResponseStatus.OK.code(), sync(cache.get("k1")).getStatus());
+      assertStatus(NO_CONTENT, cache.post("k1", "v1", 1, 1));
+      assertStatus(OK, cache.get("k1"));
       Thread.sleep(2000);
-      assertEquals(HttpResponseStatus.NOT_FOUND.code(), sync(cache.get("k1")).getStatus());
+      assertStatus(NOT_FOUND, cache.get("k1"));
    }
 
 
@@ -101,9 +96,7 @@ public class RestOperations {
       builder.protocol(protocol);
       RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
 
-      RestResponse tasks = sync(client.tasks().list(ResultType.USER));
-      List<Json> taskListNode = Json.read(tasks.getBody()).asJsonList();
-
+      List<Json> taskListNode = Json.read(assertStatus(OK, client.tasks().list(ResultType.USER))).asJsonList();
       taskListNode.forEach(n -> assertFalse(n.at("name").asString().startsWith("@@")));
    }
 
@@ -122,10 +115,8 @@ public class RestOperations {
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig("test-counter", configuration);
       String configJson = AbstractRestResourceTest.counterConfigToJson(config);
       RestCounterClient counter = client.counter("test");
-      RestResponse rsp = sync(counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
-      assertEquals(HttpResponseStatus.OK.code(), rsp.getStatus());
+      assertStatus(OK, counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
 
-      rsp = sync(counter.get());
-      assertEquals("5", rsp.getBody());
+      assertEquals("5", assertStatus(OK, counter.get()));
    }
 }

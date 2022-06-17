@@ -2,8 +2,9 @@ package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
@@ -84,28 +87,72 @@ public class Common {
       HTTP_KERBEROS_MECHS.add(new Object[]{HttpConstants.SPNEGO_NAME});
    }
 
-   public static RestResponse awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus) {
-      int count = 0;
-      RestResponse response;
-      while ((response = await(request.get())).getStatus() == pendingStatus || count++ < 100) {
-         response.close();
-         TestingUtil.sleepThread(10);
+   public static <T> T awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus, Function<RestResponse, T> f) {
+      int MAX_RETRIES = 100;
+      for (int i = 0; i < MAX_RETRIES; i++) {
+         try (RestResponse response = sync(request.get())) {
+            if (response.getStatus() == pendingStatus) {
+               TestingUtil.sleepThread(100);
+            } else if (response.getStatus() == completeStatus) {
+               return f.apply(response);
+            } else {
+               fail(String.format("Request returned unexpected status %d instead of %d or %d", response.getStatus(), pendingStatus, completeStatus));
+            }
+         }
       }
-      assertEquals(completeStatus, response.getStatus());
-      return response;
+      fail(String.format("Request did not complete with status %d after %d retries", completeStatus, MAX_RETRIES));
+      return null; // Never executed
+   }
+
+   public static void awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus) {
+      awaitStatus(request, pendingStatus, completeStatus, r -> null);
+   }
+
+   public static RestResponse awaitResponse(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus) {
+      int MAX_RETRIES = 100;
+      for (int i = 0; i < MAX_RETRIES; i++) {
+         RestResponse response = sync(request.get());
+         if (response.getStatus() == pendingStatus) {
+            response.close();
+            TestingUtil.sleepThread(100);
+         } else if (response.getStatus() == completeStatus) {
+            return response;
+         } else {
+            response.close();
+            fail(String.format("Request returned unexpected status %d instead of %d or %d", response.getStatus(), pendingStatus, completeStatus));
+         }
+      }
+      fail(String.format("Request did not complete with status %d after %d retries", completeStatus, MAX_RETRIES));
+      return null; // Never executed
    }
 
    public static <T> T sync(CompletionStage<T> stage) {
-      return Exceptions.unchecked(() -> stage.toCompletableFuture().get(5, TimeUnit.SECONDS));
+      return sync(stage, 10, TimeUnit.SECONDS);
    }
 
    public static <T> T sync(CompletionStage<T> stage, long timeout, TimeUnit timeUnit) {
       return Exceptions.unchecked(() -> stage.toCompletableFuture().get(timeout, timeUnit));
    }
 
-   public static void assertStatus(int status, CompletionStage<RestResponse> request) {
+   public static String assertStatus(int status, CompletionStage<RestResponse> request) {
       try (RestResponse response = sync(request)) {
          assertEquals(status, response.getStatus());
+         return response.getBody();
+      }
+   }
+
+   public static void assertStatusAndBodyEquals(int status, String body, CompletionStage<RestResponse> request) {
+      assertEquals(body, assertStatus(status, request));
+   }
+
+   public static void assertStatusAndBodyContains(int status, String body, CompletionStage<RestResponse> request) {
+      assertTrue(assertStatus(status, request).contains(body));
+   }
+
+   public static void assertResponse(int status, CompletionStage<RestResponse> request, Consumer<RestResponse> consumer) {
+      try (RestResponse response = sync(request)) {
+         assertEquals(status, response.getStatus());
+         consumer.accept(response);
       }
    }
 

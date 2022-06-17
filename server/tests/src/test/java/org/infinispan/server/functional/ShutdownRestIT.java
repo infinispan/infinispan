@@ -1,6 +1,8 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.commons.test.Eventually.eventually;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 
 import java.net.ConnectException;
@@ -31,7 +33,7 @@ public class ShutdownRestIT {
    @Test
    public void testShutDown() {
       RestClient client = SERVER_TEST.rest().create();
-      sync(client.server().stop());
+      assertStatus(NO_CONTENT, client.server().stop());
       eventually(() -> isServerShutdown(client));
       eventually(() -> !SERVER.getServerDriver().isRunning(0));
    }

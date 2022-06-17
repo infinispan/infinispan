@@ -38,7 +38,6 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
@@ -536,21 +535,23 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
-   public void testRestAdminsMustAccessBackupsAndRestores() throws IOException {
+   public void testRestAdminsMustAccessBackupsAndRestores() {
       String BACKUP_NAME = "backup";
       RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
       assertStatus(ACCEPTED, client.createBackup(BACKUP_NAME));
-      RestResponse response = awaitStatus(() -> client.getBackup(BACKUP_NAME, false), ACCEPTED, OK);
-      String fileName = response.getHeader("Content-Disposition").split("=")[1];
-      File backupZip = new File(getServers().getServerDriver().getRootDir(), fileName);
-      try (InputStream is = response.getBodyAsStream()) {
-         Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      } finally {
-         response.close();
-      }
+      File zip = awaitStatus(() -> client.getBackup(BACKUP_NAME, false), ACCEPTED, OK, response -> {
+         String fileName = response.getHeader("Content-Disposition").split("=")[1];
+         File backupZip = new File(getServers().getServerDriver().getRootDir(), fileName);
+         try (InputStream is = response.getBodyAsStream()) {
+            Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         }
+         return backupZip;
+      });
       assertStatus(NO_CONTENT, client.deleteBackup(BACKUP_NAME));
       assertStatus(OK, client.getBackupNames());
-      assertStatus(ACCEPTED, client.restore(BACKUP_NAME, backupZip));
+      assertStatus(ACCEPTED, client.restore(BACKUP_NAME, zip));
       assertStatus(OK, client.getRestoreNames());
       awaitStatus(() -> client.getRestore(BACKUP_NAME), ACCEPTED, CREATED);
       assertStatus(NO_CONTENT, client.deleteRestore(BACKUP_NAME));

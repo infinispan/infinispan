@@ -23,7 +23,9 @@ public interface RestResponse extends RestEntity, AutoCloseable {
    int FORBIDDEN = 403;
    int NOT_FOUND = 404;
    int METHOD_NOT_ALLOWED = 405;
+   int CONFLICT = 409;
    int INTERNAL_SERVER_ERROR = 500;
+   int SERVICE_UNAVAILABLE = 503;
 
    int getStatus();
 

@@ -68,8 +68,7 @@ public class CloudEventsIntegrationIT {
       kafkaProperties.setProperty("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
       kafkaProperties.setProperty("group.id", CloudEventsIntegrationIT.class.getSimpleName());
       kafkaProperties.setProperty("auto.offset.reset", "earliest");
-      KafkaConsumer<byte[], byte[]> kafkaConsumer = new KafkaConsumer<>(kafkaProperties);
-      try {
+      try (KafkaConsumer<byte[], byte[]> kafkaConsumer = new KafkaConsumer<>(kafkaProperties)) {
          assertTrue(kafkaConsumer.listTopics().containsKey(CACHE_ENTRIES_TOPIC));
          kafkaConsumer.subscribe(Collections.singleton(CACHE_ENTRIES_TOPIC));
 
@@ -86,8 +85,6 @@ public class CloudEventsIntegrationIT {
          Json expectedKeyJson = Json.object().set("_type", "string").set("_value", "k1");
          Json actualKeyJson = Json.read(new String(eventRecord.key()));
          assertEquals(expectedKeyJson, actualKeyJson);
-      } finally {
-         kafkaConsumer.close();
       }
    }
 }

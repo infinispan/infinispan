@@ -1,6 +1,9 @@
 package org.infinispan.server.functional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -106,8 +109,7 @@ public class RestMetricsResource {
       RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
 
       for (int i = 0; i < NUM_PUTS; i++) {
-         RestResponse putResp = sync(cache.put("k" + i, "v" + i));
-         assertEquals(204, putResp.getStatus());
+         assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
       }
 
       try (RestResponse response = sync(metricsClient.metrics())) {
@@ -124,7 +126,7 @@ public class RestMetricsResource {
       }
 
       // delete cache and check that the metric is gone
-      sync(client.cache(SERVER_TEST.getMethodName()).delete());
+      assertStatus(OK, client.cache(SERVER_TEST.getMethodName()).delete());
 
       try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
@@ -164,8 +166,7 @@ public class RestMetricsResource {
       RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
 
       for (int i = 0; i < NUM_PUTS; i++) {
-         RestResponse putResp = sync(cache.put("k" + i, "v" + i));
-         assertEquals(204, putResp.getStatus());
+         assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
       }
 
       try (RestResponse response = sync(metricsClient.metrics())) {
@@ -204,7 +205,7 @@ public class RestMetricsResource {
       }
 
       // delete cache and check that the metric is gone
-      sync(client.cache(SERVER_TEST.getMethodName()).delete());
+      assertStatus(OK, client.cache(SERVER_TEST.getMethodName()).delete());
 
       try (RestResponse response = sync(metricsClient.metricsMetadata())) {
          assertEquals(200, response.getStatus());

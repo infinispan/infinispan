@@ -1,6 +1,7 @@
 package org.infinispan.server.functional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.functional.XSiteIT.LON;
 import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.test.core.Common.sync;
@@ -78,7 +79,7 @@ public class XSiteRestMetricsOperations {
 
    private static void assertSiteStatusMetrics(RestMetricsClient client, String metric, int expected) throws Exception {
       try (RestResponse response = sync(client.metrics())) {
-         assertEquals(200, response.getStatus());
+         assertEquals(OK, response.getStatus());
          RestMetricsResource.checkIsPrometheus(response.contentType());
          RestMetricsResource.checkRule(response.getBody(), "vendor_" + metric, (stringValue) -> {
             int parsed = (int) Double.parseDouble(stringValue);
