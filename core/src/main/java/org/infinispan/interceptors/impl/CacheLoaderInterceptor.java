@@ -4,6 +4,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.B
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
+import static org.infinispan.reactive.RxJavaInterop.isNotMarshallEntryTombstoneRxOp;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -41,11 +42,13 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -79,7 +82,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -254,6 +256,17 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return visitManyDataCommand(ctx, command, command.getAffectedKeys());
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) {
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+
+      // we need to load to check if the entry is really a tombstone
+      for (Object key : command.getAffectedKeys()) {
+            stage.dependsOn(loadIfNeeded(ctx, key, command));
+      }
+      return asyncInvokeNext(ctx, command, stage.freeze());
    }
 
    @Override
@@ -598,14 +611,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       private Publisher<CacheEntry<K, V>> getCacheEntryPublisher(Publisher<CacheEntry<K, V>> inMemorySource,
                                                                  IntSet segments) {
          Set<K> seenKeys = new HashSet<>(dataContainer.sizeIncludingExpired(segments));
-         Publisher<MarshallableEntry<K, V>> loaderSource =
+         Flowable<MarshallableEntry<K, V>> loaderSource = Flowable.fromPublisher(
                persistenceManager.publishEntries(segments,
-                     k -> !seenKeys.contains(k), true, true, resolveStorePredicate(command));
+                     k -> !seenKeys.contains(k), true, true, resolveStorePredicate(command)));
+         if (!command.hasAnyFlag(FlagBitSets.STREAM_INCLUDE_TOMBSTONES)) {
+            loaderSource = loaderSource.filter(isNotMarshallEntryTombstoneRxOp());
+         }
          return Flowable.concat(
                Flowable.fromPublisher(inMemorySource)
                      .doOnNext(ce -> seenKeys.add(ce.getKey())),
-               Flowable.fromPublisher(loaderSource)
-                     .map(me -> PersistenceUtil.convert(me, iceFactory)));
+               loaderSource.map(me -> PersistenceUtil.convert(me, iceFactory)));
       }
    }
 

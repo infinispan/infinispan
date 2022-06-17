@@ -21,6 +21,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -166,6 +167,8 @@ public class PersistenceMockUtil {
       when(cache.getComponentRegistry()).thenReturn(registry);
       when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
       when(cache.getCacheConfiguration()).thenReturn(configuration);
+      when(cache.getKeyDataConversion()).thenReturn(DataConversion.newKeyDataConversion());
+      when(cache.getValueDataConversion()).thenReturn(DataConversion.newValueDataConversion());
       return cache;
    }
 }

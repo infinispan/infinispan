@@ -2,6 +2,7 @@ package org.infinispan.container.offheap;
 
 import java.util.Iterator;
 import java.util.Spliterator;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -23,6 +24,7 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    @Inject protected OffHeapMemoryAllocator allocator;
    @Inject protected OffHeapEntryFactory offHeapEntryFactory;
 
+   private final LongAdder tombstoneCount = new LongAdder();
    private OffHeapConcurrentMap map;
 
    @Start
@@ -45,6 +47,16 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    protected int getSegmentForKey(Object key) {
       // We always map to same map, so no reason to waste finding out segment
       return -1;
+   }
+
+   @Override
+   protected void incrementTombstoneCount(int segment) {
+      tombstoneCount.increment();
+   }
+
+   @Override
+   protected void decrementTombstoneCounter(int segment) {
+      tombstoneCount.decrement();
    }
 
    @Override
@@ -100,8 +112,15 @@ public class OffHeapDataContainer extends AbstractInternalDataContainer<WrappedB
    }
 
    @Override
+   public long numberOfTombstones() {
+      return tombstoneCount.sum();
+   }
+
+   @Override
    public int sizeIncludingExpired() {
-      return map.size();
+      long tombstoneSize = numberOfTombstones();
+      int size = map.size();
+      return size <= tombstoneSize ? 0 : size - (int) tombstoneSize;
    }
 
    @Override

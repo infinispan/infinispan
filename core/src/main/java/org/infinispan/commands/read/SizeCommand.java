@@ -11,6 +11,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSetsExternalization;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -104,13 +105,13 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeLong(flags);
-      output.writeObject(segments);
+      IntSetsExternalization.writeTo(output, segments);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       setFlagsBitSet(input.readLong());
-      segments = (IntSet) input.readObject();
+      segments = IntSetsExternalization.readFrom(input);
    }
 
    @Override

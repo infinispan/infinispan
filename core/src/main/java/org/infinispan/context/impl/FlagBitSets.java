@@ -48,6 +48,7 @@ public class FlagBitSets {
    public static final long ALREADY_HAS_LOCK = EnumUtil.bitSetOf(Flag.ALREADY_HAS_LOCK);
    public static final long BACKUP_WRITE = EnumUtil.bitSetOf(Flag.BACKUP_WRITE);
    public static final long STATE_TRANSFER_PROGRESS = EnumUtil.bitSetOf(Flag.STATE_TRANSFER_PROGRESS);
+   public static final long STREAM_INCLUDE_TOMBSTONES = EnumUtil.bitSetOf(Flag.STREAM_TOMBSTONES);
 
    /**
     * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.

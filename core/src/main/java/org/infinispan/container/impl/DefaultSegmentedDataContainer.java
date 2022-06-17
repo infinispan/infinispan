@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -46,11 +47,13 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
 
    protected final AtomicReferenceArray<PeekableTouchableMap<K, V>> maps;
    protected final Supplier<PeekableTouchableMap<K, V>> mapSupplier;
+   private final AtomicLongArray tombstoneCount;
    protected boolean shouldStopSegments;
 
    public DefaultSegmentedDataContainer(Supplier<PeekableTouchableMap<K, V>> mapSupplier, int numSegments) {
       maps = new AtomicReferenceArray<>(numSegments);
       this.mapSupplier = Objects.requireNonNull(mapSupplier);
+      tombstoneCount = new AtomicLongArray(numSegments);
    }
 
    @Start
@@ -77,6 +80,16 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    @Override
    public int getSegmentForKey(Object key) {
       return keyPartitioner.getSegment(key);
+   }
+
+   @Override
+   protected void incrementTombstoneCount(int segment) {
+      tombstoneCount.incrementAndGet(segment);
+   }
+
+   @Override
+   protected void decrementTombstoneCounter(int segment) {
+      tombstoneCount.decrementAndGet(segment);
    }
 
    @Override
@@ -190,7 +203,8 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
             return Integer.MAX_VALUE;
          }
       }
-      return size;
+      long tombstonesSize = numberOfTombstones();
+      return size <= tombstonesSize ? 0 : (int) (size - tombstonesSize);
    }
 
    @Override
@@ -206,7 +220,8 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
             }
          }
       }
-      return size;
+      long tombstonesSize = numberOfTombstones();
+      return size <= tombstonesSize ? 0 : (int) (size - tombstonesSize);
    }
 
    @Override
@@ -260,6 +275,15 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    }
 
    @Override
+   public long numberOfTombstones() {
+      long count = 0;
+      for (int i = 0; i < tombstoneCount.length(); ++i) {
+         count += tombstoneCount.get(i);
+      }
+      return count;
+   }
+
+   @Override
    public void forEachSegment(ObjIntConsumer<PeekableTouchableMap<K, V>> segmentMapConsumer) {
       for (int i = 0; i < maps.length(); ++i) {
          PeekableTouchableMap<K, V> map = maps.get(i);
@@ -284,6 +308,7 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    }
 
    private void stopMap(int segment, boolean notifyListener) {
+      tombstoneCount.set(segment, 0);
       ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.getAndSet(segment, null);
       if (map != null) {
          if (notifyListener && !map.isEmpty()) {

@@ -87,6 +87,11 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    }
 
    @Override
+   public void putTombstone(int segment, K key, PrivateMetadata metadata) {
+      delegate().putTombstone(segment, key, metadata);
+   }
+
+   @Override
    public void evict(K key) {
       delegate().evict(key);
    }
@@ -210,6 +215,11 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    @Override
    public void removeRemovalListener(Object listener) {
       delegate().removeRemovalListener(listener);
+   }
+
+   @Override
+   public long numberOfTombstones() {
+      return delegate().numberOfTombstones();
    }
 
    // Eviction related methods

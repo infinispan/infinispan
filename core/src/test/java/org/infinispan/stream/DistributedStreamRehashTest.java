@@ -1,6 +1,7 @@
 package org.infinispan.stream;
 
 import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.infinispan.context.Flag.STREAM_TOMBSTONES;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -82,12 +83,12 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
 
       doAnswer(blockingLpmAnswer).when(spy)
             .entryPublisher(eq(IntSets.immutableSet(1)), any(), any(),
-                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any());
+                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS, STREAM_TOMBSTONES)), any(), any());
 
       TestingUtil.replaceComponent(nodeToBlockBeforeProcessing, LocalPublisherManager.class, spy, true);
 
       Future<List<Map.Entry<MagicKey, Object>>> future = fork(() ->
-            originator.entrySet().stream().collect(() -> Collectors.toList()));
+            originator.entrySet().stream().collect(Collectors::toList));
 
       // Note that segment 2 doesn't map to the node1 anymore
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {0, 2}, {2, 1}, {1, 0}});

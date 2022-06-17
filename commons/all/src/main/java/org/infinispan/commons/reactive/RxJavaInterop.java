@@ -8,6 +8,7 @@ import org.reactivestreams.Publisher;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.functions.Predicate;
 
 /**
  * Static factory class that provides methods to obtain commonly used instances for interoperation between RxJava
@@ -54,9 +55,15 @@ public class RxJavaInterop {
       return (Consumer) emptyConsumer;
    }
 
+   public static <R> Predicate<R> truePredicate() {
+      //noinspection unchecked
+      return (Predicate<R>) truePredicate;
+   }
+
    private static final Function<Object, Object> identityFunction = i -> i;
    private static final Consumer<Object> emptyConsumer = ignore -> { };
    private static final Function<Map.Entry<Object, Object>, Object> entryToKeyFunction = Map.Entry::getKey;
    private static final Function<Map.Entry<Object, Object>, Object> entryToValueFunction = Map.Entry::getValue;
    private static final Function<? super Throwable, Publisher<?>> wrapThrowable = t -> Flowable.error(Util.rewrapAsCacheException(t));
+   private static final Predicate<Object> truePredicate = o -> true;
 }

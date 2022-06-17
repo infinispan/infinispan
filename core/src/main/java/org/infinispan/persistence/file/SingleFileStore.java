@@ -947,7 +947,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       // allocate file entry and store in cache file
       int metadataLength = metadata == null ? 0 : metadata.getLength() + TIMESTAMP_BYTES;
       int internalMetadataLength = internalMetadata == null ? 0 : internalMetadata.getLength();
-      int len = KEY_POS_LATEST + key.getLength() + data.getLength() + metadataLength + internalMetadataLength;
+      int dataLength = data == null ? 0 : data.getLength();
+      int len = KEY_POS_LATEST + key.getLength() + dataLength + metadataLength + internalMetadataLength;
 
       long stamp = resizeLock.readLock();
       try {
@@ -958,12 +959,14 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          }
 
          FileEntry newEntry = allocate(len);
-         newEntry = new FileEntry(newEntry.offset, newEntry.size, key.getLength(), data.getLength(), metadataLength, internalMetadataLength, marshalledEntry.expiryTime());
+         newEntry = new FileEntry(newEntry.offset, newEntry.size, key.getLength(), dataLength, metadataLength, internalMetadataLength, marshalledEntry.expiryTime());
 
          ByteBuffer buf = ByteBuffer.allocate(len);
          newEntry.writeToBuf(buf);
          buf.put(key.getBuf(), key.getOffset(), key.getLength());
-         buf.put(data.getBuf(), data.getOffset(), data.getLength());
+         if (data != null) {
+            buf.put(data.getBuf(), data.getOffset(), data.getLength());
+         }
          if (metadata != null) {
             buf.put(metadata.getBuf(), metadata.getOffset(), metadata.getLength());
 

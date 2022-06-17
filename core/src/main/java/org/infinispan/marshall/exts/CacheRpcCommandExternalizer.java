@@ -7,12 +7,12 @@ import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -42,6 +42,7 @@ import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.RemoveTombstoneBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -137,7 +138,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracTombstoneStateResponseCommand.class,
             IracTombstonePrimaryCheckCommand.class,
             IracTombstoneRemoteSiteCheckCommand.class,
-            IracPutManyCommand.class);
+            IracPutManyCommand.class,
+            RemoveTombstoneBackupWriteCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

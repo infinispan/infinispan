@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.util.CacheTopologyUtil.checkTopology;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,10 +30,12 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ArrayCollector;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -65,8 +69,6 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -92,6 +94,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
    private final InvocationSuccessFunction<AbstractDataWriteCommand> primaryReturnHandler = this::primaryReturnHandler;
+   private final InvocationSuccessFunction<RemoveTombstoneCommand> primaryRemoveTombstoneHandler = this::primaryRemoveTombstoneHandler;
 
    @Override
    protected Log getLog() {
@@ -133,7 +136,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     */
    protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGetSingleKey(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
-      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+      LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
       int topologyId = cacheTopology.getTopologyId();
 
       DistributionInfo info = retrieveDistributionInfo(cacheTopology, command, key);
@@ -191,7 +194,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
-      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+      LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
       DistributionInfo info = cacheTopology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key,
             keyPartitioner));
 
@@ -233,7 +236,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (log.isTraceEnabled()) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
       }
-      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+      LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
       int segment = SegmentSpecificCommand.extractSegment(command, command.getKey(), keyPartitioner);
       DistributionInfo distributionInfo = cacheTopology.getSegmentDistribution(segment);
       Collection<Address> owners = distributionInfo.writeOwners();
@@ -303,7 +306,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private <C extends FlagAffectedCommand & TopologyAffectedCommand>
    CompletionStage<Void> doRemoteGetMany(InvocationContext ctx, C command, Collection<?> keys,
                                          Map<Object, Collection<Address>> unsureOwners, boolean hasSuspectedOwner) {
-      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+      LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
       Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, cacheTopology, null, unsureOwners);
       if (requestedKeys.isEmpty()) {
          for (Object key : keys) {
@@ -343,6 +346,43 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return handleFunctionalReadManyCommand(ctx, command, readOnlyManyHelper);
    }
 
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) {
+      if (isLocalModeForced(command)) {
+         for (Object key : command.getAffectedKeys()) {
+            if (ctx.lookupEntry(key) == null) {
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+            }
+         }
+         return invokeNext(ctx, command);
+      }
+
+      LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
+      DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
+
+      if (isReplicated && command.hasAnyFlag(FlagBitSets.BACKUP_WRITE) && !info.isWriteOwner()) {
+         // Replicated caches receive broadcast commands even when they are not owners (e.g. zero capacity nodes)
+         // The originator will ignore the UnsuccessfulResponse
+         command.fail();
+         return null;
+      }
+
+      if (info.isPrimary()) {
+         return invokeNextThenApply(ctx, command, primaryRemoveTombstoneHandler);
+      } else if (ctx.isOriginLocal()) {
+         return invokeRemotely(ctx, command, info.primary());
+      } else {
+         // make sure everything is wrapped
+         for (Object key : command.getAffectedKeys()) {
+            if (ctx.lookupEntry(key) == null) {
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+            }
+         }
+
+         return invokeNext(ctx, command);
+      }
+   }
+
    protected <C extends TopologyAffectedCommand & FlagAffectedCommand> Object handleFunctionalReadManyCommand(
          InvocationContext ctx, C command, ReadManyCommandHelper<C> helper) {
       // We cannot merge this method with visitGetAllCommand because this can't wrap entries into context
@@ -351,7 +391,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return handleLocalOnlyReadManyCommand(ctx, command, helper.keys(command));
       }
 
-      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+      LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
       Collection<?> keys = helper.keys(command);
       if (!ctx.isOriginLocal()) {
          return handleRemoteReadManyCommand(ctx, command, keys, helper);
@@ -478,7 +518,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             for (Object key : keys) {
                contactedNodes.computeIfAbsent(key, k -> new ArrayList<>(4)).add(target);
             }
-            requestedKeys = getKeysByOwner(ctx, keys, CacheTopologyUtil.checkTopology(command, getCacheTopology()), null, contactedNodes);
+            requestedKeys = getKeysByOwner(ctx, keys, checkTopology(command, getCacheTopology()), null, contactedNodes);
          }
          int pos = destinationIndex;
          for (Map.Entry<Address, List<Object>> addressKeys : requestedKeys.entrySet()) {
@@ -639,7 +679,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return UnsureResponse.INSTANCE;
       }
       if (readNeedsRemoteValue(command)) {
-         LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+         LocalizedCacheTopology cacheTopology = checkTopology(command, getCacheTopology());
          Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
          if (log.isTraceEnabled())
             log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
@@ -712,6 +752,65 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     */
    protected boolean readNeedsRemoteValue(FlagAffectedCommand command) {
       return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP);
+   }
+
+   protected Object primaryRemoveTombstoneHandler(InvocationContext ctx, RemoveTombstoneCommand command, Object localResult) {
+      if (!command.isSuccessful()) {
+         if (log.isTraceEnabled()) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+         return localResult;
+      }
+      DistributionInfo distributionInfo = checkTopology(command, getCacheTopology()).getSegmentDistribution(command.getSegment());
+      Collection<Address> owners = distributionInfo.writeOwners();
+      if (owners.size() == 1) {
+         // There are no backups, skip the replication part.
+         return localResult;
+      }
+
+      if (!isSynchronous(command)) {
+         if (isReplicated) {
+            rpcManager.sendToAll(command, DeliverOrder.PER_SENDER);
+         } else {
+            rpcManager.sendToMany(owners, command, DeliverOrder.PER_SENDER);
+         }
+         return localResult;
+      }
+      VoidResponseCollector collector = VoidResponseCollector.ignoreLeavers();
+      RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+      // Mark the command as a backup write so it can skip some checks
+      command.addFlags(FlagBitSets.BACKUP_WRITE);
+      CompletionStage<Void> remoteInvocation = isReplicated ?
+            rpcManager.invokeCommandOnAll(command, collector, rpcOptions) :
+            rpcManager.invokeCommand(owners, command, collector, rpcOptions);
+      return asyncValue(remoteInvocation.handle((ignored, t) -> {
+         // Unset the backup write bit as the command will be retried
+         command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.BACKUP_WRITE);
+         CompletableFutures.rethrowExceptionIfPresent(t);
+         return localResult;
+      }));
+   }
+
+
+   private Object invokeRemotely(InvocationContext ctx, RemoveTombstoneCommand command, Address primaryOwner) {
+      if (log.isTraceEnabled()) getLog().tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+
+      if (!isSynchronous(command)) {
+         rpcManager.sendTo(primaryOwner, command, DeliverOrder.PER_SENDER);
+         return null;
+      }
+      CompletionStage<ValidResponse> remoteInvocation;
+      remoteInvocation = rpcManager.invokeCommand(primaryOwner, command, SingleResponseCollector.validOnly(),
+            rpcManager.getSyncRpcOptions());
+      return asyncValue(remoteInvocation).andHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
+         CompletableFutures.rethrowExceptionIfPresent(t);
+         Response response = ((Response) rv);
+         if (!response.isSuccessful()) {
+            rCommand.fail();
+            // FIXME A response cannot be successful and not valid
+         } else if (!(response instanceof ValidResponse)) {
+            throw unexpected(primaryOwner, response);
+         }
+         return null;
+      });
    }
 
    protected interface ReadManyCommandHelper<C extends VisitableCommand> extends InvocationSuccessFunction<C> {
@@ -861,11 +960,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          List<Object> senderKeys = requestedKeys.get(sender);
          for (Object key : senderKeys) {
-            Collection<Address> keyUnsureOwners = unsureOwners.get(key);
-            if (keyUnsureOwners == null) {
-               keyUnsureOwners = new ArrayList<>();
-               unsureOwners.put(key, keyUnsureOwners);
-            }
+            Collection<Address> keyUnsureOwners = unsureOwners.computeIfAbsent(key, k -> new ArrayList<>());
             keyUnsureOwners.add(sender);
          }
       }

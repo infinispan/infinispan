@@ -110,6 +110,15 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
    InternalCacheEntry<K, V> remove(int segment, Object k);
 
    /**
+    * Stores the following {@code key} and {@code metadata} as a tombstone {@link InternalCacheEntry}.
+    *
+    * @param segment  The key's segment.
+    * @param key      The key to store
+    * @param metadata The {@link PrivateMetadata} representing the tombstone.
+    */
+   void putTombstone(int segment, K key, PrivateMetadata metadata);
+
+   /**
     * Same as {@link DataContainer#evict(Object)} except that the segment of the key can provided to
     * remove the entry without calculating the segment for the given key.
     * @param segment segment for the key
@@ -290,4 +299,9 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @return true if any entry can expire, false otherwise.
     */
    boolean hasExpirable();
+
+   /**
+    * @return The number of tombstone {@link InternalCacheEntry} stored.
+    */
+   long numberOfTombstones();
 }

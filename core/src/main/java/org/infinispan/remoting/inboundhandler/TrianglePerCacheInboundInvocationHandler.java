@@ -22,6 +22,7 @@ import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.RemoveTombstoneBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
@@ -76,6 +77,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             case SingleKeyBackupWriteCommand.COMMAND_ID:
             case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
             case BackupNoopCommand.COMMAND_ID:
+            case RemoveTombstoneBackupWriteCommand.COMMAND_ID:
                handleSingleKeyBackupCommand((BackupWriteCommand) command);
                break;
             case PutMapBackupWriteCommand.COMMAND_ID:

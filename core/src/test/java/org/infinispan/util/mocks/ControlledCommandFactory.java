@@ -33,12 +33,12 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -72,6 +72,7 @@ import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.RemoveTombstoneBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -93,6 +94,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
@@ -749,5 +751,15 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public IracPutManyCommand buildIracPutManyCommand(int capacity) {
       return actual.buildIracPutManyCommand(capacity);
+   }
+
+   @Override
+   public RemoveTombstoneCommand buildRemoveTombstoneCommand(int segment, long flags, int capacity) {
+      return actual.buildRemoveTombstoneCommand(segment, flags, capacity);
+   }
+
+   @Override
+   public RemoveTombstoneBackupWriteCommand buildRemoveTombstoneBackupWriteCommand() {
+      return actual.buildRemoveTombstoneBackupWriteCommand();
    }
 }

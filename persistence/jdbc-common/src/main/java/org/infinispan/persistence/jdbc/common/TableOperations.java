@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.common;
 
+import static org.infinispan.reactive.RxJavaInterop.isNotMarshallEntryTombstoneRxOp;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.function.Consumer;
@@ -22,6 +24,7 @@ public interface TableOperations<K, V> {
    default Flowable<K> publishKeys(Supplier<Connection> connectionSupplier, Consumer<Connection> connectionCloser,
          IntSet segments, Predicate<? super K> filter) {
       return publishEntries(connectionSupplier, connectionCloser, segments, filter, false)
+            .filter(isNotMarshallEntryTombstoneRxOp())
             .map(MarshallableEntry::getKey);
    }
 

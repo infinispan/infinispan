@@ -1,11 +1,13 @@
 package org.infinispan.util.concurrent.locks.impl;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.await;
 
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -16,6 +18,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
@@ -33,8 +36,8 @@ import org.infinispan.util.logging.LogFactory;
  * A special lock for Infinispan cache.
  * <p/>
  * The main different with the traditional {@link java.util.concurrent.locks.Lock} is allowing to use any object as lock
- * owner. It is possible to use a {@link Thread} as lock owner that makes similar to {@link
- * java.util.concurrent.locks.Lock}.
+ * owner. It is possible to use a {@link Thread} as lock owner that makes similar to
+ * {@link java.util.concurrent.locks.Lock}.
  * <p/>
  * In addition, it has an asynchronous interface. {@link #acquire(Object, long, TimeUnit)}  will not acquire the lock
  * immediately (except if it is free) but will return a {@link ExtendedLockPromise}. This promise allow to test if the
@@ -50,7 +53,7 @@ public class InfinispanLock {
          newUpdater(InfinispanLock.class, LockPlaceHolder.class, "current");
    private static final AtomicReferenceFieldUpdater<LockPlaceHolder, LockState> STATE_UPDATER =
          newUpdater(LockPlaceHolder.class, LockState.class, "lockState");
-
+   private static final Supplier<TimeoutException> TIMEOUT_SUPPLIER = () -> new TimeoutException("Timeout waiting for lock.");
 
    private final Queue<LockPlaceHolder> pendingRequest;
    private final ConcurrentMap<Object, LockPlaceHolder> lockOwners;
@@ -64,7 +67,7 @@ public class InfinispanLock {
     * Creates a new instance.
     *
     * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
-    * @param timeService the {@link TimeService} to check for timeouts.
+    * @param timeService         the {@link TimeService} to check for timeouts.
     */
    public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService) {
       this.nonBlockingExecutor = nonBlockingExecutor;
@@ -79,8 +82,8 @@ public class InfinispanLock {
     * Creates a new instance.
     *
     * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
-    * @param timeService     the {@link TimeService} to check for timeouts.
-    * @param releaseRunnable a {@link Runnable} that is invoked every time this lock is released.
+    * @param timeService         the {@link TimeService} to check for timeouts.
+    * @param releaseRunnable     a {@link Runnable} that is invoked every time this lock is released.
     */
    public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable) {
       this.nonBlockingExecutor = nonBlockingExecutor;
@@ -152,10 +155,10 @@ public class InfinispanLock {
    /**
     * It tries to release the lock held by {@code lockOwner}.
     * <p/>
-    * If the lock is not acquired (is waiting or timed out/deadlocked) by {@code lockOwner}, its {@link
-    * ExtendedLockPromise} is canceled. If {@code lockOwner} is the current lock owner, the lock is released and the
-    * next lock owner available will acquire the lock. If the {@code lockOwner} never tried to acquire the lock, this
-    * method does nothing.
+    * If the lock is not acquired (is waiting or timed out/deadlocked) by {@code lockOwner}, its
+    * {@link ExtendedLockPromise} is canceled. If {@code lockOwner} is the current lock owner, the lock is released and
+    * the next lock owner available will acquire the lock. If the {@code lockOwner} never tried to acquire the lock,
+    * this method does nothing.
     *
     * @param lockOwner the lock owner who wants to release the lock.
     * @throws NullPointerException if {@code lockOwner} is {@code null}.
@@ -367,7 +370,12 @@ public class InfinispanLock {
 
       @Override
       public InvocationStage toInvocationStage() {
-         return toInvocationStage(() -> new TimeoutException("Timeout waiting for lock."));
+         return toInvocationStage(TIMEOUT_SUPPLIER);
+      }
+
+      @Override
+      public CompletionStage<Void> toCompletionStage() {
+         return toCompletionStage(TIMEOUT_SUPPLIER);
       }
 
       @Override
@@ -412,13 +420,25 @@ public class InfinispanLock {
             return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage,
                   ExceptionSyncInvocationStage::new, timeoutSupplier);
          }
-         return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(state -> {
-            Object rv = checkState(state, () -> null, throwable -> throwable, timeoutSupplier);
+         return new SimpleAsyncInvocationStage(completionStage(timeoutSupplier));
+      }
+
+      @Override
+      public CompletionStage<Void> toCompletionStage(Supplier<TimeoutException> timeoutSupplier) {
+         if (notifier.isDone()) {
+            return checkState(notifier.getNow(lockState), CompletableFutures::completedNull, CompletableFuture::failedStage, timeoutSupplier);
+         }
+         return completionStage(timeoutSupplier);
+      }
+
+      private CompletionStage<Void> completionStage(Supplier<TimeoutException> timeoutSupplier) {
+         return notifier.thenApplyAsync(state -> {
+            Throwable rv = checkState(state, CompletableFutures.nullSupplier(), CompletableFutures.identity(), timeoutSupplier);
             if (rv != null) {
-               throw (RuntimeException) rv;
+               throw asCompletionException(rv);
             }
             return null;
-         }, nonBlockingExecutor));
+         }, nonBlockingExecutor);
       }
 
       @Override

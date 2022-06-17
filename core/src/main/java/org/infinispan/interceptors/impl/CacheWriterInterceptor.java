@@ -35,6 +35,7 @@ import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -184,7 +185,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          }
 
          Object key = removeCommand.getKey();
-         CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(), BOTH);
+         CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(), skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
          if (log.isTraceEnabled()) {
             stage = stage.thenAccept(removed ->
                   getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
@@ -362,6 +363,28 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command)
          throws Throwable {
       return visitWriteManyCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) throws Throwable {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if (!isStoreEnabled(rCommand) || rCtx.isInTxScope() || !rCommand.isSuccessful() ||
+               !isProperWriter(rCtx, rCommand, null)) {
+            return rv;
+         }
+
+         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+         for (Object key : rCommand.getAffectedKeys()) {
+            // TODO create deleteAll in NonBlockingStore??
+            CompletionStage<?> removeStage = persistenceManager.deleteFromAllStores(key, rCommand.getSegment(), skipSharedStores(rCtx, key, rCommand) ? PRIVATE : BOTH);
+            if (log.isTraceEnabled()) {
+               removeStage = removeStage.thenAccept(removed ->
+                     getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
+            }
+            stage.dependsOn(removeStage);
+         }
+         return delayedValue(stage.freeze(), rv);
+      });
    }
 
    private <T extends WriteCommand & FunctionalCommand> Object visitWriteManyCommand(InvocationContext ctx, T command) {

@@ -89,6 +89,10 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V> {
 
    void setSkipSharedStore();
 
+   default void setTombstone(boolean isTombstone) {
+      //no-op
+   }
+
    @Override
    MVCCEntry<K, V> clone();
 }

@@ -1,6 +1,6 @@
 package org.infinispan.xsite.irac;
 
-import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.assertNotInDataContainer;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -15,7 +15,6 @@ import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
@@ -145,13 +144,8 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
 
    private void assertNoKeyInDataContainer(int siteIndex, String cacheName, String key) {
       for (Cache<String, String> c : this.<String, String>caches(siteIndex, cacheName)) {
-         assertNull(internalDataContainer(c).peek(key));
+         assertNotInDataContainer(c, key);
       }
-   }
-
-   private InternalDataContainer<String, String> internalDataContainer(Cache<String, String> c) {
-      //noinspection unchecked
-      return extractComponent(c, InternalDataContainer.class);
    }
 
    @Override

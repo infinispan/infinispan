@@ -48,4 +48,8 @@ public class MarshalledEntryUtil {
    public static <K, V> MarshallableEntry<K, V> create(InternalCacheEntry<K, V> ice, Marshaller m) {
       return new MarshallableEntryImpl<>(ice.getKey(), ice.getValue(), ice.getMetadata(), ice.getInternalMetadata(), ice.getCreated(), ice.getLastUsed(), m);
    }
+
+   public static <K, V> MarshallableEntry<K, V> create(K key, PrivateMetadata metadata, Marshaller m) {
+      return new MarshallableEntryImpl<>(key, null, null, metadata, -1L, -1L, m);
+   }
 }

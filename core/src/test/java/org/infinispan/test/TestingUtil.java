@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.FileOutputStream;
@@ -1990,5 +1991,17 @@ public class TestingUtil {
 
    public static void defineConfiguration(EmbeddedCacheManager cacheManager, String cacheName, Configuration configuration) {
       SecurityActions.defineConfiguration(cacheManager, cacheName, configuration);
+   }
+
+   public static <K> void assertNotInDataContainer(Cache<K, ?> cache, K key) {
+      InternalCacheEntry<?, ?> entry = internalDataContainer(cache).peek(key);
+      // IRAC keeps tombstones in DataContainer.
+      String msg = String.format("Key '%s' present in DataContainer in %s. Entry=%s", key, cache.getCacheManager().getAddress(), entry);
+      assertTrue(msg, entry == null || entry.isTombstone());
+   }
+
+   public static <K, V> InternalDataContainer<K, V> internalDataContainer(Cache<K, V> c) {
+      //noinspection unchecked
+      return extractComponent(c, InternalDataContainer.class);
    }
 }

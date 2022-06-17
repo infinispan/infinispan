@@ -266,6 +266,10 @@ public enum Flag {
     * during the state transfer.
     */
    STATE_TRANSFER_PROGRESS,
+   /**
+    * Signals to stream the tombstones entries too.
+    */
+   STREAM_TOMBSTONES,
    ;
 
    private static final Flag[] CACHED_VALUES = values();

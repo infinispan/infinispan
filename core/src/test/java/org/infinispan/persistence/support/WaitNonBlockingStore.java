@@ -67,6 +67,10 @@ public interface WaitNonBlockingStore<K, V> extends NonBlockingStore<K, V> {
       join(stop());
    }
 
+   default void destroyAndWait() {
+      join(destroy());
+   }
+
    default List<K> publishKeysWait(IntSet segments, Predicate<? super K> filter) {
       return join(Flowable.fromPublisher(publishKeys(segments, filter))
             .collect(Collectors.toList())

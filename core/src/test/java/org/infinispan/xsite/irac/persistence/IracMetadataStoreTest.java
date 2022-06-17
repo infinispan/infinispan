@@ -312,10 +312,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
          if (isNotWriteOwner(cache, key)) {
             continue;
          }
-         InternalDataContainer<String, Object> dc = getInternalDataContainer(cache);
-         InternalCacheEntry<String, Object> ice = dc.peek(key);
-         log.debugf("Checking DataContainer in %s. entry=%s", DistributionTestHelper.addressOf(cache), ice);
-         assertNull(String.format("Internal entry found for key %s", key), ice);
+         TestingUtil.assertNotInDataContainer(cache, key);
       }
    }
 

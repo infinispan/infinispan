@@ -25,6 +25,7 @@ import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -94,6 +95,15 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (performPartitionCheck(command)) {
+         for (Object k : command.getAffectedKeys())
+            partitionHandlingManager.checkWrite(k);
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) throws Throwable {
       if (performPartitionCheck(command)) {
          for (Object k : command.getAffectedKeys())
             partitionHandlingManager.checkWrite(k);

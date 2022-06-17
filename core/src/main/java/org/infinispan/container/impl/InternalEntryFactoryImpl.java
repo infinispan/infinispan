@@ -179,6 +179,10 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
       // the cache entry should also acquire the same lock, to avoid returning
       // partially applied cache entry updates
       synchronized (cacheEntry) {
+         if (cacheEntry.isTombstone()) {
+            // convert tombstone to live entry
+            return create(cacheEntry, value, metadata);
+         }
          boolean reincarnate = metadata == null || metadata.updateCreationTimestamp();
          cacheEntry.setValue(value);
          InternalCacheEntry original = cacheEntry;

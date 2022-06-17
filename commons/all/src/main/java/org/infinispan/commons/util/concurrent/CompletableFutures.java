@@ -12,6 +12,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
@@ -33,6 +34,7 @@ public final class CompletableFutures {
    private static final Function<?, ?> TO_NULL = o -> null;
    private static final Function<?, Boolean> TO_TRUE_FUNCTION = o -> Boolean.TRUE;
    private static final Function<?, ?> identity = t -> t;
+   private static final Supplier<?> NULL_SUPPLIER = () -> null;
 
    private CompletableFutures() {
    }
@@ -188,5 +190,10 @@ public final class CompletableFutures {
    public static <T> Function<T, T> identity() {
       //noinspection unchecked
       return (Function<T, T>) identity;
+   }
+
+   public static <R> Supplier<R> nullSupplier() {
+      //noinspection unchecked
+      return (Supplier<R>) NULL_SUPPLIER;
    }
 }

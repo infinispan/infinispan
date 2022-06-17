@@ -9,17 +9,14 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -72,19 +69,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    }
 
    @Override
-   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
-      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
-         Object key = cmd.getKey();
-         if (!isStoreEnabled(cmd) || !cmd.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, cmd, cmd.getKey()))
-            return rv;
-
-         return delayedValue(storeEntry(rCtx, key, cmd), rv);
-      });
-   }
-
-   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (!isStoreEnabled(command) || ctx.isInTxScope())
          return invokeNext(ctx, command);
@@ -105,38 +89,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
       // it must write only the keys locked on the primary owner that forwarded the rCommand
       return isUsingLockDelegation && command.isForwarded() && !dm.getCacheTopology().getDistribution(key).primary().equals(rCtx.getOrigin());
-   }
-
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, removeCommand, rv) -> {
-         Object key = removeCommand.getKey();
-         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, removeCommand, key))
-            return rv;
-
-         CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(),
-               skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
-         if (log.isTraceEnabled()) {
-            stage = stage.thenAccept(removed ->
-                  getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
-         }
-         return delayedValue(stage, rv);
-      });
-   }
-
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, replaceCommand, rv) -> {
-         Object key = replaceCommand.getKey();
-         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, replaceCommand, replaceCommand.getKey()))
-            return rv;
-
-         return delayedValue(storeEntry(rCtx, key, replaceCommand), rv);
-      });
    }
 
    @Override

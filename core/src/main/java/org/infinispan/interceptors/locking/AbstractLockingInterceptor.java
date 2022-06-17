@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.DataCommand;
@@ -34,6 +35,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
@@ -43,6 +45,9 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -235,6 +240,31 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) throws Throwable {
+      // Non-tx invalidation mode ignores the primary owner, always locks on the originator
+      boolean skipLocking = invalidationMode ? !ctx.isOriginLocal() : !shouldLockKey(command.getSegment());
+      if (hasSkipLocking(command) || skipLocking) {
+         return invokeNext(ctx, command);
+      }
+
+      long timeoutMillis = getLockTimeoutMillis(command);
+
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      for (Object key : command.getAffectedKeys()) {
+         CompletionStage<Void> lockStage = lockManager.lock(key, ctx.getLockOwner(), timeoutMillis, TimeUnit.MILLISECONDS)
+               .toCompletionStage()
+               .thenAccept(lockState -> ctx.addLockedKey(key))
+               .exceptionally(throwable -> {
+                  command.removeInternalMetadata(key);
+                  return null;
+               });
+         stage.dependsOn(lockStage);
+      }
+
+      return nonTxLockAndInvokeNext(ctx, command, new SimpleAsyncInvocationStage(stage.freeze()), unlockAllReturnHandler);
    }
 
    @Override

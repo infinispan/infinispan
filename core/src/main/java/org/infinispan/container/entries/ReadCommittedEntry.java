@@ -9,6 +9,7 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_SHARED_STORE;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.TOMBSTONE;
 
 import java.util.concurrent.CompletionStage;
 
@@ -63,6 +64,7 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
       LOADED(1 << 8),
       // Set if this write should not be persisted into any underlying shared stores
       SKIP_SHARED_STORE(1 << 9),
+      TOMBSTONE (1 << 10)
       ;
 
       final short mask;
@@ -151,6 +153,8 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
          setCommitted();
          if (isEvicted()) {
             return container.evict(segment, key);
+         } else if (isTombstone()) {
+            container.putTombstone(segment, key, internalMetadata);
          } else if (isRemoved()) {
             container.remove(segment, key);
          } else if (value != null) {
@@ -348,6 +352,16 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    }
 
    @Override
+   public boolean isTombstone() {
+      return isFlagSet(TOMBSTONE);
+   }
+
+   @Override
+   public void setTombstone(boolean isTombstone) {
+      setFlag(isTombstone, TOMBSTONE);
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" +
             "key=" + toStr(key) +
@@ -359,6 +373,7 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
             ", isExpired=" + isExpired() +
             ", isCommited=" + isCommitted() +
             ", skipLookup=" + skipLookup() +
+            ", isTombstone=" + isTombstone() +
             ", metadata=" + metadata +
             ", oldMetadata=" + oldMetadata +
             ", internalMetadata=" + internalMetadata +

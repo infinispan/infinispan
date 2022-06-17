@@ -1,5 +1,8 @@
 package org.infinispan.util.concurrent.locks;
 
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.interceptors.InvocationStage;
 
 /**
@@ -31,6 +34,10 @@ public interface KeyAwareLockPromise extends LockPromise {
          return InvocationStage.completedNullStage();
       }
 
+      @Override
+      public CompletionStage<Void> toCompletionStage() {
+         return CompletableFutures.completedNull();
+      }
    };
 
    /**

@@ -26,7 +26,9 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.TombstoneInternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.impl.PassivationManager;
@@ -48,9 +50,10 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 
 /**
- * Abstract class implemenation for a segmented data container. All methods delegate to
- * {@link #getSegmentForKey(Object)} for methods that don't provide a segment and implementors can provide what
- * map we should look into for a given segment via {@link #getMapForSegment(int)}.
+ * Abstract class implementation for a segmented data container. All methods delegate to
+ * {@link #getSegmentForKey(Object)} for methods that don't provide a segment and implementors can provide what map we
+ * should look into for a given segment via {@link #getMapForSegment(int)}.
+ *
  * @author wburns
  * @since 9.3
  */
@@ -124,6 +127,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
 
    @Override
    public void put(int segment, K k, V v, Metadata metadata, PrivateMetadata internalMetadata, long createdTimestamp, long lastUseTimestamp) {
+      assert internalMetadata == null || !internalMetadata.isTombstone();
       PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
       if (entries != null) {
          boolean l1Entry = false;
@@ -156,8 +160,8 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          if (log.isTraceEnabled())
             log.tracef("Store %s=%s in container", k, copy);
 
-         if (e != null) entryUpdated(copy, e);
-         else entryAdded(copy);
+         if (e != null) entryUpdated(segment, copy, e);
+         else entryAdded(segment, copy);
 
          putEntryInMap(entries, segment, k, copy);
       } else {
@@ -202,16 +206,34 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             return null;
          }
 
-         if (e.canExpire()) {
-            entryRemoved(e);
-            if (e.isExpired(timeService.wallClockTime())) {
-               return null;
-            }
+         if (e.canExpire() && e.isExpired(timeService.wallClockTime())) {
+            return null;
          }
+         // entry removed when not expired
+         entryRemoved(segment, e);
 
          return e;
       }
       return null;
+   }
+
+   @Override
+   public void putTombstone(int segment, K key, PrivateMetadata metadata) {
+      assert segment >= 0;
+      assert key != null;
+      assert metadata != null && metadata.isTombstone();
+      PeekableTouchableMap<K, V> entries = getMapForSegment(segment);
+      if (entries == null) {
+         return;
+      }
+      InternalCacheEntry<K, V> prev = entries.get(key);
+      InternalCacheEntry<K, V> entry = new TombstoneInternalCacheEntry<>(key, metadata);
+      if (prev != null) {
+         entryUpdated(segment, entry, prev);
+      } else {
+         entryAdded(segment, entry);
+      }
+      putEntryInMap(entries, segment, key, entry);
    }
 
    @Override
@@ -233,7 +255,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          // - we don't need eviction manager either as it is handled in NotifyHelper
          evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, null));
          computeEntryRemoved(o, entry);
-         entryRemoved(entry);
+         entryRemoved(segment, entry);
          return null;
       });
       return evictionStageRef.get();
@@ -253,11 +275,11 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
             return oldEntry;
          } else if (newEntry == null) {
             computeEntryRemoved(k, oldEntry);
-            entryRemoved(oldEntry);
+            entryRemoved(segment, oldEntry);
             return null;
          }
          computeEntryWritten(k, newEntry);
-         entryAdded(newEntry);
+         entryAdded(segment, newEntry);
          if (log.isTraceEnabled())
             log.tracef("Store %s in container", newEntry);
          return newEntry;
@@ -322,13 +344,19 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       return expirable.get() > 0;
    }
 
-   protected final void entryAdded(InternalCacheEntry<K, V> ice) {
+   protected final void entryAdded(int segment, InternalCacheEntry<K, V> ice) {
       if (ice.canExpire()) {
          expirable.incrementAndGet();
       }
+      if (isTombstone(ice)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Increment tombstone count: segment=%s, added=%s", segment, ice);
+         }
+         incrementTombstoneCount(segment);
+      }
    }
 
-   protected final void entryUpdated(InternalCacheEntry<K, V> curr, InternalCacheEntry<K, V> prev) {
+   protected final void entryUpdated(int segment, InternalCacheEntry<K, V> curr, InternalCacheEntry<K, V> prev) {
       byte combination = 0b00;
       if (curr.canExpire()) combination |= 0b01;
       if (prev.canExpire()) combination |= 0b10;
@@ -344,13 +372,35 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          case 0b10:
             expirable.decrementAndGet();
             break;
-         default: break;
+         default:
+            break;
+      }
+      boolean wasTombstone = isTombstone(prev);
+      boolean isTombstone = isTombstone(curr);
+      if (!wasTombstone && isTombstone) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Increment tombstone count: segment=%s, old=%s, new=%s", segment, prev, curr);
+         }
+         incrementTombstoneCount(segment);
+      } else if (wasTombstone && !isTombstone) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Decrement tombstone count: segment=%s, old=%s, new=%s", segment, prev, curr);
+         }
+         decrementTombstoneCounter(segment);
+      } else if (log.isTraceEnabled()) {
+         log.tracef("Keeping tombstone count: segment=%s, old=%s, new=%s", segment, prev, curr);
       }
    }
 
-   protected final void entryRemoved(InternalCacheEntry<K, V> ice) {
+   protected final void entryRemoved(int segment, InternalCacheEntry<K, V> ice) {
       if (ice.canExpire()) {
          expirable.decrementAndGet();
+      }
+      if (isTombstone(ice)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Decrement tombstone count: segment=%s, removed=%s", segment, ice);
+         }
+         decrementTombstoneCounter(segment);
       }
    }
 
@@ -358,6 +408,10 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
       long expirableInSegment = segment.values().stream().filter(InternalCacheEntry::canExpire).count();
       expirable.addAndGet(-expirableInSegment);
    }
+
+   protected abstract void incrementTombstoneCount(int segment);
+
+   protected abstract void decrementTombstoneCounter(int segment);
 
    protected class EntryIterator extends AbstractIterator<InternalCacheEntry<K, V>> {
 
@@ -556,5 +610,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
     */
    protected Predicate<InternalCacheEntry<K, V>> expiredIterationPredicate(long accessTime) {
       return e -> !e.isExpired(accessTime);
+   }
+
+   private static boolean isTombstone(CacheEntry<?,?> entry) {
+      return entry != null && entry.isTombstone();
    }
 }

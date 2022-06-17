@@ -90,9 +90,9 @@ public class VersionedRepeatableReadEntry<K, V> extends RepeatableReadEntry<K, V
       CompletionStage<InternalCacheEntry<K, V>> entry = entryLoader.loadAndStoreInDataContainer(ctx, getKey(), segment, null);
 
       return entry.thenApply(ice -> {
-         if (ice == null) {
+         if (ice == null || ice.isTombstone()) {
             if (log.isTraceEnabled()) {
-               log.tracef("No entry for key %s found in data container", toStr(key));
+               log.tracef("No entry for key %s found in data container. Is tombstone? %s", toStr(key), ice != null && ice.isTombstone());
             }
             //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
             return versionGenerator.nonExistingVersion();

@@ -20,11 +20,13 @@ import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.TombstoneInternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
@@ -157,6 +159,10 @@ public class PersistenceUtil {
    }
 
    public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {
+      PrivateMetadata privateMetadata = loaded.getInternalMetadata();
+      if (privateMetadata != null && privateMetadata.isTombstone()) {
+         return new TombstoneInternalCacheEntry<>(loaded.getKey(), privateMetadata);
+      }
       Metadata metadata = loaded.getMetadata();
       InternalCacheEntry<K, V> ice;
       if (metadata != null) {

@@ -46,6 +46,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
@@ -151,7 +152,8 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             CacheShutdownCommand.class, CacheShutdownRequestCommand.class, TopologyUpdateStableCommand.class,
             CacheJoinCommand.class, CacheLeaveCommand.class, CacheAvailabilityUpdateCommand.class,
             IracPutKeyValueCommand.class, TouchCommand.class,
-            XSiteViewNotificationCommand.class);
+            XSiteViewNotificationCommand.class,
+            RemoveTombstoneCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (!moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

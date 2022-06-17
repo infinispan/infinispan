@@ -10,6 +10,7 @@ import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
@@ -119,6 +120,14 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getKey());
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) throws Throwable {
+      if (isUsingAsyncStore(ctx, command)) {
+         command.getAffectedKeys().forEach(this::checkMarshallable);
       }
       return invokeNext(ctx, command);
    }

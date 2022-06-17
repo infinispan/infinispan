@@ -45,6 +45,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
@@ -187,6 +188,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    protected boolean canReadKey(Object key) {
       return distributionManager.getCacheTopology().isReadOwner(key);
+   }
+
+   protected boolean canReadSegment(int segment) {
+      return distributionManager.getCacheTopology().isSegmentReadOwner(segment);
    }
 
    @Override
@@ -580,6 +585,20 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getAffectedKeys()) {
          currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
                ignoreOwnership || canReadKey(key), true, currentStage);
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) {
+      boolean isOwner = ignoreOwnership(command) || canReadSegment(command.getSegment());
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
+      }
+      CompletableFuture<Void> initialStage = new CompletableFuture<>();
+      CompletionStage<Void> currentStage = initialStage;
+      for (Object key : command.getAffectedKeys()) {
+         currentStage = entryFactory.wrapEntryForWriting(ctx, key, command.getSegment(), isOwner, true, currentStage);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }

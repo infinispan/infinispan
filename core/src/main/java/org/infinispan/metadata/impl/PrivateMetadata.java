@@ -27,16 +27,17 @@ public final class PrivateMetadata {
    /**
     * A cached empty {@link PrivateMetadata}.
     */
-   private static final PrivateMetadata EMPTY = new PrivateMetadata(null, null);
+   private static final PrivateMetadata EMPTY = new PrivateMetadata(null, null, false);
 
    @ProtoField(1)
    final IracMetadata iracMetadata;
-
    private final IncrementableEntryVersion entryVersion;
+   private final boolean tombstone;
 
-   private PrivateMetadata(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
+   private PrivateMetadata(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion, boolean tombstone) {
       this.iracMetadata = iracMetadata;
       this.entryVersion = entryVersion;
+      this.tombstone = tombstone;
    }
 
    /**
@@ -65,13 +66,13 @@ public final class PrivateMetadata {
     */
    @ProtoFactory
    static PrivateMetadata protoFactory(IracMetadata iracMetadata, NumericVersion numericVersion,
-         SimpleClusteredVersion clusteredVersion) {
+                                       SimpleClusteredVersion clusteredVersion, boolean tombstone) {
       IncrementableEntryVersion entryVersion = numericVersion == null ? clusteredVersion : numericVersion;
-      return newInstance(iracMetadata, entryVersion);
+      return newInstance(iracMetadata, entryVersion, tombstone);
    }
 
-   private static PrivateMetadata newInstance(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
-      return iracMetadata == null && entryVersion == null ? EMPTY : new PrivateMetadata(iracMetadata, entryVersion);
+   private static PrivateMetadata newInstance(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion, boolean tombstone) {
+      return iracMetadata == null && entryVersion == null ? EMPTY : new PrivateMetadata(iracMetadata, entryVersion, tombstone);
    }
 
    /**
@@ -107,6 +108,7 @@ public final class PrivateMetadata {
       return "PrivateMetadata{" +
             "iracMetadata=" + iracMetadata +
             ", entryVersion=" + entryVersion +
+            ", tombstone=" + tombstone +
             '}';
    }
 
@@ -119,13 +121,14 @@ public final class PrivateMetadata {
          return false;
       }
       PrivateMetadata metadata = (PrivateMetadata) o;
-      return Objects.equals(iracMetadata, metadata.iracMetadata) &&
+      return tombstone == metadata.tombstone &&
+            Objects.equals(iracMetadata, metadata.iracMetadata) &&
             Objects.equals(entryVersion, metadata.entryVersion);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(iracMetadata, entryVersion);
+      return Objects.hash(iracMetadata, entryVersion, tombstone);
    }
 
    @ProtoField(2)
@@ -138,24 +141,39 @@ public final class PrivateMetadata {
       return entryVersion instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) entryVersion : null;
    }
 
+   @ProtoField(value = 4, defaultValue = "false")
+   public boolean isTombstone() {
+      return tombstone;
+   }
+
+   public PrivateMetadata toTombstone() {
+      return tombstone ? this : new PrivateMetadata(iracMetadata, entryVersion, true);
+   }
+
+   public PrivateMetadata revive() {
+      return tombstone ? new PrivateMetadata(iracMetadata, entryVersion, false) : this;
+   }
+
    public static class Builder {
 
       private IracMetadata iracMetadata;
       private IncrementableEntryVersion entryVersion;
+      private boolean tombstone;
 
       public Builder() {
       }
 
       private Builder(PrivateMetadata metadata) {
-         this.iracMetadata = metadata.iracMetadata;
-         this.entryVersion = metadata.entryVersion;
+         iracMetadata = metadata.iracMetadata;
+         entryVersion = metadata.entryVersion;
+         tombstone = metadata.isTombstone();
       }
 
       /**
        * @return A new instance of {@link PrivateMetadata}.
        */
       public PrivateMetadata build() {
-         return newInstance(iracMetadata, entryVersion);
+         return newInstance(iracMetadata, entryVersion, tombstone);
       }
 
       /**
@@ -177,6 +195,11 @@ public final class PrivateMetadata {
        */
       public Builder entryVersion(IncrementableEntryVersion entryVersion) {
          this.entryVersion = entryVersion;
+         return this;
+      }
+
+      public Builder tombstone(boolean isTombstone) {
+         tombstone = isTombstone;
          return this;
       }
 

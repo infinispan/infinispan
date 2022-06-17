@@ -4,11 +4,14 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.processors.AsyncProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 
@@ -22,6 +25,9 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
    private RxJavaInterop() { }
 
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
+   private static final Predicate<CacheEntry<?, ?>> RX_IS_NOT_TOMBSTONE = e -> !e.isTombstone();
+   private static final Predicate<MarshallableEntry<?, ?>> RX_ME_IS_NOT_TOMBSTONE = e -> !e.isTombstone();
 
    public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage) {
       if (CompletionStages.isCompletedSuccessfully(stage)) {
@@ -75,5 +81,15 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
       });
 
       return ap;
+   }
+
+   public static <K, V, T extends CacheEntry<K, V>> Predicate<T> isNotTombstoneRxOp() {
+      //noinspection unchecked
+      return (Predicate<T>) RX_IS_NOT_TOMBSTONE;
+   }
+
+   public static <K, V, T extends MarshallableEntry<K, V>> Predicate<T> isNotMarshallEntryTombstoneRxOp() {
+      //noinspection unchecked
+      return (Predicate<T>) RX_ME_IS_NOT_TOMBSTONE;
    }
 }

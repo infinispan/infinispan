@@ -127,6 +127,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
             assert entryVersion != null;
             CacheEntry<?, ?> entry = ctx.lookupEntry(key);
             PrivateMetadata.Builder builder = PrivateMetadata.getBuilder(entry.getInternalMetadata());
+            builder.tombstone(metadata.isTombstone());
             entry.setInternalMetadata(builder.entryVersion(entryVersion).build());
             if (log.isTraceEnabled()) {
                log.tracef("Updated entry from state transfer: %s", entry);

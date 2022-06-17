@@ -1,5 +1,8 @@
 package org.infinispan.util.concurrent.locks;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.TimeoutException;
 
@@ -14,6 +17,8 @@ import org.infinispan.util.concurrent.TimeoutException;
  * @since 8.0
  */
 public interface LockPromise {
+
+   CompletionStage<LockState> ACQUIRED = CompletableFuture.completedFuture(LockState.ACQUIRED);
 
    /**
     * It tests if the lock is available.
@@ -49,4 +54,13 @@ public interface LockPromise {
     * @return an {@link InvocationStage} for this lock.
     */
    InvocationStage toInvocationStage();
+
+   /**
+    * Returns a {@link CompletionStage} that is completed when the lock is acquired.
+    * <p>
+    * If the lock is not successfully acquired, the {@link CompletionStage} is completed exceptionally.
+    *
+    * @return a {@link CompletionStage} which is completed when the lock is acquired.
+    */
+   CompletionStage<Void> toCompletionStage();
 }

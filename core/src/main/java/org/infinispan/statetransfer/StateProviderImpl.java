@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.infinispan.context.Flag.STREAM_TOMBSTONES;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.ArrayList;
@@ -39,7 +40,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
@@ -101,7 +101,8 @@ public class StateProviderImpl implements StateProvider {
     */
    private static final long STATE_TRANSFER_ENTRIES_FLAGS = EnumUtil.bitSetOf(
          // Indicate the command to not use shared stores.
-         STATE_TRANSFER_PROGRESS
+         STATE_TRANSFER_PROGRESS,
+         STREAM_TOMBSTONES
    );
 
    public StateProviderImpl() {
@@ -366,7 +367,7 @@ public class StateProviderImpl implements StateProvider {
       removeTransfer(transferTask);
    }
 
-   protected void logError(OutboundTransferTask task, Throwable t) {
+   protected static void logError(OutboundTransferTask task, Throwable t) {
       if (task.isCancelled()) {
          // ignore eventual exceptions caused by cancellation or by the node stopping
          if (log.isTraceEnabled()) {
@@ -378,9 +379,4 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   private InternalCacheEntry<Object, Object> defaultMapEntryFromStore(MarshallableEntry<Object, Object> me) {
-      InternalCacheEntry<Object, Object> entry = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
-      entry.setInternalMetadata(me.getInternalMetadata());
-      return entry;
-   }
 }

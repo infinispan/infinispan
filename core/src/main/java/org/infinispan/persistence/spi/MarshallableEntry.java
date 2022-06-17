@@ -65,4 +65,12 @@ public interface MarshallableEntry<K, V> {
    long expiryTime();
 
    MarshalledValue getMarshalledValue();
+
+   /**
+    * @return {@code true} if this {@link MarshallableEntry} is a tombstone entry.
+    */
+   default boolean isTombstone() {
+      PrivateMetadata metadata = getInternalMetadata();
+      return metadata != null && metadata.isTombstone();
+   }
 }

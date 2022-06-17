@@ -345,7 +345,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                         }, false);
                   int segment = keyPartitioner.getSegment(entry.getKey());
                   // entry is null if expired or removed (tombstone), in both case, we can ignore it.
-                  //noinspection ConstantConditions (entry is not null!)
                   if (entry.getValueBytes() != null) {
                      // using the storeQueue (instead of binary copy) to avoid building the index later
                      CompletionStages.join(logAppender.storeRequest(segment, entry));
@@ -656,7 +655,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                null;
       }
       ByteBuffer serializedKey = readAndCheckKey(handle, header, offset);
-      if (header.valueLength() <= 0) {
+      if (header.isSifsTombstone()) {
          if (log.isTraceEnabled()) {
             log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log", key, handle.getFileId(), offset);
          }
@@ -667,7 +666,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          log.tracef("Entry for key=%s found in temporary table on %d:%d and loaded", key, handle.getFileId(), offset);
       }
 
-      ByteBuffer value = toBuffer(EntryRecord.readValue(handle, header, offset));
+      ByteBuffer value = header.valueLength() > 0 ? toBuffer(EntryRecord.readValue(handle, header, offset)) : null;
       ByteBuffer serializedMetadata;
       long created;
       long lastUsed;
@@ -743,13 +742,6 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    }
 
    @Override
-   public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
-      // TODO: do this more efficiently later
-      return Flowable.fromPublisher(publishEntries(segments, filter, false))
-            .map(MarshallableEntry::getKey);
-   }
-
-   @Override
    public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
       return blockingManager.blockingPublisher(Flowable.defer(() -> {
          Set<Object> seenKeys = new HashSet<>();
@@ -772,7 +764,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          });
          Flowable<MarshallableEntry<K, V>> indexFlowable = index.publish(segments, includeValues)
                .mapOptional(er -> {
-                  if (er.getHeader().valueLength() == 0) {
+                  if (er.getHeader().isSifsTombstone()) {
                      return Optional.empty();
                   }
 

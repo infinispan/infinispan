@@ -73,4 +73,12 @@ public interface InternalCacheValue<V> {
    PrivateMetadata getInternalMetadata();
 
    void setInternalMetadata(PrivateMetadata internalMetadata);
+
+   /**
+    * @return {@code true} if this {@link InternalCacheEntry} is a tombstone value.
+    */
+   default boolean isTombstone() {
+      PrivateMetadata metadata = getInternalMetadata();
+      return metadata != null && metadata.isTombstone();
+   }
 }

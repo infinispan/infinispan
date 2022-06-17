@@ -24,6 +24,7 @@ import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
@@ -136,6 +137,11 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       }
 
       return new BackingEntrySet((CacheSet<CacheEntry<K,V>>)  invokeNext(ctx, command));
+   }
+
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) {
+      return asyncInvokeNext(ctx, command, fetchAllContextValues(ctx, command, true));
    }
 
    @Override

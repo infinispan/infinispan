@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 import org.infinispan.commons.logging.Log;
@@ -46,6 +47,7 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
 
    private final PeekableTouchableMap<K, V> entries;
    private final Cache<K, InternalCacheEntry<K, V>> evictionCache;
+   private final LongAdder tombstoneCount = new LongAdder();
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
@@ -162,6 +164,16 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       }
    }
 
+   @Override
+   protected void incrementTombstoneCount(int segment) {
+      tombstoneCount.increment();
+   }
+
+   @Override
+   protected void decrementTombstoneCounter(int segment) {
+      tombstoneCount.decrement();
+   }
+
    @Stop
    @Override
    public void clear() {
@@ -240,6 +252,11 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       if (evictionCache != null) {
          evictionCache.cleanUp();
       }
+   }
+
+   @Override
+   public long numberOfTombstones() {
+      return tombstoneCount.sum();
    }
 
 

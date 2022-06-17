@@ -1,5 +1,7 @@
 package org.infinispan.persistence.spi;
 
+import static org.infinispan.reactive.RxJavaInterop.isNotMarshallEntryTombstoneRxOp;
+
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -14,8 +16,8 @@ import javax.transaction.Transaction;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
@@ -696,6 +698,7 @@ public interface NonBlockingStore<K, V> {
     */
    default Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
       return Flowable.fromPublisher(publishEntries(segments, filter, false))
+            .filter(isNotMarshallEntryTombstoneRxOp())
             .map(MarshallableEntry::getKey);
    }
 

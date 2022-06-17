@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.infinispan.context.Flag.STREAM_TOMBSTONES;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -194,7 +195,7 @@ public class StateProviderTest {
          .thenReturn(Flowable.empty());
       SegmentAwarePublisherSupplier<?> supplier = mock(SegmentAwarePublisherSupplier.class);
       when(lpm.entryPublisher(any(), any(), any(), eq(
-            EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any()))
+            EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS, STREAM_TOMBSTONES)), any(), any()))
             .thenAnswer(i -> supplier);
       List<SegmentAwarePublisherSupplier.NotificationWithLost<?>> values = cacheEntries.stream()
             .map(ice -> Notifications.value(ice, 0))
@@ -295,7 +296,7 @@ public class StateProviderTest {
 
       SegmentAwarePublisherSupplier<?> supplier = mock(SegmentAwarePublisherSupplier.class);
       when(lpm.entryPublisher(any(), any(), any(),
-            eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any()))
+            eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS, STREAM_TOMBSTONES)), any(), any()))
             .thenAnswer(i -> supplier);
       List<SegmentAwarePublisherSupplier.NotificationWithLost<?>> values = cacheEntries.stream()
             .map(ice -> Notifications.value(ice, 0))

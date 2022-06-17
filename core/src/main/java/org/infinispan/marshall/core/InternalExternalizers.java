@@ -23,6 +23,8 @@ import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
+import org.infinispan.container.entries.TombstoneInternalCacheEntry;
+import org.infinispan.container.entries.TombstoneInternalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -254,6 +256,8 @@ final class InternalExternalizers {
       addInternalExternalizer(AutoStateTransferResponse.EXTERNALIZER, exts);
       addInternalExternalizer(CommandInvocationId.EXTERNALIZER, exts);
       addInternalExternalizer(CacheEntryGroupPredicate.EXTERNALIZER, exts);
+      addInternalExternalizer(TombstoneInternalCacheEntry.EXTERNALIZER, exts);
+      addInternalExternalizer(TombstoneInternalCacheValue.EXTERNALIZER, exts);
 
       return exts;
    }

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.rocksdb;
 
+import static org.infinispan.reactive.RxJavaInterop.identityFunction;
+import static org.infinispan.reactive.RxJavaInterop.isNotMarshallEntryTombstoneRxOp;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
@@ -30,13 +32,13 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
@@ -55,7 +57,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -328,6 +329,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    @Override
    public Publisher<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
       return Flowable.fromPublisher(handler.publishEntries(segments, filter, false))
+            .filter(isNotMarshallEntryTombstoneRxOp())
             .map(MarshallableEntry::getKey);
    }
 
@@ -1037,7 +1039,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          }
          IntSet segmentsToUse = segments == null ? IntSets.immutableRangeSet(handles.length()) : segments;
          return Flowable.fromStream(segmentsToUse.intStream().mapToObj(i -> publish(i, function)))
-               .concatMap(RxJavaInterop.identityFunction());
+               .concatMap(identityFunction());
       }
 
       @Override

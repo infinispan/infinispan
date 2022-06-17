@@ -1145,7 +1145,7 @@ class IndexNode {
                }
                return null;
             }
-            if (headerAndKey.getHeader().valueLength() <= 0) {
+            if (headerAndKey.getHeader().isSifsTombstone()) {
                if (trace) {
                   log.trace("Entry " + file + ":" + readOffset + " matched, it is a tombstone.");
                }
@@ -1315,7 +1315,7 @@ class IndexNode {
                   return;
                }
 
-               if (record != null && record.getHeader().valueLength() > 0) {
+               if (record != null && !record.getHeader().isSifsTombstone()) {
                   // It is possible that the very first looked up entry was a previously seen value and if so
                   // we must skip it if it is equal to not return it twice.
                   // The current segmentPrefix will match the element's key bytes excluding the segment bytes

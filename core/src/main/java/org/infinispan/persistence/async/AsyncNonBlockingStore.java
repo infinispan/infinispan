@@ -345,7 +345,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
             log.tracef("Publisher subscribed to retrieve entries for segments %s", segments);
          }
          return abstractPublish(segments, filter, PutModification::getEntry, MarshallableEntry::getKey,
-               (innerSegments, predicate) -> actual.publishEntries(innerSegments, predicate, includeValues));
+               (innerSegments, predicate) -> actual.publishEntries(innerSegments, predicate, includeValues), false);
       });
    }
 
@@ -357,12 +357,12 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
             log.tracef("Publisher subscribed to retrieve keys for segments %s", segments);
          }
          return abstractPublish(segments, filter, putModification -> putModification.<K, Object>getEntry().getKey(),
-               RxJavaInterop.identityFunction(), actual::publishKeys);
+               RxJavaInterop.identityFunction(), actual::publishKeys, true);
       });
    }
 
    private <E> Publisher<E> abstractPublish(IntSet segments, Predicate<? super K> filter, Function<PutModification, E> putFunction,
-         Function<E, K> toKeyFunction, BiFunction<IntSet, Predicate<K>, Publisher<E>> publisherFunction) {
+         Function<E, K> toKeyFunction, BiFunction<IntSet, Predicate<K>, Publisher<E>> publisherFunction, boolean removeTombstones) {
       Map.Entry<Boolean, Map<Object, Modification>> entryModifications = flattenModificationMaps();
 
       Map<Object, Modification> modificationCopy = entryModifications.getValue();
@@ -370,6 +370,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       Flowable<E> modPublisher = Flowable.fromIterable(modificationCopy.values())
             .ofType(PutModification.class)
             .filter(modification -> segments.contains(modification.getSegment()))
+            .filter(modification -> !removeTombstones || !modification.getEntry().isTombstone())
             .map(putFunction);
 
       if (filter != null) {

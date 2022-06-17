@@ -1,6 +1,7 @@
 package org.infinispan.reactive.publisher.impl;
 
 import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
+import static org.infinispan.context.Flag.STREAM_TOMBSTONES;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.any;
@@ -207,7 +208,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       // Depending upon if it is parallel or not, it can invoke either method
       doAnswer(blockingLpmAnswer).when(spy)
             .entryPublisher(eq(IntSets.immutableSet(2)), any(), any(),
-                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any());
+                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS, STREAM_TOMBSTONES)), any(), any());
       TestingUtil.replaceComponent(cache2, LocalPublisherManager.class, spy, true);
 
 

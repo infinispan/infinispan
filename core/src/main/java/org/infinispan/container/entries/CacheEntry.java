@@ -132,4 +132,12 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
       //no-op
    }
 
+   /**
+    * @return {@code true} if the {@link CacheEntry} is a tombstone.
+    */
+   default boolean isTombstone() {
+      PrivateMetadata metadata = getInternalMetadata();
+      return metadata != null && metadata.isTombstone();
+   }
+
 }

@@ -51,7 +51,7 @@ import io.reactivex.rxjava3.functions.Predicate;
 public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private static final Log log = LogFactory.getLog(XSiteStateProviderImpl.class);
-   private static final Predicate<InternalCacheEntry<Object, Object>> NOT_L1_ENTRY = e -> !e.isL1Entry();
+   private static final Predicate<InternalCacheEntry<Object, Object>> NOT_L1_ENTRY = e -> !e.isL1Entry() && !e.isTombstone();
 
    @Inject InternalDataContainer<Object, Object> dataContainer;
    @Inject PersistenceManager persistenceManager;

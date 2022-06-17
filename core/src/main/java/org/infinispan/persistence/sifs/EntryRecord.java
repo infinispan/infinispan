@@ -67,7 +67,7 @@ public class EntryRecord {
       loadMetadata(handle, offset);
       byte[] readValue = null;
       if (value == null) {
-         readValue = readValue(handle, header, offset);
+         readValue = header.valueLength() > 0 ? readValue(handle, header, offset) : null;
          if (saveValue) {
             value = readValue;
          }
@@ -75,7 +75,7 @@ public class EntryRecord {
       if (internalMetadata == null && header.internalMetadataLength() > 0) {
          internalMetadata = readInternalMetadata(handle, header, offset);
       }
-      if (value == null) {
+      if (value == null && header.valueLength() > 0) {
          assert !saveValue;
          assert readValue != null;
          EntryRecord copyRecord = new EntryRecord(header, key);

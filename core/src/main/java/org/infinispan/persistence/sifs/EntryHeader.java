@@ -88,6 +88,10 @@ public class EntryHeader {
       return keyLength + metadataLength + internalMetadataLength + valueLength + headerLength;
    }
 
+   public boolean isSifsTombstone() {
+      return valueLength <= 0 && internalMetadataLength <= 0;
+   }
+
    public static void writeHeader(ByteBuffer buf, short keyLength, short metadataLength, int valueLength, short internalMetadataLength, long seqId, long expiration) {
       buf.put(EntryHeader.MAGIC);
       buf.putShort(keyLength);

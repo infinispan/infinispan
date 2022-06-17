@@ -31,6 +31,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -124,4 +125,6 @@ public interface Visitor {
    Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable;
 
    Object visitTouchCommand(InvocationContext ctx, TouchCommand command) throws Throwable;
+
+   Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) throws Throwable;
 }

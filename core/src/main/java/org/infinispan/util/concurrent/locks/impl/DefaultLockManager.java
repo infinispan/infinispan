@@ -2,6 +2,7 @@ package org.infinispan.util.concurrent.locks.impl;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -21,6 +23,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -260,6 +263,11 @@ public class DefaultLockManager implements LockManager {
       }
 
       @Override
+      public CompletionStage<Void> toCompletionStage(Supplier<TimeoutException> timeoutSupplier) {
+         return lockPromise.toCompletionStage(timeoutSupplier);
+      }
+
+      @Override
       public boolean isAvailable() {
          return lockPromise.isAvailable();
       }
@@ -281,6 +289,11 @@ public class DefaultLockManager implements LockManager {
       @Override
       public InvocationStage toInvocationStage() {
          return toInvocationStage(this);
+      }
+
+      @Override
+      public CompletionStage<Void> toCompletionStage() {
+         return lockPromise.toCompletionStage(this);
       }
 
       @Override
@@ -389,14 +402,26 @@ public class DefaultLockManager implements LockManager {
          if (notifier.isDone()) {
             return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage, ExceptionSyncInvocationStage::new);
          } else {
-            return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(lockState -> {
-               Object rv = checkState(lockState, () -> null, throwable -> throwable);
-               if (rv != null) {
-                  throw (RuntimeException) rv;
-               }
-               return null;
-            }, executor));
+            return new SimpleAsyncInvocationStage(completionStage());
          }
+      }
+
+      @Override
+      public CompletionStage<Void> toCompletionStage() {
+         if (notifier.isDone()) {
+            return checkState(notifier.getNow(lockState), CompletableFutures::completedNull, CompletableFuture::failedStage);
+         }
+         return completionStage();
+      }
+
+      private CompletionStage<Void> completionStage() {
+         return notifier.thenApplyAsync(lockState -> {
+            Throwable rv = checkState(lockState, CompletableFutures.nullSupplier(), CompletableFutures.identity());
+            if (rv != null) {
+               throw asCompletionException(rv);
+            }
+            return null;
+         }, executor);
       }
 
       @Override

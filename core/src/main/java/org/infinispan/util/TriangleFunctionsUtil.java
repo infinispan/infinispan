@@ -19,6 +19,7 @@ import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.RemoveTombstoneBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.ComputeCommand;
@@ -28,6 +29,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -200,6 +202,12 @@ public final class TriangleFunctionsUtil {
          ReadWriteManyCommand<K, V, R> command, Collection<Object> keys) {
       MultiKeyFunctionalBackupWriteCommand cmd = factory.buildMultiKeyFunctionalBackupWriteCommand();
       cmd.setReadWrite(command, keys);
+      return cmd;
+   }
+
+   public static BackupWriteCommand backupFrom(CommandsFactory factory, RemoveTombstoneCommand command) {
+      RemoveTombstoneBackupWriteCommand cmd = factory.buildRemoveTombstoneBackupWriteCommand();
+      cmd.setRemoveTombstoneCommand(command);
       return cmd;
    }
 }

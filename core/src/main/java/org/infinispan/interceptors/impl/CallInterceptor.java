@@ -1,8 +1,11 @@
 package org.infinispan.interceptors.impl;
 
 
+import static org.infinispan.commons.reactive.RxJavaInterop.entryToKeyFunction;
+import static org.infinispan.commons.reactive.RxJavaInterop.truePredicate;
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
+import static org.infinispan.reactive.RxJavaInterop.isNotTombstoneRxOp;
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 
 import java.lang.invoke.MethodHandles;
@@ -15,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -22,7 +26,6 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.InternalCacheSet;
-import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
@@ -61,9 +64,9 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.RemoveTombstoneCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -114,6 +117,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.functions.Predicate;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -144,15 +148,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Inject ClusterPublisherManager<?, ?> localClusterPublisherManager;
    @Inject ComponentRegistry componentRegistry;
 
-   // Internally we always deal with an unwrapped cache, so don't unwrap per invocation
-   Cache unwrappedCache;
-
    private IncrementableEntryVersion nonExistentVersion;
 
    @Start
    public void start() {
       nonExistentVersion = versionGenerator.nonExistingVersion();
-      unwrappedCache = AbstractDelegatingCache.unwrapCache(cacheRef.wired());
    }
 
    @Override
@@ -171,13 +171,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          command.fail();
          return null;
       }
-      //noinspection unchecked
       Object key = command.getKey();
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
+      MVCCEntry<Object, Object> e = lookupAndCheckNull(ctx, key);
 
       Object newValue = command.getValue();
       Metadata metadata = command.getMetadata();
@@ -193,14 +188,14 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return command.isReturnEntryNecessary() ? e : prevValue;
       }
 
-      return performPut(e, ctx, valueMatcher, key, newValue, metadata, command,
-                        command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER),
-                        command.isReturnEntryNecessary());
+      boolean stateTransfer = command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER);
+      return performPut(e, ctx, valueMatcher, key, newValue, metadata, command, stateTransfer,
+                        command.isReturnEntryNecessary(), stateTransfer);
    }
 
    private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx, ValueMatcher valueMatcher,
          Object key, Object value, Metadata metadata, FlagAffectedCommand command, boolean skipNotification,
-         boolean returnEntry) {
+         boolean returnEntry, boolean isStateTransfer) {
       Object entryValue = e.getValue();
       Object o;
 
@@ -227,7 +222,10 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
 
       Metadatas.updateMetadata(e, metadata);
-      if (e.isRemoved()) {
+      if (isStateTransfer && value == null) {
+         // tombstone
+         e.setTombstone(true);
+      } else if (e.isRemoved()) {
          e.setCreated(true);
          e.setExpired(false);
          e.setRemoved(false);
@@ -252,7 +250,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
       Object key = command.getKey();
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      MVCCEntry<Object, Object> e = lookupAndCheckNull(ctx, key);
       Object prevValue = e.getValue();
       Object optionalValue = command.getValue();
       if (prevValue == null) {
@@ -320,16 +318,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object key = command.getKey();
       ValueMatcher valueMatcher = command.getValueMatcher();
       Metadata metadata = command.getMetadata();
-      //noinspection unchecked
-      MVCCEntry<Object, Object> e = (MVCCEntry<Object, Object>) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
+      MVCCEntry<Object, Object> e = lookupAndCheckNull(ctx, key);
 
       return command.isRemove() ?
             performRemove(e, ctx, valueMatcher, key, null, null, metadata, true, false, command) :
-            performPut(e, ctx, valueMatcher, key, command.getValue(), metadata, command, false, false);
+            performPut(e, ctx, valueMatcher, key, command.getValue(), metadata, command, false, false, false);
 
    }
 
@@ -343,8 +336,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
       Object key = command.getKey();
-      //noinspection unchecked
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
+      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
       // We need the null check as in non-tx caches we don't always wrap the entry on the origin
       Object prevValue = e.getValue();
       Object newValue = command.getNewValue();
@@ -377,11 +369,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
       Object key = command.getKey();
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
+      MVCCEntry<Object, Object> e = lookupAndCheckNull(ctx, key);
 
       Object oldValue = e.getValue();
       Object newValue;
@@ -438,11 +426,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
       Object key = command.getKey();
-      MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
-
-      if (e == null) {
-         throw new IllegalStateException("Not wrapped");
-      }
+      MVCCEntry<Object, Object> e = lookupAndCheckNull(ctx, key);
 
       Object value = e.getValue();
 
@@ -482,7 +466,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
       if (cacheNotifier.hasListener(CacheEntryRemoved.class)) {
          aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         for (InternalCacheEntry e : dataContainer) {
+         for (InternalCacheEntry<?, ?> e : dataContainer) {
             aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryRemoved(e.getKey(), e.getValue(),
                   e.getMetadata(), true, ctx, command));
          }
@@ -539,9 +523,9 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       return delayedValue(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null, previousValues);
    }
 
-   private MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
+   private static MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
       //noinspection unchecked
-      return (MVCCEntry) ctx.lookupEntry(key);
+      return (MVCCEntry<Object, Object>) ctx.lookupEntry(key);
    }
 
    @Override
@@ -553,7 +537,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
       Object key = command.getKey();
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
       Metadata metadata = command.getMetadata();
       // When it isn't the primary owner, just accept the removal as is, trusting the primary did the appropriate checks
       if (command.hasAnyFlag(FlagBitSets.BACKUP_WRITE)) {
@@ -657,7 +641,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(command.getKey());
+      CacheEntry<?, ?> entry = lookupForRead(ctx, command.getKey());
       if (entry.isRemoved()) {
          if (log.isTraceEnabled()) {
             log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
@@ -670,7 +654,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(command.getKey());
+      CacheEntry<?, ?> entry = lookupForRead(ctx, command.getKey());
       if (entry.isNull() || entry.isRemoved()) {
          return null;
       }
@@ -683,10 +667,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       Map<Object, Object> map = new LinkedHashMap<>();
       for (Object key : command.getKeys()) {
-         CacheEntry entry = ctx.lookupEntry(key);
-         if (entry == null) {
-            throw new IllegalStateException("Entry for key " + toStr(key) + " not found");
-         }
+         CacheEntry<?, ?> entry = lookupForRead(ctx, key);
+         assertNotNull(entry, key);
          if (entry.isNull()) {
             if (log.isTraceEnabled()) {
                log.tracef("Entry for key %s is null in current context", toStr(key));
@@ -704,7 +686,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
          // Get cache entry instead of value
          if (command.isReturnEntries()) {
-            CacheEntry copy;
+            CacheEntry<?, ?> copy;
             if (ctx.isOriginLocal()) {
                copy = internalEntryFactory.copy(entry);
             } else {
@@ -728,12 +710,12 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      return new BackingKeySet<>(dataContainer);
+      return new BackingKeySet<>(dataContainer, command.hasAnyFlag(FlagBitSets.STREAM_INCLUDE_TOMBSTONES));
    }
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      return new BackingEntrySet<>(dataContainer);
+      return new BackingEntrySet<>(dataContainer, command.hasAnyFlag(FlagBitSets.STREAM_INCLUDE_TOMBSTONES));
    }
 
    @Override
@@ -765,7 +747,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       }
       for (Object key : keys) {
-         MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+         MVCCEntry<?, ?> e = lookupMvccEntry(ctx, key);
          if (e != null) {
             e.setChanged(true);
             e.setRemoved(true);
@@ -791,12 +773,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       }
       for (Object key : keys) {
-         InternalCacheEntry ice = dataContainer.peek(key);
-         if (ice != null) {
-            boolean isLocal = distributionManager.getCacheTopology().isWriteOwner(key);
-            if (!isLocal) {
+         InternalCacheEntry<?, ?> ice = dataContainer.peek(key);
+         if (ice != null && !ice.isTombstone()) {
+            if (!distributionManager.getCacheTopology().isWriteOwner(key)) {
                if (log.isTraceEnabled()) log.tracef("Invalidating key %s.", key);
-               MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+               MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
                e.setRemoved(true);
                e.setChanged(true);
                e.setCreated(false);
@@ -833,11 +814,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          }
       }
       Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
-
-      if (entry == null) {
-         throw new IllegalStateException();
-      }
+      CacheEntry<?, ?> entry = lookupForRead(ctx, key);
+      assertNotNull(entry, key);
 
       DataConversion keyDataConversion = command.getKeyDataConversion();
       EntryView.ReadEntryView ro = entry.isNull() ? EntryViews.noValue(key, keyDataConversion) :
@@ -848,7 +826,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    }
 
    private Object visitTxReadOnlyKeyCommand(InvocationContext ctx, TxReadOnlyKeyCommand command, List<Mutation> mutations) {
-      MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(command.getKey());
+      MVCCEntry<Object, Object> entry = lookupMvccEntry(ctx, command.getKey());
       EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry, command.getKeyDataConversion(),
             command.getValueDataConversion());
       Object ret = null;
@@ -881,7 +859,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       Function function = command.getFunction();
       for (Object k : keys) {
-         CacheEntry me = ctx.lookupEntry(k);
+         CacheEntry<?, ?> me = lookupForRead(ctx, k);
          EntryView.ReadEntryView view = me.isNull() ?
                EntryViews.noValue(k, keyDataConversion) :
                EntryViews.readOnly(me, keyDataConversion, valueDataConversion);
@@ -901,7 +879,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       for (Object k : keys) {
          List<Mutation> innerMutations = mutIt.next();
-         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
+         MVCCEntry<Object, Object> entry = lookupMvccEntry(ctx, k);
          EntryView.ReadEntryView ro;
          Object ret = null;
          if (mutations.isEmpty()) {
@@ -925,7 +903,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(command.getKey());
+      MVCCEntry<?, ?> e = lookupMvccEntry(ctx, command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -950,7 +928,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
 
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -974,7 +952,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       // Note: other commands don't clone the entry as they don't carry the previous value for comparison
       // using value matcher - if other commands are retried these can apply the function multiple times.
       // Here we don't want to modify the value in context when trying what would be the outcome of the operation.
-      MVCCEntry copy = e.clone();
+      MVCCEntry<Object, Object> copy = e.clone();
       DataConversion valueDataConversion = command.getValueDataConversion();
       Object decodedArgument = valueDataConversion.fromStorage(command.getArgument());
       EntryViews.AccessLoggingReadWriteView view = EntryViews.readWrite(copy, prevValue, prevMetadata,
@@ -1004,7 +982,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          return null;
       }
 
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
 
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
@@ -1026,13 +1004,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
       Map<Object, Object> arguments = command.getArguments();
       DataConversion valueDataConversion = command.getValueDataConversion();
-      for (Map.Entry entry : arguments.entrySet()) {
-         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(entry.getKey());
-
-         // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
+      for (Map.Entry<Object, Object> entry : arguments.entrySet()) {
+         MVCCEntry<Object, Object> cacheEntry = lookupAndCheckNull(ctx, entry.getKey());
          updateStoreFlags(command, cacheEntry);
          Object decodedValue = valueDataConversion.fromStorage(entry.getValue());
          command.getBiConsumer().accept(decodedValue, EntryViews.writeOnly(cacheEntry, valueDataConversion));
@@ -1042,7 +1015,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @Override
    public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(command.getKey());
+      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, command.getKey());
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -1064,10 +1037,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Consumer consumer = command.getConsumer();
       DataConversion valueDataConversion = command.getValueDataConversion();
       for (Object k : command.getAffectedKeys()) {
-         MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(k);
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
+         MVCCEntry<Object, Object> cacheEntry = lookupAndCheckNull(ctx, k);
          updateStoreFlags(command, cacheEntry);
          consumer.accept(EntryViews.writeOnly(cacheEntry, valueDataConversion));
       }
@@ -1087,7 +1057,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion valueDataConversion = command.getValueDataConversion();
       Function function = command.getFunction();
       keys.forEach(k -> {
-         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
+         MVCCEntry<Object, Object> entry = lookupMvccEntry(ctx, k);
 
          boolean exists = entry.getValue() != null;
          EntryViews.AccessLoggingReadWriteView view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
@@ -1107,11 +1077,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       DataConversion keyDataConversion = command.getKeyDataConversion();
       DataConversion valueDataConversion = command.getValueDataConversion();
       arguments.forEach((k, arg) -> {
-         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
-
-         if (entry == null) {
-            throw new IllegalStateException();
-         }
+         MVCCEntry<Object, Object> entry = lookupAndCheckNull(ctx, k);
          Object decodedArgument = valueDataConversion.fromStorage(arg);
          boolean exists = entry.getValue() != null;
          EntryViews.AccessLoggingReadWriteView view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
@@ -1127,7 +1093,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       int segment = command.getSegment();
       Object key = command.getKey();
       InternalCacheEntry<?, ?> ice = dataContainer.peek(segment, key);
-      if (ice == null) {
+      if (isNull(ice)) {
          if (log.isTraceEnabled()) {
             log.tracef("Entry was not in the container to touch for key %s", key);
          }
@@ -1148,7 +1114,44 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       return Boolean.FALSE;
    }
 
-   private void updateStoreFlags(FlagAffectedCommand command, MVCCEntry e) {
+   @Override
+   public Object visitRemoveTombstone(InvocationContext ctx, RemoveTombstoneCommand command) {
+      for (Object key : command.getAffectedKeys()) {
+         MVCCEntry<Object, Object> entry = lookupAndCheckNull(ctx, key);
+         if (entry.getValue() != null) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Failed to remove tombstone. Reason: no tombstone stored under entry %s; command=%s", entry, command);
+            }
+            command.removeInternalMetadata(key);
+            continue;
+         }
+         if (command.hasAnyFlag(FlagBitSets.BACKUP_WRITE) || Objects.equals(command.getInternalMetadata(key), entry.getInternalMetadata())) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Tombstone removed %s, command=%s", entry, command);
+            }
+            entry.setChanged(true);
+            entry.setRemoved(true);
+            entry.setCreated(false);
+            entry.setValue(null);
+            entry.setTombstone(false);
+            updateStoreFlags(command, entry);
+            continue;
+         }
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Failed to remove tombstone. Reason: private metadata is not the same %s; command=%s", entry, command);
+         }
+         command.removeInternalMetadata(key);
+      }
+
+      if (command.isEmpty()) {
+         // nothing removed
+         command.fail();
+      }
+      return null;
+   }
+
+   private static void updateStoreFlags(FlagAffectedCommand command, MVCCEntry<?, ?> e) {
       if (command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE)) {
          e.setSkipSharedStore();
       }
@@ -1156,43 +1159,53 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    static class BackingEntrySet<K, V> extends InternalCacheSet<CacheEntry<K, V>> {
       private final InternalDataContainer<K, V> dataContainer;
+      private final Predicate<InternalCacheEntry<K, V>> filter;
 
-      BackingEntrySet(InternalDataContainer<K, V> dataContainer) {
+      BackingEntrySet(InternalDataContainer<K, V> dataContainer, boolean includeTombstones) {
          this.dataContainer = dataContainer;
+         filter = includeTombstones ? truePredicate() : isNotTombstoneRxOp();
       }
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(int segment) {
          // Cast is required since nested generic can't handle sub types properly
-         return (Publisher) dataContainer.publisher(segment);
+         //noinspection unchecked
+         return (Publisher) Flowable.fromPublisher(dataContainer.publisher(segment))
+               .filter(filter);
 
       }
 
       @Override
       public Publisher<CacheEntry<K, V>> localPublisher(IntSet segments) {
          // Cast is required since nested generic can't handle sub types properly
-         return (Publisher) dataContainer.publisher(segments);
+         //noinspection unchecked
+         return (Publisher) Flowable.fromPublisher(dataContainer.publisher(segments))
+               .filter(filter);
       }
    }
 
    private static class BackingKeySet<K, V>  extends InternalCacheSet<K> {
       private final InternalDataContainer<K, V> dataContainer;
+      private final Predicate<InternalCacheEntry<K, V>> filter;
 
-      BackingKeySet(InternalDataContainer<K, V> dataContainer) {
+      BackingKeySet(InternalDataContainer<K, V> dataContainer, boolean includeTombstones) {
          this.dataContainer = dataContainer;
+         filter = includeTombstones ? truePredicate() : isNotTombstoneRxOp();
       }
 
       @Override
       public Publisher<K> localPublisher(int segment) {
          return Flowable.fromPublisher(dataContainer.publisher(segment))
-               .map(RxJavaInterop.entryToKeyFunction());
+               .filter(filter)
+               .map(entryToKeyFunction());
 
       }
 
       @Override
       public Publisher<K> localPublisher(IntSet segments) {
          return Flowable.fromPublisher(dataContainer.publisher(segments))
-               .map(RxJavaInterop.entryToKeyFunction());
+               .filter(filter)
+               .map(entryToKeyFunction());
       }
    }
 
@@ -1238,5 +1251,25 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       public Object getResult() {
          return list;
       }
+   }
+
+   private static boolean isNull(CacheEntry<?, ?> entry) {
+      return entry == null || entry.isTombstone();
+   }
+
+   private static void assertNotNull(CacheEntry<?,?> entry, Object key) {
+      if (entry == null) {
+         throw new IllegalStateException("Entry not wrapped for key " + key);
+      }
+   }
+
+   private static MVCCEntry<Object, Object> lookupAndCheckNull(InvocationContext ctx, Object key) {
+      MVCCEntry<Object, Object> e = lookupMvccEntry(ctx, key);
+      assertNotNull(e, key);
+      return e;
+   }
+
+   private static CacheEntry<?, ?> lookupForRead(InvocationContext ctx, Object key) {
+      return ctx.lookupEntry(key);
    }
 }
