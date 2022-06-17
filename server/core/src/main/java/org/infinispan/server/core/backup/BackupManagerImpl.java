@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
 import org.infinispan.lock.api.ClusteredLock;
@@ -28,7 +29,6 @@ import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
@@ -78,7 +78,10 @@ public class BackupManagerImpl implements BackupManager {
    @Override
    public Status getBackupStatus(String name) {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
-      return getBackupStatus(backupMap.get(name));
+
+      Status status = getBackupStatus(backupMap.get(name));
+      log.tracef("Backup status %s = %s", name, status);
+      return status;
    }
 
    @Override
@@ -110,13 +113,15 @@ public class BackupManagerImpl implements BackupManager {
    @Override
    public CompletionStage<Status> removeBackup(String name) {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
-      BackupRequest request = backupMap.remove(name);
+      BackupRequest request = backupMap.get(name);
       Status status = getBackupStatus(request);
       switch (status) {
          case NOT_FOUND:
+            backupMap.remove(name);
             return CompletableFuture.completedFuture(status);
          case COMPLETE:
          case FAILED:
+            backupMap.remove(name);
             return blockingManager.supplyBlocking(() -> {
                request.writer.cleanup();
                return Status.COMPLETE;
@@ -154,6 +159,7 @@ public class BackupManagerImpl implements BackupManager {
       BackupWriter writer = new BackupWriter(name, blockingManager, cacheManagers, parserRegistry, workingDir == null ? rootDir : workingDir);
       CompletionStage<Path> backupStage = backupLock.lock()
             .thenCompose(lockAcquired -> {
+               log.tracef("Backup %s locked = %s", backupLock, lockAcquired);
                if (!lockAcquired)
                   return CompletableFutures.completedExceptionFuture(log.backupInProgress());
 
@@ -163,7 +169,7 @@ public class BackupManagerImpl implements BackupManager {
 
       backupStage = CompletionStages.handleAndCompose(backupStage,
             (path, t) -> {
-               CompletionStage<Void> unlock = backupLock.unlock();
+               CompletionStage<Void> unlock = backupLock.unlock().thenAccept(v -> log.tracef("Backup %s unlocked", backupLock));
                if (t != null) {
                   Throwable backupErr = log.errorCreatingBackup(t);
                   log.errorf(backupErr.getCause(), "%s:", backupErr.getMessage());
@@ -307,6 +313,14 @@ public class BackupManagerImpl implements BackupManager {
          if (localLock == null)
             localLock = new AtomicBoolean();
          return localLock;
+      }
+
+      @Override
+      public String toString() {
+         return "Lock{" +
+               "name='" + name + '\'' +
+               ", isClustered=" + isClustered +
+               '}';
       }
    }
 }

@@ -1,7 +1,8 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -34,12 +35,12 @@ public class RestRouter {
            RestClient invalidCtx = SERVER_TEST.newRestClient(cfgFromCtx.apply("/invalid"));
            RestClient emptyCtx = SERVER_TEST.newRestClient(cfgFromCtx.apply("/"))) {
 
-         String body = sync(restCtx.server().info()).getBody();
+         String body = assertStatus(OK, restCtx.server().info());
          assertTrue(body, body.contains("version"));
 
-         assertEquals(404, sync(emptyCtx.server().info()).getStatus());
+         assertStatus(NOT_FOUND, emptyCtx.server().info());
 
-         assertEquals(404, sync(invalidCtx.server().info()).getStatus());
+         assertStatus(NOT_FOUND, invalidCtx.server().info());
       }
    }
 }

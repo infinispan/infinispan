@@ -1,6 +1,9 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
@@ -9,7 +12,6 @@ import java.util.List;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -88,11 +90,10 @@ public class RollingUpgradeDynamicStoreIT extends RollingUpgradeIT {
       RemoteStoreConfiguration remoteStore = (RemoteStoreConfiguration) builder.build().persistence().stores().iterator().next();
 
       RestEntity restEntity = RestEntity.create(MediaType.APPLICATION_JSON, SerializationUtils.toJson(remoteStore));
-      RestResponse response = join(client.connectSource(restEntity));
-      assertEquals(response.getBody(), 204, response.getStatus());
+      assertStatus(NO_CONTENT, client.connectSource(restEntity));
 
-      response = join(client.sourceConnection());
-      RemoteStoreConfiguration remoteStoreConfiguration = SerializationUtils.fromJson(response.getBody());
+      String json = assertStatus(OK, client.sourceConnection());
+      RemoteStoreConfiguration remoteStoreConfiguration = SerializationUtils.fromJson(json);
 
       List<RemoteServerConfiguration> servers = remoteStoreConfiguration.servers();
       assertEquals(1, servers.size());
@@ -102,12 +103,10 @@ public class RollingUpgradeDynamicStoreIT extends RollingUpgradeIT {
    }
 
    protected void assertSourceConnected() {
-      RestResponse response = join(target.getClient().cache(CACHE_NAME).sourceConnected());
-      assertEquals(200, response.getStatus());
+      assertStatus(OK, target.getClient().cache(CACHE_NAME).sourceConnected());
    }
 
    protected void assertSourceDisconnected() {
-      RestResponse response = join(target.getClient().cache(CACHE_NAME).sourceConnected());
-      assertEquals(404, response.getStatus());
+      assertStatus(NOT_FOUND, target.getClient().cache(CACHE_NAME).sourceConnected());
    }
 }

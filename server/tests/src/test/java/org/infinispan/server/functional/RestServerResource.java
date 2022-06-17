@@ -1,6 +1,8 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertResponse;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -9,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
@@ -34,9 +35,7 @@ public class RestServerResource {
    @Test
    public void testConfig() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse restResponse = sync(client.server().configuration());
-      assertEquals(200, restResponse.getStatus());
-      Json configNode = Json.read(restResponse.getBody());
+      Json configNode = Json.read(assertStatus(OK, client.server().configuration()));
 
       Json server = configNode.at("server");
       Json interfaces = server.at("interfaces");
@@ -55,29 +54,24 @@ public class RestServerResource {
    @Test
    public void testThreads() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse restResponse = sync(client.server().threads());
-      String dump = restResponse.getBody();
-      assertEquals(200, restResponse.getStatus());
-      assertEquals(MediaType.TEXT_PLAIN, restResponse.contentType());
-      assertTrue(dump.contains("state=RUNNABLE"));
+
+      assertResponse(OK, client.server().threads(), r -> {
+         assertEquals(MediaType.TEXT_PLAIN, r.contentType());
+         assertTrue(r.getBody().contains("state=RUNNABLE"));
+      });
    }
 
    @Test
    public void testInfo() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse restResponse = sync(client.server().info());
-      String body = restResponse.getBody();
-      assertEquals(200, restResponse.getStatus());
-      Json infoNode = Json.read(body);
+      Json infoNode = Json.read(assertStatus(OK, client.server().info()));
       assertNotNull(infoNode.at("version"));
    }
 
    @Test
    public void testMemory() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse restResponse = sync(client.server().memory());
-      assertEquals(200, restResponse.getStatus());
-      Json infoNode = Json.read(restResponse.getBody());
+      Json infoNode = Json.read(assertStatus(OK, client.server().memory()));
       Json memory = infoNode.at("heap");
       assertTrue(memory.at("used").asInteger() > 0);
       assertTrue(memory.at("committed").asInteger() > 0);
@@ -86,9 +80,7 @@ public class RestServerResource {
    @Test
    public void testEnv() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse restResponse = sync(client.server().env());
-      assertEquals(200, restResponse.getStatus());
-      Json infoNode = Json.read(restResponse.getBody());
+      Json infoNode = Json.read(assertStatus(OK, client.server().env()));
       Json osVersion = infoNode.at("os.version");
       assertEquals(System.getProperty("os.version"), osVersion.asString());
    }
@@ -96,11 +88,8 @@ public class RestServerResource {
    @Test
    public void testCacheManagerNames() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse restResponse = sync(client.cacheManagers());
-      assertEquals(200, restResponse.getStatus());
-      Json cacheManagers = Json.read(restResponse.getBody());
+      Json cacheManagers = Json.read(assertStatus(OK, client.cacheManagers()));
       Set<String> cmNames = cacheManagers.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
-
       assertEquals(cmNames, Sets.newHashSet("default"));
    }
 }

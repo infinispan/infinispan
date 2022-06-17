@@ -1,10 +1,11 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.client.rest.RestResponse.SERVICE_UNAVAILABLE;
+import static org.infinispan.server.test.core.Common.assertStatus;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -33,21 +34,17 @@ public class ShutdownContainerIT {
       RestClient client = SERVER_TEST.rest().get();
 
       String containerName = "default";
-      RestResponse response = join(client.cacheManager(containerName).caches());
-      assertEquals(200, response.getStatus());
+      assertStatus(OK, client.cacheManager(containerName).caches());
 
-      response = join(client.container().shutdown());
-      assertEquals(204, response.getStatus());
+      assertStatus(NO_CONTENT, client.container().shutdown());
 
       // Ensure operations on the cachemanager are not possible
-      response = join(client.cacheManager(containerName).caches());
-      assertEquals(503, response.getStatus());
+      assertStatus(SERVICE_UNAVAILABLE, client.cacheManager(containerName).caches());
 
-      response = join(client.counters());
-      assertEquals(503, response.getStatus());
+
+      assertStatus(SERVICE_UNAVAILABLE, client.counters());
 
       // Ensure that the K8s liveness pods will not fail
-      response = join(client.cacheManager(containerName).healthStatus());
-      assertEquals(200, response.getStatus());
+      assertStatus(OK, client.cacheManager(containerName).healthStatus());
    }
 }

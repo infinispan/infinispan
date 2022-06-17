@@ -1,5 +1,7 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,16 +32,14 @@ public class RestLoggingResource {
    @Test
    public void testListLoggers() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse response = sync(client.server().logging().listLoggers());
-      Json loggers = Json.read(response.getBody());
+      Json loggers = Json.read(assertStatus(OK, client.server().logging().listLoggers()));
       assertTrue(loggers.asJsonList().size() > 0);
    }
 
    @Test
    public void testListAppenders() {
       RestClient client = SERVER_TEST.rest().create();
-      RestResponse response = sync(client.server().logging().listAppenders());
-      String body = response.getBody();
+      String body = assertStatus(OK, client.server().logging().listAppenders());
       Json appenders = Json.read(body);
       assertEquals(body, 5, appenders.asMap().size());
    }

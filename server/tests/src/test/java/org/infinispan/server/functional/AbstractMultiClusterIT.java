@@ -1,8 +1,10 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-import static org.infinispan.util.concurrent.CompletionStages.join;
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.server.test.core.Common.assertStatus;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -14,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
@@ -72,22 +73,19 @@ class AbstractMultiClusterIT {
 
    protected int getCacheSize(String cacheName, RestClient restClient) {
       RestCacheClient cache = restClient.cache(cacheName);
-      return Integer.parseInt(join(cache.size()).getBody());
+      return Integer.parseInt(assertStatus(OK, cache.size()));
    }
 
    protected void addSchema(RestClient client) {
       RestCacheClient cache = client.cache(PROTOBUF_METADATA_CACHE_NAME);
-      RestResponse response = join(cache.put("schema.proto", "message Person {required string name = 1;}"));
-      assertEquals(204, response.getStatus());
-      RestResponse errorResponse = join(client.cache(PROTOBUF_METADATA_CACHE_NAME).get("schema.proto.errors"));
-      assertEquals(404, errorResponse.getStatus());
+      assertStatus(NO_CONTENT, cache.put("schema.proto", "message Person {required string name = 1;}"));
+      assertStatus(NOT_FOUND,  client.cache(PROTOBUF_METADATA_CACHE_NAME).get("schema.proto.errors"));
    }
 
    protected void createCache(String cacheName, ConfigurationBuilder builder, RestClient client) {
       String cacheConfig = Common.cacheConfigToJson(cacheName, builder.build());
       StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, cacheConfig);
-      RestResponse response = join(client.cache(cacheName).createWithConfiguration(body));
-      assertEquals(response.getBody(), 200, response.getStatus());
+      assertStatus(OK, client.cache(cacheName).createWithConfiguration(body));
    }
 
    protected KeyValuePair<String, String> getCredentials() {
@@ -136,7 +134,7 @@ class AbstractMultiClusterIT {
       }
 
       Set<String> getMembers() {
-         String response = join(getClient().cacheManager("default").info()).getBody();
+         String response = assertStatus(OK, getClient().cacheManager("default").info());
          Json jsonNode = Json.read(response);
          return jsonNode.at("cluster_members").asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
       }

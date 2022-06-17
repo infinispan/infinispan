@@ -1,13 +1,14 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -92,19 +93,15 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
    }
 
    protected void disconnectSource(RestClient client) {
-      RestResponse response = join(client.cache(CACHE_NAME).disconnectSource());
-      assertEquals(204, response.getStatus());
+      assertStatus(NO_CONTENT, client.cache(CACHE_NAME).disconnectSource());
    }
 
    protected void doRollingUpgrade(RestClient client) {
-      RestResponse response = join(client.cache(CACHE_NAME).synchronizeData());
-      assertEquals(response.getBody(), 200, response.getStatus());
+      assertStatus(OK, client.cache(CACHE_NAME).synchronizeData());
    }
 
    protected String getPersonName(String id, RestClient client) {
-      RestResponse resp = join(client.cache(CACHE_NAME).get(id));
-      String body = resp.getBody();
-      assertEquals(body, 200, resp.getStatus());
+      String body = assertStatus(OK,client.cache(CACHE_NAME).get(id));
       return Json.read(body).at("name").asString();
    }
 
@@ -113,7 +110,7 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
 
       for (int i = 0; i < ENTRIES; i++) {
          String person = createPerson("name-" + i);
-         join(cache.put(String.valueOf(i), person));
+         assertStatus(NO_CONTENT, cache.put(String.valueOf(i), person));
       }
       assertEquals(ENTRIES, getCacheSize(CACHE_NAME, client));
    }

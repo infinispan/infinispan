@@ -1,8 +1,9 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.functional.ShutdownRestIT.isServerShutdown;
-import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.Common.assertStatus;
 
 import java.util.concurrent.CompletionStage;
 
@@ -35,8 +36,8 @@ public class ConcurrentShutdownRestIT {
       RestClient client1 = SERVER_TEST.rest().get(1);
       CompletionStage<RestResponse> stop0 = client0.server().stop();
       CompletionStage<RestResponse> stop1 = client1.server().stop();
-      sync(stop0);
-      sync(stop1);
+      assertStatus(NO_CONTENT, stop0);
+      assertStatus(NO_CONTENT, stop1);
 
       eventually(() -> isServerShutdown(client0));
       eventually(() -> isServerShutdown(client1));
