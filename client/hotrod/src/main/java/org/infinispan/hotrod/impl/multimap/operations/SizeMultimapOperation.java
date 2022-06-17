@@ -6,6 +6,7 @@ import static org.infinispan.hotrod.impl.multimap.protocol.MultimapHotRodConstan
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.hotrod.impl.operations.OperationContext;
 import org.infinispan.hotrod.impl.operations.RetryOnFailureOperation;
+import org.infinispan.hotrod.impl.protocol.Codec;
 import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
@@ -20,8 +21,11 @@ import io.netty.channel.Channel;
  */
 public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
 
-   protected SizeMultimapOperation(OperationContext operationContext, CacheOptions options) {
+   private final boolean supportsDuplicates;
+
+   protected SizeMultimapOperation(OperationContext operationContext, CacheOptions options, boolean supportsDuplicates) {
       super(operationContext, SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, options, null);
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
@@ -32,5 +36,14 @@ public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       complete(ByteBufUtil.readVLong(buf));
+   }
+
+   @Override
+   protected void sendHeader(Channel channel) {
+      Codec codec = operationContext.getCodec();
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + codec.estimateSizeMultimapSupportsDuplicated());
+      operationContext.getCodec().writeHeader(buf, header);
+      codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
+      channel.writeAndFlush(buf);
    }
 }

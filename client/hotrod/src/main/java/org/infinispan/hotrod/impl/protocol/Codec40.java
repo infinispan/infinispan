@@ -541,4 +541,14 @@ public class Codec40 implements Codec, HotRodConstants {
    public MediaType readValueType(ByteBuf buf) {
       return CodecUtils.readMediaType(buf);
    }
+
+   @Override
+   public int estimateSizeMultimapSupportsDuplicated() {
+      return 1;
+   }
+
+   @Override
+   public void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates) {
+      buf.writeByte(supportsDuplicates ? 1 : 0);
+   }
 }

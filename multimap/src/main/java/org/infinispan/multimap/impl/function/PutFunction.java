@@ -24,16 +24,18 @@ public final class PutFunction<K, V> implements BaseFunction<K, V, Void> {
 
    public static final AdvancedExternalizer<PutFunction> EXTERNALIZER = new Externalizer();
    private final V value;
+   private final boolean supportsDuplicates;
 
-   public PutFunction(V value) {
+   public PutFunction(V value, boolean supportsDuplicates) {
       this.value = value;
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
    public Void apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       Optional<Bucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
-         Bucket<V> newBucket = existing.get().add(value);
+         Bucket<V> newBucket = existing.get().add(value, supportsDuplicates);
          //don't change the cache is the value already exists. it avoids replicating a no-op
          if (newBucket != null) {
             entryView.set(newBucket);
@@ -60,11 +62,12 @@ public final class PutFunction<K, V> implements BaseFunction<K, V, Void> {
       @Override
       public void writeObject(ObjectOutput output, PutFunction object) throws IOException {
          output.writeObject(object.value);
+         output.writeBoolean(object.supportsDuplicates);
       }
 
       @Override
       public PutFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new PutFunction(input.readObject());
+         return new PutFunction(input.readObject(), input.readBoolean());
       }
    }
 }

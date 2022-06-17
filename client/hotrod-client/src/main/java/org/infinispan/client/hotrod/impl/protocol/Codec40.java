@@ -49,4 +49,14 @@ public class Codec40 extends Codec31 {
          ByteBufUtil.writeArray(buf, value);
       });
    }
+
+   @Override
+   public int estimateSizeMultimapSupportsDuplicated() {
+      return 1;
+   }
+
+   @Override
+   public void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates) {
+      buf.writeByte(supportsDuplicates ? 1 : 0);
+   }
 }

@@ -4,13 +4,11 @@ import static org.infinispan.hotrod.impl.multimap.protocol.MultimapHotRodConstan
 import static org.infinispan.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_ENTRY_RESPONSE;
 
 import org.infinispan.api.common.CacheOptions;
-import org.infinispan.hotrod.impl.operations.AbstractKeyValueOperation;
 import org.infinispan.hotrod.impl.operations.OperationContext;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -21,17 +19,11 @@ import net.jcip.annotations.Immutable;
  * @since 14.0
  */
 @Immutable
-public class ContainsEntryMultimapOperation<K> extends AbstractKeyValueOperation<K, Boolean> {
+public class ContainsEntryMultimapOperation<K> extends AbstractMultimapKeyValueOperation<K, Boolean> {
 
    public ContainsEntryMultimapOperation(OperationContext operationContext, K key, byte[] keyBytes,
-                                         byte[] value, CacheOptions options) {
-      super(operationContext, CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, key, keyBytes, value, options, null);
-   }
-
-   @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendKeyValueOperation(channel);
+                                         byte[] value, CacheOptions options, boolean supportsDuplicates) {
+      super(operationContext, CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, key, keyBytes, value, options, null, supportsDuplicates);
    }
 
    @Override

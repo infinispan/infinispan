@@ -25,10 +25,12 @@ import io.netty.channel.Channel;
 public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Boolean> {
 
    protected final byte[] value;
+   private final boolean supportsDuplicates;
    protected ContainsValueMultimapOperation(OperationContext operationContext, int flags,
-                                            byte[] value, CacheOptions options) {
+                                            byte[] value, CacheOptions options, boolean supportsDuplicates) {
       super(operationContext, CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE, options, null);
       this.value = value;
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
@@ -51,10 +53,12 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
       Codec codec = operationContext.getCodec();
       ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
             codec.estimateExpirationSize(expiration) +
-            ByteBufUtil.estimateArraySize(value));
+            ByteBufUtil.estimateArraySize(value) +
+            codec.estimateSizeMultimapSupportsDuplicated());
       codec.writeHeader(buf, header);
       codec.writeExpirationParams(buf, expiration);
       ByteBufUtil.writeArray(buf, value);
+      codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
       channel.writeAndFlush(buf);
    }
 }

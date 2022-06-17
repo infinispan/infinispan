@@ -46,6 +46,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    private final BufferSizePredictor valueSizePredictor = new AdaptiveBufferSizePredictor();
    private long defaultLifespan = 0;
    private long defaultMaxIdleTime = 0;
+   private final boolean supportsDuplicates;
 
    public void init() {
       operationsFactory = new MultimapOperationsFactory(remoteCacheManager.getChannelFactory(),
@@ -58,11 +59,16 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    }
 
    public RemoteMultimapCacheImpl(RemoteCacheManager rcm, RemoteCache<K, Collection<V>> cache) {
+      this(rcm, cache, false);
+   }
+
+   public RemoteMultimapCacheImpl(RemoteCacheManager rcm, RemoteCache<K, Collection<V>> cache, boolean supportsDuplicates) {
       if (log.isTraceEnabled()) {
          log.tracef("Creating multimap remote cache: %s", cache.getName());
       }
       this.cache = (RemoteCacheImpl<K, Collection<V>>) cache;
       this.remoteCacheManager = rcm;
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
@@ -76,7 +82,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
 
       PutKeyValueMultimapOperation op = operationsFactory.newPutKeyValueOperation(objectKey,
-            marshallKey, marshallValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
+            marshallKey, marshallValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS, supportsDuplicates);
       return op.execute();
    }
 
@@ -89,7 +95,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       K objectKey = isObjectStorage() ? key : null;
       byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
 
-      GetKeyMultimapOperation<V> gco = operationsFactory.newGetKeyMultimapOperation(objectKey, marshallKey);
+      GetKeyMultimapOperation<V> gco = operationsFactory.newGetKeyMultimapOperation(objectKey, marshallKey, supportsDuplicates);
       return gco.execute();
    }
 
@@ -102,7 +108,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       K objectKey = isObjectStorage() ? key : null;
       byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
       GetKeyWithMetadataMultimapOperation<V> operation
-            = operationsFactory.newGetKeyWithMetadataMultimapOperation(objectKey, marshallKey);
+            = operationsFactory.newGetKeyWithMetadataMultimapOperation(objectKey, marshallKey, supportsDuplicates);
       return operation.execute();
    }
 
@@ -114,7 +120,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
       byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      RemoveKeyMultimapOperation removeOperation = operationsFactory.newRemoveKeyOperation(objectKey, marshallKey);
+      RemoveKeyMultimapOperation removeOperation = operationsFactory.newRemoveKeyOperation(objectKey, marshallKey, supportsDuplicates);
       return removeOperation.execute();
    }
 
@@ -127,7 +133,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       K objectKey = isObjectStorage() ? key : null;
       byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
       byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
-      RemoveEntryMultimapOperation removeOperation = operationsFactory.newRemoveEntryOperation(objectKey, marshallKey, marshallValue);
+      RemoveEntryMultimapOperation removeOperation = operationsFactory.newRemoveEntryOperation(objectKey, marshallKey, marshallValue, supportsDuplicates);
       return removeOperation.execute();
    }
 
@@ -139,7 +145,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       assertRemoteCacheManagerIsStarted();
       K objectKey = isObjectStorage() ? key : null;
       byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      ContainsKeyMultimapOperation containsKeyOperation = operationsFactory.newContainsKeyOperation(objectKey, marshallKey);
+      ContainsKeyMultimapOperation containsKeyOperation = operationsFactory.newContainsKeyOperation(objectKey, marshallKey, supportsDuplicates);
       return containsKeyOperation.execute();
    }
 
@@ -150,7 +156,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
-      ContainsValueMultimapOperation containsValueOperation = operationsFactory.newContainsValueOperation(marshallValue);
+      ContainsValueMultimapOperation containsValueOperation = operationsFactory.newContainsValueOperation(marshallValue, supportsDuplicates);
       return containsValueOperation.execute();
    }
 
@@ -163,7 +169,7 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       K objectKey = isObjectStorage() ? key : null;
       byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
       byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
-      ContainsEntryMultimapOperation containsOperation = operationsFactory.newContainsEntryOperation(objectKey, marshallKey, marshallValue);
+      ContainsEntryMultimapOperation containsOperation = operationsFactory.newContainsEntryOperation(objectKey, marshallKey, marshallValue, supportsDuplicates);
       return containsOperation.execute();
    }
 
@@ -173,12 +179,12 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.trace("About to call size");
       }
       assertRemoteCacheManagerIsStarted();
-      return operationsFactory.newSizeOperation().execute();
+      return operationsFactory.newSizeOperation(supportsDuplicates).execute();
    }
 
    @Override
    public boolean supportsDuplicates() {
-      return false;
+      return supportsDuplicates;
    }
 
    private void assertRemoteCacheManagerIsStarted() {

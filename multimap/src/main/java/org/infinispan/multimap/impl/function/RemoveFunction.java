@@ -27,12 +27,14 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
 
    public static final AdvancedExternalizer<RemoveFunction> EXTERNALIZER = new Externalizer();
    private final V value;
+   private final boolean supportsDuplicates;
 
    /**
     * Call this constructor to create a function that removed a key
     */
    public RemoveFunction() {
       this.value = null;
+      this.supportsDuplicates = false;
    }
 
    /**
@@ -40,8 +42,9 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
     *
     * @param value value to be removed
     */
-   public RemoveFunction(V value) {
+   public RemoveFunction(V value, boolean supportsDuplicates) {
       this.value = value;
+      this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
@@ -57,7 +60,7 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
 
    private Boolean removeKeyValue(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       return entryView.find().map(bucket -> {
-               Bucket<V> newBucket = bucket.remove(value);
+               Bucket<V> newBucket = bucket.remove(value, supportsDuplicates);
                if (newBucket != null) {
                   if (newBucket.isEmpty()) {
                      entryView.remove();
@@ -93,11 +96,12 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
       @Override
       public void writeObject(ObjectOutput output, RemoveFunction object) throws IOException {
          output.writeObject(object.value);
+         output.writeBoolean(object.supportsDuplicates);
       }
 
       @Override
       public RemoveFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new RemoveFunction(input.readObject());
+         return new RemoveFunction(input.readObject(), input.readBoolean());
       }
    }
 }

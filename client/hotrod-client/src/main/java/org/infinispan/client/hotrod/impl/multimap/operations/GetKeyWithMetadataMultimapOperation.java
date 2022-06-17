@@ -13,7 +13,6 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.multimap.metadata.MetadataCollectionImpl;
-import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -24,7 +23,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.multimap.MetadataCollection;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -35,20 +33,14 @@ import net.jcip.annotations.Immutable;
  * @since 9.2
  */
 @Immutable
-public class GetKeyWithMetadataMultimapOperation<V> extends AbstractKeyOperation<MetadataCollection<V>> {
+public class GetKeyWithMetadataMultimapOperation<V> extends AbstractMultimapKeyOperation<MetadataCollection<V>> {
    private static final Log log = LogFactory.getLog(GetKeyWithMetadataMultimapOperation.class);
 
    public GetKeyWithMetadataMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
-                                              Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+                                              Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics, boolean supportsDuplicates) {
       super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key,
-            keyBytes, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics, null);
-   }
-
-   @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+            keyBytes, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics, supportsDuplicates);
    }
 
    @Override

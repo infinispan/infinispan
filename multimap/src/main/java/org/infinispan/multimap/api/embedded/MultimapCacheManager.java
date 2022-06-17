@@ -23,7 +23,19 @@ public interface MultimapCacheManager<K, V> {
     *
     * @param name, name of multimap cache to retrieve
     * @return null if no configuration exists as per rules set above, otherwise returns a multimap cache instance
+    * identified by cacheName and doesn't support duplicates
+    */
+   default MultimapCache<K, V> get(String name) {
+      return get(name, false);
+   }
+
+   /**
+    * Retrieves a named multimap cache from the system.
+    *
+    * @param name, name of multimap cache to retrieve
+    * @param supportsDuplicates, boolean check to see whether duplicates are supported or not
+    * @return null if no configuration exists as per rules set above, otherwise returns a multimap cache instance
     * identified by cacheName
     */
-   MultimapCache<K, V> get(String name);
+   MultimapCache<K, V> get(String name, boolean supportsDuplicates);
 }

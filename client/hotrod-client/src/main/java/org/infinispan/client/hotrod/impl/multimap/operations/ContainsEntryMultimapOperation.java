@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.operations.AbstractKeyValueOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -26,13 +25,13 @@ import net.jcip.annotations.Immutable;
  * @since 9.2
  */
 @Immutable
-public class ContainsEntryMultimapOperation extends AbstractKeyValueOperation<Boolean> {
+public class ContainsEntryMultimapOperation extends AbstractMultimapKeyValueOperation<Boolean> {
 
    public ContainsEntryMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                          byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
-                                         byte[] value, ClientStatistics clientStatistics) {
+                                         byte[] value, ClientStatistics clientStatistics, boolean supportsDuplicates) {
       super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics, null);
+            flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics, supportsDuplicates);
    }
 
    @Override

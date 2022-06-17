@@ -24,12 +24,17 @@ import org.infinispan.multimap.impl.ExternalizerIds;
 public final class GetFunction<K, V> implements BaseFunction<K, V, Collection<V>> {
 
    public static final AdvancedExternalizer<GetFunction> EXTERNALIZER = new Externalizer();
+   private final boolean supportsDuplicates;
+
+   public GetFunction(Boolean supportsDuplicates) {
+      this.supportsDuplicates = supportsDuplicates;
+   }
 
    @Override
    public Collection<V> apply(EntryView.ReadWriteEntryView<K, Bucket<V>> entryView) {
       Optional<Bucket<V>> valuesOpt = entryView.find();
       if (valuesOpt.isPresent()) {
-         return entryView.find().get().toSet();
+         return supportsDuplicates ? entryView.find().get().toList() : entryView.find().get().toSet();
       } else {
          return Collections.emptySet();
       }
@@ -49,11 +54,12 @@ public final class GetFunction<K, V> implements BaseFunction<K, V, Collection<V>
 
       @Override
       public void writeObject(ObjectOutput output, GetFunction object) throws IOException {
+         output.writeBoolean(object.supportsDuplicates);
       }
 
       @Override
       public GetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new GetFunction();
+         return new GetFunction(input.readBoolean());
       }
    }
 }

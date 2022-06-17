@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.operations.AbstractKeyValueOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -28,17 +27,16 @@ import net.jcip.annotations.Immutable;
  * @since 9.2
  */
 @Immutable
-public class PutKeyValueMultimapOperation extends AbstractKeyValueOperation<Void> {
+public class PutKeyValueMultimapOperation extends AbstractMultimapKeyValueOperation<Void> {
 
    public PutKeyValueMultimapOperation(Codec codec,
                                        ChannelFactory channelFactory,
                                        Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                        int flags, Configuration cfg, byte[] value, long lifespan,
                                        TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat,
-                                       ClientStatistics clientStatistics) {
+                                       ClientStatistics clientStatistics, boolean supportsDuplicates) {
       super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
-            null);
+            flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics, supportsDuplicates);
    }
 
    @Override
