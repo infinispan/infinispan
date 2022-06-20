@@ -3,8 +3,6 @@
       xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd">
 
     <TCP bind_addr="127.0.0.1"
-         bind_port="7200"
-         port_range="30"
          recv_buf_size="20000000"
          send_buf_size="640000"
          sock_conn_timeout="300"
