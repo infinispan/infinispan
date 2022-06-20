@@ -30,7 +30,7 @@ import okhttp3.Route;
 import okhttp3.internal.http.RequestLine;
 
 public class DigestAuthenticator extends AbstractAuthenticator implements CachingAuthenticator {
-   private static final Pattern HEADER_REGEX = Pattern.compile("(?:\\s)([a-z]+)=(?:\"?)([\\p{Alnum}/=+]+)(?:\"?)");
+   private static final Pattern HEADER_REGEX = Pattern.compile("\\s([a-z]+)=\"?([\\p{Alnum}\\s\\t!#$%&'()*+\\-./:;<=>?@\\[\\\\\\]^_`{|}~]+)\"?");
 
    private static final String CREDENTIAL_CHARSET = "http.auth.credential-charset";
    private static final int QOP_UNKNOWN = -1;
@@ -43,14 +43,12 @@ public class DigestAuthenticator extends AbstractAuthenticator implements Cachin
          'e', 'f'
    };
 
-   private AtomicReference<Map<String, String>> parametersRef = new AtomicReference<>();
-   private Charset credentialsCharset = StandardCharsets.US_ASCII;
+   private final AtomicReference<Map<String, String>> parametersRef = new AtomicReference<>();
+   private final Charset credentialsCharset = StandardCharsets.US_ASCII;
    private final AuthenticationConfiguration configuration;
    private String lastNonce;
    private long nounceCount;
    private String cnonce;
-   private String s1;
-   private String s2;
 
    public DigestAuthenticator(AuthenticationConfiguration configuration) {
       this.configuration = configuration;
@@ -230,8 +228,8 @@ public class DigestAuthenticator extends AbstractAuthenticator implements Cachin
          cnonce = createCnonce();
       }
 
-      s1 = null;
-      s2 = null;
+      String s1;
+      String s2;
 
       if ("MD5-sess".equalsIgnoreCase(algorithm)) {
          sb.setLength(0);
