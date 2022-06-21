@@ -5,7 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
 
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,15 +58,15 @@ public class SslTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   protected void initServerAndClient(boolean sslServer, boolean sslClient, boolean requireClientAuth, boolean clientAuth, boolean altCertPassword, boolean usePEM) {
+   protected void initServerAndClient(boolean sslServer, boolean sslClient, boolean requireClientAuth, boolean clientAuth, boolean altCertPassword, boolean usePEM) throws URISyntaxException {
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
 
       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-      String serverKeyStore = tccl.getResource(altCertPassword ? "keystore_server.jks" : "keystore_server.p12").getPath();
-      String serverTrustStore = tccl.getResource("ca.p12").getPath();
+      Path serverKeyStore = Paths.get(tccl.getResource(altCertPassword ? "keystore_server.jks" : "keystore_server.p12").toURI());
+      Path serverTrustStore = Paths.get(tccl.getResource("ca.p12").toURI());
       org.infinispan.server.core.configuration.SslConfigurationBuilder serverSSLConfig = serverBuilder.ssl()
             .enabled(sslServer)
-            .keyStoreFileName(serverKeyStore)
+            .keyStoreFileName(serverKeyStore.toString())
             .keyStorePassword(STORE_PASSWORD)
             .keyStoreType(altCertPassword ? "JCEKS" : "PKCS12");
       if (altCertPassword)
@@ -73,15 +74,15 @@ public class SslTest extends SingleCacheManagerTest {
       if (requireClientAuth) {
          serverSSLConfig
                .requireClientAuth(true)
-               .trustStoreFileName(serverTrustStore)
+               .trustStoreFileName(serverTrustStore.toString())
                .trustStoreType("PKCS12")
                .trustStorePassword(STORE_PASSWORD);
       }
       hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder);
       log.info("Started server on port: " + hotrodServer.getPort());
 
-      String clientKeyStore = tccl.getResource(altCertPassword ? "keystore_client.jks" : "keystore_client.p12").getPath();
-      String clientTrustStore = tccl.getResource("ca.p12").getPath();
+      Path clientKeyStore = Paths.get(tccl.getResource(altCertPassword ? "keystore_client.jks" : "keystore_client.p12").toURI());
+      Path clientTrustStore = Paths.get(tccl.getResource("ca.p12").toURI());
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       SslConfigurationBuilder clientSSLConfig = clientBuilder
             .addServer()
@@ -97,8 +98,9 @@ public class SslTest extends SingleCacheManagerTest {
       if (sslClient) {
          if(usePEM) {
             try {
-               Path pem = Paths.get(clientTrustStore).getParent().resolve("ca.pem");
-               KeyStore keyStore = KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, null, new FileInputStream(clientTrustStore), clientTrustStore, STORE_PASSWORD);
+               Path pem = clientTrustStore.getParent().resolve("ca.pem");
+               KeyStore keyStore = KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, null,
+                     new FileInputStream(clientTrustStore.toFile()), clientTrustStore.toString(), STORE_PASSWORD);
                String alias = keyStore.aliases().nextElement();
                Certificate certificate = keyStore.getCertificate(alias);
                JcaPEMWriter writer = new JcaPEMWriter(Files.newBufferedWriter(pem));
@@ -112,13 +114,13 @@ public class SslTest extends SingleCacheManagerTest {
             }
          } else {
             clientSSLConfig
-                  .trustStoreFileName(clientTrustStore)
+                  .trustStoreFileName(clientTrustStore.toString())
                   .trustStorePassword(STORE_PASSWORD)
                   .trustStoreType("PKCS12");
          }
          if (clientAuth) {
             clientSSLConfig
-                  .keyStoreFileName(clientKeyStore)
+                  .keyStoreFileName(clientKeyStore.toString())
                   .keyStorePassword(STORE_PASSWORD)
                   .keyStoreType(altCertPassword ? "JCEKS" : "PKCS12");
             if (altCertPassword) {
@@ -170,8 +172,8 @@ public class SslTest extends SingleCacheManagerTest {
    }
 
    // Note: with Netty this started to throw SSLException instead of SSLHandshakeException
-   public void testClientAuthWithAnonClient() throws Exception {
-      Exceptions.expectExceptionNonStrict(TransportException.class, IOException.class, () -> initServerAndClient(true, true, true, false, false, false));
+   public void testClientAuthWithAnonClient() {
+      Exceptions.expectExceptionNonStrict(TransportException.class, ClosedChannelException.class, () -> initServerAndClient(true, true, true, false, false, false));
    }
 
    public void testClientAuthAltCertPassword() throws Exception {
