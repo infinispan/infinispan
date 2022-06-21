@@ -315,7 +315,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       // Process any enhancers
-      container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger(name)).withPrefix(Integer.toString(i)));
+      container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger("CONTAINER")).withPrefix(Integer.toString(i)));
       for (Consumer<OutputFrame> consumer : logConsumers)
          container.withLogConsumer(consumer);
 
