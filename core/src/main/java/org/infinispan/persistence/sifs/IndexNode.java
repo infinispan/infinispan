@@ -1175,8 +1175,8 @@ class IndexNode {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i <= keyParts.length; ++i) {
          sb.append('\n');
-         if (leafNodes != null) {
-            sb.append(" [").append(leafNodes[i].file).append(':').append(leafNodes[i].offset).append("] ");
+         if (leafNodes != null && i < leafNodes.length) {
+            sb.append(" [").append(leafNodes[i].file).append(':').append(leafNodes[i].offset).append(':').append(leafNodes[i].cacheSegment).append("] ");
          } else {
             sb.append(" [").append(innerNodes[i].offset).append(':').append(innerNodes[i].length).append("] ");
          }
@@ -1219,7 +1219,7 @@ class IndexNode {
             do {
                // Reset so we can loop
                done.set(false);
-               recursiveNode(this, segment, sortedSegmentPrefixes, emitter, loadValues, currentTime, new ByRef.Boolean(false), done);
+               recursiveNode(this, segment, sortedSegmentPrefixes, emitter, loadValues, currentTime, new ByRef.Boolean(false), done, false);
                // This handles two of the done cases - in which case we can't continue
                if (emitter.requested() == 0 || emitter.isCancelled()) {
                   return;
@@ -1231,18 +1231,18 @@ class IndexNode {
    }
 
    void recursiveNode(IndexNode node, Index.Segment segment, Deque<byte[]> segmentPrefixes, FlowableEmitter<EntryRecord> emitter,
-         boolean loadValues, long currentTime, ByRef.Boolean foundData, ByRef.Boolean done) throws IOException {
+         boolean loadValues, long currentTime, ByRef.Boolean foundData, ByRef.Boolean done, boolean firstNodeAttempted) throws IOException {
       Lock readLock = node.lock.readLock();
       readLock.lock();
       try {
          byte[] previousKey = null;
          int previousSegment = -1;
          if (node.innerNodes != null) {
-            int point = foundData.get() ? 0 : node.getIterationPoint(segmentPrefixes.getFirst(), -1);
+            final int point = foundData.get() ? 0 : node.getIterationPoint(segmentPrefixes.getFirst(), -1);
             // Need to search all inner nodes starting from that point until we hit the last entry for the segment
             for (int i = point; !segmentPrefixes.isEmpty() && i < node.innerNodes.length && !done.get(); ++i) {
                recursiveNode(node.innerNodes[i].getIndexNode(segment), segment, segmentPrefixes, emitter, loadValues,
-                     currentTime, foundData, done);
+                     currentTime, foundData, done, i == point);
             }
          } else if (node.leafNodes != null) {
             int suggestedIteration;
@@ -1261,13 +1261,21 @@ class IndexNode {
                if (leafNode.cacheSegment != cacheSegment) {
                   // The suggestion may be off by 1 if the page index prefix is longer than the segment but equal
                   if (i == suggestedIteration && firstData
-                        && segmentPrefix.length == UnsignedNumeric.sizeUnsignedInt(cacheSegment)
-                        // No entry for the given segment, make sure to try next segment
-                        && i != node.leafNodes.length - 1
-                        && (i == node.keyParts.length ||
-                        (i < node.keyParts.length &&
-                              compare(node.keyParts[i], segmentPrefix, Math.min(segmentPrefix.length, node.keyParts[i].length)) == 0)))
-                     continue;
+                        && segmentPrefix.length == UnsignedNumeric.sizeUnsignedInt(cacheSegment)) {
+
+                     // No entry for the given segment, make sure to try next segment
+                     if (i != node.leafNodes.length - 1
+                           && (i == node.keyParts.length ||
+                           (i < node.keyParts.length &&
+                                 compare(node.keyParts[i], segmentPrefix, Math.min(segmentPrefix.length, node.keyParts[i].length)) == 0)))
+                        continue;
+
+                     // The cache segment does not map to the current innerNode, we are at the end of the leafNodes,
+                     // and this is the first innerNode attempted. We need to also check the first leaf of the next innerNode if present.
+                     if (i == node.leafNodes.length - 1 && firstNodeAttempted) {
+                        return;
+                     }
+                  }
                   segmentPrefixes.removeFirst();
 
                   // If the data maps to the next segment in our ordered queue, we can continue reading,
