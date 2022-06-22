@@ -154,6 +154,10 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       return this.self();
    }
 
+   public boolean implicitConnector() {
+      return attributes.attribute(IMPLICIT_CONNECTOR).get();
+   }
+
    @Override
    public void validate() {
       ssl.validate();

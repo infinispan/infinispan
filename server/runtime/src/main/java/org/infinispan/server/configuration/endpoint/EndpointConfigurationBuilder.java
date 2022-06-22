@@ -119,10 +119,12 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             } else if (builder instanceof RestServerConfigurationBuilder) {
                enableImplicitAuthentication(securityConfiguration, securityRealm(), (RestServerConfigurationBuilder) builder);
             } else if (builder instanceof RespServerConfigurationBuilder) {
-               enableImplicitAuthentication(securityConfiguration, securityRealm(), (RespServerConfigurationBuilder) builder);
+               builder = enableImplicitAuthentication(securityConfiguration, securityRealm(), (RespServerConfigurationBuilder) builder);
             }
          }
-         connectors.add(builder.create());
+         if (builder != null) {
+            connectors.add(builder.create());
+         }
       }
       if (implicitSecurity) {
          RealmConfiguration realm = securityConfiguration.realms().getRealm(securityRealm());
@@ -251,7 +253,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       }
    }
 
-   private void enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RespServerConfigurationBuilder builder) {
+   private ProtocolServerConfigurationBuilder<?, ?> enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RespServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
       org.infinispan.server.resp.configuration.AuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
@@ -261,7 +263,13 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN)) {
          authentication.authenticator(new ElytronRESPAuthenticator(authentication.securityRealm()));
       } else {
-         throw Server.log.respEndpointRequiresRealmWithPassword();
+         if (builder.implicitConnector()) {
+            // The connector was added implicitly, but the security realm cannot support it. Remove it.
+            return null;
+         } else {
+            throw Server.log.respEndpointRequiresRealmWithPassword();
+         }
       }
+      return builder;
    }
 }
