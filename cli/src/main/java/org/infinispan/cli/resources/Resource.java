@@ -3,13 +3,22 @@ package org.infinispan.cli.resources;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.aesh.command.shell.Shell;
 import org.infinispan.cli.connection.Connection;
+import org.infinispan.cli.printers.PrettyPrinter;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public interface Resource {
+
+   enum ListFormat {
+      NAMES,
+      VALUES,
+      FULL
+   }
+
    String THIS = ".";
    String PARENT = "..";
 
@@ -27,6 +36,8 @@ public interface Resource {
     * Returns an iterable over the children of this resource
     */
    Iterable<String> getChildrenNames() throws IOException;
+
+   void printChildren(ListFormat format, int limit, PrettyPrinter.PrettyPrintMode prettyPrintMode, Shell shell) throws IOException;
 
    /**
     * Returns a resource representing the named child

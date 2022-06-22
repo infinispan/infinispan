@@ -13,6 +13,36 @@ SYNOPSIS
 *ls* ['PATH']
 
 
+OPTIONS
+-------
+
+*-f, --format*='[NAMES|VALUES|FULL]'::
+This option currently only applies when listing caches.
+
+* `NAMES`: only show the keys
+
+* `VALUES`: show the keys and values
+
+* `FULL`: show keys, values and metadata
+
+*-l*::
+This option only applies when listing caches.
+Shortcut for `-f FULL`.
+
+*-p, --pretty-print*='[TABLE|CSV|JSON]'::
+Prints the output using one of the following layouts:
+
+* `TABLE`: tabular format. The column sizes are determined by the terminal width. This is the default.
+
+* `CSV`: comma-separated values.
+
+* `JSON`: JSON format.
+
+*-m, --max-items*='num'::
+This option only applies when listing caches.
+The maximum number of items to show. Defaults to -1 (unlimited).
+
+
 EXAMPLES
 --------
 `ls caches` +
@@ -20,6 +50,9 @@ Lists the available caches.
 
 `ls ../` +
 Lists parent resources.
+
+`ls -l --pretty-print=CSV /containers/default/caches/mycache > mycache.csv` +
+Lists the content of a cache, including keys, values and metadata and redirects the contents to a file.
 
 
 SEE ALSO

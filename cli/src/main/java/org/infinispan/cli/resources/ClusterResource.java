@@ -13,7 +13,6 @@ public class ClusterResource extends AbstractResource {
       super(parent, NAME);
    }
 
-   @Override
    public Iterable<String> getChildrenNames() {
       return getConnection().getClusterNodes();
    }

@@ -2,10 +2,15 @@ package org.infinispan.cli.resources;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Optional;
 
+import org.aesh.command.shell.Shell;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.cli.printers.DefaultRowPrinter;
+import org.infinispan.cli.printers.PrettyPrinter;
+import org.infinispan.cli.printers.PrettyRowPrinter;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -33,6 +38,14 @@ public abstract class AbstractResource implements Resource {
    @Override
    public Iterable<String> getChildrenNames() throws IOException {
       return Collections.emptyList();
+   }
+
+   public void printChildren(ListFormat format, int limit, PrettyPrinter.PrettyPrintMode prettyPrintMode, Shell shell) throws IOException {
+      Iterator<String> it = getChildrenNames().iterator();
+      PrettyRowPrinter rowPrinter = new DefaultRowPrinter(shell.size().getWidth(), 1);
+      try(PrettyPrinter printer = PrettyPrinter.forMode(prettyPrintMode, shell, rowPrinter)) {
+         printer.print(it);
+      }
    }
 
    @Override

@@ -337,12 +337,11 @@ public class CLI extends CliCommand {
    }
 
    public static int main(Shell shell, String[] args, Properties properties, boolean kube) {
-      CommandRuntime runtime = null;
+      CommandRuntime<?> runtime = null;
       try {
          SecurityActions.addSecurityProvider(WildFlyElytronCredentialStoreProvider.getInstance());
          runtime = initialCommandRuntimeBuilder(shell, properties, kube).build();
-         int exitCode = new CliRuntimeRunner(kube ? "kube" : "cli", runtime).args(args).execute();
-         return exitCode;
+         return new CliRuntimeRunner(kube ? "kube" : "cli", runtime).args(args).execute();
       } catch (Exception e) {
          throw new RuntimeException(e);
       } finally {
@@ -356,7 +355,7 @@ public class CLI extends CliCommand {
       return main(shell, args, properties, isKubernetesMode());
    }
 
-   public static void main(String[] args) {
+   public static void main(String[] args) throws IOException {
       System.exit(main(new DefaultShell(), args, System.getProperties()));
    }
 

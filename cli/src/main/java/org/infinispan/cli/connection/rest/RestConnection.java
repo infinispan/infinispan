@@ -1,6 +1,7 @@
 package org.infinispan.cli.connection.rest;
 
 import static org.infinispan.cli.logging.Messages.MSG;
+import static org.infinispan.cli.util.TransformingIterable.SINGLETON_MAP_VALUE;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,7 +29,8 @@ import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.resources.ContainerResource;
 import org.infinispan.cli.resources.ContainersResource;
 import org.infinispan.cli.resources.Resource;
-import org.infinispan.cli.util.IterableJsonReader;
+import org.infinispan.cli.util.JsonReaderIterable;
+import org.infinispan.cli.util.TransformingIterable;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestTaskClient.ResultType;
@@ -263,9 +265,10 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public Collection<String> getAvailableSchemas(String container) throws IOException {
-      List<String> schemas = new ArrayList<>();
-      getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME).forEach(schemas::add);
-      return schemas;
+      TransformingIterable<Map<String, String>, String> i = new TransformingIterable<>(getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME), SINGLETON_MAP_VALUE);
+      List<String> list = new ArrayList<>();
+      i.forEach(list::add);
+      return list;
    }
 
    @Override
@@ -286,8 +289,18 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Iterable<String> getCacheKeys(String container, String cache) throws IOException {
-      return new IterableJsonReader(parseBody(fetch(() -> client.cache(cache).keys()), InputStream.class), s -> s == null || "_value".equals(s));
+   public Iterable<Map<String, String>> getCacheKeys(String container, String cache) throws IOException {
+      return new JsonReaderIterable(parseBody(fetch(() -> client.cache(cache).keys()), InputStream.class));
+   }
+
+   @Override
+   public Iterable<Map<String, String>> getCacheKeys(String container, String cache, int limit) throws IOException {
+      return new JsonReaderIterable(parseBody(fetch(() -> client.cache(cache).keys(limit)), InputStream.class));
+   }
+
+   @Override
+   public Iterable<Map<String, String>> getCacheEntries(String container, String cache, int limit, boolean metadata) throws IOException {
+      return new JsonReaderIterable(parseBody(fetch(() -> client.cache(cache).entries(limit, metadata)), InputStream.class));
    }
 
    @Override
