@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 public class OracleTableManagerTest {
 
    public void testShortIndexNamesOverlap() {
-      DbMetaData dbMetaData = new DbMetaData(DatabaseType.ORACLE, 12, 0, false, false, false);
+      DbMetaData dbMetaData = new DbMetaData(DatabaseType.ORACLE, 12, 0, 30, false, false, false);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .table()
@@ -34,8 +34,8 @@ public class OracleTableManagerTest {
       JdbcStringBasedStoreConfiguration storeConfiguration = (JdbcStringBasedStoreConfiguration) configuration.persistence().stores().get(0);
       InitializationContextImpl context = new InitializationContextImpl(null, null, null, Mockito.mock(PersistenceMarshaller.class), null, null, null, null, null, null, null);
       OracleTableManager tableManager = new OracleTableManager(context, null, storeConfiguration, dbMetaData, "ALongishCacheName");
-      String segmentIndexName = tableManager.getIndexName(true, "segment_index");
-      String timestampIndexName = tableManager.getIndexName(true, "timestamp_index");
+      String segmentIndexName = tableManager.getIndexName(30, true, "segment_index");
+      String timestampIndexName = tableManager.getIndexName(30, true, "timestamp_index");
       assertFalse(segmentIndexName.equals(timestampIndexName));
    }
 }

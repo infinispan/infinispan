@@ -1,22 +1,22 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
+import static org.infinispan.util.logging.Log.CONFIG;
+
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
 
 public abstract class AbstractJdbcStoreConfigurationParser implements ConfigurationParser {
-   protected boolean handleCommonAttributes(AbstractJdbcStoreConfigurationBuilder<?, ?> builder, Attribute attribute,
-         String value) {
+   protected boolean handleCommonAttributes(ConfigurationReader reader,
+         AbstractJdbcStoreConfigurationBuilder<?, ?> builder, Attribute attribute, String value) {
       switch (attribute) {
          case DIALECT:
             builder.dialect(DatabaseType.valueOf(value));
             break;
          case DB_MAJOR_VERSION:
-            builder.dbMajorVersion(Integer.parseInt(value));
-            break;
          case DB_MINOR_VERSION:
-            builder.dbMinorVersion(Integer.parseInt(value));
+            CONFIG.configDeprecated(attribute);
             break;
          case READ_QUERY_TIMEOUT:
             builder.readQueryTimeout(Integer.parseInt(value));

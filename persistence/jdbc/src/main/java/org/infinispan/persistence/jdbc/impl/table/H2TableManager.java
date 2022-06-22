@@ -33,7 +33,7 @@ class H2TableManager extends AbstractTableManager {
 
    @Override
    protected void dropIndex(Connection conn, String indexName) throws PersistenceException {
-      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(true, indexName));
+      String dropIndexDdl = String.format("DROP INDEX IF EXISTS  %s", getIndexName(dbMetadata.getMaxTableNameLength(), true, indexName));
       executeUpdateSql(conn, dropIndexDdl);
    }
 }

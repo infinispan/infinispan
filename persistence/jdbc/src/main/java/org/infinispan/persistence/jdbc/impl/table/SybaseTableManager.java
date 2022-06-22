@@ -25,7 +25,7 @@ class SybaseTableManager extends AbstractTableManager {
 
    @Override
    protected String getDropTimestampSql(String indexName) {
-      return String.format("DROP INDEX %s.%s", dataTableName, getIndexName(true, indexName));
+      return String.format("DROP INDEX %s.%s", dataTableName, getIndexName(dbMetadata.getMaxTableNameLength(), true, indexName));
    }
 
    @Override

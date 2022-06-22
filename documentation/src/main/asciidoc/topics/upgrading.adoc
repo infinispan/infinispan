@@ -117,6 +117,13 @@ Any annotations will simply be copied as comments to the generated `.proto` file
 
 The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
 
+== JDBC Store database versions configuration deprecated
+
+Prior we allowed a user to configure the database major and minor versions when configuring the database parameters.
+These two options are now deprecated and ignored as we always retrieve them from the JDBC metadata directly.
+This affects all three of the JDBC based stores (string-keyed-jdbc-store, table-jdbc-store and query-jdbc-store).
+
+
 = Upgrading from 12.1 to 13.0
 
 == Search

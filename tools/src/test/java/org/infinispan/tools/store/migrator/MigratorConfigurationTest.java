@@ -14,9 +14,7 @@ import static org.infinispan.tools.store.migrator.Element.DISABLE_UPSERT;
 import static org.infinispan.tools.store.migrator.Element.DRIVER_CLASS;
 import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.ID;
-import static org.infinispan.tools.store.migrator.Element.MAJOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
-import static org.infinispan.tools.store.migrator.Element.MINOR_VERSION;
 import static org.infinispan.tools.store.migrator.Element.NAME;
 import static org.infinispan.tools.store.migrator.Element.SEGMENT;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
@@ -195,8 +193,6 @@ public class MigratorConfigurationTest {
       properties.putAll(createBaseProperties(TARGET));
       Element[] storeTypes = new Element[] {SOURCE, TARGET};
       for (Element storeType : storeTypes) {
-         properties.put(propKey(storeType, DB, MAJOR_VERSION), "1");
-         properties.put(propKey(storeType, DB, MINOR_VERSION), "1");
          properties.put(propKey(storeType, DB, DISABLE_INDEXING), "true");
          properties.put(propKey(storeType, DB, DISABLE_UPSERT), "true");
 
@@ -219,8 +215,8 @@ public class MigratorConfigurationTest {
                .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
          Configuration cacheConfig = JdbcConfigurationUtil.configureStore(props, builder).build();
          JdbcStringBasedStoreConfiguration config = (JdbcStringBasedStoreConfiguration) cacheConfig.persistence().stores().get(0);
-         assertEquals((Integer) 1, config.dbMajorVersion());
-         assertEquals((Integer) 1, config.dbMinorVersion());
+         assertNull(config.dbMajorVersion());
+         assertNull(config.dbMinorVersion());
          assertTrue(Boolean.parseBoolean(config.properties().getProperty(TableManagerFactory.INDEXING_DISABLED)));
          assertTrue(Boolean.parseBoolean(config.properties().getProperty(TableManagerFactory.UPSERT_DISABLED)));
       }

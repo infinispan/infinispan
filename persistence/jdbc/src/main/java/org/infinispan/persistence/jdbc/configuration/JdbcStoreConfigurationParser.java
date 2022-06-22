@@ -64,7 +64,7 @@ public class JdbcStoreConfigurationParser extends AbstractJdbcStoreConfiguration
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         if (!handleCommonAttributes(builder, attribute, value)) {
+         if (!handleCommonAttributes(reader, builder, attribute, value)) {
             if (attribute == Attribute.KEY_TO_STRING_MAPPER) {
                builder.key2StringMapper(value);
             } else {

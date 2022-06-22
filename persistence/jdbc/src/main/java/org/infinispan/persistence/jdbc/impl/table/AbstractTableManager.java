@@ -267,9 +267,9 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
    private void createIndex(Connection conn, String indexExt, String columnName) throws PersistenceException {
       if (dbMetadata.isIndexingDisabled()) return;
 
-      boolean indexExists = indexExists(getIndexName(false, indexExt), conn);
+      boolean indexExists = indexExists(getIndexName(dbMetadata.getMaxTableNameLength(), false, indexExt), conn);
       if (!indexExists) {
-         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(true, indexExt), dataTableName, columnName);
+         String ddl = String.format("CREATE INDEX %s ON %s (%s)", getIndexName(dbMetadata.getMaxTableNameLength(), true, indexExt), dataTableName, columnName);
          if (log.isTraceEnabled()) {
             log.tracef("Adding index with following DDL: '%s'.", ddl);
          }
@@ -333,7 +333,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
    }
 
    protected void dropIndex(Connection conn, String indexName) throws PersistenceException {
-      if (!indexExists(getIndexName(true, indexName), conn)) return;
+      if (!indexExists(getIndexName(dbMetadata.getMaxTableNameLength(), true, indexName), conn)) return;
 
       String dropIndexDdl = getDropTimestampSql(indexName);
       if (log.isTraceEnabled()) {
@@ -343,7 +343,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
    }
 
    protected String getDropTimestampSql(String indexName) {
-      return String.format("DROP INDEX %s ON %s", getIndexName(true, indexName), dataTableName);
+      return String.format("DROP INDEX %s ON %s", getIndexName(dbMetadata.getMaxTableNameLength(), true, indexName), dataTableName);
    }
 
    @Override
@@ -375,7 +375,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       return metaTableName;
    }
 
-   public String getIndexName(boolean withIdentifier, String indexExt) {
+   public String getIndexName(int maxTableNameLength, boolean withIdentifier, String indexExt) {
       String plainTableName = dataTableName.toString().replace(identifierQuoteString, "");
       String indexName = plainTableName + "_" + indexExt;
       if (withIdentifier) {

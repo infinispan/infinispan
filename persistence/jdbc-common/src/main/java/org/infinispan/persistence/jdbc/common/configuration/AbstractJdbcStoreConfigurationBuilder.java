@@ -85,13 +85,19 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
       return self();
    }
 
+   /**
+    * @deprecated since 14.0 is ignored
+    */
+   @Deprecated
    public S dbMajorVersion(Integer majorVersion) {
-      attributes.attribute(AbstractJdbcStoreConfiguration.DB_MAJOR_VERSION).set(majorVersion);
       return self();
    }
 
+   /**
+    * @deprecated since 14.0 is ignored
+    */
+   @Deprecated
    public S dbMinorVersion(Integer minorVersion) {
-      attributes.attribute(AbstractJdbcStoreConfiguration.DB_MINOR_VERSION).set(minorVersion);
       return self();
    }
 

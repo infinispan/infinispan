@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
@@ -25,9 +26,7 @@ public class TableManagerFactory {
 
    public static <K, V> TableManager<K, V> getManager(InitializationContext ctx, ConnectionFactory connectionFactory,
          JdbcStringBasedStoreConfiguration config, String cacheName) {
-      DbMetaData metaData = getDbMetaData(connectionFactory, config.dialect(), config.dbMajorVersion(),
-            config.dbMinorVersion(), isPropertyDisabled(config, UPSERT_DISABLED),
-            isPropertyDisabled(config, INDEXING_DISABLED), !config.segmented());
+      DbMetaData metaData = getDbMetaData(connectionFactory, config);
 
       return getManager(metaData, ctx, connectionFactory, config, cacheName);
    }
@@ -58,70 +57,60 @@ public class TableManagerFactory {
       }
    }
 
-   private static DbMetaData getDbMetaData(ConnectionFactory connectionFactory, DatabaseType databaseType,
-                                           Integer majorVersion, Integer minorVersion, boolean disableUpsert,
-                                           boolean disableIndexing, boolean disableSegmented) {
-      if (databaseType != null && majorVersion != null && minorVersion != null)
-         return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
+   private static DbMetaData getDbMetaData(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
+      return getDbMetaData(connectionFactory, config, !config.segmented());
+   }
 
+   public static DbMetaData getDbMetaData(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config,
+         boolean segmentedDisabled) {
+      DatabaseType databaseType = config.dialect();
+      int majorVersion;
+      int minorVersion;
+      int maxTableName;
       Connection connection = null;
-      if (majorVersion == null || minorVersion == null) {
-         try {
-            // Try to retrieve major and minor simultaneously, if both aren't available then no use anyway
-            connection = connectionFactory.getConnection();
-            DatabaseMetaData metaData = connection.getMetaData();
-            majorVersion = metaData.getDatabaseMajorVersion();
-            minorVersion = metaData.getDatabaseMinorVersion();
+      try {
+         // Try to retrieve major and minor simultaneously, if both aren't available then no use anyway
+         connection = connectionFactory.getConnection();
+         DatabaseMetaData metaData = connection.getMetaData();
+         majorVersion = metaData.getDatabaseMajorVersion();
+         minorVersion = metaData.getDatabaseMinorVersion();
+         maxTableName = metaData.getMaxTableNameLength();
 
-            String version = majorVersion + "." + minorVersion;
-            if (log.isDebugEnabled()) {
-               log.debugf("Guessing database version as '%s'.  If this is incorrect, please specify both the correct " +
-                                "major and minor version of your database using the 'databaseMajorVersion' and " +
-                                "'databaseMinorVersion' attributes in your configuration.", version);
-            }
-
-            // If we already know the DatabaseType via User, then don't check
-            if (databaseType != null)
-               return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
-         } catch (SQLException e) {
-            if (log.isDebugEnabled())
-               log.debug("Unable to retrieve DB Major and Minor versions from JDBC metadata.", e);
-         } finally {
-            connectionFactory.releaseConnection(connection);
+         String version = majorVersion + "." + minorVersion;
+         if (log.isDebugEnabled()) {
+            log.debugf("Database version reported as '%s'.", version);
          }
-      }
 
-      try {
-         connection = connectionFactory.getConnection();
-         String dbProduct = connection.getMetaData().getDatabaseProductName();
-         return new DbMetaData(DatabaseType.guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
-      } catch (Exception e) {
-         if (log.isDebugEnabled())
-            log.debug("Unable to guess dialect from JDBC metadata.", e);
+         if (databaseType == null) {
+            databaseType = determineDatabaseType(metaData);
+            if (databaseType == null) {
+               throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(DatabaseType.values()));
+            }
+            log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct " +
+                        "dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s",
+                  databaseType, Arrays.toString(DatabaseType.values()));
+         }
+         return new DbMetaData(databaseType, majorVersion, minorVersion, maxTableName,
+               isPropertyDisabled(config, UPSERT_DISABLED), isPropertyDisabled(config, INDEXING_DISABLED), segmentedDisabled);
+      } catch (SQLException e) {
+         throw new CacheException(e);
       } finally {
          connectionFactory.releaseConnection(connection);
       }
+   }
 
-      if (log.isDebugEnabled())
-         log.debug("Unable to detect database dialect using connection metadata.  Attempting to guess on driver name.");
-      try {
-         connection = connectionFactory.getConnection();
-         String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-         return new DbMetaData(DatabaseType.guessDialect(dbProduct), majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
-      } catch (Exception e) {
-         if (log.isDebugEnabled())
-            log.debug("Unable to guess database dialect from JDBC driver name.", e);
-      } finally {
-         connectionFactory.releaseConnection(connection);
+   private static DatabaseType determineDatabaseType(DatabaseMetaData metaData) throws SQLException {
+      String dbProduct = metaData.getDatabaseProductName();
+      DatabaseType databaseType = DatabaseType.guessDialect(dbProduct);
+      if (databaseType != null) {
+         return databaseType;
       }
 
-      if (databaseType == null) {
-         throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(DatabaseType.values()));
-      }
+      String dbDriver = metaData.getDriverName();
 
-      if (log.isDebugEnabled())
-         log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
-      return new DbMetaData(databaseType, majorVersion, minorVersion, disableUpsert, disableIndexing, disableSegmented);
+      log.debugf("Unable to detect database dialect using produce name %s.  Attempting to guess on driver name %s.", dbProduct, dbDriver);
+
+      return DatabaseType.guessDialect(dbDriver);
    }
 
    private static boolean isPropertyDisabled(AbstractJdbcStoreConfiguration config, String propertyName) {

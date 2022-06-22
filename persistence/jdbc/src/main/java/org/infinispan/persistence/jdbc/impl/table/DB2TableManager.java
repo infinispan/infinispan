@@ -72,7 +72,7 @@ class DB2TableManager<K, V> extends AbstractTableManager<K, V> {
 
    @Override
    protected String getDropTimestampSql(String indexName) {
-      return String.format("DROP INDEX %s", getIndexName(true, indexName));
+      return String.format("DROP INDEX %s", getIndexName(dbMetadata.getMaxTableNameLength(), true, indexName));
    }
 
    @Override

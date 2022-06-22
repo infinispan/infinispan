@@ -99,14 +99,6 @@ endif::downstream[]
 |Specifies a password for the database username.
 |Required
 
-|`db.major_version`
-|Sets the database major version.
-|Optional
-
-|`db.minor_version`
-|Sets the database minor version.
-|Optional
-
 |`db.disable_upsert`
 |Disables database upsert.
 |Optional
@@ -153,8 +145,6 @@ target.connection_pool.connection_url=jdbc:postgresql:postgres
 target.connection_pool.driver_class=org.postrgesql.Driver
 target.connection_pool.username=postgres
 target.connection_pool.password=redhat
-target.db.major_version=9
-target.db.minor_version=5
 target.db.disable_upsert=false
 target.db.disable_indexing=false
 target.table.string.table_name_prefix=tablePrefix

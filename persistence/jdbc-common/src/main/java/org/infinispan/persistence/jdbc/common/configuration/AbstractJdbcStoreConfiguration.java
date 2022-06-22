@@ -9,19 +9,15 @@ import org.infinispan.persistence.jdbc.common.DatabaseType;
 
 public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DIALECT, null, DatabaseType.class).immutable().build();
-   static final AttributeDefinition<Integer> DB_MAJOR_VERSION = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DB_MAJOR_VERSION, null, Integer.class).immutable().build();
-   static final AttributeDefinition<Integer> DB_MINOR_VERSION = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DB_MINOR_VERSION, null, Integer.class).immutable().build();
    static final AttributeDefinition<Integer> READ_QUERY_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.READ_QUERY_TIMEOUT, 0, Integer.class).build();
    static final AttributeDefinition<Integer> WRITE_QUERY_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.WRITE_QUERY_TIMEOUT, 0, Integer.class).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AbstractJdbcStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(),
-            DIALECT, DB_MAJOR_VERSION, DB_MINOR_VERSION, READ_QUERY_TIMEOUT, WRITE_QUERY_TIMEOUT);
+            DIALECT, READ_QUERY_TIMEOUT, WRITE_QUERY_TIMEOUT);
    }
 
    private final Attribute<DatabaseType> dialect;
-   private final Attribute<Integer> dbMajorVersion;
-   private final Attribute<Integer> dbMinorVersion;
    private final Attribute<Integer> readQueryTimeout;
    private final Attribute<Integer> writeQueryTimeout;
    private final ConnectionFactoryConfiguration connectionFactory;
@@ -30,8 +26,6 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
       super(attributes, async);
       this.connectionFactory = connectionFactory;
       dialect = attributes.attribute(DIALECT);
-      dbMajorVersion = attributes.attribute(DB_MAJOR_VERSION);
-      dbMinorVersion = attributes.attribute(DB_MINOR_VERSION);
       readQueryTimeout = attributes.attribute(READ_QUERY_TIMEOUT);
       writeQueryTimeout = attributes.attribute(WRITE_QUERY_TIMEOUT);
    }
@@ -52,12 +46,19 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
       return dialect.get();
    }
 
+   /**
+    * @deprecated since 14.0, always returns <b>null</b>
+    */
    public Integer dbMajorVersion() {
-      return dbMajorVersion.get();
+      return null;
    }
 
+   /**
+    * @deprecated since 14.0, always returns <b>null</b>
+    */
+   @Deprecated
    public Integer dbMinorVersion() {
-      return dbMinorVersion.get();
+      return null;
    }
 
    public Integer readQueryTimeout() {
