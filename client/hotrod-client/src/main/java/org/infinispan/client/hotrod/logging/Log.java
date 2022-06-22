@@ -382,4 +382,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Invalid created count after closing channel %s", id = 4107)
    void invalidCreatedCountAfterClose(Channel channel);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Native IOUring transport not available, using NIO instead: %s", id = 4108)
+   void ioUringNotAvailable(String cause);
 }

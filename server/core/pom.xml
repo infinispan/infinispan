@@ -28,6 +28,28 @@
          <classifier>linux-x86_64</classifier>
       </dependency>
       <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-transport-native-epoll</artifactId>
+         <classifier>linux-aarch_64</classifier>
+      </dependency>
+      <dependency>
+         <groupId>io.netty.incubator</groupId>
+         <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>io.netty.incubator</groupId>
+         <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+         <classifier>linux-x86_64</classifier>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>io.netty.incubator</groupId>
+         <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+         <classifier>linux-aarch_64</classifier>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-tasks</artifactId>
       </dependency>
