@@ -397,6 +397,33 @@ DELETE /rest/v2/caches/{cacheName}/{cacheKey}
 |Sets the content type for the key in the request. The default is `application/x-java-object; type=java.lang.String`. See link:#rest_key_content_type[Key-Content-Type] for more information.
 |===
 
+[id='rest_v2_distribution_entries']
+= Checking entry distribution
+Invoking this endpoint returns the nodes the entry is present, identifying the primary owner and backup readers.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}/{cacheKey}?action=distribution
+----
+
+{brandname} provides a JSON response such as the following:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_full_key_data_distribution.json[]
+----
+
+The root element contains the properties:
+
+* `contains_key` identifies if the key exists in the cache.
+* `owners` is a list of nodes that have the key.
+
+Each element in the `owners` list represents a node. The properties are:
+
+* `node_name` is the node name.
+* `primary` identifies if the node is the primary owner.
+* `node_addresses` is a list with all the node's physical addresses.
+
 
 [id='rest_v2_remove_cache']
 = Deleting Caches

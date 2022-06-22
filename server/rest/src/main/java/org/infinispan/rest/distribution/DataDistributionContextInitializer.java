@@ -6,9 +6,9 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 @AutoProtoSchemaBuilder(
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = {
-            CacheDistributionRunnable.class,
             CacheDistributionInfo.class,
             NodeDistributionInfo.class,
+            KeyDistributionInfo.class,
       },
       schemaFileName = "persistence.distribution.proto",
       schemaFilePath = "proto/generated",

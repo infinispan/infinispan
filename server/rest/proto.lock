@@ -92,12 +92,29 @@
             ]
           },
           {
-            "name": "CacheDistributionRunnable",
+            "name": "KeyDistributionInfo",
             "fields": [
               {
                 "id": 1,
-                "name": "cacheName",
+                "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "primary",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "false"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "addresses",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           }

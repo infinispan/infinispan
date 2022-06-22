@@ -80,6 +80,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;
@@ -477,6 +478,48 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
          // But less space than before.
          assertTrue(node.at("memory_used").asLong() < previousSizes.get(node.at("node_name").asString()));
+      }
+   }
+
+   @Test
+   public void testCacheV2KeyDistribution() {
+      final String cacheName = "keyDistribution";
+      String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
+      createCache(cacheJson, cacheName);
+
+      RestCacheClient cacheClient = client.cache(cacheName);
+
+      putStringValueInCache(cacheName, "key1", "data");
+      putStringValueInCache(cacheName, "key2", "data");
+      Map<String, Boolean> sample = Map.of("key1", true, "key2", true, "unknown", false);
+
+      for (Map.Entry<String, Boolean> entry : sample.entrySet()) {
+         CompletionStage<RestResponse> response = cacheClient.distribution(entry.getKey());
+         assertThat(response).isOk();
+
+         try (RestResponse restResponse = join(response)) {
+            Json jsonNode = Json.read(restResponse.getBody());
+            assertEquals((boolean) entry.getValue(), jsonNode.at("contains_key").asBoolean());
+            assertTrue(jsonNode.at("owners").isArray());
+
+            List<Json> distribution = jsonNode.at("owners").asJsonList();
+            assertEquals(NUM_SERVERS, distribution.size());
+
+            Pattern pattern = Pattern.compile(this.getClass().getSimpleName() + "-Node[a-zA-Z]$");
+            for (Json node : distribution) {
+               assertEquals(node.at("node_addresses").asJsonList().size(), 1);
+               assertTrue(pattern.matcher(node.at("node_name").asString()).matches());
+               assertTrue(node.has("primary"));
+            }
+
+            if (entry.getValue()) {
+               assertTrue(distribution.stream().anyMatch(n -> n.at("primary").asBoolean()));
+            } else {
+               assertTrue(distribution.stream().noneMatch(n -> n.at("primary").asBoolean()));
+            }
+         } catch (Exception e) {
+            throw new TestException(e);
+         }
       }
    }
 

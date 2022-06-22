@@ -1,0 +1,19 @@
+{
+  "contains_key": true,
+  "owners": [
+    {
+      "node_name": "NodeA",
+      "primary": true,
+      "node_addresses": [
+        "127.0.0.1:39492"
+      ]
+    },
+    {
+      "node_name": "NodeB",
+      "primary": false,
+      "node_addresses": [
+        "127.0.0.1:38195"
+      ]
+    }
+  ]
+}

@@ -18,7 +18,9 @@ import org.infinispan.notifications.Listenable;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.AddCacheManagerListenerAction;
+import org.infinispan.security.actions.CacheContainsKeyAsyncAction;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
+import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
@@ -87,5 +89,13 @@ final class SecurityActions {
 
    static AuthorizationManager getCacheAuthorizationManager(final AdvancedCache<?, ?> cache) {
       return doPrivileged(new GetCacheAuthorizationManagerAction(cache));
+   }
+
+   static Cache<?, ?> getCache(String cacheName, EmbeddedCacheManager manager) {
+      return doPrivileged(new GetCacheAction(manager, cacheName));
+   }
+
+   static <K> CompletionStage<Boolean> cacheContainsKeyAsync(AdvancedCache<K, ?> ac, K key) {
+      return doPrivileged(new CacheContainsKeyAsyncAction<>(ac, key));
    }
 }

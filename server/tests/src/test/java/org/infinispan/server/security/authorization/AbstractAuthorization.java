@@ -151,6 +151,26 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
+   public void testRestKeyDistribution() {
+      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+      RestCacheClient adminCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cache(getServerTest().getMethodName());
+      assertStatus(NO_CONTENT, adminCache.put("existentKey", "v"));
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(OK, cache.distribution("somekey"));
+         assertStatus(OK, cache.distribution("existentKey"));
+      }
+
+      // Types with no access.
+      for (TestUser type: EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, cache.distribution("somekey"));
+         assertStatus(FORBIDDEN, cache.distribution("existentKey"));
+      }
+   }
+
+   @Test
    public void testStats() {
       restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
 

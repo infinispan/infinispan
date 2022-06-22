@@ -378,6 +378,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> distribution(String key) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/" + sanitize(key) + "?action=distribution").get();
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> query(String query, boolean local) {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=search&query=" + sanitize(query) + "&local=" + local).get();

@@ -124,6 +124,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Key related operations
             .invocation().methods(PUT, POST).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::putValueToCache)
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
+            .invocation().method(GET).path("/v2/caches/{cacheName}/{cacheKey}").withAction("distribution").handleWith(this::getKeyDistribution)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("entries").handleWith(this::streamEntries)
@@ -565,6 +566,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.supplyAsync(() -> cache.cacheDistribution(cacheName, request), invocationHelper.getExecutor())
             .thenCompose(Function.identity())
             .thenApply(distributions -> asJsonResponse(Json.array(distributions.stream().map(CacheDistributionInfo::toJson).toArray())));
+   }
+
+   private CompletionStage<RestResponse> getKeyDistribution(RestRequest request) {
+      return keyDistribution(request)
+            .thenApply(distribution -> asJsonResponse(distribution.toJson()));
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {
