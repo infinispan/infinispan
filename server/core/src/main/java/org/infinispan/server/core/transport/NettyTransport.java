@@ -27,14 +27,10 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.ServerChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFutureListener;
 import io.netty.channel.group.ChannelMatcher;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -346,15 +342,14 @@ public class NettyTransport implements Transport {
    }
 
    private Class<? extends ServerChannel> getServerSocketChannel() {
-      Class<? extends ServerChannel> channel = EPollAvailable.USE_NATIVE_EPOLL ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
+      Class<? extends ServerChannel> channel = NativeTransport.serverSocketChannelClass();
       log.createdSocketChannel(channel.getName(), configuration.toString());
       return channel;
    }
 
    public static MultithreadEventLoopGroup buildEventLoop(int nThreads, ThreadFactory threadFactory,
          String configuration) {
-      MultithreadEventLoopGroup eventLoop = EPollAvailable.USE_NATIVE_EPOLL ? new EpollEventLoopGroup(nThreads, threadFactory) :
-            new NioEventLoopGroup(nThreads, threadFactory);
+      MultithreadEventLoopGroup eventLoop = NativeTransport.createEventLoopGroup(nThreads, threadFactory);
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration);
       return eventLoop;
    }

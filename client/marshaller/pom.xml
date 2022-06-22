@@ -106,7 +106,7 @@
 
     <profiles>
         <profile>
-            <id>deprecated-marshallers</id>
+            <id>community</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>

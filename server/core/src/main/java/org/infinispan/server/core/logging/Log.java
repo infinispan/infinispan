@@ -34,6 +34,7 @@ import io.netty.handler.ipfilter.IpFilterRule;
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
+   Log SERVER = Logger.getMessageLogger(Log.class, LOG_ROOT + "SERVER");
 //   @LogMessage(level = WARN)
 //   @Message(value = "Server channel group did not completely unbind", id = 5004)
 //   void serverDidNotUnbind();
@@ -169,4 +170,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The supplied configuration for cache '%s' must contain a single cache configuration for it: %s", id = 5053)
    CacheConfigurationException configurationMustContainSingleCache(String name, String configuration);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Native IOUring transport not available, using NIO instead: %s", id = 5054)
+   void ioUringNotAvailable(String message);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Using transport: %s")
+   void usingTransport(String transportName);
 }

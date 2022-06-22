@@ -1,5 +1,7 @@
 package org.infinispan.server.license;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,7 +40,7 @@ public class LicenseTest {
             .filter(Files::isRegularFile)
             .map(Path::getFileName)
             .map(String::valueOf)
-            .map(LicenseTest::removeNettyOsName)
+            .map(LicenseTest::removeOsName)
             .collect(Collectors.toSet());
 
       String html = new String(Files.readAllBytes(getDependencyHtmlFile()));
@@ -53,7 +55,6 @@ public class LicenseTest {
             if (group.contains("@patternfly")) {
                // patternfly includes the artifact in the group with a slash
                String[] splitGroup = group.split("/");
-               group = splitGroup[0];
                artifact = splitGroup[1];
                // Ignore the next match as it is empty
                tdMatcher.find();
@@ -84,11 +85,15 @@ public class LicenseTest {
          System.out.println("Missing: " + lib);
       }
 
-      Assert.assertEquals(0, libs.size());
+      assertEquals(libs.toString(), 0, libs.size());
    }
 
-   private static String removeNettyOsName(String jarFile) {
-      return jarFile.replace("netty-transport-native-epoll-linux-x86_64", "netty-transport-native-epoll");
+   private static String removeOsName(String jarFile) {
+      return jarFile
+            .replace("epoll-linux-x86_64", "epoll")
+            .replace("epoll-linux-aarch_64", "epoll")
+            .replace("io_uring-linux-x86_64", "io_uring")
+            .replace("io_uring-linux-aarch_64", "io_uring");
    }
 
    private Path getLibDir() {
@@ -104,6 +109,6 @@ public class LicenseTest {
    }
 
    private boolean hasLicenseLink(String value) {
-      return value != null ? value.contains("a href") : false;
+      return value != null && value.contains("a href");
    }
 }

@@ -146,7 +146,6 @@
       <dependency>
          <groupId>org.latencyutils</groupId>
          <artifactId>LatencyUtils</artifactId>
-         <version>${version.latencyutils}</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
@@ -517,5 +516,31 @@
          </plugin>
       </plugins>
    </build>
-</project>
 
+   <profiles>
+      <profile>
+         <id>community</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <dependencies>
+            <dependency>
+               <groupId>io.netty.incubator</groupId>
+               <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+            </dependency>
+
+            <dependency>
+               <groupId>io.netty.incubator</groupId>
+               <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+               <classifier>linux-x86_64</classifier>
+            </dependency>
+
+            <dependency>
+               <groupId>io.netty.incubator</groupId>
+               <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+               <classifier>linux-aarch_64</classifier>
+            </dependency>
+         </dependencies>
+      </profile>
+   </profiles>
+</project>
