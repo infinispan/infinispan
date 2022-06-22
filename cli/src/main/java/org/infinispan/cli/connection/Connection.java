@@ -3,6 +3,7 @@ package org.infinispan.cli.connection;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 
@@ -43,7 +44,11 @@ public interface Connection extends Closeable {
 
    Collection<String> getAvailableTasks(String container) throws IOException;
 
-   Iterable<String> getCacheKeys(String container, String cache) throws IOException;
+   Iterable<Map<String, String>> getCacheKeys(String container, String cache) throws IOException;
+
+   Iterable<Map<String, String>> getCacheKeys(String container, String cache, int limit) throws IOException;
+
+   Iterable<Map<String, String>> getCacheEntries(String container, String cache, int limit, boolean metadata) throws IOException;
 
    Iterable<String> getCounterValue(String container, String counter) throws IOException;
 

@@ -2,15 +2,19 @@ package org.infinispan.cli.impl;
 
 import java.io.Console;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
-import org.aesh.command.shell.Shell;
 import org.aesh.readline.Prompt;
 import org.aesh.readline.terminal.Key;
+import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.aesh.readline.util.Parser;
-import org.aesh.terminal.tty.Size;
 import org.aesh.terminal.utils.ANSI;
 
-public class DefaultShell implements Shell {
+public class DefaultShell extends AeshDelegatingShell {
+
+   public DefaultShell() throws IOException {
+      super(new TerminalConnection(Charset.defaultCharset(), System.in, System.out));
+   }
 
    @Override
    public void write(String out, boolean paging) {
@@ -78,21 +82,6 @@ public class DefaultShell implements Shell {
          }
       }
       return null;
-   }
-
-   @Override
-   public boolean enableAlternateBuffer() {
-      return false;
-   }
-
-   @Override
-   public boolean enableMainBuffer() {
-      return false;
-   }
-
-   @Override
-   public Size size() {
-      return new Size(1, -1);
    }
 
    @Override

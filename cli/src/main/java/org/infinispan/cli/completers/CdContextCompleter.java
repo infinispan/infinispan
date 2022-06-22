@@ -16,7 +16,7 @@ import org.infinispan.cli.resources.RootResource;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class CdContextCompleter implements OptionCompleter {
+public class CdContextCompleter implements OptionCompleter<CompleterInvocation> {
 
    @Override
    public void complete(CompleterInvocation invocation) {
@@ -72,7 +72,7 @@ public class CdContextCompleter implements OptionCompleter {
    private Collection<String> getChildrenNames(Resource resource) {
       try {
          List<String> children = new ArrayList<>();
-         resource.getChildrenNames().forEach(c -> children.add(c));
+         resource.getChildrenNames().forEach(children::add);
          return children;
       } catch (IOException e) {
          return Collections.emptyList();

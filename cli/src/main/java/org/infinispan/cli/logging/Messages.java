@@ -11,6 +11,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.patching.PatchInfo;
 import org.infinispan.cli.patching.PatchOperation;
+import org.infinispan.cli.resources.Resource;
 import org.infinispan.cli.user.UserTool;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -246,4 +247,7 @@ public interface Messages {
 
    @Message("Retry download '%d/%d'")
    String retryDownload(int retry, int retries);
+
+   @Message("The resource does not support the '%s' list format")
+   IllegalArgumentException unsupportedListFormat(Resource.ListFormat format);
 }
