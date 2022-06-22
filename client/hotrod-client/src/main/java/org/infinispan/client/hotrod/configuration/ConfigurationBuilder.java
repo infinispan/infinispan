@@ -490,16 +490,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       transaction.withTransactionProperties(typed);
       nearCache.withProperties(properties);
 
-      Map<String, String> xsiteProperties = typed.entrySet().stream()
-            .filter(e -> ((String) e.getKey()).startsWith(ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX))
-            .collect(Collectors.toMap(
-                  e -> ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX_REGEX
-                        .matcher((String) e.getKey()).replaceFirst(""),
-                  e -> StringPropertyReplacer.replaceProperties((String) e.getValue())));
-      xsiteProperties.forEach((key, value) -> {
-         ClusterConfigurationBuilder cluster = this.addCluster(key);
-         parseServers(value, cluster::addClusterNode);
-      });
+      parseClusterProperties(typed);
 
       Set<String> cachesNames = typed.keySet().stream()
             .map(k -> (String) k)
@@ -520,6 +511,32 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.transportFactory = Util.getInstance(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY), classLoader.get());
       }
       return this;
+   }
+
+   private void parseClusterProperties(TypedProperties properties) {
+      Map<String, ClusterConfigurationBuilder> builders = new HashMap<>();
+
+      properties.forEach((k, v) -> {
+         assert k instanceof String;
+         String key = (String) k;
+         if (!key.startsWith(ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX)) {
+            // not a cluster property
+            return;
+         }
+
+         assert v instanceof String;
+         String value = (String) v;
+
+         Matcher intelligenceMatcher = ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX_INTELLIGENCE_REGEX.matcher(key);
+         if (intelligenceMatcher.matches()) {
+            String clusterName = intelligenceMatcher.replaceFirst("");
+            builders.computeIfAbsent(clusterName, this::addCluster).clusterClientIntelligence(ClientIntelligence.valueOf(value.toUpperCase()));
+            return;
+         }
+         String clusterName = ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX_REGEX.matcher(key).replaceFirst("");
+         ClusterConfigurationBuilder builder = builders.computeIfAbsent(clusterName, this::addCluster);
+         parseServers(StringPropertyReplacer.replaceProperties(value), builder::addClusterNode);
+      });
    }
 
    @Override

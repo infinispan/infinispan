@@ -122,7 +122,7 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
          }
 
          if (segmentKeyTracker.track(key, status, operationContext.getConfiguration().getClassAllowList())) {
-            K unmarshallKey = dataFormat.keyToObj(key, operationContext.getConfiguration().getClassAllowList());
+            K unmarshallKey = dataFormat().keyToObj(key, operationContext.getConfiguration().getClassAllowList());
             entries.add(new CacheEntryImpl<>(unmarshallKey, value, metadata));
          } else {
             untrackedEntries++;
@@ -138,6 +138,6 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
    }
 
    private <M> M unmarshallValue(byte[] bytes) {
-      return dataFormat.valueToObj(bytes, operationContext.getConfiguration().getClassAllowList());
+      return dataFormat().valueToObj(bytes, operationContext.getConfiguration().getClassAllowList());
    }
 }

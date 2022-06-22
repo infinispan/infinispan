@@ -5,10 +5,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -31,9 +32,9 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
    private final RemoteQuery<?> remoteQuery;
    private final QuerySerializer querySerializer;
 
-   public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
+   public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                          int flags, Configuration cfg, RemoteQuery<?> remoteQuery, DataFormat dataFormat) {
-      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, null);
+      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat, null);
       this.remoteQuery = remoteQuery;
       this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());
    }

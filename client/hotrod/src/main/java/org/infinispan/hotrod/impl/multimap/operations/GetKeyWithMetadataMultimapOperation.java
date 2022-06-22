@@ -87,7 +87,7 @@ public class GetKeyWithMetadataMultimapOperation<K, V> extends AbstractMultimapK
       int size = ByteBufUtil.readVInt(buf);
       Collection<V> values = new ArrayList<>(size);
       for (int i = 0; i < size; ++i) {
-         V value = bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), operationContext.getConfiguration().getClassAllowList());
+         V value = bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), operationContext.getConfiguration().getClassAllowList());
          values.add(value);
       }
       complete(new CacheEntryCollectionImpl<>(key, values, new CacheEntryMetadataImpl(creation, lastUsed, expiration, version)));

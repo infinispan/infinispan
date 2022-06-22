@@ -3,11 +3,12 @@ package org.infinispan.client.hotrod.impl.operations;
 import static org.infinispan.commons.util.Util.printArray;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -37,10 +38,10 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
    protected final TimeUnit maxIdleTimeUnit;
 
    protected AbstractKeyValueOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
-                                       AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
+                                       AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
                                        DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(requestCode, responseCode, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics, telemetryService);
+      super(requestCode, responseCode, codec, channelFactory, key, keyBytes, cacheName, clientTopology, flags, cfg, dataFormat, clientStatistics, telemetryService);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

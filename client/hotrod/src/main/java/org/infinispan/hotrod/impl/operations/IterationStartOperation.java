@@ -66,7 +66,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       SegmentConsistentHash consistentHash = (SegmentConsistentHash) operationContext.getChannelFactory().getConsistentHash(operationContext.getCacheNameBytes());
-      IterationStartResponse response = new IterationStartResponse(ByteBufUtil.readArray(buf), consistentHash, header.topologyId().get(), channel);
+      IterationStartResponse response = new IterationStartResponse(ByteBufUtil.readArray(buf), consistentHash, header.getClientTopology().get().getTopologyId(), channel);
       complete(response);
    }
 }

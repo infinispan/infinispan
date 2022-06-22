@@ -101,7 +101,7 @@ public class GetWithMetadataOperation<K, V> extends AbstractKeyOperation<K, Cach
       if (log.isTraceEnabled()) {
          log.tracef("Received version: %d", version);
       }
-      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList());
+      V value = dataFormat().valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList());
       statsDataRead(true);
       complete(new CacheEntryImpl<>((K) key, value, new CacheEntryMetadataImpl(creation, lastUsed, expiration, version)));
    }

@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.event.impl.RemovedEventImpl;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
@@ -111,6 +112,7 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    protected HeaderParams writeHeader(ByteBuf buf, HeaderParams params, byte version) {
+      ClientTopology clientTopology = params.clientTopology.get();
       buf.writeByte(HotRodConstants.REQUEST_MAGIC);
       ByteBufUtil.writeVLong(buf, params.messageId);
       buf.writeByte(version);
@@ -118,8 +120,11 @@ public class Codec20 implements Codec, HotRodConstants {
       ByteBufUtil.writeArray(buf, params.cacheName);
       int joinedFlags = params.flags;
       ByteBufUtil.writeVInt(buf, joinedFlags);
-      buf.writeByte(params.clientIntel);
-      int topologyId = params.topologyId.get();
+      byte clientIntel = clientTopology.getClientIntelligence().getValue();
+      // set the client intelligence byte sent to read the response
+      params.clientIntelligence = clientIntel;
+      buf.writeByte(clientIntel);
+      int topologyId = clientTopology.getTopologyId();
       ByteBufUtil.writeVInt(buf, topologyId);
 
       if (log.isTraceEnabled())
@@ -134,7 +139,7 @@ public class Codec20 implements Codec, HotRodConstants {
    public int estimateHeaderSize(HeaderParams params) {
       return 1 + ByteBufUtil.estimateVLongSize(params.messageId) + 1 + 1 +
             ByteBufUtil.estimateArraySize(params.cacheName) + ByteBufUtil.estimateVIntSize(params.flags) +
-            1 + 1 + ByteBufUtil.estimateVIntSize(params.topologyId.get());
+            1 + 1 + ByteBufUtil.estimateVIntSize(params.getClientTopology().get().getTopologyId());
    }
 
    public long readMessageId(ByteBuf buf) {
@@ -376,7 +381,7 @@ public class Codec20 implements Codec, HotRodConstants {
 
       final short hashFunctionVersion;
       final SocketAddress[][] segmentOwners;
-      if (params.clientIntel == ClientIntelligence.HASH_DISTRIBUTION_AWARE.getValue()) {
+      if (params.clientIntelligence == ClientIntelligence.HASH_DISTRIBUTION_AWARE.getValue()) {
          // Only read the hash if we asked for it
          hashFunctionVersion = buf.readUnsignedByte();
          int numSegments = ByteBufUtil.readVInt(buf);

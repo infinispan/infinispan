@@ -38,7 +38,7 @@ public class AddBloomNearCacheClientListenerOperation extends ClientListenerOper
    }
 
    public AddBloomNearCacheClientListenerOperation copy() {
-      return new AddBloomNearCacheClientListenerOperation(operationContext, options, listenerId, listener, dataFormat, bloomFilterBits, remoteCache);
+      return new AddBloomNearCacheClientListenerOperation(operationContext, options, listenerId, listener, dataFormat(), bloomFilterBits, remoteCache);
    }
 
    @Override

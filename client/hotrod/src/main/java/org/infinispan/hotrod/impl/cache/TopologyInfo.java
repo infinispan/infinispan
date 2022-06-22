@@ -101,7 +101,7 @@ public final class TopologyInfo {
       return caches.computeIfAbsent(cacheName, cn -> {
          // TODO Do we still need locking, in case the cluster switch iteration misses this cache?
          ClusterInfo cluster = this.cluster;
-         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), cluster.getTopologyAge(), cluster.getInitialServers());
+         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), cluster.getTopologyAge(), cluster.getInitialServers(), cluster.getIntelligence());
          cacheInfo.updateBalancerServers();
          if (log.isTraceEnabled()) log.tracef("Creating cache info %s with topology age %d",
                                               cacheInfo.getCacheName(), cluster.getTopologyAge());
@@ -124,7 +124,7 @@ public final class TopologyInfo {
       // Stop accepting topology updates from old requests
       caches.forEach((name, oldCacheInfo) -> {
          CacheInfo newCacheInfo = oldCacheInfo.withNewServers(newTopologyAge, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
-                                                              newCluster.getInitialServers());
+                                                              newCluster.getInitialServers(), newCluster.getIntelligence());
          updateCacheInfo(name, oldCacheInfo, newCacheInfo);
       });
 
@@ -144,7 +144,7 @@ public final class TopologyInfo {
       CacheInfo oldCacheInfo = caches.get(cacheName);
       CacheInfo newCacheInfo = oldCacheInfo.withNewServers(cluster.getTopologyAge(),
                                                            HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
-                                                           cluster.getInitialServers());
+                                                           cluster.getInitialServers(), cluster.getIntelligence());
       updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
    }
 
@@ -165,7 +165,7 @@ public final class TopologyInfo {
       // The new CacheInfo doesn't have a new balancer instance, so the server update affects both
       newCacheInfo.updateBalancerServers();
       // Update the topology id for new requests
-      newCacheInfo.getTopologyIdRef().set(newCacheInfo.getTopologyId());
+      newCacheInfo.updateClientTopologyRef();
    }
 
    public void forEachCache(BiConsumer<WrappedBytes, CacheInfo> action) {

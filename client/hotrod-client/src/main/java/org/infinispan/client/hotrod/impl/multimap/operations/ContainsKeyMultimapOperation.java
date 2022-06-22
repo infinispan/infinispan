@@ -3,10 +3,11 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_KEY_MULTIMAP_REQUEST;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_KEY_MULTIMAP_RESPONSE;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -23,10 +24,10 @@ import io.netty.buffer.ByteBuf;
  */
 public class ContainsKeyMultimapOperation extends AbstractMultimapKeyOperation<Boolean> {
    public ContainsKeyMultimapOperation(Codec codec, ChannelFactory transportFactory, Object key, byte[] keyBytes,
-                                       byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                       byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                        ClientStatistics clientStatistics, boolean supportsDuplicates) {
       super(CONTAINS_KEY_MULTIMAP_REQUEST, CONTAINS_KEY_MULTIMAP_RESPONSE, codec, transportFactory, key, keyBytes, cacheName,
-            topologyId, flags, cfg, null, clientStatistics, supportsDuplicates);
+            clientTopology, flags, cfg, null, clientStatistics, supportsDuplicates);
    }
 
    @Override

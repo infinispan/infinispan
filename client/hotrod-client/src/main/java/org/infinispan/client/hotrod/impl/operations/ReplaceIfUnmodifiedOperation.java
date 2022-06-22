@@ -1,11 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -28,12 +29,12 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    private final long version;
 
    public ReplaceIfUnmodifiedOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
-                                       AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
+                                       AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
                                        long version, DataFormat dataFormat, ClientStatistics clientStatistics,
                                        TelemetryService telemetryService) {
       super(REPLACE_IF_UNMODIFIED_REQUEST, REPLACE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
-            topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
+            clientTopology, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
             telemetryService);
       this.version = version;
    }

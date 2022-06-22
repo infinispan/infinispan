@@ -5,11 +5,12 @@ import java.io.OutputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.ChannelOutputStream;
 import org.infinispan.client.hotrod.impl.protocol.ChannelOutputStreamListener;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -41,11 +42,11 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
    public PutStreamOperation(Codec codec, ChannelFactory channelFactory,
-                             Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                             Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                              int flags, Configuration cfg, long version,
                              long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
                              ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(PUT_STREAM_REQUEST, PUT_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+      super(PUT_STREAM_REQUEST, PUT_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
             flags, cfg, null, clientStatistics, telemetryService);
       this.version = version;
       this.lifespan = lifespan;

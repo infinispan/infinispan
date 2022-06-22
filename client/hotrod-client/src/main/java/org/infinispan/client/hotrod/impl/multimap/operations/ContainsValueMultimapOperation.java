@@ -4,9 +4,10 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_VALUE_MULTIMAP_RESPONSE;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -34,10 +35,10 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    private final boolean supportsDuplicates;
 
    protected ContainsValueMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-                                            AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
+                                            AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, byte[] value,
                                             long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, boolean supportsDuplicates) {
       super(CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName,
-            topologyId, flags, cfg, null, null);
+            clientTopology, flags, cfg, null, null);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

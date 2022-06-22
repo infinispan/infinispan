@@ -2,9 +2,10 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -24,7 +25,7 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
    private int size;
    private Collection<String> names;
 
-   public GetCounterNamesOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
+   public GetCounterNamesOperation(Codec codec, ChannelFactory transportFactory, AtomicReference<ClientTopology> topologyId,
                                    Configuration cfg) {
       super(COUNTER_GET_NAMES_REQUEST, COUNTER_GET_NAMES_RESPONSE, codec, transportFactory, topologyId, cfg, "", false);
    }

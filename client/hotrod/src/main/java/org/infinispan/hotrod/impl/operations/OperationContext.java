@@ -2,10 +2,11 @@ package org.infinispan.hotrod.impl.operations;
 
 import static org.infinispan.hotrod.impl.protocol.HotRodConstants.DEFAULT_CACHE_NAME_BYTES;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.hotrod.configuration.HotRodConfiguration;
 import org.infinispan.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.hotrod.impl.ClientTopology;
 import org.infinispan.hotrod.impl.HotRodTransport;
 import org.infinispan.hotrod.impl.cache.ClientStatistics;
 import org.infinispan.hotrod.impl.protocol.Codec;
@@ -17,7 +18,7 @@ import org.infinispan.hotrod.telemetry.impl.TelemetryService;
  **/
 public class OperationContext {
    private final ChannelFactory channelFactory;
-   private final AtomicInteger topologyId;
+   private final AtomicReference<ClientTopology> clientTopology;
    private final ClientListenerNotifier listenerNotifier;
    private final HotRodConfiguration configuration;
    private final ClientStatistics clientStatistics;
@@ -37,15 +38,17 @@ public class OperationContext {
       this.telemetryService = telemetryService;
       this.cacheName = cacheName;
       this.cacheNameBytes = cacheName == null ? DEFAULT_CACHE_NAME_BYTES : HotRodTransport.cacheNameBytes(cacheName);
-      this.topologyId = channelFactory != null ? channelFactory.createTopologyId(cacheNameBytes) : new AtomicInteger(-1);
+      this.clientTopology = channelFactory != null ?
+            channelFactory.createTopologyId(cacheNameBytes) :
+            new AtomicReference<>(new ClientTopology(-1, configuration.clientIntelligence()));
    }
 
    public ChannelFactory getChannelFactory() {
       return channelFactory;
    }
 
-   public AtomicInteger getTopologyId() {
-      return topologyId;
+   public AtomicReference<ClientTopology> getClientTopology() {
+      return clientTopology;
    }
 
    public ClientListenerNotifier getListenerNotifier() {

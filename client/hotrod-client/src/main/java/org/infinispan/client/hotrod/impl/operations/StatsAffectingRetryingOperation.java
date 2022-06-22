@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
@@ -20,9 +21,9 @@ public abstract class StatsAffectingRetryingOperation<T> extends RetryOnFailureO
    private long startTime;
 
    protected StatsAffectingRetryingOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                             byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                             byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                              DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, telemetryService);
+      super(requestCode, responseCode, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat, telemetryService);
       this.clientStatistics = clientStatistics;
    }
 

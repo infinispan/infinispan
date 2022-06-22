@@ -3,9 +3,10 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.SIZE_MULTIMAP_REQUEST;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.SIZE_MULTIMAP_RESPONSE;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -26,8 +27,8 @@ public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
 
    private final boolean supportsDuplicates;
 
-   protected SizeMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, boolean supportsDuplicates) {
-      super(SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg,
+   protected SizeMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, boolean supportsDuplicates) {
+      super(SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg,
             null, null);
       this.supportsDuplicates = supportsDuplicates;
    }

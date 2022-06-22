@@ -8,10 +8,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -42,10 +43,10 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
    private int untrackedEntries;
 
    protected IterationNextOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
-                                    AtomicInteger topologyId, byte[] iterationId, Channel channel,
+                                    AtomicReference<ClientTopology> clientTopology, byte[] iterationId, Channel channel,
                                     ChannelFactory channelFactory, KeyTracker segmentKeyTracker,
                                     DataFormat dataFormat) {
-      super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
+      super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory, dataFormat);
       this.iterationId = iterationId;
       this.channel = channel;
       this.segmentKeyTracker = segmentKeyTracker;
@@ -69,7 +70,7 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
          if (entriesSize == 0) {
             IntSet finishedSegmentSet = IntSets.from(finishedSegments);
             segmentKeyTracker.segmentsFinished(finishedSegmentSet);
-            complete(new IterationNextResponse(status, Collections.emptyList(), finishedSegmentSet, false));
+            complete(new IterationNextResponse<>(status, Collections.emptyList(), finishedSegmentSet, false));
             return;
          }
          entries = new ArrayList<>(entriesSize);
@@ -100,19 +101,19 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
          if (projectionsSize > 1) {
             Object[] projections = new Object[projectionsSize];
             for (int j = 0; j < projectionsSize; j++) {
-               projections[j] = unmarshallValue(ByteBufUtil.readArray(buf), status);
+               projections[j] = unmarshallValue(ByteBufUtil.readArray(buf));
             }
             value = (E) projections;
          } else {
-            value = unmarshallValue(ByteBufUtil.readArray(buf), status);
+            value = unmarshallValue(ByteBufUtil.readArray(buf));
          }
          if (meta == 1) {
             value = (E) new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
          }
 
          if (segmentKeyTracker.track(key, status, cfg.getClassAllowList())) {
-            K unmarshallKey = dataFormat.keyToObj(key, cfg.getClassAllowList());
-            entries.add(new SimpleEntry<>(unmarshallKey, (E) value));
+            K unmarshallKey = dataFormat().keyToObj(key, cfg.getClassAllowList());
+            entries.add(new SimpleEntry<>(unmarshallKey, value));
          } else {
             untrackedEntries++;
          }
@@ -126,7 +127,7 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
       complete(new IterationNextResponse<>(status, entries, finishedSegmentSet, entriesSize > 0));
    }
 
-   private <M> M unmarshallValue(byte[] bytes, short status) {
-      return dataFormat.valueToObj(bytes, cfg.getClassAllowList());
+   private <M> M unmarshallValue(byte[] bytes) {
+      return dataFormat().valueToObj(bytes, cfg.getClassAllowList());
    }
 }

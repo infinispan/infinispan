@@ -7,11 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.impl.CacheTopologyInfoImpl;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.commons.marshall.WrappedBytes;
@@ -34,19 +36,19 @@ public class CacheInfo {
    // The balancer is final, but using it still needs synchronization because it is not thread-safe
    private final FailoverRequestBalancingStrategy balancer;
    private final int numSegments;
-   private final int topologyId;
    private final List<InetSocketAddress> servers;
    private final Map<SocketAddress, Set<Integer>> primarySegments;
    private final ConsistentHash consistentHash;
-   private final AtomicInteger topologyIdRef;
+   private final AtomicReference<ClientTopology> clientTopologyRef;
+   private final ClientTopology clientTopology;
 
-   public CacheInfo(WrappedBytes cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge, List<InetSocketAddress> servers) {
+   public CacheInfo(WrappedBytes cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
       this.balancer = balancer;
       this.topologyAge = topologyAge;
       this.cacheName = cacheName == null || cacheName.getLength() == 0 ? "<default>" :
                        new String(cacheName.getBytes(), HotRodConstants.HOTROD_STRING_CHARSET);
       this.numSegments = -1;
-      this.topologyId = HotRodConstants.DEFAULT_CACHE_TOPOLOGY;
+      this.clientTopology = new ClientTopology(HotRodConstants.DEFAULT_CACHE_TOPOLOGY, intelligence);
       this.consistentHash = null;
 
       this.servers = Immutables.immutableListCopy(servers);
@@ -54,7 +56,7 @@ public class CacheInfo {
       // Before the first topology update or after a topology-aware (non-hash) topology update
       this.primarySegments = null;
 
-      this.topologyIdRef = new AtomicInteger(topologyId);
+      clientTopologyRef = new AtomicReference<>(clientTopology);
    }
 
    public void updateBalancerServers() {
@@ -63,24 +65,28 @@ public class CacheInfo {
    }
 
    public CacheInfo withNewServers(int topologyAge, int topologyId, List<InetSocketAddress> servers) {
-      return new CacheInfo(cacheName, balancer, topologyAge, topologyIdRef, topologyId, servers, null, -1);
+      return withNewServers(topologyAge, topologyId, servers, clientTopologyRef.get().getClientIntelligence());
+   }
+
+   public CacheInfo withNewServers(int topologyAge, int topologyId, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
+      return new CacheInfo(cacheName, balancer, topologyAge,  servers, null, -1, clientTopologyRef, new ClientTopology(topologyId, intelligence));
    }
 
    public CacheInfo withNewHash(int topologyAge, int topologyId, List<InetSocketAddress> servers,
                                 ConsistentHash consistentHash, int numSegments) {
-      return new CacheInfo(cacheName, balancer, topologyAge, topologyIdRef, topologyId, servers, consistentHash, numSegments);
+      return new CacheInfo(cacheName, balancer, topologyAge, servers, consistentHash, numSegments, clientTopologyRef, new ClientTopology(topologyId, getIntelligence()));
    }
 
    private CacheInfo(String cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge,
-                     AtomicInteger topologyIdRef, int topologyId, List<InetSocketAddress> servers,
-                     ConsistentHash consistentHash, int numSegments) {
+                     List<InetSocketAddress> servers, ConsistentHash consistentHash, int numSegments,
+                     AtomicReference<ClientTopology> clientTopologyRef, ClientTopology clientTopology) {
       this.balancer = balancer;
       this.topologyAge = topologyAge;
       this.cacheName = cacheName;
       this.numSegments = numSegments;
-      this.topologyId = topologyId;
       this.consistentHash = consistentHash;
-      this.topologyIdRef = topologyIdRef;
+      this.clientTopology = clientTopology;
+      this.clientTopologyRef = clientTopologyRef;
 
       this.servers = Immutables.immutableListCopy(servers);
 
@@ -110,11 +116,11 @@ public class CacheInfo {
    }
 
    public int getTopologyId() {
-      return topologyId;
+      return clientTopology.getTopologyId();
    }
 
-   public AtomicInteger getTopologyIdRef() {
-      return topologyIdRef;
+   public AtomicReference<ClientTopology> getClientTopologyRef() {
+      return clientTopologyRef;
    }
 
    public List<InetSocketAddress> getServers() {
@@ -138,13 +144,21 @@ public class CacheInfo {
       if (consistentHash != null) {
          segmentsByServer = consistentHash.getSegmentsByServer();
       } else {
-         segmentsByServer = new HashMap<>();
+         segmentsByServer = new HashMap<>(servers.size());
          for (InetSocketAddress server : servers) {
             segmentsByServer.put(server, IntSets.immutableEmptySet());
          }
       }
       return new CacheTopologyInfoImpl(segmentsByServer,
                                        numSegments > 0 ? numSegments : null,
-                                       topologyId > 0 ? topologyId : null);
+                                       getTopologyId());
+   }
+
+   private ClientIntelligence getIntelligence() {
+      return clientTopology.getClientIntelligence();
+   }
+
+   public void updateClientTopologyRef() {
+      clientTopologyRef.set(clientTopology);
    }
 }

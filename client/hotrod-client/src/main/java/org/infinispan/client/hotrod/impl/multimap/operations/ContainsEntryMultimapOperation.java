@@ -4,10 +4,11 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_ENTRY_RESPONSE;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -28,9 +29,9 @@ import net.jcip.annotations.Immutable;
 public class ContainsEntryMultimapOperation extends AbstractMultimapKeyValueOperation<Boolean> {
 
    public ContainsEntryMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
-                                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                          byte[] value, ClientStatistics clientStatistics, boolean supportsDuplicates) {
-      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
             flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics, supportsDuplicates);
    }
 

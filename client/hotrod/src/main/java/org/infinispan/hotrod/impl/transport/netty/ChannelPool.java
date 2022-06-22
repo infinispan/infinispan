@@ -162,7 +162,7 @@ class ChannelPool {
                connectionFailureListener.accept(this, ChannelEventType.CONNECT_FAILED);
             } else {
                int currentConnected = connected.incrementAndGet();
-               if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel connected, created = %d, active = %d, connected = %d",
+               if (log.isTraceEnabled()) log.tracef("[%s] Channel connected, created = %d, active = %d, connected = %d",
                                                     address, created.get(), active.get(), currentConnected);
                callback.invoke(channel);
                connectionFailureListener.accept(this, ChannelEventType.CONNECTED);
@@ -259,7 +259,7 @@ class ChannelPool {
                callback.invoke(channel);
             } catch (Throwable t) {
                log.tracef(t, "Closing channel %s due to exception", channel);
-               discardChannel(channel, record);
+               discardChannel(channel);
             }
          });
       } else {
@@ -267,13 +267,13 @@ class ChannelPool {
             callback.invoke(channel);
          } catch (Throwable t) {
             log.tracef(t, "Closing channel %s due to exception", channel);
-            discardChannel(channel, record);
+            discardChannel(channel);
             throw t;
          }
       }
    }
 
-   private void discardChannel(Channel channel, ChannelRecord record) {
+   private void discardChannel(Channel channel) {
       channel.close();
    }
 

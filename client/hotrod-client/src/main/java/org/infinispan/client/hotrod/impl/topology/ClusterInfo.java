@@ -2,8 +2,9 @@ package org.infinispan.client.hotrod.impl.topology;
 
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Objects;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.commons.util.Immutables;
 
 /**
@@ -19,21 +20,21 @@ public class ClusterInfo {
    // increased and so any old requests that might have received topology
    // updates won't be allowed to apply since they refer to older views.
    private final int topologyAge;
-   // This completable future is completed when we switch away from the cluster
-   private final CompletableFuture<ClusterInfo> clusterSwitchFuture = new CompletableFuture<>();
+   private final ClientIntelligence intelligence;
 
-   public ClusterInfo(String clusterName, List<InetSocketAddress> servers) {
-      this(clusterName, servers, -1);
+   public ClusterInfo(String clusterName, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
+      this(clusterName, servers, -1, intelligence);
    }
 
-   private ClusterInfo(String clusterName, List<InetSocketAddress> servers, int topologyAge) {
+   private ClusterInfo(String clusterName, List<InetSocketAddress> servers, int topologyAge, ClientIntelligence intelligence) {
       this.clusterName = clusterName;
       this.servers = Immutables.immutableListCopy(servers);
       this.topologyAge = topologyAge;
+      this.intelligence = Objects.requireNonNull(intelligence);
    }
 
    public ClusterInfo withTopologyAge(int topologyAge) {
-      return new ClusterInfo(clusterName, servers, topologyAge);
+      return new ClusterInfo(clusterName, servers, topologyAge, intelligence);
    }
 
    public String getName() {
@@ -48,16 +49,17 @@ public class ClusterInfo {
       return topologyAge;
    }
 
-   public CompletableFuture<ClusterInfo> getClusterSwitchFuture() {
-      return clusterSwitchFuture;
+   public ClientIntelligence getIntelligence() {
+      return intelligence;
    }
 
    @Override
    public String toString() {
       return "ClusterInfo{" +
-             "name='" + clusterName + '\'' +
-             ", servers=" + servers +
-             ", age=" + topologyAge +
-             '}';
+            "name='" + clusterName + '\'' +
+            ", servers=" + servers +
+            ", age=" + topologyAge +
+            ", intelligence=" + intelligence +
+            '}';
    }
 }

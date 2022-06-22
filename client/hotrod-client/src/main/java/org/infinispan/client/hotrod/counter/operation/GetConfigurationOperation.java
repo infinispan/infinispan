@@ -2,9 +2,10 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import static org.infinispan.counter.util.EncodeUtil.decodeConfiguration;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -23,7 +24,7 @@ import io.netty.channel.Channel;
  */
 public class GetConfigurationOperation extends BaseCounterOperation<CounterConfiguration> {
 
-   public GetConfigurationOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+   public GetConfigurationOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
                                     Configuration cfg, String counterName) {
       super(COUNTER_GET_CONFIGURATION_REQUEST, COUNTER_GET_CONFIGURATION_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
    }

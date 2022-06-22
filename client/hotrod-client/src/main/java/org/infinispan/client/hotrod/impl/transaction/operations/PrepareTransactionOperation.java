@@ -8,12 +8,13 @@ import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.writ
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
@@ -41,9 +42,9 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    private boolean retry;
 
    public PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-         AtomicInteger topologyId, Configuration cfg, Xid xid, boolean onePhaseCommit,
+         AtomicReference<ClientTopology> clientTopology, Configuration cfg, Xid xid, boolean onePhaseCommit,
          List<Modification> modifications, boolean recoverable, long timeoutMs) {
-      super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null, null);
+      super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, clientTopology, 0, cfg, null, null);
       this.xid = xid;
       this.onePhaseCommit = onePhaseCommit;
       this.modifications = modifications;
@@ -87,7 +88,7 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
       if (modifications.isEmpty()) {
          super.fetchChannelAndInvoke(retryCount, failedServers);
       } else {
-         channelFactory.fetchChannelAndInvoke(modifications.get(0).getKey(), failedServers, cacheName, this);
+         channelFactory.fetchChannelAndInvoke(modifications.get(0).getKey(), failedServers, cacheName(), this);
       }
    }
 

@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.impl.transaction.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -26,10 +27,10 @@ public class CompleteTransactionOperation extends RetryOnFailureOperation<Intege
 
    private final Xid xid;
 
-   public CompleteTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+   public CompleteTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology,
          Configuration cfg, Xid xid, boolean commit) {
       super(commit ? COMMIT_REQUEST : ROLLBACK_REQUEST, commit ? COMMIT_RESPONSE : ROLLBACK_RESPONSE,
-            codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, topologyId, 0, cfg, null, null);
+            codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, clientTopology, 0, cfg, null, null);
       this.xid = xid;
    }
 

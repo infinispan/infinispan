@@ -52,7 +52,7 @@ public class GetKeyMultimapOperation<K, V> extends AbstractMultimapKeyOperation<
          result = supportsDuplicates ? new ArrayList<>(size) : new HashSet<>(size);
       }
       while (result.size() < size) {
-         V value = bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), operationContext.getConfiguration().getClassAllowList());
+         V value = bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), operationContext.getConfiguration().getClassAllowList());
          result.add(value);
          decoder.checkpoint();
       }

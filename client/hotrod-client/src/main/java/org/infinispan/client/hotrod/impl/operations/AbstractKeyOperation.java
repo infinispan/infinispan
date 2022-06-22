@@ -2,11 +2,12 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -29,10 +30,10 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
    protected final byte[] keyBytes;
 
    protected AbstractKeyOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
+                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
                                   TelemetryService telemetryService) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat,
+      super(requestCode, responseCode, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat,
             clientStatistics, telemetryService);
       this.key = key;
       this.keyBytes = keyBytes;
@@ -41,14 +42,14 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
    @Override
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
       if (retryCount == 0) {
-         channelFactory.fetchChannelAndInvoke(key == null ? keyBytes : key, failedServers, cacheName, this);
+         channelFactory.fetchChannelAndInvoke(key == null ? keyBytes : key, failedServers, cacheName(), this);
       } else {
-         channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
+         channelFactory.fetchChannelAndInvoke(failedServers, cacheName(), this);
       }
    }
 
    protected T returnPossiblePrevValue(ByteBuf buf, short status) {
-      return (T) codec.returnPossiblePrevValue(buf, status, dataFormat, flags, cfg.getClassAllowList(), channelFactory.getMarshaller());
+      return (T) codec.returnPossiblePrevValue(buf, status, dataFormat(), flags(), cfg.getClassAllowList(), channelFactory.getMarshaller());
    }
 
    protected VersionedOperationResponse returnVersionedOperationResponse(ByteBuf buf, short status) {

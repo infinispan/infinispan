@@ -3,10 +3,12 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -21,9 +23,9 @@ import io.netty.buffer.ByteBuf;
 public abstract class ParallelHotRodOperation<T, SUBOP extends HotRodOperation<T>> extends StatsAffectingHotRodOperation<T> {
    protected final ChannelFactory channelFactory;
 
-   protected ParallelHotRodOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger
-         topologyId, int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat, clientStatistics);
+   protected ParallelHotRodOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology>
+         clientTopology, int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, codec, flags, cfg, cacheName, clientTopology, channelFactory, dataFormat, clientStatistics);
       this.channelFactory = channelFactory;
    }
 
