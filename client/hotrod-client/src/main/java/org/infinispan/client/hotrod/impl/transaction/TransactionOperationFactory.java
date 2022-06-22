@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.operations.CompleteTransactionOperation;
@@ -28,25 +29,25 @@ public class TransactionOperationFactory {
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
    private final Codec codec;
-   private final AtomicInteger topologyId;
+   private final AtomicReference<ClientTopology> clientTopology;
 
    public TransactionOperationFactory(Configuration configuration, ChannelFactory channelFactory, Codec codec) {
       this.configuration = configuration;
       this.channelFactory = channelFactory;
       this.codec = codec;
-      this.topologyId = channelFactory.createTopologyId(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
+      clientTopology = channelFactory.createTopologyId(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
    }
 
    CompleteTransactionOperation newCompleteTransactionOperation(Xid xid, boolean commit) {
-      return new CompleteTransactionOperation(codec, channelFactory, topologyId, configuration, xid, commit);
+      return new CompleteTransactionOperation(codec, channelFactory, clientTopology, configuration, xid, commit);
    }
 
    ForgetTransactionOperation newForgetTransactionOperation(Xid xid) {
-      return new ForgetTransactionOperation(codec, channelFactory, topologyId, configuration, xid);
+      return new ForgetTransactionOperation(codec, channelFactory, clientTopology, configuration, xid);
    }
 
    RecoveryOperation newRecoveryOperation() {
-      return new RecoveryOperation(codec, channelFactory, topologyId, configuration);
+      return new RecoveryOperation(codec, channelFactory, clientTopology, configuration);
    }
 
 }

@@ -1,11 +1,12 @@
 package org.infinispan.client.hotrod.impl.transaction.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -26,9 +27,9 @@ import io.netty.channel.Channel;
 public class ForgetTransactionOperation extends RetryOnFailureOperation<Void> {
    private final Xid xid;
 
-   public ForgetTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+   public ForgetTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology,
          Configuration cfg, Xid xid) {
-      super(FORGET_TX_REQUEST, FORGET_TX_RESPONSE, codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, topologyId, 0, cfg,
+      super(FORGET_TX_REQUEST, FORGET_TX_RESPONSE, codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, clientTopology, 0, cfg,
             null, null);
       this.xid = xid;
    }

@@ -2,10 +2,11 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -30,10 +31,10 @@ public class RemoveClientListenerOperation extends HotRodOperation<Void> impleme
    private byte[] listenerId;
 
    protected RemoveClientListenerOperation(Codec codec, ChannelFactory channelFactory,
-                                           byte[] cacheName, AtomicInteger topologyId, int flags,
+                                           byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                            Configuration cfg,
                                            ClientListenerNotifier listenerNotifier, Object listener) {
-      super(REMOVE_CLIENT_LISTENER_REQUEST, REMOVE_CLIENT_LISTENER_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(REMOVE_CLIENT_LISTENER_REQUEST, REMOVE_CLIENT_LISTENER_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory);
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
    }

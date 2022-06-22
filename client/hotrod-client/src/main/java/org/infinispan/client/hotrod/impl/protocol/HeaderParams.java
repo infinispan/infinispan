@@ -2,10 +2,10 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 
 /**
  * Hot Rod request header parameters
@@ -17,19 +17,24 @@ public class HeaderParams {
    final short opCode;
    final short opRespCode;
    byte[] cacheName;
-   int flags;
-   byte clientIntel;
-   byte txMarker;
-   AtomicInteger topologyId;
+   final int flags;
+   final byte txMarker;
+   final AtomicReference<ClientTopology> clientTopology;
    final long messageId;
    int topologyAge;
-   DataFormat dataFormat;
+   final DataFormat dataFormat;
    Map<String, byte[]> otherParams;
+   // sent client intelligence: to read the response
+   volatile byte clientIntelligence;
 
-   public HeaderParams(short requestCode, short responseCode, long messageId) {
+   public HeaderParams(short requestCode, short responseCode, int flags, byte txMarker, long messageId, DataFormat dataFormat, AtomicReference<ClientTopology> clientTopology) {
       opCode = requestCode;
       opRespCode = responseCode;
+      this.flags = flags;
+      this.txMarker = txMarker;
       this.messageId = messageId;
+      this.dataFormat = dataFormat;
+      this.clientTopology = clientTopology;
    }
 
    public HeaderParams cacheName(byte[] cacheName) {
@@ -37,32 +42,8 @@ public class HeaderParams {
       return this;
    }
 
-   public HeaderParams flags(int flags) {
-      this.flags = flags;
-      return this;
-   }
-
-   public HeaderParams clientIntel(ClientIntelligence clientIntel) {
-      this.clientIntel = clientIntel.getValue();
-      return this;
-   }
-
-   public HeaderParams txMarker(byte txMarker) {
-      this.txMarker = txMarker;
-      return this;
-   }
-
    public long messageId() {
       return messageId;
-   }
-
-   public HeaderParams topologyId(AtomicInteger topologyId) {
-      this.topologyId = topologyId;
-      return this;
-   }
-
-   public AtomicInteger topologyId() {
-      return topologyId;
    }
 
    public HeaderParams topologyAge(int topologyAge) {
@@ -70,9 +51,12 @@ public class HeaderParams {
       return this;
    }
 
-   public HeaderParams dataFormat(DataFormat dataFormat) {
-      this.dataFormat = dataFormat;
-      return this;
+   public DataFormat dataFormat() {
+      return dataFormat;
+   }
+
+   public byte[] cacheName() {
+      return cacheName;
    }
 
    public void otherParam(String paramKey, byte[] paramValue) {
@@ -84,5 +68,13 @@ public class HeaderParams {
 
    public Map<String, byte[]> otherParams() {
       return otherParams;
+   }
+
+   public int flags() {
+      return flags;
+   }
+
+   public AtomicReference<ClientTopology> getClientTopology() {
+      return clientTopology;
    }
 }

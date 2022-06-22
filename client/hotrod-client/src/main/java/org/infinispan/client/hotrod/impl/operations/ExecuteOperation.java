@@ -7,10 +7,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -33,10 +34,10 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    private final Object key;
 
    protected ExecuteOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-                              AtomicInteger topologyId, int flags, Configuration cfg,
+                              AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                               String taskName, Map<String, byte[]> marshalledParams, Object key, DataFormat dataFormat) {
       super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName,
-            topologyId, flags, cfg, dataFormat, null);
+            clientTopology, flags, cfg, dataFormat, null);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
       this.key = key;
@@ -45,9 +46,9 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    @Override
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
       if (key != null) {
-         channelFactory.fetchChannelAndInvoke(key, failedServers, cacheName, this);
+         channelFactory.fetchChannelAndInvoke(key, failedServers, cacheName(), this);
       } else {
-         channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
+         channelFactory.fetchChannelAndInvoke(failedServers, cacheName(), this);
       }
    }
 
@@ -69,7 +70,7 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassAllowList()));
+      complete(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), cfg.getClassAllowList()));
    }
 
    @Override

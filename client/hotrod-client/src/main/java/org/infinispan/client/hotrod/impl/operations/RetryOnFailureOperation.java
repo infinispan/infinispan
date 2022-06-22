@@ -7,13 +7,14 @@ import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
@@ -41,12 +42,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    private int retryCount = 0;
    private Set<SocketAddress> failedServers = null;
-   private String currentClusterName;
 
    protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                     byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                      DataFormat dataFormat, TelemetryService telemetryService) {
-      super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
+      super(requestCode, responseCode, codec, flags, cfg, cacheName, clientTopology, channelFactory, dataFormat);
       if (telemetryService != null) {
          telemetryService.injectSpanContext(header);
       }
@@ -167,7 +167,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          if (channel != null && closeChannelForCause(cause)) {
             // We need to remove decoder even if we're about to close the channel
             // because otherwise we would be notified through channelInactive and we would retry (again).
-            HeaderDecoder headerDecoder = (HeaderDecoder)channel.pipeline().get(HeaderDecoder.NAME);
+            HeaderDecoder headerDecoder = (HeaderDecoder) channel.pipeline().get(HeaderDecoder.NAME);
             if (headerDecoder != null) {
                channel.pipeline().remove(HeaderDecoder.NAME);
             }
@@ -207,7 +207,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
    }
 
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
+      channelFactory.fetchChannelAndInvoke(failedServers, cacheName(), this);
    }
 
    /**

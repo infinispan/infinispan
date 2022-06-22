@@ -48,7 +48,7 @@ public abstract class AbstractKeyOperation<K, T> extends StatsAffectingRetryingO
 
    // This T is only ever Void or CacheEntry so the cast is safe
    protected <V> CacheEntry<K, V> returnPossiblePrevValue(ByteBuf buf, short status) {
-      return operationContext.getCodec().returnPossiblePrevValue(key, buf, status, dataFormat, flags(),
+      return operationContext.getCodec().returnPossiblePrevValue(key, buf, status, dataFormat(), flags(),
             operationContext.getConfiguration().getClassAllowList(), operationContext.getChannelFactory().getMarshaller());
    }
 

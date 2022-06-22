@@ -85,7 +85,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
    }
 
-   private void killSites() {
+   protected void killSites() {
       for (TestSite ts : sites) {
          killSite(ts);
       }

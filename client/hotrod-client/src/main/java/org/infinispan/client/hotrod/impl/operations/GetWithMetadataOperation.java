@@ -2,12 +2,13 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -39,10 +40,10 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
    private volatile boolean retried;
 
    public GetWithMetadataOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
-                                   byte[] cacheName, AtomicInteger topologyId, int flags,
+                                   byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                    Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
                                    SocketAddress preferredServer) {
-      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
             flags, cfg, dataFormat, clientStatistics, null);
       this.preferredServer = preferredServer;
    }
@@ -71,7 +72,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      MetadataValue<V> metadataValue = readMetadataValue(buf, status, dataFormat, cfg.getClassAllowList());
+      MetadataValue<V> metadataValue = readMetadataValue(buf, status, dataFormat(), cfg.getClassAllowList());
       statsDataRead(metadataValue != null);
       complete(metadataValue);
    }

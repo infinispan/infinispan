@@ -69,8 +69,8 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
          decoder.checkpoint();
       }
       while (result.size() < size) {
-         K key = dataFormat.keyToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList());
-         V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList());
+         K key = dataFormat().keyToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList());
+         V value = dataFormat().valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList());
          result.put(key, value);
          decoder.checkpoint();
       }

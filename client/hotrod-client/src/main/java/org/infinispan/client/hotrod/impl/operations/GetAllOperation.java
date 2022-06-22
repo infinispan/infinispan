@@ -4,11 +4,12 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -31,9 +32,9 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
    private int size = -1;
 
    public GetAllOperation(Codec codec, ChannelFactory channelFactory,
-                          Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
+                          Set<byte[]> keys, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                           int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat,
+      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat,
             clientStatistics, null);
       this.keys = keys;
    }
@@ -67,7 +68,7 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
 
    @Override
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      channelFactory.fetchChannelAndInvoke(keys.iterator().next(), failedServers, cacheName, this);
+      channelFactory.fetchChannelAndInvoke(keys.iterator().next(), failedServers, cacheName(), this);
    }
 
    @Override
@@ -78,8 +79,8 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
          decoder.checkpoint();
       }
       while (result.size() < size) {
-         K key = dataFormat.keyToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
-         V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
+         K key = dataFormat().keyToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
+         V value = dataFormat().valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList());
          result.put(key, value);
          decoder.checkpoint();
       }

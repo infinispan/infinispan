@@ -2,9 +2,10 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
@@ -18,9 +19,9 @@ public class UpdateBloomFilterOperation extends HotRodOperation<Void> implements
    private final byte[] bloomBits;
 
    protected UpdateBloomFilterOperation(Codec codec, ChannelFactory channelFactory,
-                                        byte[] cacheName, AtomicInteger topologyId, int flags,
+                                        byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                         Configuration cfg, SocketAddress address, byte[] bloomBits) {
-      super(UPDATE_BLOOM_FILTER_REQUEST, UPDATE_BLOOM_FILTER_RESPONSE, codec, flags, cfg, cacheName, topologyId, channelFactory);
+      super(UPDATE_BLOOM_FILTER_REQUEST, UPDATE_BLOOM_FILTER_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory);
       this.address = address;
       this.bloomBits = bloomBits;
    }

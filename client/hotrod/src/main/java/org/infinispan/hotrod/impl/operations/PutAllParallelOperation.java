@@ -33,7 +33,7 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
       }
 
       return splittedMaps.values().stream().map(
-            mapSubset -> new PutAllOperation(operationContext, mapSubset, (CacheWriteOptions) options, dataFormat)).collect(Collectors.toList());
+            mapSubset -> new PutAllOperation(operationContext, mapSubset, (CacheWriteOptions) options, dataFormat())).collect(Collectors.toList());
    }
 
    @Override

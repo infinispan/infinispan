@@ -13,8 +13,9 @@ import org.infinispan.commons.configuration.Builder;
  */
 public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ClusterConfiguration> {
 
-   private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
+   private final List<ServerConfigurationBuilder> servers = new ArrayList<>();
    private final String clusterName;
+   private ClientIntelligence intelligence;
 
    protected ClusterConfigurationBuilder(ConfigurationBuilder builder, String clusterName) {
       super(builder);
@@ -39,6 +40,12 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
+   public ClusterConfigurationBuilder clusterClientIntelligence(ClientIntelligence intelligence) {
+      // null is valid, means using the global intelligence (for backwards compatibility)
+      this.intelligence = intelligence;
+      return this;
+   }
+
    @Override
    public void validate() {
       if (clusterName == null || clusterName.isEmpty()) {
@@ -56,12 +63,13 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    public ClusterConfiguration create() {
       List<ServerConfiguration> serverCluster = servers.stream()
          .map(ServerConfigurationBuilder::create).collect(Collectors.toList());
-      return new ClusterConfiguration(serverCluster, clusterName);
+      return new ClusterConfiguration(serverCluster, clusterName, intelligence);
    }
 
    @Override
    public Builder<?> read(ClusterConfiguration template) {
       template.getCluster().forEach(server -> this.addClusterNode(server.host(), server.port()));
+      clusterClientIntelligence(template.getClientIntelligence());
       return this;
    }
 }

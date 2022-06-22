@@ -224,7 +224,7 @@ public class CacheOperationsFactory implements HotRodConstants {
    }
 
    public int getTopologyId() {
-      return cacheContext.getTopologyId().get();
+      return cacheContext.getClientTopology().get().getTopologyId();
    }
 
    public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, IntSet segments, int batchSize, boolean metadata, CacheOptions options, DataFormat dataFormat, SocketAddress targetAddress) {

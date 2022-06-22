@@ -112,6 +112,8 @@ public class ConfigurationProperties {
    public static final String CLUSTER_PROPERTIES_PREFIX = ICH + "cluster";
    public static final Pattern CLUSTER_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX + '.');
+   public static final Pattern CLUSTER_PROPERTIES_PREFIX_INTELLIGENCE_REGEX =
+         Pattern.compile('^' + ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX + '.' + "intelligence.");
    // Cache properties
    public static final String CACHE_PREFIX= ICH + "cache.";
    public static final String CACHE_CONFIGURATION_SUFFIX = ".configuration";

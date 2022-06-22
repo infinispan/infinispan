@@ -2,11 +2,12 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -36,13 +37,13 @@ public class PingOperation extends NeutralVersionHotRodOperation<PingResponse> i
 
    private final PingResponse.Decoder responseBuilder;
 
-   public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, byte[] cacheName, ChannelFactory channelFactory, boolean releaseChannel, OperationsFactory operationsFactory) {
-      this(PING_REQUEST, PING_RESPONSE, codec, topologyId, cfg, cacheName, channelFactory, releaseChannel, operationsFactory);
+   public PingOperation(Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, byte[] cacheName, ChannelFactory channelFactory, boolean releaseChannel, OperationsFactory operationsFactory) {
+      this(PING_REQUEST, PING_RESPONSE, codec, clientTopology, cfg, cacheName, channelFactory, releaseChannel, operationsFactory);
    }
 
-   protected PingOperation(short requestCode, short responseCode, Codec codec, AtomicInteger topologyId, Configuration cfg, byte[] cacheName,
+   protected PingOperation(short requestCode, short responseCode, Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, byte[] cacheName,
                            ChannelFactory channelFactory, boolean releaseChannel, OperationsFactory operationsFactory) {
-      super(requestCode, responseCode, codec, 0, cfg, cacheName, topologyId, channelFactory);
+      super(requestCode, responseCode, codec, 0, cfg, cacheName, clientTopology, channelFactory);
       this.releaseChannel = releaseChannel;
       this.operationsFactory = operationsFactory;
       this.responseBuilder = new PingResponse.Decoder(cfg.version());

@@ -3,9 +3,10 @@ package org.infinispan.client.hotrod.impl.operations;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -28,9 +29,9 @@ public class AuthOperation extends NeutralVersionHotRodOperation<byte[]> {
    private final String saslMechanism;
    private final byte[] response;
 
-   public AuthOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Channel channel,
+   public AuthOperation(Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, Channel channel,
                         ChannelFactory channelFactory, String saslMechanism, byte[] response) {
-      super(AUTH_REQUEST, AUTH_RESPONSE, codec, 0,  cfg, DEFAULT_CACHE_NAME_BYTES, topologyId, channelFactory);
+      super(AUTH_REQUEST, AUTH_RESPONSE, codec, 0,  cfg, DEFAULT_CACHE_NAME_BYTES, clientTopology, channelFactory);
       this.channel = channel;
       this.saslMechanism = saslMechanism;
       this.response = response;
@@ -60,7 +61,7 @@ public class AuthOperation extends NeutralVersionHotRodOperation<byte[]> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       boolean complete = buf.readUnsignedByte() > 0;
-      byte challenge[] = ByteBufUtil.readArray(buf);
+      byte[] challenge = ByteBufUtil.readArray(buf);
       complete(complete ? null : challenge);
    }
 }

@@ -33,7 +33,7 @@ public class GetOperation<K, V> extends AbstractKeyOperation<K, V> {
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status)) {
          statsDataRead(true);
-         complete(dataFormat.valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList()));
+         complete(dataFormat().valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList()));
       } else {
          statsDataRead(false);
          complete(null);

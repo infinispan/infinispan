@@ -4,11 +4,12 @@ import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -28,8 +29,8 @@ public class BulkGetKeysOperation<K> extends StatsAffectingRetryingOperation<Set
    private final Set<K> result = new HashSet<>();
 
    public BulkGetKeysOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-                               AtomicInteger topologyId, int flags, Configuration cfg, int scope, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg,
+                               AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, int scope, DataFormat dataFormat, ClientStatistics clientStatistics) {
+      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg,
             dataFormat, clientStatistics, null);
       this.scope = scope;
    }
@@ -54,7 +55,7 @@ public class BulkGetKeysOperation<K> extends StatsAffectingRetryingOperation<Set
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
-         result.add(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassAllowList()));
+         result.add(bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), cfg.getClassAllowList()));
          decoder.checkpoint();
       }
       complete(result);

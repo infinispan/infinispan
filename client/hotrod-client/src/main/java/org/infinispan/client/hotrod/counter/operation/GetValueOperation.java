@@ -1,8 +1,9 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -18,7 +19,7 @@ import io.netty.channel.Channel;
  */
 public class GetValueOperation extends BaseCounterOperation<Long> {
 
-   public GetValueOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+   public GetValueOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
          Configuration cfg, String counterName, boolean useConsistentHash) {
       super(COUNTER_GET_REQUEST, COUNTER_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, useConsistentHash);
    }

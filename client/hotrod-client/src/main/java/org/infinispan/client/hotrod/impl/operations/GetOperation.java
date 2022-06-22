@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -25,9 +26,9 @@ import net.jcip.annotations.Immutable;
 public class GetOperation<V> extends AbstractKeyOperation<V> {
 
    public GetOperation(Codec codec, ChannelFactory channelFactory,
-                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
+                       Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                        Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(GET_REQUEST, GET_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg,
+      super(GET_REQUEST, GET_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology, flags, cfg,
             dataFormat, clientStatistics, null);
    }
 
@@ -41,7 +42,7 @@ public class GetOperation<V> extends AbstractKeyOperation<V> {
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status)) {
          statsDataRead(true);
-         complete(dataFormat.valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList()));
+         complete(dataFormat().valueToObj(ByteBufUtil.readArray(buf), cfg.getClassAllowList()));
       } else {
          statsDataRead(false);
          complete(null);

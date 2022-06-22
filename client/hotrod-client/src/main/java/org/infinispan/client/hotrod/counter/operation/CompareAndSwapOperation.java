@@ -1,8 +1,9 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -30,7 +31,7 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
    private final long update;
    private final CounterConfiguration counterConfiguration;
 
-   public CompareAndSwapOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+   public CompareAndSwapOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
                                   Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
       super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, true);
       this.expect = expect;

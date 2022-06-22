@@ -1,11 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -25,12 +26,12 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
 
    private final OperationsFactory operationsFactory;
 
-   private PingResponse.Decoder responseBuilder;
+   private final PingResponse.Decoder responseBuilder;
 
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
-                                        byte[] cacheName, AtomicInteger topologyId, int flags,
+                                        byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                         Configuration cfg, OperationsFactory operationsFactory) {
-      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, null);
+      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, null);
       this.operationsFactory = operationsFactory;
       this.responseBuilder = new PingResponse.Decoder(cfg.version());
    }

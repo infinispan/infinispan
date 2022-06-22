@@ -7,9 +7,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -37,9 +38,9 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    private final String counterName;
    private final boolean useConsistentHash;
 
-   BaseCounterOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
+   BaseCounterOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology, Configuration cfg,
                         String counterName, boolean useConsistentHash) {
-      super(requestCode, responseCode, codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg, null, null);
+      super(requestCode, responseCode, codec, channelFactory, EMPTY_CACHE_NAME, clientTopology, 0, cfg, null, null);
       this.counterName = counterName;
       this.useConsistentHash = useConsistentHash;
    }
@@ -103,7 +104,7 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
       sb.append("counter=").append(counterName);
    }
 
-   private class ByteString {
+   private static class ByteString {
 
       private final int hash;
       private final byte[] b;

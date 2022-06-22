@@ -111,7 +111,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    }
 
    protected DataFormat getDataFormat() {
-      return op.getDataFormat();
+      return op.dataFormat();
    }
 
    static final class ClientListenerInvocation {

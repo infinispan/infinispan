@@ -39,7 +39,7 @@ public class AddClientListenerOperation extends ClientListenerOperation {
 
    public AddClientListenerOperation copy() {
       return new AddClientListenerOperation(operationContext, options, listenerId, listener, filterFactoryParams,
-            converterFactoryParams, dataFormat, remoteCache);
+            converterFactoryParams, dataFormat(), remoteCache);
    }
 
    @Override

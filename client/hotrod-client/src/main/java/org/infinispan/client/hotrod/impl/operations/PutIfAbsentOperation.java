@@ -1,11 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -31,11 +32,11 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    private static final BasicLogger log = LogFactory.getLog(PutIfAbsentOperation.class);
 
    public PutIfAbsentOperation(Codec codec, ChannelFactory channelFactory,
-                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                               Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                                int flags, Configuration cfg, byte[] value, long lifespan,
                                TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit,
                                DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
+      super(PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology, flags, cfg, value,
             lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
    }
 

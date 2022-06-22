@@ -7,12 +7,13 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -41,12 +42,9 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
 
    private static final AtomicLong MSG_ID = new AtomicLong(1);
 
-   public final byte[] cacheName;
-   protected final int flags;
    protected final Codec codec;
    protected final Configuration cfg;
    protected final ChannelFactory channelFactory;
-   protected final DataFormat dataFormat;
    protected final HeaderParams header;
    protected volatile ScheduledFuture<?> timeoutFuture;
    private Channel channel;
@@ -55,25 +53,19 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    private static final byte XA_TX = 1;
 
    protected HotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg,
-                             byte[] cacheName, AtomicInteger topologyId, ChannelFactory channelFactory,
+                             byte[] cacheName, AtomicReference<ClientTopology> clientTopology, ChannelFactory channelFactory,
                              DataFormat dataFormat) {
-      this.flags = flags;
       this.cfg = cfg;
-      this.cacheName = cacheName;
       this.codec = codec;
       this.channelFactory = channelFactory;
-      this.dataFormat = dataFormat;
       // TODO: we could inline all the header here
-      this.header = new HeaderParams(requestCode, responseCode, MSG_ID.getAndIncrement())
-            .cacheName(cacheName).flags(flags)
-            .clientIntel(cfg.clientIntelligence())
-            .topologyId(topologyId).txMarker(NO_TX)
-            .dataFormat(dataFormat)
+      this.header = new HeaderParams(requestCode, responseCode, flags, NO_TX, MSG_ID.getAndIncrement(), dataFormat, clientTopology)
+            .cacheName(cacheName)
             .topologyAge(channelFactory.getTopologyAge());
    }
 
-   protected HotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId, ChannelFactory channelFactory) {
-      this(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, null);
+   protected HotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, ChannelFactory channelFactory) {
+      this(requestCode, responseCode, codec, flags, cfg, cacheName, clientTopology, channelFactory, null);
    }
 
    public abstract CompletableFuture<T> execute();
@@ -144,11 +136,11 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
 
    @Override
    public String toString() {
-      String cn = cacheName == null || cacheName.length == 0 ? "(default)" : new String(cacheName);
+      String cn = cacheName() == null || cacheName().length == 0 ? "(default)" : new String(cacheName());
       StringBuilder sb = new StringBuilder(64);
       sb.append(getClass().getSimpleName()).append('{').append(cn);
       addParams(sb);
-      sb.append(", flags=").append(Integer.toHexString(flags));
+      sb.append(", flags=").append(Integer.toHexString(flags()));
       if (channel != null) {
          sb.append(", connection=").append(channel.remoteAddress());
       }
@@ -189,6 +181,18 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    @Override
    public void run() {
       exceptionCaught(channel, new SocketTimeoutException(this + " timed out after " + channelFactory.socketTimeout() + " ms"));
+   }
+
+   public final DataFormat dataFormat() {
+      return header.dataFormat();
+   }
+
+   protected final byte[] cacheName() {
+      return header.cacheName();
+   }
+
+   protected final int flags() {
+      return header.flags();
    }
 
 }

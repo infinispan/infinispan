@@ -1,9 +1,10 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.ServerStatisticsImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -26,8 +27,8 @@ public class StatsOperation extends RetryOnFailureOperation<ServerStatistics> {
    private int numStats = -1;
 
    public StatsOperation(Codec codec, ChannelFactory channelFactory,
-                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(STATS_REQUEST, STATS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, null);
+                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg) {
+      super(STATS_REQUEST, STATS_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, null);
    }
 
    @Override

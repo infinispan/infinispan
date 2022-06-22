@@ -48,7 +48,7 @@ public class BulkGetKeysOperation<K> extends StatsAffectingRetryingOperation<Set
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       while (buf.readUnsignedByte() == 1) { //there's more!
-         result.add(bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), operationContext.getConfiguration().getClassAllowList()));
+         result.add(bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), operationContext.getConfiguration().getClassAllowList()));
          decoder.checkpoint();
       }
       complete(result);

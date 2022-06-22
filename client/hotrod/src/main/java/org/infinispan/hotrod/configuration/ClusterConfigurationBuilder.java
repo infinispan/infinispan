@@ -1,5 +1,6 @@
 package org.infinispan.hotrod.configuration;
 
+import static org.infinispan.hotrod.configuration.ClusterConfiguration.CLIENT_INTELLIGENCE;
 import static org.infinispan.hotrod.configuration.ClusterConfiguration.NAME;
 import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 
@@ -37,6 +38,12 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
          ServerConfigurationBuilder serverBuilder = new ServerConfigurationBuilder(builder);
          servers.add(serverBuilder.host(host).port(port));
       });
+      return this;
+   }
+
+   public ClusterConfigurationBuilder clusterClientIntelligence(ClientIntelligence intelligence) {
+      // null is valid, means using the global intelligence (for backwards compatibility)
+      attributes.attribute(CLIENT_INTELLIGENCE).set(intelligence);
       return this;
    }
 

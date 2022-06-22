@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientEventDispatcher;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -25,30 +26,30 @@ public class AddBloomNearCacheClientListenerOperation extends ClientListenerOper
    private final InternalRemoteCache<?, ?> remoteCache;
 
    protected AddBloomNearCacheClientListenerOperation(Codec codec, ChannelFactory channelFactory,
-                                                      String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                                      String cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                                       ClientListenerNotifier listenerNotifier, Object listener,
                                                       DataFormat dataFormat,
                                                       int bloomFilterBits, InternalRemoteCache<?, ?> remoteCache) {
-      this(codec, channelFactory, cacheName, topologyId, flags, cfg, generateListenerId(),
+      this(codec, channelFactory, cacheName, clientTopology, flags, cfg, generateListenerId(),
             listenerNotifier, listener, dataFormat, bloomFilterBits,
             remoteCache);
    }
 
    private AddBloomNearCacheClientListenerOperation(Codec codec, ChannelFactory channelFactory,
-                                                    String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                                    String cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                                     byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
                                                     DataFormat dataFormat,
                                                     int bloomFilterBits, InternalRemoteCache<?, ?> remoteCache) {
       super(ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_REQUEST, ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_RESPONSE, codec, channelFactory,
-            RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg, listenerId, dataFormat, listener,
+            RemoteCacheManager.cacheNameBytes(cacheName), clientTopology, flags, cfg, listenerId, dataFormat, listener,
             cacheName, listenerNotifier, null);
       this.bloomFilterBits = bloomFilterBits;
       this.remoteCache = remoteCache;
    }
 
    public AddBloomNearCacheClientListenerOperation copy() {
-      return new AddBloomNearCacheClientListenerOperation(codec, channelFactory, cacheNameString, header.topologyId(), flags, cfg,
-            listenerId, listenerNotifier, listener, dataFormat,
+      return new AddBloomNearCacheClientListenerOperation(codec, channelFactory, cacheNameString, header.getClientTopology(), flags(), cfg,
+            listenerId, listenerNotifier, listener, dataFormat(),
             bloomFilterBits, remoteCache);
    }
 

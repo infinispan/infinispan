@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -30,10 +31,12 @@ import java.util.function.Function;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
@@ -116,7 +119,7 @@ public class ChannelFactory {
          for (ServerConfiguration server : configuration.servers()) {
             initialServers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
          }
-         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers);
+         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers, configuration.clientIntelligence());
          List<ClusterInfo> clustersDefinitions = new ArrayList<>();
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", initialServers);
@@ -130,8 +133,11 @@ public class ChannelFactory {
                for (ServerConfiguration server : clusterConfiguration.getCluster()) {
                   alternateServers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
                }
+               ClientIntelligence intelligence = clusterConfiguration.getClientIntelligence() != null ?
+                     clusterConfiguration.getClientIntelligence() :
+                     configuration.clientIntelligence();
                ClusterInfo alternateCluster =
-                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers);
+                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers, intelligence);
                log.debugf("Add secondary cluster: %s", alternateCluster);
                clustersDefinitions.add(alternateCluster);
             }
@@ -369,9 +375,9 @@ public class ChannelFactory {
       CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
       List<InetSocketAddress> oldServers = oldCacheInfo.getServers();
       Set<SocketAddress> addedServers = new HashSet<>(newServers);
-      addedServers.removeAll(oldServers);
+      oldServers.forEach(addedServers::remove);
       Set<SocketAddress> removedServers = new HashSet<>(oldServers);
-      removedServers.removeAll(newServers);
+      newServers.forEach(removedServers::remove);
       if (log.isTraceEnabled()) {
          String cacheNameString = newCacheInfo.getCacheName();
          log.tracef("[%s] Current list: %s", cacheNameString, oldServers);
@@ -444,10 +450,10 @@ public class ChannelFactory {
       return maxRetries;
    }
 
-   public AtomicInteger createTopologyId(byte[] cacheName) {
+   public AtomicReference<ClientTopology> createTopologyId(byte[] cacheName) {
       lock.writeLock().lock();
       try {
-         return topologyInfo.getOrCreateCacheInfo(wrapBytes(cacheName)).getTopologyIdRef();
+         return topologyInfo.getOrCreateCacheInfo(wrapBytes(cacheName)).getClientTopologyRef();
       } finally {
          lock.writeLock().unlock();
       }
@@ -751,6 +757,15 @@ public class ChannelFactory {
 
    public void incrementRetryCount() {
       totalRetries.increment();
+   }
+
+   public ClientIntelligence getClientIntelligence() {
+      lock.readLock().lock();
+      try {
+         return topologyInfo.getCluster().getIntelligence();
+      } finally {
+         lock.readLock().unlock();
+      }
    }
 
    private class ReleaseChannelOperation implements ChannelOperation {

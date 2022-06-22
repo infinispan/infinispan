@@ -5,12 +5,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -32,11 +33,11 @@ import net.jcip.annotations.Immutable;
 public class PutAllOperation extends StatsAffectingRetryingOperation<Void> {
 
    public PutAllOperation(Codec codec, ChannelFactory channelFactory,
-                          Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
+                          Map<byte[], byte[]> map, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                           int flags, Configuration cfg,
                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
                           DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat,
+      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat,
             clientStatistics, telemetryService);
       this.map = map;
       this.lifespan = lifespan;
@@ -75,7 +76,7 @@ public class PutAllOperation extends StatsAffectingRetryingOperation<Void> {
 
    @Override
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      channelFactory.fetchChannelAndInvoke(map.keySet().iterator().next(), failedServers, cacheName, this);
+      channelFactory.fetchChannelAndInvoke(map.keySet().iterator().next(), failedServers, cacheName(), this);
    }
 
    @Override

@@ -1,8 +1,9 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -22,9 +23,9 @@ import net.jcip.annotations.Immutable;
 public class ClearOperation extends RetryOnFailureOperation<Void> {
 
    public ClearOperation(Codec codec, ChannelFactory channelFactory,
-                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                          TelemetryService telemetryService) {
-      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, telemetryService);
+      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, telemetryService);
    }
 
    @Override

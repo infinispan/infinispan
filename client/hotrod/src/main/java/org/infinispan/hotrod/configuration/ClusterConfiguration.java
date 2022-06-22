@@ -10,11 +10,12 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
  * @since 14.0
  */
 public class ClusterConfiguration extends ConfigurationElement<ClusterConfiguration> {
-   public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
+   // default intelligence is "null" to use the client intelligence defined globally
+   static final AttributeDefinition<ClientIntelligence> CLIENT_INTELLIGENCE = AttributeDefinition.builder("client_intelligence", null, ClientIntelligence.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusterConfiguration.class, NAME);
+      return new AttributeSet(ClusterConfiguration.class, NAME, CLIENT_INTELLIGENCE);
    }
 
    private final List<ServerConfiguration> servers;
@@ -30,5 +31,9 @@ public class ClusterConfiguration extends ConfigurationElement<ClusterConfigurat
 
    public String getClusterName() {
       return attributes.attribute(NAME).get();
+   }
+
+   public ClientIntelligence getClientIntelligence() {
+      return attributes.attribute(CLIENT_INTELLIGENCE).get();
    }
 }

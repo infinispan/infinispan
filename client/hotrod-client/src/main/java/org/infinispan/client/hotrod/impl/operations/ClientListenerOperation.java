@@ -5,12 +5,13 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -33,10 +34,10 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
    protected SocketAddress address;
 
    protected ClientListenerOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                     byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                      byte[] listenerId, DataFormat dataFormat, Object listener, String cacheNameString,
                                      ClientListenerNotifier listenerNotifier, TelemetryService telemetryService) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, telemetryService);
+      super(requestCode, responseCode, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat, telemetryService);
       this.listenerId = listenerId;
       this.listener = listener;
       this.cacheNameString = cacheNameString;
@@ -132,9 +133,6 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
       sb.append("listenerId=").append(Util.printArray(listenerId));
    }
 
-   public DataFormat getDataFormat() {
-      return dataFormat;
-   }
 
    abstract public ClientListenerOperation copy();
 }

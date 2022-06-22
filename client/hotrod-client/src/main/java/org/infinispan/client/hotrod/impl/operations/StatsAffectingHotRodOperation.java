@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
@@ -19,9 +20,9 @@ public abstract class StatsAffectingHotRodOperation<T> extends HotRodOperation<T
    private long startTime;
 
    protected StatsAffectingHotRodOperation(short requestCode, short responseCode, Codec codec, int flags, Configuration cfg,
-                                           byte[] cacheName, AtomicInteger topologyId, ChannelFactory channelFactory,
+                                           byte[] cacheName, AtomicReference<ClientTopology> clientTopology, ChannelFactory channelFactory,
                                            DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
+      super(requestCode, responseCode, codec, flags, cfg, cacheName, clientTopology, channelFactory, dataFormat);
       this.clientStatistics = clientStatistics;
    }
 

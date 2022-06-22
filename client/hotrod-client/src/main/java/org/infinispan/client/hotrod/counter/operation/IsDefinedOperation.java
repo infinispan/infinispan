@@ -1,8 +1,9 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -19,9 +20,9 @@ import io.netty.channel.Channel;
  */
 public class IsDefinedOperation extends BaseCounterOperation<Boolean> {
 
-   public IsDefinedOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+   public IsDefinedOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology,
                              Configuration cfg, String counterName) {
-      super(COUNTER_IS_DEFINED_REQUEST, COUNTER_IS_DEFINED_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
+      super(COUNTER_IS_DEFINED_REQUEST, COUNTER_IS_DEFINED_RESPONSE, codec, channelFactory, clientTopology, cfg, counterName, false);
    }
 
    @Override

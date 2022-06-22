@@ -42,6 +42,22 @@ include::code_examples/HotRodClientIntelligence.java[]
 include::properties/hotrod-client-intelligence.properties[]
 ----
 
+If the Hot Rod client is configured to use multiple {brandname} clusters, it is possible to have
+different intelligence for each cluster.
+If not specified, it uses the intelligence configured globally.
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodClientIntelligenceCluster.java[]
+----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::properties/hotrod-client-intelligence-cluster.properties[]
+----
+
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/ClientIntelligence.html[org.infinispan.client.hotrod.configuration.ClientIntelligence]

@@ -8,11 +8,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -35,9 +36,9 @@ public class GetKeyMultimapOperation<V> extends AbstractMultimapKeyOperation<Col
    private Collection<V> result;
 
    public GetKeyMultimapOperation(Codec codec, ChannelFactory channelFactory,
-                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
+                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics, boolean supportsDuplicates) {
-      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
             flags, cfg, dataFormat, clientStatistics, supportsDuplicates);
    }
 
@@ -57,7 +58,7 @@ public class GetKeyMultimapOperation<V> extends AbstractMultimapKeyOperation<Col
          result = supportsDuplicates ? new ArrayList<>(size) : new HashSet<>(size);
       }
       while (result.size() < size) {
-         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat.isObjectStorage(), cfg.getClassAllowList());
+         V value = bytes2obj(channelFactory.getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), cfg.getClassAllowList());
          result.add(value);
          decoder.checkpoint();
       }

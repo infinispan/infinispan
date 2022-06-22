@@ -29,8 +29,8 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.DecoderException;
 
 /**
- * Generic Hot Rod operation. It is aware of {@link HotRodFlag}s and it is targeted against a cache name. This base class
- * encapsulates the knowledge of writing and reading a header, as described in the
+ * Generic Hot Rod operation. It is aware of {@link HotRodFlag}s and it is targeted against a cache name. This base
+ * class encapsulates the knowledge of writing and reading a header, as described in the
  * <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>
  *
  * @since 14.0
@@ -41,7 +41,6 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    private static final byte NO_TX = 0;
    protected final OperationContext operationContext;
    protected final CacheOptions.Impl options;
-   protected final DataFormat dataFormat;
    protected final HeaderParams header;
    protected volatile ScheduledFuture<?> timeoutFuture;
    private Channel channel;
@@ -49,13 +48,9 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    protected HotRodOperation(OperationContext operationContext, short requestCode, short responseCode, CacheOptions options, DataFormat dataFormat) {
       this.operationContext = operationContext;
       this.options = (CacheOptions.Impl) options;
-      this.dataFormat = dataFormat;
       // TODO: we could inline all the header here
-      this.header = new HeaderParams(requestCode, responseCode, MSG_ID.getAndIncrement())
-            .cacheName(operationContext.getCacheNameBytes()).flags(flags())
-            .clientIntel(operationContext.getConfiguration().clientIntelligence())
-            .topologyId(operationContext.getTopologyId()).txMarker(NO_TX)
-            .dataFormat(dataFormat)
+      this.header = new HeaderParams(requestCode, responseCode, flags(), NO_TX, MSG_ID.getAndIncrement(), dataFormat, operationContext.getClientTopology())
+            .cacheName(operationContext.getCacheNameBytes())
             .topologyAge(operationContext.getChannelFactory().getTopologyAge());
    }
 
@@ -183,4 +178,11 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       exceptionCaught(channel, new SocketTimeoutException(this + " timed out after " + operationContext.getChannelFactory().socketTimeout() + " ms"));
    }
 
+   public final DataFormat dataFormat() {
+      return header.dataFormat();
+   }
+
+   protected final byte[] cacheName() {
+      return header.cacheName();
+   }
 }

@@ -112,9 +112,5 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
       sb.append("listenerId=").append(Util.printArray(listenerId));
    }
 
-   public DataFormat getDataFormat() {
-      return dataFormat;
-   }
-
    abstract public ClientListenerOperation copy();
 }

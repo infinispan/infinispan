@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -29,12 +30,12 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    private final long version;
 
    public RemoveIfUnmodifiedOperation(Codec codec, ChannelFactory channelFactory,
-                                      Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                                      Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                                       int flags, Configuration cfg,
                                       long version, DataFormat dataFormat, ClientStatistics clientStatistics,
                                       TelemetryService telemetryService) {
       super(REMOVE_IF_UNMODIFIED_REQUEST, REMOVE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
-            topologyId, flags, cfg, dataFormat.withoutValueType(), clientStatistics, telemetryService);
+            clientTopology, flags, cfg, dataFormat.withoutValueType(), clientStatistics, telemetryService);
       this.version = version;
    }
 
