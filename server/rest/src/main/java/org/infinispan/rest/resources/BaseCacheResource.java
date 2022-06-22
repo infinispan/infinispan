@@ -26,6 +26,7 @@ import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.distribution.CompleteKeyDistribution;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -239,6 +240,13 @@ public class BaseCacheResource {
          }
          return responseBuilder.build();
       });
+   }
+
+   protected CompletionStage<CompleteKeyDistribution> keyDistribution(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      Object key = getKey(request);
+      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
+      return restCacheManager.getKeyDistribution(cacheName, key, request);
    }
 
    private Object getKey(RestRequest request) {

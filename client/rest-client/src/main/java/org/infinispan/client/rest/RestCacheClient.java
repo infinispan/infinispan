@@ -273,6 +273,13 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> distribution();
 
    /**
+    * Return the nodes which the key is present for a specific cache.
+    *
+    * @param key: the key to search.
+    */
+   CompletionStage<RestResponse> distribution(String key);
+
+   /**
     * Creates the cache using the supplied configuration
     *
     * @param configuration the configuration, in XML, JSON or YAML format

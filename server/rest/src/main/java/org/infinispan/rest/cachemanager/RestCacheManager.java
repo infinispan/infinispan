@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -17,10 +18,13 @@ import javax.security.auth.Subject;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -33,7 +37,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.distribution.CacheDistributionInfo;
-import org.infinispan.rest.distribution.CacheDistributionRunnable;
+import org.infinispan.rest.distribution.CompleteKeyDistribution;
+import org.infinispan.rest.distribution.KeyDistributionInfo;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuthorizationManager;
@@ -43,6 +48,7 @@ import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -92,6 +98,13 @@ public class RestCacheManager<V> {
       AdvancedCache<Object, V> cache = cacheInfo.getCache(new KeyValuePair<>(keyContentType, valueContentType), subject);
       if (flags != null && flags.length > 0) cache = cache.withFlags(flags);
       return cache;
+   }
+
+   public AdvancedCache<Object, V> getCache(String name, MediaType keyContentType, RestRequest request) {
+      if (keyContentType == null)
+         return getCache(name, request);
+
+      return getCache(name, keyContentType, MATCH_ALL, request);
    }
 
    public AdvancedCache<Object, V> getCache(String name, RestRequest restRequest) {
@@ -211,7 +224,7 @@ public class RestCacheManager<V> {
       knownCaches.remove(cacheName);
    }
 
-   public CompletionStage<Collection<CacheDistributionInfo>> cacheDistribution(String cacheName, RestRequest request) {
+   public CompletionStage<List<CacheDistributionInfo>> cacheDistribution(String cacheName, RestRequest request) {
       AdvancedCache<?, ?> ac = getCache(cacheName, request);
       checkCachePermission(ac, request.getSubject(), AuthorizationPermission.MONITOR);
       DistributionManager dm = SecurityActions.getDistributionManager(ac);
@@ -220,15 +233,51 @@ public class RestCacheManager<V> {
          return CompletableFuture.completedStage(Collections.singletonList(local));
       }
 
-      Map<Address, CacheDistributionInfo> distributions = new ConcurrentHashMap<>();
+      return requestMembers(dm.getCacheTopology().getMembers(), ecm -> {
+         Cache<?, ?> c = SecurityActions.getCache(cacheName, ecm);
+         return CacheDistributionInfo.resolve(c.getAdvancedCache());
+      });
+   }
+
+   public CompletionStage<CompleteKeyDistribution> getKeyDistribution(String cacheName, Object key, RestRequest request) {
+      AdvancedCache<Object, ?> cache = getCache(cacheName, request.keyContentType(), request);
+      checkCachePermission(cache, request.getSubject(), AuthorizationPermission.MONITOR);
+      return SecurityActions.cacheContainsKeyAsync(cache, key)
+            .thenCompose(contains -> {
+               DistributionManager dm = SecurityActions.getDistributionManager(cache);
+               if (dm == null) {
+                  KeyDistributionInfo local = KeyDistributionInfo.resolve(cache, true);
+                  return CompletableFuture.completedFuture(new CompleteKeyDistribution(Collections.singletonList(local), contains));
+               }
+
+               LocalizedCacheTopology topology = dm.getCacheTopology();
+               List<Address> members = topology.getMembers();
+               Address primary = null;
+               if (contains) {
+                  DistributionInfo distribution = topology.getDistribution(key);
+                  members = distribution.readOwners();
+                  primary = distribution.primary();
+               }
+
+               final Address p = primary;
+               return requestMembers(members, ecm -> {
+                  Cache<?, ?> c = SecurityActions.getCache(cacheName, ecm);
+                  boolean isPrimary = p != null && ecm.getAddress().equals(p);
+                  return KeyDistributionInfo.resolve(c.getAdvancedCache(), isPrimary);
+               }).thenApply(d -> new CompleteKeyDistribution(d, contains));
+            });
+   }
+
+   private <T> CompletionStage<List<T>> requestMembers(List<Address> addresses, SerializableFunction<EmbeddedCacheManager, T> function) {
+      Map<Address, T> responses = new ConcurrentHashMap<>();
       ClusterExecutor executor = SecurityActions.getClusterExecutor(instance);
-      Collection<Address> members = dm.getCacheTopology().getMembers();
-      return executor.filterTargets(members).submitConsumer(new CacheDistributionRunnable(cacheName), (address, info, t) -> {
-         if (t != null) {
-            throw CompletableFutures.asCompletionException(t);
-         }
-         distributions.putIfAbsent(address, info);
-      }).thenApply(ignore -> distributions.values());
+      return executor.filterTargets(addresses)
+            .submitConsumer(function, (address, res, t) -> {
+               if (t != null) {
+                  throw CompletableFutures.asCompletionException(t);
+               }
+               responses.put(address, res);
+            }).thenApply(ignore -> Immutables.immutableListConvert(responses.values()));
    }
 
    private void checkCachePermission(AdvancedCache<?, ?> ac, Subject subject, AuthorizationPermission permission) {
