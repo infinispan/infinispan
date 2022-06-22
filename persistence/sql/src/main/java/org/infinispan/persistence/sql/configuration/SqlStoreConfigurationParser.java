@@ -49,7 +49,7 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         if (!handleCommonAttributes(builder, attribute, value)) {
+         if (!handleCommonAttributes(reader, builder, attribute, value)) {
             if (attribute == Attribute.TABLE_NAME) {
                builder.tableName(value);
             } else {
@@ -74,7 +74,7 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         if (!handleCommonAttributes(builder, attribute, value)) {
+         if (!handleCommonAttributes(reader, builder, attribute, value)) {
             if (attribute == Attribute.KEY_COLUMNS) {
                builder.keyColumns(value);
             } else {

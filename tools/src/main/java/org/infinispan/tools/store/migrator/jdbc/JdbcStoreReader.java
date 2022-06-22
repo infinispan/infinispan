@@ -45,7 +45,7 @@ public class JdbcStoreReader implements StoreIterator {
       this.config = JdbcConfigurationUtil.getStoreConfig(props);
       this.connectionFactory = new PooledConnectionFactory();
       String segmentCount = props.get(Element.SEGMENT_COUNT);
-      this.metaData = new DbMetaData(config.dialect(), config.dbMajorVersion(), config.dbMinorVersion(), false, false,
+      metaData = TableManagerFactory.getDbMetaData(connectionFactory, config,
             // If we don't have segments then disable it
             segmentCount == null || Integer.parseInt(segmentCount) <= 0);
       this.stringConfig = config;
