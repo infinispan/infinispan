@@ -93,6 +93,8 @@ public class LifecycleManager implements ModuleLifecycle {
     */
    public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
 
+   private volatile boolean remoteQueryEnabled = false;
+
    /**
     * Registers the Search interceptor in the cache before it gets started
     */
@@ -138,6 +140,10 @@ public class LifecycleManager implements ModuleLifecycle {
       }
    }
 
+   public void enableRemoteQuery() {
+      remoteQueryEnabled = true;
+   }
+
    private Map<String, Class<?>> makeIndexedClassesMap(AdvancedCache<?, ?> cache) {
       Configuration cacheConfiguration = cache.getCacheConfiguration();
 
@@ -147,7 +153,8 @@ public class LifecycleManager implements ModuleLifecycle {
          entities.put(c.getName(), c);
       }
 
-      if (!cache.getValueDataConversion().getStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM)) {
+      if (!cache.getValueDataConversion().getStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM) ||
+          !remoteQueryEnabled) {
          // Try to resolve the indexed type names to class names.
          for (String typeName : cacheConfiguration.indexing().indexedEntityTypes()) {
             if (!entities.containsKey(typeName)) {

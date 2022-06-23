@@ -186,6 +186,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return getOrCreateComponent(TimeService.class);
    }
 
+   public <T extends ModuleLifecycle> T getModuleLifecycle(Class<T> type) {
+      for (ModuleLifecycle module : moduleLifecycles) {
+         if (type.isInstance(module)) {
+            return (T) module;
+         }
+      }
+      return null;
+   }
+
    /**
     * This method returns true if there is an mbean server running
     * <p>
