@@ -58,6 +58,11 @@ public final class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      org.infinispan.query.impl.LifecycleManager queryModule = gcr.getModuleLifecycle(org.infinispan.query.impl.LifecycleManager.class);
+      if (queryModule != null) {
+         queryModule.enableRemoteQuery();
+      }
+
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.ICKLE_PROTOBUF_CACHE_EVENT_FILTER_CONVERTER, new IckleProtobufCacheEventFilterConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.ICKLE_PROTOBUF_FILTER_AND_CONVERTER, new IckleProtobufFilterAndConverter.Externalizer());
