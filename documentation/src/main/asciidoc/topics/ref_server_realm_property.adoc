@@ -8,7 +8,9 @@ Passwords can be pre-digested with the `DIGEST-MD5` and `DIGEST` authentication 
 
 [NOTE]
 ====
-Properties files contain headers that associate them with security realms in {brandname} Server configuration.
+You can avoid authentication issues that relate to a property file by using the {brandname} CLI to enter the correct security realm name to the file. 
+You can find the correct security realm name of your {brandname} Server by opening the `infinispan.xml` file and navigating to the `<security-realm name>` property. 
+When you copy a property file from one {brandname} Server to another, make sure that the security realm name appropriates to the correct authentication mechanism for the target endpoint.
 ====
 
 .users.properties
