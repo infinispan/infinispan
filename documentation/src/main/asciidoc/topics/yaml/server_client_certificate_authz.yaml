@@ -7,4 +7,5 @@ infinispan:
         roles:
           Client1:
             role:
-              permissions: "ALL"
+              permissions:
+                - "ALL"
