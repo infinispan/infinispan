@@ -7,13 +7,19 @@ infinispan:
         roles:
           reader:
             role:
-              permissions: "READ"
+              permissions:
+                - "READ"
           admin:
             role:
-              permissions: "ALL"
+              permissions:
+                - "ALL"
           writer:
             role:
-              permissions: "WRITE"
+              permissions:
+                - "WRITE"
           supervisor:
             role:
-              permissions: "READ WRITE EXEC"
+              permissions:
+                - "READ"
+                - "WRITE"
+                - "EXEC"
