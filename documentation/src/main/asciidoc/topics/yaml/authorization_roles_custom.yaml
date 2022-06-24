@@ -6,7 +6,11 @@ infinispan:
         roles:
           temprole:
             role:
-              permissions: "ALL_WRITE LISTEN"
+              permissions:
+                - "ALL_WRITE"
+                - "LISTEN"
           myrole:
             role:
-              permissions: "READ WRITE"
+              permissions:
+                - "READ"
+                - "WRITE"
