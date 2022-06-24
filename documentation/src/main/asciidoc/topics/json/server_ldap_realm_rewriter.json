@@ -2,7 +2,7 @@
   "server": {
     "security": {
       "security-realms": [{
-        "name": "ldap-realm",
+        "name": "LdapRealm",
         "ldap-realm": {
           "principal": "uid=admin,ou=People,dc=infinispan,dc=org",
           "url": "ldap://${org.infinispan.test.host.address}:10389",

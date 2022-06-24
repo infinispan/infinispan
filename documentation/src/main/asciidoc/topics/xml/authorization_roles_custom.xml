@@ -1,5 +1,5 @@
 <infinispan>
-  <cache-container name="custom-authorization">
+  <cache-container name="CustomAuthorization">
     <security>
       <authorization>
         <role name="temprole" permissions="ALL_WRITE,LISTEN" />

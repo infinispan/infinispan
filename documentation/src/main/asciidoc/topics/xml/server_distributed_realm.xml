@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <security>
     <security-realms>
-      <security-realm name="distributed-realm">
+      <security-realm name="DistributedRealm">
         <ldap-realm url="ldap://my-ldap-server:10389"
                     principal="uid=admin,ou=People,dc=infinispan,dc=org"
                     credential="strongPassword">

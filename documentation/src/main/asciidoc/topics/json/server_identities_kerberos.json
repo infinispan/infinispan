@@ -2,7 +2,7 @@
   "server": {
     "security": {
       "security-realms": [{
-        "name": "kerberos-realm",
+        "name": "KerberosRealm",
         "server-identities": [{
           "kerberos": {
             "principal": "hotrod/datagrid@INFINISPAN.ORG",
@@ -20,10 +20,10 @@
     "endpoints": {
       "endpoint": {
         "socket-binding": "default",
-        "security-realm": "kerberos-realm",
+        "security-realm": "KerberosRealm",
         "hotrod-connector": {
           "authentication": {
-            "security-realm": "kerberos-realm",
+            "security-realm": "KerberosRealm",
             "sasl": {
               "server-name": "datagrid",
               "server-principal": "hotrod/datagrid@INFINISPAN.ORG"

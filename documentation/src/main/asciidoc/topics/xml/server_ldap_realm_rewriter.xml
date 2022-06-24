@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <security>
     <security-realms>
-      <security-realm name="ldap-realm">
+      <security-realm name="LdapRealm">
         <ldap-realm url="ldap://${org.infinispan.test.host.address}:10389"
                     principal="uid=admin,ou=People,dc=infinispan,dc=org"
                     credential="strongPassword">

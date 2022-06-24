@@ -1,7 +1,7 @@
 server:
   security:
     securityRealms:
-      - name: ldap-realm
+      - name: LdapRealm
         ldapRealm:
           url: 'ldap://my-ldap-server:10389'
           principal: 'uid=admin,ou=People,dc=infinispan,dc=org'

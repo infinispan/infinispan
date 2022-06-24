@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <security>
     <security-realms>
-      <security-realm name="kerberos-realm">
+      <security-realm name="KerberosRealm">
         <server-identities>
           <!-- Specifies a keytab file that provides a Kerberos identity. -->
           <!-- Names the Kerberos service principal for the Hot Rod endpoint. -->
@@ -19,7 +19,7 @@
   </security>
   <endpoints>
     <endpoint socket-binding="default"
-              security-realm="kerberos-realm">
+              security-realm="KerberosRealm">
      <hotrod-connector>
         <authentication>
            <sasl server-name="datagrid"

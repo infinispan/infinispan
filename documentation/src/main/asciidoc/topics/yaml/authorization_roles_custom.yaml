@@ -1,6 +1,6 @@
 infinispan:
   cacheContainer:
-    name: "custom-authorization"
+    name: "CustomAuthorization"
     security:
       authorization:
         roles:

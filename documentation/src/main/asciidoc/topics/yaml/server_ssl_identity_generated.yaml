@@ -1,7 +1,7 @@
 server:
   security:
     securityRealms:
-      - name: "generated-keystore"
+      - name: "GeneratedKeystore"
         serverIdentities:
           ssl:
             keystore:

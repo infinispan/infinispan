@@ -1,7 +1,7 @@
 server:
   security:
     securityRealms:
-      - name: token-realm
+      - name: TokenRealm
         tokenRealm:
           authServerUrl: 'https://oauth-server/auth/'
           oauth2Introspection:

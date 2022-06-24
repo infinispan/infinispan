@@ -50,7 +50,7 @@ You must manually synchronize credentials in a properties realm to each node in 
 . Use the `security-realms` element in the `security` configuration to contain create multiple security realms.
 . Add a security realm with the `security-realm` element and give it a unique name with the `name` attribute.
 +
-To follow the example, create one security realm named `application-realm` and another named `management-realm`.
+To follow the example, create one security realm named `ApplicationRealm` and another named `ManagementRealm`.
 . Provide the TLS/SSL identify for {brandname} Server with the `server-identities` element and configure a keystore as required.
 . Specify the type of security realm by adding one the following elements or fields:
 +
@@ -67,6 +67,13 @@ To follow the example, specify the `*.properties` files you created with the CLI
 
 [discrete]
 == Multiple property realms
+
+You can define multiple security realms in an XML, a JSON, or a YAML file. The following examples demonstrate defining multiple security realms in each file type.
+
+[NOTE]
+====
+When defining the name of your security realm in the `name` field, ensure that you do not include any special characters in the name, such as a hyphen (-), an underscore) (_), and so on. By using such characters, you might cause issues with an authentication mechanism that uses the `REST` endpoint or cause connections issues with the CLI.  
+====
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]

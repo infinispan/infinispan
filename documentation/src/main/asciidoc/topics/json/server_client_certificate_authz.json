@@ -1,7 +1,7 @@
 {
   "infinispan": {
     "cache-container": {
-      "name": "certificate-authentication",
+      "name": "CertificateAuthentication",
       "security": {
         "authorization": {
           "common-name-role-mapper": null,

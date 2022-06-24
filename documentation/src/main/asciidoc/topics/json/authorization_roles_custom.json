@@ -1,7 +1,7 @@
 {
   "infinispan" : {
     "cache-container" : {
-      "name" : "custom-authorization",
+      "name" : "CustomAuthorization",
       "security" : {
          "authorization" : {
           "roles" : {

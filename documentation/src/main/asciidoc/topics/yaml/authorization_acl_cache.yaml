@@ -1,6 +1,6 @@
 infinispan:
   cacheContainer:
-    name: "acl-cache-configuration"
+    name: "AclCacheConfiguration"
     security:
       cache-size: "1000"
       cache-timeout: "300000"
