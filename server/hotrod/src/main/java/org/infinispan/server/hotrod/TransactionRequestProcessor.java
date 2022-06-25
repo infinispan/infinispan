@@ -25,12 +25,13 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.opentelemetry.api.trace.Tracer;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
 
-   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
-      super(channel, executor, server);
+   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server, Tracer tracer) {
+      super(channel, executor, server, tracer);
    }
 
    private void writeTransactionResponse(HotRodHeader header, int value) {

@@ -76,7 +76,6 @@ import org.infinispan.server.configuration.security.TransportSecurityConfigurati
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ProtocolServer;
-import org.infinispan.server.core.RequestTracer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.server.core.backup.BackupManagerImpl;
@@ -425,9 +424,6 @@ public class Server implements ServerManagement, AutoCloseable {
          taskManager = bcr.getComponent(TaskManager.class).running();
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cacheManager));
 
-         // Initialize the OpenTracing integration
-         RequestTracer.start();
-
          ElytronJMXAuthenticator.init(serverConfiguration);
 
          for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
@@ -531,9 +527,6 @@ public class Server implements ServerManagement, AutoCloseable {
 
    @Override
    public void serverStop(List<String> servers) {
-      // Stop the OpenTracing integration
-      RequestTracer.stop();
-
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
       ClusterExecutor executor = SecurityActions.getClusterExecutor(cacheManager);
       if (servers != null && !servers.isEmpty()) {
@@ -590,9 +583,6 @@ public class Server implements ServerManagement, AutoCloseable {
       if (scheduler != null) {
          scheduler.shutdown();
       }
-
-      // Stop the OpenTracing integration
-      RequestTracer.stop();
 
       shutdownLog4jLogManager();
    }
