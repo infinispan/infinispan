@@ -232,16 +232,16 @@ public interface Log extends BasicLogger {
    CacheConfigurationException attributeMustBeGreaterThanZero(Number value, Enum<?> attribute);
 
    @LogMessage(level = INFO)
-   @Message(value = "OpenTelemetry tracer loaded: %s", id = 952)
-   void tracerLoaded(Object tracer);
+   @Message(value = "OpenTelemetry instance loaded: %s", id = 952)
+   void telemetryLoaded(Object telemetry);
 
    @LogMessage(level = INFO)
-   @Message(value = "OpenTelemetry tracer integration is disabled", id = 953)
-   void tracerDisabled();
+   @Message(value = "OpenTelemetry integration is disabled", id = 953)
+   void telemetryDisabled();
 
    @LogMessage(level = WARN)
-   @Message(value = "OpenTelemetry tracer cannot be configured", id = 954)
-   void errorOnLoadingTracer();
+   @Message(value = "OpenTelemetry cannot be configured", id = 954)
+   void errorOnLoadingTelemetry();
 
    //----- counters exceptions // don't use the same id range ------
 
