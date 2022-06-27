@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 
@@ -34,8 +35,8 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
    protected ClientListenerOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
                                      byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                      byte[] listenerId, DataFormat dataFormat, Object listener, String cacheNameString,
-                                     ClientListenerNotifier listenerNotifier) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+                                     ClientListenerNotifier listenerNotifier, TelemetryService telemetryService) {
+      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, telemetryService);
       this.listenerId = listenerId;
       this.listener = listener;
       this.cacheNameString = cacheNameString;

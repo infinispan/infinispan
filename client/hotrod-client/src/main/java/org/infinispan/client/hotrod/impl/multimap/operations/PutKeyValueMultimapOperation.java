@@ -37,7 +37,8 @@ public class PutKeyValueMultimapOperation extends AbstractKeyValueOperation<Void
                                        TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat,
                                        ClientStatistics clientStatistics) {
       super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
+            flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
+            null);
    }
 
    @Override

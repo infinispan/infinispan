@@ -386,4 +386,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Native IOUring transport not available, using NIO instead: %s", id = 4108)
    void ioUringNotAvailable(String cause);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "OpenTelemetry API is not present in the classpath. No tracing client context will be propagated.", id = 4109)
+   void noOpenTelemetryAPI(@Cause Throwable throwable);
+
 }

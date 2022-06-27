@@ -45,7 +45,7 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
                              long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
                              ClientStatistics clientStatistics) {
       super(PUT_STREAM_REQUEST, PUT_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, null, clientStatistics);
+            flags, cfg, null, clientStatistics, null);
       this.version = version;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

@@ -41,7 +41,7 @@ public class AddBloomNearCacheClientListenerOperation extends ClientListenerOper
                                                     int bloomFilterBits, InternalRemoteCache<?, ?> remoteCache) {
       super(ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_REQUEST, ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_RESPONSE, codec, channelFactory,
             RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg, listenerId, dataFormat, listener,
-            cacheName, listenerNotifier);
+            cacheName, listenerNotifier, null);
       this.bloomFilterBits = bloomFilterBits;
       this.remoteCache = remoteCache;
    }

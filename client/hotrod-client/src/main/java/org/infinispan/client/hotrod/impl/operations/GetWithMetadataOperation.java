@@ -43,7 +43,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
                                    Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
                                    SocketAddress preferredServer) {
       super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, dataFormat, clientStatistics);
+            flags, cfg, dataFormat, clientStatistics, null);
       this.preferredServer = preferredServer;
    }
 

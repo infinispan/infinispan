@@ -29,7 +29,7 @@ public class CompleteTransactionOperation extends RetryOnFailureOperation<Intege
    public CompleteTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
          Configuration cfg, Xid xid, boolean commit) {
       super(commit ? COMMIT_REQUEST : ROLLBACK_REQUEST, commit ? COMMIT_RESPONSE : ROLLBACK_RESPONSE,
-            codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, topologyId, 0, cfg, null);
+            codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, topologyId, 0, cfg, null, null);
       this.xid = xid;
    }
 

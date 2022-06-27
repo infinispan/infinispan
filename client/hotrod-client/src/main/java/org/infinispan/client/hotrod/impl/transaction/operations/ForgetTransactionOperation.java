@@ -29,7 +29,7 @@ public class ForgetTransactionOperation extends RetryOnFailureOperation<Void> {
    public ForgetTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
          Configuration cfg, Xid xid) {
       super(FORGET_TX_REQUEST, FORGET_TX_RESPONSE, codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, topologyId, 0, cfg,
-            null);
+            null, null);
       this.xid = xid;
    }
 

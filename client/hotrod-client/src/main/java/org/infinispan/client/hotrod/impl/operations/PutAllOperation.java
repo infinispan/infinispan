@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -34,8 +35,9 @@ public class PutAllOperation extends StatsAffectingRetryingOperation<Void> {
                           Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg,
                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
-                          DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
+                          DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
+      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat,
+            clientStatistics, telemetryService);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;

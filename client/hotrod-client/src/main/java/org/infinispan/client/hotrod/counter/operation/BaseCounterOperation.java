@@ -39,7 +39,7 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
 
    BaseCounterOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
                         String counterName, boolean useConsistentHash) {
-      super(requestCode, responseCode, codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg, null);
+      super(requestCode, responseCode, codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg, null, null);
       this.counterName = counterName;
       this.useConsistentHash = useConsistentHash;
    }

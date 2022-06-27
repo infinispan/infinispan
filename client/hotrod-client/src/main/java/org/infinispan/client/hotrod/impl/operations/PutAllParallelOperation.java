@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 /**
  * @author Guillaume Darmont / guillaume@dropinocean.com
@@ -24,17 +25,20 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
    private final TimeUnit lifespanTimeUnit;
    protected final long maxIdle;
    private final TimeUnit maxIdleTimeUnit;
+   private final TelemetryService telemetryService;
 
    public PutAllParallelOperation(Codec codec, ChannelFactory channelFactory, Map<byte[], byte[]> map, byte[]
          cacheName, AtomicInteger topologyId, int flags, Configuration cfg, long lifespan,
                                   TimeUnit lifespanTimeUnit, long maxIdle,
-                                  TimeUnit maxIdleTimeUnit, DataFormat dataFormat, ClientStatistics clientStatistics) {
+                                  TimeUnit maxIdleTimeUnit, DataFormat dataFormat, ClientStatistics clientStatistics,
+                                  TelemetryService telemetryService) {
       super(codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;
       this.maxIdle = maxIdle;
       this.maxIdleTimeUnit = maxIdleTimeUnit;
+      this.telemetryService = telemetryService;
    }
 
    @Override
@@ -53,7 +57,8 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
 
       return splittedMaps.values().stream().map(
             mapSubset -> new PutAllOperation(codec, channelFactory, mapSubset, cacheName, header.topologyId(), flags,
-                  cfg, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics)).collect(Collectors.toList());
+                  cfg, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
+                  telemetryService)).collect(Collectors.toList());
    }
 
    @Override

@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -21,8 +22,9 @@ import net.jcip.annotations.Immutable;
 public class ClearOperation extends RetryOnFailureOperation<Void> {
 
    public ClearOperation(Codec codec, ChannelFactory channelFactory,
-                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                         TelemetryService telemetryService) {
+      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, telemetryService);
    }
 
    @Override

@@ -35,7 +35,8 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    protected ExecuteOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                               AtomicInteger topologyId, int flags, Configuration cfg,
                               String taskName, Map<String, byte[]> marshalledParams, Object key, DataFormat dataFormat) {
-      super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg, dataFormat);
+      super(EXEC_REQUEST, EXEC_RESPONSE, codec, channelFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName,
+            topologyId, flags, cfg, dataFormat, null);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
       this.key = key;

@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
@@ -29,8 +30,10 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
 
    protected AbstractKeyOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
                                   Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
-                                  Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
+                                  Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
+                                  TelemetryService telemetryService) {
+      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat,
+            clientStatistics, telemetryService);
       this.key = key;
       this.keyBytes = keyBytes;
    }

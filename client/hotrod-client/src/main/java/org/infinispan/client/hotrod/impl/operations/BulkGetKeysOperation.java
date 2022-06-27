@@ -29,7 +29,8 @@ public class BulkGetKeysOperation<K> extends StatsAffectingRetryingOperation<Set
 
    public BulkGetKeysOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                                AtomicInteger topologyId, int flags, Configuration cfg, int scope, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
+      super(BULK_GET_KEYS_REQUEST, BULK_GET_KEYS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg,
+            dataFormat, clientStatistics, null);
       this.scope = scope;
    }
 
