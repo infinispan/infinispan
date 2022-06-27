@@ -245,6 +245,11 @@
          <groupId>io.mashona</groupId>
          <artifactId>mashona-logwriting</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>io.netty.incubator</groupId>
+         <artifactId>netty-incubator-transport-native-io_uring</artifactId>
+      </dependency>
    </dependencies>
 
    <build>
