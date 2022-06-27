@@ -15,6 +15,7 @@ public interface HotRodConstants {
    byte VERSION_28 = HotRodVersion.HOTROD_28.getVersion();
    byte VERSION_30 = HotRodVersion.HOTROD_30.getVersion();
    byte VERSION_31 = HotRodVersion.HOTROD_31.getVersion();
+   byte VERSION_40 = HotRodVersion.HOTROD_40.getVersion();
 
    //requests
    byte PUT_REQUEST = 0x01;
