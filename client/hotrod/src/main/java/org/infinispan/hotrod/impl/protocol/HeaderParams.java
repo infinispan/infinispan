@@ -1,5 +1,7 @@
 package org.infinispan.hotrod.impl.protocol;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.hotrod.impl.DataFormat;
@@ -21,6 +23,7 @@ public class HeaderParams {
    final long messageId;
    int topologyAge;
    DataFormat dataFormat;
+   Map<String, byte[]> otherParams = new HashMap<>();
 
    public HeaderParams(short requestCode, short responseCode, long messageId) {
       opCode = requestCode;
@@ -71,4 +74,11 @@ public class HeaderParams {
       return this;
    }
 
+   public void otherParam(String paramKey, byte[] paramValue) {
+      otherParams.put(paramKey, paramValue);
+   }
+
+   public Map<String, byte[]> otherParams() {
+      return otherParams;
+   }
 }

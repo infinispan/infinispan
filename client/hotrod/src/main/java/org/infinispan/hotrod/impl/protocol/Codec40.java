@@ -64,6 +64,7 @@ public class Codec40 implements Codec, HotRodConstants {
    public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
       HeaderParams headerParams = writeHeader(buf, params, HotRodConstants.VERSION_40);
       writeDataTypes(buf, params.dataFormat);
+      writeOtherParams(buf, params.otherParams);
       return headerParams;
    }
 
@@ -96,6 +97,19 @@ public class Codec40 implements Codec, HotRodConstants {
             ByteBufUtil.writeString(buf, value);
          });
       }
+   }
+
+   private void writeOtherParams(ByteBuf buf, Map<String, byte[]> parameters) {
+      if (parameters == null) {
+         ByteBufUtil.writeVInt(buf, 0);
+         return;
+      }
+
+      ByteBufUtil.writeVInt(buf, parameters.size());
+      parameters.forEach((key, value) -> {
+         ByteBufUtil.writeString(buf, key);
+         ByteBufUtil.writeArray(buf, value);
+      });
    }
 
    @Override
@@ -176,6 +190,7 @@ public class Codec40 implements Codec, HotRodConstants {
       buf.writeByte(params.clientIntel);
       int topologyId = params.topologyId.get();
       ByteBufUtil.writeVInt(buf, topologyId);
+
 
       if (log.isTraceEnabled())
          log.tracef("[%s] Wrote header for messageId=%d. Operation code: %#04x(%s). Flags: %#x. Topology id: %s",
