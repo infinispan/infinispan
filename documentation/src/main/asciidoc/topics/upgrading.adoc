@@ -66,6 +66,12 @@ The RocksDB implementation is no longer included by default with the server. It 
 cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
 ----
 
+== JDBC Store database versions configuration deprecated
+
+Prior we allowed a user to specify the database major and minor versions when configuring the database parameters.
+These two options are now deprecated and ignored as we always retrieve them from the JDBC metadata directly.
+This affects all three of the JDBC based stores (string-keyed-jdbc-store, table-jdbc-store and query-jdbc-store).
+
 == Micrometer Metrics
 
 Microprofile metrics are no longer supported, available output metrics are now Prometheus and OpenMetrics.
@@ -116,12 +122,6 @@ Any annotations will simply be copied as comments to the generated `.proto` file
 == The (undocumented) server filesystem-realm has been removed
 
 The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
-
-== JDBC Store database versions configuration deprecated
-
-Prior we allowed a user to configure the database major and minor versions when configuring the database parameters.
-These two options are now deprecated and ignored as we always retrieve them from the JDBC metadata directly.
-This affects all three of the JDBC based stores (string-keyed-jdbc-store, table-jdbc-store and query-jdbc-store).
 
 
 = Upgrading from 12.1 to 13.0
