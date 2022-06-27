@@ -70,8 +70,8 @@ root request
 
 header returns HotRodHeader
    : { magic != MAGIC_REQ }? { throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic); }
-   | { deadEnd = false } messageId version operation cacheName flags intelligence topologyId txMarker keyType valueType
-      { new HotRodHeader(operation, version, messageId, cacheName, flags, intelligence, topologyId, keyType, valueType) }
+   | { deadEnd = false } messageId version operation cacheName flags intelligence topologyId txMarker keyType valueType otherParams
+      { new HotRodHeader(operation, version, messageId, cacheName, flags, intelligence, topologyId, keyType, valueType, otherParams) }
 ;
 
 magic: byte;
@@ -111,6 +111,19 @@ mediaTypeDescription returns MediaType switch mediaTypeDefinition
    | { 1 }? mediaTypeId mediaTypeParams { MediaTypeIds.getMediaType((short) mediaTypeId).withParameters(mediaTypeParams) }
    | { 2 }? mediaTypeName mediaTypeParams { MediaType.fromString(mediaTypeName).withParameters(mediaTypeParams) }
    | { throw new RequestParsingException("Unknown MediaType definition: " + mediaTypeDefinition, version, messageId); }
+   ;
+
+otherParams returns Map<String, byte[]>
+: { version >= VERSION_40 }? otherParamsRev
+   | { null }
+   ;
+
+otherParamsNum: vInt;
+otherParamName: string;
+otherParamValue: array;
+otherParamsRev returns Map<String, byte[]>
+   : otherParamsNum { otherParamsRev = allocMap(otherParamsNum); }
+      #otherParamsNum ( otherParamName otherParamValue { otherParamsRev.put(otherParamName, otherParamValue); } )
    ;
 
 key: array;

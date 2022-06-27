@@ -16,7 +16,7 @@ class UnknownVersionException extends StreamCorruptedException {
    }
 
    public HotRodHeader toHeader() {
-      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
    }
 }
 
@@ -31,7 +31,7 @@ class HotRodUnknownOperationException extends UnknownOperationException {
    }
 
    public HotRodHeader toHeader() {
-      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
    }
 }
 
@@ -62,7 +62,7 @@ class RequestParsingException extends CacheException {
    }
 
    public HotRodHeader toHeader() {
-      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+      return new HotRodHeader(HotRodOperation.ERROR, version, messageId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
    }
 }
 
