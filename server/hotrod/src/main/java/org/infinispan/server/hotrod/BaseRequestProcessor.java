@@ -90,7 +90,7 @@ public class BaseRequestProcessor {
          status = OperationStatus.ServerError;
       }
       if (header == null) {
-         header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, 0, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL);
+         header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, 0, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
       } else {
          header.op = HotRodOperation.ERROR;
       }

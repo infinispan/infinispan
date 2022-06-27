@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import java.util.EnumSet;
+import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -24,12 +25,13 @@ public class HotRodHeader {
    int topologyId;
    MediaType keyType;
    MediaType valueType;
+   Map<String, byte[]> otherParams;
 
    public HotRodHeader(HotRodHeader header) {
-      this(header.op, header.version, header.messageId, header.cacheName, header.flag, header.clientIntel, header.topologyId, header.keyType, header.valueType);
+      this(header.op, header.version, header.messageId, header.cacheName, header.flag, header.clientIntel, header.topologyId, header.keyType, header.valueType, header.otherParams);
    }
 
-   public HotRodHeader(HotRodOperation op, byte version, long messageId, String cacheName, int flag, short clientIntel, int topologyId, MediaType keyType, MediaType valueType) {
+   public HotRodHeader(HotRodOperation op, byte version, long messageId, String cacheName, int flag, short clientIntel, int topologyId, MediaType keyType, MediaType valueType, Map<String, byte[]> otherParams) {
       this.op = op;
       this.version = version;
       this.messageId = messageId;
@@ -39,6 +41,7 @@ public class HotRodHeader {
       this.topologyId = topologyId;
       this.keyType = keyType;
       this.valueType = valueType;
+      this.otherParams = otherParams;
    }
 
    public boolean hasFlag(ProtocolFlag f) {
