@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,9 +75,11 @@ public class HeaderParams {
       return this;
    }
 
-   public HeaderParams otherParams(Map<String, byte[]> otherParams) {
-      this.otherParams = otherParams;
-      return this;
+   public void otherParam(String paramKey, byte[] paramValue) {
+      if (otherParams == null) {
+         otherParams = new HashMap<>(2);
+      }
+      otherParams.put(paramKey, paramValue);
    }
 
    public Map<String, byte[]> otherParams() {

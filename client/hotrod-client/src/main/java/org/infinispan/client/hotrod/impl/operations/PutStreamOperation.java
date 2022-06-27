@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -43,9 +44,9 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> imple
                              Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                              int flags, Configuration cfg, long version,
                              long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
-                             ClientStatistics clientStatistics) {
+                             ClientStatistics clientStatistics, TelemetryService telemetryService) {
       super(PUT_STREAM_REQUEST, PUT_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, null, clientStatistics);
+            flags, cfg, null, clientStatistics, telemetryService);
       this.version = version;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

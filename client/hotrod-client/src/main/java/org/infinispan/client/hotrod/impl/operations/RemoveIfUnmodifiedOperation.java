@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -30,9 +31,10 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    public RemoveIfUnmodifiedOperation(Codec codec, ChannelFactory channelFactory,
                                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                       int flags, Configuration cfg,
-                                      long version, DataFormat dataFormat, ClientStatistics clientStatistics) {
+                                      long version, DataFormat dataFormat, ClientStatistics clientStatistics,
+                                      TelemetryService telemetryService) {
       super(REMOVE_IF_UNMODIFIED_REQUEST, REMOVE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
-            topologyId, flags, cfg, dataFormat.withoutValueType(), clientStatistics);
+            topologyId, flags, cfg, dataFormat.withoutValueType(), clientStatistics, telemetryService);
       this.version = version;
    }
 

@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -29,9 +30,9 @@ public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
                            Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                            int flags, Configuration cfg, byte[] value,
                            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
-                           DataFormat dataFormat, ClientStatistics clientStatistics) {
+                           DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
       super(REPLACE_REQUEST, REPLACE_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
-            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
+            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
    }
 
    @Override

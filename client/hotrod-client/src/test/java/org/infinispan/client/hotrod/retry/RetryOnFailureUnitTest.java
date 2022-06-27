@@ -82,7 +82,7 @@ public class RetryOnFailureUnitTest extends AbstractInfinispanTest {
 
       TestOperation(ChannelFactory channelFactory, boolean failOnTransport) {
          super(ILLEGAL_OP_CODE, ILLEGAL_OP_CODE, null, channelFactory, null, null, 0,
-               HotRodClientTestingUtil.newRemoteConfigurationBuilder().build(), null);
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder().build(), null, null);
          this.failOnTransport = failOnTransport;
          channelInvocationCount = new AtomicInteger(0);
          executeInvocationCount = new AtomicInteger(0);

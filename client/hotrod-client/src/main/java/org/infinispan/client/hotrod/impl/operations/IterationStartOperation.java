@@ -35,7 +35,8 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
                            String filterConverterFactory, byte[][] filterParameters, IntSet segments,
                            int batchSize, ChannelFactory channelFactory, boolean metadata, DataFormat dataFormat,
                            SocketAddress addressTarget) {
-      super(ITERATION_START_REQUEST, ITERATION_START_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+      super(ITERATION_START_REQUEST, ITERATION_START_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg,
+            dataFormat, null);
       this.filterConverterFactory = filterConverterFactory;
       this.filterParameters = filterParameters;
       this.segments = segments;

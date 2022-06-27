@@ -25,6 +25,9 @@ import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.infinispan.commons.util.IntSet;
 
 import io.netty.channel.Channel;
@@ -38,6 +41,8 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class OperationsFactory implements HotRodConstants {
+
+   private static final Log log = LogFactory.getLog(OperationsFactory.class, Log.class);
 
    private final ThreadLocal<Integer> flagsMap = new ThreadLocal<>();
 
@@ -59,6 +64,8 @@ public class OperationsFactory implements HotRodConstants {
 
    private final ClientStatistics clientStatistics;
 
+   private final TelemetryService telemetryService;
+
    public OperationsFactory(ChannelFactory channelFactory, String cacheName, boolean forceReturnValue, Codec
          codec, ClientListenerNotifier listenerNotifier, Configuration cfg, ClientStatistics clientStatistics) {
       this.channelFactory = channelFactory;
@@ -72,6 +79,16 @@ public class OperationsFactory implements HotRodConstants {
       this.listenerNotifier = listenerNotifier;
       this.cfg = cfg;
       this.clientStatistics = clientStatistics;
+
+      TelemetryService telemetryService = null;
+      try {
+         telemetryService = TelemetryService.create();
+      } catch (Throwable e) {
+         // missing dependency => no context to propagate to the server
+         log.noOpenTelemetryAPI(e);
+      }
+
+      this.telemetryService = telemetryService;
    }
 
    public OperationsFactory(ChannelFactory channelFactory, Codec codec, ClientListenerNotifier listenerNotifier, Configuration cfg) {
@@ -110,19 +127,22 @@ public class OperationsFactory implements HotRodConstants {
 
    public <V> RemoveOperation<V> newRemoveOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new RemoveOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat, clientStatistics);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, dataFormat,
+            clientStatistics, telemetryService);
    }
 
    public <V> RemoveIfUnmodifiedOperation<V> newRemoveIfUnmodifiedOperation(Object key, byte[] keyBytes, long version, DataFormat dataFormat) {
       return new RemoveIfUnmodifiedOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, dataFormat, clientStatistics);
+            codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, dataFormat,
+            clientStatistics, telemetryService);
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(Object key, byte[] keyBytes,
                                                                        byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version, DataFormat dataFormat) {
       return new ReplaceIfUnmodifiedOperation(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat, clientStatistics);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat, clientStatistics,
+            telemetryService);
    }
 
    public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
@@ -146,14 +166,15 @@ public class OperationsFactory implements HotRodConstants {
                                                       TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
+            cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
+            telemetryService);
    }
 
    public PutAllParallelOperation newPutAllOperation(Map<byte[], byte[]> map,
                                                      long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutAllParallelOperation(
             codec, channelFactory, map, cacheNameBytes, topologyId, flags(lifespan, maxIdle), cfg,
-            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
+            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
    }
 
    public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(Object key, byte[] keyBytes, byte[] value,
@@ -161,14 +182,16 @@ public class OperationsFactory implements HotRodConstants {
                                                               TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutIfAbsentOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdleTime),
-            cfg, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics);
+            cfg, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics,
+            telemetryService);
    }
 
    public <V> ReplaceOperation<V> newReplaceOperation(Object key, byte[] keyBytes, byte[] values,
                                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new ReplaceOperation<>(
             codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            cfg, values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics);
+            cfg, values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
+            telemetryService);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
@@ -178,7 +201,7 @@ public class OperationsFactory implements HotRodConstants {
 
    public ClearOperation newClearOperation() {
       return new ClearOperation(
-            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
+            codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, telemetryService);
    }
 
    public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope, DataFormat dataFormat) {
@@ -189,14 +212,14 @@ public class OperationsFactory implements HotRodConstants {
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {
       return new AddClientListenerOperation(codec, channelFactory,
             cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, null, null, dataFormat, null);
+            listener, null, null, dataFormat, null, telemetryService);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(
          Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
       return new AddClientListenerOperation(codec, channelFactory,
             cacheName, topologyId, flags(), cfg, listenerNotifier,
-            listener, filterFactoryParams, converterFactoryParams, dataFormat, null);
+            listener, filterFactoryParams, converterFactoryParams, dataFormat, null, telemetryService);
    }
 
    public RemoveClientListenerOperation newRemoveClientListenerOperation(Object listener) {
@@ -243,7 +266,7 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public SizeOperation newSizeOperation() {
-      return new SizeOperation(codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg);
+      return new SizeOperation(codec, channelFactory, cacheNameBytes, topologyId, flags(), cfg, telemetryService);
    }
 
    public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams, Object key, DataFormat dataFormat) {
@@ -334,15 +357,15 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics);
+      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
    }
 
    public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics);
+      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
    }
 
    public <K> PutStreamOperation newPutIfAbsentStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics);
+      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
    }
 
    public AuthMechListOperation newAuthMechListOperation(Channel channel) {

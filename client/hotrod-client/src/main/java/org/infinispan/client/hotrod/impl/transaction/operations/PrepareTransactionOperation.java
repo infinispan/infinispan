@@ -43,7 +43,7 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    public PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
          AtomicInteger topologyId, Configuration cfg, Xid xid, boolean onePhaseCommit,
          List<Modification> modifications, boolean recoverable, long timeoutMs) {
-      super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null);
+      super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, topologyId, 0, cfg, null, null);
       this.xid = xid;
       this.onePhaseCommit = onePhaseCommit;
       this.modifications = modifications;

@@ -155,6 +155,7 @@ public class HotRodHeader {
             ", topologyId=" + topologyId +
             ", keyType=" + keyType +
             ", valueType=" + valueType +
+            ", otherParams=" + otherParams +
             '}';
    }
 }

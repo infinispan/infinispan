@@ -27,7 +27,7 @@ public class StatsOperation extends RetryOnFailureOperation<ServerStatistics> {
 
    public StatsOperation(Codec codec, ChannelFactory channelFactory,
                          byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(STATS_REQUEST, STATS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+      super(STATS_REQUEST, STATS_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, null);
    }
 
    @Override

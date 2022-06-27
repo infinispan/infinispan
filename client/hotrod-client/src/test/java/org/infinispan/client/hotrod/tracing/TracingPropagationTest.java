@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.model.Author;
@@ -21,6 +24,7 @@ import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
+import io.opentelemetry.sdk.trace.data.SpanData;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.tracing.TracingPropagationTest")
 public class TracingPropagationTest extends SingleHotRodServerTest {
@@ -70,7 +74,37 @@ public class TracingPropagationTest extends SingleHotRodServerTest {
 
       // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly.
       // We're going now to correlate the client span with the server spans!
-      assertThat(inMemorySpanExporter.getFinishedSpanItems()).hasSize(3);
+      List<SpanData> spans = inMemorySpanExporter.getFinishedSpanItems();
+      assertThat(spans).hasSize(3);
+
+      String traceId = null;
+      Set spanIds = new HashSet();
+      Map<String, Integer> parentSpanIds = new HashMap<>();
+      String parentSpan = null;
+
+      for (SpanData span : spans) {
+         if (traceId == null) {
+            traceId = span.getTraceId();
+         } else {
+            // check that the spans have all the same trace id
+            assertThat(span.getTraceId()).isEqualTo(traceId);
+         }
+
+         spanIds.add(span.getSpanId());
+         parentSpanIds.compute(span.getParentSpanId(), (key, value) -> (value == null) ? 1 : value + 1);
+
+         Integer times = parentSpanIds.get(span.getParentSpanId());
+         if (times == 2) {
+            parentSpan = span.getParentSpanId();
+         }
+      }
+
+      // we have 3 different spans:
+      assertThat(spanIds).hasSize(3);
+      // two of which have the same parent span
+      assertThat(parentSpanIds).hasSize(2);
+      // that is the other span
+      assertThat(spanIds).contains(parentSpan);
    }
 
    public static Map<String, String> getContextMap() {

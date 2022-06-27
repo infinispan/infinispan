@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.DecoderException;
@@ -44,8 +45,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    protected RetryOnFailureOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
                                      byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
-                                     DataFormat dataFormat) {
+                                     DataFormat dataFormat, TelemetryService telemetryService) {
       super(requestCode, responseCode, codec, flags, cfg, cacheName, topologyId, channelFactory, dataFormat);
+      if (telemetryService != null) {
+         telemetryService.injectSpanContext(header);
+      }
    }
 
    @Override
