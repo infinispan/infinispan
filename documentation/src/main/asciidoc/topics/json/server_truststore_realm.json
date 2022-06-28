@@ -2,7 +2,7 @@
   "server": {
     "security": {
       "security-realms": [{
-        "name": "trust-store-realm",
+        "name": "TrustStoreRealm",
         "server-identities": {
           "ssl": {
             "keystore": {

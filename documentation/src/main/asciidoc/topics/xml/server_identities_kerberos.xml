@@ -19,7 +19,7 @@
   </security>
   <endpoints>
     <endpoint socket-binding="default"
-              security-realm="kerberos-realm">
+              security-realm="KerberosRealm">
      <hotrod-connector>
         <authentication>
            <sasl server-name="datagrid"

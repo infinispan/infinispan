@@ -2,7 +2,7 @@
   "server": {
     "security": {
       "security-realms": [{
-        "name": "token-realm",
+        "name": "TokenRealm",
         "token-realm": {
           "auth-server-url": "https://oauth-server/auth/",
           "oauth2-introspection": {

@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <security>
     <security-realms>
-      <security-realm name="trust-store-realm">
+      <security-realm name="TrustStoreRealm">
         <server-identities>
           <ssl>
             <!-- Provides an SSL/TLS identity with a keystore that contains server certificates. -->
