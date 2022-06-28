@@ -3151,7 +3151,7 @@ Response (0x18):
 | Value Type | MediaType | Media Type of the value stored in the server
 | Version             | 1 byte     | Hot Rod server version.
 | opCount             | vInt       | Number of supported operations
-| opRequestCode1      | 1 byte     | Request opcode of the first operation
+| opRequestCode1      | 1 short    | Request opcode of the first operation
 | ...                 | ...        | ...
 | opRequestCodeN      | 1 short    | Request opcode of the nth operation
 |==============================================================================
