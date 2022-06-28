@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
 import org.infinispan.server.hotrod.tx.PrepareCoordinator;
 import org.infinispan.server.hotrod.tx.operation.CommitTransactionOperation;
 import org.infinispan.server.hotrod.tx.operation.RollbackTransactionOperation;
@@ -25,13 +26,12 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.opentelemetry.api.OpenTelemetry;
 
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
 
-   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server, OpenTelemetry openTelemetry) {
-      super(channel, executor, server, openTelemetry);
+   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server, HotRodTelemetryService telemetryService) {
+      super(channel, executor, server, telemetryService);
    }
 
    private void writeTransactionResponse(HotRodHeader header, int value) {

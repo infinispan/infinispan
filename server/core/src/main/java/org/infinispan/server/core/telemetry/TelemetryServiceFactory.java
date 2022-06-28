@@ -7,16 +7,16 @@ import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.server.core.telemetry.impl.OpenTelemetryService;
 
 import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
 
 @Scope(Scopes.GLOBAL)
-@DefaultFactoryFor(classes = OpenTelemetry.class)
-public class OpenTelemetryFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
+@DefaultFactoryFor(classes = TelemetryService.class)
+public class TelemetryServiceFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
-   private static final Log log = LogFactory.getLog(OpenTelemetryFactory.class);
+   private static final Log log = LogFactory.getLog(TelemetryServiceFactory.class);
 
    private static final String TRACING_ENABLED = System.getProperty("infinispan.tracing.enabled");
 
@@ -33,14 +33,10 @@ public class OpenTelemetryFactory extends AbstractComponentFactory implements Au
                .getOpenTelemetrySdk();
 
          log.telemetryLoaded(openTelemetry);
-         return openTelemetry;
+         return new OpenTelemetryService(openTelemetry);
       } catch (Throwable e) {
          log.errorOnLoadingTelemetry();
          return null;
       }
-   }
-
-   public static Tracer getTracer(OpenTelemetry openTelemetry) {
-      return (openTelemetry == null) ? null : openTelemetry.getTracer("org.infinispan.server.tracing", "1.0.0");
    }
 }
