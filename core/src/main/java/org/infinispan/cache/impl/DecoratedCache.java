@@ -401,8 +401,18 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      return cacheImplementation.putIfAbsentAsyncEntry(key, value, metadata, flags, contextBuilder);
+   }
+
+   @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return cacheImplementation.removeAsync(key, flags, contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      return cacheImplementation.removeAsyncEntry(key, flags, contextBuilder);
    }
 
    @Override
@@ -448,6 +458,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
       return cacheImplementation.replaceAsync(key, value, metadata, flags, contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      return cacheImplementation.replaceAsyncEntry(key, value, metadata, flags, contextBuilder);
    }
 
    @Override
@@ -681,6 +696,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return cacheImplementation.putAsync(key, value, metadata, flags, contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
+      return cacheImplementation.putAsyncEntry(key, value, metadata, flags, contextBuilder);
    }
 
    @Override

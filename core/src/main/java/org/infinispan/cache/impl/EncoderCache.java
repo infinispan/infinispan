@@ -323,6 +323,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      K keyToStorage = keyToStorage(key);
+      return cache.putIfAbsentAsyncEntry(keyToStorage, valueToStorage(value), metadata)
+            .thenApply(e -> unwrapCacheEntry(key, keyToStorage, e));
+   }
+
+   @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return cache.removeAsync(keyToStorage(key)).thenApply(decodedValueForRead);
    }
@@ -345,6 +352,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
       return cache.replaceAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      K keyToStorage = keyToStorage(key);
+      return cache.replaceAsyncEntry(keyToStorage, valueToStorage(value), metadata)
+            .thenApply(e -> unwrapCacheEntry(key, keyToStorage, e));
    }
 
    @Override
@@ -450,6 +464,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return cache.putAsync(keyToStorage(key), valueToStorage(value), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
+      K keyToStorage = keyToStorage(key);
+      return cache.putAsyncEntry(keyToStorage, valueToStorage(value), metadata)
+            .thenApply(e -> unwrapCacheEntry(key, keyToStorage, e));
    }
 
    @Override
@@ -944,5 +965,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return function == null ?
             null :
             new FunctionMapper(function, keyDataConversion, valueDataConversion);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      K keyToStorage = keyToStorage(key);
+      return cache.removeAsyncEntry(keyToStorage).thenApply(e -> unwrapCacheEntry(key, keyToStorage, e));
    }
 }

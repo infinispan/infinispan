@@ -334,6 +334,11 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      return cache.replaceAsyncEntry(key, value, metadata);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
       return cache.replace(key, oldValue, value, metadata);
    }
@@ -354,8 +359,18 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      return cache.putIfAbsentAsyncEntry(key, value, metadata);
+   }
+
+   @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return cache.putAsync(key, value, metadata);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
+      return cache.putAsyncEntry(key, value, metadata);
    }
 
    @Override
@@ -594,5 +609,10 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
       return cache.getAllAsync(keys);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      return cache.removeAsyncEntry(key);
    }
 }

@@ -11,7 +11,7 @@ import org.infinispan.context.InvocationContext;
  */
 public class EvictCommand extends RemoveCommand implements LocalCommand {
    public EvictCommand(Object key, int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
-      super(key, null, segment, flagsBitSet, commandInvocationId);
+      super(key, null, false, segment, flagsBitSet, commandInvocationId);
    }
 
    @Override

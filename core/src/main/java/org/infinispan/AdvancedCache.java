@@ -344,6 +344,20 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
+    * An extension of {@link #replaceAsync(K, V, Metadata)}, which returns a {@link CacheEntry} instead of
+    * only the value.
+    *
+    * @param key      key with which the specified value is associated
+    * @param value    value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return the future that contains previous {@link CacheEntry} associated with the specified key,
+    *         or <tt>null</tt> if there was no mapping for the key.
+    * @since 14.0
+    * @see #replaceAsync(K, V, Metadata)
+    */
+   CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata);
+
+   /**
     * An overloaded form of {@link #replace(K, V, V)}, which takes in an instance of {@link Metadata} which can be used
     * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
@@ -407,6 +421,20 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
                      });
             });
    }
+
+   /**
+    * An extension form of {@link #putIfAbsentAsync(K, V, Metadata)}, which returns a {@link CacheEntry} instead of
+    * only the value.
+    *
+    * @param key      key with which the specified value is to be associated
+    * @param value    value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    * @return the future that contains previous {@link CacheEntry} associated with the specified key,
+    *         or <tt>null</tt> if there was no mapping for the key.
+    * @since 14.0
+    * @see #putIfAbsentAsync(K, V, Metadata)
+    */
+   CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata);
 
    /**
     * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an instance of {@link Metadata} which can
@@ -518,6 +546,18 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @since 5.3
     */
    CompletableFuture<V> putAsync(K key, V value, Metadata metadata);
+
+   /**
+    * Extension of {@link #putAsync(K, V, Metadata)} which returns a {@link CacheEntry} instead of only the
+    * previous value.
+    *
+    * @param key      key to use
+    * @param value    value to store
+    * @param metadata information to store alongside the new value
+    * @return a future containing the old {@link CacheEntry} replaced.
+    * @since 14.0
+    */
+   CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata);
 
    /**
     * Overloaded {@link #computeAsync(K, BiFunction)}, which stores metadata alongside the value.  This
@@ -929,4 +969,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    @Deprecated
    AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder);
+
+   /**
+    * An extension of {@link #removeAsync(Object)}, which returns a {@link CacheEntry} instead of only the value.
+    *
+    * @param key key to remove
+    * @return a future containing the {@link CacheEntry} removed or <code>null</code> if not found.
+    * @since 14.0
+    * @see #removeAsync(Object)
+    * @see #remove(Object)
+    */
+   CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key);
 }

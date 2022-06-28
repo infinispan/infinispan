@@ -29,6 +29,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private Object newValue;
    private Metadata metadata;
    private boolean successful = true;
+   private boolean returnEntry = false;
    private PrivateMetadata internalMetadata;
 
    private ValueMatcher valueMatcher;
@@ -36,12 +37,13 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    public ReplaceCommand() {
    }
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue,
+   public ReplaceCommand(Object key, Object oldValue, Object newValue, boolean returnEntry,
                          Metadata metadata, int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
+      this.returnEntry = returnEntry;
       this.metadata = metadata;
       this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
    }
@@ -66,6 +68,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(key);
       output.writeObject(oldValue);
       output.writeObject(newValue);
+      output.writeBoolean(returnEntry);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
@@ -79,6 +82,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       key = input.readObject();
       oldValue = input.readObject();
       newValue = input.readObject();
+      returnEntry = input.readBoolean();
       segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
@@ -164,6 +168,10 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public final boolean isReturnValueExpected() {
      return true;
+   }
+
+   public final boolean isReturnEntry() {
+      return returnEntry;
    }
 
    @Override

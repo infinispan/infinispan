@@ -653,7 +653,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          Map<K, V> keys = internalGetGroup(groupName, explicitFlagsBitSet, context);
          long removeFlags = addIgnoreReturnValuesFlag(explicitFlagsBitSet);
          for (K key : keys.keySet()) {
-            invocationHelper.invoke(context, createRemoveCommand(key, removeFlags));
+            invocationHelper.invoke(context, createRemoveCommand(key, removeFlags, false));
          }
          if (!onGoingTransaction) {
             tryCommit();
@@ -675,7 +675,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          //executed. If the context is already populated, it throws a ClassCastException because the wrapForRemove is
          //not invoked.
          assertKeyNotNull(key);
-         invocationHelper.invoke(createRemoveCommand(key, removeFlags), 1);
+         invocationHelper.invoke(createRemoveCommand(key, removeFlags, false), 1);
       }
    }
 
@@ -686,13 +686,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V remove(Object key, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
-      RemoveCommand command = createRemoveCommand(key, explicitFlags);
+      RemoveCommand command = createRemoveCommand(key, explicitFlags, false);
       return invocationHelper.invoke(contextBuilder, command, 1);
    }
 
-   private RemoveCommand createRemoveCommand(Object key, long explicitFlags) {
+   private RemoveCommand createRemoveCommand(Object key, long explicitFlags, boolean returnEntry) {
       long flags = addUnsafeFlags(explicitFlags);
-      return commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flags);
+      return commandsFactory.buildRemoveCommand(key, null, keyPartitioner.getSegment(key), flags, returnEntry);
    }
 
    @Override
@@ -1291,14 +1291,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V put(K key, V value, Metadata metadata, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      DataWriteCommand command = createPutCommand(key, value, metadata, explicitFlags);
+      DataWriteCommand command = createPutCommand(key, value, metadata, explicitFlags, false);
       return invocationHelper.invoke(contextBuilder, command, 1);
    }
 
-   private PutKeyValueCommand createPutCommand(K key, V value, Metadata metadata, long explicitFlags) {
+   private PutKeyValueCommand createPutCommand(K key, V value, Metadata metadata, long explicitFlags, boolean returnEntry) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
-      return commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key), merged, flags);
+      return commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key), merged, flags, returnEntry);
    }
 
    private long addIgnoreReturnValuesFlag(long flagBitSet) {
@@ -1324,15 +1324,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      DataWriteCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags);
+      DataWriteCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, false);
       return invocationHelper.invoke(contextBuilder, command, 1);
    }
 
-   private PutKeyValueCommand createPutIfAbsentCommand(K key, V value, Metadata metadata, long explicitFlags) {
+   private PutKeyValueCommand createPutIfAbsentCommand(K key, V value, Metadata metadata, long explicitFlags, boolean returnEntry) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
-            merged, flags);
+            merged, flags, returnEntry);
       command.setPutIfAbsent(true);
       command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
       return command;
@@ -1381,14 +1381,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V replace(K key, V value, Metadata metadata, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags);
+      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, false);
       return invocationHelper.invoke(contextBuilder, command, 1);
    }
 
-   private ReplaceCommand createReplaceCommand(K key, V value, Metadata metadata, long explicitFlags) {
+   private ReplaceCommand createReplaceCommand(K key, V value, Metadata metadata, long explicitFlags, boolean returnEntry) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
-      return commandsFactory.buildReplaceCommand(key, null, value, keyPartitioner.getSegment(key), merged, flags);
+      return commandsFactory.buildReplaceCommand(key, null, value, keyPartitioner.getSegment(key), merged, flags, returnEntry);
    }
 
    @Override
@@ -1421,7 +1421,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags);
+      PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags, false);
+      return invocationHelper.invokeAsync(contextBuilder, command, 1);
+   }
+
+   final CompletableFuture<CacheEntry<K, V>> putAsyncEntry(final K key, final V value, final Metadata metadata, final long explicitFlags, ContextBuilder contextBuilder) {
+      assertKeyValueNotNull(key, value);
+      PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags, true);
       return invocationHelper.invokeAsync(contextBuilder, command, 1);
    }
 
@@ -1472,7 +1478,19 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
                                                final long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags);
+      PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, false);
+      return invocationHelper.invokeAsync(contextBuilder, command, 1);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      return putIfAbsentAsyncEntry(key, value, metadata, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   final CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(final K key, final V value, final Metadata metadata,
+                                                                   final long explicitFlags, ContextBuilder contextBuilder) {
+      assertKeyValueNotNull(key, value);
+      PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, true);
       return invocationHelper.invokeAsync(contextBuilder, command, 1);
    }
 
@@ -1483,7 +1501,18 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<V> removeAsync(final Object key, final long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
-      RemoveCommand command = createRemoveCommand(key, explicitFlags);
+      RemoveCommand command = createRemoveCommand(key, explicitFlags, false);
+      return invocationHelper.invokeAsync(contextBuilder, command, 1);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      return removeAsyncEntry(key, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   final CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(final Object key, final long explicitFlags, ContextBuilder contextBuilder) {
+      assertKeyNotNull(key);
+      RemoveCommand command = createRemoveCommand(key, explicitFlags, true);
       return invocationHelper.invokeAsync(contextBuilder, command, 1);
    }
 
@@ -1515,7 +1544,19 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
                                            final long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyValueNotNull(key, value);
-      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags);
+      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, false);
+      return invocationHelper.invokeAsync(contextBuilder, command, 1);
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      return replaceAsyncEntry(key, value, metadata, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   final CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(final K key, final V value, final Metadata metadata,
+                                                                 final long explicitFlags, ContextBuilder contextBuilder) {
+      assertKeyValueNotNull(key, value);
+      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, true);
       return invocationHelper.invokeAsync(contextBuilder, command, 1);
    }
 
@@ -1854,6 +1895,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
+      return putAsyncEntry(key, value, metadata, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
    }
 
    private Transaction suspendOngoingTransactionIfExists() {
