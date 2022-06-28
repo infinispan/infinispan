@@ -22,51 +22,29 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.server.core.telemetry.OpenTelemetryFactory;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.propagation.TextMapGetter;
 
 class CacheRequestProcessor extends BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(CacheRequestProcessor.class, Log.class);
 
-   private static final TextMapGetter<Map<String, String>> MAP_TEXT_MAP_GETTER =
-         new TextMapGetter<>() {
-            @Override
-            public String get(Map<String, String> carrier, String key) {
-               return carrier.get(key);
-            }
-
-            @Override
-            public Iterable<String> keys(Map<String, String> carrier) {
-               return carrier.keySet();
-            }
-         };
-
    private final ClientListenerRegistry listenerRegistry;
-   private final OpenTelemetry openTelemetry;
-   private final Tracer tracer;
+   private final HotRodTelemetryService telemetryService;
 
    private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
 
-   CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server, OpenTelemetry openTelemetry) {
+   CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server, HotRodTelemetryService telemetryService) {
       super(channel, executor, server);
       this.listenerRegistry = server.getClientListenerRegistry();
-      this.openTelemetry = openTelemetry;
-      this.tracer = OpenTelemetryFactory.getTracer(openTelemetry);
+      this.telemetryService = telemetryService;
    }
 
    void ping(HotRodHeader header, Subject subject) {
@@ -239,7 +217,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      Span span = requestStart(HotRodOperation.PUT.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.PUT.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -247,22 +225,22 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                            Metadata metadata, Span span) {
+                            Metadata metadata, Object span) {
       cache.putAsyncReturnEntry(key, value, metadata)
             .whenComplete((ce, throwable) -> handlePut(header, ce, throwable, span));
    }
 
-   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Span span) {
+   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
       } else {
          writeSuccess(header, ce);
       }
-      requestEnd(span);
+      telemetryService.requestEnd(span);
    }
 
    void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
-      Span span = requestStart(HotRodOperation.REPLACE_IF_UNMODIFIED.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.REPLACE_IF_UNMODIFIED.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -270,7 +248,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void replaceIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                            long version, byte[] value, Metadata metadata, Span span) {
+                                            long version, byte[] value, Metadata metadata, Object span) {
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(key)
             .whenComplete((entry, throwable) -> {
                handleGetForReplaceIfUnmodified(header, cache, entry, version, value, metadata, throwable, span);
@@ -279,10 +257,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void handleGetForReplaceIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
                                                 CacheEntry<byte[], byte[]> entry, long version, byte[] value,
-                                                Metadata metadata, Throwable throwable, Span span) {
+                                                Metadata metadata, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       } else if (entry != null) {
          NumericVersion streamVersion = new NumericVersion(version);
          if (entry.getMetadata().version().equals(streamVersion)) {
@@ -295,20 +273,20 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                      } else {
                         writeNotExecuted(header, entry);
                      }
-                     requestEnd(span);
+                     telemetryService.requestEnd(span);
                   });
          } else {
             writeNotExecuted(header, entry);
-            requestEnd(span);
+            telemetryService.requestEnd(span);
          }
       } else {
          writeNotExist(header);
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       }
    }
 
    void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      Span span = requestStart(HotRodOperation.REPLACE.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.REPLACE.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -316,7 +294,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void replaceInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                                Metadata metadata, Span span) {
+                                Metadata metadata, Object span) {
       // Avoid listener notification for a simple optimization
       // on whether a new version should be calculated or not.
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getAsync(key)
@@ -326,21 +304,21 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void handleGetForReplace(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] prev,
-                                    byte[] value, Metadata metadata, Throwable throwable, Span span) {
+                                    byte[] value, Metadata metadata, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       } else if (prev != null) {
          // Generate new version only if key present
          cache.replaceAsyncReturnEntry(key, value, metadata)
                .whenComplete((ce, throwable1) -> handleReplace(header, ce, throwable1, span));
       } else {
          writeNotExecuted(header);
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       }
    }
 
-   private void handleReplace(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Span span) {
+   private void handleReplace(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
       } else if (result != null) {
@@ -348,11 +326,11 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       } else {
          writeNotExecuted(header);
       }
-      requestEnd(span);
+      telemetryService.requestEnd(span);
    }
 
    void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
-      Span span = requestStart(HotRodOperation.PUT_IF_ABSENT.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.PUT_IF_ABSENT.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       metadata.version(cacheInfo.versionGenerator.generateNew());
@@ -360,36 +338,37 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                                    Metadata metadata, Span span) {
+                                    Metadata metadata, Object span) {
       cache.putIfAbsentAsyncReturnEntry(key, value, metadata).whenComplete((prev, throwable) -> {
          handlePutIfAbsent(header, prev, throwable, span);
       });
    }
 
-   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Span span) {
+   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
+         telemetryService.requestEnd(span);
       } else if (result == null) {
          writeSuccess(header);
       } else {
          writeNotExecuted(header, result);
       }
-      requestEnd(span);
+      telemetryService.requestEnd(span);
    }
 
    void remove(HotRodHeader header, Subject subject, byte[] key) {
-      Span span = requestStart(HotRodOperation.REMOVE.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.REMOVE.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeInternal(header, cache, key, span);
    }
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                               Span span) {
+                               Object span) {
       cache.removeAsyncReturnEntry(key).whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
    }
 
-   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Span span) {
+   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
       } else if (ce != null) {
@@ -397,18 +376,18 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       } else {
          writeNotExist(header);
       }
-      requestEnd(span);
+      telemetryService.requestEnd(span);
    }
 
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
-      Span span = requestStart(HotRodOperation.REMOVE_IF_UNMODIFIED.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.REMOVE_IF_UNMODIFIED.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       removeIfUnmodifiedInternal(header, cache, key, version, span);
    }
 
    private void removeIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                           long version, Span span) {
+                                           long version, Object span) {
       cache.getCacheEntryAsync(key)
             .whenComplete((entry, throwable) -> {
                handleGetForRemoveIfUnmodified(header, cache, entry, key, version, throwable, span);
@@ -417,10 +396,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void handleGetForRemoveIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
                                                CacheEntry<byte[], byte[]> entry, byte[] key, long version,
-                                               Throwable throwable, Span span) {
+                                               Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       } else if (entry != null) {
          byte[] prev = entry.getValue();
          NumericVersion streamVersion = new NumericVersion(version);
@@ -433,55 +412,55 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                } else {
                   writeNotExecuted(header, entry);
                }
-               requestEnd(span);
+               telemetryService.requestEnd(span);
             });
          } else {
             writeNotExecuted(header, entry);
-            requestEnd(span);
+            telemetryService.requestEnd(span);
          }
       } else {
          writeNotExist(header);
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       }
    }
 
    void clear(HotRodHeader header, Subject subject) {
-      Span span = requestStart(HotRodOperation.CLEAR.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.CLEAR.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       clearInternal(header, cache, span);
    }
 
-   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Span span) {
+   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Object span) {
       cache.clearAsync().whenComplete((nil, throwable) -> {
          if (throwable != null) {
             writeException(header, span, throwable);
          } else {
             writeSuccess(header);
          }
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       });
    }
 
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
-      Span span = requestStart(HotRodOperation.PUT_ALL.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.PUT_ALL.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       putAllInternal(header, cache, entries, metadata.build(), span);
    }
 
    private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries,
-                               Metadata metadata, Span span) {
+                               Metadata metadata, Object span) {
       cache.putAllAsync(entries, metadata).whenComplete((nil, throwable) -> handlePutAll(header, throwable, span));
    }
 
-   private void handlePutAll(HotRodHeader header, Throwable throwable, Span span) {
+   private void handlePutAll(HotRodHeader header, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
       } else {
          writeSuccess(header);
       }
-      requestEnd(span);
+      telemetryService.requestEnd(span);
    }
 
    void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
@@ -504,23 +483,23 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void size(HotRodHeader header, Subject subject) {
-      Span span = requestStart(HotRodOperation.SIZE.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.SIZE.name(), header.otherParams);
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       sizeInternal(header, cache, span);
    }
 
-   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Span span) {
+   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Object span) {
       cache.sizeAsync()
             .whenComplete((size, throwable) -> handleSize(header, size, throwable, span));
    }
 
-   private void handleSize(HotRodHeader header, Long size, Throwable throwable, Span span) {
+   private void handleSize(HotRodHeader header, Long size, Throwable throwable, Object span) {
       if (throwable != null) {
          writeException(header, span, throwable);
       } else {
          writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel, size));
       }
-      requestEnd(span);
+      telemetryService.requestEnd(span);
    }
 
    void bulkGet(HotRodHeader header, Subject subject, int size) {
@@ -572,7 +551,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState,
                           String filterFactory, List<byte[]> filterParams, String converterFactory,
                           List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
-      Span span = requestStart(HotRodOperation.ADD_CLIENT_LISTENER.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.ADD_CLIENT_LISTENER.name(), header.otherParams);
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       BloomFilter<byte[]> bloomFilter = null;
       if (bloomBits > 0) {
@@ -594,18 +573,18 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          } else {
             writeSuccess(header);
          }
-         requestEnd(span);
+         telemetryService.requestEnd(span);
       });
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
-      Span span = requestStart(HotRodOperation.REMOVE_CLIENT_LISTENER.name(), header.otherParams);
+      Object span = telemetryService.requestStart(HotRodOperation.REMOVE_CLIENT_LISTENER.name(), header.otherParams);
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       removeClientListenerInternal(header, cache, listenerId, span);
    }
 
    private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
-                                             byte[] listenerId, Span span) {
+                                             byte[] listenerId, Object span) {
       server.getClientListenerRegistry().removeClientListener(listenerId, cache)
             .whenComplete((success, throwable) -> {
                if (throwable != null) {
@@ -617,7 +596,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                      writeNotExecuted(header);
                   }
                }
-               requestEnd(span);
+               telemetryService.requestEnd(span);
             });
    }
 
@@ -674,32 +653,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   public Span requestStart(String operationName, Map<String, String> otherParams) {
-      if (tracer == null) {
-         return null;
-      }
-
-      Context extractedContext = openTelemetry.getPropagators().getTextMapPropagator()
-            .extract(Context.current(), otherParams, MAP_TEXT_MAP_GETTER);
-
-      Span span = tracer.spanBuilder(operationName)
-            .setSpanKind(SpanKind.SERVER)
-            .setParent(extractedContext).startSpan();
-      return span;
-   }
-
-   public void requestEnd(Span span) {
-      if (tracer != null) {
-         span.end();
-      }
-   }
-
-   void writeException(HotRodHeader header, Span span, Throwable cause) {
+   void writeException(HotRodHeader header, Object span, Throwable cause) {
       try {
-         if (tracer != null) {
-            span.setStatus(StatusCode.ERROR, "Error during the cache request processing");
-            span.recordException(cause);
-         }
+         telemetryService.recordException(span, cause);
       } finally {
          writeException(header, cause);
       }

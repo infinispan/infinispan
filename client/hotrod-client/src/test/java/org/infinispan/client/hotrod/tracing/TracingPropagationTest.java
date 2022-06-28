@@ -17,11 +17,12 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.server.core.telemetry.TelemetryService;
+import org.infinispan.server.core.telemetry.impl.OpenTelemetryService;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
 import io.opentelemetry.sdk.trace.data.SpanData;
@@ -45,7 +46,7 @@ public class TracingPropagationTest extends SingleHotRodServerTest {
       manager.defineConfiguration("poems", builder.build());
 
       GlobalComponentRegistry globalComponentRegistry = manager.getGlobalComponentRegistry();
-      globalComponentRegistry.registerComponent(oTelConfig.openTelemetry(), OpenTelemetry.class);
+      globalComponentRegistry.registerComponent(new OpenTelemetryService(oTelConfig.openTelemetry()), TelemetryService.class);
       return manager;
    }
 
