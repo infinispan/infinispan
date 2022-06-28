@@ -1,7 +1,7 @@
 server:
   security:
     securityRealms:
-      - name: "trust-store-realm"
+      - name: "TrustStoreRealm"
         serverIdentities:
           ssl:
             keystore:

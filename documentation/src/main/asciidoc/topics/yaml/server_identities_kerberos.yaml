@@ -1,7 +1,7 @@
 server:
   security:
     securityRealms:
-      - name: "kerberos-realm"
+      - name: "KerberosRealm"
         serverIdentities:
           - kerberos:
               principal: "hotrod/datagrid@INFINISPAN.ORG"
@@ -14,7 +14,7 @@ server:
   endpoints:
     endpoint:
       socketBinding: "default"
-      securityRealm: "kerberos-realm"
+      securityRealm: "KerberosRealm"
       hotrodConnector:
         authentication:
           sasl:
@@ -22,5 +22,5 @@ server:
             serverPrincipal: "hotrod/datagrid@INFINISPAN.ORG"
       restConnector:
         authentication:
-          securityRealm: "kerberos-realm"
+          securityRealm: "KerberosRealm"
           serverPrincipal" : "HTTP/localhost@INFINISPAN.ORG"

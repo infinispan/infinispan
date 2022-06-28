@@ -1,19 +1,19 @@
 server:
   security:
     securityRealms:
-      - name: "management-realm"
+      - name: "ManagementRealm"
         propertiesRealm:
           groupsAttribute: "Roles"
           userProperties:
-            digestRealmName: "management-realm"
+            digestRealmName: "ManagementRealm"
             path: "management-users.properties"
           groupProperties:
             path: "management-groups.properties"
-      - name: "application-realm"
+      - name: "ApplicationRealm"
         propertiesRealm:
           groupsAttribute: "Roles"
           userProperties:
-            digestRealmName: "application-realm"
+            digestRealmName: "ApplicationRealm"
             path: "application-users.properties"
           groupProperties:
             path: "application-groups.properties"

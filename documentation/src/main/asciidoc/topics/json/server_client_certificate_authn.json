@@ -2,7 +2,7 @@
   "server": {
     "security": {
       "security-realms": [{
-        "name": "trust-store-realm",
+        "name": "TrustStoreRealm",
         "server-identities": {
           "ssl": {
             "keystore": {
@@ -23,7 +23,7 @@
     },
     "endpoints": [{
       "socket-binding": "default",
-      "security-realm": "trust-store-realm",
+      "security-realm": "TrustStoreRealm",
       "require-ssl-client-auth": "true",
       "connectors": {
         "hotrod": {

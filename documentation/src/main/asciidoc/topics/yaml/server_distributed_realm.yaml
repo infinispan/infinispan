@@ -1,7 +1,7 @@
 server:
   security:
     securityRealms:
-      - name: "distributed-realm"
+      - name: "DistributedRealm"
         ldapRealm:
           principal: "uid=admin,ou=People,dc=infinispan,dc=org"
           url: "ldap://my-ldap-server:10389"
@@ -19,7 +19,7 @@ server:
         propertiesRealm:
           groupsAttribute: "Roles"
           userProperties:
-            digestRealmName: "distributed-realm"
+            digestRealmName: "DistributedRealm"
             path: "users.properties"
           groupProperties:
             path: "groups.properties"

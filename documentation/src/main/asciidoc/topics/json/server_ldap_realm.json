@@ -2,7 +2,7 @@
   "server": {
     "security": {
       "security-realms": [{
-        "name": "ldap-realm",
+        "name": "LdapRealm",
         "ldap-realm": {
           "url": "ldap://my-ldap-server:10389",
           "principal": "uid=admin,ou=People,dc=infinispan,dc=org",

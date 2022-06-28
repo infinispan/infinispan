@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <security>
     <security-realms>
-      <security-realm name="token-realm">
+      <security-realm name="TokenRealm">
         <!-- Specifies the URL of the authentication server. -->
         <token-realm name="token"
                      auth-server-url="https://oauth-server/auth/">

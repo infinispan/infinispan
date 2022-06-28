@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
   <security>
     <security-realms>
-      <security-realm name="generated-keystore">
+      <security-realm name="GeneratedKeystore">
         <server-identities>
           <ssl>
             <!-- Generates a keystore that includes a self-signed certificate with the specified hostname. -->
