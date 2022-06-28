@@ -27,6 +27,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public static final byte COMMAND_ID = 10;
    protected boolean successful = true;
    private boolean nonExistent = false;
+   private boolean returnEntry = false;
 
    protected Metadata metadata;
    protected ValueMatcher valueMatcher;
@@ -38,11 +39,12 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, int segment, long flagsBitSet,
+   public RemoveCommand(Object key, Object value, boolean returnEntry, int segment, long flagsBitSet,
                         CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
       this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
+      this.returnEntry = returnEntry;
    }
 
    public RemoveCommand() {
@@ -93,6 +95,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
          .append("RemoveCommand{key=")
          .append(toStr(key))
          .append(", value=").append(toStr(value))
+         .append(", returnEntry=").append(returnEntry)
          .append(", metadata=").append(metadata)
          .append(", internalMetadata=").append(internalMetadata)
          .append(", flags=").append(printFlags())
@@ -125,6 +128,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
+      output.writeBoolean(returnEntry);
       UnsignedNumeric.writeUnsignedInt(output, segment);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
@@ -137,6 +141,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       value = input.readObject();
+      returnEntry = input.readBoolean();
       segment = UnsignedNumeric.readUnsignedInt(input);
       metadata = (Metadata) input.readObject();
       setFlagsBitSet(input.readLong());
@@ -171,6 +176,10 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    public void setValue(Object value) {
       this.value = value;
+   }
+
+   public boolean isReturnEntryNecessary() {
+      return returnEntry;
    }
 
    @Override

@@ -187,14 +187,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata,
-         long flagsBitSet) {
+                                                     long flagsBitSet, boolean returnEntry) {
       boolean reallyTransactional = transactional && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_EXTERNAL_READ);
-      return new PutKeyValueCommand(key, value, false, metadata, segment, flagsBitSet, generateUUID(reallyTransactional));
+      return new PutKeyValueCommand(key, value, false, returnEntry, metadata, segment, flagsBitSet, generateUUID(reallyTransactional));
    }
 
    @Override
-   public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet) {
-      return new RemoveCommand(key, value, segment, flagsBitSet, generateUUID(transactional));
+   public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet, boolean returnEntry) {
+      return new RemoveCommand(key, value, returnEntry, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
@@ -229,8 +229,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata, long flagsBitSet) {
-      return new ReplaceCommand(key, oldValue, newValue, metadata, segment, flagsBitSet, generateUUID(transactional));
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment,
+                                             Metadata metadata, long flagsBitSet, boolean returnEntry) {
+      return new ReplaceCommand(key, oldValue, newValue, returnEntry, metadata, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override

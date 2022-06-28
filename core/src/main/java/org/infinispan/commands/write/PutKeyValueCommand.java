@@ -34,6 +34,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    private Object value;
    private boolean putIfAbsent;
    private boolean successful = true;
+   private boolean returnEntry = false;
    private Metadata metadata;
    private ValueMatcher valueMatcher;
    private PrivateMetadata internalMetadata;
@@ -41,11 +42,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    public PutKeyValueCommand() {
    }
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, Metadata metadata, int segment,
-                             long flagsBitSet, CommandInvocationId commandInvocationId) {
+   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, boolean returnEntry, Metadata metadata,
+                             int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
+      this.returnEntry = returnEntry;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
       this.metadata = metadata;
    }
@@ -88,6 +90,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(putIfAbsent);
       output.writeObject(internalMetadata);
+      output.writeBoolean(returnEntry);
    }
 
    @Override
@@ -101,6 +104,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
       internalMetadata = (PrivateMetadata) input.readObject();
+      returnEntry = input.readBoolean();
    }
 
    @Override
@@ -153,6 +157,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append(", flags=").append(printFlags())
             .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
             .append(", putIfAbsent=").append(putIfAbsent)
+            .append(", returnEntry=").append(returnEntry)
             .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)
             .append(", internalMetadata=").append(internalMetadata)
@@ -198,5 +203,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    public void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
+   }
+
+   public boolean isReturnEntryNecessary() {
+      return returnEntry;
    }
 }

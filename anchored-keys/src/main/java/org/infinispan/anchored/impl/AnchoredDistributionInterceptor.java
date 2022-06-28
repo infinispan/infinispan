@@ -194,7 +194,7 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
          }
 
          Metadata metadata = new RemoteMetadata(keyWriter, null);
-         PutKeyValueCommand copy = new PutKeyValueCommand(key, null, false, metadata,
+         PutKeyValueCommand copy = new PutKeyValueCommand(key, null, false, false, metadata,
                                                           command.getSegment(), command.getFlagsBitSet(),
                                                           command.getCommandInvocationId());
          copy.setValueMatcher(command.getValueMatcher());

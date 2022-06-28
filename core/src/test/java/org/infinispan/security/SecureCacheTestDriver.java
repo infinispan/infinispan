@@ -151,6 +151,11 @@ public class SecureCacheTestDriver {
       cache.putAsync("a", "a", metadata);
    }
 
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutAsyncEntry_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.putAsyncEntry("a", "a", metadata);
+   }
+
    @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)
    public void testStop(SecureCache<String, String> cache) {
       cache.stop();
@@ -209,6 +214,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplaceAsync_Object_Object_Object_Metadata(SecureCache<String, String> cache) {
       cache.replaceAsync("a", "a", "b", new EmbeddedMetadata.Builder().build());
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testReplaceAsyncEntry_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.replaceAsyncEntry("a", "a", new EmbeddedMetadata.Builder().build());
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
@@ -377,6 +387,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPutIfAbsentAsync_Object_Object_Metadata(SecureCache<String, String> cache) {
       cache.putIfAbsentAsync("a", "a", new EmbeddedMetadata.Builder().build());
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutIfAbsentAsyncEntry_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.putIfAbsentAsyncEntry("a", "a", new EmbeddedMetadata.Builder().build());
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -564,6 +579,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testRemoveAsync_Object(SecureCache<String, String> cache) {
       cache.removeAsync("a");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testRemoveAsyncEntry_Object(SecureCache<String, String> cache) {
+      cache.removeAsyncEntry("a");
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)

@@ -205,13 +205,13 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata,
-         long flagsBitSet) {
-      return actual.buildPutKeyValueCommand(key, value, segment, metadata, flagsBitSet);
+                                                     long flagsBitSet, boolean returnEntry) {
+      return actual.buildPutKeyValueCommand(key, value, segment, metadata, flagsBitSet, returnEntry);
    }
 
    @Override
-   public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet) {
-      return actual.buildRemoveCommand(key, value, segment, flagsBitSet);
+   public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet, boolean returnEntry) {
+      return actual.buildRemoveCommand(key, value, segment, flagsBitSet, returnEntry);
    }
 
    @Override
@@ -241,8 +241,9 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata, long flagsBitSet) {
-      return actual.buildReplaceCommand(key, oldValue, newValue, segment, metadata, flagsBitSet);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment,
+                                             Metadata metadata, long flagsBitSet, boolean loadEntry) {
+      return actual.buildReplaceCommand(key, oldValue, newValue, segment, metadata, flagsBitSet, loadEntry);
    }
 
    @Override

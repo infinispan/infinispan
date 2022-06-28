@@ -218,6 +218,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
+      return CompletableFuture.completedFuture(getAndPutInternalEntry(key, value, applyDefaultMetadata(metadata)));
+   }
+
+   @Override
    public Map<K, V> getAll(Set<?> keys) {
       Map<K, V> map = new HashMap<>(keys.size());
       AggregateCompletionStage<Void> aggregateCompletionStage = null;
@@ -723,9 +728,14 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    protected V getAndPutInternal(K key, V value, Metadata metadata) {
+      CacheEntry<K, V> oldEntry = getAndPutInternalEntry(key, value, metadata);
+      return oldEntry != null ? oldEntry.getValue() : null;
+   }
+
+   private CacheEntry<K, V> getAndPutInternalEntry(K key, V value, Metadata metadata) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
-      ValueAndMetadata<V> oldRef = new ValueAndMetadata<>();
+      ByRef<CacheEntry<K, V>> oldEntryRef = new ByRef<>(null);
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          if (isNull(oldEntry)) {
@@ -733,7 +743,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                CompletionStages.join(cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ImmutableContext.INSTANCE, null));
             }
          } else {
-            oldRef.set(oldEntry.getValue(), oldEntry.getMetadata());
+            // Have to clone because the value can be updated.
+            oldEntryRef.set(oldEntry.clone());
             if (hasListeners) {
                CompletionStages.join(cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldEntry.getValue(), oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null));
             }
@@ -744,15 +755,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
             return factory.update(oldEntry, value, metadata);
          }
       });
-      V oldValue = oldRef.getValue();
+      CacheEntry<K, V> oldEntry = oldEntryRef.get();
       if (hasListeners) {
+         V oldValue = oldEntry != null ? oldEntry.getValue() : null;
          if (oldValue == null) {
             CompletionStages.join(cacheNotifier.notifyCacheEntryCreated(key, value, metadata, false, ImmutableContext.INSTANCE, null));
          } else {
-            CompletionStages.join(cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldValue, oldRef.getMetadata(), false, ImmutableContext.INSTANCE, null));
+            CompletionStages.join(cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldValue, oldEntry.getMetadata(), false, ImmutableContext.INSTANCE, null));
          }
       }
-      return oldValue;
+      return oldEntry;
    }
 
    @Override
@@ -767,9 +779,14 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    protected V putIfAbsentInternal(K key, V value, Metadata metadata) {
+      CacheEntry<K, V> entry = putIfAbsentInternalEntry(key, value, metadata);
+      return entry != null ? entry.getValue() : null;
+   }
+
+   private CacheEntry<K, V> putIfAbsentInternalEntry(K key, V value, Metadata metadata) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
-      ByRef<V> oldValueRef = new ByRef<>(null);
+      ByRef<CacheEntry<K, V>> previousEntryRef = new ByRef<>(null);
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          if (isNull(oldEntry)) {
@@ -778,15 +795,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
             }
             return factory.create(k, value, metadata);
          } else {
-            oldValueRef.set(oldEntry.getValue());
+            // Have to clone because the value can be updated.
+            previousEntryRef.set(oldEntry.clone());
             return oldEntry;
          }
       });
-      V oldValue = oldValueRef.get();
-      if (hasListeners && oldValue == null) {
+      CacheEntry<K, V> previousEntry = previousEntryRef.get();
+      if (hasListeners && previousEntry == null) {
          CompletionStages.join(cacheNotifier.notifyCacheEntryCreated(key, value, metadata, false, ImmutableContext.INSTANCE, null));
       }
-      return oldValue;
+      return previousEntry;
    }
 
    @Override
@@ -808,26 +826,33 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    protected V getAndReplaceInternal(K key, V value, Metadata metadata) {
+      CacheEntry<K, V> oldEntry = getAndReplaceInternalEntry(key, value, metadata);
+      return oldEntry != null ? oldEntry.getValue() : null;
+   }
+
+   private CacheEntry<K, V> getAndReplaceInternalEntry(K key, V value, Metadata metadata) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
-      ValueAndMetadata<V> oldRef = new ValueAndMetadata<>();
+      ByRef<CacheEntry<K, V>> ref = new ByRef<>(null);
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          if (!isNull(oldEntry)) {
             if (hasListeners) {
                CompletionStages.join(cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldEntry.getValue(), oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null));
             }
-            oldRef.set(oldEntry.getValue(), oldEntry.getMetadata());
+            // Have to clone because the value can be updated.
+            ref.set(oldEntry.clone());
             return factory.update(oldEntry, value, metadata);
          } else {
             return oldEntry;
          }
       });
-      V oldValue = oldRef.getValue();
-      if (hasListeners && oldValue != null) {
+      CacheEntry<K, V> oldRef = ref.get();
+      if (hasListeners && oldRef != null && oldRef.getValue() != null) {
+         V oldValue = oldRef.getValue();
          CompletionStages.join(cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldValue, oldRef.getMetadata(), false, ImmutableContext.INSTANCE, null));
       }
-      return oldValue;
+      return oldRef;
    }
 
    @Override
@@ -894,6 +919,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V remove(Object key) {
+      CacheEntry<K, V> oldEntry = removeEntry(key);
+      return oldEntry != null ? oldEntry.getValue() : null;
+   }
+
+   private CacheEntry<K, V> removeEntry(Object key) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       ByRef<InternalCacheEntry<K, V>> oldEntryRef = new ByRef<>(null);
       boolean hasListeners = this.hasListeners;
@@ -907,14 +937,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          return null;
       });
       InternalCacheEntry<K, V> oldEntry = oldEntryRef.get();
-      if (oldEntry != null) {
-         if (hasListeners) {
-            CompletionStages.join(cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldEntry.getValue(), oldEntry.getMetadata(), false, ImmutableContext.INSTANCE, null));
-         }
-         return oldEntry.getValue();
-      } else {
-         return null;
+      if (oldEntry != null && hasListeners) {
+         CompletionStages.join(cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldEntry.getValue(), oldEntry.getMetadata(), false, ImmutableContext.INSTANCE, null));
       }
+
+      return oldEntry;
    }
 
    @Override
@@ -988,8 +1015,18 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      return CompletableFuture.completedFuture(putIfAbsentInternalEntry(key, value, metadata));
+   }
+
+   @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return CompletableFuture.completedFuture(remove(key));
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      return CompletableFuture.completedFuture(removeEntry(key));
    }
 
    @Override
@@ -1030,6 +1067,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, Metadata metadata) {
       return CompletableFuture.completedFuture(replace(key, value, metadata));
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      return CompletableFuture.completedFuture(getAndReplaceInternalEntry(key, value, metadata));
    }
 
    @Override

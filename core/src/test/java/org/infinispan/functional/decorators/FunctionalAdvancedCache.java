@@ -395,6 +395,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V newValue, Metadata metadata) {
       return false;  // TODO: Customise this generated block
    }
@@ -521,6 +526,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
       return null;  // TODO: Customise this generated block
    }
 
@@ -725,6 +735,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   @Override
    public CompletableFuture<V> removeAsync(Object key) {
       return null;  // TODO: Customise this generated block
    }
@@ -862,6 +877,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    public <C> CompletionStage<Void> addStorageFormatFilteredListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
       // TODO: Customise this generated block
       return null;
+   }
+
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      return null; // TODO: Customise this generated block
    }
 
    public static <T> T await(CompletableFuture<T> cf) {

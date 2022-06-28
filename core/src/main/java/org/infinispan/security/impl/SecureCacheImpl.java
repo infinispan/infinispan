@@ -639,6 +639,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
+      authzManager.checkPermission(subject, writePermission);
+      return delegate.removeAsyncEntry(key);
+   }
+
+   @Override
    public boolean containsValue(Object value) {
       authzManager.checkPermission(subject, AuthorizationPermission.READ);
       return delegate.containsValue(value);
@@ -971,6 +977,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
+      authzManager.checkPermission(subject, writePermission);
+      return delegate.replaceAsyncEntry(key, value, metadata);
+   }
+
+   @Override
    public boolean replace(K key, V oldValue, V newValue, Metadata metadata) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.replace(key, oldValue, newValue, metadata);
@@ -1001,11 +1013,22 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
+      authzManager.checkPermission(subject, writePermission);
+      return delegate.putIfAbsentAsyncEntry(key, value, metadata);
+   }
+
+   @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.putAsync(key, value, metadata);
    }
 
+   @Override
+   public CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
+      authzManager.checkPermission(subject, writePermission);
+      return delegate.putAsyncEntry(key, value, metadata);
+   }
    @Override
    public CacheEntry<K, V> getCacheEntry(Object key) {
       authzManager.checkPermission(subject, AuthorizationPermission.READ);

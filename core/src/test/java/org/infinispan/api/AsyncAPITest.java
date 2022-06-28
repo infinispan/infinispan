@@ -17,12 +17,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -91,6 +96,37 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assertEquals("v2", c.get("k"));
    }
 
+   public void testPutAsyncEntry() throws Exception {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(1))
+            .lifespan(25_000)
+            .maxIdle(30_000)
+            .build();
+      CompletableFuture<CacheEntry<String, String>> f = c.getAdvancedCache().putAsyncEntry("k", "v1", metadata);
+      assertFutureResult(f, null);
+      assertEquals("v1", c.get("k"));
+
+      Metadata updatedMetadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(2))
+            .lifespan(35_000)
+            .maxIdle(42_000)
+            .build();
+      f = c.getAdvancedCache().putAsyncEntry("k", "v2", updatedMetadata);
+      assertFutureResultOn(f, previousEntry -> {
+         assertEquals("k", previousEntry.getKey());
+         assertEquals("v1", previousEntry.getValue());
+         assertNotNull(previousEntry.getMetadata());
+         assertMetadata(metadata, previousEntry.getMetadata());
+      });
+
+      assertFutureResultOn(c.getAdvancedCache().getCacheEntryAsync("k"), currentEntry -> {
+         assertEquals("k", currentEntry.getKey());
+         assertEquals("v2", currentEntry.getValue());
+         assertNotNull(currentEntry.getMetadata());
+         assertMetadata(updatedMetadata, currentEntry.getMetadata());
+      });
+   }
+
    public void testPutAllAsyncSingleKeyValue() throws Exception {
       CompletableFuture<Void> f = c.putAllAsync(Collections.singletonMap("k", "v"));
       assertFutureResult(f, null);
@@ -117,6 +153,37 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assertEquals("v1", c.get("k"));
    }
 
+   public void testPutIfAbsentAsyncEntry() throws Exception {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(1))
+            .lifespan(25_000)
+            .maxIdle(30_000)
+            .build();
+      CompletableFuture<CacheEntry<String, String>> f = c.getAdvancedCache().putIfAbsentAsyncEntry("k", "v1", metadata);
+      assertFutureResult(f, null);
+      assertEquals("v1", c.get("k"));
+
+      Metadata updatedMetadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(2))
+            .lifespan(35_000)
+            .maxIdle(42_000)
+            .build();
+      f = c.getAdvancedCache().putIfAbsentAsyncEntry("k", "v2", updatedMetadata);
+      assertFutureResultOn(f, previousEntry -> {
+         assertEquals("k", previousEntry.getKey());
+         assertEquals("v1", previousEntry.getValue());
+
+         assertMetadata(metadata, previousEntry.getMetadata());
+      });
+
+      assertFutureResultOn(c.getAdvancedCache().getCacheEntryAsync("k"), currentEntry -> {
+         assertEquals("k", currentEntry.getKey());
+         assertEquals("v1", currentEntry.getValue());
+         assertNotNull(currentEntry.getMetadata());
+         assertMetadata(metadata, currentEntry.getMetadata());
+      });
+   }
+
    public void testRemoveAsync() throws Exception {
       c.put("k", "v");
       assertEquals("v", c.get("k"));
@@ -124,6 +191,35 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       CompletableFuture<String> f = c.removeAsync("k");
       assertFutureResult(f, "v");
       assertNull(c.get("k"));
+
+      assertFutureResult(c.removeAsync("k"), null);
+   }
+
+   public void testRemoveAsyncEntry() throws Exception {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(1))
+            .lifespan(25_000)
+            .maxIdle(30_000)
+            .build();
+      assertFutureResult(c.getAdvancedCache().putAsync("k", "v", metadata), null);
+      assertFutureResultOn(c.getAdvancedCache().getCacheEntryAsync("k"), currentEntry -> {
+         assertEquals("k", currentEntry.getKey());
+         assertEquals("v", currentEntry.getValue());
+         assertNotNull(currentEntry.getMetadata());
+         assertMetadata(metadata, currentEntry.getMetadata());
+      });
+
+      CompletableFuture<CacheEntry<String, String>> f = c.getAdvancedCache().removeAsyncEntry("k");
+      assertFutureResultOn(f, previousEntry -> {
+         assertEquals("k", previousEntry.getKey());
+         assertEquals("v", previousEntry.getValue());
+
+         assertMetadata(metadata, previousEntry.getMetadata());
+      });
+      assertNull(c.get("k"));
+
+      f = c.getAdvancedCache().removeAsyncEntry("k");
+      assertFutureResult(f, null);
    }
 
    public void testRemoveConditionalAsync() throws Exception {
@@ -148,6 +244,44 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       CompletableFuture<String> f = c.replaceAsync("k", "v2");
       assertFutureResult(f, "v");
       assertEquals("v2", c.get("k"));
+   }
+
+   public void testReplaceAsyncEntryNonExistingKey() throws Exception {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(1))
+            .lifespan(25_000)
+            .maxIdle(30_000)
+            .build();
+      CompletableFuture<CacheEntry<String, String>> f = c.getAdvancedCache().replaceAsyncEntry("k", "v", metadata);
+      assertFutureResult(f, null);
+      assertNull(c.get("k"));
+   }
+
+   public void testReplaceAsyncEntryExistingKey() throws Exception {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(1))
+            .lifespan(25_000)
+            .maxIdle(30_000)
+            .build();
+      assertFutureResult(c.getAdvancedCache().putAsync("k", "v", metadata), null);
+
+      Metadata updatedMetadata = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(2))
+            .lifespan(35_000)
+            .maxIdle(42_000)
+            .build();
+      CompletableFuture<CacheEntry<String, String>> f = c.getAdvancedCache().replaceAsyncEntry("k", "v2", updatedMetadata);
+      assertFutureResultOn(f, previousEntry -> {
+         assertEquals(previousEntry.getKey(), "k");
+         assertEquals(previousEntry.getValue(), "v");
+         assertMetadata(metadata, previousEntry.getMetadata());
+      });
+      assertFutureResultOn(c.getAdvancedCache().getCacheEntryAsync("k"), currentEntry -> {
+         assertEquals("k", currentEntry.getKey());
+         assertEquals("v2", currentEntry.getValue());
+         assertNotNull(currentEntry.getMetadata());
+         assertMetadata(updatedMetadata, currentEntry.getMetadata());
+      });
    }
 
    public void testReplaceAsyncConditionalOnOldValueNonExisting() throws Exception {
@@ -514,7 +648,14 @@ public class AsyncAPITest extends SingleCacheManagerTest {
    private void assertFutureResult(Future<?> f, Object expected) throws Exception {
       assertNotNull(f);
       assertFalse(f.isCancelled());
-      assertEquals(expected, f.get());
+      assertEquals(expected, f.get(10, TimeUnit.SECONDS));
+      assertTrue(f.isDone());
+   }
+
+   private <T> void assertFutureResultOn(Future<T> f, Consumer<? super T> check) throws Exception {
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      check.accept(f.get(10, TimeUnit.SECONDS));
       assertTrue(f.isDone());
    }
 
@@ -567,5 +708,11 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       } finally {
          startTime = null;
       }
+   }
+
+   private void assertMetadata(Metadata expected, Metadata actual) {
+      assertEquals(expected.version(), actual.version());
+      assertEquals(expected.lifespan(), actual.lifespan());
+      assertEquals(expected.maxIdle(), actual.maxIdle());
    }
 }

@@ -169,7 +169,12 @@ public interface CommandsFactory {
     * @param flagsBitSet Command flags provided by cache
     * @return a PutKeyValueCommand
     */
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata, long flagsBitSet);
+   default PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata, long flagsBitSet) {
+      return buildPutKeyValueCommand(key, value, segment, metadata, flagsBitSet, false);
+   }
+
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata,
+                                              long flagsBitSet, boolean returnEntry);
 
    /**
     * Builds a RemoveCommand
@@ -179,7 +184,11 @@ public interface CommandsFactory {
     * @param flagsBitSet Command flags provided by cache
     * @return a RemoveCommand
     */
-   RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet);
+   default RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet) {
+      return buildRemoveCommand(key, value, segment, flagsBitSet, false);
+   }
+
+   RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet, boolean returnEntry);
 
    /**
     * Builds an InvalidateCommand
@@ -234,9 +243,25 @@ public interface CommandsFactory {
     * @param flagsBitSet Command flags provided by cache
     * @return a ReplaceCommand
     */
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata,
-         long flagsBitSet);
+   default ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata,
+                                      long flagsBitSet) {
+      return buildReplaceCommand(key, oldValue, newValue, segment, metadata, flagsBitSet, false);
+   }
 
+   /**
+    * Builds a ReplaceCommand
+    *
+    * @param key         key to replace
+    * @param oldValue    existing value to check for if conditional, null if unconditional.
+    * @param newValue    value to replace with
+    * @param segment     the segment of the given key
+    * @param metadata    metadata of entry
+    * @param flagsBitSet Command flags provided by cache
+    * @param returnEntry true if the {@link CacheEntry} is the command response, otherwise returns previous value.
+    * @return a ReplaceCommand
+    */
+   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment, Metadata metadata,
+                                      long flagsBitSet, boolean returnEntry);
 
    /**
     * Builds a ComputeCommand

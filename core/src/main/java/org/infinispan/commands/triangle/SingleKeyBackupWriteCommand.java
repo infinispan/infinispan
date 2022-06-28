@@ -167,19 +167,19 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       DataWriteCommand command;
       switch (operation) {
          case REMOVE:
-            command = new RemoveCommand(key, null, segmentId, getFlags(), getCommandInvocationId());
+            command = new RemoveCommand(key, null, false, segmentId, getFlags(), getCommandInvocationId());
             break;
          case WRITE:
             command = EnumUtil.containsAny(getFlags(), FlagBitSets.IRAC_UPDATE) ?
                   new IracPutKeyValueCommand(key, segmentId, getCommandInvocationId(), valueOrFunction, metadata, internalMetadata) :
-                  new PutKeyValueCommand(key, valueOrFunction, false, metadata, segmentId, getFlags(), getCommandInvocationId());
+                  new PutKeyValueCommand(key, valueOrFunction, false, false, metadata, segmentId, getFlags(), getCommandInvocationId());
             break;
          case COMPUTE:
             command = new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          case REPLACE:
-            command = new ReplaceCommand(key, null, valueOrFunction, metadata, segmentId, getFlags(),
+            command = new ReplaceCommand(key, null, valueOrFunction, false, metadata, segmentId, getFlags(),
                   getCommandInvocationId());
             break;
          case REMOVE_EXPIRED:
