@@ -2,6 +2,7 @@ package org.infinispan.server.test.junit4;
 
 import static org.junit.Assert.assertEquals;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.junit.ClassRule;
@@ -18,7 +19,12 @@ public class InfinispanRuleBasicTest {
    @Test
    public void testSingleServer() {
       RemoteCache<String, String> cache = SERVER_TEST
-            .hotrod()
+            // TODO this test uses the latest public image container version
+            //  see ContainerInfinispanServerDriver
+            //  At this very moment we don't have any supporting the #PROTOCOL_VERSION_40
+            //  we can remove this downgrade, when the new version of Infinispan container
+            //  (supporting the protocol 40) is published!
+            .hotrod(builder -> builder.version(ProtocolVersion.PROTOCOL_VERSION_31))
             .withCacheMode(CacheMode.DIST_SYNC).create();
 
       cache.put("k1", "v1");
