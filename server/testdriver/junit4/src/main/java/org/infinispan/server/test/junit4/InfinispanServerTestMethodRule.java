@@ -2,6 +2,7 @@ package org.infinispan.server.test.junit4;
 
 import net.spy.memcached.MemcachedClient;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
@@ -14,6 +15,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -35,6 +37,10 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
    @Override
    public HotRodTestClientDriver hotrod() {
       return testClient.hotrod();
+   }
+
+   public HotRodTestClientDriver hotrod(Consumer<ConfigurationBuilder> additionalConfigurations) {
+      return testClient.hotrod(additionalConfigurations);
    }
 
    @Override
