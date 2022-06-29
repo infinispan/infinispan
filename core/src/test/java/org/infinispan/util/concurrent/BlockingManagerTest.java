@@ -55,7 +55,7 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
       assertTrue(CompletionStages.isCompletedSuccessfully(stage));
 
       // We should not have used any executor as we were a blocking thread already
-      Mockito.verifyZeroInteractions(nonBlockingExecutor, blockingExecutor);
+      Mockito.verifyNoInteractions(nonBlockingExecutor, blockingExecutor);
    }
 
    public void testBlockingPublishToVoidStageInvokedNonBlockingThread() {
@@ -66,7 +66,7 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
       assertTrue(CompletionStages.isCompletedSuccessfully(stage));
 
       Mockito.verify(blockingExecutor).execute(Mockito.any());
-      Mockito.verifyZeroInteractions(nonBlockingExecutor);
+      Mockito.verifyNoInteractions(nonBlockingExecutor);
    }
 
    public void testBlockingPublishToVoidStageInvokedNonBlockingThreadCompleteAfterSubscribe() {
@@ -100,7 +100,7 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
       subscriber.assertComplete();
 
       // We should not have used any executor as we were a blocking thread already
-      Mockito.verifyZeroInteractions(nonBlockingExecutor, blockingExecutor);
+      Mockito.verifyNoInteractions(nonBlockingExecutor, blockingExecutor);
    }
 
    public void testBlockingPublisherInvokedBlockingThreadCompleteAfterSubscribe() {
@@ -124,7 +124,7 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
 
       // We should not have used any executor as we were a blocking thread already for onNext and onComplete is done on
       // the invoking thread as it happened after publish
-      Mockito.verifyZeroInteractions(nonBlockingExecutor, blockingExecutor);
+      Mockito.verifyNoInteractions(nonBlockingExecutor, blockingExecutor);
    }
 
    public void testBlockingPublisherInvokedNonBlockingThread() {

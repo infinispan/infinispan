@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-parent</artifactId>
-      <version>36</version>
+      <version>39</version>
       <!-- prevent the default ../pom.xml: the parent pom lives elsewhere -->
       <relativePath/>
    </parent>
@@ -154,7 +154,7 @@
       <version.jakarta.enterprise.cdi>2.0.2</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>2.2.3</version.jakarta.persistence>
       <version.javax.cache>1.1.0</version.javax.cache>
-      <version.jboss.logging>3.4.1.Final</version.jboss.logging>
+      <version.jboss.logging>3.4.3.Final</version.jboss.logging>
       <version.jboss.marshalling>2.0.12.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>5.12.0.Final</version.jboss.narayana>
@@ -166,12 +166,12 @@
       <version.jgroups>5.2.2.Final</version.jgroups>
       <version.jgroups.raft>1.0.8.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
-      <version.junit>4.13.1</version.junit>
+      <version.junit>4.13.2</version.junit>
       <version.junit5>5.8.2</version.junit5>
       <version.log4j>2.17.2</version.log4j>
       <version.lucene>8.11.1</version.lucene>
-      <version.metainf-services>1.7</version.metainf-services>
-      <version.mockito>2.27.0</version.mockito>
+      <version.metainf-services>1.8</version.metainf-services>
+      <version.mockito>4.3.1</version.mockito>
       <version.mockito_dep.bytebuddy>1.9.7</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
       <version.nashorn>15.3</version.nashorn>
@@ -228,6 +228,7 @@
       <version.maven.surefire>3.0.0-M6</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
+      <version.sonatype.nexus-staging-plugin>1.6.12</version.sonatype.nexus-staging-plugin>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.16.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>7.1.0</version.owasp-dependency-check-plugin>
@@ -272,7 +273,7 @@
                <plugin>
                   <groupId>org.sonatype.plugins</groupId>
                   <artifactId>nexus-staging-maven-plugin</artifactId>
-                  <version>1.6.12</version>
+                  <version>${version.sonatype.nexus-staging-plugin}</version>
                   <configuration>
                      <autoReleaseAfterClose>true</autoReleaseAfterClose>
                      <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
