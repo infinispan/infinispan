@@ -159,6 +159,17 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value, Map<String, String> headers) {
+      Request.Builder builder = new Request.Builder();
+      if (keyContentType != null) {
+         builder.addHeader("Key-Content-Type", keyContentType);
+      }
+      builder.url(cacheUrl + "/" + sanitize(key)).put(((RestEntityAdaptorOkHttp) value).toRequestBody());
+      headers.forEach(builder::header);
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value, long ttl, long maxIdle) {
       Request.Builder builder = new Request.Builder();
       if (keyContentType != null) {
