@@ -1,5 +1,7 @@
 package org.infinispan.server.test.api;
 
+import java.util.function.Consumer;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -20,12 +22,14 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    private ConfigurationBuilder clientConfiguration;
    private int port = 11222;
 
-   public HotRodTestClientDriver(TestServer testServer, TestClient testClient) {
+   public HotRodTestClientDriver(TestServer testServer, TestClient testClient,
+                                 Consumer<ConfigurationBuilder> additionalConfigurations) {
       this.testServer = testServer;
       this.testClient = testClient;
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
+      additionalConfigurations.accept(builder);
       applyDefaultConfiguration(builder);
       this.clientConfiguration = builder;
    }
