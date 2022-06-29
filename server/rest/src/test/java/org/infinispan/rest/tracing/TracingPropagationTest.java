@@ -4,8 +4,10 @@ import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.assertj.core.api.Assertions;
@@ -79,10 +81,39 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
          assertThat(resp2).isOk();
       });
 
+      // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly.
+      // We're going now to correlate the client span with the server spans!
       List<SpanData> spans = inMemorySpanExporter.getFinishedSpanItems();
+      Assertions.assertThat(spans).hasSize(3);
 
-      // TODO Produce server side (Rest) tracing spans and correlate them with this one
-      Assertions.assertThat(spans).hasSize(1);
+      String traceId = null;
+      Set spanIds = new HashSet();
+      Map<String, Integer> parentSpanIds = new HashMap<>();
+      String parentSpan = null;
+
+      for (SpanData span : spans) {
+         if (traceId == null) {
+            traceId = span.getTraceId();
+         } else {
+            // check that the spans have all the same trace id
+            Assertions.assertThat(span.getTraceId()).isEqualTo(traceId);
+         }
+
+         spanIds.add(span.getSpanId());
+         parentSpanIds.compute(span.getParentSpanId(), (key, value) -> (value == null) ? 1 : value + 1);
+
+         Integer times = parentSpanIds.get(span.getParentSpanId());
+         if (times == 2) {
+            parentSpan = span.getParentSpanId();
+         }
+      }
+
+      // we have 3 different spans:
+      Assertions.assertThat(spanIds).hasSize(3);
+      // two of which have the same parent span
+      Assertions.assertThat(parentSpanIds).hasSize(2);
+      // that is the other span
+      Assertions.assertThat(spanIds).contains(parentSpan);
    }
 
    @Override
