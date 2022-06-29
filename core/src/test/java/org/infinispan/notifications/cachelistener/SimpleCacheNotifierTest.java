@@ -1,7 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.isNull;
 
 import org.hamcrest.Matcher;
 import org.infinispan.Cache;

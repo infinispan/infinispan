@@ -261,7 +261,7 @@
       <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>30.1.1-jre</versionx.com.google.guava.guava>
-      <versionx.com.google.testing.compile>0.15</versionx.com.google.testing.compile>
+      <versionx.com.google.testing.compile>0.18</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>2.1.212</versionx.com.h2database.h2>
       <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
       <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
@@ -330,6 +330,7 @@
       <versionx.org.assertj.assertj-core>3.4.1</versionx.org.assertj.assertj-core>
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
+      <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.dom4j.dom4j>2.1.3</versionx.org.dom4j.dom4j>
       <versionx.org.eclipse.transformer>0.4.0</versionx.org.eclipse.transformer>
       <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
@@ -351,7 +352,7 @@
       <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-transaction-spi-jakarta>7.6.1.Final</versionx.org.jboss.jboss-transaction-spi-jakarta>
       <versionx.org.jboss.logging.jboss-logging>${version.jboss.logging}</versionx.org.jboss.logging.jboss-logging>
-      <versionx.org.jboss.logging.jboss-logging-processor>2.1.0.Final</versionx.org.jboss.logging.jboss-logging-processor>
+      <versionx.org.jboss.logging.jboss-logging-processor>2.2.1.Final</versionx.org.jboss.logging.jboss-logging-processor>
       <versionx.org.jboss.marshalling.jboss-marshalling>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling>
       <versionx.org.jboss.marshalling.jboss-marshalling-osgi>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-osgi>
       <versionx.org.jboss.marshalling.jboss-marshalling-river>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-river>
@@ -418,7 +419,7 @@
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
       <versionx.org.wildfly.common.wildfly-common>1.5.4.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
-      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.2.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.natives>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${version.org.wildfly.openssl.natives.linux_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${version.org.wildfly.openssl.natives.linux_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
@@ -2129,7 +2130,7 @@
             <plugin>
                <groupId>org.sonatype.plugins</groupId>
                <artifactId>nexus-staging-maven-plugin</artifactId>
-               <version>1.6.8</version>
+               <version>${version.sonatype.nexus-staging-plugin}</version>
                <configuration>
                   <autoReleaseAfterClose>true</autoReleaseAfterClose>
                   <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>

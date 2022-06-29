@@ -473,7 +473,7 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>xml-maven-plugin</artifactId>
-            <version>1.0.1</version>
+            <version>${versionx.org.codehaus.mojo.xml-maven-plugin}</version>
             <inherited>false</inherited>
             <executions>
                <execution>

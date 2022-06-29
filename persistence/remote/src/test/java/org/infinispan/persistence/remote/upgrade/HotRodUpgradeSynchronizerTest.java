@@ -2,7 +2,7 @@ package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
