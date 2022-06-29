@@ -30,6 +30,7 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
+import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -45,8 +46,8 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class ProtobufResource extends BaseCacheResource implements ResourceHandler {
 
-   public ProtobufResource(InvocationHelper invocationHelper) {
-      super(invocationHelper);
+   public ProtobufResource(InvocationHelper invocationHelper, RestTelemetryService telemetryService) {
+      super(invocationHelper, telemetryService);
    }
 
    @Override

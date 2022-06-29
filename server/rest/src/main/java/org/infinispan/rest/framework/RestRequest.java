@@ -76,5 +76,7 @@ public interface RestRequest {
 
    List<String> headers(String name);
 
+   Iterable<String> headersKeys();
+
    InetSocketAddress getRemoteAddress();
 }
