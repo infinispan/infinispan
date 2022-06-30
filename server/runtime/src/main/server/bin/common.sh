@@ -3,10 +3,17 @@
 # Use --debug to activate debug mode with an optional argument to specify the port.
 # Usage : server.sh --debug
 #         server.sh --debug 9797
-
 # By default debug mode is disabled.
 DEBUG_MODE="${DEBUG:-false}"
 DEBUG_PORT="${DEBUG_PORT:-8787}"
+
+# Use --jmx to activate JMX remoting mode with an optional argument to specify the port.
+# Usage : server.sh --jmx
+#         server.sh --jmx 1234
+# By default JMX remoting is disabled.
+JMX_REMOTING="${JMX:-false}"
+JMX_PORT="${JMX_PORT:-9999}"
+
 GC_LOG="$GC_LOG"
 JAVA_OPTS_EXTRA=""
 PROPERTIES=""
@@ -17,6 +24,13 @@ do
           DEBUG_MODE=true
           if [ -n "$2" ] && [ "$2" = $(echo "$2" | sed 's/-//') ]; then
               DEBUG_PORT=$2
+              shift
+          fi
+          ;;
+      --jmx)
+          JMX_REMOTING=true
+          if [ -n "$2" ] && [ "$2" = $(echo "$2" | sed 's/-//') ]; then
+              JMX_PORT=$2
               shift
           fi
           ;;
@@ -48,7 +62,7 @@ do
     esac
     shift
 done
-echo $PROPERTIES
+echo "$PROPERTIES"
 
 GREP="grep"
 
@@ -134,6 +148,16 @@ if [ "$DEBUG_MODE" = "true" ]; then
         JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
     else
         echo "Debug already enabled in JAVA_OPTS, ignoring --debug argument"
+    fi
+fi
+
+# Enable JMX authenticator if needed
+if [ "$JMX_REMOTING" = "true" ]; then
+    JMX_OPT=$(echo "$JAVA_OPTS" | $GREP "\-Dcom.sun.management.jmxremote")
+    if [ "x$JMX_OPT" = "x" ]; then
+        JAVA_OPTS="$JAVA_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT -Djava.security.auth.login.config=$DIRNAME/server-jaas.config -Dcom.sun.management.jmxremote.login.config=ServerJMXConfig -Dcom.sun.management.jmxremote.ssl=false"
+    else
+        echo "JMX already enabled in JAVA_OPTS, ignoring --jmx argument"
     fi
 fi
 

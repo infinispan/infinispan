@@ -99,6 +99,7 @@ import org.infinispan.server.router.routes.resp.RespServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronJMXAuthenticator;
 import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
 import org.infinispan.server.state.ServerStateManagerImpl;
@@ -426,6 +427,8 @@ public class Server implements ServerManagement, AutoCloseable {
 
          // Initialize the OpenTracing integration
          RequestTracer.start();
+
+         ElytronJMXAuthenticator.init(serverConfiguration);
 
          for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
             // Start the protocol servers

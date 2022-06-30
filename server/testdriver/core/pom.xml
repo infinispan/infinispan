@@ -30,6 +30,11 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-runtime</artifactId>
+         <classifier>loader</classifier>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons-test</artifactId>
          <scope>compile</scope>
       </dependency>

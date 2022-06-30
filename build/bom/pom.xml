@@ -331,6 +331,13 @@
 
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-server-runtime</artifactId>
+                <version>${version.infinispan}</version>
+                <classifier>loader</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-server-testdriver-core</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
