@@ -1,9 +1,15 @@
 [id='hotrod-client-intelligence_{context}']
 = Client Intelligence
-Hot Rod clients use intelligence mechanisms to efficiently send requests to {brandname} Server clusters.
+Hot Rod clients use intelligence mechanisms to efficiently send requests to {brandname} Server clusters. 
+By default, the Hot Rod protocol has the `HASH_DISTRIBUTION_AWARE` intelligence mechanism enabled.  
 
 .`BASIC` intelligence
 Clients do not receive topology change events for {brandname} clusters, such as nodes joining or leaving, and use only the list of {brandname} Server network locations that you add to the client configuration.
+
+[NOTE]
+====
+Enable `BASIC` intelligence to use the Hot Rod client configuration when a {brandname} Server cluster does not send internal and hidden cluster topology to the Hot Rod client.
+====
 
 .`TOPOLOGY_AWARE` intelligence
 Clients receive and store topology change events for {brandname} clusters to dynamically keep track of {brandname} Servers on the network.
