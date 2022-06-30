@@ -1441,10 +1441,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
          String value = reader.getAttributeValue(i);
          switch (attribute) {
             case SOCKET_BINDING:
-               defaultSocketBinding = value;
+               builder.endpoints().socketBinding(defaultSocketBinding = value);
                break;
             case SECURITY_REALM:
-               defaultSecurityRealm = value;
+               builder.endpoints().securityRealm(defaultSecurityRealm = value);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);

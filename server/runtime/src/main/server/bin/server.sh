@@ -5,8 +5,8 @@ MAIN_CLASS=org.infinispan.server.Bootstrap
 ARGUMENTS=
 PROCESS_NAME=${infinispan.brand.short-name}-server
 
-PROGNAME=`basename "$0"`
-DIRNAME=`dirname "$0"`
+PROGNAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
 
 . "$DIRNAME/common.sh"
 
@@ -14,7 +14,7 @@ while true; do
    # Execute the JVM in the background
    eval \"$JAVA\" $JAVA_OPTS \
       -Dvisualvm.display.name=$PROCESS_NAME \
-      -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
+      -Djava.util.logging.manager=org.infinispan.server.loader.LogManager \
       -Dinfinispan.server.home.path=\""$ISPN_HOME"\" \
       -classpath \""$CLASSPATH"\" "$LOADER_CLASS" "$MAIN_CLASS" "$ARGUMENTS" "&"
    ISPN_PID=$!

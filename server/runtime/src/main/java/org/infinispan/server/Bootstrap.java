@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.infinispan.commons.jdkspecific.ProcessInfo;
@@ -154,6 +155,10 @@ public class Bootstrap extends Main {
       }
       System.setProperty("log4j.configurationFactory", XmlConfigurationFactory.class.getName());
       System.setProperty("log4j.configurationFile", loggingFile.toAbsolutePath().toString());
+      LogManager logManager = LogManager.getLogManager();
+      if (logManager instanceof org.infinispan.server.loader.LogManager) {
+         ((org.infinispan.server.loader.LogManager) logManager).setDelegate(new org.apache.logging.log4j.jul.LogManager());
+      }
 
       logJVMInformation();
 

@@ -1,5 +1,8 @@
 package org.infinispan.server.configuration.endpoint;
 
+import static org.infinispan.server.configuration.endpoint.EndpointsConfiguration.SECURITY_REALM;
+import static org.infinispan.server.configuration.endpoint.EndpointsConfiguration.SOCKET_BINDING;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,16 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
    public EndpointsConfigurationBuilder(ServerConfigurationBuilder server) {
       this.server = server;
       attributes = EndpointsConfiguration.attributeDefinitionSet();
+   }
+
+   public EndpointsConfigurationBuilder socketBinding(String socketBinding) {
+      attributes.attribute(SOCKET_BINDING).set(socketBinding);
+      return this;
+   }
+
+   public EndpointsConfigurationBuilder securityRealm(String securityRealm) {
+      attributes.attribute(SECURITY_REALM).set(securityRealm);
+      return this;
    }
 
    public EndpointConfigurationBuilder addEndpoint(String socketBindingName) {
