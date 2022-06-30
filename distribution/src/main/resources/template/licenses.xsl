@@ -191,11 +191,11 @@
             <xsl:when test="contains($filename, 'the antlr 2.7.7 license')">
                 <xsl:text>the antlr 2.7.7 license.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'public domain')">
-                <xsl:text>public domain.txt</xsl:text>
-            </xsl:when>
             <xsl:when test="contains($filename, 'cc0')">
                 <xsl:text>cc0-1.0.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'public domain')">
+                <xsl:text>public domain.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'isc license')">
                 <xsl:text>isc-license.txt</xsl:text>
