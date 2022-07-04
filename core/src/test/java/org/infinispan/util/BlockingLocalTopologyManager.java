@@ -211,15 +211,16 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    @Override
-   protected final void beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
+   protected final CompletionStage<Void> beforeConfirmRebalancePhase(String cacheName, int topologyId, Throwable throwable) {
       if (!enabled || !expectedCacheName.equals(cacheName))
-         return;
+         return CompletableFutures.completedNull();
 
       Event event = new Event(null, topologyId, -1, Type.CONFIRMATION);
       queuedTopologies.add(event);
       log.debugf("Blocking rebalance confirmation for cache %s: %s", cacheName, topologyId);
-      event.awaitUnblock();
-      log.debugf("Continue rebalance confirmation for cache %s: %s", cacheName, topologyId);
+      return event.whenUnblocked().thenRun(() -> {
+         log.debugf("Continue rebalance confirmation for cache %s: %s", cacheName, topologyId);
+      });
    }
 
    void failManager(Throwable e) {
