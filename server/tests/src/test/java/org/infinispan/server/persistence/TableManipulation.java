@@ -11,6 +11,7 @@ import java.util.Enumeration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
@@ -30,11 +31,14 @@ public class TableManipulation implements AutoCloseable {
    private static final String ID_COLUMN_NAME = "id";
    private static final String DEFAULT_IDENTIFIER_QUOTE_STRING = "\"";
    private static final String TABLE_NAME_PREFIX = "tbl";
-   private final String tableName;
+   private String tableName;
 
    public TableManipulation(String cacheName, PooledConnectionFactoryConfigurationBuilder persistenceConfiguration, ConfigurationBuilder configurationBuilder) {
       this.persistenceConfiguration = persistenceConfiguration;
       this.tableName = String.format("%s%s_%s%s", DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING);
+      if (isMysql()) {
+         this.tableName = this.tableName.replaceAll("\"", "");
+      }
       this.countRowsSql = "SELECT COUNT(*) FROM " + tableName;
       this.selectIdRowSqlWithLike = String.format("SELECT %s FROM %s WHERE %s LIKE ?", ID_COLUMN_NAME, tableName, ID_COLUMN_NAME);
    }
@@ -103,6 +107,20 @@ public class TableManipulation implements AutoCloseable {
             ex.printStackTrace();
          }
       }
+   }
+
+   private boolean isMysql() {
+      try {
+         connection = getConnection();
+         String dbProduct = connection.getMetaData().getDatabaseProductName();
+         DatabaseType databaseType = DatabaseType.guessDialect(dbProduct);
+         if (databaseType == DatabaseType.MYSQL) {
+            return true;
+         }
+      } catch (SQLException e) {
+         throw new RuntimeException(e);
+      }
+      return false;
    }
 
    @Override
