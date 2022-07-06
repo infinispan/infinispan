@@ -18,12 +18,15 @@ import org.infinispan.hotrod.impl.cache.ClientStatistics;
 import org.infinispan.hotrod.impl.cache.RemoteCache;
 import org.infinispan.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.hotrod.impl.iteration.KeyTracker;
+import org.infinispan.hotrod.impl.logging.Log;
+import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.protocol.Codec;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.query.RemoteQuery;
 import org.infinispan.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.channel.Channel;
 
@@ -33,13 +36,24 @@ import io.netty.channel.Channel;
  * @since 14.0
  */
 public class CacheOperationsFactory implements HotRodConstants {
+
+   private static final Log log = LogFactory.getLog(CacheOperationsFactory.class, Log.class);
+
    private final ThreadLocal<Integer> flagsMap = new ThreadLocal<>();
    private final OperationContext cacheContext;
    private final OperationContext defaultContext;
 
    public CacheOperationsFactory(ChannelFactory channelFactory, String cacheName, Codec codec, ClientListenerNotifier listenerNotifier, HotRodConfiguration configuration, ClientStatistics clientStatistics) {
-      this.cacheContext = new OperationContext(channelFactory, codec, listenerNotifier, configuration, clientStatistics, cacheName);
-      this.defaultContext = new OperationContext(channelFactory, codec, listenerNotifier, configuration, clientStatistics, null);
+      TelemetryService telemetryService = null;
+      try {
+         telemetryService = new TelemetryService();
+      } catch (Throwable e) {
+         // missing dependency => no context to propagate to the server
+         log.noOpenTelemetryAPI(e);
+      }
+
+      this.cacheContext = new OperationContext(channelFactory, codec, listenerNotifier, configuration, clientStatistics, telemetryService, cacheName);
+      this.defaultContext = new OperationContext(channelFactory, codec, listenerNotifier, configuration, clientStatistics, telemetryService, null);
    }
 
    public CacheOperationsFactory(ChannelFactory channelFactory, Codec codec, ClientListenerNotifier listenerNotifier, HotRodConfiguration configuration) {

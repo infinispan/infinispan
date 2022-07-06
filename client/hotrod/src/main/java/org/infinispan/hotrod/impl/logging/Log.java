@@ -381,4 +381,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Invalid created count after closing channel %s", id = 4107)
    void invalidCreatedCountAfterClose(Channel channel);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "OpenTelemetry API is not present in the classpath. No tracing client context will be propagated.", id = 4109)
+   void noOpenTelemetryAPI(@Cause Throwable throwable);
+
 }
