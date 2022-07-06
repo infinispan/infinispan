@@ -24,7 +24,7 @@ public class TransactionOperationFactory {
    private final OperationContext operationContext;
 
    public TransactionOperationFactory(HotRodConfiguration configuration, ChannelFactory channelFactory, Codec codec) {
-      this.operationContext = new OperationContext(channelFactory, codec, null, configuration, null, null);
+      this.operationContext = new OperationContext(channelFactory, codec, null, configuration, null, null, null);
    }
 
    CompleteTransactionOperation newCompleteTransactionOperation(Xid xid, boolean commit) {

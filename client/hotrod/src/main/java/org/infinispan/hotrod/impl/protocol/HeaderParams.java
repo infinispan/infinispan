@@ -23,7 +23,7 @@ public class HeaderParams {
    final long messageId;
    int topologyAge;
    DataFormat dataFormat;
-   Map<String, byte[]> otherParams = new HashMap<>();
+   Map<String, byte[]> otherParams;
 
    public HeaderParams(short requestCode, short responseCode, long messageId) {
       opCode = requestCode;
@@ -75,10 +75,9 @@ public class HeaderParams {
    }
 
    public void otherParam(String paramKey, byte[] paramValue) {
+      if (otherParams == null) {
+         otherParams = new HashMap<>(2);
+      }
       otherParams.put(paramKey, paramValue);
-   }
-
-   public Map<String, byte[]> otherParams() {
-      return otherParams;
    }
 }

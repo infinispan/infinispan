@@ -38,6 +38,9 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
 
    protected RetryOnFailureOperation(OperationContext operationContext, short requestCode, short responseCode, CacheOptions options, DataFormat dataFormat) {
       super(operationContext, requestCode, responseCode, options, dataFormat);
+      if (operationContext.getTelemetryService() != null) {
+         operationContext.getTelemetryService().injectSpanContext(header);
+      }
    }
 
    @Override

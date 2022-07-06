@@ -31,7 +31,7 @@ public class CounterOperationFactory {
    private final OperationContext operationContext;
 
    CounterOperationFactory(HotRodConfiguration configuration, ChannelFactory channelFactory, Codec codec) {
-      this.operationContext = new OperationContext(channelFactory, codec, null, configuration, null, "org.infinispan.COUNTER");
+      this.operationContext = new OperationContext(channelFactory, codec, null, configuration, null, null, "org.infinispan.COUNTER");
    }
 
    IsDefinedOperation newIsDefinedOperation(String counterName) {

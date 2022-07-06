@@ -25,7 +25,7 @@ public class MultimapOperationsFactory {
    private final DataFormat dataFormat;
 
    public MultimapOperationsFactory(ChannelFactory channelFactory, String cacheName, HotRodConfiguration configuration, Codec codec, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      this.operationContext = new OperationContext(channelFactory, codec, null, configuration, clientStatistics, cacheName);
+      this.operationContext = new OperationContext(channelFactory, codec, null, configuration, clientStatistics, null, cacheName);
       this.dataFormat = dataFormat;
    }
 
