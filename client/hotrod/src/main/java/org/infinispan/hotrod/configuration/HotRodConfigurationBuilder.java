@@ -1,5 +1,6 @@
 package org.infinispan.hotrod.configuration;
 
+import static org.infinispan.hotrod.configuration.HotRodConfiguration.ALLOW_LIST;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.BATCH_SIZE;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.CLIENT_INTELLIGENCE;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.CONNECT_TIMEOUT;
@@ -276,6 +277,7 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    @Override
    public HotRodConfigurationBuilder addJavaSerialAllowList(String... regEx) {
       this.allowListRegExs.addAll(Arrays.asList(regEx));
+      attributes.attribute(ALLOW_LIST).set(allowListRegExs.toArray(new String[0]));
       return this;
    }
 

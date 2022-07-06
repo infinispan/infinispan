@@ -24,7 +24,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.OfflineStatus;
@@ -38,7 +37,6 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 10.0
  */
-@CleanupAfterMethod
 @Test(groups = "functional", testName = "xsite.offline.AsyncOfflineTest")
 public class AsyncOfflineTest extends AbstractXSiteTest {
 

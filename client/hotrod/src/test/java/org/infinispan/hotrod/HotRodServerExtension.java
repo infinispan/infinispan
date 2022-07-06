@@ -41,15 +41,13 @@ public class HotRodServerExtension implements BeforeAllCallback, AfterAllCallbac
    @Override
    public void beforeEach(ExtensionContext extensionContext) throws Exception {
       Method method = extensionContext.getTestMethod().orElseThrow();
-      if (!method.getName().equals(cacheName)) {
-         cacheName = method.getName();
-         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-         builder
-               .clustering()
-               .cacheMode(CacheMode.DIST_SYNC)
-               .transaction().cacheStopTimeout(0L);
-         hotRodServer.getCacheManager().createCache(cacheName, builder.build());
-      }
+      cacheName = method.getName();
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      builder
+            .clustering()
+            .cacheMode(CacheMode.DIST_SYNC)
+            .transaction().cacheStopTimeout(0L);
+      hotRodServer.getCacheManager().createCache(cacheName, builder.build());
    }
 
    public void start() {
@@ -68,7 +66,7 @@ public class HotRodServerExtension implements BeforeAllCallback, AfterAllCallbac
 
          HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
          serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-         hotRodServer = HotRodTestingUtil.startHotRodServer(ecm);
+         hotRodServer = HotRodTestingUtil.startHotRodServer(ecm, serverBuilder);
       }
    }
 

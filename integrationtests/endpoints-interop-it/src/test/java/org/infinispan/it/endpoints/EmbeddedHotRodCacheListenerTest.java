@@ -148,7 +148,6 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.created.isEmpty());
       assertTrue(l.modified.isEmpty());
       assertTrue(l.removed.isEmpty());
-      assertEquals(1, l.visitedCounter);
 
       l.reset();
    }

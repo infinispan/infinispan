@@ -27,7 +27,7 @@ public class PutIfAbsentOperation<K, V> extends AbstractPutIfAbsentOperation<K, 
    }
 
    @Override
-   void completeResponse(ByteBuf buf, short status) {
+   void completeResponseExistent(ByteBuf buf, short status) {
       CacheEntry<K, V> prevValue = returnPossiblePrevValue(buf, status);
       if (HotRodConstants.hasPrevious(status)) {
          statsDataRead(true);
@@ -36,6 +36,16 @@ public class PutIfAbsentOperation<K, V> extends AbstractPutIfAbsentOperation<K, 
          log.tracef("Returning from putIfAbsent: %s", prevValue);
       }
       complete(prevValue);
+   }
+
+   @Override
+   void completeResponseNotExistent(ByteBuf buf, short status) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Returning from putIfAbsent created new entry");
+      }
+
+      statsDataStore();
+      complete(null);
    }
 
    @Override

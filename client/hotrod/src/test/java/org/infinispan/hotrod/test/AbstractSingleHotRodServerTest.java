@@ -2,25 +2,18 @@ package org.infinispan.hotrod.test;
 
 import static org.infinispan.hotrod.HotRodServerExtension.builder;
 
-import java.util.concurrent.TimeUnit;
-
-import org.infinispan.api.async.AsyncCache;
-import org.infinispan.api.async.AsyncContainer;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.api.Infinispan;
 import org.infinispan.hotrod.HotRodServerExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-/**
- * @since 14.0
- */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class AbstractSingleHotRodServerTest<K, V> {
+public abstract class AbstractSingleHotRodServerTest<C> {
 
-   private AsyncContainer container;
-   protected AsyncCache<K, V> cache;
+   protected C cache;
+   protected Infinispan container;
    protected String cacheName;
 
    @RegisterExtension
@@ -28,21 +21,24 @@ public abstract class AbstractSingleHotRodServerTest<K, V> {
          .build();
 
    @BeforeEach
-   public void setup() throws Exception {
-      container = server.getClient().async();
+   public void setup() {
+      container = container();
       cacheName = server.cacheName();
-      cache = container
-            .caches()
-            .<K, V>create(cacheName, "test")
-            .toCompletableFuture()
-            .get(10, TimeUnit.SECONDS);
+      cache = cache();
    }
 
    @AfterEach
-   public void teardown() throws Exception {
+   public void internalTeardown() {
       assert container != null : "Container is null";
-      assert CompletableFutures.uncheckedAwait(container.caches().remove(cacheName).toCompletableFuture(), 30, TimeUnit.SECONDS) : "Could not delete cache";
+      teardown();
       container.close();
+      container = null;
+      cache = null;
    }
 
+   protected abstract void teardown();
+
+   abstract Infinispan container();
+
+   abstract C cache();
 }

@@ -128,7 +128,7 @@ public class HotRodTransport implements AutoCloseable {
       }
 
       if (customMarshallerInstance) {
-         if (configuration.serialAllowList().length == 0) {
+         if (configuration.serialAllowList().length > 0) {
             marshaller.initialize(configuration.getClassAllowList());
          }
          if (marshaller instanceof ProtoStreamMarshaller) {
