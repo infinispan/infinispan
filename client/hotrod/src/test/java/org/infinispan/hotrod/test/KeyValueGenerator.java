@@ -106,6 +106,15 @@ public interface KeyValueGenerator<K, V> {
 
    void assertKeyEquals(K expected, K actual);
 
+   default boolean equalKeys(K expected, K actual) {
+      try {
+         assertKeyEquals(expected, actual);
+         return true;
+      } catch (AssertionFailedError ignore) {
+         return false;
+      }
+   }
+
    default void assertValueNotEquals(V expected, V actual) {
       try {
          assertValueEquals(expected, actual);

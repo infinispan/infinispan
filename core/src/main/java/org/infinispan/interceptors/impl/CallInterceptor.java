@@ -190,7 +190,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object prevValue = e.getValue();
       if (!valueMatcher.matches(prevValue, null, newValue)) {
          command.fail();
-         return command.isReturnEntryNecessary() ? e : prevValue;
+         return command.isReturnEntryNecessary() ? cloneEntry(e) : prevValue;
       }
 
       return performPut(e, ctx, valueMatcher, key, newValue, metadata, command,
@@ -219,7 +219,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       o = e.setValue(value);
       if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW && o != null) {
          if (returnEntry) {
-            response = internalEntryFactory.copy(e);
+            response = cloneEntry(e);
             ((CacheEntry<Object, Object>) response).setValue(o);
          } else {
             response = o;
@@ -297,7 +297,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
 
       Object returnValue;
       if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-         returnValue = command.isConditional() ? true : returnEntry ? internalEntryFactory.copy(e) : prevValue;
+         returnValue = command.isConditional() ? true : returnEntry ? cloneEntry(e) : prevValue;
       } else {
          // Return the expected value when retrying
          returnValue = command.isConditional() ? true : optionalValue;
@@ -350,7 +350,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       Object newValue = command.getNewValue();
       Object expectedValue = command.getOldValue();
       Object response = expectedValue == null && command.isReturnEntry() && prevValue != null
-            ? internalEntryFactory.copy(e) : null;
+            ? cloneEntry(e) : null;
       if (valueMatcher.matches(prevValue, expectedValue, newValue)) {
          e.setChanged(true);
          e.setValue(newValue);
@@ -1152,6 +1152,13 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE)) {
          e.setSkipSharedStore();
       }
+   }
+
+   private Object cloneEntry(CacheEntry<?, ?> entry) {
+      if (entry instanceof MVCCEntry) {
+         return internalEntryFactory.create(entry);
+      }
+      return internalEntryFactory.copy(entry);
    }
 
    static class BackingEntrySet<K, V> extends InternalCacheSet<CacheEntry<K, V>> {

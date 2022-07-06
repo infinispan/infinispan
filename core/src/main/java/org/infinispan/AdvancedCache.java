@@ -23,7 +23,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
@@ -343,25 +342,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @since 14.0
     * @see #replaceAsync(K, V, Metadata)
     */
-   default CompletionStage<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
-      // TODO: implement later
-      // noinspection unchecked
-      return replaceAsync(key, value, metadata)
-            .thenApply(prev -> new ImmortalCacheEntry(key, prev));
-   }
-
-   /**
-    * An extension of {@link #replaceAsync(K, V, Metadata)}, which returns a {@link CacheEntry} instead of
-    * only the value.
-    *
-    * @param key      key with which the specified value is associated
-    * @param value    value to be associated with the specified key
-    * @param metadata information to store alongside the new value
-    * @return the future that contains previous {@link CacheEntry} associated with the specified key,
-    *         or <tt>null</tt> if there was no mapping for the key.
-    * @since 14.0
-    * @see #replaceAsync(K, V, Metadata)
-    */
    CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata);
 
    /**
@@ -410,36 +390,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    default CompletableFuture<V> putIfAbsentAsync(K key, V value, Metadata metadata) {
       return putIfAbsentAsync(key, value, metadata.lifespan(), TimeUnit.MILLISECONDS, metadata.maxIdle(), TimeUnit.MILLISECONDS);
-   }
-
-   /**
-    * An extension form of {@link #putIfAbsentAsync(K, V, Metadata)}, which returns a {@link CacheEntry} instead of
-    * only the value.
-    *
-    * @param key      key with which the specified value is to be associated
-    * @param value    value to be associated with the specified key
-    * @param metadata information to store alongside the new value
-    * @return the future that contains previous {@link CacheEntry} associated with the specified key,
-    *         or <tt>null</tt> if there was no mapping for the key.
-    * @since 14.0
-    * @see #putIfAbsentAsync(K, V, Metadata)
-    */
-   @SuppressWarnings("unchecked")
-   default CompletionStage<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
-      // TODO: replace with a concurrent operation to do this
-      return getCacheEntryAsync(key)
-            .thenCompose(ce -> {
-               if (ce != null) {
-                  return CompletableFuture.completedFuture(ce);
-               }
-               return putIfAbsentAsync(key, value, metadata)
-                     .thenApply(prev -> {
-                        if (prev == null) {
-                           return null;
-                        }
-                        return new ImmortalCacheEntry(key, prev);
-                     });
-            });
    }
 
    /**
@@ -591,23 +541,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @since 9.4
     */
    CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
-
-   /**
-    * Extension of {@link #putAsync(K, V, Metadata)} which returns a {@link CacheEntry} instead of only the
-    * previous value.
-    *
-    * @param key      key to use
-    * @param value    value to store
-    * @param metadata information to store alongside the new value
-    * @return a future containing the old {@link CacheEntry} replaced.
-    * @since 14.0
-    */
-   default CompletionStage<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
-      // TODO: implement later
-      // noinspection unchecked
-      return putAsync(key, value, metadata)
-            .thenApply(prev -> prev != null ? new ImmortalCacheEntry(key, prev) : null);
-   }
 
    /**
     * Overloaded {@link #computeAsync(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
@@ -918,22 +851,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return if the entry was removed
     */
    CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value);
-
-   /**
-    * An extension of {@link #removeAsync(Object)}, which returns a {@link CacheEntry} instead of only the value.
-    *
-    * @param key key to remove
-    * @return a future containing the {@link CacheEntry} removed or <code>null</code> if not found.
-    * @since 14.0
-    * @see #removeAsync(Object)
-    * @see #remove(Object)
-    */
-   default CompletionStage<CacheEntry<K, V>> removeAsyncEntry(K key) {
-      // TODO: replace this with an actual impl
-      // noinspection unchecked
-      return removeAsync(key)
-            .thenApply(prev -> prev == null ? null : new ImmortalCacheEntry(key, prev));
-   }
 
    /**
     * Performs any cache operations using the specified pair of {@link Encoder}.

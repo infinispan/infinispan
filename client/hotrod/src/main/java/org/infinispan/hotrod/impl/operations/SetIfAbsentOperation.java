@@ -4,7 +4,6 @@ import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 import org.jboss.logging.BasicLogger;
 
 import io.netty.buffer.ByteBuf;
@@ -27,16 +26,17 @@ public class SetIfAbsentOperation<K> extends AbstractPutIfAbsentOperation<K, Boo
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      completeResponse(buf, status);
-   }
-
-   @Override
-   void completeResponse(ByteBuf buf, short status) {
+   void completeResponseExistent(ByteBuf buf, short status) {
       boolean wasSuccess = HotRodConstants.isSuccess(status);
       if (log.isTraceEnabled()) {
          log.tracef("Returning from setIfAbsent: %s", wasSuccess);
       }
+      statsDataStore();
       complete(wasSuccess);
+   }
+
+   @Override
+   void completeResponseNotExistent(ByteBuf buf, short status) {
+      completeResponseExistent(buf, status);
    }
 }

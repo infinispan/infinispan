@@ -21,11 +21,6 @@ public class GetAndRemoveOperation<K, V> extends AbstractRemoveOperation<K, Cach
    }
 
    @Override
-   protected int flags() {
-      return super.flags() | PrivateHotRodFlag.FORCE_RETURN_VALUE.getFlagInt();
-   }
-
-   @Override
    void completeNotExist() {
       complete(null);
    }

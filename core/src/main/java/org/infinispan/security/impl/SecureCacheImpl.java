@@ -1091,28 +1091,4 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       authzManager.checkPermission(subject, writePermission);
       return delegate.touch(key, touchEvenIfExpired);
    }
-
-   @Override
-   public CompletionStage<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata) {
-      authzManager.checkPermission(subject, writePermission);
-      return delegate.putAsyncEntry(key, value, metadata);
-   }
-
-   @Override
-   public CompletionStage<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata) {
-      authzManager.checkPermission(subject, writePermission);
-      return delegate.replaceAsyncEntry(key, value, metadata);
-   }
-
-   @Override
-   public CompletionStage<CacheEntry<K, V>> removeAsyncEntry(K key) {
-      authzManager.checkPermission(subject, writePermission);
-      return delegate.removeAsyncEntry(key);
-   }
-
-   @Override
-   public CompletionStage<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata) {
-      authzManager.checkPermission(subject, writePermission);
-      return delegate.putIfAbsentAsyncEntry(key, value, metadata);
-   }
 }
