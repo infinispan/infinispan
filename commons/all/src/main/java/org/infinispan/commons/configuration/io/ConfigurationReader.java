@@ -227,7 +227,11 @@ public interface ConfigurationReader extends AutoCloseable {
    @Override
    void close();
 
-   void saveCacheName(String name);
+   void setAttributeValue(String name, String value);
+
+   default void setAttributeValue(Enum<?> localName, String value) {
+      setAttributeValue(localName.toString(), value);
+   }
 
    enum ElementType {
       START_DOCUMENT,

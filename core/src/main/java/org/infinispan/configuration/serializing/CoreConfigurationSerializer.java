@@ -282,7 +282,8 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       writer.writeEndElement(); // CACHE-CONTAINER
    }
 
-   public void writeCache(ConfigurationWriter writer, String name, Configuration config, boolean unnamed) {
+   public void writeCache(ConfigurationWriter writer, String name, Configuration config) {
+      boolean unnamed = (name == null || name.isBlank());
       switch (config.clustering().cacheMode()) {
          case LOCAL:
             writeLocalCache(writer, name, config, unnamed);

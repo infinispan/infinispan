@@ -310,8 +310,8 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
    }
 
    @Override
-   public void saveCacheName(String name) {
-      attributes.add(new SimpleImmutableEntry<>("name", Json.factory().string(name)));
+   public void setAttributeValue(String name, String value) {
+      attributes.add(new SimpleImmutableEntry<>(name, Json.factory().string(value)));
    }
 
    private static class ElementEntry {
