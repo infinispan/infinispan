@@ -67,18 +67,6 @@
          </notifier>
       </notifiers>
    </ciManagement>
-   <distributionManagement>
-      <repository>
-         <id>${jboss.releases.repo.id}</id>
-         <name>JBoss Release Repository</name>
-         <url>${jboss.releases.repo.url}</url>
-      </repository>
-      <snapshotRepository>
-         <id>${jboss.snapshots.repo.id}</id>
-         <name>JBoss Snapshot Repository</name>
-         <url>${jboss.snapshots.repo.url}</url>
-      </snapshotRepository>
-   </distributionManagement>
    <modules>
       <module>build/configuration</module>
       <module>build/bom</module>
@@ -2128,19 +2116,6 @@
                </configuration>
             </plugin>
             <plugin>
-               <groupId>org.sonatype.plugins</groupId>
-               <artifactId>nexus-staging-maven-plugin</artifactId>
-               <version>${version.sonatype.nexus-staging-plugin}</version>
-               <configuration>
-                  <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                  <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
-                  <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
-                  <serverId>${jboss.releases.repo.id}</serverId>
-                  <stagingProfileId>2161b7b8da0080</stagingProfileId>
-                  <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
-               </configuration>
-            </plugin>
-            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-antrun-plugin</artifactId>
                <version>${version.maven.antrun}</version>
@@ -2639,23 +2614,6 @@
    </reporting>
 
    <profiles>
-      <profile>
-         <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
-         <id>nexus-staging</id>
-         <activation>
-            <property><name>!skipNexusStaging</name></property>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.sonatype.plugins</groupId>
-                  <artifactId>nexus-staging-maven-plugin</artifactId>
-                  <extensions>true</extensions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
       <profile>
          <id>m2e</id>
          <activation>
