@@ -379,7 +379,12 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
             if (attributes.attribute(MemoryConfiguration.MAX_COUNT).get() != -1L) {
                attributes.attribute(MemoryConfiguration.MAX_COUNT).reset();
             }
-            attributes.attribute(MemoryConfiguration.MAX_SIZE).set(String.valueOf(size));
+
+            String maxSize = attributes.attribute(MemoryConfiguration.MAX_SIZE).get();
+            long maxSizeBytes = MemoryConfiguration.maxSizeToBytes(maxSize);
+            if (maxSizeBytes != size) {
+               attributes.attribute(MemoryConfiguration.MAX_SIZE).set(String.valueOf(size));
+            }
             break;
          default:
             throw new IllegalArgumentException();
