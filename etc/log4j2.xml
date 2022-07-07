@@ -8,12 +8,12 @@
 
   <Appenders>
     <Console name="STDOUT">
-      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable{10}%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable{10}%n"/>
     </Console>
      <!-- Use the sys: lookup so system properties set on the command line are preferred -->
     <File name="FILE" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
           append="false">
-      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c] %m%n"/>
     </File>
   </Appenders>
 
@@ -21,6 +21,7 @@
     <Logger name="org.infinispan" level="DEBUG"/>
     <Logger name="com.mchange" level="WARN"/>
     <Logger name="org.jgroups" level="DEBUG"/>
+    <Logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire" level="INFO"/>
 
     <Root level="DEBUG">
       <AppenderRef ref="STDOUT" level="FATAL"/>
