@@ -15,8 +15,10 @@ import java.util.Map;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
+import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.aesh.io.Resource;
 import org.aesh.readline.terminal.formatting.Color;
 import org.aesh.readline.terminal.formatting.TerminalColor;
 import org.aesh.readline.terminal.formatting.TerminalString;
@@ -50,6 +52,12 @@ public class Shell extends CliCommand {
 
    @Option(shortName = 'u', name = "username", description = "The username to use when connecting")
    String username;
+
+   @Option(completer = FileOptionCompleter.class, shortName = 'k', name = "keystore", description = "A keystore containing a client certificate to authenticate with the server")
+   Resource keystore;
+
+   @Option(shortName = 'w', name = "keystore-password", description = "The password for the keystore")
+   String keystorePassword;
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
@@ -111,6 +119,12 @@ public class Shell extends CliCommand {
             args.add(certPath.toString());
             args.add("--hostname-verifier");
             args.add(".*");
+            if (keystore != null) {
+               args.add("-k");
+               args.add(keystore.getAbsolutePath());
+               args.add("-w");
+               args.add(keystorePassword);
+            }
          } else {
             connection.append("http://");
          }
