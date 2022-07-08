@@ -68,6 +68,11 @@ public class SimpleRequest implements RestRequest {
    }
 
    @Override
+   public Iterable<String> headersKeys() {
+      return null;
+   }
+
+   @Override
    public InetSocketAddress getRemoteAddress() {
       return null;
    }

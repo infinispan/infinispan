@@ -33,7 +33,7 @@ public class RecoveryOperation extends RetryOnFailureOperation<Collection<Xid>> 
 
    public RecoveryOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg) {
       super(FETCH_TX_RECOVERY_REQUEST, FETCH_TX_RECOVERY_RESPONSE, codec, channelFactory, DEFAULT_CACHE_NAME_BYTES,
-            topologyId, 0, cfg, null);
+            topologyId, 0, cfg, null, null);
    }
 
    @Override

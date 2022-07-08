@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -25,33 +26,35 @@ public class AddClientListenerOperation extends ClientListenerOperation {
    private final byte[][] filterFactoryParams;
    private final byte[][] converterFactoryParams;
    private final InternalRemoteCache<?, ?> remoteCache;
+   private final TelemetryService telemetryService;
 
    protected AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                         String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                         ClientListenerNotifier listenerNotifier, Object listener,
                                         byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat,
-                                        InternalRemoteCache<?, ?> remoteCache) {
+                                        InternalRemoteCache<?, ?> remoteCache, TelemetryService telemetryService) {
       this(codec, channelFactory, cacheName, topologyId, flags, cfg, generateListenerId(),
-            listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat, remoteCache);
+            listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat, remoteCache, telemetryService);
    }
 
    private AddClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                       String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                       byte[] listenerId, ClientListenerNotifier listenerNotifier, Object listener,
                                       byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat,
-                                      InternalRemoteCache<?, ?> remoteCache) {
+                                      InternalRemoteCache<?, ?> remoteCache, TelemetryService telemetryService) {
       super(ADD_CLIENT_LISTENER_REQUEST, ADD_CLIENT_LISTENER_RESPONSE, codec, channelFactory,
             RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg, listenerId, dataFormat, listener, cacheName,
-            listenerNotifier);
+            listenerNotifier, telemetryService);
       this.filterFactoryParams = filterFactoryParams;
       this.converterFactoryParams = converterFactoryParams;
       this.remoteCache = remoteCache;
+      this.telemetryService = telemetryService;
    }
 
    public AddClientListenerOperation copy() {
       return new AddClientListenerOperation(codec, channelFactory, cacheNameString, header.topologyId(), flags, cfg,
             listenerId, listenerNotifier, listener, filterFactoryParams, converterFactoryParams, dataFormat,
-            remoteCache);
+            remoteCache, telemetryService);
    }
 
    @Override

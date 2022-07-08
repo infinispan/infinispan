@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -14,8 +15,9 @@ import io.netty.channel.Channel;
 public class SizeOperation extends RetryOnFailureOperation<Integer> {
 
    protected SizeOperation(Codec codec, ChannelFactory channelFactory,
-                           byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(SIZE_REQUEST, SIZE_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+                           byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                           TelemetryService telemetryService) {
+      super(SIZE_REQUEST, SIZE_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, telemetryService);
    }
 
    @Override

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 
@@ -111,6 +112,11 @@ public class NettyRestRequest implements RestRequest {
    @Override
    public List<String> headers(String name) {
       return request.headers().getAll(name);
+   }
+
+   @Override
+   public Iterable<String> headersKeys() {
+      return request.headers().entries().stream().map(headerEntry -> headerEntry.getKey()).collect(Collectors.toList());
    }
 
    @Override

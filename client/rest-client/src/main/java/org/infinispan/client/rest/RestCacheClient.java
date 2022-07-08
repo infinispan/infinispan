@@ -147,6 +147,11 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value);
 
    /**
+    * Same as {@link #put(String, String, RestEntity)} but allowing custom headers.
+    */
+   CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value, Map<String, String> headers);
+
+   /**
     * PUT an entry with metadata.
     *
     * @param key The key

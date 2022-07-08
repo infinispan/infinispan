@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.channel.Channel;
 
@@ -18,8 +19,10 @@ public abstract class StatsAffectingRetryingOperation<T> extends RetryOnFailureO
    protected ClientStatistics clientStatistics;
    private long startTime;
 
-   protected StatsAffectingRetryingOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat);
+   protected StatsAffectingRetryingOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
+                                             byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
+                                             DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
+      super(requestCode, responseCode, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, telemetryService);
       this.clientStatistics = clientStatistics;
    }
 

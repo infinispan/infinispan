@@ -92,6 +92,7 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.stats.Stats;
@@ -110,10 +111,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private static final int STREAM_BATCH_SIZE = 1000;
    private static final String MIGRATOR_NAME = "hotrod";
 
-   private ParserRegistry parserRegistry = new ParserRegistry();
+   private final ParserRegistry parserRegistry = new ParserRegistry();
 
-   public CacheResourceV2(InvocationHelper invocationHelper) {
-      super(invocationHelper);
+   public CacheResourceV2(InvocationHelper invocationHelper, RestTelemetryService telemetryService) {
+      super(invocationHelper, telemetryService);
    }
 
    @Override

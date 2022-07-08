@@ -27,7 +27,7 @@ public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
                                byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                DataFormat dataFormat, ClientStatistics clientStatistics) {
       super(CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, dataFormat, clientStatistics);
+            flags, cfg, dataFormat, clientStatistics, null);
    }
 
    @Override

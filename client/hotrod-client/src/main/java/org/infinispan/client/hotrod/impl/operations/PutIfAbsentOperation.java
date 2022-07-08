@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.jboss.logging.BasicLogger;
 
 import io.netty.buffer.ByteBuf;
@@ -33,9 +34,9 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
                                Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                                int flags, Configuration cfg, byte[] value, long lifespan,
                                TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit,
-                               DataFormat dataFormat, ClientStatistics clientStatistics) {
+                               DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
       super(PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value,
-            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics);
+            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
    }
 
    @Override

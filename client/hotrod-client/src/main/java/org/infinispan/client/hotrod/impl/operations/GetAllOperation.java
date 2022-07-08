@@ -33,7 +33,8 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
    public GetAllOperation(Codec codec, ChannelFactory channelFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
+      super(GET_ALL_REQUEST, GET_ALL_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, dataFormat,
+            clientStatistics, null);
       this.keys = keys;
    }
 

@@ -30,7 +30,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
                                         byte[] cacheName, AtomicInteger topologyId, int flags,
                                         Configuration cfg, OperationsFactory operationsFactory) {
-      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null);
+      super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, topologyId, flags, cfg, null, null);
       this.operationsFactory = operationsFactory;
       this.responseBuilder = new PingResponse.Decoder(cfg.version());
    }

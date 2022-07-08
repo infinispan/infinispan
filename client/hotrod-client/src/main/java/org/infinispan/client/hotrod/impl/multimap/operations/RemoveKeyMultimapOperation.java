@@ -27,7 +27,7 @@ public class RemoveKeyMultimapOperation extends AbstractKeyOperation<Boolean> {
    public RemoveKeyMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                      AtomicInteger topologyId, int flags, Configuration cfg, ClientStatistics clientStatistics) {
       super(REMOVE_KEY_MULTIMAP_REQUEST, REMOVE_KEY_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
-            topologyId, flags, cfg, null, clientStatistics);
+            topologyId, flags, cfg, null, clientStatistics, null);
    }
 
    @Override

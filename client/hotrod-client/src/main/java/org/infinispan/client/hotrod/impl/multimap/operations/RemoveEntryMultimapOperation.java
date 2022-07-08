@@ -33,7 +33,7 @@ public class RemoveEntryMultimapOperation extends AbstractKeyValueOperation<Bool
                                        ClientStatistics clientStatistics) {
       super(REMOVE_ENTRY_MULTIMAP_REQUEST, REMOVE_ENTRY_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
             topologyId, flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null,
-            clientStatistics);
+            clientStatistics, null);
    }
 
    @Override

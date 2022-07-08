@@ -32,7 +32,7 @@ public class ContainsEntryMultimapOperation extends AbstractKeyValueOperation<Bo
                                          byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                          byte[] value, ClientStatistics clientStatistics) {
       super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
-            flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics);
+            flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics, null);
    }
 
    @Override

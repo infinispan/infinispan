@@ -31,7 +31,7 @@ public class GetStreamOperation extends AbstractKeyOperation<ChannelInputStream>
                              Object key, byte[] keyBytes, int offset, byte[] cacheName, AtomicInteger topologyId, int flags,
                              Configuration cfg, ClientStatistics clientStatistics) {
       super(GET_STREAM_REQUEST, GET_STREAM_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags,
-            cfg, null, clientStatistics);
+            cfg, null, clientStatistics, null);
       this.offset = offset;
    }
 

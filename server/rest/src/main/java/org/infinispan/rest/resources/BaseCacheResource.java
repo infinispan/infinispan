@@ -32,6 +32,7 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
+import org.infinispan.rest.tracing.RestTelemetryService;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -47,12 +48,17 @@ public class BaseCacheResource {
    final CacheResourceQueryAction queryAction;
    final InvocationHelper invocationHelper;
 
-   public BaseCacheResource(InvocationHelper invocationHelper) {
+   private final RestTelemetryService telemetryService;
+
+   public BaseCacheResource(InvocationHelper invocationHelper, RestTelemetryService telemetryService) {
       this.invocationHelper = invocationHelper;
       this.queryAction = new CacheResourceQueryAction(invocationHelper);
+      this.telemetryService = telemetryService;
    }
 
    CompletionStage<RestResponse> deleteCacheValue(RestRequest request) throws RestResponseException {
+      Object span = telemetryService.requestStart("deleteCacheValue", request);
+
       String cacheName = request.variables().get("cacheName");
 
       Object key = getKey(request);
@@ -61,7 +67,7 @@ public class BaseCacheResource {
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request);
 
-      return restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
+      CompletionStage<RestResponse> response = restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
          NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
@@ -79,9 +85,20 @@ public class BaseCacheResource {
          }
          return CompletableFuture.completedFuture(responseBuilder.build());
       });
+
+      // Attach span events
+      response.whenComplete((result, exception) -> {
+         if (exception != null) {
+            telemetryService.recordException(span, exception);
+         }
+         telemetryService.requestEnd(span);
+      });
+
+      return response;
    }
 
    CompletionStage<RestResponse> putValueToCache(RestRequest request) {
+      Object span = telemetryService.requestStart("putValueToCache", request);
 
       String cacheName = request.variables().get("cacheName");
 
@@ -101,7 +118,7 @@ public class BaseCacheResource {
 
       byte[] data = request.contents().rawContent();
 
-      return restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
+      CompletionStage<RestResponse> response = restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
          if (request.method() == POST && entry != null) {
             return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT).entity("An entry already exists").build());
          }
@@ -119,9 +136,21 @@ public class BaseCacheResource {
          }
          return putInCache(responseBuilder, cache, key, data, ttl, idle);
       });
+
+      // Attach span events
+      response.whenComplete((result, exception) -> {
+         if (exception != null) {
+            telemetryService.recordException(span, exception);
+         }
+         telemetryService.requestEnd(span);
+      });
+
+      return response;
    }
 
    CompletionStage<RestResponse> clearEntireCache(RestRequest request) throws RestResponseException {
+      Object span = telemetryService.requestStart("clearEntireCache", request);
+
       String cacheName = request.variables().get("cacheName");
 
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
@@ -129,7 +158,17 @@ public class BaseCacheResource {
 
       Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
-      return cache.clearAsync().thenApply(v -> responseBuilder.build());
+      CompletableFuture<RestResponse> response = cache.clearAsync().thenApply(v -> responseBuilder.build());
+
+      // Attach span events
+      response.whenComplete((result, exception) -> {
+         if (exception != null) {
+            telemetryService.recordException(span, exception);
+         }
+         telemetryService.requestEnd(span);
+      });
+
+      return response;
    }
 
 

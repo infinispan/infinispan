@@ -28,7 +28,7 @@ public class ContainsKeyMultimapOperation extends AbstractKeyOperation<Boolean> 
                                        byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
                                        ClientStatistics clientStatistics) {
       super(CONTAINS_KEY_MULTIMAP_REQUEST, CONTAINS_KEY_MULTIMAP_RESPONSE, codec, transportFactory, key, keyBytes, cacheName,
-            topologyId, flags, cfg, null, clientStatistics);
+            topologyId, flags, cfg, null, clientStatistics, null);
    }
 
    @Override

@@ -38,7 +38,8 @@ public class GetKeyMultimapOperation<V> extends AbstractKeyOperation<Collection<
    public GetKeyMultimapOperation(Codec codec, ChannelFactory channelFactory,
                                   Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics) {
-      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, dataFormat, clientStatistics);
+      super(GET_MULTIMAP_REQUEST, GET_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, topologyId,
+            flags, cfg, dataFormat, clientStatistics, null);
    }
 
    @Override

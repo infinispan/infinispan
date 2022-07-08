@@ -6,8 +6,5 @@
       <artifact name="${org.hdrhistogram:HdrHistogram}"/>
       <artifact name="${io.prometheus:simpleclient_common}"/>
       <artifact name="${io.prometheus:simpleclient}"/>
-      <artifact name="${io.prometheus:simpleclient_tracer_otel}"/>
-      <artifact name="${io.prometheus:simpleclient_tracer_common}"/>
-      <artifact name="${io.prometheus:simpleclient_tracer_otel_agent}"/>
    </resources>
 </module>
