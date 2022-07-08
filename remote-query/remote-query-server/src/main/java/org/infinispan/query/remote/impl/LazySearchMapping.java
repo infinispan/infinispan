@@ -181,7 +181,7 @@ public class LazySearchMapping implements SearchMapping {
       if (indexingConfiguration.enabled()) {
          if (valueDataConversion.getStorageMediaType().match(APPLICATION_PROTOSTREAM)) {
             // Try to resolve the indexed type names to protobuf type names.
-            Set<String> knownTypes = protobufMetadataManager.getSerializationContext().getGenericDescriptors().keySet();
+            Set<String> knownTypes = protobufMetadataManager.getKnownTypes();
             for (String typeName : indexedEntityTypes) {
                if (!knownTypes.contains(typeName)) {
                   if (searchMapping != null) searchMapping.close();

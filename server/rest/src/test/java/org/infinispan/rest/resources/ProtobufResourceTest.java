@@ -151,6 +151,21 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       assertEquals("users.proto", jsonNode.at(2).at("name").asString());
    }
 
+   @Test
+   public void getSchemaTypes() throws Exception {
+      RestSchemaClient schemaClient = client.schemas();
+
+      String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
+
+      join(schemaClient.post("users", personProto));
+
+      RestResponse response = join(schemaClient.types());
+      ResponseAssertion.assertThat(response).isOk();
+      Json jsonNode = Json.read(response.getBody());
+      assertEquals(4, jsonNode.asList().size());
+      assertTrue(jsonNode.asList().contains("org.infinispan.rest.search.entity.Person"));
+   }
+
    private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
       RestSchemaClient schemaClient = client.schemas();
 

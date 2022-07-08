@@ -33,6 +33,11 @@ public class RestSchemasClientOkHttp implements RestSchemaClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> types() {
+      return client.execute(baseUrl + "?action=types");
+   }
+
+   @Override
    public CompletionStage<RestResponse> post(String schemaName, String schemaContents) {
       Request.Builder builder = new Request.Builder();
       RequestBody body = RequestBody.create(TEXT_PLAIN, schemaContents);

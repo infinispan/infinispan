@@ -8,6 +8,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.MBeanException;
 
@@ -284,6 +285,10 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          throw new IllegalArgumentException("File does not exist : " + fileName);
       }
       return getCache().get(fileName + ERRORS_KEY_SUFFIX);
+   }
+
+   public Set<String> getKnownTypes() {
+      return getSerializationContext().getGenericDescriptors().keySet();
    }
 
    SerializationContext getSerializationContext() {
