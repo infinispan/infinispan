@@ -6,8 +6,10 @@ import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 
 import java.util.Comparator;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -20,6 +22,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -55,6 +58,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       return new Invocations.Builder()
             // Key related operations
             .invocation().methods(GET).path("/v2/schemas").handleWith(this::getSchemasNames)
+            .invocation().methods(GET).path("/v2/schemas").withAction("types").handleWith(this::getTypes)
             .invocation().methods(POST).path("/v2/schemas/{schemaName}")
                .permission(AuthorizationPermission.CREATE).auditContext(AuditContext.SERVER).name("SCHEMA CREATE")
                .handleWith(r -> createOrReplace(r, true))
@@ -160,6 +164,16 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          }
          return responseBuilder.build();
       });
+   }
+
+   private CompletionStage<RestResponse> getTypes(RestRequest request) {
+      ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) invocationHelper.protobufMetadataManager();
+      Set<String> knownTypes = protobufMetadataManager.getKnownTypes();
+      Json protobufTypes = Json.array();
+      for (String type: knownTypes) {
+         protobufTypes.add(type);
+      }
+      return asJsonResponseFuture(protobufTypes);
    }
 
    private CompletionStage<RestResponse> deleteSchema(RestRequest request) {

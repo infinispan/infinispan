@@ -81,3 +81,19 @@ include::json/rest_protobuf_schemas_response.json[]
 
 * `name` is the name of the Protobuf schema.
 * `error` is `null` for valid Protobuf schemas. If {brandname} cannot successfully validate the schema, it returns errors.
+
+[id='rest_v2_list_protobuf_types']
+= Listing Protobuf Types
+List all available Protobuf types with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/schemas?action=types
+----
+
+{brandname} responds with a list of all types available on the cluster.
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_protobuf_types_response.json[]
+----

@@ -8,6 +8,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metrics.impl.MetricsCollector;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
@@ -26,6 +27,7 @@ public class InvocationHelper {
    private final RestServer protocolServer;
    private final EncoderRegistry encoderRegistry;
    private final MetricsCollector metricsCollector;
+   private final ProtobufMetadataManager protobufMetadataManager;
 
    InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
@@ -39,6 +41,7 @@ public class InvocationHelper {
       GlobalComponentRegistry globalComponentRegistry = restCacheManager.getInstance().getGlobalComponentRegistry();
       this.encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
       this.metricsCollector = globalComponentRegistry.getComponent(MetricsCollector.class);
+      this.protobufMetadataManager = globalComponentRegistry.getComponent(ProtobufMetadataManager.class);
    }
 
    public ParserRegistry getParserRegistry() {
@@ -81,6 +84,10 @@ public class InvocationHelper {
 
    public MetricsCollector getMetricsCollector() {
       return metricsCollector;
+   }
+
+   public ProtobufMetadataManager protobufMetadataManager() {
+      return protobufMetadataManager;
    }
 
    private void checkServerStatus() {

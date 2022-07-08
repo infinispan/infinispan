@@ -15,6 +15,11 @@ public interface RestSchemaClient {
    CompletionStage<RestResponse> names();
 
    /**
+    * Obtains the names of the types.
+    */
+   CompletionStage<RestResponse> types();
+
+   /**
     * POST a schema with the supplied name and contents.
     */
    CompletionStage<RestResponse> post(String schemaName, String schemaContents);
