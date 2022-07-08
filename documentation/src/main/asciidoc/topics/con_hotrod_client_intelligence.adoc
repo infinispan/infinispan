@@ -1,14 +1,14 @@
 [id='hotrod-client-intelligence_{context}']
 = Client Intelligence
-Hot Rod clients use intelligence mechanisms to efficiently send requests to {brandname} Server clusters. 
-By default, the Hot Rod protocol has the `HASH_DISTRIBUTION_AWARE` intelligence mechanism enabled.  
+Hot Rod clients use intelligence mechanisms to efficiently send requests to {brandname} Server clusters.
+By default, the Hot Rod protocol has the `HASH_DISTRIBUTION_AWARE` intelligence mechanism enabled.
 
 .`BASIC` intelligence
 Clients do not receive topology change events for {brandname} clusters, such as nodes joining or leaving, and use only the list of {brandname} Server network locations that you add to the client configuration.
 
 [NOTE]
 ====
-Enable `BASIC` intelligence to use the Hot Rod client configuration when a {brandname} Server cluster does not send internal and hidden cluster topology to the Hot Rod client.
+Enable `BASIC` intelligence to use the Hot Rod client configuration when a {brandname} Server does not send internal and hidden cluster topology to the Hot Rod client.
 ====
 
 .`TOPOLOGY_AWARE` intelligence
@@ -30,6 +30,8 @@ Another benefit is that {brandname} Server responds to client requests more quic
 [discrete]
 == Configuration
 
+By default, Hot Rod client uses the intelligence that you configure globally for all the {brandname} clusters.
+
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
@@ -42,9 +44,7 @@ include::code_examples/HotRodClientIntelligence.java[]
 include::properties/hotrod-client-intelligence.properties[]
 ----
 
-If the Hot Rod client is configured to use multiple {brandname} clusters, it is possible to have
-different intelligence for each cluster.
-If not specified, it uses the intelligence configured globally.
+When you configure Hot Rod client to use multiple {brandname} clusters you can use different intelligence for each of the clusters.
 
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]
