@@ -15,7 +15,7 @@ public final class IndexStartupRunner {
       if (IndexStartupMode.PURGE.equals(startupMode)) {
          mapping.scopeAll().workspace().purge();
       } else if (IndexStartupMode.REINDEX.equals(startupMode)) {
-         indexer.run();
+         indexer.runLocal();
       }
    }
 
