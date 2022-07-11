@@ -148,6 +148,10 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          recreateCacheManager(storage, cacheStorage, startupMode);
          runnable.run();
       } finally {
+         eventually( () ->
+               // Wait for a possible ongoing reindexing
+               !Search.getSearchStatistics(cache).getIndexStatistics().reindexing()
+         );
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
