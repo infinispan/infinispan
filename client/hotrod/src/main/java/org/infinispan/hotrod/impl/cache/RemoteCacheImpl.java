@@ -6,6 +6,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -56,7 +57,10 @@ import org.infinispan.hotrod.near.NearCacheService;
 import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -216,15 +220,25 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
       if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl)) {
          throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
       }
-      ReplaceIfUnmodifiedOperation<K, V> op = cacheOperationsFactory.newReplaceIfUnmodifiedOperation(key, keyToBytes(key), valueToBytes(value),
+      ReplaceIfUnmodifiedOperation<K, V> op = cacheOperationsFactory.newReplaceIfUnmodifiedOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value),
             ((CacheEntryVersionImpl) version).version(), options, dataFormat);
       // TODO: add new op to prevent requiring return value?
-      return op.execute().thenApply(r -> r.getValue() != null);
+      return op.execute().thenApply(r -> r.getCode().isUpdated());
    }
 
    @Override
    public CompletionStage<CacheEntry<K, V>> getOrReplaceEntry(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl)) {
+         throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
+      }
+      ReplaceIfUnmodifiedOperation<K, V> op = cacheOperationsFactory.newReplaceIfUnmodifiedOperation(keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(value),
+            ((CacheEntryVersionImpl) version).version(), options, dataFormat);
+      return op.execute().thenApply(r -> {
+         if (r.getCode().isUpdated()) {
+            return null;
+         }
+         return r.getValue();
+      });
    }
 
    @Override
@@ -270,7 +284,11 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
 
    @Override
    public CompletionStage<Void> putAll(Flow.Publisher<CacheEntry<K, V>> entries, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      // TODO: this ignores the metadata, however expiration is part of options... is that okay?
+      return Flowable.fromPublisher(FlowAdapters.toPublisher(entries))
+            .collect(Collectors.toMap(CacheEntry::key, CacheEntry::value))
+            .concatMapCompletable(map -> Completable.fromCompletionStage(putAll(map, options)))
+            .toCompletionStage(null);
    }
 
    @Override
@@ -293,24 +311,37 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
       return FlowAdapters.toFlowPublisher(flowable);
    }
 
+   private Flow.Publisher<K> removeAll(Flowable<K> keys, CacheWriteOptions options) {
+      Flowable<K> keyFlowable = keys.concatMapMaybe(k -> Single.fromCompletionStage(remove(k, options)).mapOptional(removed ->
+            removed ? Optional.of(k) : Optional.empty()));
+      return FlowAdapters.toFlowPublisher(keyFlowable);
+   }
+
    @Override
    public Flow.Publisher<K> removeAll(Set<K> keys, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      return removeAll(Flowable.fromIterable(keys), options);
    }
 
    @Override
    public Flow.Publisher<K> removeAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      return removeAll(Flowable.fromPublisher(FlowAdapters.toPublisher(keys)), options);
+   }
+
+   private Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flowable<K> keys, CacheWriteOptions options) {
+      // TODO: eventually support a batch getAndRemoveAll by owner
+      Flowable<CacheEntry<K, V>> entryFlowable = keys
+            .concatMapMaybe(k -> Maybe.fromCompletionStage(getAndRemove(k, options)));
+      return FlowAdapters.toFlowPublisher(entryFlowable);
    }
 
    @Override
    public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      return getAndRemoveAll(Flowable.fromIterable(keys), options);
    }
 
    @Override
    public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
-      throw new UnsupportedOperationException();
+      return getAndRemoveAll(Flowable.fromPublisher(FlowAdapters.toPublisher(keys)), options);
    }
 
    @Override
