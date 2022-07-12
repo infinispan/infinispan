@@ -49,8 +49,7 @@ include::xml/indexing_startup_reindex.xml[]
 ====
 The clear (purge) operation is performed synchronously, so the cache will be available only when the purge completes.
 
-The reindex operation is performed asynchronously instead, since it may take several time to finish,
-it will depend on the size of the caches.
+The reindex operation is performed asynchronously, since it may take a longer time to finish, dependent upon the size of the cache.
 
 To check if the reindexing operation is still in progress, check the `reindexing` attribute of the index statistics.
 ====
