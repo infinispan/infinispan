@@ -2135,7 +2135,7 @@
                <artifactId>nexus-staging-maven-plugin</artifactId>
                <version>${version.sonatype.nexus-staging-plugin}</version>
                <configuration>
-                  <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                  <autoReleaseAfterClose>false</autoReleaseAfterClose>
                   <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
                   <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
                   <serverId>${jboss.releases.repo.id}</serverId>
