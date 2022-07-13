@@ -231,7 +231,7 @@
       <version.maven.surefire>3.0.0-M6</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
-      <version.sonatype.nexus-staging-plugin>1.6.12</version.sonatype.nexus-staging-plugin>
+      <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.16.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>7.1.0</version.owasp-dependency-check-plugin>
