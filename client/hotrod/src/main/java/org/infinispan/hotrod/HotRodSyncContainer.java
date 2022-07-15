@@ -42,8 +42,8 @@ public class HotRodSyncContainer implements SyncContainer {
    }
 
    @Override
-   public HotRodSyncMultiMaps multiMaps() {
-      return new HotRodSyncMultiMaps(hotrod);
+   public HotRodSyncMultimaps multimaps() {
+      return new HotRodSyncMultimaps(hotrod);
    }
 
    @Override

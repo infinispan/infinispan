@@ -3,12 +3,12 @@ package org.infinispan.api.async;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 
-import org.infinispan.api.configuration.MultiMapConfiguration;
+import org.infinispan.api.configuration.MultimapConfiguration;
 
 /**
  * @since 14.0
  **/
-public interface AsyncMultiMap<K, V> {
+public interface AsyncMultimap<K, V> {
    /**
     * The name of this multimap
     *
@@ -21,10 +21,10 @@ public interface AsyncMultiMap<K, V> {
     *
     * @return
     */
-   CompletionStage<MultiMapConfiguration> configuration();
+   CompletionStage<MultimapConfiguration> configuration();
 
    /**
-    * Return the container of this MultiMap
+    * Return the container of this Multimap
     *
     * @return
     */

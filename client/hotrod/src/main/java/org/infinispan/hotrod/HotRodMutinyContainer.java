@@ -45,8 +45,8 @@ public class HotRodMutinyContainer implements MutinyContainer {
    }
 
    @Override
-   public HotRodMutinyMultiMaps multiMaps() {
-      return new HotRodMutinyMultiMaps(hotrod);
+   public HotRodMutinyMultimaps multimaps() {
+      return new HotRodMutinyMultimaps(hotrod);
    }
 
    @Override

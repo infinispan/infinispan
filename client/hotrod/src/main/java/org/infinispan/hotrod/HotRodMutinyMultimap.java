@@ -1,7 +1,7 @@
 package org.infinispan.hotrod;
 
-import org.infinispan.api.configuration.MultiMapConfiguration;
-import org.infinispan.api.mutiny.MutinyMultiMap;
+import org.infinispan.api.configuration.MultimapConfiguration;
+import org.infinispan.api.mutiny.MutinyMultimap;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -9,11 +9,11 @@ import io.smallrye.mutiny.Uni;
 /**
  * @since 14.0
  **/
-public class HotRodMutinyMultiMap<K, V> implements MutinyMultiMap<K, V> {
+public class HotRodMutinyMultimap<K, V> implements MutinyMultimap<K, V> {
    private final HotRod hotrod;
    private final String name;
 
-   HotRodMutinyMultiMap(HotRod hotrod, String name) {
+   HotRodMutinyMultimap(HotRod hotrod, String name) {
       this.hotrod = hotrod;
       this.name = name;
    }
@@ -24,7 +24,7 @@ public class HotRodMutinyMultiMap<K, V> implements MutinyMultiMap<K, V> {
    }
 
    @Override
-   public Uni<MultiMapConfiguration> configuration() {
+   public Uni<MultimapConfiguration> configuration() {
       return null;
    }
 

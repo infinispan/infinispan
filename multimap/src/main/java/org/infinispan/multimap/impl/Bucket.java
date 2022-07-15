@@ -19,7 +19,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
- * Bucket used to store MultiMap values, required as HashSet cannot be directly marshalled via ProtoStream.
+ * Bucket used to store Multimap values, required as HashSet cannot be directly marshalled via ProtoStream.
  *
  * @author Ryan Emerson
  * @since 10.0

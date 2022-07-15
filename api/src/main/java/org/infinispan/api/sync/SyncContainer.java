@@ -13,7 +13,7 @@ public interface SyncContainer extends Infinispan {
 
    SyncCaches caches();
 
-   SyncMultiMaps multiMaps();
+   SyncMultimaps multimaps();
 
    SyncStrongCounters strongCounters();
 

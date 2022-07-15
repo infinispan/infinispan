@@ -45,8 +45,8 @@ public class HotRodAsyncContainer implements AsyncContainer {
    }
 
    @Override
-   public HotRodAsyncMultiMaps multiMaps() {
-      return new HotRodAsyncMultiMaps(hotrod);
+   public HotRodAsyncMultimaps multimaps() {
+      return new HotRodAsyncMultimaps(hotrod);
    }
 
    @Override

@@ -15,7 +15,7 @@ public interface AsyncContainer extends Infinispan {
 
    AsyncCaches caches();
 
-   AsyncMultiMaps multiMaps();
+   AsyncMultimaps multimaps();
 
    AsyncStrongCounters strongCounters();
 

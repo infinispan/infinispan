@@ -1,6 +1,6 @@
 package org.infinispan.api.mutiny;
 
-import org.infinispan.api.configuration.MultiMapConfiguration;
+import org.infinispan.api.configuration.MultimapConfiguration;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -10,14 +10,14 @@ import io.smallrye.mutiny.Uni;
  * @param <V>
  * @since 14.0
  */
-public interface MutinyMultiMap<K, V> {
+public interface MutinyMultimap<K, V> {
 
    String name();
 
-   Uni<MultiMapConfiguration> configuration();
+   Uni<MultimapConfiguration> configuration();
 
    /**
-    * Return the container of this MultiMap
+    * Return the container of this Multimap.
     *
     * @return
     */
