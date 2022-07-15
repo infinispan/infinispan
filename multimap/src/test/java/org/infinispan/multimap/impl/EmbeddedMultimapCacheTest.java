@@ -27,6 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
+import org.infinispan.multimap.configuration.EmbeddedMultimapConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -46,9 +47,12 @@ public class EmbeddedMultimapCacheTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(MultimapSCI.INSTANCE);
-      cm.defineConfiguration("test", new ConfigurationBuilder().build());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
       MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
-      multimapCache = multimapCacheManager.get("test");
+      builder.addModule(EmbeddedMultimapConfigurationBuilder.class)
+            .name("test");
+      multimapCacheManager.defineConfiguration("test", builder.build());
+      multimapCache = multimapCacheManager.get("test", false);
       cm.getClassAllowList().addClasses(SuperPerson.class);
       return cm;
    }

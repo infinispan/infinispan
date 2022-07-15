@@ -1,18 +1,18 @@
 package org.infinispan.api.sync;
 
 import org.infinispan.api.common.CloseableIterable;
-import org.infinispan.api.configuration.MultiMapConfiguration;
+import org.infinispan.api.configuration.MultimapConfiguration;
 
 /**
  * @param <K>
  * @param <V>
  * @since 14.0
  */
-public interface SyncMultiMap<K, V> {
+public interface SyncMultimap<K, V> {
 
    String name();
 
-   MultiMapConfiguration configuration();
+   MultimapConfiguration configuration();
 
    /**
     * Return the container of this multimap

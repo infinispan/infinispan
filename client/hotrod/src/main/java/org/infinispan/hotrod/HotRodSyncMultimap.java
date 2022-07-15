@@ -1,17 +1,17 @@
 package org.infinispan.hotrod;
 
 import org.infinispan.api.common.CloseableIterable;
-import org.infinispan.api.configuration.MultiMapConfiguration;
-import org.infinispan.api.sync.SyncMultiMap;
+import org.infinispan.api.configuration.MultimapConfiguration;
+import org.infinispan.api.sync.SyncMultimap;
 
 /**
  * @since 14.0
  **/
-public class HotRodSyncMultiMap<K, V> implements SyncMultiMap<K, V> {
+public class HotRodSyncMultimap<K, V> implements SyncMultimap<K, V> {
    private final HotRod hotrod;
    private final String name;
 
-   HotRodSyncMultiMap(HotRod hotrod, String name) {
+   HotRodSyncMultimap(HotRod hotrod, String name) {
       this.hotrod = hotrod;
       this.name = name;
    }
@@ -22,7 +22,7 @@ public class HotRodSyncMultiMap<K, V> implements SyncMultiMap<K, V> {
    }
 
    @Override
-   public MultiMapConfiguration configuration() {
+   public MultimapConfiguration configuration() {
       return null;
    }
 

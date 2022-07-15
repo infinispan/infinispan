@@ -3,17 +3,17 @@ package org.infinispan.hotrod;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 
-import org.infinispan.api.async.AsyncMultiMap;
-import org.infinispan.api.configuration.MultiMapConfiguration;
+import org.infinispan.api.async.AsyncMultimap;
+import org.infinispan.api.configuration.MultimapConfiguration;
 
 /**
  * @since 14.0
  **/
-public class HotRodAsyncMultiMap<K, V> implements AsyncMultiMap<K, V> {
+public class HotRodAsyncMultimap<K, V> implements AsyncMultimap<K, V> {
    private final HotRod hotrod;
    private final String name;
 
-   HotRodAsyncMultiMap(HotRod hotrod, String name) {
+   HotRodAsyncMultimap(HotRod hotrod, String name) {
       this.hotrod = hotrod;
       this.name = name;
    }
@@ -24,7 +24,7 @@ public class HotRodAsyncMultiMap<K, V> implements AsyncMultiMap<K, V> {
    }
 
    @Override
-   public CompletionStage<MultiMapConfiguration> configuration() {
+   public CompletionStage<MultimapConfiguration> configuration() {
       return null;
    }
 

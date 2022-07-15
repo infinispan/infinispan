@@ -15,7 +15,7 @@ import io.smallrye.mutiny.Uni;
 public interface MutinyContainer extends Infinispan {
    MutinyCaches caches();
 
-   MutinyMultiMaps multiMaps();
+   MutinyMultimaps multimaps();
 
    MutinyStrongCounters strongCounters();
 

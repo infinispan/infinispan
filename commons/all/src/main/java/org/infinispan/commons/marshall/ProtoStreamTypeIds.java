@@ -122,6 +122,7 @@ public interface ProtoStreamTypeIds {
    // MultiMap 5300 -> 5399
    int MULTIMAP_LOWER_BOUND = 5300;
    int MULTIMAP_BUCKET = MULTIMAP_LOWER_BOUND;
+   int MULTIMAP_CONFIGURATION = MULTIMAP_LOWER_BOUND + 1;
 
    // Server Core 5400 -> 5799
    int SERVER_CORE_LOWER_BOUND = 5400;
