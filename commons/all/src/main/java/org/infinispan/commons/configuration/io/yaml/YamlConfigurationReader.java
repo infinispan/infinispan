@@ -415,13 +415,14 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   readNext();
                } else {
                   if (lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
+                     String name = next.name;
                      StringBuilder sb = new StringBuilder();
                      readNext();
                      while(next.listItem) {
                         sb.append(replaceProperties(next.value)).append(' ');
                         readNext();
                      }
-                     this.setAttributeValue(next.name, sb.toString());
+                     this.setAttributeValue(name, sb.toString());
                   } else {
                      break;
                   }
