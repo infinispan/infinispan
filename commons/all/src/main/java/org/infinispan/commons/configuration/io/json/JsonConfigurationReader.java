@@ -139,10 +139,10 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
       for (Iterator<Map.Entry<String, Json>> it = map.entrySet().iterator(); it.hasNext(); ) {
          Map.Entry<String, Json> entry = it.next();
          if (entry.getValue().isPrimitive()) {
-            setAttributeValue(entry.getKey(), entry.getValue().asString());
+            this.attributes.add(entry);
             it.remove();
          } else if (isArrayOfPrimitives(entry.getValue())) {
-            setAttributeValue(entry.getKey(), entry.getValue().asString());
+            this.attributes.add(entry);
             it.remove();
          }
       }
