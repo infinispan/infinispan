@@ -138,13 +138,8 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
       Map<String, Json> map = value.asJsonMap();
       for (Iterator<Map.Entry<String, Json>> it = map.entrySet().iterator(); it.hasNext(); ) {
          Map.Entry<String, Json> entry = it.next();
-         if (entry.getValue().isPrimitive()) {
-            attributes.add(entry);
-            it.remove();
-         } else if (isArrayOfPrimitives(entry.getValue())) {
-            attributes.add(entry);
-            it.remove();
-         }
+         setAttributeValue(entry.getKey(), entry.getValue().asString());
+         it.remove();
       }
       iteratorStack.push(map.entrySet().iterator());
    }
@@ -311,7 +306,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public void setAttributeValue(String name, String value) {
-      attributes.add(new SimpleImmutableEntry<>(name, Json.factory().string(value)));
+      attributes.add(new SimpleImmutableEntry<>(name, Json.factory().raw(value)));
    }
 
    private static class ElementEntry {
