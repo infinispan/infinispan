@@ -268,7 +268,6 @@
                   <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
                   <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
                   <serverId>${maven.releases.repo.id}</serverId>
-                  <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
                </configuration>
             </plugin>
             <plugin>
