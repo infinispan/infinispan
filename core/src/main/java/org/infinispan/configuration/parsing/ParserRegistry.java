@@ -202,11 +202,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    public void parseElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       String namespace = reader.getNamespace();
       String name = reader.getLocalName();
-      NamespaceParserPair parser = findNamespaceParser(namespace, name);
-      // If there's no name in that namespace, maybe it found a cache name
-      if (parser == null) {
-         parser = parseCacheName(reader, name, namespace);
-      }
+      NamespaceParserPair parser = findNamespaceParser(reader, namespace, name);
       ConfigurationSchemaVersion oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(namespace));
       parser.parser.readElement(reader, holder);
@@ -217,24 +213,25 @@ public class ParserRegistry implements NamespaceMappingParser {
       if (reader.hasNext()) {
          reader.nextElement();
       }
+      // If there's an invalid cache type element, then it's not a cache name and an invalid cache definition
       if (!Element.isCacheElement(reader.getLocalName()))
          throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
       reader.setAttributeValue("name", name);
-      return findNamespaceParser(reader.getNamespace(), reader.getLocalName());
+      return findNamespaceParser(reader, reader.getNamespace(), reader.getLocalName());
    }
 
    @Override
    public void parseAttribute(ConfigurationReader reader, int i, ConfigurationBuilderHolder holder) throws ConfigurationReaderException {
       String namespace = reader.getAttributeNamespace(i);
       String name = reader.getLocalName();
-      NamespaceParserPair parser = findNamespaceParser(namespace, name);
+      NamespaceParserPair parser = findNamespaceParser(reader, namespace, name);
       ConfigurationSchemaVersion oldSchema = reader.getSchema();
       reader.setSchema(Schema.fromNamespaceURI(namespace));
       parser.parser.readAttribute(reader, name, i, holder);
       reader.setSchema(oldSchema);
    }
 
-   private NamespaceParserPair findNamespaceParser(String namespace, String name) {
+   private NamespaceParserPair findNamespaceParser(ConfigurationReader reader, String namespace, String name) {
       NamespaceParserPair parser = parserMappings.get(new QName(namespace, name));
       if (parser == null) {
          // Next we strip off the version from the URI and look for a wildcard match
@@ -243,7 +240,8 @@ public class ParserRegistry implements NamespaceMappingParser {
          parser = parserMappings.get(new QName(baseUri, name));
          // See if we can get a default parser instead
          if (parser == null || !isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1)))
-            return null;
+            // Parse a possible cache name because the cache name has not a namespace definition in YAML/JSON
+            return parseCacheName(reader, name, namespace);
       }
       return parser;
    }
