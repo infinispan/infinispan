@@ -39,7 +39,6 @@ public class Codec40 extends Codec31 {
 
    private void writeOtherParams(ByteBuf buf, Map<String, byte[]> parameters) {
       if (parameters == null) {
-         ByteBufUtil.writeVInt(buf, 0);
          return;
       }
 

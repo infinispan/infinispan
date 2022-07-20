@@ -11,6 +11,7 @@ constants org.infinispan.server.hotrod.HotRodConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.hotrod.Intrinsics;
 
+import java.lang.Integer;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.Collections;
@@ -114,11 +115,15 @@ mediaTypeDescription returns MediaType switch mediaTypeDefinition
    ;
 
 otherParams returns Map<String, byte[]>
-: { version >= VERSION_40 }? otherParamsRev
+: { version >= VERSION_40 }? otherParamsNum { otherParamsRev }
    | { null }
    ;
 
-otherParamsNum: vInt;
+otherParamsSize: vInt;
+otherParamsNum returns int
+   : otherParamsSize { (otherParamsSize != Integer.MIN_VALUE) && (otherParamsSize > 0) }? otherParamsSize
+   | { 0 }
+   ;
 otherParamName: string;
 otherParamValue: array;
 otherParamsRev returns Map<String, byte[]>
