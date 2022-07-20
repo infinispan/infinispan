@@ -276,13 +276,14 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       writer.writeStartMap(Element.CACHES);
       for (Entry<String, Configuration> configuration : holder.getConfigurations().entrySet()) {
          Configuration config = configuration.getValue();
-         writeCache(writer, configuration.getKey(), config, false);
+         writeCache(writer, configuration.getKey(), config);
       }
       writer.writeEndMap(); // CACHES
       writer.writeEndElement(); // CACHE-CONTAINER
    }
 
-   public void writeCache(ConfigurationWriter writer, String name, Configuration config, boolean unnamed) {
+   public void writeCache(ConfigurationWriter writer, String name, Configuration config) {
+      boolean unnamed = (name == null || name.isBlank());
       switch (config.clustering().cacheMode()) {
          case LOCAL:
             writeLocalCache(writer, name, config, unnamed);

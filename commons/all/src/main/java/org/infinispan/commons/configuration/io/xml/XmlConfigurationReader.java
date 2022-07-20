@@ -271,6 +271,9 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
       Util.close(state.reader);
    }
 
+   @Override
+   public void setAttributeValue(String name, String value) {}
+
    // private members
    private static final class State {
       Reader reader;

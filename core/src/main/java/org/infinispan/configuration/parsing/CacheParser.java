@@ -88,42 +88,43 @@ public class CacheParser implements ConfigurationParser {
    @Override
    public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       Element element = Element.forName(reader.getLocalName());
+      String name = reader.getAttributeValue(Attribute.NAME.getLocalName());
       switch (element) {
          case LOCAL_CACHE: {
-            parseLocalCache(reader, holder, null,false);
+            parseLocalCache(reader, holder, name,false);
             break;
          }
          case LOCAL_CACHE_CONFIGURATION: {
-            parseLocalCache(reader, holder, null, true);
+            parseLocalCache(reader, holder, name, true);
             break;
          }
          case INVALIDATION_CACHE: {
-            parseInvalidationCache(reader, holder, null,false);
+            parseInvalidationCache(reader, holder, name,false);
             break;
          }
          case INVALIDATION_CACHE_CONFIGURATION: {
-            parseInvalidationCache(reader, holder, null, true);
+            parseInvalidationCache(reader, holder, name, true);
             break;
          }
          case REPLICATED_CACHE: {
-            parseReplicatedCache(reader, holder, null, false);
+            parseReplicatedCache(reader, holder, name, false);
             break;
          }
          case REPLICATED_CACHE_CONFIGURATION: {
-            parseReplicatedCache(reader, holder, null, true);
+            parseReplicatedCache(reader, holder, name, true);
             break;
          }
          case DISTRIBUTED_CACHE: {
-            parseDistributedCache(reader, holder, null, false);
+            parseDistributedCache(reader, holder, name, false);
             break;
          }
          case DISTRIBUTED_CACHE_CONFIGURATION: {
-            parseDistributedCache(reader, holder, null, true);
+            parseDistributedCache(reader, holder, name, true);
             break;
          }
          case SCATTERED_CACHE: {
             if (reader.getSchema().since(9, 1)) {
-               parseScatteredCache(reader, holder, null,false);
+               parseScatteredCache(reader, holder, name,false);
             } else {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -131,7 +132,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case SCATTERED_CACHE_CONFIGURATION: {
             if (reader.getSchema().since(9, 1)) {
-               parseScatteredCache(reader, holder, null, true);
+               parseScatteredCache(reader, holder, name, true);
             } else {
                throw ParseUtils.unexpectedElement(reader);
             }
