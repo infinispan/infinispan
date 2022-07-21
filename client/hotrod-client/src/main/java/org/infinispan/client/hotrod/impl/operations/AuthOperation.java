@@ -22,7 +22,7 @@ import net.jcip.annotations.Immutable;
  * @since 7.0
  */
 @Immutable
-public class AuthOperation extends HotRodOperation<byte[]> {
+public class AuthOperation extends NeutralVersionHotRodOperation<byte[]> {
 
    private final Channel channel;
    private final String saslMechanism;
