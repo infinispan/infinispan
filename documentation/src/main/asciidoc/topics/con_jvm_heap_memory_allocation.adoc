@@ -1,26 +1,129 @@
 [id='jvm-heap-memory-allocation_{context}']
 = JVM heap space allocation
 
-When allocating JVM heap space for {brandname} deployments, you can use the following guidelines:
-
-[%autowidth,cols="1,1",stripes=even,%noheader]
-|===
-|Cache operations only (read, write, delete)
-|Allocate **50%** of JVM heap space for data storage
-
-|Cache operations + data processing such as queries and cache event listeners
-|Allocate **33%** of JVM heap space for data storage
-|===
+Determine the volume of memory that you require for your {brandname} deployment, so that you have enough data storage capacity to meet your needs.
 
 [IMPORTANT]
 ====
-Allocating too much of JVM heap space for data storage can lead to more frequent garbage collection (GC) as well as GC pauses that lead to {brandname} cluster instability and network partitions.
+Allocating a large memory heap size in combination with setting garbage collection (GC) times might impact the performance of your {brandname} deployment in the following ways:
+
+* If a JVM handles only one thread, the GC might block the thread and reduce the JVM's performance. The GC might operate ahead of the deployment. This asynchronous behavior might cause large GC pauses.
+
+* If CPU resources are low and GC operates synchronously with the deployment, GC might require more frequent runs that can degrade your deployment's performance.
 ====
+
+The following table outlines two examples of allocating JVM heap space for data storage. 
+These examples represent safe estimates for deploying a cluster. 
+
+[%autowidth,cols="1,1",stripes=even,%noheader]
+|===
+|Cache operations only, such as read, write, and delete operations.
+|Allocate **50%** of JVM heap space for data storage.
+|Cache operations and data processing, such as queries and cache event listeners.
+|Allocate **33%** of JVM heap space for data storage.
+|===
+
+[NOTE]
+====
+Depending on pattern changes and usage for data storage, you might consider setting a different percentage for JVM heap space than any of the suggested safe estimates.
+
+Consider setting a safe estimate before you start your {brandname} deployment. 
+After you start your deployment, check the performance of your JVM and the occupancy of heap space. 
+You might need to re-adjust JVM heap space when data usage and throughput for your JVM significantly increases. 
+====
+
+The safe estimates were calculated on the assumption that the following common operations were running inside a JVM. 
+The list is not exhaustive, and you might set one of these safe estimates with the purpose of performing additional operations.   
+
+* {brandname} converts objects in serialized form to key-value pairs. {brandname} adds the pairs to caches and persistent storage. 
+* {brandname} encrypts and decrypts caches from remote connections to clients.
+* {brandname} performs regular querying of caches to collect data.  
+* {brandname} strategically divides data into segments to ensure efficient distribution of data among clusters, even during a state transfer operation. 
+* GC performs more frequent garbage collections, because the JVM allocated large volumes of memory for GC operations.
+* GC dynamically manages and monitors data objects in JVM heap space to ensure safe removal of unused objects. 
+
+Consider the following factors when allocating JVM heap space for data storage, and when determining the volume of memory and CPU requirements for your {brandname} deployment:
+
+* Clustered cache mode.
+* Number of segments.
+** For example, a low number of segments might affect how a server distributes data among nodes.
+* Read or write operations.
+* Rebalancing requirements.
+** For example, a high number of threads might quickly run in parallel during a state transfer, but each thread operation might use more memory. 
+* Scaling clusters.
+* Synchronous or asynchronous replication.
+
+Most notable {brandname} operations that require high CPU resources include rebalancing nodes after pod restarts, running indexing queries on data, and performing GC operations. 
+
+
+////
+The following example calculation helps determine the volume JVM memory required for an {brandname} deployment:
+
+[source,options="nowrap",subs=”+attributes.+quotes”]
+----
+JVM memory = JVM code + JVM stack size + JVM heap space
+----
+
+Note the following elements from the previous calculation:
+* A JVM stack, also called a thread stack, is an area of JVM memory that stores data that can be used by a JVM thread. 
+* JVM heap space is an area of JVM memory that stores data and temporary objects from an application. 
+
+Additionally, consider the following calculation that can help you determine a suitable JVM heap space, where `m1` represents the calculated JVM heap space in megabytes. 
+
+[source,options="nowrap",subs=”+attributes.+quotes”]
+----
+m1 = (int) ((x * y) / (p * S)) + 1
+----
+
+The following table outlines the elements in the previous calculation:
+
+[%autowidth,cols="1,1",stripes=even,%noheader]
+|===
+| Element | Description
+
+|`int` | Denotes the calculated value for `m1` as an integer. 
+| `x` | Represents the average size of a key-value pair. You can determine the value of `x` bu using the following calculator: `x =  Serialized size of key + Serialized size of value + Metadata`
+| `y` a| Represents the expected number of cache entries for each node. Consider the type of cache mode when determining a value for `y`. For example:
+
+* For distributed mode, determine the volume of owners per cache entry.
+* For the local and replicated modes, 
+
+Note: Ensure that the number of entries (H) does not exceed the expected JVM heap space (S). Otherwise, {brandname} might evict more cache entries to optimize JVM memory space
+
+| `p` | 
+Denotes a fractional value for the full heap space that Infinsipan uses to store cache entries. Typical starting value is p=0.5.
+
+Consider that the JVM, heap size, GC parameters, and the volume of data stored in JVM memory can affect the length of a GC operation. You might need to configure your GC implementation to facilitate these operations.
+
+| `S` | 
+Represents the expected JVM heap space for each node in a cluster. Value in megabytes.
+|===
+
+////
 
 .Off-heap storage
 
-{brandname} uses JVM heap representations of objects to process read and write operations on caches or perform other operations such as state transfer.
+{brandname} uses JVM heap representations of objects to process read and write operations on caches or perform other operations, such as a state transfer operation.
 You must always allocate some JVM heap space to {brandname}, even if you store entries in off-heap memory.
 
-The amount of JVM heap memory that {brandname} uses with off-heap storage is much smaller than when storing data in the JVM heap space.
-However that amount increases as the number of concurrent operations scales up.
+The volume of JVM heap memory that {brandname} uses with off-heap storage is much smaller when compared with storing data in the JVM heap space.
+The JVM heap memory requirements for off-heap storage scales with the number of concurrent operations as against the number of stored entries.
+
+[NOTE]
+====
+{brandname} uses topology caches to provide clients with a cluster view.
+====
+
+If you receive any `OutOfMemoryError` exceptions from your {brandname} cluster, consider the options:
+
+* Disable the state transfer operation, which might results in data loss if a node joins or leaves a cluster. 
+* Recalculate the JVM heap space by factoring in the key size and the number of nodes and segments. 
+* Use more nodes to better manage memory consumption for your cluster.
+* Use a single node, because this might use less memory. However, consider the impact if you want to scale your cluster to its original size. 
+
+////
+.Additional resources
+* link:https://infinispan.org/docs/stable/titles/configuring/configuring.html#key-ownership_clustered-caches
+* link:https://infinispan.org/docs/stable/titles/configuring/configuring.html#configuring-memory-usage
+* link:https://access.redhat.com/documentation/en-us/openjdk/11/html-single/using_shenandoah_garbage_collector_with_openjdk_11/index[internal RH OpenJDK docs on GC]
+////
