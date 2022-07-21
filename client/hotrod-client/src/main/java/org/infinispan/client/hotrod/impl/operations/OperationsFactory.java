@@ -75,7 +75,9 @@ public class OperationsFactory implements HotRodConstants {
             ? channelFactory.createTopologyId(cacheNameBytes)
             : new AtomicInteger(-1);
       this.forceReturnValue = forceReturnValue;
-      this.codec = codec;
+
+      Codec negotiatedCodec = (channelFactory != null) ? channelFactory.getNegotiatedCodec() : null;
+      this.codec = (negotiatedCodec != null) ? negotiatedCodec : codec;
       this.listenerNotifier = listenerNotifier;
       this.cfg = cfg;
       this.clientStatistics = clientStatistics;

@@ -150,6 +150,10 @@ public class ChannelFactory {
       pingServersIgnoreException();
    }
 
+   public Codec getNegotiatedCodec() {
+      return (operationsFactory == null) ? null : operationsFactory.getCodec();
+   }
+
    private int maxAsyncThreads(ExecutorService executorService, Configuration configuration) {
       if (executorService instanceof ThreadPoolExecutor) {
          return ((ThreadPoolExecutor) executorService).getMaximumPoolSize();
