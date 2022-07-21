@@ -8,7 +8,6 @@ import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.configuration.CacheConfiguration;
@@ -158,12 +157,12 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
 
    @Override
    public <R> MutinyQuery<K, V, R> query(String query, CacheOptions options) {
-      return new HotRodMutinyQuery(query, options);
+      return new HotRodMutinyQuery<>(query, options);
    }
 
    @Override
-   public Multi<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.listen(options, types)));
+   public Multi<CacheEntryEvent<K, V>> listen(CacheListenerOptions options) {
+      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.listen(options)));
    }
 
    @Override
@@ -174,6 +173,6 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
 
    @Override
    public MutinyStreamingCache<K> streaming() {
-      return new HotRodMutinyStreamingCache(hotrod, remoteCache);
+      return new HotRodMutinyStreamingCache<>(hotrod, remoteCache);
    }
 }

@@ -1,7 +1,7 @@
 package org.infinispan.hotrod.impl.protocol;
 
 import java.net.SocketAddress;
-import java.util.EnumSet;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.api.common.CacheEntry;
@@ -13,8 +13,8 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.hotrod.api.ClientCacheListenerOptions;
 import org.infinispan.hotrod.configuration.ProtocolVersion;
-import org.infinispan.hotrod.event.ClientListener;
 import org.infinispan.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.cache.RemoteCache;
@@ -52,8 +52,7 @@ public interface Codec {
    /**
     * Writes client listener parameters
     */
-   void writeClientListenerParams(ByteBuf buf, ClientListener clientListener,
-                                  byte[][] filterFactoryParams, byte[][] converterFactoryParams);
+   void writeClientListenerParams(ByteBuf buf, ClientCacheListenerOptions.Impl clientListener);
 
    /**
     * Write lifespan/maxidle parameters.
@@ -77,7 +76,7 @@ public interface Codec {
 
    <K, V> CacheEntry<K, V> returnPossiblePrevValue(K key, ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller);
 
-   void writeClientListenerInterests(ByteBuf buf, EnumSet<CacheEntryEventType> types);
+   void writeClientListenerInterests(ByteBuf buf, Set<CacheEntryEventType> types);
 
    /**
     * Reads a {@link HotRodCounterEvent} with the {@code listener-id}.

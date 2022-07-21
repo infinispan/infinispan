@@ -7,8 +7,8 @@ import java.time.Duration;
 import java.util.Map;
 
 import org.infinispan.api.common.CacheEntry;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
+import org.infinispan.api.common.events.cache.CommonCacheEventTypes;
 import org.infinispan.api.mutiny.MutinyCache;
 
 import io.smallrye.mutiny.Uni;
@@ -49,7 +49,7 @@ public class MutinyCacheDemo {
          mycache.putAll(Map.of("key1", "value1", "key2", "value2")).subscribe();
          mycache.getAll("key1", "key2").subscribe();
          // Listen
-         mycache.listen(new CacheListenerOptions().clustered(), CacheEntryEventType.CREATED).subscribe();
+         mycache.listen(CacheListenerOptions.builder().eventTypes(CommonCacheEventTypes.CREATED).build()).subscribe();
       }
    }
 

@@ -15,7 +15,6 @@ import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.common.process.CacheProcessorOptions;
@@ -170,8 +169,8 @@ public class HotRodAsyncCache<K, V> implements AsyncCache<K, V> {
    }
 
    @Override
-   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types) {
-      return remoteCache.listen(options, types);
+   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options) {
+      return remoteCache.listen(options);
    }
 
    @Override

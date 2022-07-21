@@ -10,7 +10,6 @@ import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.configuration.CacheConfiguration;
@@ -459,21 +458,19 @@ public interface MutinyCache<K, V> {
    /**
     * Listens to the events
     *
-    * @param types
     * @return a {@link Multi} which produces {@link CacheEntryEvent} items.
     */
-   default Multi<CacheEntryEvent<K, V>> listen(CacheEntryEventType... types) {
-      return listen(new CacheListenerOptions(), types);
+   default Multi<CacheEntryEvent<K, V>> listen() {
+      return listen(CacheListenerOptions.DEFAULT);
    }
 
    /**
     * Listens to the events
     *
     * @param options
-    * @param types
     * @return a {@link Multi} which produces {@link CacheEntryEvent} items.
     */
-   Multi<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types);
+   Multi<CacheEntryEvent<K, V>> listen(CacheListenerOptions options);
 
    /**
     * Process the specified entries using the supplied processor

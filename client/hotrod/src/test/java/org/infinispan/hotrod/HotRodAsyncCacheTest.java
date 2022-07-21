@@ -31,4 +31,19 @@ public class HotRodAsyncCacheTest {
          assertAwaitEquals("value", get);
       }
    }
+
+   @Test
+   public void listen() {
+      try (Infinispan infinispan = server.getClient()) {
+         CompletionStage<Object> get = infinispan.async()
+               .caches()
+               .create("getPut", "test")
+               .thenCompose(cache ->
+                     cache.set("key", "value")
+                           .thenApply(v -> cache)
+               )
+               .thenCompose(cache -> cache.get("key"));
+         assertAwaitEquals("value", get);
+      }
+   }
 }

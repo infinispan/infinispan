@@ -9,8 +9,8 @@ import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 
@@ -18,6 +18,7 @@ import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheEntryExpiration;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEventType;
+import org.infinispan.api.common.events.cache.CommonCacheEventTypes;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
@@ -26,9 +27,9 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.counter.api.CounterState;
+import org.infinispan.hotrod.api.ClientCacheListenerOptions;
 import org.infinispan.hotrod.configuration.ClientIntelligence;
 import org.infinispan.hotrod.event.ClientEvent;
-import org.infinispan.hotrod.event.ClientListener;
 import org.infinispan.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.hotrod.event.impl.CreatedEventImpl;
 import org.infinispan.hotrod.event.impl.CustomEventImpl;
@@ -113,26 +114,25 @@ public class Codec40 implements Codec, HotRodConstants {
    }
 
    @Override
-   public void writeClientListenerInterests(ByteBuf buf, EnumSet<CacheEntryEventType> types) {
+   public void writeClientListenerInterests(ByteBuf buf, Set<CacheEntryEventType> types) {
       byte listenerInterests = 0;
-      if (types.contains(CacheEntryEventType.CREATED))
+      if (types.contains(CommonCacheEventTypes.CREATED))
          listenerInterests = (byte) (listenerInterests | 0x01);
-      if (types.contains(CacheEntryEventType.UPDATED))
+      if (types.contains(CommonCacheEventTypes.UPDATED))
          listenerInterests = (byte) (listenerInterests | 0x02);
-      if (types.contains(CacheEntryEventType.REMOVED))
+      if (types.contains(CommonCacheEventTypes.REMOVED))
          listenerInterests = (byte) (listenerInterests | 0x04);
-      if (types.contains(CacheEntryEventType.EXPIRED))
+      if (types.contains(CommonCacheEventTypes.EXPIRED))
          listenerInterests = (byte) (listenerInterests | 0x08);
 
       ByteBufUtil.writeVInt(buf, listenerInterests);
    }
 
    @Override
-   public void writeClientListenerParams(ByteBuf buf, ClientListener clientListener,
-         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+   public void writeClientListenerParams(ByteBuf buf, ClientCacheListenerOptions.Impl clientListener) {
       buf.writeByte((short) (clientListener.includeCurrentState() ? 1 : 0));
-      writeNamedFactory(buf, clientListener.filterFactoryName(), filterFactoryParams);
-      writeNamedFactory(buf, clientListener.converterFactoryName(), converterFactoryParams);
+      writeNamedFactory(buf, clientListener.rawFilterFactoryName(), clientListener.rawFilterFactoryParameters());
+      writeNamedFactory(buf, clientListener.rawConverterFactoryName(), clientListener.rawConverterFactoryParameters());
       buf.writeByte((short) (clientListener.useRawData() ? 1 : 0));
    }
 

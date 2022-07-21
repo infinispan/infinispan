@@ -8,12 +8,15 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
+import org.infinispan.api.common.events.cache.CacheEntryEvent;
+import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
@@ -271,9 +274,15 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    @Override
+   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions listenerOptions) {
+      return null;
+   }
+
+   @Override
    public SocketAddress addNearCacheListener(Object listener, int bloomBits) {
-      ClientListenerOperation op = getOperationsFactory().newAddNearCacheListenerOperation(listener, CacheOptions.DEFAULT, getDataFormat(),
-            bloomBits, this);
+      // TODO: fix this
+      ClientListenerOperation<?, ?> op = getOperationsFactory().newAddNearCacheListenerOperation(null,
+            bloomBits, getDataFormat(), null, this);
       // no timeout, see below
       return await(op.execute());
    }

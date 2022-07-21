@@ -17,17 +17,15 @@ import io.netty.channel.Channel;
  * node where the listener has been added.
  */
 public class RemoveClientListenerOperation extends HotRodOperation<Void> implements ChannelOperation {
-   private final Object listener;
    private byte[] listenerId;
 
-   protected RemoveClientListenerOperation(OperationContext operationContext, CacheOptions options, Object listener) {
+   protected RemoveClientListenerOperation(OperationContext operationContext, CacheOptions options, byte[] listenerId) {
       super(operationContext, REMOVE_CLIENT_LISTENER_REQUEST, REMOVE_CLIENT_LISTENER_RESPONSE, options);
-      this.listener = listener;
+      this.listenerId = listenerId;
    }
 
    protected void fetchChannelAndInvoke() {
-      listenerId = operationContext.getListenerNotifier().findListenerId(listener);
-      if (listenerId != null) {
+      if (operationContext.getListenerNotifier().isListenerConnected(listenerId)) {
          SocketAddress address = operationContext.getListenerNotifier().findAddress(listenerId);
          operationContext.getChannelFactory().fetchChannelAndInvoke(address, this);
       } else {

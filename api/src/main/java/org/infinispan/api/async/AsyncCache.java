@@ -11,7 +11,6 @@ import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.common.process.CacheProcessor;
@@ -494,21 +493,19 @@ public interface AsyncCache<K, V> {
    /**
     * Register a cache listener with default {@link CacheListenerOptions}
     *
-    * @param types
     * @return
     */
-   default Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheEntryEventType... types) {
-      return listen(new CacheListenerOptions(), types);
+   default Flow.Publisher<CacheEntryEvent<K, V>> listen() {
+      return listen(CacheListenerOptions.DEFAULT);
    }
 
    /**
     * Register a cache listener with the supplied {@link CacheListenerOptions}
     *
     * @param options
-    * @param types   one or more {@link CacheEntryEventType}
     * @return
     */
-   Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types);
+   Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options);
 
    /**
     * Process entries using the supplied task

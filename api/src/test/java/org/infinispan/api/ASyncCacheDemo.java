@@ -15,8 +15,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.api.async.AsyncCache;
 import org.infinispan.api.common.CacheEntry;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
+import org.infinispan.api.common.events.cache.CommonCacheEventTypes;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -66,7 +66,7 @@ public class ASyncCacheDemo {
          mycache.getAll(Set.of("key1", "key2")).subscribe(new NullSubscriber<>());
 
          // Listen
-         mycache.listen(new CacheListenerOptions().clustered(), CacheEntryEventType.CREATED).subscribe(new NullSubscriber<>());
+         mycache.listen(CacheListenerOptions.builder().eventTypes(CommonCacheEventTypes.CREATED).build()).subscribe(new NullSubscriber<>());
 
          // Batch
          await(infinispan.async().batch(async ->

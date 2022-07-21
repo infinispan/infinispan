@@ -9,7 +9,9 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
+import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.hotrod.api.ClientCacheListenerOptions;
 import org.infinispan.hotrod.configuration.HotRodConfiguration;
 import org.infinispan.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.hotrod.impl.DataFormat;
@@ -29,6 +31,7 @@ import org.infinispan.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.channel.Channel;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
 
 /**
  * Factory for {@link org.infinispan.hotrod.impl.operations.HotRodOperation} objects.
@@ -149,20 +152,18 @@ public class CacheOperationsFactory implements HotRodConstants {
       return new BulkGetKeysOperation<>(cacheContext, options, scope, dataFormat);
    }
 
-   public AddClientListenerOperation newAddClientListenerOperation(Object listener, CacheOptions options, DataFormat dataFormat) {
-      return new AddClientListenerOperation(cacheContext, options, listener, null, null, dataFormat, null);
+   public <K, V> AddClientListenerOperation<K, V> newAddClientListenerOperation(ClientCacheListenerOptions.Impl cacheListenerOptions,
+         DataFormat dataFormat, FlowableProcessor<CacheEntryEvent<K, V>> processor) {
+      return new AddClientListenerOperation<>(cacheContext, cacheListenerOptions, dataFormat, processor, null);
    }
 
-   public AddClientListenerOperation newAddClientListenerOperation(Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams, CacheOptions options, DataFormat dataFormat) {
-      return new AddClientListenerOperation(cacheContext, options, listener, filterFactoryParams, converterFactoryParams, dataFormat, null);
+   public RemoveClientListenerOperation newRemoveClientListenerOperation(byte[] listenerId, CacheOptions options) {
+      return new RemoveClientListenerOperation(cacheContext, options, listenerId);
    }
 
-   public RemoveClientListenerOperation newRemoveClientListenerOperation(Object listener, CacheOptions options) {
-      return new RemoveClientListenerOperation(cacheContext, options, listener);
-   }
-
-   public AddBloomNearCacheClientListenerOperation newAddNearCacheListenerOperation(Object listener, CacheOptions options, DataFormat dataFormat, int bloomFilterBits, RemoteCache<?, ?> remoteCache) {
-      return new AddBloomNearCacheClientListenerOperation(cacheContext, options, listener, dataFormat, bloomFilterBits, remoteCache);
+   public <K, V> AddBloomNearCacheClientListenerOperation<K, V> newAddNearCacheListenerOperation(ClientCacheListenerOptions.Impl cacheListenerOptions,
+         int bloomFilterBits, DataFormat dataFormat, FlowableProcessor<CacheEntryEvent<K, V>> processor, RemoteCache<?, ?> remoteCache) {
+      return new AddBloomNearCacheClientListenerOperation<>(cacheContext, cacheListenerOptions, bloomFilterBits, dataFormat, processor, remoteCache);
    }
 
    public UpdateBloomFilterOperation newUpdateBloomFilterOperation(CacheOptions options, SocketAddress address, byte[] bloomBytes) {

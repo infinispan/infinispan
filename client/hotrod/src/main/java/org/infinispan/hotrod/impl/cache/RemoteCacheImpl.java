@@ -21,7 +21,6 @@ import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.api.common.events.cache.CacheEntryEvent;
-import org.infinispan.api.common.events.cache.CacheEntryEventType;
 import org.infinispan.api.common.events.cache.CacheListenerOptions;
 import org.infinispan.api.common.process.CacheEntryProcessorResult;
 import org.infinispan.api.common.process.CacheProcessorOptions;
@@ -30,6 +29,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.Util;
+import org.infinispan.hotrod.api.ClientCacheListenerOptions;
 import org.infinispan.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.hotrod.filter.Filters;
 import org.infinispan.hotrod.impl.DataFormat;
@@ -37,6 +37,7 @@ import org.infinispan.hotrod.impl.HotRodTransport;
 import org.infinispan.hotrod.impl.iteration.RemotePublisher;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
+import org.infinispan.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.hotrod.impl.operations.ClearOperation;
 import org.infinispan.hotrod.impl.operations.GetAllParallelOperation;
@@ -61,6 +62,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -357,8 +360,22 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType[] types) {
-      throw new UnsupportedOperationException();
+   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions listenerOptions) {
+      Flowable<CacheEntryEvent<K, V>> flowable = Flowable.defer(() -> {
+         FlowableProcessor<CacheEntryEvent<K, V>> processor = UnicastProcessor.<CacheEntryEvent<K, V>>create().toSerialized();
+         AddClientListenerOperation<K, V> op = cacheOperationsFactory.newAddClientListenerOperation(
+               ClientCacheListenerOptions.Impl.fromCacheListenerOperations(listenerOptions), dataFormat, processor);
+         op.execute().whenComplete((sa, t) -> {
+            if (t != null) {
+               cacheOperationsFactory.newRemoveClientListenerOperation(op.listenerId, op.listenerOptions).execute();
+               processor.onError(t);
+            }
+         });
+         return processor.doOnCancel(() ->
+               cacheOperationsFactory.newRemoveClientListenerOperation(op.listenerId, op.listenerOptions).execute());
+      });
+
+      return FlowAdapters.toFlowPublisher(flowable);
    }
 
    @Override

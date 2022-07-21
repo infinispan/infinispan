@@ -33,12 +33,5 @@ public interface CacheEntryEvent<K, V> {
       return null;
    }
 
-   /**
-    * @return true if the call originated on the local cache instance; false if originated from a remote one.
-    */
-   default boolean isOriginLocal() {
-      return false;
-   }
-
    CacheEntryEventType type();
 }

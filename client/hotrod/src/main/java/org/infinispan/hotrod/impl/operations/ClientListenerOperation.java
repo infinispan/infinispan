@@ -6,8 +6,9 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.infinispan.api.common.CacheOptions;
+import org.infinispan.api.common.events.cache.CacheEntryEvent;
 import org.infinispan.commons.util.Util;
+import org.infinispan.hotrod.api.ClientCacheListenerOptions;
 import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.ChannelRecord;
@@ -15,19 +16,22 @@ import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
 
-public abstract class ClientListenerOperation extends RetryOnFailureOperation<SocketAddress> {
+public abstract class ClientListenerOperation<K, V> extends RetryOnFailureOperation<SocketAddress> {
    public final byte[] listenerId;
-   public final Object listener;
+   public final ClientCacheListenerOptions.Impl listenerOptions;
+   public final FlowableProcessor<CacheEntryEvent<K, V>> processor;
 
    // Holds which address we are currently executing the operation on
    protected SocketAddress address;
 
    protected ClientListenerOperation(OperationContext operationContext, short requestCode, short responseCode,
-                                     CacheOptions options, byte[] listenerId, DataFormat dataFormat, Object listener) {
-      super(operationContext, requestCode, responseCode, options, dataFormat);
+         ClientCacheListenerOptions.Impl listenerOptions, byte[] listenerId, DataFormat dataFormat, FlowableProcessor<CacheEntryEvent<K, V>> processor) {
+      super(operationContext, requestCode, responseCode, listenerOptions, dataFormat);
       this.listenerId = listenerId;
-      this.listener = listener;
+      this.listenerOptions = listenerOptions;
+      this.processor = processor;
    }
 
    protected static byte[] generateListenerId() {
@@ -69,6 +73,7 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
          if (decoder != null) {
             decoder.removeListener(listenerId);
          }
+         processor.onComplete();
       });
    }
 
@@ -84,12 +89,13 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
       if (HotRodConstants.isSuccess(status)) {
          decoder.addListener(listenerId);
          operationContext.getListenerNotifier().startClientListener(listenerId);
+         complete(address);
       } else {
          // this releases the channel
          operationContext.getListenerNotifier().removeClientListener(listenerId);
-         throw HOTROD.failedToAddListener(listener, status);
+         // TODO: make this error return a better name?
+         completeExceptionally(HOTROD.failedToAddListener(listenerId, status));
       }
-      complete(address);
    }
 
    @Override
