@@ -126,7 +126,7 @@ public class PingResponse {
 
       PingResponse build(short status) {
          assert decoderState == 4 : "Invalid decoder state";
-         return new PingResponse(status, version, keyMediaType, valueMediaType, serverOps);
+         return new PingResponse(status, version.choose(serverVersion), keyMediaType, valueMediaType, serverOps);
       }
 
       public void reset() {

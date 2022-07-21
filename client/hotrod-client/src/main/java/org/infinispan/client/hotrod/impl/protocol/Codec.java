@@ -163,4 +163,12 @@ public interface Codec {
     * @param supportsDuplicates, to see whether multimap cache supports duplicates or not.
     */
    void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates);
+
+   /**
+    * Returns true if the current codec uses a latest codec version, that could be unsafe for the initial handshake.
+    * This is necessary to check interoperability between versions during the protocol negotiation.
+    */
+   default boolean isUnsafeForTheHandshake() {
+      return false;
+   }
 }

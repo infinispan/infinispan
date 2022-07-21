@@ -28,7 +28,7 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class PingOperation extends HotRodOperation<PingResponse> implements ChannelOperation {
+public class PingOperation extends NeutralVersionHotRodOperation<PingResponse> implements ChannelOperation {
    private static final Log log = LogFactory.getLog(PingOperation.class);
 
    private final boolean releaseChannel;
