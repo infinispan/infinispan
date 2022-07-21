@@ -157,8 +157,6 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
          return true;
       if (obj == null)
          return false;
-      if (getClass() != obj.getClass())
-         return false;
       AbstractStoreConfiguration other = (AbstractStoreConfiguration) obj;
       if (async == null) {
          if (other.async != null)
