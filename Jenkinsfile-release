@@ -67,26 +67,9 @@ pipeline {
             }
         }
 
-        stage('Create Staging repository') {
-            steps {
-                // Create a staging repository on Nexus
-                script {
-                    STAGING_REPO_ID = sh(returnStdout: true, script: "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-open -pl .|grep 'Opened '|grep -oE '[^ ]+\$'").trim()
-                }
-                echo "Staging repository: $STAGING_REPO_ID"
-            }
-        }
-
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pdistribution -DskipTests clean deploy -DstagingRepositoryId=$STAGING_REPO_ID -Dinfinispan.brand.version=${version}"
-            }
-        }
-
-        stage('Close Staging repository') {
-            steps {
-                // This ensures that Nexus validates the repository for correctness
-                sh "$MAVEN_HOME/bin/mvn -B -V org.sonatype.plugins:nexus-staging-maven-plugin:rc-close -pl . -DstagingRepositoryId=$STAGING_REPO_ID"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Pcommunity-release -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${version}"
             }
         }
 
