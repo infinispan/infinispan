@@ -123,6 +123,40 @@ public abstract class AbstractAuthorization {
       RestCacheClient adminCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withCacheMode(CacheMode.DIST_SYNC).create().cache(getServerTest().getMethodName());
       sync(adminCache.put("k", "v"));
       assertEquals("v", sync(adminCache.get("k")).getBody());
+
+      assertStatus(OK, adminCache.distribution());
+   }
+
+   @Test
+   public void testRestCacheDistribution() {
+      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(OK, cache.distribution());
+      }
+
+      // Types with no access.
+      for (TestUser type: EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, cache.distribution());
+      }
+   }
+
+   @Test
+   public void testStats() {
+      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(OK, cache.stats());
+      }
+
+      // Types with no access.
+      for (TestUser type: EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, cache.stats());
+      }
    }
 
    @Test
