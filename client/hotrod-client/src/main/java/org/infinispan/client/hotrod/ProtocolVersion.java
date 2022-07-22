@@ -94,21 +94,11 @@ public enum ProtocolVersion {
       throw new IllegalArgumentException("Illegal version " + version);
    }
 
-   public ProtocolVersion choose(ProtocolVersion other) {
-      if (other == null) return this;
-
-      byte tracingSupport = 0x00;
-
-      if (codec.isSafeWithLatest()) tracingSupport ^= 0x01;
-      if (other.codec.isSafeWithLatest()) tracingSupport ^= 0x10;
-
-      switch (tracingSupport) {
-         case 0x01:
-            return other;
-         case 0x10:
-            return this;
-         default:
-            return other.compareTo(this) < 0 ? this : other;
+   public ProtocolVersion choose(ProtocolVersion serverVersion) {
+      if (serverVersion == null) {
+         return this;
       }
+
+      return (serverVersion.compareTo(this) >= 0) ? this : serverVersion;
    }
 }
