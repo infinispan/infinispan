@@ -563,7 +563,7 @@ public class ContainerResource implements ResourceHandler {
                includeCurrentState ?
                      (stream) -> {
                         for (String configName : cacheManager.getCacheConfigurationNames()) {
-                           Configuration config = cacheManager.getCacheConfiguration(configName);
+                           Configuration config = SecurityActions.getCacheConfigurationFromManager(cacheManager, configName);
                            String eventType = config.isTemplate() ? "create-template" : "create-cache";
                            stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType)));
                         }
@@ -588,7 +588,7 @@ public class ContainerResource implements ResourceHandler {
             switch (event.getConfigurationEntityType()) {
                case "cache":
                case "template":
-                     Configuration config = cacheManager.getCacheConfiguration(event.getConfigurationEntityName());
+                     Configuration config = SecurityActions.getCacheConfigurationFromManager(cacheManager, event.getConfigurationEntityName());
                      sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType));
                   break;
                default:
