@@ -71,16 +71,14 @@
       </notifiers>
    </ciManagement>
    <distributionManagement>
-      <repository>
-         <id>${jboss.releases.repo.id}</id>
-         <name>JBoss Release Repository</name>
-         <url>${jboss.releases.repo.url}</url>
-      </repository>
       <snapshotRepository>
-         <id>${jboss.snapshots.repo.id}</id>
-         <name>JBoss Snapshot Repository</name>
-         <url>${jboss.snapshots.repo.url}</url>
+         <id>${maven.snapshots.repo.id}</id>
+         <url>${maven.snapshots.repo.url}</url>
       </snapshotRepository>
+      <repository>
+         <id>${maven.releases.repo.id}</id>
+         <url>${maven.releases.repo.url}</url>
+      </repository>
    </distributionManagement>
    <modules>
       <module>bom</module>
@@ -100,15 +98,16 @@
       <infinispan.base.version>12.1</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
+      <infinispan.gpg.key>9E31AB27445478DB</infinispan.gpg.key>
       <wildfly.brand.name>WildFly</wildfly.brand.name>
       <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
 
-      <!-- jboss repository urls -->
-      <jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
-      <jboss.releases.nexus.url>https://repository.jboss.org/nexus</jboss.releases.nexus.url>
-      <jboss.releases.repo.url>${jboss.releases.nexus.url}/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
-      <jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
-      <jboss.snapshots.repo.url>${jboss.releases.nexus.url}/content/repositories/snapshots/</jboss.snapshots.repo.url>
+      <!-- maven repository urls -->
+      <maven.releases.nexus.url>https://s01.oss.sonatype.org/</maven.releases.nexus.url>
+      <maven.releases.repo.id>ossrh</maven.releases.repo.id>
+      <maven.releases.repo.url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</maven.releases.repo.url>
+      <maven.snapshots.repo.id>ossrh</maven.snapshots.repo.id>
+      <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
 
       <!-- === Application Server Configuration === -->
 
@@ -211,7 +210,8 @@
       <version.maven.antrun>3.0.0</version.maven.antrun>
       <version.maven.buildhelper>3.1.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
-      <version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
+      <version.maven.gpg>3.0.1</version.maven.gpg>
+      <version.maven-compiler-plugin>3.10.1</version.maven-compiler-plugin>
       <version.maven.invoker>3.2.1</version.maven.invoker>
       <version.maven.jar>3.2.0</version.maven.jar>
       <version.maven.javadoc>3.2.0</version.maven.javadoc>
@@ -246,11 +246,54 @@
                <groupId>org.owasp</groupId>
                <artifactId>dependency-check-maven</artifactId>
             </plugin>
+            <plugin>
+               <groupId>org.sonatype.plugins</groupId>
+               <artifactId>nexus-staging-maven-plugin</artifactId>
+               <version>${version.sonatype.nexus-staging-plugin}</version>
+               <configuration>
+                  <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                  <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
+                  <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
+                  <serverId>${maven.releases.repo.id}</serverId>
+               </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-gpg-plugin</artifactId>
+               <version>${version.maven.gpg}</version>
+               <executions>
+                  <execution>
+                     <id>sign-artifacts</id>
+                     <phase>verify</phase>
+                     <goals>
+                        <goal>sign</goal>
+                     </goals>
+                     <configuration>
+                        <keyname>${infinispan.gpg.key}</keyname>
+                        <passphraseServerId>${infinispan.gpg.key}</passphraseServerId>
+                     </configuration>
+                  </execution>
+               </executions>
+            </plugin>
          </plugins>
       </pluginManagement>
    </build>
 
    <profiles>
+      <profile>
+         <id>community-release</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-gpg-plugin</artifactId>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
 
       <profile>
          <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
@@ -263,14 +306,7 @@
                <plugin>
                   <groupId>org.sonatype.plugins</groupId>
                   <artifactId>nexus-staging-maven-plugin</artifactId>
-                  <version>1.6.12</version>
-                  <configuration>
-                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                     <nexusUrl>${jboss.releases.nexus.url}</nexusUrl>
-                     <serverId>${jboss.releases.repo.id}</serverId>
-                     <stagingProfileId>2161b7b8da0080</stagingProfileId>
-                     <stagingRepositoryId>${stagingRepositoryId}</stagingRepositoryId>
-                  </configuration>
+                  <extensions>false</extensions>
                </plugin>
             </plugins>
          </build>
