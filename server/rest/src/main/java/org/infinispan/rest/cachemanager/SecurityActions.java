@@ -12,15 +12,19 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.AddCacheManagerListenerAction;
+import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheEntryAsyncAction;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
+import org.infinispan.security.actions.GetClusterExecutorAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAsyncAction;
 
@@ -75,5 +79,13 @@ final class SecurityActions {
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
+   }
+
+   static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {
+      return doPrivileged(new GetClusterExecutorAction(cacheManager));
+   }
+
+   static AuthorizationManager getCacheAuthorizationManager(final AdvancedCache<?, ?> cache) {
+      return doPrivileged(new GetCacheAuthorizationManagerAction(cache));
    }
 }
