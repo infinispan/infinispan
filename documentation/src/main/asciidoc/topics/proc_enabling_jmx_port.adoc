@@ -6,25 +6,47 @@ Provide unique remote JMX ports to expose {brandname} MBeans through connections
 ifdef::remote_caches[]
 [NOTE]
 ====
-{brandname} Server does not expose JMX remotely by using the single port endpoint. 
+{brandname} Server does not expose JMX remotely by using the single port endpoint.
 If you want to remotely access the {brandname} Server through JMX, you must enable a remote port.
 ====
 endif::remote_caches[]
 
+You can enable remote JMX ports using one of the following approaches:
+
+* Enable remote JMX ports that require authentication to one of the {brandname} Server security realms.
+* Enable remote JMX ports manually using the standard Java management configuration options.
+
+.Prerequisites
+* For remote JMX with authentication, define user roles using the default security realm.
+Users must have `controlRole` with read/write access or the `monitorRole` with read-only access to access any JMX resources.
+
 .Procedure
-
-* Pass the following system properties to {brandname} at startup:
+Start {brandname} Server with a remote JMX port enabled using one of the following ways:
+* Enable remote JMX through port `9999`.
 +
-[source,java,options="nowrap",subs=attributes+,quotes+]
+[source,options="nowrap",subs=attributes+]
 ----
--Dcom.sun.management.jmxremote
--Dcom.sun.management.jmxremote.port=9999
+bin/server.sh --jmx 9999
 ----
++
+[WARNING]
+====
+Using remote JMX with SSL disabled is not intended for production environments.
+====
 
-//Community content
-ifdef::community[]
+* Pass the following system properties to {brandname} Server at startup.
++
+[source,options="nowrap",subs=attributes+]
+----
+bin/server.sh -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+----
++
+[WARNING]
+====
+Enabling remote JMX with no authentication or SSL is not secure and not recommended in any environment.
+Disabling authentication and SSL allows unauthorized users to connect to your server and access the data hosted there.
+====
+
 [role="_additional-resources"]
 .Additional resources
-* link:https://docs.oracle.com/en/java/javase/11/management/monitoring-and-management-using-jmx-technology.html#GUID-F08985BB-629A-4FBF-A0CB-8762DF7590E0[Remote monitoring and Management] (Oracle)
-endif::community[]
-
+* link:{server_docs}#creating-security-realms_security-realms[Creating security realms]
