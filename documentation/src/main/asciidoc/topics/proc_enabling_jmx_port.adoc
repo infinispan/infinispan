@@ -11,23 +11,42 @@ If you want to remotely access {brandname} Server via JMX you must enable a remo
 ====
 endif::remote_caches[]
 
+You can enable remote JMX ports using one of the following approaches:
+
+* Enable remote JMX ports that require authentication to one of the {brandname} Server security realms.
+* Enable remote JMX ports manually using the standard Java management configuration options.
+
+.Prerequisites
+* For remote JMX with authentication, define user roles using the default security realm.
+Users must have `controlRole` with read/write access or the `monitorRole` with read-only access to access any JMX resources.
+
 .Procedure
-
-Start the server with JMX remoting enabled using one of the supported ways:
-
-* Using the `--jmx` option. This will enable JMX remoting on port `9999` without SSL and requiring authentication
-to the default security realm. Users authenticating to JMX should have either the `controlRole` (for read/write access)
-or the `monitorRole` (for read-only access). Users not belonging to either of those roles will not be able to access
-any JMX resources. If there is no default security realm, access will always be denied.
+Start {brandname} Server with a remote JMX port enabled using one of the following ways:
+* Enable remote JMX through port `9999`.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 bin/server.sh --jmx 9999
 ----
++
+[WARNING]
+====
+Using remote JMX with SSL disabled is not intended for production environments.
+====
 
-* Using any of the standard JMX remoting system properties {brandname} at startup. Refer to the https://docs.oracle.com/en/java/javase/11/management/monitoring-and-management-using-jmx-technology.html#GUID-F08985BB-629A-4FBF-A0CB-8762DF7590E0[JDK Monitoring and Management using JMX technology] guide for details.
+* Pass the following system properties to {brandname} Server at startup.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-bin/server.sh -Dcom.sun.management.jmxremote.port=9999
+bin/server.sh -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
 ----
++
+[WARNING]
+====
+Enabling remote JMX with no authentication or SSL is not secure and not recommended in any environment.
+Disabling authentication and SSL allows unauthorized users to connect to your server and access the data hosted there.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#creating-security-realms_security-realms[Creating security realms]
