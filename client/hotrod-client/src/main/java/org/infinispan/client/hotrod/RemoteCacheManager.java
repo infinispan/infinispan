@@ -264,7 +264,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public Set<String> getCacheNames() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+      OperationsFactory operationsFactory = channelFactory.adminOperationFactory();
       String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
       Set<String> cacheNames = new HashSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
@@ -525,7 +525,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                return null;
             }
             // Create and re-ping
-            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+            OperationsFactory adminOperationsFactory = channelFactory.adminOperationFactory();
             pingResponse = await(adminOperationsFactory.newAdminOperation("@@cache@getorcreate", params).execute().thenCompose(s -> operationsFactory.newFaultTolerantPingOperation().execute()));
          }
       } else {
@@ -623,7 +623,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+      OperationsFactory operationsFactory = channelFactory.adminOperationFactory();
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {

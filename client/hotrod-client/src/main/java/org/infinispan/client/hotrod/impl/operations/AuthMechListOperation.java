@@ -22,7 +22,7 @@ import io.netty.channel.Channel;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class AuthMechListOperation extends HotRodOperation<List<String>> {
+public class AuthMechListOperation extends NeutralVersionHotRodOperation<List<String>> {
    private final Channel channel;
    private int mechCount = -1;
    private List<String> result;

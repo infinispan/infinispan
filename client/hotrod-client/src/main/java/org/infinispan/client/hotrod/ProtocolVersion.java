@@ -49,6 +49,7 @@ public enum ProtocolVersion {
 
    public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_AUTO;
    public static final ProtocolVersion HIGHEST_PROTOCOL_VERSION = VERSIONS[VERSIONS.length - 2];
+   public static final ProtocolVersion SAFE_HANDSHAKE_PROTOCOL_VERSION = PROTOCOL_VERSION_31;
 
    private final String textVersion;
    private final int version;
@@ -91,5 +92,13 @@ public enum ProtocolVersion {
             return VERSIONS[i];
       }
       throw new IllegalArgumentException("Illegal version " + version);
+   }
+
+   public ProtocolVersion choose(ProtocolVersion serverVersion) {
+      if (serverVersion == null) {
+         return this;
+      }
+
+      return (serverVersion.compareTo(this) >= 0) ? this : serverVersion;
    }
 }
