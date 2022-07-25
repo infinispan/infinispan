@@ -1,0 +1,31 @@
+[id='enabling-jmx-port_{context}']
+= Enabling JMX remote ports
+Provide unique remote JMX ports to expose {brandname} MBeans through connections in JMXServiceURL format.
+Enable remote JMX ports manually using the standard Java management configuration options.
+
+//Server Guide
+ifdef::remote_caches[]
+[NOTE]
+====
+{brandname} Server does not expose JMX remotely via the single port endpoint.
+If you want to remotely access {brandname} Server via JMX you must enable a remote port.
+====
+endif::remote_caches[]
+
+.Procedure
+* Pass the following system properties to {brandname} Server at startup.
++
+[source,options="nowrap",subs=attributes+]
+----
+bin/server.sh -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+----
++
+[WARNING]
+====
+Enabling remote JMX with no authentication or SSL is not secure and not recommended in any environment.
+Disabling authentication and SSL allows unauthorized users to connect to your server and access the data hosted there.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://docs.oracle.com/en/java/javase/11/management/monitoring-and-management-using-jmx-technology.html#GUID-F08985BB-629A-4FBF-A0CB-8762DF7590E0[Remote monitoring and Management]
