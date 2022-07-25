@@ -79,7 +79,7 @@ Defines the path to a keystore that contains a certificate chain that verifies s
 Specifies a password to access the truststore.
 
 *keystore*::
-Defines the path to a keystore that contains a certificate that identifies the client. Use this  when the server requires client certificate authentication
+Defines a path to the keystore, which contains a certificate. The certificate identifies the client. Use the `keystore` property when the server requires client certificate authentication.
 
 *keystore-password*::
 Specifies a password to access the keystore.

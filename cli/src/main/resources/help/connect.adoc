@@ -34,13 +34,13 @@ Specifies a truststore.
 Specifies a password for the truststore.
 
 *-k, --keystore*='PATH'::
-Specifies a keystore containing a client certificate.
+Specifies a keystore that contains a client certificate.
 
 *-w, --keystore-password*='PASSWORD'::
 Specifies a password for the keystore.
 
 *--hostname-verifier*='REGEX'
-A regular expression used to match hostnames when connecting to SSL/TLS-enabled servers.
+A regular expression that matches hostnames during a connection to an SSL/TLS-enabled server.
 
 *--trustall*::
 Trusts all certificates.
