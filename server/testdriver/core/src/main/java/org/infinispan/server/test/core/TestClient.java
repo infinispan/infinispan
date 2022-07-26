@@ -7,12 +7,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCounterManagerFactory;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
@@ -56,11 +54,7 @@ public class TestClient {
    }
 
    public HotRodTestClientDriver hotrod() {
-      return hotrod(configurationBuilder -> {});
-   }
-
-   public HotRodTestClientDriver hotrod(Consumer<ConfigurationBuilder> additionalConfigurations) {
-      return new HotRodTestClientDriver(testServer, this, additionalConfigurations);
+      return new HotRodTestClientDriver(testServer, this);
    }
 
    public RestTestClientDriver rest() {
