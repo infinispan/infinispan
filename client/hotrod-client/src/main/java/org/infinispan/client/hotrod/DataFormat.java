@@ -93,7 +93,7 @@ public final class DataFormat {
       }
    }
 
-   private Marshaller resolveValueMarshaller() {
+   public Marshaller resolveValueMarshaller() {
       if (valueMarshaller != null) return valueMarshaller;
       if (valueType == null) return defaultMarshaller;
 
@@ -108,7 +108,7 @@ public final class DataFormat {
       return isObjectStorage;
    }
 
-   private Marshaller resolveKeyMarshaller() {
+   public Marshaller resolveKeyMarshaller() {
       if (keyMarshaller != null) return keyMarshaller;
       if (keyType == null) return defaultMarshaller;
 
