@@ -167,7 +167,7 @@ public class JGroupsConfigBuilder {
       int clusterOffset = udpIndex * MAX_SITES_PER_THREAD + siteIndex;
 
       Map<String, String> props = udp.getProperties();
-      props.put("mcast_addr", "228.10.10." + clusterOffset);
+      props.put("mcast_addr", "239.10.10." + clusterOffset);
       props.put("mcast_port", String.valueOf(46000 + clusterOffset));
       replaceProperties(jgroupsCfg, props, UDP);
    }

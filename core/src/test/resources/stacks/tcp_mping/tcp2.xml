@@ -22,7 +22,7 @@
    <!--port_range="1"-->
    <!--num_initial_members="3"/>-->
 
-   <MPING mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
+   <MPING mcast_addr="${jgroups.mping.mcast_addr:239.2.4.6}"
           mcast_port="${jgroups.mping.mcast_port:43366}"
           break_on_coord_rsp="true"
           num_discovery_runs="3"

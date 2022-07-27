@@ -67,7 +67,7 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
       final ProtocolStackConfigurator configurator = ConfiguratorFactory.getStackConfigurator("default-configs/default-jgroups-udp.xml");
       ProtocolConfiguration udpConfiguration = configurator.getProtocolStack().get(0);
       assertEquals("UDP", udpConfiguration.getProtocolName());
-      udpConfiguration.getProperties().put("mcast_addr", "224.0.0.15");
+      udpConfiguration.getProperties().put("mcast_addr", "239.0.0.15");
       udpConfiguration.getProperties().put("thread_pool.min_threads", "0");
       udpConfiguration.getProperties().put("thread_pool.max_threads", String.valueOf(JGROUPS_MAX_THREADS));
       ProtocolConfiguration gmsConfiguration = configurator.getProtocolStack().get(9);

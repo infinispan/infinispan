@@ -2,7 +2,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups {jgroups_schema}">
     <UDP bind_addr="${jgroups.bind_addr:127.0.0.1}"
-         mcast_addr="${jgroups.udp.mcast_addr:192.0.2.0}"
+         mcast_addr="${jgroups.udp.mcast_addr:239.0.2.0}"
          mcast_port="${jgroups.udp.mcast_port:46655}"
          tos="8"
          ucast_recv_buf_size="20000000"

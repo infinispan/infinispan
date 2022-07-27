@@ -23,7 +23,7 @@ Use the following properties to customize JGroups cluster transport.
 
 | `jgroups.mcast_addr`
 | IP address for multicast, both discovery and inter-cluster communication. The IP address must be a valid "class D" address that is suitable for IP multicast.
-| `228.6.7.8`
+| `239.6.7.8`
 | Optional
 
 | `jgroups.mcast_port`

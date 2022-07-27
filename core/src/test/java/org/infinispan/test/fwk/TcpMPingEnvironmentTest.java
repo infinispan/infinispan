@@ -36,7 +36,7 @@ public class TcpMPingEnvironmentTest {
 
    List<JChannel> openedChannles = new ArrayList<JChannel>();
    private boolean success = false;
-   private static final String IP_ADDRESS = "228.10.10.5";
+   private static final String IP_ADDRESS = "239.10.10.5";
 
    @AfterMethod
    public void destroyCaches() {
@@ -55,7 +55,7 @@ public class TcpMPingEnvironmentTest {
 
    private void tryPrintRoutingInfo() {
       tryExecNativeCommand("/sbin/route", "Routing table is ");
-      tryExecNativeCommand("/sbin/ip route get 228.10.10.5", "/sbin/ip route get " + IP_ADDRESS);
+      tryExecNativeCommand("/sbin/ip route get 239.10.10.5", "/sbin/ip route get " + IP_ADDRESS);
    }
 
    private void tryExecNativeCommand(String command, String printPrefix) {
