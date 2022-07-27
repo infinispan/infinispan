@@ -6,7 +6,7 @@
       <TCP bind_port="7800" port_range="30" recv_buf_size="20000000" send_buf_size="640000"/>
       <RED/>
       <MPING break_on_coord_rsp="true"
-             mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
+             mcast_addr="${jgroups.mping.mcast_addr:239.2.4.6}"
              mcast_port="${jgroups.mping.mcast_port:43366}"
              num_discovery_runs="3"
              ip_ttl="${jgroups.udp.ip_ttl:2}"/>

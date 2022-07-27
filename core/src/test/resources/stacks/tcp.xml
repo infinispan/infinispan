@@ -31,7 +31,7 @@
 	<!--/>-->
 
    <!--<MPING break_on_coord_rsp="true"-->
-   <!--mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"-->
+   <!--mcast_addr="${jgroups.mping.mcast_addr:239.2.4.6}"-->
    <!--mcast_port="${jgroups.mping.mcast_port:43366}"-->
    <!--ip_ttl="2" num_initial_members="3"/>-->
 
