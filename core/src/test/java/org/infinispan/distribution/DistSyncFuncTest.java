@@ -60,7 +60,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       }
    }
 
-   private void assertOwnershipConsensus(String key) {
+   protected void assertOwnershipConsensus(String key) {
       List l1 = getCacheTopology(c1).getDistribution(key).writeOwners();
       List l2 = getCacheTopology(c2).getDistribution(key).writeOwners();
       List l3 = getCacheTopology(c3).getDistribution(key).writeOwners();
@@ -76,7 +76,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       for (Cache<Object, String> c : caches)
          assertTrue(c.isEmpty());
 
-      final Object k1 = getKeyForCache(caches.get(1));
+      final Object k1 = getKeyForCache(caches.get(0));
       getOwners(k1)[0].put(k1, "value");
 
       // No non-owners have requested the key, so no invalidations
@@ -222,12 +222,21 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
    public void testKeyValueEntryCollections() {
       c1.put("1", "one");
       asyncWait("1", PutKeyValueCommand.class);
-      c2.put("2", "two");
-      asyncWait("2", PutKeyValueCommand.class);
-      c3.put("3", "three");
-      asyncWait("3", PutKeyValueCommand.class);
-      c4.put("4", "four");
-      asyncWait("4", PutKeyValueCommand.class);
+
+      if (c2 != null) {
+         c2.put("2", "two");
+         asyncWait("2", PutKeyValueCommand.class);
+      }
+
+      if (c3 != null) {
+         c3.put("3", "three");
+         asyncWait("3", PutKeyValueCommand.class);
+      }
+
+      if (c4 != null) {
+         c4.put("4", "four");
+         asyncWait("4", PutKeyValueCommand.class);
+      }
 
       for (Cache c : caches) {
          Set expKeys = TestingUtil.getInternalKeys(c);

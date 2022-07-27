@@ -3,6 +3,9 @@ package org.infinispan.scattered;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -40,6 +43,32 @@ public class ScatteredSyncFuncTest extends DistSyncFuncTest {
    @Override
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       Utils.assertOwnershipAndNonOwnership(caches, key);
+   }
+
+   public void testPutAll() {
+      Map<MagicKey, String> nonOwner = new HashMap<>();
+      for (int i = 0; i < 5; i++) {
+         nonOwner.put(new MagicKey(cache(0, cacheName)), String.valueOf(i));
+      }
+
+      cache(2, cacheName).putAll(nonOwner);
+      for (Map.Entry<MagicKey, String> entry: nonOwner.entrySet()) {
+         assertLocalValue(0, entry.getKey(), entry.getValue());
+         assertLocalValue(2, entry.getKey(), entry.getValue());
+         assertOwnershipAndNonOwnership(entry.getKey(), false);
+      }
+
+      Map<MagicKey, String> fromOwner = new HashMap<>();
+      for (int i = 0; i < 5; i++) {
+         fromOwner.put(new MagicKey(cache(0, cacheName)), String.valueOf(i));
+      }
+      cache(0, cacheName).putAll(fromOwner);
+
+      // We don't know which node is the backup.
+      for (Map.Entry<MagicKey, String> entry: fromOwner.entrySet()) {
+         assertLocalValue(0, entry.getKey(), entry.getValue());
+         assertOwnershipAndNonOwnership(entry.getKey(), false);
+      }
    }
 
    public void testCompute() {
@@ -162,35 +191,35 @@ public class ScatteredSyncFuncTest extends DistSyncFuncTest {
       assertLocalValue(0, otherKey, "x");
       assertLocalValue(1, otherKey, "x");
       assertNoLocalValue(2, otherKey);
-      assertOwnershipAndNonOwnership(key, false);
+      assertOwnershipAndNonOwnership(otherKey, false);
 
       // on existent value from non-owner, non-last-writer
       assertEquals("x", cache(2, cacheName).computeIfAbsent(otherKey, k -> "y"));
       assertLocalValue(0, otherKey, "x");
       assertLocalValue(1, otherKey, "x");
       assertNoLocalValue(2, otherKey);
-      assertOwnershipAndNonOwnership(key, false);
+      assertOwnershipAndNonOwnership(otherKey, false);
 
       // removal on owner should do nothing
       assertEquals("x", cache(0, cacheName).computeIfAbsent(otherKey, k -> null));
       assertLocalValue(0, otherKey, "x");
       assertLocalValue(1, otherKey, "x");
       assertNoLocalValue(2, otherKey);
-      assertOwnershipAndNonOwnership(key, false);
+      assertOwnershipAndNonOwnership(otherKey, false);
 
       // removal on non-owner should do nothing
       assertEquals("x", cache(1, cacheName).computeIfAbsent(otherKey, k -> null));
       assertLocalValue(0, otherKey, "x");
       assertLocalValue(1, otherKey, "x");
       assertNoLocalValue(2, otherKey);
-      assertOwnershipAndNonOwnership(key, false);
+      assertOwnershipAndNonOwnership(otherKey, false);
 
       // removal on non-owner, non-last-writer should do nothing
       assertEquals("x", cache(2, cacheName).computeIfAbsent(otherKey, k -> null));
       assertLocalValue(0, otherKey, "x");
       assertLocalValue(1, otherKey, "x");
       assertNoLocalValue(2, otherKey);
-      assertOwnershipAndNonOwnership(key, false);
+      assertOwnershipAndNonOwnership(otherKey, false);
    }
 
    public void testMerge() {

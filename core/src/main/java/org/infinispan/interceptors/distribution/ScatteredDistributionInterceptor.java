@@ -1512,11 +1512,16 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             Address backup = getNextMember(cacheTopology);
             completeManyWriteOnPrimaryOriginator(writeCommand, backup, allFuture);
             PutMapCommand backupCommand = cf.buildPutMapCommand(backupMap, null, writeCommand.getFlagsBitSet());
-            backupCommand.setForwarded(true);
-            backupCommand.setTopologyId(writeCommand.getTopologyId());
-            ResponseCollector<Map<Address, Response>> collector = SingletonMapResponseCollector.ignoreLeavers();
-            CompletionStage<Map<Address, Response>> rpcFuture =
-                  rpcManager.invokeCommand(backup, backupCommand, collector, rpcManager.getSyncRpcOptions());
+            CompletionStage<Map<Address, Response>> rpcFuture;
+
+            if (backup != null) {
+               backupCommand.setForwarded(true);
+               backupCommand.setTopologyId(writeCommand.getTopologyId());
+               ResponseCollector<Map<Address, Response>> collector = SingletonMapResponseCollector.ignoreLeavers();
+               rpcFuture = rpcManager.invokeCommand(backup, backupCommand, collector, rpcManager.getSyncRpcOptions());
+            } else {
+               rpcFuture = CompletableFuture.completedFuture(Collections.emptyMap());
+            }
 
             CompletionStage<Map<Address, Response>> combinedResponse;
             if (CompletionStages.isCompletedSuccessfully(aggregatedStage)) {
@@ -1524,7 +1529,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             } else {
                combinedResponse = aggregatedStage.thenCombine(rpcFuture, (v, map) -> map);
             }
-            combinedResponse.whenComplete((responseMap, throwable1) -> {
+            combinedResponse.whenComplete((ignore, throwable1) -> {
                      if (throwable1 != null) {
                         allFuture.completeExceptionally(throwable1);
                      } else {
