@@ -73,6 +73,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    private InitializationContext ctx;
    private volatile boolean running;
    private volatile boolean available;
+   private volatile boolean exceptionOnAvailbilityCheck;
    private AtomicInteger startAttempts = new AtomicInteger();
 
    @Override
@@ -280,7 +281,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
          flowable = Flowable.fromIterable(segments)
                  .concatMap(segment -> {
                     Map<Object, byte[]> map = store.get(segment);
-                    if (map == null) {
+                    if (map == null || map.isEmpty()) {
                        return Flowable.<Map.Entry<Object, byte[]>>empty();
                     }
                     return Flowable.fromIterable(map.entrySet());
@@ -327,7 +328,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
+      if (exceptionOnAvailbilityCheck) {
+         throw new RuntimeException();
+      }
       return CompletableFutures.booleanStage(available);
+   }
+
+   public void setExceptionOnAvailbilityCheck(boolean throwException) {
+      this.exceptionOnAvailbilityCheck = throwException;
    }
 
    public void setAvailable(boolean available) {
