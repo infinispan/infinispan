@@ -2334,4 +2334,20 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Caught exception while invoking a event logger listener!", id = 675)
    void failedInvokingEventLoggerListener(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Store '%s'#isAvailable check threw Exception", id = 676)
+   void storeIsAvailableCheckThrewException(@Cause Throwable e, String storeImpl);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Store '%s'#isAvailable completed Exceptionally", id = 677)
+   void storeIsAvailableCompletedExceptionally(@Cause Throwable e, String storeImpl);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Persistence is unavailable because of store %s", id = 678)
+   void persistenceUnavailable(String storeImpl);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Persistence is now available", id = 679)
+   void persistenceAvailable();
 }

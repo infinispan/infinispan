@@ -28,6 +28,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -38,7 +39,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -73,6 +73,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    private InitializationContext ctx;
    private volatile boolean running;
    private volatile boolean available;
+   private volatile boolean exceptionOnAvailbilityCheck;
    private AtomicInteger startAttempts = new AtomicInteger();
 
    @Override
@@ -329,7 +330,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
+      if (exceptionOnAvailbilityCheck) {
+         throw new RuntimeException();
+      }
       return CompletableFutures.booleanStage(available);
+   }
+
+   public void setExceptionOnAvailbilityCheck(boolean throwException) {
+      this.exceptionOnAvailbilityCheck = throwException;
    }
 
    public void setAvailable(boolean available) {
