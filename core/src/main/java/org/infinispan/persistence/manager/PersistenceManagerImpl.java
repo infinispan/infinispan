@@ -330,7 +330,19 @@ public class PersistenceManagerImpl implements PersistenceManager {
       try {
          AggregateCompletionStage<Void> stageBuilder = CompletionStages.aggregateCompletionStage();
          for (StoreStatus storeStatus : stores) {
-            CompletionStage<Boolean> availableStage = storeStatus.store.isAvailable();
+            CompletionStage<Boolean> availableStage;
+            try {
+               availableStage = storeStatus.store.isAvailable();
+            } catch (Throwable t) {
+               log.storeIsAvailableCheckThrewException(t, storeStatus.store.getClass().getName());
+               availableStage = CompletableFutures.booleanStage(false);
+            }
+
+            availableStage = availableStage.exceptionally(throwable -> {
+               log.storeIsAvailableCompletedExceptionally(throwable, storeStatus.store.getClass().getName());
+               return false;
+            });
+
             stageBuilder.dependsOn(availableStage.thenCompose(isAvailable -> {
                storeStatus.availability = isAvailable;
                if (!isAvailable) {
@@ -360,14 +372,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
       // No locking needed: there is only one availability check task running at any given time
       if (unavailableStore != null) {
          if (unavailableExceptionMessage == null) {
-            log.debugf("Persistence is unavailable because of store %s", unavailableStore);
+            log.persistenceUnavailable(unavailableStore.getClass().getName());
             unavailableExceptionMessage = "Store " + unavailableStore + " is unavailable";
             return cacheNotifier.notifyPersistenceAvailabilityChanged(false);
          }
       } else {
          // All stores are available
          if (unavailableExceptionMessage != null) {
-            log.debug("Persistence is available again");
+            log.persistenceAvailable();
             unavailableExceptionMessage = null;
             return cacheNotifier.notifyPersistenceAvailabilityChanged(true);
          }

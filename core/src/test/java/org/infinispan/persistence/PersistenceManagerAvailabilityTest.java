@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -61,6 +62,14 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
    }
 
    public void testStoreReconnect() {
+      testAvailabilityFailover(dims -> dims.setAvailable(false), dims -> dims.setAvailable(true));
+   }
+
+   public void testStoreReconnectWithAvailabilityException() {
+      testAvailabilityFailover(dims -> dims.setExceptionOnAvailbilityCheck(true), dims -> dims.setExceptionOnAvailbilityCheck(false));
+   }
+
+   private void testAvailabilityFailover(Consumer<DummyInMemoryStore> failAction, Consumer<DummyInMemoryStore> recoverAction) {
       PersistenceAvailabilityListener pal = new PersistenceAvailabilityListener();
       Cache<Object, Object> cache = createManagerAndGetCache(0);
       cache.addListener(pal);
@@ -71,7 +80,7 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
       PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       assertTrue(pm.isAvailable());
       DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
-      dims.setAvailable(false);
+      failAction.accept(dims);
       eventually(() -> !pm.isAvailable());
       eventuallyEquals(1, () -> pal.unavailableCount.get());
 
@@ -80,7 +89,7 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
          fail("Expected " + StoreUnavailableException.class.getSimpleName());
       } catch (PersistenceException ignore) {
       }
-      dims.setAvailable(true);
+      recoverAction.accept(dims);
       eventuallyEquals(1, () -> pal.availableCount.get());
       assertTrue(pm.isAvailable());
 
