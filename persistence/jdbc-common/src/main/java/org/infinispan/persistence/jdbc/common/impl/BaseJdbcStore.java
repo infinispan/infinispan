@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import javax.transaction.Transaction;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.persistence.jdbc.common.TableOperations;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
@@ -108,8 +109,9 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
          try {
             connection = connectionFactory.getConnection();
             return connection != null && connection.isValid(10);
-         } catch (SQLException e) {
-            return false;
+         } catch (Throwable t) {
+            log.debugf(t, "Exception thrown when checking DB availability");
+            throw CompletableFutures.asCompletionException(t);
          } finally {
             connectionFactory.releaseConnection(connection);
          }
