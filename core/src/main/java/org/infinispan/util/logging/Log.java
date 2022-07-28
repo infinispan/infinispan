@@ -2230,4 +2230,20 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
    void failedToTransferTombstones(Address requestor, IntSet segments,  @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Store '%s'#isAvailable check threw Exception", id = 676)
+   void storeIsAvailableCheckThrewException(@Cause Throwable e, String storeImpl);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Store '%s'#isAvailable completed Exceptionally", id = 677)
+   void storeIsAvailableCompletedExceptionally(@Cause Throwable e, String storeImpl);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Persistence is unavailable because of store %s", id = 678)
+   void persistenceUnavailable(String storeImpl);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Persistence is now available", id = 679)
+   void persistenceAvailable();
 }
