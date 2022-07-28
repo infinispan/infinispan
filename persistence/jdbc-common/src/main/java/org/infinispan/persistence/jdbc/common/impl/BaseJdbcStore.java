@@ -23,6 +23,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -108,8 +109,9 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
          try {
             connection = connectionFactory.getConnection();
             return connection != null && connection.isValid(10);
-         } catch (SQLException e) {
-            return false;
+         } catch (Throwable t) {
+            log.debugf(t, "Exception thrown when checking DB availability");
+            throw CompletableFutures.asCompletionException(t);
          } finally {
             connectionFactory.releaseConnection(connection);
          }
