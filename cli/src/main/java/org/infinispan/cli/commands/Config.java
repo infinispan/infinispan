@@ -40,7 +40,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "config", description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class, Config.Convert.class})
+@GroupCommandDefinition(name = "config", description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class, Config.Reset.class, Config.Convert.class})
 public class Config extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -109,6 +109,25 @@ public class Config extends CliCommand {
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
          Context context = invocation.getContext();
          invocation.printf("%s=%s\n", name, context.getProperty(name));
+         return CommandResult.SUCCESS;
+      }
+   }
+
+   @CommandDefinition(name = "reset", description = "Resets all configuration properties to their default values")
+   public static class Reset extends CliCommand {
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      public CommandResult exec(ContextAwareCommandInvocation invocation) {
+         Context context = invocation.getContext();
+         context.resetProperties();
+         context.saveProperties();
          return CommandResult.SUCCESS;
       }
    }

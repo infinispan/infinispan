@@ -109,6 +109,11 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
+   public void resetProperties() {
+      properties.clear();
+   }
+
+   @Override
    public void saveProperties() {
       Path configFile = configPath.resolve(CONFIG_FILE);
       try {

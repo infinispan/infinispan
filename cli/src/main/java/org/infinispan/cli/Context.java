@@ -36,6 +36,8 @@ public interface Context extends AeshContext {
 
    Properties getProperties();
 
+   void resetProperties();
+
    void saveProperties();
 
    void setSslContext(SSLContextSettings sslContext);
