@@ -35,6 +35,9 @@ Sets the value of a specific property. If you do not specify a value, the proper
 *config get* 'name'::
 Retrieves the value of a specific property.
 
+*config reset*::
+Resets all properties to their default values.
+
 *config convert* --format=[xml|json|yaml] [-o outputFile] [inputFile]::
 Converts a configuration file to a different format.
 
