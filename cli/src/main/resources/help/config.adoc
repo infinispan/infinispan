@@ -76,7 +76,14 @@ Specifies whether to trust all server certificates. Values are `false` (default)
 Defines the path to a keystore that contains a certificate chain that verifies server identity.
 
 *truststore-password*::
+Specifies a password to access the truststore.
+
+*keystore*::
+Defines a path to the keystore, which contains a certificate. The certificate identifies the client. Use the `keystore` property when the server requires client certificate authentication.
+
+*keystore-password*::
 Specifies a password to access the keystore.
+
 
 
 EXAMPLES

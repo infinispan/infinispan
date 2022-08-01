@@ -27,6 +27,23 @@ Specifies a username to authenticate with ${infinispan.brand.name} servers.
 *-p, --password*='PASSWORD'::
 Specifies passwords.
 
+*-t, --truststore*='PATH'::
+Specifies a truststore.
+
+*-s, --truststore-password*='PASSWORD'::
+Specifies a password for the truststore.
+
+*-k, --keystore*='PATH'::
+Specifies a keystore that contains a client certificate.
+
+*-w, --keystore-password*='PASSWORD'::
+Specifies a password for the keystore.
+
+*--hostname-verifier*='REGEX'
+A regular expression that matches hostnames during a connection to an SSL/TLS-enabled server.
+
+*--trustall*::
+Trusts all certificates.
 
 EXAMPLE
 -------

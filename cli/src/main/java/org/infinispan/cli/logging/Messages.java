@@ -44,8 +44,8 @@ public interface Messages {
    @Message("The user is not allowed to access the server resource: %s")
    AccessDeniedException forbidden(String s);
 
-   @Message("Error while loading trust store '%s'")
-   String keyStoreError(String trustStorePath, @Cause Exception e);
+   @Message("Error while configuring SSL")
+   String keyStoreError(@Cause Exception e);
 
    @Message("No such resource '%s'")
    IllegalArgumentException noSuchResource(String name);
