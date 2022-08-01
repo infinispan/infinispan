@@ -28,8 +28,8 @@ import org.jgroups.protocols.raft.InMemoryLog;
 import org.jgroups.protocols.raft.NO_DUPES;
 import org.jgroups.protocols.raft.RAFT;
 import org.jgroups.protocols.raft.REDIRECT;
-import org.jgroups.protocols.raft.StateMachine;
 import org.jgroups.raft.RaftHandle;
+import org.jgroups.raft.StateMachine;
 import org.jgroups.stack.ProtocolStack;
 
 /**
