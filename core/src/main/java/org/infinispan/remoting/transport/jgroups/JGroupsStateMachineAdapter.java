@@ -8,7 +8,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.raft.RaftStateMachine;
-import org.jgroups.protocols.raft.StateMachine;
+import org.jgroups.raft.StateMachine;
 
 /**
  * An adapter that converts JGroups {@link StateMachine} calls to {@link  RaftStateMachine}.
@@ -24,7 +24,8 @@ class JGroupsStateMachineAdapter<T extends RaftStateMachine> implements StateMac
    }
 
    @Override
-   public byte[] apply(byte[] data, int offset, int length) throws Exception {
+   public byte[] apply(byte[] data, int offset, int length, boolean serialize_response) throws Exception {
+      // serialize_response ignored.
       ByteBuffer buffer = stateMachine.apply(ByteBufferImpl.create(data, offset, length));
       return buffer == null ? Util.EMPTY_BYTE_ARRAY : buffer.trim();
    }
