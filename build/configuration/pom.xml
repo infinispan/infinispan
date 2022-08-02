@@ -173,7 +173,7 @@
       <version.mockito>4.3.1</version.mockito>
       <version.mockito_dep.bytebuddy>1.9.7</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
-      <version.nashorn>15.3</version.nashorn>
+      <version.nashorn>15.4</version.nashorn>
       <version.netty>4.1.78.Final</version.netty>
       <version.netty.incubator.iouring>0.0.14.Final</version.netty.incubator.iouring>
       <version.okhttp>3.14.9</version.okhttp>
