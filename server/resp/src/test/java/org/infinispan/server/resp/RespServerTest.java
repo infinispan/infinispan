@@ -27,9 +27,8 @@ public class RespServerTest extends AbstractInfinispanTest {
    public void testValidateDefaultConfiguration() {
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
-               ms.start(new RespServerConfigurationBuilder().build(), cm);
+               ms.start(new RespServerConfigurationBuilder().port(0).build(), cm);
                assertEquals(ms.getHost(), "127.0.0.1");
-               assertEquals((int) ms.getPort(), RespServerConfiguration.DEFAULT_RESP_PORT);
                assertEquals(ms.getCache().getName(), RespServerConfiguration.DEFAULT_RESP_CACHE);
             }));
    }
@@ -49,7 +48,7 @@ public class RespServerTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
-               ms.start(new RespServerConfigurationBuilder().build(), cm);
+               ms.start(new RespServerConfigurationBuilder().port(0).build(), cm);
                assertEquals(CacheMode.LOCAL, ms.getCache().getCacheConfiguration().clustering().cacheMode());
             }));
    }
@@ -58,7 +57,7 @@ public class RespServerTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
-               ms.start(new RespServerConfigurationBuilder().build(), cm);
+               ms.start(new RespServerConfigurationBuilder().port(0).build(), cm);
                assertEquals(CacheMode.REPL_SYNC, ms.getCache().getCacheConfiguration().clustering().cacheMode());
             }));
    }

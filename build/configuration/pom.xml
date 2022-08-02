@@ -144,7 +144,7 @@
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.2.Final</version.infinispan.maven-plugins>
       <version.io.agroal>1.16</version.io.agroal>
-      <version.io.lettuce>6.1.6.RELEASE</version.io.lettuce>
+      <version.io.lettuce>6.2.0.RELEASE</version.io.lettuce>
       <version.io.mashona>1.0.0</version.io.mashona>
       <version.jackson>2.13.2</version.jackson>
       <version.jackson.databind>2.13.2.2</version.jackson.databind>
