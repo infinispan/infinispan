@@ -1252,21 +1252,24 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       restResponse = join(cacheClient.setAvailability("DEGRADED_MODE"));
       ResponseAssertion.assertThat(restResponse).isOk();
 
-      restResponse = join(cacheClient.getAvailability());
-      ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("DEGRADED_MODE");
+      eventuallyEquals("Availability status not updated!", "DEGRADED_MODE", () -> {
+         RestResponse r = join(cacheClient.getAvailability());
+         ResponseAssertion.assertThat(r).isOk();
+         return r.getBody();
+      });
 
       // Ensure that the endpoints can be utilised with internal caches
-      cacheClient = adminClient.cache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME);
-      restResponse = join(cacheClient.getAvailability());
+      RestCacheClient adminCacheClient = adminClient.cache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME);
+      restResponse = join(adminCacheClient.getAvailability());
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
 
       // No-op in core as the cache uses the PreferAvailabilityStategy
       // Call to ensure that accessing internal cache doesn't throw an exception
-      restResponse = join(cacheClient.setAvailability("DEGRADED_MODE"));
+      restResponse = join(adminCacheClient.setAvailability("DEGRADED_MODE"));
       ResponseAssertion.assertThat(restResponse).isOk();
 
       // The availability will always be AVAILABLE
-      restResponse = join(cacheClient.getAvailability());
+      restResponse = join(adminCacheClient.getAvailability());
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
    }
 
