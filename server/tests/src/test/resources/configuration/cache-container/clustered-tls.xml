@@ -1,0 +1,15 @@
+<cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:locks="urn:infinispan:config:clustered-locks:14.0"
+                 xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-fragment-14.0.xsd urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
+                 xmlns="urn:infinispan:config:14.0"
+                 name="default" statistics="true"
+                 xmlns:server="urn:infinispan:server:14.0">
+   <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}" server:security-realm="cluster-transport"/>
+   <serialization>
+      <allow-list>
+         <regex>.*</regex>
+      </allow-list>
+   </serialization>
+   <metrics gauges="true" histograms="true" accurate-size="true"/>
+   <locks:clustered-locks num-owners="-1"/>
+</cache-container>

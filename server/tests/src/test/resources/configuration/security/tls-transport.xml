@@ -1,0 +1,24 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
+          xmlns="urn:infinispan:server:14.0">
+    <security-realms>
+        <security-realm name="default">
+            <properties-realm groups-attribute="Roles">
+                <user-properties path="users.properties" relative-to="infinispan.server.config.path" plain-text="true"/>
+                <group-properties path="groups.properties" relative-to="infinispan.server.config.path"/>
+            </properties-realm>
+        </security-realm>
+        <security-realm name="cluster-transport">
+            <server-identities>
+                <ssl>
+                    <keystore path="server.pfx"
+                              password="secret"
+                              alias="server"/>
+                    <truststore path="server.pfx"
+                                password="secret"/>
+
+                </ssl>
+            </server-identities>
+        </security-realm>
+    </security-realms>
+</security>
