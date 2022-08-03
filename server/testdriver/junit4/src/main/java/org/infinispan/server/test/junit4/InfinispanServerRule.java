@@ -80,6 +80,7 @@ public class InfinispanServerRule implements TestRule {
                base.evaluate();
             } catch (Throwable e) {
                log.error("Problem during the server initialization", e);
+               throw e;
             } finally {
                InfinispanServerRule.this.after(testName);
                if (manageServer && testServer.isDriverInitialized()) {
