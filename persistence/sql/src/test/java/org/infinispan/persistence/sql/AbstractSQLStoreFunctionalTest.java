@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.common.UnitTestDatabaseManager;
@@ -39,12 +41,14 @@ import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryCon
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.sql.configuration.AbstractSchemaJdbcConfigurationBuilder;
+import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
 import org.infinispan.transaction.TransactionMode;
+import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -260,6 +264,45 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                   .messageName("Sex")
                   .packageName("org.infinispan.test.core");
       testSimpleGetAndPut(m.getName(), "samantha", Sex.FEMALE);
+   }
+
+   public void testEmbeddedLoadSchemaAfterCreation(Method m) {
+      schemaConsumer = builder ->
+            builder.schemaJdbcConfigurationBuilder()
+                  .embeddedKey(true)
+                  .messageName("Person")
+                  .packageName("org.infinispan.test.core");
+
+      final AtomicBoolean loadSchema = new AtomicBoolean(false);
+      SerializationContextRegistry scr = TestingUtil.extractGlobalComponent(cacheManager, SerializationContextRegistry.class);
+      SerializationContextRegistry spyScr = Mockito.spy(scr);
+      Mockito.when(spyScr.getUserCtx()).then(ivk -> {
+         if (loadSchema.get()) return scr.getUserCtx();
+         return ProtobufUtil.newSerializationContext();
+      });
+      TestingUtil.replaceComponent(cacheManager, SerializationContextRegistry.class, spyScr, true);
+
+      String cacheName = m.getName();
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      // This should fail because the schema does not exist.
+      Exceptions.expectException(CacheConfigurationException.class, CompletionException.class,
+            CacheConfigurationException.class,
+            "ISPN008047: Schema not found for : org.infinispan.test.core.Person",
+            () -> cacheManager.getCache(cacheName)
+      );
+
+      loadSchema.set(true);
+      // Schema registered successfully afterwards.
+      // Should be fully functional now.
+      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      String key = "joe";
+      Person value = new Person("joe");
+      assertNull(cache.get(key));
+      cache.put(key, value);
+      assertEquals(value, cache.get(key));
    }
 
    private void testSimpleGetAndPut(String cacheName, Object key, Object value) {

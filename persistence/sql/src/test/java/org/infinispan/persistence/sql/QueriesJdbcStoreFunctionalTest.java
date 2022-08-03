@@ -96,7 +96,7 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "name", "street")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
-      } else if (cacheName.toUpperCase().startsWith("TESTEMBEDDEDKEY")) {
+      } else if (cacheName.toUpperCase().startsWith("TESTEMBEDDED")) {
          storeBuilder.keyColumns("name");
          storeBuilder.queriesJdbcConfigurationBuilder()
                .select("SELECT name, STREET, city, ZIP, picture, sex, birthdate FROM " + tableName + " WHERE name = :name")

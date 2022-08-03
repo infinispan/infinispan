@@ -545,7 +545,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          try {
             return (Cache<K, V>) cacheFuture.join();
          } catch (CompletionException e) {
-            throw ((CacheException) e.getCause());
+            caches.computeIfPresent(cacheName, (k, v) -> {
+               if (v == cacheFuture) {
+                  return null;
+               }
+               return v;
+            });
          }
       }
 
