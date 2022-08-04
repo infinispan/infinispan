@@ -61,6 +61,17 @@ Use the following properties to customize JGroups cluster transport.
 | `50000` (port `57800` )
 | Optional
 
+| `jgroups.frag_size`
+| The max number of bytes in a message. Larger messages will be fragmented.
+| 60000
+| Optional
+
+| `jgroups.bundler.max_size`
+| Maximum number of bytes for messages to be queued until they are sent.
+Must be higher than `jgroups.frag_size`.
+| 64000
+| Optional
+
 |===
 
 [role="_additional-resources"]

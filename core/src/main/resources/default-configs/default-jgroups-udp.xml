@@ -15,7 +15,7 @@
         thread_naming_pattern="pl"
         diag.enabled="false"
         bundler_type="transfer-queue"
-        bundler.max_size="8500"
+        bundler.max_size="${jgroups.bundler.max_size:64000}"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
@@ -57,5 +57,5 @@
    <MFC max_credits="4m"
         min_threshold="0.40"
    />
-   <FRAG4 frag_size="8000"/>
+   <FRAG4 frag_size="${jgroups.frag_size:60000}"/>
 </config>
