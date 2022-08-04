@@ -241,7 +241,7 @@
       <version.maven-compiler-plugin>3.10.1</version.maven-compiler-plugin>
       <version.maven.invoker>3.2.1</version.maven.invoker>
       <version.maven.jar>3.2.0</version.maven.jar>
-      <version.maven.javadoc>3.2.0</version.maven.javadoc>
+      <version.maven.javadoc>3.4.1</version.maven.javadoc>
       <version.maven-plugin-annotations>3.5.1</version.maven-plugin-annotations>
       <version.maven-plugin-api>3.5.3</version.maven-plugin-api>
       <version.maven-plugin-plugin>3.6.0</version.maven-plugin-plugin>
@@ -277,6 +277,20 @@
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>${version.maven.javadoc}</version>
+               <executions>
+                  <execution>
+                     <id>javadoc</id>
+                     <phase>package</phase>
+                     <goals>
+                        <goal>jar</goal>
+                     </goals>
+                  </execution>
+               </executions>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-gpg-plugin</artifactId>
                <version>${version.maven.gpg}</version>
                <executions>
@@ -308,6 +322,10 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-gpg-plugin</artifactId>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
                </plugin>
             </plugins>
          </build>
