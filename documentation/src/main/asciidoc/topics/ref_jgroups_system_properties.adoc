@@ -62,7 +62,7 @@ Use the following properties to customize JGroups cluster transport.
 | Optional
 
 | `jgroups.frag_size`
-| The max number of bytes in a message. Larger messages will be fragmented.
+| Maximum number of bytes in a message. Messages larger than that are fragmented.
 | 60000
 | Optional
 
