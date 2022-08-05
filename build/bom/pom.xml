@@ -59,19 +59,6 @@
         <url>https://issues.jboss.org/browse/ISPN</url>
     </issueManagement>
 
-    <distributionManagement>
-        <repository>
-            <id>${jboss.releases.repo.id}</id>
-            <name>JBoss Release Repository</name>
-            <url>${jboss.releases.repo.url}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${jboss.snapshots.repo.id}</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>${jboss.snapshots.repo.url}</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <properties>
         <versionx.org.infinispan.infinispan-console>${version.console}</versionx.org.infinispan.infinispan-console>
     </properties>
@@ -426,7 +413,7 @@
 
     <profiles>
         <profile>
-            <id>community</id>
+            <id>community-release</id>
             <activation>
                <activeByDefault>true</activeByDefault>
             </activation>
