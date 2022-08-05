@@ -59,19 +59,6 @@
         <url>https://issues.jboss.org/browse/ISPN</url>
     </issueManagement>
 
-    <distributionManagement>
-        <repository>
-            <id>${jboss.releases.repo.id}</id>
-            <name>JBoss Release Repository</name>
-            <url>${jboss.releases.repo.url}</url>
-        </repository>
-        <snapshotRepository>
-            <id>${jboss.snapshots.repo.id}</id>
-            <name>JBoss Snapshot Repository</name>
-            <url>${jboss.snapshots.repo.url}</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <properties>
         <!-- Java source/target version -->
         <version.java>1.8</version.java>
