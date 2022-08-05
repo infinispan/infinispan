@@ -66,7 +66,7 @@ public class Generator {
          writer.printf("package %s;%n%n", p.packageName);
          writer.printf("import java.util.Arrays;%n");
          writer.printf("import java.util.Collections;%n");
-         writer.printf("import javax.annotation.Generated;%n");
+         writer.printf("import javax.annotation.processing.Generated;%n");
          writer.printf("%n");
          writer.printf("import org.infinispan.factories.impl.ComponentAccessor;%n");
          writer.printf("import org.infinispan.factories.impl.ModuleMetadataBuilder;%n");
@@ -299,7 +299,7 @@ public class Generator {
          writer.printf("import java.util.Arrays;%n");
          writer.printf("import java.util.Collection;%n");
          writer.printf("import java.util.Collections;%n");
-         writer.printf("import javax.annotation.Generated;%n");
+         writer.printf("import javax.annotation.processing.Generated;%n");
          writer.printf("%n");
          writer.printf("import org.infinispan.factories.impl.ModuleMetadataBuilder;%n");
          writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;%n");

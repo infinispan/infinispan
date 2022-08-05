@@ -29,6 +29,11 @@
             <scope>provided</scope>
         </dependency>
        <dependency>
+          <groupId>javax.annotation</groupId>
+          <artifactId>javax.annotation-api</artifactId>
+          <scope>provided</scope>
+       </dependency>
+       <dependency>
           <groupId>org.infinispan</groupId>
           <artifactId>infinispan-component-processor</artifactId>
        </dependency>
