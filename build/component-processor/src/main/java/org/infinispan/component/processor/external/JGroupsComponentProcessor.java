@@ -64,7 +64,7 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       w.println("import java.util.List;");
       w.println("import java.util.Map;");
       w.println("import java.util.function.Function;");
-      w.println("import javax.annotation.Generated;");
+      w.println("import javax.annotation.processing.Generated;");
       w.println("import static org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;");
       w.println("import org.jgroups.stack.Protocol;");
       w.println();
