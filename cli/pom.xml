@@ -23,6 +23,10 @@
          <artifactId>aesh</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.aesh</groupId>
+         <artifactId>readline</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
       </dependency>

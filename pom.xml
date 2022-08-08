@@ -290,7 +290,8 @@
       <versionx.junit.junit5>${version.junit5}</versionx.junit.junit5>
       <versionx.mysql.mysql-connector-java>8.0.28</versionx.mysql.mysql-connector-java>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
-      <versionx.org.aesh.aesh>2.6</versionx.org.aesh.aesh>
+      <versionx.org.aesh.aesh>${version.aesh}</versionx.org.aesh.aesh>
+      <versionx.org.aesh.readline>${version.aesh-readline}</versionx.org.aesh.readline>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
@@ -882,6 +883,11 @@
             <groupId>org.aesh</groupId>
             <artifactId>aesh</artifactId>
             <version>${versionx.org.aesh.aesh}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.aesh</groupId>
+            <artifactId>readline</artifactId>
+            <version>${versionx.org.aesh.readline}</version>
          </dependency>
          <dependency>
             <groupId>org.antlr</groupId>
