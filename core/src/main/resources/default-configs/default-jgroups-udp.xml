@@ -13,7 +13,7 @@
         mcast_recv_buf_size="25m"
         ip_ttl="${jgroups.ip_ttl:2}"
         thread_naming_pattern="pl"
-        diag.enabled="false"
+        diag.enabled="${jgroups.diag.enabled:false}"
         bundler_type="transfer-queue"
         bundler.max_size="${jgroups.bundler.max_size:64000}"
 
