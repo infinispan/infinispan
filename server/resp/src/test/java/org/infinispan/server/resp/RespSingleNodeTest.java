@@ -254,4 +254,11 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       Long nextValue = redis.decr(key);
       assertEquals(10L, nextValue.longValue());
    }
+
+   public void testCommand() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      List<Object> commands = redis.command();
+      assertEquals(20, commands.size());
+   }
 }

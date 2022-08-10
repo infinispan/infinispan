@@ -22,6 +22,7 @@ import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
@@ -270,10 +271,52 @@ public class Resp3Handler implements RespRequestHandler {
             // TODO: need to close connection
             ctx.flush();
             break;
+         case "COMMAND":
+            StringBuilder commandBuilder = new StringBuilder();
+            commandBuilder.append("*20\r\n");
+            addCommand(commandBuilder, "HELLO", -1, 0, 0, 0);
+            addCommand(commandBuilder, "AUTH", -2, 0, 0, 0);
+            addCommand(commandBuilder, "PING", -2, 0, 0, 0);
+            addCommand(commandBuilder, "ECHO", 2, 0, 0, 0);
+            addCommand(commandBuilder, "GET", 2, 1, 1, 1);
+            addCommand(commandBuilder, "SET", -3, 1, 1, 1);
+            addCommand(commandBuilder, "DEL", -2, 1, -1, 1);
+            addCommand(commandBuilder, "MGET", -2, 1, -1, 1);
+            addCommand(commandBuilder, "MSET", -3, 1, 1, 2);
+            addCommand(commandBuilder, "INCR", 2, 1, 1, 1);
+            addCommand(commandBuilder, "DECR", 2, 1, 1, 1);
+            addCommand(commandBuilder, "INFO", -1, 0, 0, 0);
+            addCommand(commandBuilder, "PUBLISH", 3, 0, 0, 0);
+            addCommand(commandBuilder, "SUBSCRIBE", -2, 0, 0, 0);
+            addCommand(commandBuilder, "SELECT", -1, 0, 0, 0);
+            addCommand(commandBuilder, "READWRITE", 1, 0, 0, 0);
+            addCommand(commandBuilder, "READONLY", 1, 0, 0, 0);
+            addCommand(commandBuilder, "RESET", 1, 0, 0, 0);
+            addCommand(commandBuilder, "QUIT", 1, 0, 0, 0);
+            addCommand(commandBuilder, "COMMAND", -1, 0, 0, 0);
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(commandBuilder.toString(), ctx.alloc()));
+            break;
          default:
             return RespRequestHandler.super.handleRequest(ctx, type, arguments);
       }
       return this;
+   }
+
+   private static void addCommand(StringBuilder builder, String name, int arity, int firstKeyPos, int lastKeyPos, int steps) {
+      builder.append("*6\r\n");
+      // Name
+      builder.append("$").append(ByteBufUtil.utf8Bytes(name)).append("\r\n").append(name).append("\r\n");
+      // Arity
+      builder.append(":").append(arity).append("\r\n");
+      // Flags
+      builder.append("*0\r\n");
+      // First key
+      builder.append(":").append(firstKeyPos).append("\r\n");
+      // Second key
+      builder.append(":").append(lastKeyPos).append("\r\n");
+      // Step
+      builder.append(":").append(steps).append("\r\n");
+
    }
 
    private static void handleLongResult(ChannelHandlerContext ctx, Long result) {

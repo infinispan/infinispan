@@ -20,7 +20,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 public class RespDetector extends ByteToMessageDecoder {
    public static final String NAME = "resp-detector";
    private final RespServer respServer;
-   private static final Pattern RESP3_HANDSHAKE = Pattern.compile("^(?is)\\*[1-9]\r\n\\$[1-9]\r\n(HELLO|AUTH)\r\n.*");
+   private static final Pattern RESP3_HANDSHAKE = Pattern.compile("^(?is)\\*[1-9]\r\n\\$[1-9]\r\n(HELLO|AUTH|COMMAND)\r\n.*");
 
    public RespDetector(RespServer respServer) {
       this.respServer = respServer;
