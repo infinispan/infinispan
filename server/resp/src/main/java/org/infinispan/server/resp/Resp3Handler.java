@@ -54,27 +54,13 @@ public class Resp3Handler implements RespRequestHandler {
                break;
             }
             if (arguments.size() == 4) {
-               performAuth(arguments.get(2), arguments.get(3)).whenComplete((subject, t) -> {
-                  if (t == null) {
-                     cache = cache.withSubject(subject);
-                     helloResponse(ctx);
-                  } else {
-                     handleThrowable(ctx, t);
-                  }
-               });
+               performAuth(ctx, arguments.get(2), arguments.get(3));
             } else {
                helloResponse(ctx);
             }
             break;
          case "AUTH":
-            performAuth(arguments.get(0), arguments.get(1)).whenComplete((subject, t) -> {
-               if (t == null) {
-                  cache = cache.withSubject(subject);
-                  ctx.writeAndFlush(statusOK());
-               } else {
-                  handleThrowable(ctx, t);
-               }
-            });
+            performAuth(ctx, arguments.get(0), arguments.get(1));
             break;
          case "PING":
             if (arguments.size() == 0) {
@@ -368,12 +354,29 @@ public class Resp3Handler implements RespRequestHandler {
             });
    }
 
-   private CompletionStage<Subject> performAuth(byte[] username, byte[] password) {
-      return respServer.getConfiguration().authentication().authenticator()
-            .authenticate(
-                  new String(username, StandardCharsets.UTF_8),
-                  new String(password, StandardCharsets.UTF_8).toCharArray()
-            );
+   private void performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
+      Authenticator authenticator = respServer.getConfiguration().authentication().authenticator();
+      if (authenticator == null) {
+         handleAuthResponse(ctx, null, null);
+         return;
+      }
+      authenticator.authenticate(
+            new String(username, StandardCharsets.UTF_8),
+            new String(password, StandardCharsets.UTF_8).toCharArray()
+      ).whenComplete((subject, t) -> handleAuthResponse(ctx, subject, t));
+   }
+
+   private void handleAuthResponse(ChannelHandlerContext ctx, Subject subject, Throwable t) {
+      if (t == null) {
+         if (subject != null) {
+            cache = cache.withSubject(subject);
+            ctx.writeAndFlush(statusOK());
+         } else {
+            ctx.writeAndFlush(ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set" + "\r\n", ctx.alloc())));
+         }
+      } else {
+         handleThrowable(ctx, t);
+      }
    }
 
    private static void helloResponse(ChannelHandlerContext ctx) {
