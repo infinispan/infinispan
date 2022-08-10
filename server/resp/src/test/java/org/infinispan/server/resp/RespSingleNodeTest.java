@@ -17,6 +17,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -26,6 +27,7 @@ import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
@@ -260,5 +262,10 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
       List<Object> commands = redis.command();
       assertEquals(20, commands.size());
+   }
+
+   public void testAuth() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set", () -> redis.auth("user", "pass"));
    }
 }
