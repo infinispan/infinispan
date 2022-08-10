@@ -14,6 +14,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.core.logging.Log;
@@ -222,11 +223,23 @@ public class Resp3Handler implements RespRequestHandler {
             break;
          case "INCR":
             counterIncOrDec(cache, arguments.get(0), true)
-                  .thenAccept(longValue -> handleLongResult(ctx, longValue));
+                  .whenComplete((longValue, t) -> {
+                     if (t != null) {
+                        handleThrowable(ctx, t);
+                     } else {
+                        handleLongResult(ctx, longValue);
+                     }
+                  });
             break;
          case "DECR":
             counterIncOrDec(cache, arguments.get(0), false)
-                  .thenAccept(longValue -> handleLongResult(ctx, longValue));
+                  .whenComplete((longValue, t) -> {
+                     if (t != null) {
+                        handleThrowable(ctx, t);
+                     } else {
+                        handleLongResult(ctx, longValue);
+                     }
+                  });
             break;
          case "INFO":
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()));
@@ -318,7 +331,12 @@ public class Resp3Handler implements RespRequestHandler {
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
                   String prevValue = new String(currentValueBytes, CharsetUtil.UTF_8);
-                  long prevIntValue = Long.parseLong(prevValue) + (increment ? 1 : -1);
+                  long prevIntValue;
+                  try {
+                     prevIntValue = Long.parseLong(prevValue) + (increment ? 1 : -1);
+                  } catch (NumberFormatException e) {
+                     throw new CacheException("value is not an integer or out of range");
+                  }
                   String newValueString = String.valueOf(prevIntValue);
                   byte[] newValueBytes = newValueString.getBytes(CharsetUtil.UTF_8);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)

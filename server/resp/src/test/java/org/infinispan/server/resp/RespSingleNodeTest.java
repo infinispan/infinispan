@@ -235,6 +235,14 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       assertEquals(14L, nextValue.longValue());
    }
 
+   public void testIncrPresentNotInteger() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incr-string";
+      redis.set(key, "foo");
+
+      Exceptions.expectException(RedisCommandExecutionException.class, ".*value is not an integer or out of range", () -> redis.incr(key));
+   }
+
    public void testDecrNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "decr-notpresent";
