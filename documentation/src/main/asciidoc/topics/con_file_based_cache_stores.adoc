@@ -4,12 +4,29 @@
 File-based cache stores provide persistent storage on the local host filesystem where {brandname} is running.
 For clustered caches, file-based cache stores are unique to each {brandname} node.
 
+For a file system that supports the Portable Operating System Interface (POSIX) standard, you can mount the file system to a pod on {openshiftshort} by using the same commands that you would use with the command line interface (CLI). 
+With this functionality, you can access storage capabilities that FCP, iSCSI, NFS, or Samba does not expose. 
+
+{brandname} defaults to using the `SoftIndexFileStore` implementation for file-based cache stores, because this implementation uses B+ trees that reduce the number of keys that need to be stored in memory.
+
+You can also consider the using the `SingleFileStore` implementation that persists data to file. This implementation might require additional memory for keeping an in-memory index of keys and the location of their values. 
+
+Other forms of cache stores exist, such as JDBC, SQL, and RocksDB.
+ 
+With a filesystem-based cache store, such as `SoftIndexFileStore` or `SingleFileStore`, you can mount file systems from a remote host over a network as though the hosts are mounted locally. 
+
 [WARNING]
 ====
 Never use filesystem-based cache stores on shared file systems, such as an NFS or Samba share, because they do not provide file locking capabilities and data corruption can occur.
 
 Additionally if you attempt to use transactional caches with shared file systems, unrecoverable failures can happen when writing to files during the commit phase.
 ====
+
+//Downstream content
+ifdef::downstream[]
+{RedHat} supports many types of file-based cache stores. 
+If you decide to switch from  the default `SoftIndexFileStore` implementation, consider the impact to your server’s resources and the increased risk of data loss for your files.
+endif::downstream[]
 
 [discrete]
 == Soft-Index File Stores
