@@ -4,15 +4,16 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,7 +34,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -98,10 +98,16 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
       parserRegistry = new ParserRegistry();
 
-      // Start the static caches first
-      Set<String> staticCacheNames = new HashSet<>(configurationManager.getDefinedCaches());
-      log.debugf("Starting statically defined caches: %s", staticCacheNames);
-      for (String cacheName : configurationManager.getDefinedCaches()) {
+      Set<String> internalCacheNames = new TreeSet<>(internalCacheRegistry.getInternalCacheNames());
+      log.debugf("Starting internal caches: %s", internalCacheNames);
+      for (String cacheName : internalCacheNames) {
+         SecurityActions.getCache(cacheManager, cacheName);
+      }
+
+      Set<String> staticCacheNames = new TreeSet<>(configurationManager.getDefinedCaches());
+      staticCacheNames.removeAll(internalCacheNames);
+      log.debugf("Starting user defined caches: %s", staticCacheNames);
+      for (String cacheName : staticCacheNames) {
          SecurityActions.getCache(cacheManager, cacheName);
       }
 
