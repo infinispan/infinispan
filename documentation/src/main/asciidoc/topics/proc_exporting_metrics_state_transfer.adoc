@@ -1,0 +1,33 @@
+[id='displaying-metrics-state-transfer_{context}']
+= Exporting metrics during a state transfer operation
+
+You can export time metrics for clustered caches that {brandname} redistributes across nodes. 
+
+A state transfer operation occurs when a clustered cache topology changes, such as a node joining or leaving a cluster.
+During a state transfer operation, {brandname} exports metrics from each cache, so that you can determine a cache's status.
+A state transfer exposes attributes as properties, so that {brandname} can export metrics from each cache.
+
+[NOTE]
+====
+You cannot perform a state transfer operation in invalidation mode. 
+====
+
+{brandname} generates time metrics that are compatible with the REST API and the JMX API. 
+
+.Prerequisites
+* Configure {brandname} metrics.
+* Initiate a state transfer operation by changing your clustered cache topology. 
+* Enable metrics for your cache type, such as embedded cache or remote cache.
+
+.Procedure
+* Choose one of the following methods:
+** Configure {brandname} to use the REST API to collect metrics.
+** Configure {brandname} to use the JMX API to collect metrics.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/jmxComponents.html#StateTransferManager[`StateTransferManager` ({brandname} {ispn_version_link} API) ]
+* link:{config_docs}#configuring-metrics_statistics-jmx[Configuring {brandname} metrics ({brandname} caches)]
+* link:{config_docs}#enabling-statistics-embedded_statistics-jmx[Enabling statistics in embedded caches].
+* link:{config_docs}#enabling-statistics-remote_statistics-jmx[Enabling statistic in remote caches].
+* link:{config_docs}#enabling-jmx_statistics-jmx[Registering JMX MBeans({brandname} caches)]

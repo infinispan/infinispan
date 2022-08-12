@@ -28,11 +28,13 @@ public class JBossLoggingConsumer extends BaseConsumer<JBossLoggingConsumer> {
       utf8String = utf8String.replaceAll("((\\r?\\n)|(\\r))$", "");
       switch (outputType) {
          case STDOUT:
+            this.logger.infof("%s%s: %s", prefix, outputType, utf8String);
+            break;
          case STDERR:
-            System.out.printf("%s%s: %s%n", prefix, outputType, utf8String);
-            this.logger.tracef("%s%s: %s", prefix, outputType, utf8String);
+            this.logger.errorf("%s%s: %s", prefix, outputType, utf8String);
+            break;
          case END:
-            return;
+            break;
          default:
             throw new IllegalArgumentException("Unexpected outputType " + outputType);
       }
