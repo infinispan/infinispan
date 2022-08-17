@@ -411,18 +411,19 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
             // Read the attributes: they are indented relative to the element and have a value
             while (next != null && next.indent > currentIndent && next.name != null) {
                if (next.value != null) {
-                  setAttributeValue(next.name, next.value);
+                  setAttributeValue(next.nsPrefix, next.name, next.value);
                   readNext();
                } else {
                   if (lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
                      String name = next.name;
+                     String namespace = next.nsPrefix;
                      StringBuilder sb = new StringBuilder();
                      readNext();
-                     while(next.listItem) {
+                     while(next != null && next.listItem) {
                         sb.append(replaceProperties(next.value)).append(' ');
                         readNext();
                      }
-                     this.setAttributeValue(name, sb.toString());
+                     this.setAttributeValue(namespace, name, sb.toString());
                   } else {
                      break;
                   }
@@ -564,9 +565,9 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
    }
 
    @Override
-   public void setAttributeValue(String name, String value) {
+   public void setAttributeValue(String namespace, String name, String value) {
       this.attributeNames.add(name);
-      this.attributeNamespaces.add(next.nsPrefix);
+      this.attributeNamespaces.add(namespace);
       this.attributeValues.add(replaceProperties(value));
    }
 
