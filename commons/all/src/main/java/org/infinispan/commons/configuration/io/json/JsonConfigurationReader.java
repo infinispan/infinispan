@@ -310,7 +310,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
    }
 
    @Override
-   public void setAttributeValue(String name, String value) {
+   public void setAttributeValue(String namespace, String name, String value) {
       attributes.add(new SimpleImmutableEntry<>(name, Json.make(value)));
    }
 

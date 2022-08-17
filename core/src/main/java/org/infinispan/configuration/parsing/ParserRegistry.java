@@ -217,7 +217,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       // If there's an invalid cache type element, then it's not a cache name and an invalid cache definition
       if (!Element.isCacheElement(reader.getLocalName()))
          throw CONFIG.unsupportedConfiguration(name, namespace, Version.getVersion());
-      reader.setAttributeValue("name", name);
+      reader.setAttributeValue("", "name", name);
       return findNamespaceParser(reader, reader.getNamespace(), reader.getLocalName());
    }
 
