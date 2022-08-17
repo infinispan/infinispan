@@ -533,15 +533,15 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          responseBuilder.status(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
-
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(invocationHelper.getRestCacheManager().getInstance());
       return CompletableFuture.supplyAsync(() -> {
          try {
             ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8), sourceType);
             ConfigurationBuilder cfgBuilder = holder.getCurrentConfigurationBuilder() != null ? holder.getCurrentConfigurationBuilder() : new ConfigurationBuilder();
             if (request.method() == PUT) {
-               administration.getOrCreateCache(cacheName, cfgBuilder.build());
+               administration.getOrCreateCache(cacheName, cfgBuilder.build(globalConfiguration));
             } else {
-               administration.createCache(cacheName, cfgBuilder.build());
+               administration.createCache(cacheName, cfgBuilder.build(globalConfiguration));
             }
             responseBuilder.status(OK);
          } catch (Throwable t) {
