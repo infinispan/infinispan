@@ -68,8 +68,10 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
             } else {
                keyStore = buildKeyStore(properties);
             }
-            String provider = attributes.attribute(PROVIDER).get();
-            KeyManagerFactory keyManagerFactory = provider != null ? KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm(), provider) : KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            String providerName = attributes.attribute(PROVIDER).get();
+            String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+            Provider provider = findProvider(INSTALLED_PROVIDERS, providerName, KeyManagerFactory.class, algorithm);
+            KeyManagerFactory keyManagerFactory = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
             char[] keyStorePassword = resolvePassword(attributes.attribute(KEYSTORE_PASSWORD));
             char[] keyPassword = resolvePassword(attributes.attribute(KEY_PASSWORD));
             keyManagerFactory.init(keyStore, keyPassword != null ? keyPassword : keyStorePassword);
