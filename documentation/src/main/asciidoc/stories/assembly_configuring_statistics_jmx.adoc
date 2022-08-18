@@ -18,6 +18,7 @@ include::{topics}/proc_enabling_jmx.adoc[leveloffset=+1]
 include::{topics}/proc_enabling_jmx_port.adoc[leveloffset=+2]
 include::{topics}/ref_jmx_mbeans.adoc[leveloffset=+2]
 include::{topics}/proc_registering_jmx_mbean_servers.adoc[leveloffset=+2]
+include::{topics}/proc_exporting_metrics_state_transfer.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
