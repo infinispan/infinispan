@@ -73,7 +73,7 @@ final class SecurityActions {
 
    static boolean stopCacheManager(final EmbeddedCacheManager cacheManager) {
       PrivilegedAction<Boolean> action = () -> {
-         if (cacheManager.getStatus().allowInvocations()) {
+         if (cacheManager != null && cacheManager.getStatus().allowInvocations()) {
             cacheManager.stop();
             return true;
          } else {
