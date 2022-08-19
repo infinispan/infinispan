@@ -30,20 +30,11 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons</artifactId>
-         <classifier>jakarta</classifier>
+         <artifactId>infinispan-commons-jakarta</artifactId>
        </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <classifier>jakarta</classifier>
-         <exclusions>
-           <exclusion>
-               <!-- Exclude the non jakarta commons -->
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-commons</artifactId>
-           </exclusion>
-         </exclusions>
+         <artifactId>infinispan-core-jakarta</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
