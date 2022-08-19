@@ -15,6 +15,7 @@
 
    <modules>
       <module>all</module>
+      <module>all-jakarta</module>
    </modules>
 
    <profiles>

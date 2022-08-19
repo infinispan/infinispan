@@ -27,10 +27,6 @@
 
     <build>
        <plugins>
-           <plugin>
-               <groupId>org.eclipse.transformer</groupId>
-               <artifactId>transformer-maven-plugin</artifactId>
-           </plugin>
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>

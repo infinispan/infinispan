@@ -160,10 +160,6 @@
                </dependenciesToScan>
             </configuration>
          </plugin>
-         <plugin>
-            <groupId>org.eclipse.transformer</groupId>
-            <artifactId>transformer-maven-plugin</artifactId>
-         </plugin>
       </plugins>
    </build>
 </project>
