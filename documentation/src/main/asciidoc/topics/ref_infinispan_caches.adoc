@@ -6,6 +6,20 @@ You can create declarative cache configuration in XML, JSON, and YAML format.
 All declarative caches must conform to the {brandname} schema.
 Configuration in JSON format must follow the structure of an XML configuration, elements correspond to objects and attributes correspond to fields.
 
+[IMPORTANT]
+====
+{brandname} restricts characters to a maximum of `255` for a cache name or a cache template name.
+If you exceed this character limit, {brandname} throws an exception.
+Write succinct cache names and cache template names.
+====
+
+[IMPORTANT]
+====
+A file system might set a limitation for the length of a file name, so ensure that a cache's name does not exceed this limitation.
+If a cache name exceeds a file system's naming limitation, general operations or initialing operations towards that cache might fail. 
+Write succinct file names.
+====
+
 [discrete]
 == Distributed caches
 
