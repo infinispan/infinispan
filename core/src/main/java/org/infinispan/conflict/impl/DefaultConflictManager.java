@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -498,17 +497,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                      log.tracef("Cache %s segment %s entries received: %s", cacheName, nextSegment, segmentEntries);
                   nextSegment++;
                   iterator = segmentEntries.iterator();
-               } catch (CancellationException e) {
-                  handleException(e);
-                  return false;
-               } catch (InterruptedException e) {
-                  handleException(e);
-                  Thread.currentThread().interrupt();
-                  throw new CacheException(e);
-               } catch (ExecutionException | TimeoutException e) {
-                  handleException(e);
-                  Throwable cause = e.getCause();
-                  throw new CacheException(e.getMessage(), cause != null ? cause : e);
+               }  catch (Exception e) {
+                  if (log.isTraceEnabled()) log.tracef("Cache %s replicaSpliterator caught %s", cacheName, e);
+                  stopStream();
+                  return handleException(e);
                }
             } else {
                streamInProgress.compareAndSet(true, false);
@@ -526,10 +518,24 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          streamInProgress.set(false);
       }
 
-      void handleException(Exception e) {
-         if (log.isTraceEnabled()) log.tracef("Cache %s replicaSpliterator caught %s", cacheName, e);
+      void stopStream() {
          stateReceiver.cancelRequests();
          streamInProgress.set(false);
+      }
+
+      private boolean handleException(Throwable t) {
+         Throwable cause = t.getCause();
+
+         if (t instanceof CancellationException || cause instanceof CancellationException) {
+            return false;
+         }
+
+         if (t instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+            throw new CacheException(t);
+         }
+
+         throw new CacheException(t.getMessage(), cause != null ? cause : t);
       }
    }
 }

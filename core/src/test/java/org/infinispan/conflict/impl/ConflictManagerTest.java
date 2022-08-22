@@ -7,12 +7,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -20,6 +22,7 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;
@@ -43,7 +46,9 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -121,6 +126,17 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       listener.latch.await();
       Exceptions.expectException(IllegalStateException.class, ".* Unable to retrieve conflicts as StateTransfer is currently in progress for cache .*", () -> getConflicts(0));
       latch.countDown();
+   }
+
+   public void testGetConflictAfterCancellation() throws Exception {
+      waitForClusterToForm(CACHE_NAME);
+      CountDownLatch latch = new CountDownLatch(1);
+      cancelStateTransfer(latch);
+      Future<Long> f = fork(() -> getConflicts(0).count());
+      if (!latch.await(10, TimeUnit.SECONDS)) {
+         throw new TestException("No state transfer cancelled");
+      }
+      assertEquals(0, (long) f.get(10, TimeUnit.SECONDS));
    }
 
    public void testAllVersionsOfKeyReturned() {
@@ -274,6 +290,10 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new DelayStateResponseCommandHandler(latch, delegate)));
    }
 
+   private void cancelStateTransfer(CountDownLatch latch) {
+      IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new StateTransferCancellation(latch, delegate)));
+   }
+
    public class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
       final CountDownLatch latch;
 
@@ -294,6 +314,34 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
                }
             }
          }
+         delegate.handle(command, reply, order);
+      }
+   }
+
+   public class StateTransferCancellation extends AbstractDelegatingHandler {
+      private final CountDownLatch latch;
+
+      protected StateTransferCancellation(CountDownLatch latch, PerCacheInboundInvocationHandler delegate) {
+         super(delegate);
+         this.latch = latch;
+      }
+
+      @Override
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+         // ISPN-14084
+         // Simulate the condition where the InboundTransferTask is cancelled before the SegmentRequest future is done.
+         if (command instanceof ConflictResolutionStartCommand) {
+            StateReceiverImpl<?, ?> sr = (StateReceiverImpl<?, ?>) TestingUtil.extractComponent(cache(0, command.getCacheName().toString()), StateReceiver.class);
+            Map<Address, InboundTransferTask> tasks = new HashMap<>();
+            ((ConflictResolutionStartCommand) command).getSegments().forEach((IntConsumer) value -> tasks.putAll(sr.getTransferTaskMap(value)));
+            sr.nonBlockingExecutor.execute(() -> {
+               tasks.forEach((k, v) -> v.cancel());
+               delegate.handle(command, reply, order);
+               latch.countDown();
+            });
+            return;
+         }
+
          delegate.handle(command, reply, order);
       }
    }
