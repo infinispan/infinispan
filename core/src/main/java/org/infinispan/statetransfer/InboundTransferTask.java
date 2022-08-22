@@ -118,7 +118,6 @@ public class InboundTransferTask {
     * @return a {@code CompletableFuture} that completes when the transfer is done.
     */
    public CompletionStage<Void> requestSegments() {
-      Address address = rpcManager.getAddress();
       return startTransfer(applyState ?
             segments -> commandsFactory.buildStateTransferStartCommand(topologyId, segments) :
             segments -> commandsFactory.buildConflictResolutionStartCommand(topologyId, segments));

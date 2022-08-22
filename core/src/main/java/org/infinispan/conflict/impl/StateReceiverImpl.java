@@ -245,12 +245,12 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
             // requestState() has not run yet, so we create the future first
             future = new CompletableFuture<>();
          }
-         transferTaskMap.forEach((address, inboundTransferTask) -> inboundTransferTask.cancel());
          if (throwable != null) {
             future.completeExceptionally(throwable);
          } else {
             future.cancel(true);
          }
+         transferTaskMap.forEach((address, inboundTransferTask) -> inboundTransferTask.cancel());
          clear();
       }
 
