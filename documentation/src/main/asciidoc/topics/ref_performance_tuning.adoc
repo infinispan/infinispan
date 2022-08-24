@@ -79,6 +79,94 @@ The recommended values are:
 * send window size - 640 KB
 * receive window size - 25 MB
 
+== Thread pool settings
+
+A thread pool manages threads by assigning them concurrent tasks.
+Additionally, a thread pool can improve system performance by using any idle thread instead of creating threads.
+
+You can configure your `threading` subsystem, so that you can better manage thread pools and their resources. 
+
+[NOTE]
+====
+Consider only configuring the `threading` subsystem when necessary, such as configuring it to define a behavior that meet your needs. 
+====
+
+The following table outlines common `threading` subsystem components that you can configure:
+
+[cols="1,1,3"]
+|===
+| Component  | Attribute type |Description
+
+|`blocking-bounded-queue-thread-pool`|string and integer | A thread pool executor that can run blocking operations. 
+Executor checks that the number of running threads does not exceed the core size; otherwise, the executor creates new threads. 
+The thread pool uses a best effort approach to maintain a low number of running threads, such as reusing idle threads where possible.
+This behavior differs from the JRE's `ThreadPoolExecutor` that creates new threads for each generated request until core size limitations apply.
+Attributes include,`core-threads`, `keepalive-time`, `queue-length`, `thread-factory`, `max-threads`, and `name`.
+
+|`cached-thread-pool` |string| A thread pool executor that creates new threads when an idle thread cannot be used with no bounds. The `name` and `thread-factory` attributes are mandatory.
+
+|`non-blocking-bounded-queue-thread-pool` | string and integer a| A thread pool executor that can run non-blocking operations. 
+Executor creates new threads when the number of running threads is less that the core size. 
+Idle threads are placed in a queue.
+
+Includes similar attributes to the blocking-bounded-queue-thread-pool` component.
+
+|`scheduled-thread-pool`|string|A thread pool executor that creates a single-threaded executor that schedules commands to run at a specific time.
+The `name` and `thread-factory` attributes are mandatory. 
+
+|`thread-factory` |string| Specifies metadata for your threads pools. 
+The `name` attribute and the `thread-name-pattern` attributes are mandatory. 
+Optional attributes include `group-name` and `priority`.
+|===
+
+Your {brandname} configuration contains a cache container security configuration that applies default settings to thread pools.
+
+The following table outlines common thread pool properties and their default thread property settings that exist in the cache container security configuration. 
+Each thread pool property contains a `DEFAULT_THREAD_PRIORITY` thread property that default to `NORM_PRIORITY`.   
+
+[cols="1,2,3"]
+|===
+| Property | `DEFAULT_THREAD_COUNT` / `DEFAULT_QUEUE_SIZE` | Description
+
+|`ASYNC_NOTIFICATION_EXECUTOR` |`1` / `1000`| Used by asynchronous listeners that your {brandname} server registers in embedded mode.
+Configuring this property is discouraged. 
+The default setting of one thread ensures that {brandname} invokes asynchronous listeners by order of occurrence.
+Increasing the thread pool size might cause threads to handle events in a different order than the events were generated.
+Increasing the property's value from `1` might cause your {brandname} server to randomly create mixed types of listener events on different threads.
+
+|`BLOCKING_EXECUTOR` | `150` / `5000`  |  Used by your {brandname} server to handle blocking operations.
+An example of a blocking operation includes a cache store that calls external sources, transactions, or time-consuming non-blocking entities.
+Thread pool reuses blocking threads based on the value specified for this property.
+
+For workloads with large amounts of blocking threads, configure a blocking pool with a larger pool size.
+
+|`EXPIRATION_SCHEDULED_EXECUTOR`|`1` / `0`| Based on the property's value, a reaper schedules checks on expired cache entries that exist in memory.
+If your workload includes a large amount of expired cache entries that span multiple caches, consider setting a higher value for this property. 
+Be mindful that setting a higher value does not increase the rate at which threads process expired cache entries. 
+The default setting of `1` thread count indicates that one thread must handle all expired caches sequentially.
+Increasing the thread count value means that more threads can handle caches in parallel order.
+
+|`NON_BLOCKING_EXECUTOR` | `ProcessorInfo.availableProcessors() * 2` / `1000`| Property defines how a thread pool handles server operations and embedded cache operations. 
+The `NON_BLOCKING_EXECUTOR` dispatches client requests on the server. 
+Configuring this property is discouraged, because the default setting scales thread workload according to the size of your server installation, which ensures lower latency for thread operations.
+|===
+
+[IMPORTANT]
+====
+Applying a value greater than `2 * numCores` for the `NON_BLOCKING_EXECUTOR` property might lead to the creation of more threads, which can increase your server's memory footprint.  
+====
+
+[role="_additional-resources"]
+.Additional resources
+link:https://docs.jboss.org/infinispan/{schemaversion}/configdocs/infinispan-config-{schemaversion}.html[urn:infinispan:config:14.0]
+
+[source,xml,options="nowrap", subs=attributes+]
+.Thread pool configuration examples
+----
+include::xml/thread_cache_examples.xml[]
+----
+
+
 == Number of threads for Hot Rod connectors
 
 The Hot Rod connector for {brandname} server uses worker threads that are

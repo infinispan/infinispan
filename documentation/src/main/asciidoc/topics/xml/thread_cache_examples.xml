@@ -1,0 +1,23 @@
+<infinispan>
+    ...
+    <threads>
+      <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>
+      <!-- listener-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory"
+            core-threads="1" max-threads="1" queue-length="0" keepalive-time="0"/>
+
+      <blocking-bounded-queue-thread-pool name="infinispan-blocking" thread-factory="infinispan-factory"
+                                              core-threads="3" max-threads="8" queue-length="121" keepalive-time="9859" />
+
+      <non-blocking-bounded-queue-thread-pool name="infinispan-non-blocking" thread-factory="infinispan-factory"
+                                              core-threads="12" max-threads="15" queue-length="132" keepalive-time="9851" />
+      <!-- expiration-executor -->
+      <scheduled-thread-pool name="infinispan-expiration" thread-factory="infinispan-factory" />
+   </threads>
+    <cache-container name="maximal" default-cache="local" expiration-executor="infinispan-expiration"
+                    listener-executor="infinispan-listener" non-blocking-executor="infinispan-non-blocking"
+                    blocking-executor="infinispan-blocking">
+   ...
+    </cache-container>
+   ...
+</infinispan>

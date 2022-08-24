@@ -99,6 +99,11 @@ However, {brandname} can detect node crashes and update cluster topology changes
 Using asynchronous replication does not guarantee improved throughput for writes, because asynchronous replication limits the number of backup writes that a node can handle at any time to the number of possible senders (via JGroups per-sender ordering).
 Synchronous replication allows nodes to handle more incoming write operations at the same time, which in certain configurations might compensate for the fact that individual operations take longer to complete, giving you a higher total throughput.
 
+[IMPORTANT]
+====
+The primary thread pool can use up to a maximum of `200` threads by default. Credit requests might spawn additional threads, as needed, outside of this thread pool to avoid blocking these requests.
+====
+
 When a node sends multiple requests to replicate entries, JGroups sends the messages to the rest of the nodes in the cluster one at a time, which results in there being only one replication request per originating node.
 This means that {brandname} nodes can process, in parallel with other write operations, one write from each other node in the cluster.
 
