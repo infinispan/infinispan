@@ -12,6 +12,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_T
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
+import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.framework.Method.DELETE;
@@ -361,7 +362,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       int batch = batchParam == null || batchParam.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
       int limit = limitParam == null || limitParam.isEmpty() ? -1 : Integer.parseInt(limitParam);
 
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, TEXT_PLAIN, request);
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, MATCH_ALL, request);
       if (cache == null)
          return notFoundResponseFuture();
 

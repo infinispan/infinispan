@@ -43,7 +43,9 @@ public class CacheKeyInputStream extends InputStream {
    }
 
    private byte[] escape(byte[] content) {
-      return ("\"" + new String(content, UTF_8) + "\"").getBytes(UTF_8);
+      String stringified = new String(content, UTF_8);
+      String escaped = stringified.replaceAll("\"", "\\\\\"");
+      return ("\"" + escaped + "\"").getBytes(UTF_8);
    }
 
    @Override
