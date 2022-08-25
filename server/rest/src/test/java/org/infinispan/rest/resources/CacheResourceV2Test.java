@@ -669,6 +669,53 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testGetAllKeysWithDifferentType() {
+      String cacheJson = "{    \"distributed-cache\": { \"mode\": \"SYNC\","
+            + " \"encoding\": {"
+            + " \"key\": {\"media-type\": \"application/json\"},"
+            + " \"value\": {\"media-type\": \"application/xml\"}}}}";
+      String value = "<?xml version=\"1.0\"?>\n"
+            + "<log category=\"CLUSTER\">\n"
+            + "    <content level=\"INFO\" message=\"hello\" detail=\"testing\"/>\n"
+            + "    <meta instant=\"42\" context=\"testing\" scope=\"\" who=\"\"/>\n"
+            + "</log>\n";
+      String cacheName = "xmlCaching";
+      RestCacheClient cacheClient = client.cache(cacheName);
+
+      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, cacheJson);
+      CompletionStage<RestResponse> r = cacheClient.createWithConfiguration(jsonEntity, VOLATILE);
+      assertThat(r).isOk();
+
+      RestResponse response = join(client.cache(cacheName).keys());
+      Collection<?> emptyKeys = Json.read(response.getBody()).asJsonList();
+      assertEquals(0, emptyKeys.size());
+
+      // Test key with escape.
+      putInCache(cacheName, "{\"text\": \"I'm right \\\\\"here\\\\\".\"}", APPLICATION_JSON_TYPE, value, APPLICATION_XML);
+      response = join(client.cache(cacheName).keys());
+      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      assertEquals(1, singleSet.size());
+      join(client.cache(cacheName).clear());
+
+      int entries = 10;
+      for (int i = 0; i < entries; i++) {
+         putInCache(cacheName, String.format("{\"v\": %d}", i), APPLICATION_JSON_TYPE, value, APPLICATION_XML);
+      }
+      response = join(client.cache(cacheName).keys());
+      List<Json> keys = Json.read(response.getBody()).asJsonList();
+      assertEquals(entries, keys.size());
+
+      response = join(client.cache(cacheName).keys(5));
+      List<?> keysLimited = Json.read(response.getBody()).asJsonList();
+      assertEquals(5, keysLimited.size());
+   }
+
+   private void putInCache(String cacheName, String key, String keyType, String value, MediaType valueType) {
+      CompletionStage<RestResponse> r = client.cache(cacheName).put(key, keyType, RestEntity.create(valueType, value));
+      ResponseAssertion.assertThat(r).isOk();
+   }
+
+   @Test
    public void testStreamEntries() {
       RestResponse response = join(client.cache("default").entries());
       Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
