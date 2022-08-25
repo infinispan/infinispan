@@ -90,7 +90,7 @@ public class EntryRecord {
       try {
          return new EntryHeader(header);
       } catch (IllegalStateException e) {
-         throw new IllegalStateException("Error reading from " + handle.getFileId() + ":" + offset);
+         throw new IllegalStateException("Error reading from " + handle.getFileId() + ":" + offset, e);
       }
    }
 
@@ -103,7 +103,7 @@ public class EntryRecord {
       try {
          return new EntryHeader(header, true);
       } catch (IllegalStateException e) {
-         throw new IllegalStateException("Error reading from " + handle.getFileId() + ":" + offset);
+         throw new IllegalStateException("Error reading from " + handle.getFileId() + ":" + offset, e);
       }
    }
 

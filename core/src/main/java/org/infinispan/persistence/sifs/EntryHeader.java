@@ -38,8 +38,9 @@ public class EntryHeader {
    }
 
    public EntryHeader(ByteBuffer buffer, boolean oldFormat) {
-      if (!oldFormat && buffer.get() != MAGIC) {
-            throw new IllegalStateException();
+      byte magicByte;
+      if (!oldFormat && (magicByte = buffer.get()) != MAGIC) {
+         throw new IllegalStateException("Magic byte was: " + magicByte);
       }
       this.keyLength = buffer.getShort();
       this.metadataLength = buffer.getShort();

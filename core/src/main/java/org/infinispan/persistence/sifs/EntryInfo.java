@@ -12,4 +12,8 @@ public class EntryInfo extends EntryPosition {
       this.numRecords = numRecords;
       this.cacheSegment = cacheSegment;
    }
+
+   public String toString() {
+      return String.format("[%d:%d] containing %d records in segment %d", file, offset, numRecords, cacheSegment);
+   }
 }
