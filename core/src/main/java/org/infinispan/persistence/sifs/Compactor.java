@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -439,6 +440,8 @@ class Compactor implements Consumer<Object> {
             // We drop all entries by default unless it is a log file as we can't drop any of those since we may
             // try to compact a log file multiple times, note modifications to drop variable below should only be to set
             // it to false
+            int prevFile = -1;
+            int prevOffset = -1;
             boolean drop = !isLogFile;
             // Whether to truncate the value
             boolean truncate = false;
@@ -481,8 +484,10 @@ class Compactor implements Consumer<Object> {
                drop = false;
             } else {
                EntryInfo info = index.getInfo(key, segment, serializedKey);
-               assert info != null : "No index info found for key: " + key;
-               assert info.numRecords > 0;
+               Objects.requireNonNull(info, "No index info found for key: " + key);
+               if (info.numRecords <= 0) {
+                  throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
+               }
                if (info.file == scheduledFile && info.offset == scheduledOffset) {
                   assert header.valueLength() > 0;
                   long entryExpiryTime = header.expiryTime();
@@ -510,7 +515,7 @@ class Compactor implements Consumer<Object> {
                   }
 
                   if (log.isTraceEnabled()) {
-                     log.tracef("Is %d:%d expired? %s, numRecords? %d", scheduledFile, scheduledOffset, truncate, info.numRecords);
+                     log.tracef("Is key %s at %d:%d expired? %s, numRecords? %d", key, scheduledFile, scheduledOffset, truncate, info.numRecords);
                   }
                } else if (isLogFile) {
                   // If entry doesn't match the index we can't touch it when it is a log file
@@ -520,17 +525,19 @@ class Compactor implements Consumer<Object> {
                   // The entry was expired, but we have other records so we can't drop this one or else the index will rebuild incorrectly
                   drop = false;
                } else if (log.isTraceEnabled()) {
-                  log.tracef("Key for %d:%d was found in index on %d:%d, %d record => drop",
+                  log.tracef("Key %s for %d:%d was found in index on %d:%d, %d record => drop", key,
                         scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
                }
+               prevFile = info.file;
+               prevOffset = info.offset;
             }
 
             if (drop) {
                if (log.isTraceEnabled()) {
-                  log.tracef("Drop %d:%d (%s)", scheduledFile, (Object) scheduledOffset,
+                  log.tracef("Drop index for key %s, file %d:%d (%s)", key, scheduledFile, scheduledOffset,
                         header.valueLength() > 0 ? "record" : "tombstone");
                }
-               index.handleRequest(IndexRequest.dropped(segment, key, ByteBufferImpl.create(serializedKey), scheduledFile, scheduledOffset));
+               index.handleRequest(IndexRequest.dropped(segment, key, ByteBufferImpl.create(serializedKey), prevFile, prevOffset, scheduledFile, scheduledOffset));
             } else {
                if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
                   if (logFile != null) {
