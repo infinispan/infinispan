@@ -271,6 +271,10 @@ public class Resp3Handler implements RespRequestHandler {
             ctx.flush();
             break;
          case "COMMAND":
+            if (!arguments.isEmpty()) {
+               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", ctx.alloc()));
+               break;
+            }
             StringBuilder commandBuilder = new StringBuilder();
             commandBuilder.append("*20\r\n");
             addCommand(commandBuilder, "HELLO", -1, 0, 0, 0);
