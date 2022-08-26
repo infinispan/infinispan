@@ -313,12 +313,9 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
             "$JAVA" -Xverbosegclog:"$ISPN_LOG_DIR/gc.log" -version > /dev/null 2>&1 && OPEN_J9_JDK=true || OPEN_J9_JDK=false
             if [ "$OPEN_J9_JDK" = "true" ]; then
                 TMP_PARAM="-Xverbosegclog:\"$ISPN_LOG_DIR/gc.log\""
-            elif [ "$MODULAR_JDK" = "true" ]; then
-                TMP_PARAM="-Xlog:gc*:file=\"$ISPN_LOG_DIR/gc.log\":time,uptimemillis:filecount=5,filesize=3M"
             else
-                TMP_PARAM="-verbose:gc -Xloggc:\"$ISPN_LOG_DIR/gc.log\" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading"
+                TMP_PARAM="-Xlog:gc*:file=\"$ISPN_LOG_DIR/gc.log\":time,uptimemillis:filecount=5,filesize=3M"
             fi
-
             eval "$JAVA" $JVM_OPTVERSION $TMP_PARAM -version >/dev/null 2>&1 && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS $TMP_PARAM"
             # Remove the gc.log file from the -version check
             rm -f "$ISPN_LOG_DIR/gc.log" >/dev/null 2>&1
