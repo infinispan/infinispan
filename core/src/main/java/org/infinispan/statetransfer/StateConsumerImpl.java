@@ -49,6 +49,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -101,7 +102,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -872,12 +872,11 @@ public class StateConsumerImpl implements StateConsumer {
             Collection<List<InboundTransferTask>> transfers = new ArrayList<>(transfersBySource.values());
             transfersBySource.clear();
             transfersBySegment.clear();
-            requestedTransactionalSegments = null;
             for (List<InboundTransferTask> inboundTransfers : transfers) {
                inboundTransfers.forEach(InboundTransferTask::cancel);
             }
          }
-
+         requestedTransactionalSegments.clear();
          stateRequestExecutor.shutdownNow();
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
