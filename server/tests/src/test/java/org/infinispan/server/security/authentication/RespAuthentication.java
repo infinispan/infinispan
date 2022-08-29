@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -16,8 +17,13 @@ import org.junit.experimental.categories.Category;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ListOfMapsOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 
 /**
  * @since 14.0
@@ -49,6 +55,20 @@ public class RespAuthentication {
 
          List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3", "k4");
          assertEquals(expected, results);
+      } finally {
+         client.shutdown();
+      }
+   }
+
+   @Test
+   public void testRespCommandDocs() {
+      InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
+      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostName(), serverSocket.getPort()));
+      try (StatefulRedisConnection<String, String> redisConnection = client.connect()) {
+         RedisCommands<String, String> redis = redisConnection.sync();
+         Exceptions.expectException(RedisCommandExecutionException.class, () -> redis.dispatch(CommandType.COMMAND,
+               new ListOfMapsOutput<>(StringCodec.UTF8),
+               new CommandArgs<>(StringCodec.UTF8).add("DOCS")));
       } finally {
          client.shutdown();
       }
