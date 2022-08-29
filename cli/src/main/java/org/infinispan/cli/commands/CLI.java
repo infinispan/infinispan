@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.UnrecoverableKeyException;
 import java.util.Map;
 import java.util.Properties;
@@ -79,10 +80,10 @@ import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 import org.wildfly.security.credential.store.WildFlyElytronCredentialStoreProvider;
 import org.wildfly.security.keystore.KeyStoreUtil;
-import org.wildfly.security.provider.util.ProviderUtil;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -150,6 +151,9 @@ public class CLI extends CliCommand {
    @Option(shortName = 'w', name = "keystore-password", description = "The password for the keystore")
    String keystorePassword;
 
+   @Option(name = "provider", description = "The security provider used to create the SSL/TLS context")
+   String provider;
+
    @Option(shortName = 'v', hasValue = false, description = "Shows version information")
    boolean version;
 
@@ -209,7 +213,7 @@ public class CLI extends CliCommand {
       }
 
       try {
-         configureSslContext(context, truststore, truststorePassword, keystore, keystorePassword, hostnameVerifier, trustAll);
+         configureSslContext(context, truststore, truststorePassword, keystore, keystorePassword, provider, hostnameVerifier, trustAll);
       } catch (Exception e) {
          invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
          return CommandResult.FAILURE;
@@ -231,13 +235,15 @@ public class CLI extends CliCommand {
       }
    }
 
-   public static void configureSslContext(Context context, Resource truststore, String truststorePassword, Resource keystore, String keystorePassword, String hostnameVerifier, boolean trustAll) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException {
+   public static void configureSslContext(Context context, Resource truststore, String truststorePassword, Resource keystore, String keystorePassword, String providerName, String hostnameVerifier, boolean trustAll) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException {
+      Provider[] providers = SslContextFactory.discoverSecurityProviders(CLI.class.getClassLoader());
+      providerName = providerName != null ? providerName : context.getProperty(Context.Property.PROVIDER);
       String sslKeyStore = keystore != null ? keystore.getAbsolutePath() : context.getProperty(Context.Property.KEYSTORE);
       KeyManager[] keyManagers = null;
       if (sslKeyStore != null) {
          String sslKeyStorePassword = keystorePassword != null ? keystorePassword : context.getProperty(Context.Property.KEYSTORE_PASSWORD);
          try (FileInputStream f = new FileInputStream(sslKeyStore)) {
-            KeyStore ks = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, sslKeyStore, sslKeyStorePassword != null ? sslKeyStorePassword.toCharArray() : null);
+            KeyStore ks = KeyStoreUtil.loadKeyStore(() -> providers, providerName, f, sslKeyStore, sslKeyStorePassword != null ? sslKeyStorePassword.toCharArray() : null);
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(ks, sslKeyStorePassword != null ? sslKeyStorePassword.toCharArray() : null);
             keyManagers = keyManagerFactory.getKeyManagers();
@@ -249,7 +255,7 @@ public class CLI extends CliCommand {
          TrustManagerFactory trustManagerFactory;
          String sslTrustStorePassword = truststorePassword != null ? truststorePassword : context.getProperty(Context.Property.TRUSTSTORE_PASSWORD);
          try (FileInputStream f = new FileInputStream(sslTrustStore)) {
-            KeyStore ts = KeyStoreUtil.loadKeyStore(ProviderUtil.INSTALLED_PROVIDERS, null, f, sslTrustStore, sslTrustStorePassword != null ? sslTrustStorePassword.toCharArray() : null);
+            KeyStore ts = KeyStoreUtil.loadKeyStore(() -> providers, providerName, f, sslTrustStore, sslTrustStorePassword != null ? sslTrustStorePassword.toCharArray() : null);
             trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(ts);
          }

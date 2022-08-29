@@ -6,7 +6,6 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -140,6 +139,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                      .keyAlias(ssl.keyAlias())
                      .keyStoreCertificatePassword(ssl.keyStoreCertificatePassword())
                      .classLoader(configuration.classLoader())
+                     .provider(ssl.provider())
                      .getKeyManagerFactory());
             }
             if (ssl.trustStoreFileName() != null) {
@@ -151,6 +151,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                         .trustStoreType(ssl.trustStoreType())
                         .trustStorePassword(ssl.trustStorePassword())
                         .classLoader(configuration.classLoader())
+                        .provider(ssl.provider())
                         .getTrustManagerFactory());
                }
             }
@@ -164,7 +165,8 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                builder.ciphers(ssl.ciphers());
             }
             if (ssl.provider() != null) {
-               builder.sslContextProvider(Security.getProvider(ssl.provider()));
+               Provider provider = SslContextFactory.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
+               builder.sslContextProvider(provider);
             }
             sslContext = builder.build();
          } catch (Exception e) {

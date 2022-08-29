@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -22,17 +23,19 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
- * @since 10.0
+ * @since 14.0
  **/
 
 @RunWith(Parameterized.class)
 @Category(Security.class)
-public class AuthenticationTLSIT {
-
+public class AuthenticationTLSBouncyCastleIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTLSTest.xml")
-                                    .build();
+         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTLSBouncyCastleTest.xml")
+               .runMode(ServerRunMode.CONTAINER)
+               .numServers(1)
+               .mavenArtifacts("org.bouncycastle:bcprov-jdk15on:1.70")
+               .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
@@ -44,14 +47,14 @@ public class AuthenticationTLSIT {
       return Common.SASL_MECHS;
    }
 
-   public AuthenticationTLSIT(String mechanism) {
+   public AuthenticationTLSBouncyCastleIT(String mechanism) {
       this.mechanism = mechanism;
    }
 
    @Test
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.bcfks", "BCFKS", "BC");
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
                .saslMechanism(mechanism)

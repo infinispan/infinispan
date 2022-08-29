@@ -1,0 +1,14 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+   <security>
+      <security-realms>
+         <security-realm name="default">
+            <server-identities>
+               <ssl>
+                  <!-- Adds a keystore that reads certificates from the BCFKS keystore. -->
+                  <keystore path="server.bcfks" password="secret" alias="server" provider="BCFIPS" type="BCFKS"/>
+               </ssl>
+            </server-identities>
+         </security-realm>
+      </security-realms>
+   </security>
+</server>

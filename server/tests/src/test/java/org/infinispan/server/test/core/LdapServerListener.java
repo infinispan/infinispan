@@ -35,7 +35,7 @@ public class LdapServerListener implements InfinispanServerListener {
    @Override
    public void before(InfinispanServerDriver driver) {
       Exceptions.unchecked(() -> {
-         ldapServer.start(driver.getCertificateFile("server").getAbsolutePath(), driver.getConfDir());
+         ldapServer.start(driver.getCertificateFile("server.pfx").getAbsolutePath(), driver.getConfDir());
       });
    }
 

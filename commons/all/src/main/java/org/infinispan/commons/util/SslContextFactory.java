@@ -8,6 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.Provider;
+import java.security.Security;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -30,6 +35,7 @@ public class SslContextFactory {
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
    private static final String CLASSPATH_RESOURCE = "classpath:";
    private static final String SSL_PROVIDER;
+   private static final ConcurrentHashMap<ClassLoader, Provider[]> PER_CLASSLOADER_PROVIDERS = new ConcurrentHashMap<>(2);
 
    static {
       String sslProvider = null;
@@ -57,6 +63,7 @@ public class SslContextFactory {
    private String sslProtocol = DEFAULT_SSL_PROTOCOL;
    private boolean useNativeIfAvailable = true;
    private ClassLoader classLoader;
+   private String provider;
 
    public SslContextFactory() {
    }
@@ -112,6 +119,13 @@ public class SslContextFactory {
       return this;
    }
 
+   public SslContextFactory provider(String provider) {
+      if (provider != null) {
+         this.provider = provider;
+      }
+      return this;
+   }
+
    public SslContextFactory useNativeIfAvailable(boolean useNativeIfAvailable) {
       this.useNativeIfAvailable = useNativeIfAvailable;
       return this;
@@ -135,11 +149,16 @@ public class SslContextFactory {
             trustManagers = tmf.getTrustManagers();
          }
          SSLContext sslContext;
-         if (useNativeIfAvailable && SSL_PROVIDER != null) {
-            sslContext = SSLContext.getInstance(sslProtocol, SSL_PROVIDER);
-         } else {
-            sslContext = SSLContext.getInstance(sslProtocol);
+         Provider provider = null;
+         if (this.provider != null) {
+            // If the user has supplied a provider, try to use it
+            provider = findProvider(this.provider, SSLContext.class.getSimpleName(), sslProtocol);
          }
+         if (provider == null && useNativeIfAvailable && SSL_PROVIDER != null) {
+            // Try to use the native provider if possible
+            provider = findProvider(SSL_PROVIDER, SSLContext.class.getSimpleName(), sslProtocol);
+         }
+         sslContext = provider != null ? SSLContext.getInstance(sslProtocol, provider) : SSLContext.getInstance(sslProtocol);
          sslContext.init(keyManagers, trustManagers, null);
          return sslContext;
       } catch (Exception e) {
@@ -148,7 +167,9 @@ public class SslContextFactory {
    }
 
    public KeyManagerFactory getKeyManagerFactory() throws IOException, GeneralSecurityException {
-      KeyStore ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
+      String type = keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE;
+      Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), type);
+      KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
       loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
       char[] keyPassword = keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword;
       if (keyAlias != null) {
@@ -156,22 +177,28 @@ public class SslContextFactory {
             KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyPassword);
             KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
             // Recreate the keystore with just one key
-            ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
-            ks.load(null);
+            ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+            ks.load(null, null);
             ks.setEntry(keyAlias, entry, passParam);
          } else {
             throw SECURITY.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
          }
       }
-      KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+      provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), algorithm);
+      KeyManagerFactory kmf = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
       kmf.init(ks, keyPassword);
       return kmf;
    }
 
    public TrustManagerFactory getTrustManagerFactory() throws IOException, GeneralSecurityException {
-      KeyStore ks = KeyStore.getInstance(trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE);
+      String type = trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE;
+      Provider provider = findProvider(this.provider, KeyStore.class.getSimpleName(), trustStoreType);
+      KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
       loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
-      TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+      provider = findProvider(this.provider, TrustManagerFactory.class.getSimpleName(), algorithm);
+      TrustManagerFactory tmf = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
       tmf.init(ks);
       return tmf;
    }
@@ -203,5 +230,33 @@ public class SslContextFactory {
       } finally {
          Util.close(is);
       }
+   }
+
+   public static Provider findProvider(String providerName, String serviceType, String algorithm) {
+      Provider[] providers = discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
+      for (Provider provider : providers) {
+         if (providerName == null || providerName.equals(provider.getName())) {
+            Provider.Service providerService = provider.getService(serviceType, algorithm);
+            if (providerService != null) {
+               return provider;
+            }
+         }
+      }
+      return null;
+   }
+
+   public static Provider[] discoverSecurityProviders(ClassLoader classLoader) {
+      return PER_CLASSLOADER_PROVIDERS.computeIfAbsent(classLoader, cl -> {
+               // We need to keep them sorted by insertion order, since we want system providers first
+               Map<Class<? extends Provider>, Provider> providers = new LinkedHashMap<>();
+               for (Provider provider : Security.getProviders()) {
+                  providers.put(provider.getClass(), provider);
+               }
+               for (Provider provider : ServiceFinder.load(Provider.class, classLoader)) {
+                  providers.putIfAbsent(provider.getClass(), provider);
+               }
+               return providers.values().toArray(new Provider[0]);
+            }
+      );
    }
 }

@@ -30,6 +30,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private SSLContext sslContext;
    private String sniHostName;
    private String protocol;
+   private String provider;
    private TrustManager[] trustManagers;
    private HostnameVerifier hostnameVerifier;
 
@@ -199,6 +200,18 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return enable();
    }
 
+   /**
+    * Configures the security provider to use when initializing TLS. Setting this property also implicitly enables SSL/TLS (see {@link
+    * #enable()}
+    *
+    * @param provider The name of a security provider
+    * @see SSLContext#getInstance(String)
+    */
+   public SslConfigurationBuilder provider(String provider) {
+      this.provider = provider;
+      return enable();
+   }
+
    @Override
    public void validate() {
       if (enabled) {
@@ -232,7 +245,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias,
             sslContext, trustManagers, hostnameVerifier,
             trustStoreFileName, trustStorePath, trustStoreType, trustStorePassword,
-            sniHostName, protocol);
+            sniHostName, protocol, provider);
    }
 
    @Override
@@ -252,6 +265,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.trustStorePassword = template.trustStorePassword();
       this.sniHostName = template.sniHostName();
       this.protocol = template.protocol();
+      this.provider = template.provider();
       return this;
    }
 
@@ -288,6 +302,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if (typed.containsKey(RestClientConfigurationProperties.SSL_PROTOCOL))
          this.protocol(typed.getProperty(RestClientConfigurationProperties.SSL_PROTOCOL, null, true));
+
+      if (typed.containsKey(RestClientConfigurationProperties.PROVIDER))
+         this.provider(typed.getProperty(RestClientConfigurationProperties.PROVIDER, null, true));
 
       if (typed.containsKey(RestClientConfigurationProperties.SNI_HOST_NAME))
          this.sniHostName(typed.getProperty(RestClientConfigurationProperties.SNI_HOST_NAME, null, true));

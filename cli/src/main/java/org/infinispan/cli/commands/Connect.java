@@ -44,6 +44,9 @@ public class Connect extends CliCommand {
    @Option(shortName = 'w', name = "keystore-password", description = "The password for the keystore")
    String keystorePassword;
 
+   @Option(name = "provider", description = "The security provider used to create the SSL/TLS context")
+   String provider;
+
    @Option(hasValue = false, description = "Whether to trust all server certificates", name = "trustall")
    boolean trustAll;
 
@@ -61,7 +64,7 @@ public class Connect extends CliCommand {
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
       try {
-         CLI.configureSslContext(invocation.getContext(), truststore, truststorePassword, keystore, keystorePassword, hostnameVerifier, trustAll);
+         CLI.configureSslContext(invocation.getContext(), truststore, truststorePassword, keystore, keystorePassword, provider, hostnameVerifier, trustAll);
       } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | IOException e) {
          invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
          throw new RuntimeException(e);
