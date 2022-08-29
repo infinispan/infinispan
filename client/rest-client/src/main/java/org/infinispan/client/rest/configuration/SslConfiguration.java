@@ -1,5 +1,7 @@
 package org.infinispan.client.rest.configuration;
 
+import java.util.Arrays;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -24,12 +26,15 @@ public class SslConfiguration {
    private final char[] trustStorePassword;
    private final String sniHostName;
    private final String protocol;
+
+   private final String provider;
    private final TrustManager[] trustManagers;
    private final HostnameVerifier hostnameVerifier;
 
    SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
                     SSLContext sslContext, TrustManager[] trustManagers, HostnameVerifier hostnameVerifier,
-                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String protocol) {
+                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String protocol,
+                    String provider) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
@@ -45,6 +50,7 @@ public class SslConfiguration {
       this.trustStorePassword = trustStorePassword;
       this.sniHostName = sniHostName;
       this.protocol = protocol;
+      this.provider = provider;
    }
 
    public boolean enabled() {
@@ -107,6 +113,10 @@ public class SslConfiguration {
       return protocol;
    }
 
+   public String provider() {
+      return provider;
+   }
+
    @Override
    public String toString() {
       return "SslConfiguration{" +
@@ -115,11 +125,12 @@ public class SslConfiguration {
             ", keyStoreType='" + keyStoreType + '\'' +
             ", keyAlias='" + keyAlias + '\'' +
             ", sslContext=" + sslContext +
-            ", trustManagers=" + trustManagers +
+            ", trustManagers=" + Arrays.toString(trustManagers) +
             ", trustStoreFileName='" + trustStoreFileName + '\'' +
             ", trustStoreType='" + trustStoreType + '\'' +
             ", sniHostName='" + sniHostName + '\'' +
             ", protocol='" + protocol + '\'' +
+            ", provider='" + provider + '\'' +
             '}';
    }
 }

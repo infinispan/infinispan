@@ -59,11 +59,11 @@ public class CliCertIT {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{
                "-t",
-               driver.getCertificateFile("ca").getAbsolutePath(),
+               driver.getCertificateFile("ca.pfx").getAbsolutePath(),
                "-s",
                KEY_PASSWORD,
                "-k",
-               driver.getCertificateFile("admin").getAbsolutePath(),
+               driver.getCertificateFile("admin.pfx").getAbsolutePath(),
                "-w",
                KEY_PASSWORD,
                "--hostname-verifier",
@@ -83,9 +83,9 @@ public class CliCertIT {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          terminal.assertContains("[disconnected]");
          terminal.send(String.format("connect -t %s -s %s -k %s -w %s --hostname-verifier=.* https://%s:11222",
-               driver.getCertificateFile("ca").getAbsolutePath(),
+               driver.getCertificateFile("ca.pfx").getAbsolutePath(),
                KEY_PASSWORD,
-               driver.getCertificateFile("admin").getAbsolutePath(),
+               driver.getCertificateFile("admin.pfx").getAbsolutePath(),
                KEY_PASSWORD,
                hostAddress()
          ));

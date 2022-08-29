@@ -31,8 +31,8 @@ public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak 
             Path serverConfPath = SERVERS.getServerDriver().getConfDir().toPath();
             Path keyCloakPath = k.getKeycloakDirectory().toPath();
             try {
-               Files.copy(serverConfPath.resolve("ca.crt"), keyCloakPath.resolve("tls.crt"), StandardCopyOption.REPLACE_EXISTING);
-               Files.copy(serverConfPath.resolve("ca.key"), keyCloakPath.resolve("tls.key"), StandardCopyOption.REPLACE_EXISTING);
+               Files.copy(serverConfPath.resolve("ca.pfx.crt"), keyCloakPath.resolve("tls.crt"), StandardCopyOption.REPLACE_EXISTING);
+               Files.copy(serverConfPath.resolve("ca.pfx.key"), keyCloakPath.resolve("tls.key"), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                throw new RuntimeException(e);
             }
@@ -49,6 +49,6 @@ public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak 
    @Override
    protected String getToken() {
       EmbeddedInfinispanServerDriver driver = (EmbeddedInfinispanServerDriver) SERVERS.getServerDriver();
-      return KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword", SERVERS.getServerDriver().getCertificateFile("ca").toPath(), "secret");
+      return KEYCLOAK.getAccessTokenForCredentials(INFINISPAN_REALM, INFINISPAN_CLIENT_ID, INFINISPAN_CLIENT_SECRET, "admin", "adminPassword", SERVERS.getServerDriver().getCertificateFile("ca.pfx").toPath(), "secret");
    }
 }

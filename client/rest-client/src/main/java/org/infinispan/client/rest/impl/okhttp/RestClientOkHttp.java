@@ -87,6 +87,8 @@ public class RestClientOkHttp implements RestClient {
                   .trustStoreFileName(ssl.trustStoreFileName())
                   .trustStorePassword(ssl.trustStorePassword())
                   .trustStoreType(ssl.trustStoreType())
+                  .sslProtocol(ssl.protocol())
+                  .provider(ssl.provider())
                   .classLoader(Thread.currentThread().getContextClassLoader())
                   .useNativeIfAvailable(false);
             sslContext = sslContextFactory.getContext();

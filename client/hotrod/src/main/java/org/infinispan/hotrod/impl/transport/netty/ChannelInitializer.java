@@ -6,7 +6,6 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -139,6 +138,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                      .keyStorePassword(ssl.keyStorePassword())
                      .keyAlias(ssl.keyAlias())
                      .classLoader(HotRod.class.getClassLoader())
+                     .provider(ssl.provider())
                      .getKeyManagerFactory());
             }
             if (ssl.trustStoreFileName() != null) {
@@ -149,6 +149,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                         .trustStoreFileName(ssl.trustStoreFileName())
                         .trustStoreType(ssl.trustStoreType())
                         .trustStorePassword(ssl.trustStorePassword())
+                        .provider(ssl.provider())
                         .classLoader(HotRod.class.getClassLoader())
                         .getTrustManagerFactory());
                }
@@ -160,7 +161,8 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                builder.ciphers(Arrays.asList(ssl.ciphers()));
             }
             if (ssl.provider() != null) {
-               builder.sslContextProvider(Security.getProvider(ssl.provider()));
+               Provider provider = SslContextFactory.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
+               builder.sslContextProvider(provider);
             }
             sslContext = builder.build();
          } catch (Exception e) {

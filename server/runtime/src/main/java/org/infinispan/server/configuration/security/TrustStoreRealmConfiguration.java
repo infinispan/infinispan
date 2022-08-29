@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import java.security.KeyStore;
+import java.security.Provider;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.BuiltBy;
@@ -31,7 +32,8 @@ public class TrustStoreRealmConfiguration extends ConfigurationElement<TrustStor
 
    @Override
    public SecurityRealm build(SecurityConfiguration securityConfiguration, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
-      KeyStore keyStore = realm.serverIdentitiesConfiguration().sslConfiguration().trustStore().trustStore(properties);
+      Provider[] providers = SecurityActions.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
+      KeyStore keyStore = realm.serverIdentitiesConfiguration().sslConfiguration().trustStore().trustStore(providers, properties);
       realm.addFeature(ServerSecurityRealm.Feature.TRUST);
       return new KeyStoreBackedSecurityRealm(keyStore);
    }

@@ -1,0 +1,25 @@
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd
+                            urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
+      xmlns="urn:infinispan:config:14.0"
+      xmlns:server="urn:infinispan:server:14.0">
+
+   <xi:include href="jgroups/stacks.xml"/>
+
+   <xi:include href="cache-container/clustered.xml"/>
+
+   <server xmlns="urn:infinispan:server:14.0">
+
+      <xi:include href="interfaces/default.xml"/>
+
+      <xi:include href="socket-bindings/default.xml"/>
+
+      <xi:include href="security/properties-tls-bc.xml"/>
+
+      <endpoints>
+         <xi:include href="endpoints/auth-tls.xml"/>
+      </endpoints>
+   </server>
+</infinispan>

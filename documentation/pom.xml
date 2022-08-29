@@ -21,9 +21,9 @@
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
-        <jdk.root>https://docs.oracle.com/javase/8/docs</jdk.root>
-        <jdk.docroot>${jdk.root}/api</jdk.docroot>
-        <javaee.docroot>https://docs.oracle.com/javaee/7/api</javaee.docroot>
+        <jdk.root>https://docs.oracle.com/en/java/javase/11</jdk.root>
+        <jdk.docroot>${jdk.root}/docs/api</jdk.docroot>
+        <javaee.docroot>https://jakarta.ee/specifications/platform/9/apidocs</javaee.docroot>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
         <asciidoctorj.version>2.5.2</asciidoctorj.version>
@@ -167,6 +167,7 @@
                                 <infinispanslot>${infinispanslot}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
                                 <javadocroot>${javadoc.root}</javadocroot>
+                                <jdkroot>${jdk.root}</jdkroot>
                                 <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
                                 <configdocroot>${configdoc.root}</configdocroot>
                                 <wildflydocroot>${wildfly.docroot}</wildflydocroot>

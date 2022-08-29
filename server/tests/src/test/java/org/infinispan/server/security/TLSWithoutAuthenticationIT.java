@@ -39,7 +39,7 @@ public class TLSWithoutAuthenticationIT {
    @Test
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
@@ -49,7 +49,7 @@ public class TLSWithoutAuthenticationIT {
    @Test
    public void testDisabledProtocol() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().protocol("TLSv1.1");
       try {
          SERVER_TEST.hotrod().withClientConfiguration(builder)
@@ -65,7 +65,7 @@ public class TLSWithoutAuthenticationIT {
    @Test
    public void testDisabledCipherSuite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384");
       expectException(TransportException.class, ClosedChannelException.class,
                       () -> SERVER_TEST.hotrod().withClientConfiguration(builder)
@@ -76,7 +76,7 @@ public class TLSWithoutAuthenticationIT {
    @Test
    public void testForceTLSv12() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().protocol("TLSv1.2");
       SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
    }
@@ -84,7 +84,7 @@ public class TLSWithoutAuthenticationIT {
    @Test
    public void testForceTLSv13() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().protocol("TLSv1.3");
       SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
    }

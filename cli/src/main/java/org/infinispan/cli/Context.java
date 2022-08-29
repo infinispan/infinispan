@@ -94,6 +94,7 @@ public interface Context extends AeshContext {
       TRUSTSTORE_PASSWORD,
       KEYSTORE,
       KEYSTORE_PASSWORD,
+      PROVIDER,
       AUTOCONNECT_URL,
       AUTOEXEC;
 

@@ -30,8 +30,8 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
             Path serverConfPath = SERVERS.getServerDriver().getConfDir().toPath();
             Path keyCloakPath = k.getKeycloakDirectory().toPath();
             try {
-               Files.copy(serverConfPath.resolve("ca.crt"), keyCloakPath.resolve("tls.crt"), StandardCopyOption.REPLACE_EXISTING);
-               Files.copy(serverConfPath.resolve("ca.key"), keyCloakPath.resolve("tls.key"), StandardCopyOption.REPLACE_EXISTING);
+               Files.copy(serverConfPath.resolve("ca.pfx.crt"), keyCloakPath.resolve("tls.crt"), StandardCopyOption.REPLACE_EXISTING);
+               Files.copy(serverConfPath.resolve("ca.pfx.key"), keyCloakPath.resolve("tls.key"), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                throw new RuntimeException(e);
             }

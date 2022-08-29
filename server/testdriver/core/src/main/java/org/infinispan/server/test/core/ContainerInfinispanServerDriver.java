@@ -54,7 +54,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.Base58;
-import org.testcontainers.utility.ResourceReaper;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.ContainerNetwork;
@@ -333,7 +332,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          stop(i);
          log.infof("Stopped container %d", i);
       }
-      ResourceReaper.instance().performCleanup();
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
    }

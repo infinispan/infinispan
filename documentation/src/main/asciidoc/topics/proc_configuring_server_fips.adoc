@@ -1,18 +1,34 @@
 [id='configuring-server-fips_{context}']
 = Configuring {brandname} Server on a system with FIPS 140-2 compliant cryptography
-It is possible to configure {brandname} Server to present SSL/TLS certificates that verify its identity to clients.
-If a security realm contains TLS/SSL identities, it encrypts any connections to {brandname} Server endpoints that use that security realm.
+
+FIPS (Federal Information Processing Standards) are standards and guidelines for US federal computer systems. 
+Although FIPS are developed for use by the US federal government, many in the private sector voluntarily use these standards.
+
+FIPS 140-2 defines security requirements for cryptographic modules. 
+You can configure your {brandname} Server to use encryption ciphers that adhere to the FIPS 140-2 specification by using alternative JDK security providers.
+
+.Additional resources
+
+* link:{jdkroot}/security/pkcs11-reference-guide1.html[Java PKCS#11 cryptographic provider]
+* link:https://www.bouncycastle.org/fips_faq.html[The Legion of the Bouncy Castle cryptographic provider]
+
+== Configuring the PKCS11 cryptographic provider
+
+You can configure the PKCS11 cryptographic provider by specifying the PKCS11 keystore with the `SunPKCS11-NSS-FIPS` provider.
+
 
 .Prerequisites
 
-* A system in FIPS mode. Execute `fips-mode-setup --check` to ensure it is enabled.
-* A correctly initialized NSS database.
-* A JDK installation with the `java.security` file configured to enable the `SunPKCS11` provider pointing to the NSS database and the SSL provider initialized with the `SunPKCS11-nss-fips` argument.
-* A certificate installed in the NSS database.
+* Configure your system for FIPS mode. You can check if your system has FIPS Mode enabled by issuing the `fips-mode-setup --check` command in your {brandname} command-line Interface (CLI)
+* Initialize the system-wide NSS database by using the `certutil` tool.
+* Install the JDK with the `java.security` file configured to enable the `SunPKCS11` provider. This provider points to the NSS database and the SSL provider.
+* Install a certificate in the NSS database.
 
 [NOTE]
 ====
-The OpenSSL provider requires a private key, but it is not possible to retrieve a private key from the PKCS11 store. FIPS does not allow the export of unencrypted keys from FIPS compliant cryptographic module. Therefore it is not possible to use the OpenSSL provider for TLS when in FIPS mode. Start the server with the `-Dorg.infinispan.openssl=false` argument to disable OpenSSL.
+The OpenSSL provider requires a private key, but you cannot retrieve a private key from the PKCS#11 store.
+FIPS blocks the export of unencrypted keys from a FIPS-compliant cryptographic module, so you cannot use the OpenSSL provider for TLS when in FIPS mode. 
+You can disable the OpenSSL provider at startup with the `-Dorg.infinispan.openssl=false` argument.
 ====
 
 .Procedure
@@ -24,22 +40,67 @@ The OpenSSL provider requires a private key, but it is not possible to retrieve 
 
 
 [discrete]
-== Keystore configuration
+=== Keystore configuration
 
 .XML
 [source,xml,options="nowrap",subs=attributes+]
 ----
-include::xml/server_ssl_identity_fips.xml[]
+include::xml/server_ssl_identity_fips_pkcs11.xml[]
 ----
 
 .JSON
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json/server_ssl_identity_fips.json[]
+include::json/server_ssl_identity_fips_pkcs11.json[]
 ----
 
 .YAML
 [source,yaml,options="nowrap",subs=attributes+]
 ----
-include::yaml/server_ssl_identity_fips.yaml[]
+include::yaml/server_ssl_identity_fips_pkcs11.yaml[]
+----
+
+== Configuring the Bouncy Castle FIPS cryptographic provider
+
+You can configure the Bouncy Castle FIPS (Federal Information Processing Standards) cryptographic provider in your {brandname} server's configuration.
+
+.Prerequisites
+
+* Configure your system for FIPS mode. You can check if your system has FIPS Mode enabled by issuing the `fips-mode-setup --check` command in your {brandname} command-line Interface (CLI).
+* Create a keystore in BCFKS format that contains a certificate.
+
+.Procedure
+
+. Download the Bouncy Castle FIPS JAR file, and add the file to the `server/lib` directory of your {brandname} Server installation.
+. To install Bouncy Castle, issue the `install` command:
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> install org.bouncycastle:bc-fips:1.0.2.3
+----
+. Open your {brandname} Server configuration for editing.
+. Add a `server-identities` definition to the {brandname} Server security realm.
+. Specify the BCFKS keystore with the `BCFIPS` provider.
+. Save the changes to your configuration.
+
+
+[discrete]
+=== Keystore configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_ssl_identity_fips_bcfips.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/server_ssl_identity_fips_bcfips.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/server_ssl_identity_fips_bcfips.yaml[]
 ----

@@ -40,7 +40,7 @@ public class AuthenticationMultiRealmIT {
    @Test
    public void testLDAP() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().authentication()
             .saslMechanism("SCRAM-SHA-256")
             .serverName("infinispan")
@@ -53,7 +53,7 @@ public class AuthenticationMultiRealmIT {
    @Test
    public void testProps() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().authentication()
             .saslMechanism("SCRAM-SHA-256")
             .serverName("infinispan")
@@ -67,8 +67,8 @@ public class AuthenticationMultiRealmIT {
    public void testCert() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
-      SERVERS.getServerDriver().applyKeyStore(builder, "admin");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
       builder.security()
             .authentication()
             .saslMechanism("EXTERNAL")
@@ -80,7 +80,7 @@ public class AuthenticationMultiRealmIT {
    @Test
    public void testUnknown() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().authentication()
             .saslMechanism("SCRAM-SHA-256")
             .serverName("infinispan")

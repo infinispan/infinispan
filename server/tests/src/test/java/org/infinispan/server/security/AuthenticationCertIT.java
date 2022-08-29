@@ -35,8 +35,8 @@ public class AuthenticationCertIT {
    public void testTrustedCertificate() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
-      SERVERS.getServerDriver().applyKeyStore(builder, "admin");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
       builder.security()
             .authentication()
             .saslMechanism("EXTERNAL")
@@ -53,8 +53,8 @@ public class AuthenticationCertIT {
    public void testUntrustedCertificate() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
-      SERVERS.getServerDriver().applyKeyStore(builder, "untrusted");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyKeyStore(builder, "untrusted.pfx");
       builder.security()
             .authentication()
             .saslMechanism("EXTERNAL")
