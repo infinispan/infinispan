@@ -421,7 +421,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                      this.attributeNamespaces.add(next.nsPrefix);
                      StringBuilder sb = new StringBuilder();
                      readNext();
-                     while(next.listItem) {
+                     while(next != null && next.listItem) {
                         sb.append(replaceProperties(next.value)).append(' ');
                         readNext();
                      }
