@@ -82,6 +82,7 @@ import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.NotifyHelper;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
@@ -453,20 +454,27 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
                   log.trace("Committing new entry " + entry);
                }
                entry.setCommitted();
-               return factory.create(entry);
+               InternalCacheEntry newly = factory.create(entry);
+               newly.setInternalMetadata(entry.getInternalMetadata());
+               return newly;
             }
          }
+
+         if (entry.isRemoved() && isLoadedEntry(entry)) {
+            entry.setCommitted();
+            return null;
+         }
+
          Metadata oldMetadata = oldEntry.getMetadata();
-         InequalVersionComparisonResult comparisonResult;
-         if (oldMetadata == null || oldMetadata.version() == null || newMetadata == null || newMetadata.version() == null
-               || (comparisonResult = oldMetadata.version().compareTo(newMetadata.version())) == InequalVersionComparisonResult.BEFORE
-               || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL)) {
+         if (canCommitEntry(oldMetadata, newMetadata, oldEntry.getInternalMetadata(), entry.getInternalMetadata())) {
             if (log.isTraceEnabled()) {
                log.tracef("Committing entry %s, replaced %s", entry, oldEntry);
             }
             entry.setCommitted();
             if (entry.getValue() != null || newMetadata != null) {
-               return factory.create(entry);
+               InternalCacheEntry newly = factory.create(entry);
+               newly.setInternalMetadata(entry.getInternalMetadata());
+               return newly;
             } else {
                return null;
             }
@@ -478,6 +486,27 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
       });
       return entry.isCommitted();
+   }
+
+   private boolean canCommitEntry(Metadata oldMetadata, Metadata newMetadata, PrivateMetadata oldPrivate, PrivateMetadata newPrivate) {
+      if (oldMetadata == null || oldMetadata.version() == null || newMetadata == null || newMetadata.version() == null)
+         return true;
+
+      InequalVersionComparisonResult comparisonResult = oldMetadata.version().compareTo(newMetadata.version());
+      if (comparisonResult == InequalVersionComparisonResult.BEFORE
+            || (oldMetadata instanceof RemoteMetadata && comparisonResult == InequalVersionComparisonResult.EQUAL))
+         return true;
+
+      if (oldPrivate == null || newPrivate == null || oldPrivate.isPreloaded() != newPrivate.isPreloaded())
+         return false;
+
+      comparisonResult = oldPrivate.entryVersion().compareTo(newPrivate.entryVersion());
+      return comparisonResult == InequalVersionComparisonResult.BEFORE;
+   }
+
+   private static boolean isLoadedEntry(CacheEntry<?, ?> entry) {
+      PrivateMetadata privateMetadata = entry.getInternalMetadata();
+      return privateMetadata != null && privateMetadata.isPreloaded();
    }
 
    private CompletionStage<Void> commitSingleEntryIfNoChange(RepeatableReadEntry entry, InvocationContext ctx, VisitableCommand command) {

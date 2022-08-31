@@ -187,6 +187,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          e.setCreated(internalMetadata.created());
          e.setLastUsed(internalMetadata.lastUsed());
       }
+
+      if (command.getInternalMetadata() != null) {
+         e.setInternalMetadata(command.getInternalMetadata());
+      }
+
       Object prevValue = e.getValue();
       if (!valueMatcher.matches(prevValue, null, newValue)) {
          command.fail();

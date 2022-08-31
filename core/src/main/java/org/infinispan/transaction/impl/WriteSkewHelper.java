@@ -72,7 +72,8 @@ public class WriteSkewHelper {
             int segment = SegmentSpecificCommand.extractSegment(c, k, keyPartitioner);
             if (ksl.performCheckOnSegment(segment)) {
                CacheEntry<?, ?> cacheEntry = context.lookupEntry(k);
-               if (!(cacheEntry instanceof VersionedRepeatableReadEntry)) {
+               PrivateMetadata metadata = cacheEntry.getInternalMetadata();
+               if (!(cacheEntry instanceof VersionedRepeatableReadEntry) || metadata.isPreloaded()) {
                   continue;
                }
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) cacheEntry;

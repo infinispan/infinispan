@@ -27,16 +27,19 @@ public final class PrivateMetadata {
    /**
     * A cached empty {@link PrivateMetadata}.
     */
-   private static final PrivateMetadata EMPTY = new PrivateMetadata(null, null);
+   private static final PrivateMetadata EMPTY = new PrivateMetadata(null, null, false);
 
    @ProtoField(1)
    final IracMetadata iracMetadata;
 
    private final IncrementableEntryVersion entryVersion;
 
-   private PrivateMetadata(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
+   private final boolean isPreloaded;
+
+   private PrivateMetadata(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion, boolean isPreloaded) {
       this.iracMetadata = iracMetadata;
       this.entryVersion = entryVersion;
+      this.isPreloaded = isPreloaded;
    }
 
    /**
@@ -67,11 +70,11 @@ public final class PrivateMetadata {
    static PrivateMetadata protoFactory(IracMetadata iracMetadata, NumericVersion numericVersion,
          SimpleClusteredVersion clusteredVersion) {
       IncrementableEntryVersion entryVersion = numericVersion == null ? clusteredVersion : numericVersion;
-      return newInstance(iracMetadata, entryVersion);
+      return newInstance(iracMetadata, entryVersion, false);
    }
 
-   private static PrivateMetadata newInstance(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion) {
-      return iracMetadata == null && entryVersion == null ? EMPTY : new PrivateMetadata(iracMetadata, entryVersion);
+   private static PrivateMetadata newInstance(IracMetadata iracMetadata, IncrementableEntryVersion entryVersion, boolean isPreloaded) {
+      return iracMetadata == null && entryVersion == null ? EMPTY : new PrivateMetadata(iracMetadata, entryVersion, isPreloaded);
    }
 
    /**
@@ -138,10 +141,15 @@ public final class PrivateMetadata {
       return entryVersion instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) entryVersion : null;
    }
 
+   public boolean isPreloaded() {
+      return isPreloaded;
+   }
+
    public static class Builder {
 
       private IracMetadata iracMetadata;
       private IncrementableEntryVersion entryVersion;
+      private boolean isPreloaded;
 
       public Builder() {
       }
@@ -149,13 +157,14 @@ public final class PrivateMetadata {
       private Builder(PrivateMetadata metadata) {
          this.iracMetadata = metadata.iracMetadata;
          this.entryVersion = metadata.entryVersion;
+         this.isPreloaded = metadata.isPreloaded;
       }
 
       /**
        * @return A new instance of {@link PrivateMetadata}.
        */
       public PrivateMetadata build() {
-         return newInstance(iracMetadata, entryVersion);
+         return newInstance(iracMetadata, entryVersion, isPreloaded);
       }
 
       /**
@@ -177,6 +186,16 @@ public final class PrivateMetadata {
        */
       public Builder entryVersion(IncrementableEntryVersion entryVersion) {
          this.entryVersion = entryVersion;
+         return this;
+      }
+
+      /**
+       * Mark that the entry is preloaded.
+       *
+       * @return This instance.
+       */
+      public Builder preloadedEntry() {
+         this.isPreloaded = true;
          return this;
       }
 

@@ -1,9 +1,13 @@
 package org.infinispan.persistence.manager;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -13,23 +17,33 @@ import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.executors.LimitedExecutor;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.transaction.impl.FakeJTATransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -72,22 +86,48 @@ public class PreloadManager {
    @Inject TransactionCoordinator transactionCoordinator;
    @Inject TransactionManager transactionManager;
    @Inject TransactionTable transactionTable;
+   @Inject MarshallableEntryFactory entryFactory;
+   @Inject @ComponentName(NON_BLOCKING_EXECUTOR) ExecutorService nonBlockingExecutor;
+   private LimitedExecutor executor;
 
-   private volatile boolean fullyPreloaded;
+   private volatile PreloadStatus status = PreloadStatus.NOT_RUNNING;
+   private long version = 0;
 
    @Start
-   public void start() {
-      fullyPreloaded = false;
-      CompletionStages.join(doPreload());
+   public void blockingPreload() {
+      executor = new LimitedExecutor("preloader-" + cache.wired().getName(), nonBlockingExecutor, 1);
+      CompletionStages.join(preload());
    }
 
-   private CompletionStage<Void> doPreload() {
+   public CompletionStage<Void> preload() {
+      if (status == PreloadStatus.RUNNING) {
+         return CompletableFutures.completedExceptionFuture(new IllegalStateException("Preloader already running"));
+      }
+
+      return CompletableFuture.supplyAsync(this::doPreload, executor)
+            .thenCompose(Function.identity())
+            .thenCompose(loaded -> removeOldEntries().thenApply(ignore -> loaded))
+            .whenComplete((loadStatus, t) -> {
+               version += 1;
+
+               if (t != null) {
+                  status = PreloadStatus.FAILED_LOAD;
+                  throw CompletableFutures.asCompletionException(t);
+               }
+
+               status = loadStatus;
+            })
+            .thenApply(ignore -> null);
+   }
+
+   private CompletionStage<PreloadStatus> doPreload() {
+      status = PreloadStatus.RUNNING;
       Publisher<MarshallableEntry<Object, Object>> publisher = persistenceManager.preloadPublisher();
 
       long start = timeService.time();
 
       final long maxEntries = getMaxEntries();
-      final long flags = getFlagsForStateInsertion();
+      final long flags = getFlagsForPreloadOperations();
       AdvancedCache<?,?> tmpCache = this.cache.wired().withStorageMediaType();
       DataConversion keyDataConversion = tmpCache.getKeyDataConversion();
       DataConversion valueDataConversion = tmpCache.getValueDataConversion();
@@ -96,14 +136,17 @@ public class PreloadManager {
       try {
          return Flowable.fromPublisher(publisher)
                         .take(maxEntries)
+                        .map(this::handleEntryPrivateMetadata)
                         .concatMapSingle(me -> preloadEntry(flags, me, keyDataConversion, valueDataConversion))
                         .count()
                         .toCompletionStage()
-                        .thenAccept(insertAmount -> {
-                           this.fullyPreloaded = insertAmount < maxEntries;
+                        .whenComplete((insertAmount, t) -> {
                            log.debugf("Preloaded %d keys in %s", insertAmount,
                                       Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
-                        });
+                        })
+                        .thenApply(insertAmount -> insertAmount < maxEntries
+                              ? PreloadStatus.COMPLETE_LOAD
+                              : PreloadStatus.PARTIAL_LOAD);
       } finally {
          resumeIfNeeded(outerTransaction);
       }
@@ -136,6 +179,41 @@ public class PreloadManager {
       }
       // The return value doesn't matter, but it cannot be null
       return Completable.fromCompletionStage(stage).toSingleDefault(me);
+   }
+
+   private CompletionStage<Void> removeOldEntries() {
+      if (version == 0) return CompletableFutures.completedNull();
+
+      AdvancedCache<?, ?> tmpCache = cache.wired().withFlags(EnumUtil.enumSetOf(getFlagsForPreloadOperations(), Flag.class));
+      CloseableIterator<? extends CacheEntry<?, ?>> it = tmpCache.cacheEntrySet().iterator();
+      while (it.hasNext()) {
+         CacheEntry<?, ?> entry = it.next();
+         PrivateMetadata metadata = entry.getInternalMetadata();
+         if (metadata != null) {
+            EntryVersion entryVersion = metadata.entryVersion();
+            if (entryVersion instanceof NumericVersion && ((NumericVersion) entryVersion).getVersion() < version) {
+               it.remove();
+            }
+         }
+      }
+
+      return CompletableFutures.completedNull();
+   }
+
+   private MarshallableEntry<Object, Object> handleEntryPrivateMetadata(MarshallableEntry<Object, Object> entry) {
+      PrivateMetadata privateMetadata = entry.getInternalMetadata();
+      if (privateMetadata == null) {
+         privateMetadata = PrivateMetadata.getBuilder(null)
+               .build();
+      }
+
+      privateMetadata = privateMetadata.builder()
+            .entryVersion(new NumericVersion(version))
+            .preloadedEntry()
+            .build();
+
+      return entryFactory.create(entry.getKey(), entry.getValue(), entry.getMetadata(), privateMetadata,
+            entry.created(), entry.lastUsed());
    }
 
    private CompletionStage<?> completeTransaction(Object key, LocalTransaction localTransaction, Throwable t) {
@@ -179,7 +257,7 @@ public class PreloadManager {
       return Long.MAX_VALUE;
    }
 
-   private long getFlagsForStateInsertion() {
+   private long getFlagsForPreloadOperations() {
       boolean hasSharedStore = persistenceManager.hasStore(StoreConfiguration::shared);
       if (!hasSharedStore  || !configuration.indexing().isVolatile()) {
          return PRELOAD_WITHOUT_INDEXING_FLAGS;
@@ -193,6 +271,10 @@ public class PreloadManager {
     * is disabled or eviction limit was reached when preloading, returns false.
     */
    public boolean isFullyPreloaded() {
-      return fullyPreloaded;
+      return status.fullyPreloaded();
+   }
+
+   public PreloadStatus currentStatus() {
+      return status;
    }
 }

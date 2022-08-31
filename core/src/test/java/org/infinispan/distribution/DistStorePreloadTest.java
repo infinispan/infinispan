@@ -2,16 +2,20 @@ package org.infinispan.distribution;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
+import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -60,6 +64,49 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
       if (managers().length > 1) {
          killMember(1, cacheName);
       }
+   }
+
+   public void testMultiplePreloads() throws PersistenceException, ExecutionException, InterruptedException {
+      for (int i = 0; i < NUM_KEYS; i++) {
+         c1.put("k" + i, "v" + i);
+      }
+      DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
+      assert dc1.size() == NUM_KEYS;
+
+      DummyInMemoryStore store = TestingUtil.getFirstStore(c1);
+      assertEquals(NUM_KEYS, store.size());
+
+      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, null, new TransportFlags().withFD(false));
+      EmbeddedCacheManager cm2 = cacheManagers.get(1);
+      cm2.defineConfiguration(cacheName, buildConfiguration().build());
+      c2 = cache(1, cacheName);
+      caches.add(c2);
+      waitForClusterToForm(cacheName);
+
+      DataContainer<String, String> dc2 = c2.getAdvancedCache().getDataContainer();
+      assertEquals("Expected all the cache store entries to be preloaded on the second cache", NUM_KEYS, dc2.size());
+
+      for (int i = 0; i < NUM_KEYS; i++) {
+         assertOwnershipAndNonOwnership("k" + i, true);
+      }
+
+      int numDeletedKeys = 4;
+      for (int i = 0; i < numDeletedKeys; i++) {
+         assertTrue(store.delete("k" + i));
+      }
+
+      // First store removed the entries while second store still has all data.
+      assertEquals(NUM_KEYS - numDeletedKeys, store.size());
+      assertEquals(NUM_KEYS, dc2.size());
+
+      PreloadManager c2Preload = TestingUtil.extractComponent(c2, PreloadManager.class);
+      assertTrue(c2Preload.isFullyPreloaded());
+      CompletableFutures.<Void>await(c2Preload.preload().toCompletableFuture());
+
+      assertTrue(c2Preload.isFullyPreloaded());
+
+      // After second preload data is ok.
+      assertEquals(NUM_KEYS - numDeletedKeys, dc2.size());
    }
 
    public void testPreloadOnStart() throws PersistenceException {

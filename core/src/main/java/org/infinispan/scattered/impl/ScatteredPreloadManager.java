@@ -31,8 +31,8 @@ public class ScatteredPreloadManager extends PreloadManager {
    @Inject ClusterTopologyManager clusterTopologyManager;
 
    @Override
-   public void start() {
-      super.start();
+   public void blockingPreload() {
+      super.blockingPreload();
 
       initTopologyId();
    }

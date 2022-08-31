@@ -2,6 +2,7 @@ package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
  * A class designed to forward all method invocations for a CacheEntry to the provided delegate.  This
@@ -140,5 +141,10 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    @Override
    public int hashCode() {
       return delegate().hashCode();
+   }
+
+   @Override
+   public PrivateMetadata getInternalMetadata() {
+      return delegate().getInternalMetadata();
    }
 }

@@ -278,7 +278,7 @@ public class IracMetadataStoreTest extends AbstractXSiteTest {
    private void preload() {
       for (Cache<String, String> cache : this.<String, String>caches(LON)) {
          PreloadManager pm = TestingUtil.extractComponent(cache, PreloadManager.class);
-         pm.start();
+         pm.blockingPreload();
       }
    }
 
