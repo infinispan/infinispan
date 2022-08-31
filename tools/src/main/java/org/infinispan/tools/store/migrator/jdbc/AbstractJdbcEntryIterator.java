@@ -9,6 +9,7 @@ import java.util.Iterator;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.impl.table.AbstractTableManager;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -35,12 +36,20 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>,
 
       try {
          conn = connectionFactory.getConnection();
-         numberOfRows = tableManager.size(conn);
+         String sizeSql = ((AbstractTableManager<?, ?>) tableManager).getSizeSql();
+         ps = conn.prepareStatement(sizeSql);
+         ps.setLong(1, System.currentTimeMillis());
+         rs = ps.executeQuery();
+         rs.next();
+         numberOfRows = rs.getInt(1);
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
 
          ps = conn.prepareStatement(tableManager.getLoadAllRowsSql(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
          ps.setFetchSize(tableManager.getFetchSize());
          rs = ps.executeQuery();
       } catch (SQLException e) {
+         this.close();
          throw new PersistenceException("SQL error while fetching all StoredEntries", e);
       }
    }

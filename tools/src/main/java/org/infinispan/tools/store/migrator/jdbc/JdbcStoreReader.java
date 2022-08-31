@@ -44,14 +44,15 @@ public class JdbcStoreReader implements StoreIterator {
       this.marshaller = SerializationConfigUtil.getMarshaller(props);
       this.config = JdbcConfigurationUtil.getStoreConfig(props);
       this.connectionFactory = new PooledConnectionFactory();
-      String segmentCount = props.get(Element.SEGMENT_COUNT);
-      metaData = TableManagerFactory.getDbMetaData(connectionFactory, config,
-            // If we don't have segments then disable it
-            segmentCount == null || Integer.parseInt(segmentCount) <= 0);
       this.stringConfig = config;
       this.binaryConfig = createBinaryTableConfig();
 
       connectionFactory.start(config.connectionFactory(), JdbcStoreReader.class.getClassLoader());
+
+      String segmentCount = props.get(Element.SEGMENT_COUNT);
+      metaData = TableManagerFactory.getDbMetaData(connectionFactory, config,
+            // If we don't have segments then disable it
+            segmentCount == null || Integer.parseInt(segmentCount) <= 0);
    }
 
    @Override

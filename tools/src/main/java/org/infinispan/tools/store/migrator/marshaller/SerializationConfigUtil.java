@@ -90,9 +90,13 @@ public class SerializationConfigUtil {
       }
 
       EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
-      Cache<Object, Object> cache = manager.createCache(props.cacheName(), new ConfigurationBuilder().build());
-      return cache.getAdvancedCache().getComponentRegistry()
-            .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+      try {
+         Cache<Object, Object> cache = manager.createCache(props.cacheName(), new ConfigurationBuilder().build());
+         return cache.getAdvancedCache().getComponentRegistry()
+               .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+      } finally {
+         manager.stop();
+      }
    }
 
    private static Marshaller loadMarshallerInstance(StoreProperties props) {
