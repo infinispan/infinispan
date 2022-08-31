@@ -97,8 +97,6 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       this.connectionFactory = connectionFactory;
       this.jdbcConfig = jdbcConfig;
       this.config = jdbcConfig.table();
-      this.marshaller = ctx.getPersistenceMarshaller();
-      this.marshallableEntryFactory = ctx.getMarshallableEntryFactory();
       this.dbMetadata = dbMetadata;
       this.dataTableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName);
       this.metaTableName = new TableName(identifierQuoteString, config.tableNamePrefix(), cacheName + META_TABLE_SUFFIX);
@@ -119,7 +117,15 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       this.deleteAllRows = initDeleteAllRowsSql();
       this.selectExpiredRowsSql = initSelectOnlyExpiredRowsSql();
 
-      ctx.getPersistenceMarshaller().register(new PersistenceContextInitializerImpl());
+      // ISPN-14108 only initiate variables from InitializationContext if not null. Required for StoreMigrator
+      if (ctx != null) {
+         this.marshaller = ctx.getPersistenceMarshaller();
+         this.marshallableEntryFactory = ctx.getMarshallableEntryFactory();
+         this.marshaller.register(new PersistenceContextInitializerImpl());
+      } else {
+         this.marshaller = null;
+         this.marshallableEntryFactory = null;
+      }
    }
 
    @Override
