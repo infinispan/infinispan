@@ -16,5 +16,6 @@ public class NamingStrategyTest {
       assertEquals("thisIsAnIdentifier", NamingStrategy.CAMEL_CASE.convert("this-is-an-identifier"));
       assertEquals("yet-another-identifier", NamingStrategy.KEBAB_CASE.convert("yetAnotherIdentifier"));
       assertEquals("sock_conn_timeout", NamingStrategy.SNAKE_CASE.convert("sockConnTimeout"));
+      assertEquals("enabled-ciphersuites-tls13", NamingStrategy.KEBAB_CASE.convert("enabledCiphersuitesTls13"));
    }
 }

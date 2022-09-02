@@ -90,7 +90,8 @@
                     "TLSV1.2",
                     "TLSV1.3"
                   ],
-                  "enabled-ciphersuites": "DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"
+                  "enabled-ciphersuites": "DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256",
+                  "enabled-ciphersuites-tls13": "TLS_AES_256_GCM_SHA384"
                 }
               },
               "kerberos": {

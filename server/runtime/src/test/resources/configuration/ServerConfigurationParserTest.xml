@@ -49,7 +49,8 @@
                                  relative-to="infinispan.server.config.path"
                                  password="secret"/>
                      <engine enabled-protocols="TLSV1.1 TLSV1.2 TLSV1.3"
-                             enabled-ciphersuites="DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"/>
+                             enabled-ciphersuites="DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"
+                             enabled-ciphersuites-tls13="TLS_AES_256_GCM_SHA384"/>
                   </ssl>
                   <kerberos principal="kerberos@DOMAIN.ORG" keytab-path="keytab" required="false" debug="false" fail-cache="1000" mechanism-names="KRB5 SPNEGO" relative-to="infinispan.server.config.path"/>
                </server-identities>

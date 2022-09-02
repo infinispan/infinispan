@@ -1270,7 +1270,20 @@
    </xs:complexType>
    <xs:complexType name="security-realm-ssl-engine">
       <xs:attribute type="tns:name-list" name="enabled-protocols"/>
-      <xs:attribute type="xs:string" name="enabled-ciphersuites"/>
+      <xs:attribute type="xs:string" name="enabled-ciphersuites" default="DEFAULT">
+         <xs:annotation>
+            <xs:documentation>
+               The filter to be applied to the cipher suites made available by this SSL engine.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="enabled-ciphersuites-tls13" default="TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256">
+         <xs:annotation>
+            <xs:documentation>
+               The ciphersuite names to use for the TLSv1.3 engine.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-properties">
