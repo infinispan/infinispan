@@ -67,7 +67,7 @@ public class TLSWithoutAuthenticationIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384");
-      expectException(TransportException.class, ClosedChannelException.class,
+      expectException(TransportException.class, SSLHandshakeException.class,
                       () -> SERVER_TEST.hotrod().withClientConfiguration(builder)
                                        .withCacheMode(CacheMode.DIST_SYNC)
                                        .create());

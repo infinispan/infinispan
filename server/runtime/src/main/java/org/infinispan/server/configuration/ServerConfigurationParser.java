@@ -1042,7 +1042,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                engine.enabledProtocols(reader.getListAttributeValue(i));
                break;
             case ENABLED_CIPHERSUITES:
-               engine.enabledCiphersuites(reader.getAttributeValue(i));
+               engine.enabledCiphersuitesFilter(reader.getAttributeValue(i));
+               break;
+            case ENABLED_CIPHERSUITES_TLS13:
+               engine.enabledCiphersuitesNames(reader.getAttributeValue(i));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
