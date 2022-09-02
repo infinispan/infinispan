@@ -16,11 +16,13 @@ import org.wildfly.security.ssl.SSLContextBuilder;
 public class SSLEngineConfiguration extends ConfigurationElement<SSLEngineConfiguration> {
    static final AttributeDefinition<String[]> ENABLED_PROTOCOLS = AttributeDefinition.builder(Attribute.ENABLED_PROTOCOLS, null, String[].class)
          .serializer(AttributeSerializer.STRING_ARRAY).immutable().build();
-   static final AttributeDefinition<String> ENABLED_CIPHERSUITES = AttributeDefinition.builder(Attribute.ENABLED_CIPHERSUITES, null, String.class)
+   static final AttributeDefinition<String> ENABLED_CIPHERSUITES = AttributeDefinition.builder(Attribute.ENABLED_CIPHERSUITES, "DEFAULT", String.class)
+         .immutable().build();
+   static final AttributeDefinition<String> ENABLED_CIPHERSUITES_13 = AttributeDefinition.builder(Attribute.ENABLED_CIPHERSUITES_TLS13, CipherSuiteSelector.OPENSSL_DEFAULT_CIPHER_SUITE_NAMES, String.class)
          .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SSLEngineConfiguration.class, ENABLED_PROTOCOLS, ENABLED_CIPHERSUITES);
+      return new AttributeSet(SSLEngineConfiguration.class, ENABLED_PROTOCOLS, ENABLED_CIPHERSUITES, ENABLED_CIPHERSUITES_13);
    }
 
    SSLEngineConfiguration(AttributeSet attributes) {
@@ -35,6 +37,9 @@ public class SSLEngineConfiguration extends ConfigurationElement<SSLEngineConfig
          }
          builder.setProtocolSelector(protocolSelector);
       });
-      attributes.attribute(ENABLED_CIPHERSUITES).apply(cipherSuites -> builder.setCipherSuiteSelector(CipherSuiteSelector.fromString(cipherSuites)));
+      CipherSuiteSelector cipherSuiteFilter = CipherSuiteSelector.fromString(attributes.attribute(ENABLED_CIPHERSUITES).get());
+
+      String cipherSuiteNames = attributes.attribute(ENABLED_CIPHERSUITES_13).get();
+      builder.setCipherSuiteSelector(CipherSuiteSelector.aggregate(cipherSuiteNames != null ? CipherSuiteSelector.fromNamesString(cipherSuiteNames) : null, cipherSuiteFilter));
    }
 }

@@ -25,7 +25,7 @@ Omitting the `enabled-protocols` attribute allows any TLS version.
 ----
 ====
 +
-. Configure {brandname} to use one or more cipher suites with the `enabled-ciphersuites` attribute.
+. Configure {brandname} to use one or more cipher suites with the `enabled-ciphersuites` attribute (for TLSv1.2 and below) and the `enabled-ciphersuites-tls13` attribute (for TLSv1.3).
 +
 You must ensure that you set a cipher suite that supports any protocol features you plan to use; for example `HTTP/2 ALPN`.
 . Save the changes to your configuration.

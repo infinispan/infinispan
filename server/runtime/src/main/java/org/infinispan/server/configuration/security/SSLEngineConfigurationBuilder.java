@@ -20,8 +20,13 @@ public class SSLEngineConfigurationBuilder implements Builder<SSLEngineConfigura
       return this;
    }
 
-   public SSLEngineConfigurationBuilder enabledCiphersuites(String cipherSuites) {
-      attributes.attribute(SSLEngineConfiguration.ENABLED_CIPHERSUITES).set(cipherSuites);
+   public SSLEngineConfigurationBuilder enabledCiphersuitesFilter(String cipherSuitesFilter) {
+      attributes.attribute(SSLEngineConfiguration.ENABLED_CIPHERSUITES).set(cipherSuitesFilter);
+      return this;
+   }
+
+   public SSLEngineConfigurationBuilder enabledCiphersuitesNames(String cipherSuitesNames) {
+      attributes.attribute(SSLEngineConfiguration.ENABLED_CIPHERSUITES_13).set(cipherSuitesNames);
       return this;
    }
 

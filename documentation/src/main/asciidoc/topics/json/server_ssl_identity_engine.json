@@ -12,7 +12,8 @@
             },
             "engine": {
               "enabled-protocols": ["TLSv1.3"],
-              "enabled-ciphersuites": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
+              "enabled-ciphersuites": "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256",
+              "enabled-ciphersuites-tls13": "TLS_AES_256_GCM_SHA384"
             }
           }
         }

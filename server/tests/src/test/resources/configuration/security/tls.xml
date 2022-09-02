@@ -5,9 +5,8 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"
-                         alias="server"/>
-               <engine enabled-protocols="TLSv1.3 TLSv1.2" enabled-ciphersuites="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"/>
+               <keystore path="server.pfx" password="secret" alias="server"/>
+               <engine enabled-protocols="TLSv1.3 TLSv1.2" enabled-ciphersuites="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" enabled-ciphersuites-tls13="TLS_AES_256_GCM_SHA384"/>
             </ssl>
          </server-identities>
       </security-realm>
