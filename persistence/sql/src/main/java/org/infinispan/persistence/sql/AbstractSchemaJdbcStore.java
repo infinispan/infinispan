@@ -169,7 +169,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       List<Parameter> unusedValueParams = null;
 
       for (Parameter parameter : parameters) {
-         if (parameter.jsonUpdateConsumer == null) {
+         if (parameter.jsonConsumerValue == null && parameter.jsonConsumerKey == null) {
             if (parameter.primaryIdentifier) {
                throw log.keyNotInSchema(parameter.name, fullKeyMessageName);
             } else {
@@ -211,10 +211,10 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
 
    private void updatePrimitiveJsonConsumer(Parameter parameter, boolean key) {
       updateUnwrap(parameter, key, json -> json.at("_value"));
-      parameter.jsonUpdateConsumer = (json, value) -> {
+      updateJsonConsumer(parameter, key, (json, value) -> {
          json.set("_type", parameter.getType().protostreamType);
          json.set("_value", value);
-      };
+      });
    }
 
    void verifyParametersPresentForMessage(ImmutableSerializationContext ctx, String fullTypeName, Map<String, Parameter> parameterMap, boolean key) {
@@ -237,10 +237,10 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          if (enumParam != null) {
             assert enumParam.getType() == ProtostreamFieldType.STRING;
             updateUnwrap(enumParam, key, json -> json.at("_value"));
-            enumParam.jsonUpdateConsumer = (json, o) -> {
+            updateJsonConsumer(enumParam, key, (json, o) -> {
                json.set("_type", fullTypeName);
                json.set("_value", o);
-            };
+            });
          }
       } else {
          throw new UnsupportedOperationException("Unsupported descriptor found " + genericDescriptor);
@@ -297,7 +297,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
 
          if (nestedMessageNames == null) {
             updateUnwrap(parameter, key, retrievalFunction);
-            parameter.jsonUpdateConsumer = valueConsumer;
+            updateJsonConsumer(parameter, key, valueConsumer);
          } else {
             updateUnwrap(parameter, key, json -> {
                for (String nestedName : nestedMessageNames) {
@@ -306,7 +306,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
                }
                return retrievalFunction.apply(json);
             });
-            parameter.jsonUpdateConsumer = ((json, o) -> {
+            updateJsonConsumer(parameter, key, (json, o) -> {
                Json nestedJSon = json;
                for (String nestedName : nestedMessageNames) {
                   nestedJSon = json.at(nestedName);
@@ -327,6 +327,14 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          parameter.unwrapJsonKey = function;
       } else {
          parameter.unwrapJsonValue = function;
+      }
+   }
+
+   private void updateJsonConsumer(Parameter parameter, boolean key, BiConsumer<Json, Object> jsonBiConsumer) {
+      if (key) {
+         parameter.jsonConsumerKey = jsonBiConsumer;
+      } else {
+         parameter.jsonConsumerValue = jsonBiConsumer;
       }
    }
 
@@ -388,7 +396,8 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       private final ProtostreamFieldType type;
       private final boolean primaryIdentifier;
       private final int sqlType;
-      private BiConsumer<Json, Object> jsonUpdateConsumer;
+      private BiConsumer<Json, Object> jsonConsumerValue;
+      private BiConsumer<Json, Object> jsonConsumerKey;
       private Function<Json, Json> unwrapJsonValue;
       private Function<Json, Json> unwrapJsonKey;
 
@@ -517,7 +526,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          }
       }
 
-      protected void updateJsonWithParameter(ResultSet rs, Parameter parameter, int offset, Json json) throws SQLException {
+      protected void updateJsonWithParameter(ResultSet rs, Parameter parameter, int offset, Json json, boolean key) throws SQLException {
          Object value;
          switch (parameter.getType()) {
             case INT_32:
@@ -549,8 +558,13 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
             default:
                throw new IllegalArgumentException("Type " + parameter.getType() + " not supported!");
          }
-         if (value != null)
-            parameter.jsonUpdateConsumer.accept(json, value);
+         if (value != null) {
+            if (key) {
+               parameter.jsonConsumerKey.accept(json, value);
+            } else {
+               parameter.jsonConsumerValue.accept(json, value);
+            }
+         }
       }
 
       @Override
@@ -567,14 +581,15 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          Parameter[] valueParameters = schemaOptions.valueParameters;
          for (int i = 0; i < valueParameters.length; ++i) {
             Parameter parameter = valueParameters[i];
-            Json jsonToUse = valueJson;
-            if (parameter.isPrimaryIdentifier() && !schemaOptions.config.getSchemaJdbcConfiguration().embeddedKey()) {
-               if (keyJson == null) {
+            if (parameter.isPrimaryIdentifier()) {
+               if (keyJson != null) {
+                  updateJsonWithParameter(rs, parameter, i + 1, keyJson, true);
+               }
+               if (!schemaOptions.config.getSchemaJdbcConfiguration().embeddedKey()) {
                   continue;
                }
-               jsonToUse = keyJson;
             }
-            updateJsonWithParameter(rs, parameter, i + 1, jsonToUse);
+            updateJsonWithParameter(rs, parameter, i + 1, valueJson, false);
          }
          if (keyJson != null) {
             keyIfProvided = schemaOptions.keyConversion.toStorage(keyJson.toString());
