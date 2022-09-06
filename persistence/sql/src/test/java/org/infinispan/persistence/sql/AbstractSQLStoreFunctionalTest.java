@@ -274,6 +274,13 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       cache.put(key, value);
 
       assertEquals(value, cache.get(key));
+
+      List<Map.Entry<Object, Object>> entryList = cache.entrySet().stream().collect(Collectors.toList());
+      assertEquals(1, entryList.size());
+
+      Map.Entry<Object, Object> entry = entryList.get(0);
+      assertEquals(key, entry.getKey());
+      assertEquals(value, entry.getValue());
    }
 
    protected void configureCommonConfiguration(AbstractSchemaJdbcConfigurationBuilder<?, ?> builder) {
