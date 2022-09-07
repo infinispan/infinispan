@@ -424,8 +424,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       }
       if (isPotentiallyIndexedType(newValue)) {
          if (shouldModifyIndexes(command, ctx, storedKey)) {
-            // This means that the entry is just modified so we need to update the indexes and not add to them.
-            operation = operation.thenCompose(r -> updateIndexes(skipIndexCleanup, newValue, key, segment));
+            // We don't need to wait for a possible removeFromIndexes operation,
+            // since if it exists, the oldValue is UNKNOWN or replacedWithADifferentEntity is true,
+            // which implies that the delete and the add operations are related to different indexes
+            operation = CompletableFuture.allOf(operation, updateIndexes(skipIndexCleanup, newValue, key, segment));
          } else {
             if (log.isTraceEnabled()) {
                log.tracef("Not modifying index for %s (%s)", storedKey, command);
