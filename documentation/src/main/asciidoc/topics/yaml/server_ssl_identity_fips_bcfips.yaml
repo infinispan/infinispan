@@ -1,0 +1,12 @@
+server:
+  security:
+    securityRealms:
+      - name: "default"
+        serverIdentities:
+          ssl:
+            keystore:
+              path: "server.bcfks"
+              password: "secret"
+              alias: "server"
+              provider: "BCFIPS"
+              type: "BCFKS"

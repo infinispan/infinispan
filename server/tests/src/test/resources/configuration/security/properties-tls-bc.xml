@@ -5,7 +5,7 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.pfx" password="secret" alias="server"/>
+               <keystore path="server.bcfks" password="secret" alias="server" provider="BC" type="BCFKS"/>
             </ssl>
          </server-identities>
          <properties-realm groups-attribute="Roles">

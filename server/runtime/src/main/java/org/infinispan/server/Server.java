@@ -178,7 +178,7 @@ public class Server implements ServerManagement, AutoCloseable {
    public static final String DEFAULT_CLUSTER_STACK = "tcp";
    public static final int DEFAULT_BIND_PORT = 11222;
    public static final int DEFAULT_JGROUPS_BIND_PORT = 7800;
-
+   public static final int DEFAULT_JGROUPS_FD_PORT_OFFSET = 50000;
    private static final int SHUTDOWN_DELAY_SECONDS = 3;
 
    private final ClassLoader classLoader;

@@ -32,8 +32,8 @@ public class CertWithoutAuthenticationIT {
    @Test
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(builder, "ca");
-      SERVERS.getServerDriver().applyKeyStore(builder, "admin");
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
 
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");

@@ -75,11 +75,19 @@ public interface InfinispanServerDriver {
 
    void applyKeyStore(ConfigurationBuilder builder, String certificateName);
 
+   void applyKeyStore(ConfigurationBuilder builder, String certificateName, String type, String provider);
+
    void applyKeyStore(RestClientConfigurationBuilder builder, String certificateName);
+
+   void applyKeyStore(RestClientConfigurationBuilder builder, String certificateName, String type, String provider);
 
    void applyTrustStore(ConfigurationBuilder builder, String certificateName);
 
+   void applyTrustStore(ConfigurationBuilder builder, String certificateName, String type, String provider);
+
    void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName);
+
+   void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName, String type, String provider);
 
    /**
     * Pauses a server. Equivalent to kill -SIGSTOP

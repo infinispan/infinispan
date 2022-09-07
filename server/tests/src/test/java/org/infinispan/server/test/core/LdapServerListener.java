@@ -68,7 +68,7 @@ public class LdapServerListener implements InfinispanServerListener {
             generateKeyTab(new File(driver.getConfDir(), "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
             generateKeyTab(new File(driver.getConfDir(), "http.keytab"), "HTTP/localhost@INFINISPAN.ORG", "httpPassword");
          }
-         ldapServer.start(driver.getCertificateFile("server").getAbsolutePath(), this.initLDIFs);
+         ldapServer.start(driver.getCertificateFile("server.pfx").getAbsolutePath(), this.initLDIFs);
          if (withKdc) {
             ldapServer.startKdc();
          }

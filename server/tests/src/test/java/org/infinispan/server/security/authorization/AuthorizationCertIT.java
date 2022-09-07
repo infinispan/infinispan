@@ -41,11 +41,11 @@ public class AuthorizationCertIT extends AbstractAuthorization {
    @Override
    protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(hotRodBuilder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(hotRodBuilder, "ca.pfx");
       if (user == TestUser.ANONYMOUS) {
-         SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, "server");
+         SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, "server.pfx");
       } else {
-         SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, user.getUser());
+         SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, user.getUser() + ".pfx");
       }
       hotRodBuilder.security()
             .authentication()
@@ -56,11 +56,11 @@ public class AuthorizationCertIT extends AbstractAuthorization {
       hotRodBuilders.put(user, hotRodBuilder);
 
       RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
-      SERVERS.getServerDriver().applyTrustStore(restBuilder, "ca");
+      SERVERS.getServerDriver().applyTrustStore(restBuilder, "ca.pfx");
       if (user == TestUser.ANONYMOUS) {
-         SERVERS.getServerDriver().applyKeyStore(restBuilder, "server");
+         SERVERS.getServerDriver().applyKeyStore(restBuilder, "server.pfx");
       } else {
-         SERVERS.getServerDriver().applyKeyStore(restBuilder, user.getUser());
+         SERVERS.getServerDriver().applyKeyStore(restBuilder, user.getUser() + ".pfx");
       }
       restBuilder.security().authentication().ssl()
             .sniHostName("infinispan")

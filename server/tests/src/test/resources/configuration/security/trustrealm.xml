@@ -5,9 +5,8 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.pfx" relative-to="infinispan.server.config.path" keystore-password="secret"
-                         alias="server"/>
-               <truststore path="trust.pfx"  relative-to="infinispan.server.config.path" password="secret"/>
+               <keystore path="server.pfx" password="secret" alias="server"/>
+               <truststore path="trust.pfx" password="secret"/>
             </ssl>
          </server-identities>
          <truststore-realm/>

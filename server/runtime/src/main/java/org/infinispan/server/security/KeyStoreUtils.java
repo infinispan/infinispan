@@ -1,5 +1,7 @@
 package org.infinispan.server.security;
 
+import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -8,6 +10,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -55,5 +58,20 @@ public class KeyStoreUtils {
       try (FileOutputStream stream = new FileOutputStream(keyStoreFileName)) {
          keyStore.store(stream, keyStorePassword);
       }
+   }
+
+   public static void generateEmptyKeyStore(String keyStoreFileName, char[] keyStorePassword) throws IOException, GeneralSecurityException {
+      KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      keyStore.load(null, keyStorePassword);
+      try (FileOutputStream stream = new FileOutputStream(keyStoreFileName)) {
+         keyStore.store(stream, keyStorePassword);
+      }
+   }
+
+   public static KeyStore buildFilelessKeyStore(Provider[] providers, String providerName, String type) throws GeneralSecurityException, IOException {
+      Provider provider = findProvider(providers, providerName, KeyStore.class, type);
+      KeyStore keyStore = KeyStore.getInstance(type, provider);
+      keyStore.load(null, null);
+      return keyStore;
    }
 }
