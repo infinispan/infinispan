@@ -1,0 +1,20 @@
+{
+  "server": {
+    "security": {
+      "security-realms": [{
+        "name": "default",
+        "server-identities": {
+          "ssl": {
+            "keystore": {
+              "path": "server.bcfks",
+              "password": "secret",
+              "alias": "server",
+              "provider": "BCFIPS",
+              "type": "BCFKS"
+            }
+          }
+        }
+      }]
+    }
+  }
+}

@@ -1,12 +1,14 @@
 package org.infinispan.server.configuration.security;
 
-import static org.wildfly.security.provider.util.ProviderUtil.INSTALLED_PROVIDERS;
+import static org.infinispan.server.security.KeyStoreUtils.buildFilelessKeyStore;
+import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -34,25 +36,31 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
    static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
    static final AttributeDefinition<String> PROVIDER = AttributeDefinition.builder(Attribute.PROVIDER, null, String.class).build();
+   static final AttributeDefinition<String> TYPE = AttributeDefinition.builder(Attribute.TYPE, null, String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TrustStoreConfiguration.class, PATH, RELATIVE_TO, PROVIDER, PASSWORD);
+      return new AttributeSet(TrustStoreConfiguration.class, PATH, RELATIVE_TO, PROVIDER, PASSWORD, TYPE);
    }
 
    TrustStoreConfiguration(AttributeSet attributes) {
       super(Element.TRUSTSTORE, attributes);
    }
 
-   KeyStore trustStore(Properties properties) {
+   KeyStore trustStore(Provider[] providers, Properties properties) {
       String fileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(),
             properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
+      String providerName = attributes.attribute(PROVIDER).get();
+      String type = attributes.attribute(TYPE).get();
       if (fileName == null) {
-         return null;
+         try {
+            return buildFilelessKeyStore(providers, providerName, type);
+         } catch (GeneralSecurityException | IOException e) {
+            throw new CacheConfigurationException(e);
+         }
       } else {
-         String provider = attributes.attribute(PROVIDER).get();
          char[] password = attributes.attribute(PASSWORD).get().get();
          try (FileInputStream is = new FileInputStream(fileName)) {
-            return KeyStoreUtil.loadKeyStore(INSTALLED_PROVIDERS, provider, is, fileName, password);
+            return KeyStoreUtil.loadKeyStore(() -> providers, providerName, is, fileName, password);
          } catch (IOException | KeyStoreException e) {
             throw new CacheConfigurationException(e);
          }
@@ -60,19 +68,25 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
    }
 
    public void build(SSLContextBuilder builder, Properties properties) {
-      try {
-         KeyStore trustStore = trustStore(properties);
-         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-         trustManagerFactory.init(trustStore);
-         for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
-            if (trustManager instanceof X509TrustManager) {
-               builder.setTrustManager((X509TrustManager) trustManager);
-               return;
+      if (attributes.isModified()) {
+         Provider[] providers = SecurityActions.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
+         try {
+            KeyStore trustStore = trustStore(providers, properties);
+            String algorithm = TrustManagerFactory.getDefaultAlgorithm();
+            String providerName = attributes.attribute(PROVIDER).get();
+            Provider provider = findProvider(providers, providerName, TrustManagerFactory.class, algorithm);
+            TrustManagerFactory trustManagerFactory = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
+            trustManagerFactory.init(trustStore);
+            for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
+               if (trustManager instanceof X509TrustManager) {
+                  builder.setTrustManager((X509TrustManager) trustManager);
+                  return;
+               }
             }
+            throw Server.log.noDefaultTrustManager();
+         } catch (Exception e) {
+            throw new CacheConfigurationException(e);
          }
-         throw Server.log.noDefaultTrustManager();
-      } catch (NoSuchAlgorithmException | KeyStoreException e) {
-         throw new CacheConfigurationException(e);
       }
    }
 }

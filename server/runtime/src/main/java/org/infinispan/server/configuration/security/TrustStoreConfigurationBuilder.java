@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.security.KeyStoreConfiguration.TYPE;
 import static org.infinispan.server.configuration.security.TrustStoreConfiguration.PASSWORD;
 import static org.infinispan.server.configuration.security.TrustStoreConfiguration.PATH;
 import static org.infinispan.server.configuration.security.TrustStoreConfiguration.PROVIDER;
@@ -40,6 +41,11 @@ public class TrustStoreConfigurationBuilder implements Builder<TrustStoreConfigu
 
    public TrustStoreConfigurationBuilder provider(String value) {
       attributes.attribute(PROVIDER).set(value);
+      return this;
+   }
+
+   public TrustStoreConfigurationBuilder type(String value) {
+      attributes.attribute(TYPE).set(value);
       return this;
    }
 

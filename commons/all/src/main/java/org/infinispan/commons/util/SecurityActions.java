@@ -94,5 +94,4 @@ final class SecurityActions {
             Thread.currentThread().getContextClassLoader() //Used by jboss-as stuff
       });
    }
-
 }
