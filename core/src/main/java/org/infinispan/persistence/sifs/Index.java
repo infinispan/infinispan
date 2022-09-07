@@ -369,7 +369,7 @@ class Index {
                throw new IllegalArgumentException(request.toString());
          }
          try {
-            IndexNode.setPosition(root, request.getSegment(), request.getSerializedKey(), request.getFile(), request.getOffset(),
+            IndexNode.setPosition(root, request.getSegment(), request.getKey(), request.getSerializedKey(), request.getFile(), request.getOffset(),
                   request.getSize(), overwriteHook, recordChange);
          } catch (IllegalStateException e) {
             request.completeExceptionally(e);

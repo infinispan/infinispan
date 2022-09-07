@@ -10,9 +10,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.distribution.BaseDistStoreTest;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.LOCAL})
@@ -66,5 +70,42 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       for (int i = 0; i < size; i++) {
          assertEquals("value-" + i, cache(0, cacheName).get(i));
       }
+   }
+
+
+   @DataProvider(name = "booleans")
+   Object[][] booleans() {
+      return new Object[][]{
+            {Boolean.TRUE}, {Boolean.FALSE}};
+   }
+
+   @Test(dataProvider = "booleans")
+   public void testRestartWithEntryUpdatedMultipleTimes(boolean leafOrNode) throws Throwable {
+      int size = 10;
+      String key = "compaction";
+      // We want to test both a leaf and node storage on the root node
+      int extraInserts = leafOrNode ? size : size * 256;
+      for (int i = 0; i < extraInserts; i++) {
+         // Have some extra entries which prevent it from running compaction at beginning
+         cache(0, cacheName).put(i, "value-" + i);
+      }
+      for (int i = 0; i < size; i++) {
+         cache(0, cacheName).put(key, "value-" + i);
+      }
+      assertEquals(extraInserts + 1, cache(0, cacheName).size());
+
+      killMember(0, cacheName);
+      // NOTE: we keep the index, so we ensure upon restart that it is correct
+
+      createCacheManagers();
+
+      WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache(0, cacheName));
+
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+
+      // Force compaction for the previous file
+      CompletionStages.join(compactor.forceCompactionForAllNonLogFiles());
+
+      assertEquals("value-" + (size - 1), cache(0, cacheName).get(key));
    }
 }

@@ -343,7 +343,7 @@ class IndexNode {
       return maxSeqId;
    }
 
-   private void updateFileOffsetInFile(int leafOffset, int newFile, int newOffset) throws IOException {
+   private void updateFileOffsetInFile(int leafOffset, int newFile, int newOffset, short numRecords) throws IOException {
       // Root is -1, so that means the beginning of the file
       long offset = this.offset >= 0 ? this.offset : 0;
       offset += headerLength();
@@ -352,9 +352,10 @@ class IndexNode {
       }
       offset += (long) leafOffset * LEAF_NODE_REFERENCE_SIZE;
 
-      ByteBuffer buffer = ByteBuffer.allocate(8);
+      ByteBuffer buffer = ByteBuffer.allocate(10);
       buffer.putInt(newFile);
       buffer.putInt(newOffset);
+      buffer.putShort(numRecords);
 
       buffer.flip();
 
@@ -374,10 +375,10 @@ class IndexNode {
       return node;
    }
 
-   public static void setPosition(IndexNode root, int segment, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   public static void setPosition(IndexNode root, int segment, Object objectKey, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       Deque<Path> stack = new ArrayDeque<>();
       IndexNode node = findParentNode(root, key, stack);
-      IndexNode copy = node.copyWith(segment, key, file, offset, size, overwriteHook, recordChange);
+      IndexNode copy = node.copyWith(segment, objectKey, key, file, offset, size, overwriteHook, recordChange);
       if (copy == node) {
          // no change was executed
          return;
@@ -629,7 +630,7 @@ class IndexNode {
    /**
     * Called on the most bottom node
     */
-   private IndexNode copyWith(int cacheSegment, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   private IndexNode copyWith(int cacheSegment, Object objectKey, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       if (leafNodes == null) throw new IllegalArgumentException();
       byte[] newPrefix;
       if (leafNodes.length == 0) {
@@ -675,16 +676,16 @@ class IndexNode {
             if (overwriteHook.check(oldLeafNode.file, oldLeafNode.offset)) {
                if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
                   if (log.isTraceEnabled()) {
-                     log.trace(String.format("Overwriting %d:%d with %d:%d (%d)",
+                     log.trace(String.format("Overwriting %s %d:%d with %d:%d (%d)", objectKey,
                            oldLeafNode.file, oldLeafNode.offset, file, offset, numRecords));
                   }
 
-                  updateFileOffsetInFile(insertPart, file, offset);
+                  updateFileOffsetInFile(insertPart, file, offset, numRecords);
 
                   segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
                } else {
                   if (log.isTraceEnabled()) {
-                     log.trace(String.format("Updating num records for %d:%d to %d", oldLeafNode.file, oldLeafNode.offset, numRecords));
+                     log.trace(String.format("Updating num records for %s %d:%d to %d", objectKey, oldLeafNode.file, oldLeafNode.offset, numRecords));
                   }
                   // We don't need to update the file as the file and position are the same, only the numRecords
                   // has been updated for REMOVED
@@ -750,11 +751,13 @@ class IndexNode {
             newKeyParts[insertPart] = substring(key, newPrefix.length, keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart + 1);
             System.arraycopy(leafNodes, insertPart + 1, newLeafNodes, insertPart + 2, leafNodes.length - insertPart - 1);
+            log.tracef("Creating new leafNode for %s at %d:%d", objectKey, file, offset);
             newLeafNodes[insertPart + 1] = new LeafNode(file, offset, (short) 1, cacheSegment);
          } else {
             newKeyParts[insertPart] = substring(hak.getKey(), newPrefix.length, -keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart);
             System.arraycopy(leafNodes, insertPart, newLeafNodes, insertPart + 1, leafNodes.length - insertPart);
+            log.tracef("Creating new leafNode for %s at %d:%d", objectKey, file, offset);
             newLeafNodes[insertPart] = new LeafNode(file, offset, (short) 1, cacheSegment);
          }
       }
