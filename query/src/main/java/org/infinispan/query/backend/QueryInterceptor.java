@@ -418,7 +418,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             if (shouldModifyIndexes(command, ctx, storedKey)) {
                operation = removeFromIndexes(key, segment);
             }
-         } else if (isPotentiallyIndexedType(oldValue) && (newValue == null || shouldRemove(newValue, oldValue))
+         } else if (isPotentiallyIndexedType(oldValue) && (newValue == null || replacedWithADifferentEntity(newValue, oldValue))
                && shouldModifyIndexes(command, ctx, storedKey)) {
             operation = removeFromIndexes(oldValue, key, segment);
          } else if (log.isTraceEnabled()) {
@@ -442,7 +442,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return operation;
    }
 
-   private boolean shouldRemove(Object value, Object previousValue) {
+   private boolean replacedWithADifferentEntity(Object value, Object previousValue) {
       return value != null && previousValue != null && value.getClass() != previousValue.getClass();
    }
 
