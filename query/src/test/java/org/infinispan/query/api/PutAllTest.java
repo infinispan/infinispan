@@ -56,7 +56,8 @@ public class PutAllTest extends SingleCacheManagerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
+            .writer().queueSize(1);
       cfg.memory()
             .storageType(storageType);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
@@ -157,6 +158,21 @@ public class PutAllTest extends SingleCacheManagerTest {
       assertEquals(1, q3.execute().hitCount().orElse(-1));
       assertEquals(AnotherTestEntity.class, q3.list().get(0).getClass());
       StaticTestingErrorHandler.assertAllGood(cache);
+   }
+
+   @Test
+   public void testOverwriteIndexedValue_heavyLoad() {
+      for (int i=0; i<1000; i++) {
+         Map<Object, Object> map = new HashMap<>();
+         map.put(1, new TestEntity("name1", "surname1", 1, "note"));
+         map.put(2, new AnotherTestEntity("name2"));
+         cache.putAll(map);
+
+         map.clear();
+         map.put(1, new AnotherTestEntity("name2"));
+         map.put(2, new TestEntity("name1", "surname1", 1, "note"));
+         cache.putAll(map);
+      }
    }
 
    private <T> Query<T> queryByNameField(String name, Class<T> entity) {
