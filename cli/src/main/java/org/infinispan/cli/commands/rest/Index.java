@@ -22,7 +22,7 @@ import org.kohsuke.MetaInfServices;
  * @since 14.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.ClearStats.class})
+@GroupCommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.UpdateIndex.class, Index.ClearStats.class})
 public class Index extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
