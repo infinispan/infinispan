@@ -30,7 +30,7 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
          .immutable().build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder(org.infinispan.configuration.parsing.Attribute.TRANSACTION_MANAGER_LOOKUP_CLASS, GenericTransactionManagerLookup.INSTANCE)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
-         .copier(identityCopier()).autoPersist(false).immutable().build();
+         .autoPersist(false).global(false).immutable().build();
 
    public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class)
          .copier(identityCopier()).autoPersist(false).immutable().build();

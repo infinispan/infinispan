@@ -74,7 +74,7 @@ public class StatefulSetRollingUpgradeIT {
       ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) serverRule.getServerDriver();
 
       // ISPN-13997 Ensure that Memory max-size is represented in original format in caches.xml
-      String cacheConfig = "<replicated-cache name=\"cache01\"><memory storage=\"OFF_HEAP\" max-size=\"200MB\"/></replicated-cache>";
+      String cacheConfig = "<replicated-cache name=\"cache01\"><memory storage=\"OFF_HEAP\" max-size=\"200MB\"/><transaction transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/></replicated-cache>";
       StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_XML, cacheConfig);
       RestResponse rsp = sync(methodRule.rest().get().cache("cache01").createWithConfiguration(body));
       assertEquals(HttpResponseStatus.OK.code(), rsp.getStatus());
