@@ -49,6 +49,16 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
       }
    }
 
+   @Override
+   public void completeExceptionally(CompletableFuture<?> future, Throwable t) {
+      // This is just best effort to eliminate context switch if there are no dependents.
+      if (future.getNumberOfDependents() > 0) {
+         executor.execute(() -> future.completeExceptionally(t));
+      } else {
+         future.completeExceptionally(t);
+      }
+   }
+
    private class ReschedulingTask implements AutoCloseable, Runnable {
       @GuardedBy("this")
       private Future<?> future;

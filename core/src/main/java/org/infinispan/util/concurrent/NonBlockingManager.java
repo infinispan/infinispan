@@ -57,4 +57,15 @@ public interface NonBlockingManager {
     * @param <T> the type of the value
     */
    <T> void complete(CompletableFuture<? super T> future, T value);
+
+   /**
+    * Exceptionally completes the provided future with the given throble. If the future does not have any dependents it
+    * will complete it in the invoking thread. However, if there are any dependents it will complete it in a non
+    * blocking thread. This is a best effort to prevent a context switch for a stage that does not yet have a dependent
+    * while also handing off the dependent processing to a non blocking thread if necessary.
+    *
+    * @param future future to complete
+    * @param t throwable to complete the future with
+    */
+   void completeExceptionally(CompletableFuture<?> future, Throwable t);
 }

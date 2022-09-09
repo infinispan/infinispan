@@ -60,7 +60,9 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.mappingSession = new InfinispanSearchSession(this, entityLoader, typeContextContainer);
-      this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer);
+      this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
+            // TODO: need to propagate these objects down
+            null, null);
       this.allIndexedEntityNames = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::name).collect(Collectors.toSet());
       this.allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
