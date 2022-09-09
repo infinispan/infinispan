@@ -777,7 +777,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Memory used by data in the cache"
    )
    public long getDataMemoryUsed() {
-      if (cacheConfiguration.memory().maxSizeBytes() > 0) {
+      if (cacheConfiguration.memory().isEvictionEnabled() && cacheConfiguration.memory().maxSizeBytes() > 0) {
          return dataContainer.evictionSize();
       }
       return -1L;
