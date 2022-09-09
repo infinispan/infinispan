@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -26,8 +25,8 @@ public class ClusteredStatsTest extends SingleStatsTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ClusteredStatsTest().withStorage(StorageType.OBJECT).withEvictionType(EvictionType.COUNT),
-            new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withEvictionType(EvictionType.COUNT),
+            new ClusteredStatsTest().withStorage(StorageType.OBJECT).withCountEviction(true),
+            new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true),
       };
    }
 
