@@ -6,6 +6,8 @@ import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
 
 public class InfinispanMappingPartialBuildState implements MappingPartialBuildState {
 
@@ -13,15 +15,20 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
    private final InfinispanTypeContextContainer typeContextContainer;
    private final PojoSelectionEntityLoader<?> entityLoader;
    private final EntityConverter entityConverter;
+   private final BlockingManager blockingManager;
+   private final NonBlockingManager nonBlockingManager;
 
    InfinispanMappingPartialBuildState(PojoMappingDelegate mappingDelegate,
                                       InfinispanTypeContextContainer typeContextContainer,
                                       PojoSelectionEntityLoader<?> entityLoader,
-                                      EntityConverter entityConverter) {
+                                      EntityConverter entityConverter,
+                                      BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
       this.mappingDelegate = mappingDelegate;
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
+      this.blockingManager = blockingManager;
+      this.nonBlockingManager = nonBlockingManager;
    }
 
    @Override
@@ -30,6 +37,7 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
    }
 
    public MappingImplementor<SearchMapping> finalizeMapping() {
-      return new InfinispanMapping(mappingDelegate, typeContextContainer, entityLoader, entityConverter);
+      return new InfinispanMapping(mappingDelegate, typeContextContainer, entityLoader, entityConverter,
+            blockingManager, nonBlockingManager);
    }
 }

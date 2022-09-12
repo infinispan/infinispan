@@ -14,6 +14,8 @@ import org.infinispan.search.mapper.mapping.MappingConfigurationContext;
 import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.search.mapper.mapping.impl.InfinispanMapperDelegate;
 import org.infinispan.search.mapper.mapping.impl.InfinispanMappingPartialBuildState;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
 
 public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<InfinispanMappingPartialBuildState>
    implements MappingConfigurationContext {
@@ -23,13 +25,18 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
 
    private PojoSelectionEntityLoader<?> entityLoader;
    private EntityConverter entityConverter;
+   private BlockingManager blockingManager;
+   private NonBlockingManager nonBlockingManager;
 
    public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector,
-                                     Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
+                                     Collection<ProgrammaticSearchMappingProvider> mappingProviders,
+                                     BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
       super(introspector);
       typeConfigurationContributor = new InfinispanTypeConfigurationContributor(introspector);
       addConfigurationContributor(typeConfigurationContributor);
       this.mappingProviders = mappingProviders;
+      this.blockingManager = blockingManager;
+      this.nonBlockingManager = nonBlockingManager;
    }
 
    public void addEntityType(Class<?> type, String entityName) {
@@ -56,6 +63,6 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
 
    @Override
    protected PojoMapperDelegate<InfinispanMappingPartialBuildState> createMapperDelegate() {
-      return new InfinispanMapperDelegate(entityLoader, entityConverter);
+      return new InfinispanMapperDelegate(entityLoader, entityConverter, blockingManager, nonBlockingManager);
    }
 }

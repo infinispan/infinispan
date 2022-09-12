@@ -25,6 +25,8 @@ import org.infinispan.search.mapper.mapping.impl.IndexProperties;
 import org.infinispan.search.mapper.mapping.impl.InfinispanMapping;
 import org.infinispan.search.mapper.mapping.impl.InfinispanMappingKey;
 import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
 
 public final class SearchMappingBuilder {
 
@@ -41,12 +43,14 @@ public final class SearchMappingBuilder {
    private final ClassLoaderServiceImpl classLoaderService;
 
    SearchMappingBuilder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
-                        Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
+                        Collection<ProgrammaticSearchMappingProvider> mappingProviders,
+                        BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
       propertyChecker = ConfigurationPropertyChecker.create();
       propertySource = indexProperties.createPropertySource(propertyChecker);
 
       mappingKey = new InfinispanMappingKey();
-      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders);
+      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders,
+            blockingManager, nonBlockingManager);
 
       // Enable annotated type discovery by default
       mappingInitiator.annotatedTypeDiscoveryEnabled(true);
