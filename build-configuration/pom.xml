@@ -226,6 +226,7 @@
       <version.maven.surefire>3.0.0-M5</version.maven.surefire>
       <version.org.wildfly.build-tools>1.2.13.Final</version.org.wildfly.build-tools>
       <version.owasp-dependency-check-plugin>6.1.0</version.owasp-dependency-check-plugin>
+      <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
 
       <!-- versionx -->
       <versionx.com.puppycrawl.tools.checkstyle>8.32</versionx.com.puppycrawl.tools.checkstyle>
