@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -161,6 +162,7 @@ public class PutAllTest extends SingleCacheManagerTest {
    }
 
    @Test
+   @TestForIssue(jiraKey = "ISPN-14115")
    public void testOverwriteIndexedValue_heavyLoad() {
       for (int i=0; i<1000; i++) {
          Map<Object, Object> map = new HashMap<>();
