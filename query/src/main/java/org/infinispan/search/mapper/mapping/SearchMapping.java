@@ -9,6 +9,8 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
 
 public interface SearchMapping extends AutoCloseable {
 
@@ -108,7 +110,9 @@ public interface SearchMapping extends AutoCloseable {
    Class<?> toConvertedEntityJavaClass(Object value);
 
    static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
-                                       Collection<ProgrammaticSearchMappingProvider> mappingProviders) {
-      return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders);
+                                       Collection<ProgrammaticSearchMappingProvider> mappingProviders,
+                                       BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
+      return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders,
+            blockingManager, nonBlockingManager);
    }
 }
