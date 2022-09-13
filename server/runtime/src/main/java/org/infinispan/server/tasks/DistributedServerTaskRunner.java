@@ -27,12 +27,14 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
 
       ClusterExecutor clusterExecutor = SecurityActions.getClusterExecutor(context.getCacheManager());
 
-      List<T> results = Collections.synchronizedList(new ArrayList<>());
+      List<T> results = new ArrayList<>();
       TriConsumer<Address, T, Throwable> triConsumer = (a, v, t) -> {
          if (t != null) {
             throw new CacheException(t);
          }
-         results.add(v);
+         synchronized (results) {
+            results.add(v);
+         }
       };
       List<TaskParameter> taskParams = context.getParameters().orElse(Collections.emptyMap())
             .entrySet().stream().map(e -> new TaskParameter(e.getKey(), e.getValue().toString())).collect(Collectors.toList());
