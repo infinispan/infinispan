@@ -5,7 +5,8 @@
       "127.0.0.1:44175"
     ],
     "memory_entries": 0,
-    "total_entries": 0
+    "total_entries": 0,
+    "memory_used": 528512
   },
   {
     "node_name":"NodeB",
@@ -13,6 +14,7 @@
       "127.0.0.1:44187"
     ],
     "memory_entries": 0,
-    "total_entries": 0
+    "total_entries": 0,
+    "memory_used": 528512
   }
 ]

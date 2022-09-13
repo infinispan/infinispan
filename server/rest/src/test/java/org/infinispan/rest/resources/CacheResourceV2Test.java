@@ -422,7 +422,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCacheV2Distribution() {
-      String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true } }";
+      String cacheJson = "{ \"distributed-cache\" : { \"statistics\":true, \"memory\" : {"
+            + "\"storage\": \"OFF_HEAP\", \"max-size\": \"1MB\" } } }";
       RestCacheClient cacheClient = client.cache("distributionCache");
 
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, cacheJson);
@@ -441,11 +442,15 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       assertEquals(NUM_SERVERS, jsons.size());
       Pattern pattern = Pattern.compile(this.getClass().getSimpleName() + "-Node[a-zA-Z]$");
+      Map<String, Long> previousSizes = new HashMap<>();
       for (Json node : jsons) {
          assertEquals(node.at("memory_entries").asInteger(), 2);
          assertEquals(node.at("total_entries").asInteger(), 2);
          assertEquals(node.at("node_addresses").asJsonList().size(), 1);
          assertTrue(pattern.matcher(node.at("node_name").asString()).matches());
+         assertTrue(node.at("memory_used").asLong() > 0);
+
+         previousSizes.put(node.at("node_name").asString(), node.at("memory_used").asLong());
       }
 
       response = cacheClient.clear();
@@ -461,6 +466,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       for (Json node : jsons) {
          assertEquals(node.at("memory_entries").asInteger(), 0);
          assertEquals(node.at("total_entries").asInteger(), 0);
+
+         // Even though the cache was cleared, it still occupies some space.
+         assertTrue(node.at("memory_used").asLong() > 0);
+
+         // But less space than before.
+         assertTrue(node.at("memory_used").asLong() < previousSizes.get(node.at("node_name").asString()));
       }
    }
 

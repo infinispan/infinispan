@@ -177,6 +177,7 @@ Each element in the list represents a node. The properties are:
 * `node_addresses` is a list with all the node's physical addresses.
 * `memory_entries` the number of entries the node holds in memory belonging to the cache.
 * `total_entries` the number of entries the node has in memory and disk belonging to the cache.
+* `memory_used` the value in bytes the eviction algorithm estimates the cache occupies. Returns -1 if eviction is not enabled.
 
 [id='rest_v2_cache_mutable_attributes']
 = Retrieving all mutable cache configuration attributes
