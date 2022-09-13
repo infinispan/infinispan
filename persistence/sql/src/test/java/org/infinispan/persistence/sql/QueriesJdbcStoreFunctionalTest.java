@@ -60,10 +60,10 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
       storeBuilder.keyColumns(KEY_COLUMN);
       if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
          storeBuilder.queries()
-               .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, accepted_tos FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, accepted_tos FROM " + tableName)
+               .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, accepted_tos, moneyOwned, moneyOwed, decimalField, realField FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, accepted_tos, moneyOwned, moneyOwed, decimalField, realField FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
-                     Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate", "accepted_tos")))
+                     Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate", "accepted_tos", "moneyOwned", "moneyOwed", "decimalField", "realField")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
          storeBuilder.queries()

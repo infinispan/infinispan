@@ -106,7 +106,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    // DB table is denormalized when read
    @Override
    protected Person createEmptyPerson(String name) {
-      return new Person(name, new Address(), null, null, null, false);
+      return new Person(name, new Address());
    }
 
    @Override
@@ -432,6 +432,10 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "accepted_tos " + booleanType() + ", " +
                "sex VARCHAR(255), " +
                "birthdate " + dateTimeType() + ", " +
+               "moneyOwned NUMERIC(10, 4), " +
+               "moneyOwed FLOAT, " +
+               "decimalField DECIMAL(10, 4), " +
+               "realField REAL, " +
                "PRIMARY KEY (keycolumn))";
       } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
          tableCreation = "CREATE TABLE " + tableName + " (" +

@@ -22,6 +22,6 @@ public class TwoWayPersonKey2StringMapper extends PersonKey2StringMapper impleme
       String street = tkz.nextToken();
       String city = tkz.nextToken();
       String zip = tkz.nextToken();
-      return new Person(name, new Address(street, city, Integer.parseInt(zip)), null, null, null, false);
+      return new Person(name, new Address(street, city, Integer.parseInt(zip)));
    }
 }
