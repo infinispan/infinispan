@@ -2,14 +2,17 @@ package org.infinispan.server.extensions;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -67,5 +70,15 @@ public class ScriptingTasks {
 
       Map<String, Long> result = cache.execute(scriptName, Collections.emptyMap());
       assertEquals(19, result.size());
+   }
+
+   @Test
+   public void testProtoStreamMarshaller() {
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withMarshaller(ProtoStreamMarshaller.class).create();
+      List<String> greetings = cache.execute("dist-hello", Collections.singletonMap("greetee", "my friend"));
+      assertEquals(2, greetings.size());
+      for(String greeting : greetings) {
+         assertTrue(greeting.matches("Hello my friend .*"));
+      }
    }
 }
