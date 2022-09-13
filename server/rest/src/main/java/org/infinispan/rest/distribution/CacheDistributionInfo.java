@@ -20,13 +20,15 @@ public class CacheDistributionInfo implements JsonSerialization, NodeDataDistrib
    private final List<String> addresses;
    private final long memoryEntries;
    private final long totalEntries;
+   private final long memoryUsed;
 
    @ProtoFactory
-   public CacheDistributionInfo(String name, List<String> addresses, long memoryEntries, long totalEntries) {
+   public CacheDistributionInfo(String name, List<String> addresses, long memoryEntries, long totalEntries, long memoryUsed) {
       this.name = name;
       this.addresses = addresses;
       this.memoryEntries = memoryEntries;
       this.totalEntries = totalEntries;
+      this.memoryUsed = memoryUsed;
    }
 
    @ProtoField(1)
@@ -51,13 +53,19 @@ public class CacheDistributionInfo implements JsonSerialization, NodeDataDistrib
       return totalEntries;
    }
 
+   @ProtoField(value = 5, defaultValue = "0")
+   public long memoryUsed() {
+      return memoryUsed;
+   }
+
    @Override
    public Json toJson() {
       return Json.object()
             .set("node_name", name)
             .set("node_addresses", Json.array(addresses.toArray()))
             .set("memory_entries", memoryEntries)
-            .set("total_entries", totalEntries);
+            .set("total_entries", totalEntries)
+            .set("memory_used", memoryUsed);
    }
 
    public static CacheDistributionInfo resolve(AdvancedCache<?, ?> cache) {
@@ -65,6 +73,7 @@ public class CacheDistributionInfo implements JsonSerialization, NodeDataDistrib
       final CacheManagerInfo manager = cache.getCacheManager().getCacheManagerInfo();
       long inMemory = stats.getApproximateEntriesInMemory();
       long total = stats.getApproximateEntries();
-      return new CacheDistributionInfo(manager.getNodeName(), manager.getPhysicalAddressesRaw(), inMemory, total);
+      return new CacheDistributionInfo(manager.getNodeName(), manager.getPhysicalAddressesRaw(), inMemory, total,
+            stats.getDataMemoryUsed());
    }
 }

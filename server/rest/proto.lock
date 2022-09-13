@@ -77,6 +77,17 @@
                     "value": "0"
                   }
                 ]
+              },
+              {
+                "id": 5,
+                "name": "memoryUsed",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
               }
             ]
           },
