@@ -101,7 +101,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
     */
    abstract Parameter[] generateParameterInformation(C config, ConnectionFactory connectionFactory) throws SQLException;
 
-   int typeWeUse(int sqlType, String typeName) {
+   int typeWeUse(int sqlType, String typeName, int scale) {
       if (sqlType == Types.VARCHAR) {
          // Some DBs store VARBINARY as VARCHAR FOR BIT DATA (ahem... DB2)
          if (typeName.contains("BIT") || typeName.contains("BINARY")) {
@@ -110,6 +110,9 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       } else if (typeName.toUpperCase().startsWith("BOOL")) {
          // Some databases store as int32 or something similar but have the typename as BOOLEAN or some derivation
          return Types.BOOLEAN;
+      } else if (sqlType == Types.NUMERIC && scale == 0) {
+         // If scale is 0 we don't want to use float or double types
+         return Types.INTEGER;
       }
       return sqlType;
    }
@@ -360,13 +363,15 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       protected static ProtostreamFieldType from(int sqlType) {
          switch (sqlType) {
             case Types.INTEGER:
-            case Types.NUMERIC:
                return INT_32;
             case Types.BIGINT:
                return INT_64;
             case Types.FLOAT:
+            case Types.REAL:
                return FLOAT;
             case Types.DOUBLE:
+            case Types.NUMERIC:
+            case Types.DECIMAL:
                return DOUBLE;
             case Types.BIT:
             case Types.BOOLEAN:

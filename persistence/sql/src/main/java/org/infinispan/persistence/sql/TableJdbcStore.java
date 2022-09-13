@@ -134,7 +134,8 @@ public class TableJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, TableJdb
          while (rs.next()) {
             String name = rs.getString("COLUMN_NAME");
             int sqlColumnType = rs.getInt("DATA_TYPE");
-            int actualType = typeWeUse(sqlColumnType, rs.getString("TYPE_NAME"));
+            int scale = rs.getInt("DECIMAL_DIGITS");
+            int actualType = typeWeUse(sqlColumnType, rs.getString("TYPE_NAME"), scale);
 
             ProtostreamFieldType schemaType = ProtostreamFieldType.from(actualType);
             boolean isPrimary = primaryKeyList.contains(name.toUpperCase());

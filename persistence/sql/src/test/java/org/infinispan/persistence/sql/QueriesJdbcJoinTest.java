@@ -234,7 +234,12 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
       address.setCity("London");
       address.setStreet("Cool Street");
       address.setZip(1321);
-      return new Person(name, address, new byte[]{0x1, 0x12}, Sex.MALE, new java.util.Date(1629495308), true);
+      Person person = new Person(name, address);
+      person.setPicture(new byte[]{0x1, 0x12});
+      person.setSex(Sex.MALE);
+      person.setBirthDate(new java.util.Date(1629495308));
+      person.setAcceptedToS(true);
+      return person;
    }
 
    private String insertTable1Statement(boolean idJoin, boolean namedParams) {

@@ -164,10 +164,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
       byte[] pictureBytes = new byte[]{1, 82, 123, 19};
 
-      cache.put("k1", new Person("1"));
-      cache.put("k2", new Person("2", null, pictureBytes, null, null, false), 111111, TimeUnit.MILLISECONDS);
-      cache.put("k3", new Person("3", null, null, Sex.MALE, null, false), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
-      cache.put("k4", new Person("4", new Address("Street", "City", 12345), null, null, null, true), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+      cache.put("k1", createEmptyPerson("1"));
+      cache.put("k2", new Person("2", null, pictureBytes, null, null, false, 4.6, 5.6f, 8.4, 9.2f), 111111, TimeUnit.MILLISECONDS);
+      cache.put("k3", new Person("3", null, null, Sex.MALE, null, false, 4.7, 5.7f, 8.5, 9.3f), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
+      cache.put("k4", new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
       Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("EST"));
       calendar.set(2009, Calendar.MARCH, 18, 3, 22, 57);
       // Chop off the last milliseconds as some databases don't have that high of accuracy
@@ -184,11 +184,19 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(createEmptyPerson("1"), cache.get("k1"));
       Person person2 = createEmptyPerson("2");
       person2.setPicture(pictureBytes);
+      person2.setMoneyOwned(4.6);
+      person2.setMoneyOwed(5.6f);
+      person2.setDecimalField(8.4);
+      person2.setRealField(9.2f);
       assertEquals(person2, cache.get("k2"));
       Person person3 = createEmptyPerson("3");
       person3.setSex(Sex.MALE);
+      person3.setMoneyOwned(4.7);
+      person3.setMoneyOwed(5.7f);
+      person3.setDecimalField(8.5);
+      person3.setRealField(9.3f);
       assertEquals(person3, cache.get("k3"));
-      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null, true), cache.get("k4"));
+      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), cache.get("k4"));
       assertEquals(infinispanPerson, cache.get("Infinispan"));
 
       cache.stop();
@@ -199,7 +207,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(createEmptyPerson("1"), cache.get("k1"));
       assertEquals(person2, cache.get("k2"));
       assertEquals(person3, cache.get("k3"));
-      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null, true), cache.get("k4"));
+      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), cache.get("k4"));
       assertEquals(infinispanPerson, cache.get("Infinispan"));
    }
 
