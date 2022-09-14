@@ -7,33 +7,47 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
+import org.testng.annotations.Test;
 
 /**
  * @author anistor@redhat.com
  * @since 9.0
  */
-public class HibernateSearchPropertyHelperTest {
+public class HibernateSearchPropertyHelperTest extends SingleCacheManagerTest {
 
    private SearchMapping searchMapping;
    private HibernateSearchPropertyHelper propertyHelper;
 
-   @Before
-   public void setup() {
-      searchMapping = SearchMappingHelper.createSearchMappingForTests(TestEntity.class);
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+
+      GlobalComponentRegistry componentRegistry = cacheManager.getGlobalComponentRegistry();
+      BlockingManager blockingManager = componentRegistry.getComponent(BlockingManager.class);
+      NonBlockingManager nonBlockingManager = componentRegistry.getComponent(NonBlockingManager.class);
+
+      // the cache manager is created only to provide manager instances to the search mapping
+      searchMapping = SearchMappingHelper.createSearchMappingForTests(blockingManager, nonBlockingManager, TestEntity.class);
       propertyHelper = new HibernateSearchPropertyHelper(searchMapping, new ReflectionEntityNamesResolver(null));
+
+      return cacheManager;
    }
 
-   @After
-   public void cleanUp() {
+   @Override
+   protected void teardown() {
       if (searchMapping != null) {
          searchMapping.close();
       }
+      super.teardown();
    }
 
    private Object convertToPropertyType(Class<?> type, String propertyName, String value) {
