@@ -18,6 +18,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
+import org.infinispan.tasks.TaskExecutionMode;
 import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -67,13 +68,10 @@ public class ServerTaskEngine implements TaskEngine {
 
    private <T> CompletableFuture<T> invokeTask(TaskContext context, ServerTaskWrapper<T> task) {
       ServerTaskRunner runner;
-      switch (task.getExecutionMode()) {
-         case ONE_NODE:
-            runner = localRunner;
-            break;
-         default:
-            runner = distributedRunner;
-            break;
+      if (task.getExecutionMode() == TaskExecutionMode.ONE_NODE) {
+         runner = localRunner;
+      } else {
+         runner = distributedRunner;
       }
       launderParameters(context);
       MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
@@ -92,7 +90,7 @@ public class ServerTaskEngine implements TaskEngine {
       String role = task.getRole().orElse(null);
       if (globalauthorizer != null) {
          if (context.getCache().isPresent()) {
-            AuthorizationManager authorizationManager = context.getCache().get().getAdvancedCache().getAuthorizationManager();
+            AuthorizationManager authorizationManager = SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache());
             if (authorizationManager != null) {
                // when the cache is secured
                authorizationManager.checkPermission(AuthorizationPermission.EXEC, role);
