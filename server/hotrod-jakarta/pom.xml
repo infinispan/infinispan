@@ -13,6 +13,12 @@
     <artifactId>infinispan-server-hotrod-jakarta</artifactId>
     <description>Infinispan Hot Rod Server Jakarta EE</description>
 
+    <properties>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.source.skip>true</maven.source.skip>
+        <transform.skip>false</transform.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -112,35 +118,4 @@
             </exclusions>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.eclipse.transformer</groupId>
-                <artifactId>transformer-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <rules>
-                        <jakartaDefaults>true</jakartaDefaults>
-                    </rules>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <classifier>-</classifier>
-                            <artifact>
-                                <groupId>org.infinispan</groupId>
-                                <artifactId>infinispan-server-hotrod</artifactId>
-                                <version>${project.version}</version>
-                            </artifact>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

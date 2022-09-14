@@ -332,7 +332,6 @@
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.dom4j.dom4j>2.1.3</versionx.org.dom4j.dom4j>
-      <versionx.org.eclipse.transformer>0.5.0</versionx.org.eclipse.transformer>
       <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
       <versionx.org.hamcrest.hamcrest-core>${version.hamcrest}</versionx.org.hamcrest.hamcrest-core>
       <versionx.org.hamcrest.hamcrest-library>${version.hamcrest}</versionx.org.hamcrest.hamcrest-library>
@@ -2049,6 +2048,11 @@
          <plugins>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-enforcer-plugin</artifactId>
+               <version>${version.maven.enforcer}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-source-plugin</artifactId>
                <version>${version.maven.source}</version>
             </plugin>
@@ -2096,22 +2100,22 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-clean-plugin</artifactId>
-               <version>2.6.1</version>
+               <version>${version.maven.clean}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-install-plugin</artifactId>
-               <version>2.5.2</version>
+               <version>${version.maven.install}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-help-plugin</artifactId>
-               <version>2.1.1</version>
+               <version>3.3.0</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-deploy-plugin</artifactId>
-               <version>2.8.1</version>
+               <version>3.0.0</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2196,15 +2200,6 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
                <version>${version.maven.javadoc}</version>
-               <configuration>
-                  <!--
-                  The javadoc plugin only runs in the javadoc and rhq-plugin modules.
-                  But with the default configuration it tries to run a new maven instance
-                  in every dependency, in order to generate the apidocs there as well.
-                  (http://maven.apache.org/plugins-archives/maven-javadoc-plugin-2.10.3/javadoc-mojo.html#detectOfflineLinks)
-                  -->
-                  <detectOfflineLinks>false</detectOfflineLinks>
-               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2381,12 +2376,6 @@
                   <failOnError>false</failOnError>
                   <suppressionFile>${infinispan.root}/etc/dependency-check-suppressions.xml</suppressionFile>
                </configuration>
-            </plugin>
-            <plugin>
-               <groupId>org.eclipse.transformer</groupId>
-               <artifactId>transformer-maven-plugin</artifactId>
-               <version>${versionx.org.eclipse.transformer}</version>
-               <extensions>true</extensions>
             </plugin>
          </plugins>
       </pluginManagement>

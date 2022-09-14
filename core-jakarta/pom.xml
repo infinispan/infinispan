@@ -15,6 +15,12 @@
     <name>Infinispan Core Jakarta EE</name>
     <description>Infinispan core module for Jakarta EE</description>
 
+    <properties>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.source.skip>true</maven.source.skip>
+        <transform.skip>false</transform.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -111,39 +117,8 @@
         <dependency>
             <groupId>org.jboss</groupId>
             <artifactId>jdk-misc</artifactId>
-            <version>2.Final</version>
+            <version>3.Final</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.eclipse.transformer</groupId>
-                <artifactId>transformer-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <rules>
-                        <jakartaDefaults>true</jakartaDefaults>
-                    </rules>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <classifier>-</classifier>
-                            <artifact>
-                                <groupId>org.infinispan</groupId>
-                                <artifactId>infinispan-core</artifactId>
-                                <version>${project.version}</version>
-                            </artifact>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
