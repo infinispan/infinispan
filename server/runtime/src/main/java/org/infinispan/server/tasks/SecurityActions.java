@@ -4,12 +4,12 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheComponentRegistryAction;
+import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetClusterExecutorAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
@@ -35,13 +35,13 @@ final class SecurityActions {
       return doPrivileged(new GetClusterExecutorAction(embeddedCacheManager));
    }
 
-   static ComponentRegistry getComponentRegistry(final AdvancedCache<?, ?> cache) {
-      GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
+   static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
+      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
       return doPrivileged(action);
    }
 
-   static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
-      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
+   static AuthorizationManager getAuthorizationManager(AdvancedCache<?, ?> cache) {
+      GetCacheAuthorizationManagerAction action = new GetCacheAuthorizationManagerAction(cache);
       return doPrivileged(action);
    }
 }
