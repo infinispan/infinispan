@@ -29,10 +29,7 @@
            max_interval="30000"
    />
    <FD_SOCK2 offset="${jgroups.fd.port-offset:50000}"/>
-   <!-- Suspect node `timeout` millis after the last heartbeat -->
-   <FD_ALL3 timeout="10000"
-            interval="2000"
-   />
+   <FD_ALL3/>
    <VERIFY_SUSPECT2 timeout="1000"/>
    <pbcast.NAKACK2 xmit_interval="100"
                    xmit_table_num_rows="50"
