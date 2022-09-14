@@ -15,6 +15,12 @@
     <name>Infinispan Commons Jakarta EE</name>
     <description>Infinispan Commons Jakarta EE</description>
 
+    <properties>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.source.skip>true</maven.source.skip>
+        <transform.skip>false</transform.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -75,35 +81,4 @@
             <artifactId>metainf-services</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.eclipse.transformer</groupId>
-                <artifactId>transformer-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <rules>
-                        <jakartaDefaults>true</jakartaDefaults>
-                    </rules>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <classifier>-</classifier>
-                            <artifact>
-                                <groupId>org.infinispan</groupId>
-                                <artifactId>infinispan-commons</artifactId>
-                                <version>${project.version}</version>
-                            </artifact>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

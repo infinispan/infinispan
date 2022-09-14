@@ -84,6 +84,8 @@
    <properties>
       <maven.compiler.source>11</maven.compiler.source>
       <maven.compiler.target>11</maven.compiler.target>
+      <maven.javadoc.skip>false</maven.javadoc.skip>
+      <transform.skip>true</transform.skip>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -223,7 +225,10 @@
       <version.maven.buildhelper>3.1.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.gpg>3.0.1</version.maven.gpg>
+      <version.maven.clean>3.2.0</version.maven.clean>
       <version.maven-compiler-plugin>3.10.1</version.maven-compiler-plugin>
+      <version.maven.enforcer>3.1.0</version.maven.enforcer>
+      <version.maven.install>3.0.1</version.maven.install>
       <version.maven.invoker>3.2.1</version.maven.invoker>
       <version.maven.jar>3.2.0</version.maven.jar>
       <version.maven.javadoc>3.4.0</version.maven.javadoc>
@@ -237,6 +242,7 @@
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
+      <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.16.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>7.1.0</version.owasp-dependency-check-plugin>
@@ -307,11 +313,87 @@
                   </execution>
                </executions>
             </plugin>
+            <plugin>
+               <groupId>org.eclipse.transformer</groupId>
+               <artifactId>transformer-maven-plugin</artifactId>
+               <version>${version.eclipse.transformer}</version>
+            </plugin>
          </plugins>
       </pluginManagement>
    </build>
 
    <profiles>
+      <profile>
+         <id>jakarta-transform</id>
+         <activation>
+            <file>
+               <exists>${basedir}/jakarta.txt</exists>
+            </file>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>jakarta-transform</id>
+                        <goals>
+                           <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                           <name>original.artifactId</name>
+                           <value>${project.artifactId}</value>
+                           <regex>\-jakarta$</regex>
+                           <failIfNoMatch>false</failIfNoMatch>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.eclipse.transformer</groupId>
+                  <artifactId>transformer-maven-plugin</artifactId>
+                  <extensions>true</extensions>
+                  <configuration>
+                     <rules>
+                        <jakartaDefaults>true</jakartaDefaults>
+                     </rules>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>default-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>source-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                              <classifier>sources</classifier>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
       <profile>
          <id>community-release</id>
          <activation>
@@ -321,11 +403,41 @@
             <plugins>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-gpg-plugin</artifactId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <configuration>
+                     <skip>${maven.javadoc.skip}</skip>
+                     <detectOfflineLinks>false</detectOfflineLinks>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.eclipse.transformer</groupId>
+                  <artifactId>transformer-maven-plugin</artifactId>
+                  <configuration>
+                     <rules>
+                        <jakartaDefaults>true</jakartaDefaults>
+                     </rules>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>javadoc-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                              <classifier>javadoc</classifier>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                  </executions>
                </plugin>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <artifactId>maven-gpg-plugin</artifactId>
                </plugin>
             </plugins>
          </build>
