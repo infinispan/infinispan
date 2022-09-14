@@ -158,7 +158,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private static final String METRICS_PREFIX = "jgroups_";
    public static final short REQUEST_FLAGS_UNORDERED =
          (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
+   public static final short REQUEST_FLAGS_UNORDERED_NO_FC = (short) (REQUEST_FLAGS_UNORDERED | Message.Flag.NO_FC.value());
    public static final short REQUEST_FLAGS_PER_SENDER = Message.Flag.NO_TOTAL_ORDER.value();
+   public static final short REQUEST_FLAGS_PER_SENDER_NO_FC = (short) (REQUEST_FLAGS_PER_SENDER | Message.Flag.NO_FC.value());
    public static final short REPLY_FLAGS =
          (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() |
                Message.Flag.NO_TOTAL_ORDER.value());
@@ -1262,8 +1264,12 @@ public class JGroupsTransport implements Transport, ChannelListener {
       switch (deliverOrder) {
          case PER_SENDER:
             return REQUEST_FLAGS_PER_SENDER;
+         case PER_SENDER_NO_FC:
+            return REQUEST_FLAGS_PER_SENDER_NO_FC;
          case NONE:
             return REQUEST_FLAGS_UNORDERED;
+         case NONE_NO_FC:
+            return REQUEST_FLAGS_UNORDERED_NO_FC;
          default:
             throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
       }
