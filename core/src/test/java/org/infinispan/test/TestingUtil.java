@@ -129,6 +129,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
@@ -1772,6 +1773,14 @@ public class TestingUtil {
          set.add(new TestingUtil.TestPrincipal(principal));
       }
       return new Subject(true, set, Collections.emptySet(), Collections.emptySet());
+   }
+
+   public static Map<AuthorizationPermission, Subject> makeAllSubjects() {
+      HashMap<AuthorizationPermission, Subject> subjects = new HashMap<>(AuthorizationPermission.values().length);
+      for (AuthorizationPermission perm : AuthorizationPermission.values()) {
+         subjects.put(perm, makeSubject(perm.toString() + "_user", perm.toString()));
+      }
+      return subjects;
    }
 
    static public void assertAnyEquals(Object expected, Object actual) {

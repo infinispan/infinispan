@@ -36,6 +36,7 @@ public interface ProtoStreamTypeIds {
    int PROTOBUF_VALUE_WRAPPER = 11;
    int MEDIA_TYPE = 12;
    int PRIVATE_METADATA = 13;
+   int SUBJECT = 14;
 
    // Priority counter values
    int COUNTER_VALUE = 125;

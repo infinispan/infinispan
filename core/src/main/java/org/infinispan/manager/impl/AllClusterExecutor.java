@@ -24,6 +24,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughMapResponseCollector;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
@@ -177,7 +178,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
             if (log.isTraceEnabled()) {
                log.tracef("Submitting consumer to single remote node - JGroups Address %s", target);
             }
-            ReplicableCommand command = new ReplicableManagerFunctionCommand(function);
+            ReplicableCommand command = new ReplicableManagerFunctionCommand(function, Security.getSubject());
             CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
             futures[i] = request.toCompletableFuture().whenComplete((r, t) -> {
                if (t != null) {
