@@ -6,15 +6,12 @@ import static org.infinispan.query.helper.IndexAccessor.extractSort;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.util.common.SearchException;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -22,9 +19,11 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResol
 import org.infinispan.query.dsl.embedded.impl.model.Employee;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
+import org.testng.annotations.Test;
 
 /**
  * Test the parsing and transformation of Ickle queries to Lucene queries.
@@ -32,32 +31,37 @@ import org.apache.lucene.search.SortField;
  * @author anistor@redhat.com
  * @since 9.0
  */
-public class LuceneTransformationTest {
+public class LuceneTransformationTest extends SingleCacheManagerTest {
 
    private SearchMapping searchMapping;
    private HibernateSearchPropertyHelper propertyHelper;
 
-   @Rule
-   public ExpectedException expectedException = ExpectedException.none();
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
 
-   @Before
-   public void initMapping() {
-      searchMapping = SearchMappingHelper.createSearchMappingForTests(Employee.class);
+      GlobalComponentRegistry componentRegistry = cacheManager.getGlobalComponentRegistry();
+      BlockingManager blockingManager = componentRegistry.getComponent(BlockingManager.class);
+      NonBlockingManager nonBlockingManager = componentRegistry.getComponent(NonBlockingManager.class);
+
+      // the cache manager is created only to provide manager instances to the search mapping
+      searchMapping = SearchMappingHelper.createSearchMappingForTests(blockingManager, nonBlockingManager, Employee.class);
       propertyHelper = new HibernateSearchPropertyHelper(searchMapping, new ReflectionEntityNamesResolver(null));
+
+      return cacheManager;
    }
 
-   @After
-   public void disposeMapping() {
+   @Override
+   protected void teardown() {
       if (searchMapping != null) {
          searchMapping.close();
       }
+      super.teardown();
    }
 
-   @Test
+   @Test(expectedExceptions = { ParsingException.class },
+         expectedExceptionsMessageRegExp = "ISPN028502: Unknown alias: a.")
    public void testRaiseExceptionDueToUnknownAlias() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028502: Unknown alias: a.");
-
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where a.name = 'same'");
    }
 
@@ -233,12 +237,9 @@ public class LuceneTransformationTest {
             "+sameInfo:foo");
    }
 
-   @Test
+   @Test(expectedExceptions = { SearchException.class },
+         expectedExceptionsMessageRegExp = "HSEARCH000610: Unknown field 'otherInfo'.*Context: indexes \\[org.infinispan.query.dsl.embedded.impl.model.Employee\\]")
    public void testWrongFieldName() {
-      expectedException.expect(SearchException.class);
-      expectedException.expectMessage("HSEARCH000610: Unknown field 'otherInfo'.\n" +
-            "Context: indexes [org.infinispan.query.dsl.embedded.impl.model.Employee]");
-
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.otherInfo = 'foo'");
    }
 
@@ -574,59 +575,45 @@ public class LuceneTransformationTest {
             "+contactDetails.address.alternatives.postCode:90210");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.")
    public void testRaiseExceptionDueToUnknownQualifiedProperty() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.");
-
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.foobar = 'same'");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.")
    public void testRaiseExceptionDueToUnknownUnqualifiedProperty() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.");
-
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where foobar = 'same'");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028522: No relational queries can be applied to property 'text' in type org.infinispan.query.dsl.embedded.impl.model.Employee since the property is analyzed.")
    public void testRaiseExceptionDueToAnalyzedPropertyInFromClause() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028522: No relational queries can be applied to property 'text' in type org.infinispan.query.dsl.embedded.impl.model.Employee since the property is analyzed.");
-
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.text = 'foo'");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.")
    public void testRaiseExceptionDueToUnknownPropertyInSelectClause() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foobar'.");
-
       parseAndTransform("select e.foobar from org.infinispan.query.dsl.embedded.impl.model.Employee e");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foo'.")
    public void testRaiseExceptionDueToUnknownPropertyInEmbeddedSelectClause() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028501: The type org.infinispan.query.dsl.embedded.impl.model.Employee does not have an accessible property named 'foo'.");
-
       parseAndTransform("select e.author.foo from org.infinispan.query.dsl.embedded.impl.model.Employee e");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028503: Property author can not be selected from type org.infinispan.query.dsl.embedded.impl.model.Employee since it is an embedded entity.")
    public void testRaiseExceptionDueToSelectionOfCompleteEmbeddedEntity() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028503: Property author can not be selected from type org.infinispan.query.dsl.embedded.impl.model.Employee since it is an embedded entity.");
-
       parseAndTransform("select e.author from org.infinispan.query.dsl.embedded.impl.model.Employee e");
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028503: Property author can not be selected from type org.infinispan.query.dsl.embedded.impl.model.Employee since it is an embedded entity.")
    public void testRaiseExceptionDueToUnqualifiedSelectionOfCompleteEmbeddedEntity() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028503: Property author can not be selected from type org.infinispan.query.dsl.embedded.impl.model.Employee since it is an embedded entity.");
-
       parseAndTransform("select author from org.infinispan.query.dsl.embedded.impl.model.Employee e");
    }
 
@@ -676,11 +663,9 @@ public class LuceneTransformationTest {
       assertThat(sort.getSort()[0].getType()).isEqualTo(SortField.Type.CUSTOM);
    }
 
-   @Test
+   @Test(expectedExceptions = ParsingException.class,
+         expectedExceptionsMessageRegExp = "ISPN028526: Invalid query: select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' order by e.title DESblah, e.name ASC.*")
    public void testRaiseExceptionDueToUnrecognizedSortDirection() {
-      expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN028526: Invalid query: select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' order by e.title DESblah, e.name ASC;");
-
       parseAndTransform("select e from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.name = 'same' order by e.title DESblah, e.name ASC");
    }
 
