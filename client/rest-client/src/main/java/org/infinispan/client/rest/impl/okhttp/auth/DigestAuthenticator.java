@@ -118,7 +118,7 @@ public class DigestAuthenticator extends AbstractAuthenticator implements Cachin
       // Add method name and request-URI to the parameter map
       if (route == null || !route.requiresTunnel()) {
          final String method = request.method();
-         final String uri = RequestLine.requestPath(request.url());
+         final String uri = RequestLine.INSTANCE.requestPath(request.url());
          parameters.put("methodname", method);
          parameters.put("uri", uri);
       } else {

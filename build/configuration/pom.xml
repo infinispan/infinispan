@@ -179,7 +179,7 @@
       <version.nashorn>15.4</version.nashorn>
       <version.netty>4.1.80.Final</version.netty>
       <version.netty.incubator.iouring>0.0.14.Final</version.netty.incubator.iouring>
-      <version.okhttp>3.14.9</version.okhttp>
+      <version.okhttp>4.10.0</version.okhttp>
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
       <version.org.wildfly.arquillian>3.0.1.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>16.0.1.Final</version.org.wildfly.core>
