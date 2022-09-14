@@ -24,7 +24,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    private final JGroupsTransport transport;
 
    @GuardedBy("responseCollector")
-   private long deadline;
+   private final long deadline;
    @GuardedBy("responseCollector")
    private int targetIndex;
 
@@ -95,8 +95,12 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
             isFinalTarget = targetIndex >= getTargetsSize();
          }
 
-         // Sending may block in flow-control or even in TCP, so we must do it outside the critical section
-         transport.sendCommand(target, command, requestId, deliverOrder, true, false);
+         Address finalTarget = target;
+         transport.blockingManager.runBlocking(() -> {
+            // Sending may block in flow-control or even in TCP, so we must do it outside the critical section
+            transport.sendCommand(finalTarget, command, requestId, deliverOrder, true, false);
+         }, "staggered-request-" + requestId);
+
 
          // Scheduling the timeout task may also block
          // If this is the last target, set the request timeout at the deadline

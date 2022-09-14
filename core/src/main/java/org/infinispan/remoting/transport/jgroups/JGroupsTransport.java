@@ -95,6 +95,7 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.remoting.transport.raft.RaftManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -184,6 +185,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
    @Inject protected GlobalXSiteAdminOperations globalXSiteAdminOperations;
    @Inject protected ComponentRef<MetricsCollector> metricsCollector;
+   @Inject protected BlockingManager blockingManager;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
