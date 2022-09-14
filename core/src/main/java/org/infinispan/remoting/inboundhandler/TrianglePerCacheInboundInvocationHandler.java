@@ -3,7 +3,7 @@ package org.infinispan.remoting.inboundhandler;
 import static org.infinispan.commons.util.EnumUtil.containsAll;
 import static org.infinispan.context.impl.FlagBitSets.FORCE_ASYNCHRONOUS;
 import static org.infinispan.context.impl.FlagBitSets.FORCE_SYNCHRONOUS;
-import static org.infinispan.remoting.inboundhandler.DeliverOrder.NONE;
+import static org.infinispan.remoting.inboundhandler.DeliverOrder.NONE_NO_FC;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
@@ -195,7 +195,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (origin.equals(localAddress)) {
          commandAckCollector.completeExceptionally(id.getId(), throwable, topologyId);
       } else {
-         rpcManager.sendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId), NONE);
+         rpcManager.sendTo(origin, commandsFactory.buildExceptionAckCommand(id.getId(), throwable, topologyId), NONE_NO_FC);
       }
    }
 
@@ -214,7 +214,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       if (isLocal) {
          commandAckCollector.backupAck(id.getId(), origin, topologyId);
       } else {
-         rpcManager.sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), topologyId), NONE);
+         rpcManager.sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), topologyId), NONE_NO_FC);
       }
    }
 
@@ -266,7 +266,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       } else {
          BackupMultiKeyAckCommand command =
                commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, topologyId);
-         rpcManager.sendTo(origin, command, NONE);
+         rpcManager.sendTo(origin, command, NONE_NO_FC);
       }
    }
 
