@@ -102,6 +102,7 @@ import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
+import org.infinispan.security.impl.SubjectExternalizer;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.stream.StreamMarshalling;
@@ -269,6 +270,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new ScopedState.Externalizer(), exts);
       addInternalExternalizer(new ScopeFilter.Externalizer(), exts);
       addInternalExternalizer(new AdminFlagExternalizer(), exts);
+      addInternalExternalizer(new SubjectExternalizer(), exts);
 
       return exts;
    }

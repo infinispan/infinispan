@@ -1,8 +1,7 @@
 package org.infinispan.server.infinispan.task;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Optional;
+import java.security.PrivilegedExceptionAction;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
@@ -12,6 +11,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.Security;
 import org.infinispan.tasks.TaskContext;
 
 /**
@@ -21,13 +21,13 @@ import org.infinispan.tasks.TaskContext;
  */
 public class DistributedServerTask<T> implements Serializable, Function<EmbeddedCacheManager, T> {
    private final String cacheName;
-   private final Optional<Map<String, ?>> parameters;
    private final String taskName;
+   private final TaskContext context;
 
-   public DistributedServerTask(String cacheName, String taskName, Optional<Map<String, ?>> parameters) {
+   public DistributedServerTask(String cacheName, String taskName, TaskContext context) {
       this.cacheName = cacheName;
       this.taskName = taskName;
-      this.parameters = parameters;
+      this.context = context;
    }
 
    @Override
@@ -37,21 +37,24 @@ public class DistributedServerTask<T> implements Serializable, Function<Embedded
       ServerTaskRegistry taskRegistry = componentRegistry.getComponent(ServerTaskRegistry.class);
       Marshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
       ServerTaskWrapper<T> task = taskRegistry.getTask(taskName);
-      task.inject(prepareContext(cache, marshaller));
+      TaskContext taskContext = prepareContext(cache, marshaller);
+      task.inject(taskContext);
       try {
-         return task.run();
+         if (taskContext.getSubject().isPresent()) {
+            return Security.doAs(taskContext.getSubject().get(), (PrivilegedExceptionAction<T>) task::run);
+         } else {
+            return task.run();
+         }
       } catch (Exception e) {
          throw new CacheException(e);
       }
    }
 
    private TaskContext prepareContext(Cache<Object, Object> cache, Marshaller marshaller) {
-      TaskContext context = new TaskContext();
-      if (parameters.isPresent()) context.parameters(parameters.get());
+      TaskContext context = new TaskContext(this.context);
       String type = MediaType.APPLICATION_OBJECT_TYPE;
       if (cache != null) context.cache(cache.getAdvancedCache().withMediaType(type, type));
       if (marshaller != null) context.marshaller(marshaller);
-
       return context;
    }
 }

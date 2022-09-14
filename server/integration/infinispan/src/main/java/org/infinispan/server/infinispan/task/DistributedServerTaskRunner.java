@@ -32,8 +32,8 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
             results.add(v);
          }
       };
-      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedServerTask<>(
-            masterCacheNode.getName(), taskName, context.getParameters()), triConsumer);
+      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedServerTask<>(masterCacheNode.getName(), taskName, context), triConsumer);
+
 
 //         noinspection unchecked
       return (CompletableFuture<T>) future.thenApply(ignore -> results);

@@ -1,5 +1,6 @@
 package org.infinispan.tasks;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -18,15 +19,20 @@ import org.infinispan.security.Security;
  * @author Tristan Tarrant
  * @since 8.1
  */
-public class TaskContext {
-   private EmbeddedCacheManager cacheManager;
-   private Optional<Marshaller> marshaller = Optional.empty();
-   private Optional<Cache<?, ?>> cache = Optional.empty();
+public class TaskContext implements Serializable {
+   private transient EmbeddedCacheManager cacheManager;
+   private transient Optional<Marshaller> marshaller = Optional.empty();
+   private transient Optional<Cache<?, ?>> cache = Optional.empty();
    private Optional<Map<String, ?>> parameters = Optional.empty();
    private Optional<Subject> subject = Optional.empty();
    private boolean logEvent;
 
    public TaskContext() {
+   }
+
+   public TaskContext(TaskContext other) {
+      this.parameters = other.parameters;
+      this.subject = other.subject;
    }
 
    /**

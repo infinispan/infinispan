@@ -9,6 +9,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
 import java.util.Stack;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 import javax.security.auth.Subject;
 
@@ -121,6 +123,60 @@ public final class Security {
       }
    }
 
+   public static void doAs(Subject subject, Runnable runnable) {
+      Stack<Subject> stack = SUBJECT.get();
+      if (stack == null) {
+         stack = new Stack<>();
+         SUBJECT.set(stack);
+      }
+      stack.push(subject);
+      try {
+         runnable.run();
+      } finally {
+         stack.pop();
+         if (stack.isEmpty()) {
+            SUBJECT.remove();
+         }
+      }
+   }
+
+   public static <V> V doAs(Subject subject, Callable<V> callable) throws PrivilegedActionException {
+      Stack<Subject> stack = SUBJECT.get();
+      if (stack == null) {
+         stack = new Stack<>();
+         SUBJECT.set(stack);
+      }
+      stack.push(subject);
+      try {
+         return callable.call();
+      } catch (Exception e) {
+         throw new PrivilegedActionException(e);
+      } finally {
+         stack.pop();
+         if (stack.isEmpty()) {
+            SUBJECT.remove();
+         }
+      }
+   }
+
+   public static <T, R> R doAs(final Subject subject, Function<T, R> function, T t) throws PrivilegedActionException {
+      Stack<Subject> stack = SUBJECT.get();
+      if (stack == null) {
+         stack = new Stack<>();
+         SUBJECT.set(stack);
+      }
+      stack.push(subject);
+      try {
+         return function.apply(t);
+      } catch (Exception e) {
+         throw new PrivilegedActionException(e);
+      } finally {
+         stack.pop();
+         if (stack.isEmpty()) {
+            SUBJECT.remove();
+         }
+      }
+   }
 
    public static void checkPermission(CachePermission permission) throws AccessControlException {
       if (!isPrivileged()) {

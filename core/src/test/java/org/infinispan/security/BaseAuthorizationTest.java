@@ -1,7 +1,6 @@
 package org.infinispan.security;
 
 import java.security.PrivilegedAction;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -27,10 +26,7 @@ public abstract class BaseAuthorizationTest extends SingleCacheManagerTest {
 
    static {
       // Initialize one subject per permission
-      SUBJECTS = new HashMap<>(AuthorizationPermission.values().length);
-      for (AuthorizationPermission perm : AuthorizationPermission.values()) {
-         SUBJECTS.put(perm, TestingUtil.makeSubject(perm.toString() + "_user", perm.toString()));
-      }
+      SUBJECTS = TestingUtil.makeAllSubjects();
       ADMIN = SUBJECTS.get(AuthorizationPermission.ALL);
    }
 
