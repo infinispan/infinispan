@@ -6,15 +6,13 @@ import static org.infinispan.query.helper.IndexAccessor.extractSort;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.util.common.SearchException;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -22,9 +20,15 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResol
 import org.infinispan.query.dsl.embedded.impl.model.Employee;
 import org.infinispan.query.helper.SearchMappingHelper;
 import org.infinispan.search.mapper.mapping.SearchMapping;
-
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
+import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManager;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * Test the parsing and transformation of Ickle queries to Lucene queries.
@@ -33,6 +37,10 @@ import org.apache.lucene.search.SortField;
  * @since 9.0
  */
 public class LuceneTransformationTest {
+
+   private static BlockingManager blockingManager;
+   private static NonBlockingManager nonBlockingManager;
+   private static EmbeddedCacheManager cacheManager;
 
    private SearchMapping searchMapping;
    private HibernateSearchPropertyHelper propertyHelper;
@@ -829,5 +837,21 @@ public class LuceneTransformationTest {
       return searchQueryMaker
             .transform(ickleParsingResult, parameters, Employee.class, null)
             .builder(searchMapping.getMappingSession()).build();
+   }
+
+   @BeforeClass
+   public static void beforeAll() {
+      cacheManager = new DefaultCacheManager();
+
+      GlobalComponentRegistry componentRegistry = cacheManager.getGlobalComponentRegistry();
+      blockingManager = componentRegistry.getComponent(BlockingManager.class);
+      nonBlockingManager = componentRegistry.getComponent(NonBlockingManager.class);
+   }
+
+   @AfterClass
+   public static void afterAll() {
+      if (cacheManager != null) {
+         cacheManager.stop();
+      }
    }
 }
