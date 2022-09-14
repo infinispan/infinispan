@@ -15,6 +15,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
+import org.infinispan.security.impl.SubjectAdapter;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -51,7 +52,8 @@ import org.infinispan.util.logging.events.EventLogLevel;
             IracMetadata.class,
             ClusterRoleMapper.RoleSet.class,
             AuthorizationPermission.class,
-            CacheRoleImpl.class
+            CacheRoleImpl.class,
+            SubjectAdapter.class
       },
       schemaFileName = "persistence.core.proto",
       schemaFilePath = "proto/generated",

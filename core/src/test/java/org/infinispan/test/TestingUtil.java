@@ -73,6 +73,7 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -129,12 +130,12 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -1758,6 +1759,14 @@ public class TestingUtil {
          set.add(new TestingUtil.TestPrincipal(principal));
       }
       return new Subject(true, set, Collections.emptySet(), Collections.emptySet());
+   }
+
+   public static Map<AuthorizationPermission, Subject> makeAllSubjects() {
+      HashMap<AuthorizationPermission, Subject> subjects = new HashMap<>(AuthorizationPermission.values().length);
+      for (AuthorizationPermission perm : AuthorizationPermission.values()) {
+         subjects.put(perm, makeSubject(perm.toString() + "_user", perm.toString()));
+      }
+      return subjects;
    }
 
    static public void assertAnyEquals(Object expected, Object actual) {
