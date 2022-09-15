@@ -75,6 +75,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    public void close() {
       try (Closer<RuntimeException> closer = new Closer<>()) {
          closer.push(SearchIntegration::close, integration);
+         closer.push(SearchIndexer::close, searchIndexer);
          close = true;
       }
    }
