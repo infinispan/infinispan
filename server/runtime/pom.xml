@@ -147,6 +147,17 @@
          <groupId>org.latencyutils</groupId>
          <artifactId>LatencyUtils</artifactId>
          <scope>compile</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.hdrhistogram</groupId>
+               <artifactId>HdrHistogram</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <artifactId>HdrHistogram</artifactId>
+         <groupId>org.hdrhistogram</groupId>
+         <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.glassfish</groupId>
