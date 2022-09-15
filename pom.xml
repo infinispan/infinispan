@@ -1618,6 +1618,11 @@
             <scope>test</scope>
          </dependency>
          <dependency>
+            <artifactId>HdrHistogram</artifactId>
+            <groupId>org.hdrhistogram</groupId>
+            <version>${version.hdrhistogram}</version>
+         </dependency>
+         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <version>${versionx.org.mariadb.jdbc}</version>

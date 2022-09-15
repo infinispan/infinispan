@@ -160,7 +160,18 @@
       <dependency>
          <groupId>org.latencyutils</groupId>
          <artifactId>LatencyUtils</artifactId>
-	     <scope>test</scope>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.hdrhistogram</groupId>
+               <artifactId>HdrHistogram</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <artifactId>HdrHistogram</artifactId>
+         <groupId>org.hdrhistogram</groupId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 
