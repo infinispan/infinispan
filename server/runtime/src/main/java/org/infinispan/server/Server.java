@@ -10,6 +10,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivilegedActionException;
+import java.security.Provider;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -437,9 +438,9 @@ public class Server implements ServerManagement, AutoCloseable {
                   if (configuration instanceof HotRodServerConfiguration) {
                      ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                   } else if (configuration instanceof RestServerConfiguration) {
-                     ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
+                     ElytronHTTPAuthenticator.init((RestServerConfiguration) configuration, serverConfiguration);
                   } else if (configuration instanceof RespServerConfiguration) {
-                     ElytronRESPAuthenticator.init((RespServerConfiguration)configuration, serverConfiguration, blockingManager);
+                     ElytronRESPAuthenticator.init((RespServerConfiguration) configuration, serverConfiguration, blockingManager);
                   }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cacheManager);
@@ -477,6 +478,11 @@ public class Server implements ServerManagement, AutoCloseable {
          // Change status
          this.status = ComponentStatus.RUNNING;
          log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
+         if (log.isDebugEnabled()) {
+            for (Provider provider : java.security.Security.getProviders()) {
+               log.debugf("Provider: %s [%s]", provider.getName(), provider.getInfo());
+            }
+         }
       } catch (Exception e) {
          r.completeExceptionally(e);
       }
@@ -506,7 +512,7 @@ public class Server implements ServerManagement, AutoCloseable {
       if (rest.authentication().mechanisms().contains("BEARER_TOKEN")) {
          // Find the token realm
          RealmConfiguration realm = serverConfiguration.security().realms().getRealm(rest.authentication().securityRealm());
-         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration)r).findFirst().get();
+         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration) r).findFirst().get();
          loginConfiguration.put("mode", "OIDC");
          loginConfiguration.put("url", realmConfiguration.authServerUrl());
          loginConfiguration.put("realm", realmConfiguration.name());

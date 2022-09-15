@@ -294,7 +294,7 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
     fi
 
     # Enable export for LDAP (needed for JDK 17+)
-    PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
+    PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-exports jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED"
 
     if [ "$GC_LOG" = "true" ]; then
         # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled

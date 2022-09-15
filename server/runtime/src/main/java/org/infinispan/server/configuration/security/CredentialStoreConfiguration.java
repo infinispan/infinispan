@@ -1,7 +1,6 @@
 package org.infinispan.server.configuration.security;
 
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +47,6 @@ public class CredentialStoreConfiguration extends ConfigurationElement<Credentia
          }).build();
 
    static AttributeSet attributeDefinitionSet() {
-      KeyStore.getDefaultType();
       return new AttributeSet(CredentialStoreConfiguration.class, NAME, PATH, RELATIVE_TO, TYPE, CREDENTIAL);
    }
 

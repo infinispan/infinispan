@@ -116,7 +116,7 @@ public enum Attribute {
    VERIFIABLE,
    WORKER_THREADS,
    WRAP_GSS_CREDENTIAL,
-   WRITABLE;
+   WRITABLE, CLASS_NAME, CONFIGURATION;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

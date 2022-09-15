@@ -271,4 +271,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.ERROR)
    @Message(value = "JMX authentication error", id = 80073)
    void jmxAuthenticationError(@Cause Throwable e);
+
+   @Message(value = "Invalid security provider class '%s'", id = 80074)
+   CacheConfigurationException invalidProviderClass(String classname);
 }

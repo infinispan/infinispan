@@ -38,7 +38,6 @@ You can disable the OpenSSL provider at startup with the `-Dorg.infinispan.opens
 . Specify the PKCS11 keystore with the `SunPKCS11-NSS-FIPS` provider.
 . Save the changes to your configuration.
 
-
 [discrete]
 === Keystore configuration
 
@@ -59,6 +58,42 @@ include::json/server_ssl_identity_fips_pkcs11.json[]
 ----
 include::yaml/server_ssl_identity_fips_pkcs11.yaml[]
 ----
+
+=== Custom security providers
+
+You can configure custom security providers directly from the {brandname} Server without affecting the system-wide JDK security configuration.
+Do this to use multiple PKCS#11 keystores backed by different NSS databases.
+
+.Procedure
+. Initialize one or more NSS databases using the `certutil` tool.
+. Create an NSS configuration file for each NSS database.
+. Open your {brandname} Server configuration for editing.
+. Add a `providers` definition to the {brandname} Server security configuration.
+. Specify the providers.
+. Reference the provider names in the `keystore` and `truststore` elements.
+. Save the changes to your configuration.
+
+[discrete]
+
+.XML
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_security_providers.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/server_security_providers.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/server_security_providers.yaml[]
+----
+
+
 
 == Configuring the Bouncy Castle FIPS cryptographic provider
 
@@ -104,3 +139,4 @@ include::json/server_ssl_identity_fips_bcfips.json[]
 ----
 include::yaml/server_ssl_identity_fips_bcfips.yaml[]
 ----
+

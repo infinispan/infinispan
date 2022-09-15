@@ -75,7 +75,8 @@ public enum Element {
    IP_FILTER,
    ACCEPT,
    REJECT,
-   ;
+   PROVIDERS,
+   PROVIDER;
 
    private static final Map<String, Element> ELEMENTS;
 

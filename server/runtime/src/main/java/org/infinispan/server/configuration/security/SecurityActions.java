@@ -22,4 +22,14 @@ class SecurityActions {
    public static Provider[] discoverSecurityProviders(ClassLoader classLoader) {
       return doPrivileged(() -> SslContextFactory.discoverSecurityProviders(classLoader));
    }
+
+   static void addSecurityProvider(Provider provider) {
+      doPrivileged(() -> {
+               if (java.security.Security.getProvider(provider.getName()) == null) {
+                  java.security.Security.addProvider(provider);
+               }
+               return null;
+            }
+      );
+   }
 }

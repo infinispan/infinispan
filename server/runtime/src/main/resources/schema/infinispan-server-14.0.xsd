@@ -239,6 +239,7 @@
 
    <xs:complexType name="security">
       <xs:sequence>
+         <xs:element type="tns:providers" name="providers" minOccurs="0"/>
          <xs:element type="tns:credential-stores" name="credential-stores" minOccurs="0">
             <xs:unique name="security-credential-unique">
                <xs:selector xpath="./tns:credential-store"/>
@@ -902,6 +903,39 @@
             <xs:documentation>
                Specifies the CORS 'Access-Control-Expose-Headers' header in the preflight response.
                Controls the headers that are exposed to origins.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="providers">
+      <xs:annotation>
+         <xs:documentation>
+            Complex type to contain the definitions of security providers.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="provider" type="tns:provider" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="provider">
+      <xs:annotation>
+         <xs:documentation>
+            An individual provider definition.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="class-name" type="xs:string" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               Specifies the class name of a security provider.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="configuration" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               An optional configuration parameter for the security provider.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>

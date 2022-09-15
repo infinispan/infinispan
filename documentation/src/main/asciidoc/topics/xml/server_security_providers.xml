@@ -1,0 +1,18 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+   <security>
+      <providers>
+         <provider name="keystore-pkcs11" class-name="sun.security.pkcs11.SunPKCS11" configuration="/path/to/keystore-pkcs11.cfg"/>
+         <provider name="truststore-pkcs11" class-name="sun.security.pkcs11.SunPKCS11" configuration="/path/to/truststore-pkcs11.cfg"/>
+      </providers>
+      <security-realms>
+         <security-realm name="default">
+            <server-identities>
+               <ssl>
+                  <keystore provider="SunPKCS11-keystore" type="PKCS11"/>
+                  <truststore provider="SunPKCS11-truststore" type="PKCS11"/>
+               </ssl>
+            </server-identities>
+         </security-realm>
+      </security-realms>
+   </security>
+</server>

@@ -68,10 +68,10 @@ public class KeyStoreUtils {
       }
    }
 
-   public static KeyStore buildFilelessKeyStore(Provider[] providers, String providerName, String type) throws GeneralSecurityException, IOException {
+   public static KeyStore buildFilelessKeyStore(Provider[] providers, String providerName, String type, char[] password) throws GeneralSecurityException, IOException {
       Provider provider = findProvider(providers, providerName, KeyStore.class, type);
       KeyStore keyStore = KeyStore.getInstance(type, provider);
-      keyStore.load(null, null);
+      keyStore.load(null, password);
       return keyStore;
    }
 }

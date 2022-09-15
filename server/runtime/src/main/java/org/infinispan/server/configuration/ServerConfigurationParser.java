@@ -39,6 +39,8 @@ import org.infinispan.server.configuration.security.LdapUserPasswordMapperConfig
 import org.infinispan.server.configuration.security.LocalRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.OAuth2ConfigurationBuilder;
 import org.infinispan.server.configuration.security.PropertiesRealmConfigurationBuilder;
+import org.infinispan.server.configuration.security.ProviderConfigurationBuilder;
+import org.infinispan.server.configuration.security.ProvidersConfigurationBuilder;
 import org.infinispan.server.configuration.security.RealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.RealmsConfigurationBuilder;
 import org.infinispan.server.configuration.security.SSLConfigurationBuilder;
@@ -301,6 +303,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case PROVIDERS:
+               parseProviders(reader, builder);
+               break;
             case CREDENTIAL_STORES:
                parseCredentialStores(reader, builder);
                break;
@@ -311,6 +316,42 @@ public class ServerConfigurationParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader, element);
          }
       }
+   }
+
+   private void parseProviders(ConfigurationReader reader, ServerConfigurationBuilder builder) {
+      ProvidersConfigurationBuilder providers = builder.security().providers();
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROVIDER:
+            case PROVIDERS:
+               parseProvider(reader, builder, providers);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseProvider(ConfigurationReader reader, ServerConfigurationBuilder builder, ProvidersConfigurationBuilder providers) {
+      String className = ParseUtils.requireAttributes(reader, Attribute.CLASS_NAME)[0];
+      ProviderConfigurationBuilder providerConfigurationBuilder = providers.addProvider().className(className);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case CLASS_NAME:
+               // Already seen.
+               break;
+            case CONFIGURATION:
+               providerConfigurationBuilder.configuration(value);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseCredentialStores(ConfigurationReader reader, ServerConfigurationBuilder builder) {

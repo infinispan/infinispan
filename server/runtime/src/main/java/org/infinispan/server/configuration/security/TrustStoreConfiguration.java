@@ -53,14 +53,14 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
             properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
       String providerName = attributes.attribute(PROVIDER).get();
       String type = attributes.attribute(TYPE).get();
+      char[] password = resolvePassword(attributes.attribute(PASSWORD));
       if (fileName == null) {
          try {
-            return buildFilelessKeyStore(providers, providerName, type);
+            return buildFilelessKeyStore(providers, providerName, type, password);
          } catch (GeneralSecurityException | IOException e) {
             throw new CacheConfigurationException(e);
          }
       } else {
-         char[] password = resolvePassword(attributes.attribute(PASSWORD));
          try (FileInputStream is = new FileInputStream(fileName)) {
             return KeyStoreUtil.loadKeyStore(() -> providers, providerName, is, fileName, password);
          } catch (IOException | KeyStoreException e) {
