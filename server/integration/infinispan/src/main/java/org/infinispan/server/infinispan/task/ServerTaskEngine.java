@@ -74,7 +74,7 @@ public class ServerTaskEngine implements TaskEngine {
       String role = task.getRole().orElse(null);
       if (globalAuthzHelper != null) {
          if (context.getCache().isPresent()) {
-            AuthorizationManager authorizationManager = context.getCache().get().getAdvancedCache().getAuthorizationManager();
+            AuthorizationManager authorizationManager = SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache());
             if (authorizationManager != null) {
                authorizationManager.checkPermission(AuthorizationPermission.EXEC, role);
                return;
