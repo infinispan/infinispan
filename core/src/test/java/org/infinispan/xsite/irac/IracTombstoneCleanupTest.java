@@ -13,9 +13,15 @@ import static org.testng.AssertJUnit.fail;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,6 +31,7 @@ import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -140,6 +147,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       pRpcManager.startRecording();
       bRpcManager.startRecording();
 
+      pRpcManager.markCommandForbidden(IracTombstoneCleanupCommand.class);
       tombstoneManager(bCache).runCleanupAndWait();
 
       IracTombstonePrimaryCheckCommand cmd = bRpcManager.findSingleCommand(IracTombstonePrimaryCheckCommand.class);
@@ -150,6 +158,8 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       assertEquals(segment, tombstoneInfo.getSegment());
       assertEquals(key, tombstoneInfo.getKey());
       assertEquals(metadata, tombstoneInfo.getMetadata());
+
+      bRpcManager.waitCommandCompletion(cmd);
 
       assertFalse(pRpcManager.isCommandSent(IracTombstoneCleanupCommand.class));
 
@@ -304,11 +314,20 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
       @GuardedBy("this")
       private final List<CacheRpcCommand> commandList;
+
+      @GuardedBy("this")
+      private final Map<Byte, CompletionStage<?>> requests;
+
+      @GuardedBy("this")
+      private final Set<Class<? extends CacheRpcCommand>> forbidden;
+
       private volatile boolean recording;
 
       RecordingRpcManager(RpcManager realOne) {
          super(realOne);
          commandList = new LinkedList<>();
+         requests = new HashMap<>();
+         forbidden = new HashSet<>();
       }
 
       <T extends CacheRpcCommand> T findSingleCommand(Class<T> commandClass) {
@@ -341,9 +360,29 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
          return found;
       }
 
+      <T extends CacheRpcCommand> void markCommandForbidden(Class<T> clazz) {
+         synchronized (this) {
+            forbidden.add(clazz);
+         }
+      }
+
+      void waitCommandCompletion(CacheRpcCommand cmd) {
+         CompletionStage<?> cs;
+         synchronized (this) {
+            cs = requests.get(cmd.getCommandId());
+         }
+
+         if (cs != null) {
+            CompletableFuture<?> future = cs.toCompletableFuture();
+            eventually(future::isDone, 15, TimeUnit.SECONDS);
+         }
+      }
+
       void startRecording() {
          synchronized (this) {
             commandList.clear();
+            requests.clear();
+            forbidden.clear();
          }
          recording = true;
       }
@@ -352,18 +391,27 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
          recording = false;
          synchronized (this) {
             commandList.clear();
+            requests.clear();
+            forbidden.clear();
          }
 
       }
 
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<T> collector, Function<ResponseCollector<T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
+         CompletionStage<T> cs = super.performRequest(targets, command, collector, invoker, rpcOptions);
+
          if (recording && command instanceof CacheRpcCommand) {
             synchronized (this) {
+               if (forbidden.contains(command.getClass())) {
+                  throw CompletableFutures.asCompletionException(
+                        new IllegalStateException("Commands of " + command.getClass() + " are forbidden"));
+               }
                commandList.add((CacheRpcCommand) command);
+               requests.put(command.getCommandId(), cs);
             }
          }
-         return super.performRequest(targets, command, collector, invoker, rpcOptions);
+         return cs;
       }
 
       @Override
