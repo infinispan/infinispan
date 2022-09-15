@@ -9,6 +9,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.resp.RespServer;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 
 import io.lettuce.core.RedisClient;
@@ -22,10 +23,10 @@ import io.lettuce.core.RedisClient;
 public class RespTestingUtil {
    private static final Log log = LogFactory.getLog(RespTestingUtil.class, Log.class);
 
-   private static final String host = "127.0.0.1";
+   public static final String HOST = "127.0.0.1";
 
    public static RedisClient createClient(long timeout, int port) {
-      RedisClient client = RedisClient.create("redis://" + host + ":" + port);
+      RedisClient client = RedisClient.create("redis://" + HOST + ":" + port);
       client.setDefaultTimeout(Duration.ofMillis(timeout));
       return client;
    }
@@ -35,11 +36,14 @@ public class RespTestingUtil {
    }
 
    public static RespServer startServer(EmbeddedCacheManager cacheManager, int port) {
-      RespServer server = new RespServer();
       String serverName = TestResourceTracker.getCurrentTestShortName();
-      server.start(new RespServerConfigurationBuilder().name(serverName).host(host).port(port)
-                  .build(),
-            cacheManager);
+      return startServer(cacheManager, new RespServerConfigurationBuilder().name(serverName).host(HOST).port(port)
+            .build());
+   }
+
+   public static RespServer startServer(EmbeddedCacheManager cacheManager, RespServerConfiguration configuration) {
+      RespServer server = new RespServer();
+      server.start(configuration, cacheManager);
       return server;
    }
 
@@ -59,7 +63,7 @@ public class RespTestingUtil {
          }
       };
       String serverName = TestResourceTracker.getCurrentTestShortName();
-      server.start(new RespServerConfigurationBuilder().name(serverName).host(host).port(port).build(),
+      server.start(new RespServerConfigurationBuilder().name(serverName).host(HOST).port(port).build(),
             cacheManager);
       return server;
    }
@@ -74,6 +78,10 @@ public class RespTestingUtil {
 
    public static void killServer(RespServer server) {
       if (server != null) server.stop();
+   }
+
+   public static int port() {
+      return UniquePortThreadLocal.INSTANCE.get();
    }
 
    private static final class UniquePortThreadLocal extends ThreadLocal<Integer> {

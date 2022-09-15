@@ -26,6 +26,13 @@ public class RespChannelInitializer implements NettyInitializer {
    @Override
    public void initializeChannel(Channel ch) {
       ChannelPipeline pipeline = ch.pipeline();
-      pipeline.addLast(new RespLettuceHandler(respServer));
+      RespRequestHandler initialHandler;
+      if (respServer.getConfiguration().authentication().enabled()) {
+         initialHandler = new Resp3AuthHandler(respServer);
+      } else {
+         initialHandler = respServer.newHandler();
+      }
+
+      pipeline.addLast(new RespLettuceHandler(initialHandler));
    }
 }
