@@ -18,7 +18,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -49,11 +53,19 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       cacheManager = createTestCacheManager();
-      server = startServer(cacheManager);
+      RespServerConfiguration serverConfiguration = serverConfiguration().build();
+      server = startServer(cacheManager, serverConfiguration);
       client = createClient(30000, server.getPort());
       redisConnection = client.connect();
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
       return cacheManager;
+   }
+
+   protected RespServerConfigurationBuilder serverConfiguration() {
+      String serverName = TestResourceTracker.getCurrentTestShortName();
+      return new RespServerConfigurationBuilder().name(serverName)
+            .host(RespTestingUtil.HOST)
+            .port(RespTestingUtil.port());
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
@@ -156,7 +168,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
    @Test(dataProvider = "booleans")
    public void testPubSubUnsubscribe(boolean reset) throws InterruptedException {
-      RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
       BlockingQueue<String> handOffQueue = addPubSubListener(connection);
 
       // Subscribe to some channels
@@ -184,7 +196,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    }
 
    public void testPubSub() throws InterruptedException {
-      RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
       BlockingQueue<String> handOffQueue = addPubSubListener(connection);
       // Subscribe to some channels
       connection.subscribe("channel2", "test");
@@ -275,5 +287,9 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    public void testAuth() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set", () -> redis.auth("user", "pass"));
+   }
+
+   protected RedisPubSubCommands<String, String> createPubSubConnection() {
+      return client.connectPubSub().sync();
    }
 }

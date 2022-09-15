@@ -20,8 +20,8 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
    private final RedisStateMachine stateMachine = new RedisStateMachine(ByteBufAllocator.DEFAULT);
    private RespRequestHandler requestHandler;
 
-   public RespLettuceHandler(RespServer respServer) {
-      this.requestHandler = respServer.newHandler();
+   public RespLettuceHandler(RespRequestHandler initialHandler) {
+      this.requestHandler = initialHandler;
    }
 
    @Override

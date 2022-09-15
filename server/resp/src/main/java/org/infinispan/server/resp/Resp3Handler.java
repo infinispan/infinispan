@@ -1,7 +1,6 @@
 package org.infinispan.server.resp;
 
 import java.lang.invoke.MethodHandles;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -10,13 +9,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.security.auth.Subject;
-
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.Version;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -27,15 +22,12 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
-public class Resp3Handler implements RespRequestHandler {
+public class Resp3Handler extends Resp3AuthHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private static final ByteBuf OK = RespRequestHandler.stringToByteBuf("+OK\r\n", ByteBufAllocator.DEFAULT);
-   private final RespServer respServer;
-   private AdvancedCache<byte[], byte[]> cache;
 
    Resp3Handler(RespServer respServer) {
-      this.respServer = respServer;
-      this.cache = respServer.getCache();
+      super(respServer);
    }
 
    // Returns a cached OK status that is retained for multiple uses
@@ -47,22 +39,6 @@ public class Resp3Handler implements RespRequestHandler {
    public RespRequestHandler handleRequest(ChannelHandlerContext ctx, String type,
          List<byte[]> arguments) {
       switch (type) {
-         case "HELLO":
-            byte[] respProtocolBytes = arguments.get(0);
-            String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
-            if (!version.equals("3")) {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-NOPROTO sorry this protocol version is not supported\r\n", ctx.alloc()));
-               break;
-            }
-            if (arguments.size() == 4) {
-               performAuth(ctx, arguments.get(2), arguments.get(3));
-            } else {
-               helloResponse(ctx);
-            }
-            break;
-         case "AUTH":
-            performAuth(ctx, arguments.get(0), arguments.get(1));
-            break;
          case "PING":
             if (arguments.size() == 0) {
                ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$4\r\nPONG\r\n", ctx.alloc()));
@@ -266,10 +242,6 @@ public class Resp3Handler implements RespRequestHandler {
             // TODO: do we need to reset anything in this case?
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("+RESET\r\n", ctx.alloc()));
             break;
-         case "QUIT":
-            // TODO: need to close connection
-            ctx.flush();
-            break;
          case "COMMAND":
             if (!arguments.isEmpty()) {
                ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", ctx.alloc()));
@@ -300,7 +272,7 @@ public class Resp3Handler implements RespRequestHandler {
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(commandBuilder.toString(), ctx.alloc()));
             break;
          default:
-            return RespRequestHandler.super.handleRequest(ctx, type, arguments);
+            return super.handleRequest(ctx, type, arguments);
       }
       return this;
    }
@@ -326,7 +298,7 @@ public class Resp3Handler implements RespRequestHandler {
       ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + result + "\r\n", ctx.alloc()));
    }
 
-   private static void handleThrowable(ChannelHandlerContext ctx, Throwable t) {
+   static void handleThrowable(ChannelHandlerContext ctx, Throwable t) {
       ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR" + t.getMessage() + "\r\n", ctx.alloc()));
    }
 
@@ -374,42 +346,5 @@ public class Resp3Handler implements RespRequestHandler {
                   ctx.writeAndFlush(messageOnSuccess);
                }
             });
-   }
-
-   private void performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
-      Authenticator authenticator = respServer.getConfiguration().authentication().authenticator();
-      if (authenticator == null) {
-         handleAuthResponse(ctx, null, null);
-         return;
-      }
-      authenticator.authenticate(
-            new String(username, StandardCharsets.UTF_8),
-            new String(password, StandardCharsets.UTF_8).toCharArray()
-      ).whenComplete((subject, t) -> handleAuthResponse(ctx, subject, t));
-   }
-
-   private void handleAuthResponse(ChannelHandlerContext ctx, Subject subject, Throwable t) {
-      if (t == null) {
-         if (subject != null) {
-            cache = cache.withSubject(subject);
-            ctx.writeAndFlush(statusOK());
-         } else {
-            ctx.writeAndFlush(ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set" + "\r\n", ctx.alloc())));
-         }
-      } else {
-         handleThrowable(ctx, t);
-      }
-   }
-
-   private static void helloResponse(ChannelHandlerContext ctx) {
-      String versionString = Version.getBrandVersion();
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("%7\r\n" +
-            "$6\r\nserver\r\n$15\r\nInfinispan RESP\r\n" +
-            "$7\r\nversion\r\n$" + versionString.length() + "\r\n" + versionString + "\r\n" +
-            "$5\r\nproto\r\n:3\r\n" +
-            "$2\r\nid\r\n:184\r\n" +
-            "$4\r\nmode\r\n$7\r\ncluster\r\n" +
-            "$4\r\nrole\r\n$6\r\nmaster\r\n" +
-            "$7\r\nmodules\r\n*0\r\n", ctx.alloc()));
    }
 }
