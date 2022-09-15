@@ -92,6 +92,11 @@ public class SearchIndexerImpl implements SearchIndexer {
       return operation;
    }
 
+   @Override
+   public void close() {
+      indexProcessor.onComplete();
+   }
+
    private ConvertedValue convertedValue(Object entity) {
       if (entity == null) {
          return null;
