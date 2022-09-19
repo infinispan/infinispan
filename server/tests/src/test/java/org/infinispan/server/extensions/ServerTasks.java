@@ -31,7 +31,7 @@ public class ServerTasks {
    @Test
    public void testServerTaskNoParameters() {
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
-      Object hello = cache.execute("hello", Collections.emptyMap());
+      Object hello = cache.execute("hello");
       assertEquals("Hello world", hello);
    }
 
@@ -53,5 +53,23 @@ public class ServerTasks {
       for(String greeting : greetings) {
          assertTrue(greeting.matches("Hello my friend .*"));
       }
+   }
+
+   @Test
+   public void testIsolatedTask() {
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
+      Integer i = cache.execute("isolated");
+      assertEquals(1, i.intValue());
+      i = cache.execute("isolated");
+      assertEquals(1, i.intValue());
+   }
+
+   @Test
+   public void testSharedTask() {
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
+      Integer i = cache.execute("shared", Collections.emptyMap(), "k");
+      assertEquals(1, i.intValue());
+      i = cache.execute("shared", Collections.emptyMap(), "k");
+      assertEquals(2, i.intValue());
    }
 }

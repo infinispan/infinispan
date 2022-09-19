@@ -81,7 +81,7 @@ public class ServerTaskEngine implements TaskEngine {
 
    private void launderParameters(TaskContext context) {
       if (context.getParameters().isPresent()) {
-         Map<String, ?> convertParameters = scriptConversions.convertParameters(context);
+         Map<String, Object> convertParameters = scriptConversions.convertParameters(context);
          context.parameters(convertParameters);
       }
    }

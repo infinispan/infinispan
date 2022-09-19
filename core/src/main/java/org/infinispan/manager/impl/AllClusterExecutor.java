@@ -176,7 +176,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          for (int i = 0; i < size; ++i) {
             Address target = targets.get(i);
             if (log.isTraceEnabled()) {
-               log.tracef("Submitting consumer to single remote node - JGroups Address %s", target);
+               log.tracef("Submitting consumer to single remote node - address=%s, subject=%s", target, Security.getSubject());
             }
             ReplicableCommand command = new ReplicableManagerFunctionCommand(function, Security.getSubject());
             CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);

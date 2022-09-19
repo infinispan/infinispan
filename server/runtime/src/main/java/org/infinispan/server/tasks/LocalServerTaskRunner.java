@@ -19,8 +19,7 @@ public class LocalServerTaskRunner implements ServerTaskRunner {
    public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
       ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
       try {
-         task.inject(context);
-         return CompletableFuture.completedFuture(task.run());
+         return CompletableFuture.completedFuture(task.run(context));
       } catch (Exception e) {
          CompletableFuture<T> finishedWithException = new CompletableFuture<>();
          finishedWithException.completeExceptionally(e);

@@ -3,15 +3,20 @@ package org.infinispan.server.tasks;
 import java.util.Optional;
 import java.util.Set;
 
+import org.infinispan.commons.util.Util;
+import org.infinispan.server.logging.Log;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
+import org.infinispan.tasks.TaskInstantiationMode;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
 public class ServerTaskWrapper<T> implements Task {
+   private static final Log log = LogFactory.getLog(ServerTaskWrapper.class, Log.class);
    private final ServerTask<T> task;
 
    public ServerTaskWrapper(ServerTask<T> task) {
@@ -23,8 +28,18 @@ public class ServerTaskWrapper<T> implements Task {
       return task.getName();
    }
 
-   public T run() throws Exception {
-      return task.call();
+   public T run(TaskContext context) throws Exception {
+      final ServerTask<T> t;
+      if (task.getInstantiationMode() == TaskInstantiationMode.ISOLATED) {
+         t = Util.getInstance(task.getClass());
+      } else {
+         t = task;
+      }
+      t.setTaskContext(context);
+      if (log.isTraceEnabled()) {
+         log.tracef("Executing task '%s' in '%s' mode using context %s", getName(), getInstantiationMode(), context);
+      }
+      return t.call();
    }
 
    @Override
@@ -37,8 +52,9 @@ public class ServerTaskWrapper<T> implements Task {
       return task.getExecutionMode();
    }
 
-   public void inject(TaskContext context) {
-      task.setTaskContext(context);
+   @Override
+   public TaskInstantiationMode getInstantiationMode() {
+      return task.getInstantiationMode();
    }
 
    public Optional<String> getRole() {
