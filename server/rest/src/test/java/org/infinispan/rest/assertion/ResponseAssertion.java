@@ -72,7 +72,11 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion isOk() {
-      Assertions.assertThat(response.getStatus()).isBetween(OK.code(), NO_CONTENT.code());
+      if (response.getStatus() >= OK.code() && response.getStatus() <= NO_CONTENT.code()) {
+         return this;
+      }
+
+      Assertions.fail("Unexpected error code " + response.getStatus() + ": " + response.getBody());
       return this;
    }
 
