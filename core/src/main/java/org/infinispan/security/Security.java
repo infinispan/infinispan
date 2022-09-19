@@ -35,7 +35,7 @@ public final class Security {
     * We don't override initialValue because we don't want to allocate the ArrayDeque if we just want to check if a
     * Subject has been set.
     */
-   private static final ThreadLocal<Deque<Subject>> SUBJECT = new InheritableThreadLocal<Deque<Subject>>() {
+   private static final ThreadLocal<Deque<Subject>> SUBJECT = new InheritableThreadLocal<>() {
       @Override
       protected Deque<Subject> childValue(Deque<Subject> parentValue) {
          return parentValue == null ? null : new ArrayDeque<>(parentValue);

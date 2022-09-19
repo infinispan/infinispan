@@ -17,10 +17,11 @@ public interface ServerTask<V> extends Callable<V>, Task {
    /**
     * Sets the task context
     * Store the value in your task implementation to be able to access caches and other resources in the task
-    * Note that there will be a single instance of each ServerTask on each server so, if you
-    * expect concurrent invocations of a task, the {@link TaskContext} should be stored in a {@link ThreadLocal} static
-    * field in your task. The TaskContext should then be obtained during the task's {@link #call()} method and removed
-    * from the ThreadLocal.
+    * Note that, if {@link Task#getInstantiationMode()} is {@link TaskInstantiationMode#SHARED} there will be single
+    * instance of each ServerTask on each server so, if you expect concurrent invocations of a task, the
+    * {@link TaskContext} should be stored in a {@link ThreadLocal} static field in your task. The TaskContext should
+    * then be obtained during the task's {@link #call()} method and removed from the ThreadLocal. Alternatively use
+    * {@link TaskInstantiationMode#ISOLATED}.
     *
     * @param taskContext task execution context
     */

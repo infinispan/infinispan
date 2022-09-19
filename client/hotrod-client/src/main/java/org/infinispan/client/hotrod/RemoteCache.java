@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -532,6 +533,13 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     */
    @Deprecated
    Set<Object> getListeners();
+
+   /**
+    * Executes a remote task without passing any parameters
+    */
+   default <T> T execute(String taskName) {
+      return execute(taskName, Collections.emptyMap());
+   }
 
    /**
     * Executes a remote task passing a set of named parameters

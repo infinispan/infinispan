@@ -1,10 +1,6 @@
 package org.infinispan.server.tasks;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -30,14 +26,14 @@ public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, 
    @ProtoField(2)
    final String cacheName;
 
-   @ProtoField(number = 3, collectionImplementation = ArrayList.class)
-   final List<TaskParameter> parameters;
+   @ProtoField(3)
+   final TaskContext context;
 
    @ProtoFactory
-   public DistributedServerTask(String taskName, String cacheName, List<TaskParameter> parameters) {
+   public DistributedServerTask(String taskName, String cacheName, TaskContext context) {
       this.cacheName = cacheName;
       this.taskName = taskName;
-      this.parameters = parameters;
+      this.context = context;
    }
 
    @Override
@@ -48,23 +44,20 @@ public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, 
       ServerTaskEngine serverTaskEngine = componentRegistry.getComponent(ServerTaskEngine.class);
       Marshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
       ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
-      task.inject(prepareContext(embeddedCacheManager, cache, marshaller));
+      TaskContext ctx = prepareContext(embeddedCacheManager, cache, marshaller);
       try {
-         return task.run();
+         return task.run(ctx);
       } catch (Exception e) {
          throw new CacheException(e);
       }
    }
 
    private TaskContext prepareContext(EmbeddedCacheManager embeddedCacheManager, Cache<Object, Object> cache, Marshaller marshaller) {
-      TaskContext context = new TaskContext();
+      TaskContext context = new TaskContext(this.context);
       context.cacheManager(embeddedCacheManager);
-      Map<String, String> params = parameters.stream().collect(Collectors.toMap(p -> p.key, p -> p.value));
-      context.parameters(params);
       MediaType type = MediaType.APPLICATION_OBJECT;
       if (cache != null) context.cache(cache.getAdvancedCache().withMediaType(type, type));
       if (marshaller != null) context.marshaller(marshaller);
-
       return context;
    }
 }
