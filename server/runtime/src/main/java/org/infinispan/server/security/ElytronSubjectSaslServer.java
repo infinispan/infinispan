@@ -32,7 +32,9 @@ class ElytronSubjectSaslServer extends SubjectSaslServer {
             SecurityIdentity identity = (SecurityIdentity) delegate.getNegotiatedProperty(WildFlySasl.SECURITY_IDENTITY);
             Subject subject = new Subject();
             Set<Principal> principals = subject.getPrincipals();
-            principals.add(identity.getPrincipal());
+            if (!identity.isAnonymous()) {
+               principals.add(identity.getPrincipal());
+            }
             identity.getRoles().forEach(role -> principals.add(new RolePrincipal(role)));
             principals.addAll(this.principals);
             return subject;

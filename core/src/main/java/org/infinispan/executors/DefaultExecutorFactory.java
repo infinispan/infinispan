@@ -1,8 +1,6 @@
 package org.infinispan.executors;
 
 import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -65,18 +63,7 @@ public class DefaultExecutorFactory implements SecurityAwareExecutorFactory {
 
          @Override
          public Thread newThread(Runnable r) {
-            final Runnable runnable = r;
-            final AccessControlContext acc;
-            if (System.getSecurityManager() != null && (acc = context) != null) {
-               return AccessController.doPrivileged(new PrivilegedAction<Thread>() {
-                  @Override
-                  public Thread run() {
-                     return createThread(runnable);
-                  }
-               }, acc);
-            } else {
-               return createThread(runnable);
-            }
+            return createThread(r);
          }
       };
 

@@ -45,15 +45,14 @@ public class DistributedRunner implements ScriptRunner {
             results.add(v);
          }
       };
-      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedScript<T>(masterCacheNode.getName(),
-                  metadata, ctxParams), triConsumer);
+      CompletableFuture<Void> future = clusterExecutor.submitConsumer(new DistributedScript<>(masterCacheNode.getName(), metadata, ctxParams), triConsumer);
 
       return (CompletableFuture<T>) future.thenApply(ignore -> results);
    }
 
    private Map<String, Object> extractContextParams(ScriptMetadata metadata, CacheScriptBindings binding) {
       Map<String, Object> params = new HashMap<>();
-      metadata.parameters().stream().forEach(paramName -> params.put(paramName, binding.get(paramName)));
+      metadata.parameters().forEach(paramName -> params.put(paramName, binding.get(paramName)));
       return params;
    }
 

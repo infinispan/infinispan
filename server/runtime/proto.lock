@@ -112,52 +112,6 @@
           "name": "org.infinispan.persistence.server_state"
         }
       }
-    },
-    {
-      "protopath": "generated:/:persistence.servertasks.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "TaskParameter",
-            "fields": [
-              {
-                "id": 1,
-                "name": "key",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "value",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "DistributedServerTask",
-            "fields": [
-              {
-                "id": 1,
-                "name": "taskName",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "cacheName",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "parameters",
-                "type": "TaskParameter",
-                "is_repeated": true
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.servertasks"
-        }
-      }
     }
   ]
 }

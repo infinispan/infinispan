@@ -2,6 +2,8 @@ package org.infinispan.server.tasks;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.security.impl.SubjectAdapter;
+import org.infinispan.tasks.TaskContext;
 
 /**
  * Interface used to initialise a {@link org.infinispan.protostream.SerializationContext} using the specified Pojos,
@@ -12,7 +14,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  */
 @AutoProtoSchemaBuilder(
       includeClasses = {
-            TaskParameter.class,
+            SubjectAdapter.class,
+            TaskContext.class,
             DistributedServerTask.class
       },
       schemaFileName = "persistence.servertasks.proto",
