@@ -56,8 +56,12 @@
                max_join_attempts="3"
    />
 
-   <UFC max_credits="4m" min_threshold="0.40"/>
-   <MFC max_credits="4m" min_threshold="0.40"/>
+   <org.infinispan.remoting.transport.jgroups.IUFC max_credits="4m"
+                                                   min_threshold="0.40"
+   />
+   <org.infinispan.remoting.transport.jgroups.IMFC max_credits="4m"
+                                                   min_threshold="0.40"
+   />
    <FRAG4 frag_size="8000"  />
 
    <org.infinispan.test.fwk.TEST_RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml"

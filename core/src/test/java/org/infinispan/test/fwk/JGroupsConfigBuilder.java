@@ -31,6 +31,9 @@ import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.conf.XmlConfigurator;
+import org.jgroups.protocols.FRAG2;
+import org.jgroups.protocols.FRAG3;
+import org.jgroups.protocols.FRAG4;
 
 /**
  * This class owns the logic of associating network resources(i.e. ports) with threads, in order to make sure that there
@@ -303,7 +306,7 @@ public class JGroupsConfigBuilder {
       RSVP,
       STABLE,
       GMS,
-      UFC, MFC, FC, UFC_NB, MFC_NB,
+      UFC, MFC, FC, UFC_NB, MFC_NB, IUFC, IMFC,
       FRAG2, FRAG3, FRAG4,
       STREAMING_STATE_TRANSFER,
       TEST_RELAY2

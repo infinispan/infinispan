@@ -95,6 +95,7 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.remoting.transport.raft.RaftManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -184,6 +185,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
    @Inject protected GlobalXSiteAdminOperations globalXSiteAdminOperations;
    @Inject protected ComponentRef<MetricsCollector> metricsCollector;
+   @Inject protected BlockingManager blockingManager;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
@@ -522,6 +524,15 @@ public class JGroupsTransport implements Transport, ChannelListener {
       // NOTE: total order needs to deliver own messages. the invokeRemotely method has a total order boolean
       //       that when it is false, it discard our own messages, maintaining the property needed
       channel.setDiscardOwnMessages(false);
+
+      IUFC iufc = channel.getProtocolStack().findProtocol(IUFC.class);
+      if (iufc != null) {
+         iufc.setExecutor(blockingManager.asExecutor("UFC"));
+      }
+      IMFC imfc = channel.getProtocolStack().findProtocol(IMFC.class);
+      if (imfc != null) {
+         imfc.setExecutor(blockingManager.asExecutor("MFC"));
+      }
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups
       if (transportCfg.hasTopologyInfo()) {

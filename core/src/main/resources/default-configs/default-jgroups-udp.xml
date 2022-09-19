@@ -48,11 +48,11 @@
    <pbcast.GMS print_local_addr="false"
                join_timeout="${jgroups.join_timeout:2000}"
    />
-   <UFC max_credits="4m"
-        min_threshold="0.40"
-   />
-   <MFC max_credits="4m"
-        min_threshold="0.40"
-   />
+    <org.infinispan.remoting.transport.jgroups.IUFC max_credits="4m"
+                                                    min_threshold="0.40"
+    />
+    <org.infinispan.remoting.transport.jgroups.IMFC max_credits="4m"
+                                                    min_threshold="0.40"
+    />
    <FRAG4 frag_size="${jgroups.frag_size:60000}"/>
 </config>
