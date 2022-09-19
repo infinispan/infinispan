@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,9 +30,12 @@ public final class ScriptConversions {
       formatterByMediaType.put(TEXT_PLAIN_TYPE, new TextPlainFormatter());
    }
 
-   public Map<String, ?> convertParameters(TaskContext context) {
-      if (!context.getParameters().isPresent()) return null;
-      Map<String, ?> contextParams = context.getParameters().get();
+   public Map<String, Object> convertParameters(TaskContext context) {
+      if (context.getParameters().isEmpty()) return null;
+      Map<String, Object> contextParams = context.getParameters().get();
+      if (contextParams == Collections.EMPTY_MAP) {
+         return new HashMap<>(2);
+      }
       Map<String, Object> converted = new HashMap<>(contextParams.size());
 
       if (context.getCache().isPresent()) {

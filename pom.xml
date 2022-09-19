@@ -2852,7 +2852,7 @@
                               <exec dir="${project.build.outputDirectory}/schema" executable="rsync" failonerror="${rsync.failonerror}" if:set="hasSchema" xmlns:if="ant:if">
                                  <arg value="-rvm"/>
                                  <arg line="--protocol=29"/>
-                                 <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
+                                 <arg line="-e &quot;ssh -o StrictHostKeyChecking=accept-new -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
                                  <arg line="--include='*-${infinispan.core.schema.version}.xsd'"/>
                                  <arg value="."/>
                                  <arg value="${upload.schemaDir}"/>

@@ -121,6 +121,39 @@ public abstract class AbstractAuthorization {
       RestCacheClient adminCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withCacheMode(CacheMode.DIST_SYNC).create().cache(getServerTest().getMethodName());
       sync(adminCache.put("k", "v"));
       assertEquals("v", sync(adminCache.get("k")).getBody());
+      assertStatus(OK, adminCache.getAvailability());
+   }
+
+   @Test
+   public void testRestCacheDistribution() {
+      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(OK, cache.getAvailability());
+      }
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, cache.getAvailability());
+      }
+   }
+
+   @Test
+   public void testStats() {
+      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(OK, cache.stats());
+      }
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, cache.stats());
+      }
    }
 
    @Test
@@ -190,7 +223,7 @@ public abstract class AbstractAuthorization {
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCacheManager remoteCacheManager = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
-                 () -> serverTest.addScript(remoteCacheManager, "scripts/test.js")
+               () -> serverTest.addScript(remoteCacheManager, "scripts/test.js")
          );
       }
    }
@@ -213,9 +246,9 @@ public abstract class AbstractAuthorization {
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCache cacheExec = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
-                 () -> {
-                    cacheExec.execute(scriptName, params);
-                 }
+               () -> {
+                  cacheExec.execute(scriptName, params);
+               }
          );
       }
    }
@@ -234,6 +267,8 @@ public abstract class AbstractAuthorization {
          assertEquals(2, messages.size());
          assertEquals("Hello nurse", messages.get(0));
          assertEquals("Hello kitty", messages.get(1));
+         String message = cache.execute("hello", Collections.emptyMap());
+         assertEquals("Hello " + expectedServerPrincipalName(user), message);
       }
 
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.OBSERVER, TestUser.WRITER)) {
@@ -260,6 +295,11 @@ public abstract class AbstractAuthorization {
          assertEquals(2, greetings.size());
          for (String greeting : greetings) {
             assertTrue(greeting.matches("Hello my friend .*"));
+         }
+         greetings = cache.execute("dist-hello", Collections.emptyMap());
+         assertEquals(2, greetings.size());
+         for (String greeting : greetings) {
+            assertTrue(greeting, greeting.startsWith("Hello " + expectedServerPrincipalName(user) + " from "));
          }
       }
    }

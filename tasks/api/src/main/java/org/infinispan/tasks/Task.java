@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 public interface Task extends JsonSerialization {
    /**
@@ -22,7 +22,7 @@ public interface Task extends JsonSerialization {
    String getType();
 
    /**
-    * Provides info whether the task execution should be local - on one node or distributed - on all nodes.
+    * Whether the task execution should be local - on one node or distributed - on all nodes.
     *
     * ONE_NODE execution is the default.
     *
@@ -30,6 +30,15 @@ public interface Task extends JsonSerialization {
     */
    default TaskExecutionMode getExecutionMode() {
       return TaskExecutionMode.ONE_NODE;
+   }
+
+   /**
+    * Whether tasks should reuse a single instance or create a new instance per execution. {@link TaskInstantiationMode#SHARED} is the default
+    *
+    * @return TaskInstantiationMode
+    */
+   default TaskInstantiationMode getInstantiationMode() {
+      return TaskInstantiationMode.SHARED;
    }
 
    /**
@@ -60,6 +69,7 @@ public interface Task extends JsonSerialization {
             .set("type", getType())
             .set("parameters", Json.make(getParameters()))
             .set("execution_mode", getExecutionMode().toString())
+            .set("instantiation_mode", getInstantiationMode().toString())
             .set("allowed_role", getAllowedRole().orElse(null));
    }
 }

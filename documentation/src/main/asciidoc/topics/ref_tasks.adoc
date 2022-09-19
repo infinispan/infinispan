@@ -6,14 +6,19 @@
 method calls:
 
 `setTaskContext()`::
-Allows access to execution context information including task parameters, cache references on which tasks are executed, and so on. In most cases, implementations store this information locally and use it when tasks are actually executed.
+Allows access to execution context information including task parameters, cache references on which tasks are executed, and so on. In most cases, implementations store this information locally and use it when tasks are actually executed. When using `SHARED` instantiation mode, the task should use a `ThreadLocal` to store the `TaskContext` for concurrent invocations.
 `getName()`::
 Returns unique names for tasks. Clients invoke tasks with these names.
 `getExecutionMode()`::
 Returns the execution mode for tasks.
 +
-* `TaskExecutionMode.ONE_NODE` only the node that handles the request executes the script. Although scripts can still invoke clustered operations.
+* `TaskExecutionMode.ONE_NODE` only the node that handles the request executes the script. Although scripts can still invoke clustered operations. This is the default.
 * `TaskExecutionMode.ALL_NODES` {brandname} uses clustered executors to run scripts across nodes. For example, server tasks that invoke stream processing need to be executed on a single node because stream processing is distributed to all nodes.
+`getInstantiationMode()`::
+Returns the instantiation mode for tasks.
++
+* `TaskInstantiationMode.SHARED` creates a single instance that is reused for every task execution on the same server. This is the default.
+* `TaskInstantiationMode.ISOLATED` creates a new instance for every invocation.
 `call()`::
 Computes a result. This method is defined in the
 `java.util.concurrent.Callable` interface and is invoked with server tasks.
@@ -25,7 +30,7 @@ For example, implementations must have a zero-argument constructors.
 ====
 
 The following `HelloTask` class implementation provides an example task that
-has one parameter:
+has one parameter. It also illustrates the use of a `ThreadLocal` to store the `TaskContext` for concurrent invocations.
 
 [source,java]
 ----
@@ -36,15 +41,16 @@ import org.infinispan.tasks.TaskContext;
 
 public class HelloTask implements ServerTask<String> {
 
-   private TaskContext ctx;
+   private static final ThreadLocal<TaskContext> taskContext = new ThreadLocal<>();
 
    @Override
    public void setTaskContext(TaskContext ctx) {
-      this.ctx = ctx;
+      taskContext.set(ctx);
    }
 
    @Override
    public String call() throws Exception {
+      TaskContext ctx = taskContext.get();
       String name = (String) ctx.getParameters().get().get("name");
       return "Hello " + name;
    }
