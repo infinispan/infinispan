@@ -15,7 +15,7 @@ import org.infinispan.xsite.status.DefaultTakeOfflineManager;
  * Used by asynchronous cross-site replication, it aggregates response from multiple sites and returns {@link
  * IracBatchSendResult}.
  * <p>
- * This collector assumes the request is a {@link ClearCommand}.
+ * This collector assumes the request is a {@link ClearCommand}, and never completes exceptionally.
  *
  * @author Pedro Ruivo
  * @since 14.0
@@ -45,6 +45,10 @@ public class IracClearResponseCollector implements Runnable {
       return complete;
    }
 
+   public void forceBackOffAndRetry() {
+      RESULT_UPDATED.set(this, IracBatchSendResult.BACK_OFF_AND_RETRY);
+   }
+
    private void onResponse(IracXSiteBackup backup, Throwable throwable) {
       try {
          boolean trace = log.isTraceEnabled();
@@ -52,9 +56,11 @@ public class IracClearResponseCollector implements Runnable {
             if (DefaultTakeOfflineManager.isCommunicationError(throwable)) {
                //in case of communication error, we need to back-off.
                RESULT_UPDATED.set(this, IracBatchSendResult.BACK_OFF_AND_RETRY);
+               backup.enableBackOff();
             } else {
                //don't overwrite communication errors
                RESULT_UPDATED.compareAndSet(this, IracBatchSendResult.OK, IracBatchSendResult.RETRY);
+               backup.resetBackOff();
             }
             if (backup.logExceptions()) {
                log.warnXsiteBackupFailed(cacheName, backup.getSiteName(), throwable);
@@ -62,7 +68,10 @@ public class IracClearResponseCollector implements Runnable {
                log.tracef(throwable, "Encountered issues while backing clear command for cache %s to site %s", cacheName, backup.getSiteName());
             }
          } else if (trace) {
-            log.tracef("Received clear response from %s (%d remaining)", backup.getSiteName(), countDownRunnable.missing());
+            backup.resetBackOff();
+
+            if (log.isTraceEnabled())
+               log.tracef("Received clear response from %s (%d remaining)", backup.getSiteName(), countDownRunnable.missing());
          }
 
       } finally {

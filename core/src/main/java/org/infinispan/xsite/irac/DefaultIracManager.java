@@ -31,6 +31,7 @@ import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -144,8 +145,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    public void inject(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService,
                       @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor) {
       // using the inject method here in order to decrease the class size
-      iracExecutor.setBackOff(new ExponentialBackOffImpl(executorService));
       iracExecutor.setExecutor(blockingExecutor);
+      setBackOff(backup -> new ExponentialBackOffImpl(executorService));
    }
 
    @Start
@@ -371,8 +372,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             .toCompletionStage(null);
    }
 
-   public void setBackOff(ExponentialBackOff backOff) {
-      iracExecutor.setBackOff(backOff);
+   public void setBackOff(Function<IracXSiteBackup, ExponentialBackOff> builder) {
+      asyncBackups.forEach(backup -> backup.useBackOff(builder.apply(backup), iracExecutor));
    }
 
    public boolean isEmpty() {
@@ -417,56 +418,72 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          }
          return Completable.complete();
       }
-      IracPutManyCommand cmd = commandsFactory.buildIracPutManyCommand(size);
-      Collection<IracManagerKeyState> invalidState = new ArrayList<>(size);
-      Collection<IracManagerKeyState> validState = new ArrayList<>(size);
-      for (IracStateData data : batch) {
-         if (data.entry == null && data.tombstone == null) {
-            // there a concurrency issue where the entry and the tombstone do not exist (remove following by a put)
-            // the put will create a new state and the key will be sent to the remote sites
-            invalidState.add(data.state);
-            continue;
-         }
-         validState.add(data.state);
-         if (data.state.isExpiration()) {
-            cmd.addExpire(data.state.getKey(), data.tombstone);
-         } else if (data.entry == null) {
-            cmd.addRemove(data.state.getKey(), data.tombstone);
-         } else {
-            cmd.addUpdate(data.state.getKey(), data.entry.getValue(), data.entry.getMetadata(), data.entry.getInternalMetadata().iracMetadata());
-         }
-      }
 
-      IracResponseCollector rspCollector = null;
-      if (!cmd.isEmpty()) {
-         rspCollector = new IracResponseCollector(commandsFactory.getCacheName(), validState, this::onBatchResponse);
-         try {
-            for (IracXSiteBackup backup : asyncBackups) {
-               if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
-                  continue; // backup is offline
-               }
-               rspCollector.dependsOn(backup, sendToRemoteSite(backup, cmd));
-            }
-         } catch (Throwable throwable) {
-            // safety net; should never happen
-            // onUnexpectedThrowable() log the exception!
+      AggregateCompletionStage<Void> aggregation = CompletionStages.aggregateCompletionStage();
+      for (IracXSiteBackup backup: asyncBackups) {
+         if (backup.isBackOffEnabled()) {
             for (IracStateData data : batch) {
                data.state.retry();
             }
-            onUnexpectedThrowable(throwable);
-            rspCollector = null;
+            continue;
+         }
+
+         IracPutManyCommand cmd = commandsFactory.buildIracPutManyCommand(size);
+         Collection<IracManagerKeyState> invalidState = new ArrayList<>(size);
+         Collection<IracManagerKeyState> validState = new ArrayList<>(size);
+         for (IracStateData data : batch) {
+            if (data.entry == null && data.tombstone == null) {
+               // there a concurrency issue where the entry and the tombstone do not exist (remove following by a put)
+               // the put will create a new state and the key will be sent to the remote sites
+               invalidState.add(data.state);
+               continue;
+            }
+
+            if (data.state.wasSuccessful(backup))
+               continue;
+
+            validState.add(data.state);
+            if (data.state.isExpiration()) {
+               cmd.addExpire(data.state.getKey(), data.tombstone);
+            } else if (data.entry == null) {
+               cmd.addRemove(data.state.getKey(), data.tombstone);
+            } else {
+               cmd.addUpdate(data.state.getKey(), data.entry.getValue(), data.entry.getMetadata(), data.entry.getInternalMetadata().iracMetadata());
+            }
+         }
+
+         if (!cmd.isEmpty()) {
+            IracResponseCollector rspCollector = new IracResponseCollector(commandsFactory.getCacheName(), backup, validState, this::onBatchResponse);
+            try {
+               CompletionStage<IntSet> cs;
+               if (takeOfflineManager.getSiteState(backup.getSiteName()) != SiteState.OFFLINE) {
+                  cs = sendToRemoteSite(backup, cmd);
+               } else {
+                  cs = CompletableFutures.completedNull();
+               }
+               // The result of this current Completable is not necessary, only the collector's result is.
+               cs.whenCompleteAsync(rspCollector, iracExecutor.executor());
+               aggregation.dependsOn(rspCollector);
+            } catch (Throwable throwable) {
+               // safety net; should never happen
+               // onUnexpectedThrowable() log the exception!
+               onUnexpectedThrowable(throwable);
+               for (IracStateData data : batch) {
+                  data.state.retry();
+               }
+            }
+         }
+
+         if (!invalidState.isEmpty()) {
+            if (trace) {
+               log.tracef("[IRAC] Removing %d invalid state(s)", invalidState.size());
+            }
+            invalidState.forEach(IracManagerKeyState::discard);
+            removeStateFromCluster(invalidState);
          }
       }
 
-      if (!invalidState.isEmpty()) {
-         if (trace) {
-            log.tracef("[IRAC] Removing %d invalid state(s)", invalidState.size());
-         }
-         invalidState.forEach(IracManagerKeyState::discard);
-         removeStateFromCluster(invalidState);
-      }
-
-      return rspCollector == null ? Completable.complete() : Completable.fromCompletionStage(rspCollector.freeze());
+      return Completable.fromCompletionStage(aggregation.freeze());
    }
 
    private CompletionStage<Void> sendClearUpdate() {
@@ -476,6 +493,10 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       for (IracXSiteBackup backup : asyncBackups) {
          if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
             continue; // backup is offline
+         }
+         if (backup.isBackOffEnabled()) {
+            collector.forceBackOffAndRetry();
+            continue;
          }
          collector.dependsOn(backup, sendToRemoteSite(backup, cmd));
       }
@@ -492,11 +513,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             hasClear = false;
             // fallthrough
          case RETRY:
-            iracExecutor.disableBackOff();
-            iracExecutor.run();
-            break;
          case BACK_OFF_AND_RETRY:
-            iracExecutor.enableBackOff();
             iracExecutor.run();
             break;
          default:
@@ -540,9 +557,11 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          }
       }
 
-      IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(stateToCleanup);
-      rpcManager.sendToMany(owners, cmd, DeliverOrder.NONE);
-      stateToCleanup.forEach(this::removeStateFromLocal);
+      if (!segments.isEmpty()) {
+         IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(stateToCleanup);
+         rpcManager.sendToMany(owners, cmd, DeliverOrder.NONE);
+         stateToCleanup.forEach(this::removeStateFromLocal);
+      }
    }
 
    private void removeStateFromLocal(IracManagerKeyInfo state) {
@@ -557,23 +576,31 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Batch completed with %d keys applied. Global result=%s", successfulSent.size(), result);
       }
+      Collection<IracManagerKeyState> doneKeys = new ArrayList<>(successfulSent.size());
       switch (result) {
          case OK:
-            iracExecutor.disableBackOff();
+            for (IracManagerKeyState state : successfulSent) {
+               if (sentKeyToAllBackups(state) && state.done()) {
+                  doneKeys.add(state);
+               }
+            }
             break;
          case RETRY:
-            iracExecutor.disableBackOff();
             iracExecutor.run();
             break;
          case BACK_OFF_AND_RETRY:
-            iracExecutor.enableBackOff();
-            iracExecutor.run();
+            // No-op, backup is already scheduled for retry.
             break;
          default:
             onUnexpectedThrowable(new IllegalStateException("Unknown result: " + result));
             break;
       }
-      removeStateFromCluster(successfulSent);
+      removeStateFromCluster(doneKeys);
+   }
+
+   private boolean sentKeyToAllBackups(IracManagerKeyInfo state) {
+      IracManagerKeyState imks = updatedKeys.get(state.getKey());
+      return imks != null && imks.successfullySent(asyncBackups);
    }
 
    @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)",

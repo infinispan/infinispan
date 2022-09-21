@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -20,22 +19,18 @@ import org.infinispan.util.logging.LogFactory;
  * This executor makes sure no more than one task is running at the same time. Also, it avoids "queueing" multiple tasks
  * by queuing at most one. This is possible because the task does the same thing: iterator over pending updates and send
  * them to the remote site.
- * <p>
- * In addition, it iteracts with the {@link ExponentialBackOff} to add delays in case of network failures.
  *
  * @author Pedro Ruivo
  * @since 12
  */
-public class IracExecutor implements Function<Void, CompletionStage<Void>>, Runnable {
+public class IracExecutor implements Runnable {
 
    private static final Log log = LogFactory.getLog(IracExecutor.class);
 
    private final WrappedRunnable runnable;
    private volatile CompletableFuture<Void> lastRunnable;
    private volatile Executor executor;
-   private volatile ExponentialBackOff backOff;
    final AtomicBoolean hasPendingRunnable;
-   private volatile boolean backOffEnabled;
 
 
    public IracExecutor(Supplier<CompletionStage<Void>> runnable) {
@@ -49,45 +44,15 @@ public class IracExecutor implements Function<Void, CompletionStage<Void>>, Runn
       this.executor = Objects.requireNonNull(executor);
    }
 
-   public void setBackOff(ExponentialBackOff backOff) {
-      this.backOff = Objects.requireNonNull(backOff);
-   }
-
    /**
     * Executes, in a new thread, or queues the task.
     */
    @Override
    public void run() {
       if (hasPendingRunnable.compareAndSet(false, true)) {
-         if (backOffEnabled) {
-            //noinspection NonAtomicOperationOnVolatileField
-            lastRunnable = lastRunnable.thenCompose(this).thenComposeAsync(runnable, executor);
-         } else {
-            //noinspection NonAtomicOperationOnVolatileField
-            lastRunnable = lastRunnable.thenComposeAsync(runnable, executor);
-         }
+         //noinspection NonAtomicOperationOnVolatileField
+         lastRunnable = lastRunnable.thenComposeAsync(runnable, executor);
       }
-   }
-
-   public void enableBackOff() {
-      backOffEnabled = true;
-   }
-
-   public void disableBackOff() {
-      backOffEnabled = false;
-      backOff.reset();
-   }
-
-   /**
-    * Used by {@link CompletableFuture#thenComposeAsync(Function, Executor)}, it adds the {@link ExponentialBackOff}
-    * delay.
-    *
-    * @param unused Unused value.
-    * @return The {@link CompletionStage} from {@link ExponentialBackOff#asyncBackOff()}.
-    */
-   @Override
-   public CompletionStage<Void> apply(Void unused) {
-      return backOff.asyncBackOff();
    }
 
    private class WrappedRunnable implements Function<Void, CompletionStage<Void>> {
@@ -114,5 +79,9 @@ public class IracExecutor implements Function<Void, CompletionStage<Void>>, Runn
             return CompletableFutures.completedNull();
          }
       }
+   }
+
+   public Executor executor() {
+      return executor;
    }
 }

@@ -61,6 +61,11 @@ public class IracManagerKeyInfoImpl implements IracManagerKeyInfo {
       return result;
    }
 
+   @Override
+   public String toString() {
+      return "IracManagerKeyInfoImpl{" + "segment=" + segment + ", key=" + key + ", owner=" + owner + '}';
+   }
+
    public static void writeTo(ObjectOutput output, IracManagerKeyInfo keyInfo) throws IOException {
       if (keyInfo == null) {
          output.writeObject(null);
