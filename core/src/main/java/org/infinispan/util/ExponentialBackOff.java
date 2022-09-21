@@ -1,9 +1,11 @@
 package org.infinispan.util;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.xsite.irac.IracXSiteBackup;
 
 /**
  * Interface to implement an exponential back-off algorithm that retries the request based on the result of the remote
@@ -33,6 +35,8 @@ public interface ExponentialBackOff {
          return CompletableFutures.completedNull();
       }
    };
+
+   Function<IracXSiteBackup, ExponentialBackOff> NO_OP_BUILDER = backup -> NO_OP;
 
    /**
     * Resets its state.

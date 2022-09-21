@@ -50,7 +50,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -141,7 +140,6 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       transport.checkCrossSiteAvailable();
       String localSiteName = transport.localSiteName();
       asyncBackups.removeIf(xSiteBackup -> localSiteName.equals(xSiteBackup.getSiteName()));
-      iracExecutor.setBackOff(ExponentialBackOff.NO_OP);
       iracExecutor.setExecutor(blockingManager.asExecutor(commandsFactory.getCacheName() + "-tombstone-cleanup"));
       stopped = false;
       scheduler.disabled = false;

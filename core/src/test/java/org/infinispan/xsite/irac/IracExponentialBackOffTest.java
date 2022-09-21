@@ -1,34 +1,20 @@
 package org.infinispan.xsite.irac;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
 import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ExponentialBackOff;
-import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.UnreachableException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -57,12 +43,13 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       //default cache manager
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager();
-      this.transport = TestingUtil.wrapGlobalComponent(cacheManager, Transport.class, ControlledTransport::new, true);
+      this.transport = TestingUtil.wrapGlobalComponent(cacheManager, Transport.class,
+            actual -> new ControlledTransport(actual, LON, Collections.singleton(NYC)), true);
       this.cache = cacheManager.administration()
             .withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
             .getOrCreateCache(CACHE_NAME, createCacheConfiguration().build());
       iracManager = (DefaultIracManager) TestingUtil.extractComponent(cache, IracManager.class);
-      iracManager.setBackOff(backOff);
+      iracManager.setBackOff(backup -> backOff);
       return cacheManager;
    }
 
@@ -103,7 +90,7 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
 
       cache.put(key, value);
 
-      backOff.eventually("Reset event with CacheException.", Event.RESET);
+      backOff.eventually("Reset event with CacheException.", ControlledExponentialBackOff.Event.RESET);
 
       //with "normal" exception, the protocol will keep trying to send the request
       //we need to let it have a successful request otherwise it will fill queue with RESET events.
@@ -121,128 +108,19 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
 
       cache.put(key, value);
 
-      backOff.eventually("Backoff event on first try.", Event.BACK_OFF);
+      backOff.eventually("Backoff event on first try.", ControlledExponentialBackOff.Event.BACK_OFF);
 
       //the release should trigger another back off event
       backOff.release();
-      backOff.eventually("Backoff event on second try.", Event.BACK_OFF);
+      backOff.eventually("Backoff event on second try.", ControlledExponentialBackOff.Event.BACK_OFF);
 
       //no exception, request will be completed.
       transport.throwableSupplier = NO_EXCEPTION;
       backOff.release();
 
       eventually(iracManager::isEmpty);
-      backOff.eventually("Reset event after successful try", Event.RESET);
+      //backOff.eventually("Reset event after successful try operations", ControlledExponentialBackOff.Event.RESET);
+      backOff.eventually("Reset event after successful try", ControlledExponentialBackOff.Event.RESET);
       backOff.assertNoEvents();
    }
-
-   private static class ControlledExponentialBackOff implements ExponentialBackOff {
-
-      private final BlockingDeque<Event> backOffEvents;
-      private volatile CompletableFuture<Void> backOff = new CompletableFuture<>();
-
-      private ControlledExponentialBackOff() {
-         backOffEvents = new LinkedBlockingDeque<>();
-      }
-
-      @Override
-      public void reset() {
-         log.tracef("RESET");
-         backOffEvents.add(Event.RESET);
-      }
-
-      @Override
-      public CompletionStage<Void> asyncBackOff() {
-         log.tracef("BACK_OFF");
-         CompletionStage<Void> stage = backOff;
-         // add to the event after getting the completable future
-         backOffEvents.add(Event.BACK_OFF);
-         return stage;
-      }
-
-      void release() {
-         log.tracef("RELEASE");
-         backOff.complete(null);
-         this.backOff = new CompletableFuture<>();
-      }
-
-      void cleanupEvents() {
-         backOffEvents.clear();
-      }
-
-      void eventually(String message, Event expected) throws InterruptedException {
-         Event current = backOffEvents.poll(30, TimeUnit.SECONDS);
-         assertEquals(message, expected, current);
-      }
-
-      void assertNoEvents() {
-         assertTrue("Expected no events.", backOffEvents.isEmpty());
-      }
-   }
-
-   static class ControlledTransport extends AbstractDelegatingTransport {
-
-      private volatile Supplier<Throwable> throwableSupplier = NO_EXCEPTION;
-
-      ControlledTransport(Transport actual) {
-         super(actual);
-      }
-
-      @Override
-      public void start() {
-         //already started
-      }
-
-      @Override
-      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
-         ControlledXSiteResponse<O> response = new ControlledXSiteResponse<>(backup, throwableSupplier.get());
-         response.complete();
-         return response;
-      }
-
-      @Override
-      public void checkCrossSiteAvailable() throws CacheConfigurationException {
-         //no-op == it is available
-      }
-
-      @Override
-      public String localSiteName() {
-         return LON;
-      }
-
-      @Override
-      public Set<String> getSitesView() {
-         return Collections.singleton(LON);
-      }
-   }
-
-   private static class ControlledXSiteResponse<T> extends CompletableFuture<T> implements XSiteResponse<T> {
-
-      private final XSiteBackup backup;
-      private final Throwable result;
-
-      private ControlledXSiteResponse(XSiteBackup backup, Throwable result) {
-         this.backup = backup;
-         this.result = result;
-      }
-
-      @Override
-      public void whenCompleted(XSiteResponseCompleted listener) {
-         listener.onCompleted(backup, System.currentTimeMillis(), 0, result);
-      }
-
-      void complete() {
-         if (result == null) {
-            complete(null);
-         } else {
-            completeExceptionally(result);
-         }
-      }
-   }
-
-   private enum Event {
-      BACK_OFF,
-      RESET
-   }
-
 }

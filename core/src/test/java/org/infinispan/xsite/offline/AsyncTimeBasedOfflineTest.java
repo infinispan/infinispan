@@ -43,7 +43,7 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
 
       //disable exponential back-off to avoid messing the times
       for (int i = 0; i < NUM_NODES; ++i) {
-         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP_BUILDER);
       }
 
       String key = method.getName() + "-key";

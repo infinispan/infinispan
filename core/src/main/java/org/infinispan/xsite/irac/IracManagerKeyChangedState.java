@@ -4,11 +4,17 @@ import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteBackup;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Default implementation of {@link IracManagerKeyState}.
@@ -26,6 +32,10 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    private final Object key;
    private final Object owner;
    private final boolean expiration;
+
+   @GuardedBy("sentTo")
+   private final Set<XSiteBackup> sentTo;
+
    private volatile Status status = Status.READY;
 
    public IracManagerKeyChangedState(int segment, Object key, Object owner, boolean expiration) {
@@ -33,6 +43,7 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
       this.key = Objects.requireNonNull(key);
       this.owner = Objects.requireNonNull(owner);
       this.expiration = expiration;
+      this.sentTo = new HashSet<>();
    }
 
    @Override
@@ -90,6 +101,27 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
          log.tracef("[IRAC] State.setDiscard for key %s (status=%s)", toStr(key), status);
       }
       STATUS_UPDATER.lazySet(this, Status.DONE);
+   }
+
+   @Override
+   public void successFor(XSiteBackup site) {
+      synchronized (sentTo) {
+         sentTo.add(site);
+      }
+   }
+
+   @Override
+   public boolean wasSuccessful(XSiteBackup site) {
+      synchronized (sentTo) {
+         return sentTo.contains(site);
+      }
+   }
+
+   @Override
+   public boolean successfullySent(Collection<? extends XSiteBackup> sites) {
+      synchronized (sentTo) {
+         return sentTo.containsAll(sites);
+      }
    }
 
    @Override

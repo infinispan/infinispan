@@ -53,7 +53,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       defineCache(NYC, cacheName, getNYCOrSFOConfiguration());
 
       for (int i = 0; i < NUM_NODES; ++i) {
-         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP_BUILDER);
       }
 
       String key = method.getName() + "-key";
@@ -73,7 +73,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       defineCache(SFO, cacheName, getNYCOrSFOConfiguration());
 
       for (int i = 0; i < NUM_NODES; ++i) {
-         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP_BUILDER);
       }
 
       String key = method.getName() + "-key";
@@ -103,7 +103,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       defineCache(SFO, cacheName, getNYCOrSFOConfiguration());
 
       for (int i = 0; i < NUM_NODES; ++i) {
-         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP);
+         iracManager(LON, cacheName, i).setBackOff(ExponentialBackOff.NO_OP_BUILDER);
       }
 
       String key = method.getName() + "-key";

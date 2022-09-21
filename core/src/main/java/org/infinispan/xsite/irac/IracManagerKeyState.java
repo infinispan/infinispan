@@ -1,5 +1,9 @@
 package org.infinispan.xsite.irac;
 
+import java.util.Collection;
+
+import org.infinispan.xsite.XSiteBackup;
+
 /**
  * Keeps a key state for {@link IracManager}.
  * <p>
@@ -56,4 +60,23 @@ interface IracManagerKeyState extends IracManagerKeyInfo {
     */
    void discard();
 
+   /**
+    * Mark the given site as successfully received the current state.
+    *
+    * @param site: Site that received the state.
+    */
+   void successFor(XSiteBackup site);
+
+   /**
+    * Check if given site received this state.
+    *
+    * @param site: Site to verify.
+    * @return true if successfully sent, false otherwise.
+    */
+   boolean wasSuccessful(XSiteBackup site);
+
+   /**
+    * Check if all given sites have received this state.
+    */
+   boolean successfullySent(Collection<? extends XSiteBackup> sites);
 }
