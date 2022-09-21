@@ -71,7 +71,7 @@ public class Resp3AuthHandler implements RespRequestHandler {
       CompletionStage<Boolean> cs = authenticator.authenticate(username, password.toCharArray())
             .thenApply(r -> handleAuthResponse(ctx, r))
             .exceptionally(t -> {
-               handleThrowable(ctx, t);
+               handleUnauthorized(ctx);
                return false;
             });
       try {
@@ -85,7 +85,7 @@ public class Resp3AuthHandler implements RespRequestHandler {
 
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       if (subject == null) {
-         ctx.writeAndFlush(ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set" + "\r\n", ctx.alloc())));
+         ctx.writeAndFlush(ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", ctx.alloc())));
          return false;
       }
 
@@ -95,7 +95,7 @@ public class Resp3AuthHandler implements RespRequestHandler {
    }
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR unauthorized command\r\n", ctx.alloc()));
+      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", ctx.alloc()));
    }
 
    private boolean isAuthorized() {

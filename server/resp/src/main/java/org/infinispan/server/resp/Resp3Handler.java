@@ -70,7 +70,7 @@ public class Resp3Handler extends Resp3AuthHandler {
                         buf.writeByte('\r').writeByte('\n');
                         ctx.writeAndFlush(buf);
                      } else {
-                        ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("_\r\n", ctx.alloc()));
+                        ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$-1\r\n", ctx.alloc()));
                      }
                   });
             break;
@@ -139,8 +139,8 @@ public class Resp3Handler extends Resp3AuthHandler {
                               resultBytesSize.addAndGet(2);
                            }
                         } else {
-                           // _
-                           resultBytesSize.addAndGet(1);
+                           // $-1
+                           resultBytesSize.addAndGet(3);
                         }
                         // /r/n
                         resultBytesSize.addAndGet(2);
@@ -162,7 +162,7 @@ public class Resp3Handler extends Resp3AuthHandler {
                      byteBuf.writeByte('\n');
                      for (byte[] value : results) {
                         if (value == null) {
-                           byteBuf.writeCharSequence("_", CharsetUtil.UTF_8);
+                           byteBuf.writeCharSequence("$-1", CharsetUtil.UTF_8);
                         } else {
                            byteBuf.writeCharSequence("$" + value.length, CharsetUtil.UTF_8);
                            byteBuf.writeByte('\r');
@@ -241,6 +241,9 @@ public class Resp3Handler extends Resp3AuthHandler {
          case "RESET":
             // TODO: do we need to reset anything in this case?
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("+RESET\r\n", ctx.alloc()));
+            if (respServer.getConfiguration().authentication().enabled()) {
+               return new Resp3AuthHandler(respServer);
+            }
             break;
          case "COMMAND":
             if (!arguments.isEmpty()) {
