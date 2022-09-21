@@ -124,6 +124,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       redis.del("k1");
 
       assertNull(redis.get("k1"));
+      assertNull(redis.get("something"));
    }
 
    public void testPingNoArg() {

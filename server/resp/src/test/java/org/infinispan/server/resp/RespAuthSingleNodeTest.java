@@ -58,7 +58,7 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
       // This method did not issue AUTH, so this should be unauthorized.
       RedisCommands<String, String> redis = redisConnection.sync();
       Exceptions.expectException(RedisCommandExecutionException.class,
-            "ERR unauthorized command",
+            "WRONGPASS invalid username-password pair or user is disabled\\.",
             () -> redis.set("k", "v"));
    }
 
