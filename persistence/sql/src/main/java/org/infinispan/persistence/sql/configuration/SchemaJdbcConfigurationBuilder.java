@@ -9,12 +9,15 @@ import java.util.Objects;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 
-public class SchemaJdbcConfigurationBuilder implements Builder<SchemaJdbcConfiguration> {
+public class SchemaJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S> implements Builder<SchemaJdbcConfiguration> {
 
    private final AttributeSet attributes;
 
-   public SchemaJdbcConfigurationBuilder() {
+   protected SchemaJdbcConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
+      super(builder);
       this.attributes = SchemaJdbcConfiguration.attributeDefinitionSet();
    }
 
@@ -25,7 +28,7 @@ public class SchemaJdbcConfigurationBuilder implements Builder<SchemaJdbcConfigu
     * @param messageName the protobuf message name for the value
     * @return this
     */
-   public SchemaJdbcConfigurationBuilder messageName(String messageName) {
+   public SchemaJdbcConfigurationBuilder<S> messageName(String messageName) {
       attributes.attribute(MESSAGE_NAME).set(messageName);
       return this;
    }
@@ -37,7 +40,7 @@ public class SchemaJdbcConfigurationBuilder implements Builder<SchemaJdbcConfigu
     * @param keyMessageName the protobuf message name for the key
     * @return this
     */
-   public SchemaJdbcConfigurationBuilder keyMessageName(String keyMessageName) {
+   public SchemaJdbcConfigurationBuilder<S> keyMessageName(String keyMessageName) {
       attributes.attribute(KEY_MESSAGE_NAME).set(keyMessageName);
       return this;
    }
@@ -49,7 +52,7 @@ public class SchemaJdbcConfigurationBuilder implements Builder<SchemaJdbcConfigu
     * @param packageName the package for the message or key message
     * @return this
     */
-   public SchemaJdbcConfigurationBuilder packageName(String packageName) {
+   public SchemaJdbcConfigurationBuilder<S> packageName(String packageName) {
       attributes.attribute(PACKAGE).set(Objects.requireNonNull(packageName));
       return this;
    }
@@ -61,7 +64,7 @@ public class SchemaJdbcConfigurationBuilder implements Builder<SchemaJdbcConfigu
     * @param embeddedKey whether the key is embedded in the value
     * @return this
     */
-   public SchemaJdbcConfigurationBuilder embeddedKey(boolean embeddedKey) {
+   public SchemaJdbcConfigurationBuilder<S> embeddedKey(boolean embeddedKey) {
       attributes.attribute(EMBEDDED_KEY).set(embeddedKey);
       return this;
    }

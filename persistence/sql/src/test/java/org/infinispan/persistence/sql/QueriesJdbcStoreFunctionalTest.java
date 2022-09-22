@@ -54,26 +54,26 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
       SqlManager manager = SqlManager.fromDatabaseType(DB_TYPE, tableName, true);
 
       String KEY_COLUMN = "keycolumn";
-      storeBuilder.queriesJdbcConfigurationBuilder()
+      storeBuilder.queries()
             .deleteAll("DELETE FROM " + tableName)
             .size("SELECT COUNT(*) FROM " + tableName);
       storeBuilder.keyColumns(KEY_COLUMN);
       if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, accepted_tos FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, accepted_tos FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate", "accepted_tos")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "value1")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASMOREVALUECOLUMNS")) {
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, value2, value3 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, value2, value3 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
@@ -83,14 +83,14 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
          // The colum has to be value1 to match our Key proto schema
          KEY_COLUMN = "value1";
          storeBuilder.keyColumns(KEY_COLUMN + ", keycolumn2");
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", keycolumn2, value2 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", keycolumn2, value2 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "value2")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN + " AND keycolumn2 = :keycolumn2");
       } else if (cacheName.toUpperCase().startsWith("TESTDBHASLESSVALUECOLUMNS")) {
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", name, STREET FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", name, street FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
@@ -98,7 +98,7 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else if (cacheName.toUpperCase().startsWith("TESTEMBEDDED")) {
          storeBuilder.keyColumns("name");
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT name, STREET, city, ZIP, picture, sex, birthdate FROM " + tableName + " WHERE name = :name")
                .selectAll("SELECT name, street, city, zip, picture, sex, birthdate FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList("name"),
@@ -106,7 +106,7 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .delete("DELETE FROM " + tableName + " WHERE name = :name");
       } else if (cacheName.toUpperCase().startsWith("TESTENUMFORVALUE")) {
          storeBuilder.keyColumns("name");
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT name, sex FROM " + tableName + " WHERE name = :name")
                .selectAll("SELECT name, sex FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList("name"),
@@ -114,14 +114,14 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .delete("DELETE FROM " + tableName + " WHERE name = :name");
       } else if (cacheName.toUpperCase().startsWith("TESTENUMFORKEY")) {
          storeBuilder.keyColumns("sex");
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT name, sex FROM " + tableName + " WHERE sex = :sex")
                .selectAll("SELECT name, sex FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList("sex"),
                      Arrays.asList("name", "sex")))
                .delete("DELETE FROM " + tableName + " WHERE sex = :sex");
       } else {
-         storeBuilder.queriesJdbcConfigurationBuilder()
+         storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),

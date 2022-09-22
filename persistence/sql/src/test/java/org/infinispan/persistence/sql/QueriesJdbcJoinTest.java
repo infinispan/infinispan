@@ -65,7 +65,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
          @Override
          void modifyConfiguration(QueriesJdbcStoreConfigurationBuilder builder, boolean idJoin) {
             super.modifyConfiguration(builder, idJoin);
-            QueriesJdbcConfigurationBuilder queryBuilder = builder.queriesJdbcConfigurationBuilder();
+            QueriesJdbcConfigurationBuilder queryBuilder = builder.queries();
             if (idJoin) {
                queryBuilder
                      // Note these return * which will include the joined columns as well
@@ -91,7 +91,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
          @Override
          void modifyConfiguration(QueriesJdbcStoreConfigurationBuilder builder, boolean idJoin) {
             super.modifyConfiguration(builder, idJoin);
-            builder.schemaJdbcConfigurationBuilder().embeddedKey(false);
+            builder.schema().embeddedKey(false);
          }
       },
       PASS;
@@ -101,15 +101,15 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
       }
 
       void modifyConfiguration(QueriesJdbcStoreConfigurationBuilder builder, boolean idJoin) {
-         QueriesJdbcConfigurationBuilder queryBuilder = builder.queriesJdbcConfigurationBuilder();
+         QueriesJdbcConfigurationBuilder queryBuilder = builder.queries();
          queryBuilder.size("SELECT COUNT(*) FROM " + TABLE1_NAME);
-         builder.schemaJdbcConfigurationBuilder().embeddedKey(true);
+         builder.schema().embeddedKey(true);
          if (idJoin) {
-            builder.queriesJdbcConfigurationBuilder()
+            builder.queries()
                   .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 ON t1.address = t2.id WHERE t1.name = :name")
                   .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 ON t1.address = t2.id");
          } else {
-            builder.queriesJdbcConfigurationBuilder()
+            builder.queries()
                   .select("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 WHERE t1.name = :name AND t2.name = :name")
                   .selectAll("SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM " + TABLE1_NAME + " t1 JOIN " + TABLE2_NAME + " t2 WHERE t1.name = t2.name");
          }
@@ -123,7 +123,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
             .addStore(QueriesJdbcStoreConfigurationBuilder.class)
             .ignoreModifications(true);
       queriesBuilder.keyColumns("name");
-      queriesBuilder.schemaJdbcConfigurationBuilder()
+      queriesBuilder.schema()
             .messageName("Person")
             .packageName("org.infinispan.test.core");
 
@@ -175,7 +175,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
       QueriesJdbcStoreConfigurationBuilder queriesBuilder = builder.persistence()
             .addStore(QueriesJdbcStoreConfigurationBuilder.class);
       queriesBuilder.keyColumns("name");
-      queriesBuilder.schemaJdbcConfigurationBuilder()
+      queriesBuilder.schema()
             .messageName("Person")
             .packageName("org.infinispan.test.core");
 
@@ -185,7 +185,7 @@ public class QueriesJdbcJoinTest extends AbstractInfinispanTest {
 
       TestType.PASS.modifyConfiguration(queriesBuilder, false);
 
-      queriesBuilder.queriesJdbcConfigurationBuilder()
+      queriesBuilder.queries()
             .delete("DELETE FROM " + TABLE1_NAME + " t1 WHERE t1.name = :name; DELETE FROM " + TABLE2_NAME + " t2 where t2.name = :name")
             .deleteAll("DELETE FROM " + TABLE1_NAME + "; DELETE FROM " + TABLE2_NAME)
             .upsert(insertTable1Statement(false, true) +

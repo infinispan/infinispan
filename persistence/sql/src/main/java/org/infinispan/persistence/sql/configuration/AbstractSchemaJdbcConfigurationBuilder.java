@@ -10,7 +10,7 @@ import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreCon
 
 public abstract class AbstractSchemaJdbcConfigurationBuilder<T extends AbstractSchemaJdbcConfiguration,
       S extends AbstractSchemaJdbcConfigurationBuilder<T, S>> extends AbstractJdbcStoreConfigurationBuilder<T, S> {
-   protected final SchemaJdbcConfigurationBuilder schemaJdbcConfigurationBuilder = new SchemaJdbcConfigurationBuilder();
+   protected final SchemaJdbcConfigurationBuilder<S> schemaBuilder = new SchemaJdbcConfigurationBuilder<>(this);
 
    public AbstractSchemaJdbcConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
       super(builder, attributes);
@@ -20,15 +20,21 @@ public abstract class AbstractSchemaJdbcConfigurationBuilder<T extends AbstractS
     * Retrieves the schema configuration builder
     *
     * @return builder to configure the schema
+    * @deprecated use {@link #schema()} instead
     */
-   public SchemaJdbcConfigurationBuilder schemaJdbcConfigurationBuilder() {
-      return schemaJdbcConfigurationBuilder;
+   @Deprecated
+   public SchemaJdbcConfigurationBuilder<S> schemaJdbcConfigurationBuilder() {
+      return schemaBuilder;
+   }
+
+   public SchemaJdbcConfigurationBuilder<S> schema() {
+      return schemaBuilder;
    }
 
    @Override
    public void validate() {
       super.validate();
-      schemaJdbcConfigurationBuilder.validate();
+      schemaBuilder.validate();
 
       Attribute<Boolean> segmentedAttr = attributes.attribute(AbstractStoreConfiguration.SEGMENTED);
       if (!segmentedAttr.isModified()) {
@@ -42,7 +48,7 @@ public abstract class AbstractSchemaJdbcConfigurationBuilder<T extends AbstractS
    @Override
    public Builder<?> read(T template) {
       super.read(template);
-      schemaJdbcConfigurationBuilder.read(template.getSchemaJdbcConfiguration());
+      schemaBuilder.read(template.schema());
       return this;
    }
 }

@@ -18,6 +18,14 @@ public class AbstractSchemaJdbcConfiguration extends AbstractJdbcStoreConfigurat
       this.schemaJdbcConfiguration = schemaJdbcConfiguration;
    }
 
+   public SchemaJdbcConfiguration schema() {
+      return schemaJdbcConfiguration;
+   }
+
+   /**
+    * @deprecated use {@link #schema()} instead.
+    */
+   @Deprecated
    public SchemaJdbcConfiguration getSchemaJdbcConfiguration() {
       return schemaJdbcConfiguration;
    }

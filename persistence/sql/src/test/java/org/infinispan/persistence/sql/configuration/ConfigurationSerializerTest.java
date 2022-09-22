@@ -20,12 +20,12 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       if (beforeStore instanceof QueriesJdbcStoreConfiguration) {
          QueriesJdbcStoreConfiguration before = (QueriesJdbcStoreConfiguration) beforeStore;
          QueriesJdbcStoreConfiguration after = (QueriesJdbcStoreConfiguration) afterStore;
-         compareAttributeSets("Configuration " + name + " schema", before.getSchemaJdbcConfiguration().attributes(), after.getSchemaJdbcConfiguration().attributes());
+         compareAttributeSets("Configuration " + name + " schema", before.schema().attributes(), after.schema().attributes());
          compareAttributeSets("Configuration " + name + " queries", before.getQueriesJdbcConfiguration().attributes(), after.getQueriesJdbcConfiguration().attributes());
       } else if (beforeStore instanceof TableJdbcStoreConfiguration) {
          TableJdbcStoreConfiguration before = (TableJdbcStoreConfiguration) beforeStore;
          TableJdbcStoreConfiguration after = (TableJdbcStoreConfiguration) afterStore;
-         compareAttributeSets("Configuration " + name + " schema", before.getSchemaJdbcConfiguration().attributes(), after.getSchemaJdbcConfiguration().attributes());
+         compareAttributeSets("Configuration " + name + " schema", before.schema().attributes(), after.schema().attributes());
       }
       super.compareStoreConfiguration(name, beforeStore, afterStore);
    }

@@ -9,6 +9,8 @@ import static org.infinispan.persistence.sql.configuration.QueriesJdbcConfigurat
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 
 /**
  * QueriesJdbcConfigurationBuilder.
@@ -16,11 +18,12 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author William Burns
  * @since 13.0
  */
-public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfiguration> {
+public class QueriesJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>> extends AbstractJdbcStoreConfigurationChildBuilder<S> implements Builder<QueriesJdbcConfiguration> {
 
    private final AttributeSet attributes;
 
-   public QueriesJdbcConfigurationBuilder() {
+   public QueriesJdbcConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
+      super(builder);
       this.attributes = QueriesJdbcConfiguration.attributeDefinitionSet();
    }
 
@@ -32,7 +35,7 @@ public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfi
     * @param select the select statement to use
     * @return this
     */
-   public QueriesJdbcConfigurationBuilder select(String select) {
+   public QueriesJdbcConfigurationBuilder<S> select(String select) {
       attributes.attribute(SELECT).set(select);
       return this;
    }
@@ -44,7 +47,7 @@ public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfi
     * @param selectAll the select all statement to use
     * @return this
     */
-   public QueriesJdbcConfigurationBuilder selectAll(String selectAll) {
+   public QueriesJdbcConfigurationBuilder<S> selectAll(String selectAll) {
       attributes.attribute(SELECT_ALL).set(selectAll);
       return this;
    }
@@ -57,7 +60,7 @@ public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfi
     * @param delete the delete statement to use
     * @return this
     */
-   public QueriesJdbcConfigurationBuilder delete(String delete) {
+   public QueriesJdbcConfigurationBuilder<S> delete(String delete) {
       attributes.attribute(DELETE).set(delete);
       return this;
    }
@@ -68,7 +71,7 @@ public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfi
     * @param deleteAll the delete all statement to use
     * @return this
     */
-   public QueriesJdbcConfigurationBuilder deleteAll(String deleteAll) {
+   public QueriesJdbcConfigurationBuilder<S> deleteAll(String deleteAll) {
       attributes.attribute(DELETE_ALL).set(deleteAll);
       return this;
    }
@@ -80,7 +83,7 @@ public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfi
     * @param upsert the upsert statement to use
     * @return this
     */
-   public QueriesJdbcConfigurationBuilder upsert(String upsert) {
+   public QueriesJdbcConfigurationBuilder<S> upsert(String upsert) {
       attributes.attribute(UPSERT).set(upsert);
       return this;
    }
@@ -91,7 +94,7 @@ public class QueriesJdbcConfigurationBuilder implements Builder<QueriesJdbcConfi
     * @param size the size statement to use
     * @return this
     */
-   public QueriesJdbcConfigurationBuilder size(String size) {
+   public QueriesJdbcConfigurationBuilder<S> size(String size) {
       attributes.attribute(SIZE).set(size);
       return this;
    }
