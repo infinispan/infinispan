@@ -141,12 +141,13 @@ public class Common {
       }
    }
 
-   public static void assertStatusAndBodyEquals(int status, String body, CompletionStage<RestResponse> request) {
-      assertEquals(body, assertStatus(status, request));
+   public static void assertStatusAndBodyEquals(int status, String body, CompletionStage<RestResponse> response) {
+      assertEquals(body, assertStatus(status, response));
    }
 
-   public static void assertStatusAndBodyContains(int status, String body, CompletionStage<RestResponse> request) {
-      assertTrue(assertStatus(status, request).contains(body));
+   public static void assertStatusAndBodyContains(int status, String body, CompletionStage<RestResponse> response) {
+      String responseBody = assertStatus(status, response);
+      assertTrue(responseBody, responseBody.contains(body));
    }
 
    public static void assertResponse(int status, CompletionStage<RestResponse> request, Consumer<RestResponse> consumer) {

@@ -1,10 +1,16 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains;
 import static org.junit.Assert.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Security;
@@ -32,7 +38,7 @@ public class AuthenticationCertIT {
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
-   public void testTrustedCertificate() {
+   public void testTrustedCertificateHotRod() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
@@ -50,7 +56,7 @@ public class AuthenticationCertIT {
    }
 
    @Test
-   public void testUntrustedCertificate() {
+   public void testUntrustedCertificateHotRod() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
@@ -62,5 +68,22 @@ public class AuthenticationCertIT {
             .realm("default");
 
       Exceptions.expectException(TransportException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
+   }
+
+   @Test
+   public void testTrustedCertificateREST() {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
+      builder.security()
+            .authentication()
+            .ssl()
+            .sniHostName("infinispan")
+            .hostnameVerifier((hostname, session) -> true).connectionTimeout(120_000).socketTimeout(120_000);
+      RestCacheClient cache = SERVER_TEST.rest().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create().cache(SERVER_TEST.getMethodName());
+
+      assertStatus(NO_CONTENT, cache.put("k1", "v1"));
+      assertStatusAndBodyContains(OK, "1", cache.size());
+      assertStatusAndBodyContains(OK, "v1", cache.get("k1"));
    }
 }

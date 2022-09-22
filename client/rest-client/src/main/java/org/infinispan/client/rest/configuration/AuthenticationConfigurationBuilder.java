@@ -113,6 +113,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
    @Override
    public Builder<?> read(AuthenticationConfiguration template) {
+      this.username = template.username();
+      this.password = template.password();
       this.clientSubject = template.clientSubject();
       this.enabled = template.enabled();
       this.mechanism = template.mechanism();

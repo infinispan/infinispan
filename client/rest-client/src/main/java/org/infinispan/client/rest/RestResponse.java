@@ -18,6 +18,7 @@ public interface RestResponse extends RestEntity, AutoCloseable {
    int ACCEPTED = 202;
    int NO_CONTENT = 204;
    int NOT_MODIFIED = 304;
+   int TEMPORARY_REDIRECT = 307;
    int BAD_REQUEST = 400;
    int UNAUTHORIZED = 401;
    int FORBIDDEN = 403;

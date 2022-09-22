@@ -24,6 +24,7 @@ public enum TestUser {
    ANONYMOUS(null, null, null);
 
    public static final EnumSet<TestUser> NON_ADMINS = EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS));
+   public static final EnumSet<TestUser> ALL = EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS));
 
    private final String user;
    private final String password;
