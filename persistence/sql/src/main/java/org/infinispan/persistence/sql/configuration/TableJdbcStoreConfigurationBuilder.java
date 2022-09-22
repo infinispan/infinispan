@@ -49,7 +49,7 @@ public class TableJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConfig
    public TableJdbcStoreConfiguration create() {
       return new TableJdbcStoreConfiguration(attributes.protect(), async.create(),
             connectionFactory != null ? connectionFactory.create() : null,
-            schemaJdbcConfigurationBuilder.create());
+            schemaBuilder.create());
    }
 
    @Override

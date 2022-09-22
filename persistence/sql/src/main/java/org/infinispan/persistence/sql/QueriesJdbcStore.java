@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.TableOperations;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.sql.configuration.QueriesJdbcConfiguration;
@@ -22,7 +23,7 @@ import org.infinispan.persistence.sql.configuration.QueriesJdbcStoreConfiguratio
 public class QueriesJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, QueriesJdbcStoreConfiguration> {
    @Override
    protected TableOperations<K, V> actualCreateTableOperations(ProtoSchemaOptions<K, V, QueriesJdbcStoreConfiguration> options) {
-      QueriesJdbcConfigurationBuilder builder = new QueriesJdbcConfigurationBuilder();
+      QueriesJdbcConfigurationBuilder<?> builder = new QueriesJdbcConfigurationBuilder<>(new ConfigurationBuilder().persistence().addStore(QueriesJdbcStoreConfigurationBuilder.class));
       QueriesJdbcConfiguration originalConfig = config.getQueriesJdbcConfiguration();
       builder.read(originalConfig);
 

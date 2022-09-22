@@ -14,7 +14,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
  */
 public class QueriesJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConfigurationBuilder<QueriesJdbcStoreConfiguration, QueriesJdbcStoreConfigurationBuilder> {
 
-   private final QueriesJdbcConfigurationBuilder queriesJdbcConfigurationBuilder = new QueriesJdbcConfigurationBuilder();
+   private final QueriesJdbcConfigurationBuilder<?> queriesBuilder = new QueriesJdbcConfigurationBuilder<>(this);
 
    public QueriesJdbcStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, QueriesJdbcStoreConfiguration.attributeDefinitionSet());
@@ -33,7 +33,7 @@ public class QueriesJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConf
    @Override
    public void validate() {
       super.validate();
-      queriesJdbcConfigurationBuilder.validate(attributes.attribute(AbstractStoreConfiguration.READ_ONLY).get());
+      queriesBuilder.validate(attributes.attribute(AbstractStoreConfiguration.READ_ONLY).get());
 
       Attribute<String> keyAttr = attributes.attribute(QueriesJdbcStoreConfiguration.KEY_COLUMNS);
       if (!keyAttr.isModified() || keyAttr.isNull() || keyAttr.get().isEmpty()) {
@@ -41,8 +41,16 @@ public class QueriesJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConf
       }
    }
 
-   public QueriesJdbcConfigurationBuilder queriesJdbcConfigurationBuilder() {
-      return queriesJdbcConfigurationBuilder;
+   /**
+    * @deprecated use {@link #queries()} instead
+    */
+   @Deprecated
+   public QueriesJdbcConfigurationBuilder<?> queriesJdbcConfigurationBuilder() {
+      return queriesBuilder;
+   }
+
+   public QueriesJdbcConfigurationBuilder<?> queries() {
+      return queriesBuilder;
    }
 
    public QueriesJdbcStoreConfigurationBuilder keyColumns(String keyColumns) {
@@ -54,13 +62,13 @@ public class QueriesJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConf
    public QueriesJdbcStoreConfiguration create() {
       return new QueriesJdbcStoreConfiguration(attributes.protect(), async.create(),
             connectionFactory != null ? connectionFactory.create() : null,
-            schemaJdbcConfigurationBuilder.create(), queriesJdbcConfigurationBuilder.create());
+            schemaBuilder.create(), queriesBuilder.create());
    }
 
    @Override
    public Builder<?> read(QueriesJdbcStoreConfiguration template) {
       super.read(template);
-      queriesJdbcConfigurationBuilder.read(template.getQueriesJdbcConfiguration());
+      queriesBuilder.read(template.getQueriesJdbcConfiguration());
       return this;
    }
 

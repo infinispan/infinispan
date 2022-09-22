@@ -128,7 +128,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    @Override
    public void testPreloadStoredAsBinary() {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(false)
                   .messageName("Person")
                   .packageName("org.infinispan.test.core");
@@ -181,7 +181,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testDBHasMoreKeyColumnsWithKeySchema(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(false)
                   .keyMessageName("Key")
                   .packageName("org.infinispan.test.core");
@@ -213,7 +213,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testDBHasMoreValueColumnsWithValueSchema(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(false)
                   .messageName("Person")
                   .packageName("org.infinispan.test.core");
@@ -232,7 +232,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testDBHasLessValueColumnsWithSchema(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(false)
                   .messageName("Person")
                   .packageName("org.infinispan.test.core");
@@ -241,7 +241,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testEmbeddedKey(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(true)
                   .messageName("Person")
                   .packageName("org.infinispan.test.core");
@@ -250,7 +250,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testEnumForKey(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(false)
                   .keyMessageName("Sex")
                   .packageName("org.infinispan.test.core");
@@ -259,7 +259,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testEnumForValue(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(false)
                   .messageName("Sex")
                   .packageName("org.infinispan.test.core");
@@ -268,7 +268,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    public void testEmbeddedLoadSchemaAfterCreation(Method m) {
       schemaConsumer = builder ->
-            builder.schemaJdbcConfigurationBuilder()
+            builder.schema()
                   .embeddedKey(true)
                   .messageName("Person")
                   .packageName("org.infinispan.test.core");

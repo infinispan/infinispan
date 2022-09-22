@@ -61,7 +61,7 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
          Element element = Element.forName(reader.getLocalName());
          if (!handleCommonElement(builder, element, reader)) {
             if (element == Element.SCHEMA) {
-               parseSchema(reader, builder.schemaJdbcConfigurationBuilder());
+               parseSchema(reader, builder.schema());
             } else {
                CacheParser.parseStoreElement(reader, builder);
             }
@@ -87,10 +87,10 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
          if (!handleCommonElement(builder, element, reader)) {
             switch (element) {
                case QUERIES:
-                  parseQueries(reader, builder.queriesJdbcConfigurationBuilder());
+                  parseQueries(reader, builder.queries());
                   break;
                case SCHEMA:
-                  parseSchema(reader, builder.schemaJdbcConfigurationBuilder());
+                  parseSchema(reader, builder.schema());
                   break;
                default:
                   CacheParser.parseStoreElement(reader, builder);
@@ -135,7 +135,7 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
       }
    }
 
-   private void parseSchema(ConfigurationReader reader, SchemaJdbcConfigurationBuilder builder) {
+   private void parseSchema(ConfigurationReader reader, SchemaJdbcConfigurationBuilder<?> builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
