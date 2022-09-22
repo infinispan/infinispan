@@ -1,7 +1,7 @@
 package org.infinispan.client.rest.impl.okhttp;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OPENMETRICS_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
 import java.util.concurrent.CompletionStage;
 
@@ -38,7 +38,7 @@ public class RestMetricsClientOkHttp implements RestMetricsClient {
 
    private CompletionStage<RestResponse> metricsGet(boolean openMetricsFormat) {
       Request.Builder builder = new Request.Builder()
-            .addHeader("ACCEPT", openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : APPLICATION_JSON_TYPE);
+            .addHeader("ACCEPT", openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : TEXT_PLAIN_TYPE);
       return client.execute(builder, baseMetricsURL);
    }
 
