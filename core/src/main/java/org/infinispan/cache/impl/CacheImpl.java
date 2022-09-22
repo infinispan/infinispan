@@ -1009,7 +1009,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       componentRegistry.start();
 
       if (stateTransferManager != null) {
-         stateTransferManager.waitForInitialStateTransferToComplete();
+         try {
+            stateTransferManager.waitForInitialStateTransferToComplete();
+         } catch (Throwable t) {
+            log.debugf("Stopping cache as exception encountered waiting for state transfer", t);
+            componentRegistry.stop();
+            throw t;
+         }
       }
       log.debugf("Started cache %s on %s", getName(), managerIdentifier());
    }
