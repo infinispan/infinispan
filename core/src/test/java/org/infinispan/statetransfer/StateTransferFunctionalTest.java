@@ -6,13 +6,16 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -21,8 +24,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.DelayedMarshallingPojo;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -263,6 +268,35 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       verifyInitialData(cache2);
       logTestEnd(m);
+   }
+
+   public void testStateTransferException(Method m) {
+      testCount++;
+      logTestStart(m);
+
+      Cache<Object, Object> cache1;
+      cache1 = createCacheManager(cacheName).getCache(cacheName);
+      writeInitialData(cache1);
+
+      GlobalConfigurationBuilder globalBuilder = defaultGlobalConfigurationBuilder();
+      if (sci != null) globalBuilder.serialization().addContextInitializer(sci);
+
+      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.createClusteredCacheManager(false,
+            // Use an empty configuration builder
+            globalBuilder, new ConfigurationBuilder(), new TransportFlags().withMerge(true));
+      amendCacheManagerBeforeStart(embeddedCacheManager);
+      embeddedCacheManager.start();
+
+      ConfigurationBuilder configToUse = new ConfigurationBuilder();
+      configToUse.read(configurationBuilder.build())
+            .clustering().remoteTimeout(1, TimeUnit.NANOSECONDS).stateTransfer().timeout(1, TimeUnit.NANOSECONDS);
+
+      assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
+
+      embeddedCacheManager.defineConfiguration(cacheName, configToUse.build());
+      Exceptions.expectException(TimeoutException.class, () -> embeddedCacheManager.getCache(cacheName));
+
+      assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
    }
 
    private void logTestStart(Method m) {
