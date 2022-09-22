@@ -6,6 +6,7 @@ import static org.infinispan.client.rest.RestResponse.FORBIDDEN;
 import static org.infinispan.client.rest.RestResponse.NOT_MODIFIED;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.awaitStatus;
@@ -44,7 +45,9 @@ import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.skip.SkipJunit;
@@ -701,6 +704,25 @@ public abstract class AbstractAuthorization {
             assertTrue(latch.await(10, TimeUnit.SECONDS));
          }
       }
+   }
+
+   @Test
+   public void testConsoleLogin() {
+      for (TestUser user : TestUser.ALL) {
+         RestClientConfiguration cfg = restBuilders.get(user).build();
+         boolean followRedirects = !cfg.security().authentication().mechanism().equals("SPNEGO");
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().read(cfg).clearServers().followRedirects(followRedirects);
+         RestClient client = getServerTest().rest().withClientConfiguration(builder).get();
+         assertStatus(followRedirects ? OK : TEMPORARY_REDIRECT, client.raw().get("/rest/v2/login"));
+         Json acl = Json.read(assertStatus(OK, client.raw().get("/rest/v2/security/user/acl")));
+         Json subject = acl.asJsonMap().get("subject");
+         Map<String, Object> principal = subject.asJsonList().get(0).asMap();
+         assertEquals(expectedServerPrincipalName(user), principal.get("name"));
+      }
+   }
+
+   protected String expectedServerPrincipalName(TestUser user) {
+      return user.getUser();
    }
 
    private <K, V> RemoteCache<K, V> hotRodCreateAuthzCache(String... explicitRoles) {

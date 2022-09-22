@@ -69,4 +69,8 @@ public class AuthorizationCertIT extends AbstractAuthorization {
             .hostnameVerifier((hostname, session) -> true).connectionTimeout(120_000).socketTimeout(120_000);
       restBuilders.put(user, restBuilder);
    }
+
+   protected String expectedServerPrincipalName(TestUser user) {
+      return String.format("CN=%s,OU=Infinispan,O=JBoss,L=Red Hat", user.getUser());
+   }
 }

@@ -81,4 +81,8 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
       hotRodBuilders.put(user, hotRodBuilder);
       restBuilders.put(user, restBuilder);
    }
+
+   protected String expectedServerPrincipalName(TestUser user) {
+      return String.format("%s@INFINISPAN.ORG", user.getUser());
+   }
 }

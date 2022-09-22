@@ -56,7 +56,12 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       return this;
    }
 
-   public static final void parseServers(String servers, BiConsumer<String, Integer> c) {
+   public RestClientConfigurationBuilder clearServers() {
+      this.servers.clear();
+      return this;
+   }
+
+   private static void parseServers(String servers, BiConsumer<String, Integer> c) {
       for (String server : servers.split(";")) {
          Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
          if (matcher.matches()) {
@@ -191,7 +196,6 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
 
    @Override
    public RestClientConfigurationBuilder read(RestClientConfiguration template) {
-
       this.connectionTimeout = template.connectionTimeout();
       this.servers.clear();
       for (ServerConfiguration server : template.servers()) {
@@ -201,6 +205,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       this.security.read(template.security());
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();
+      this.security.read(template.security());
 
       return this;
    }
