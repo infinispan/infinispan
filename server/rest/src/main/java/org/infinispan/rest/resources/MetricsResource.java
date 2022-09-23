@@ -54,8 +54,7 @@ public final class MetricsResource implements ResourceHandler {
          try {
             String contentType = TextFormat.chooseContentType(restRequest.getAcceptHeader());
             builder.header("Content-Type", contentType);
-            builder.entity(metricsCollector.getBaseRegistry().scrape(contentType)
-                  + metricsCollector.getVendorRegistry().scrape(contentType));
+            builder.entity(metricsCollector.registry().scrape(contentType));
 
             return builder.build();
          } catch (Exception e) {
