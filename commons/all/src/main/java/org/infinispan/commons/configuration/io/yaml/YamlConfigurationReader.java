@@ -416,7 +416,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   this.attributeValues.add(replaceProperties(next.value));
                   readNext();
                } else {
-                  if (lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
+                  if (lines != null && lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
                      this.attributeNames.add(next.name);
                      this.attributeNamespaces.add(next.nsPrefix);
                      StringBuilder sb = new StringBuilder();

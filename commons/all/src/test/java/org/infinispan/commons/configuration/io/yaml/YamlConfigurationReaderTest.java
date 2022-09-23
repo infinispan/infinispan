@@ -150,6 +150,10 @@ public class YamlConfigurationReaderTest {
          assertAttribute(yaml, "a", "true");
          assertAttribute(yaml, "b", "1 2 3 ");
          yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "c");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "c");
+         yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item9");
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item1");
