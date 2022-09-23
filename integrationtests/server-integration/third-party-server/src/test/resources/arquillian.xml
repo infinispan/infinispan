@@ -57,6 +57,7 @@
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
                 </property>
+                <property name="serverConfig">standalone-test.xml</property>
             </configuration>
         </container>
         <container qualifier="server-2">
@@ -73,6 +74,7 @@
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="managementPort">10090</property>
+                <property name="serverConfig">standalone-test.xml</property>
             </configuration>
         </container>
     </group>
