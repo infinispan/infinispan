@@ -414,7 +414,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   setAttributeValue(next.nsPrefix, next.name, next.value);
                   readNext();
                } else {
-                  if (lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
+                  if (lines != null && lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
                      String name = next.name;
                      String namespace = next.nsPrefix;
                      StringBuilder sb = new StringBuilder();
