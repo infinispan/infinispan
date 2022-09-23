@@ -32,7 +32,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 
@@ -76,11 +75,9 @@ public class MetricsCollector implements Constants {
    @Start
    protected void start() {
       baseRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-      baseRegistry.config().meterFilter(new BaseFilter());
       new BaseAdditionalMetrics().bindTo(baseRegistry);
 
       vendorRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-      vendorRegistry.config().meterFilter(new VendorFilter());
       new VendorAdditionalMetrics().bindTo(vendorRegistry);
 
       Transport transport = transportRef.running();
@@ -159,7 +156,7 @@ public class MetricsCollector implements Constants {
          Consumer<TimerTracker> setter = (Consumer<TimerTracker>) attr.setter(instance);
 
          if (getter != null || setter != null) {
-            String metricName = namePrefix + NameUtils.decamelize(attr.getName());
+            String metricName = VendorAdditionalMetrics.PREFIX + namePrefix + NameUtils.decamelize(attr.getName());
 
             if (getter != null) {
                if (metricsCfg.gauges()) {
@@ -230,24 +227,6 @@ public class MetricsCollector implements Constants {
             log.tracef("Could not remove unexisting metric \"%s\". Metric registry @%x contains %d metrics.",
                   metricId, System.identityHashCode(vendorRegistry), vendorRegistry.getMeters().size());
          }
-      }
-   }
-
-   private static class BaseFilter implements MeterFilter {
-      private static final String PREFIX = "base.";
-
-      @Override
-      public Meter.Id map(Meter.Id id) {
-         return id.withName(PREFIX + id.getName());
-      }
-   }
-
-   private static class VendorFilter implements MeterFilter {
-      private static final String PREFIX = "vendor.";
-
-      @Override
-      public Meter.Id map(Meter.Id id) {
-         return id.withName(PREFIX + id.getName());
       }
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.metrics.impl;
 
+import static org.infinispan.metrics.impl.BaseAdditionalMetrics.PREFIX;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
@@ -41,22 +43,22 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
 
    @Override
    public void bindTo(MeterRegistry registry) {
-      Gauge.builder("cpu.availableProcessors", operatingSystemBean, OperatingSystemMXBean::getAvailableProcessors)
+      Gauge.builder(PREFIX + "cpu.availableProcessors", operatingSystemBean, OperatingSystemMXBean::getAvailableProcessors)
             .description("Displays the number of processors available to the Java virtual machine. This value may change during a particular invocation of the virtual machine.")
             .register(registry);
 
-      Gauge.builder("cpu.systemLoadAverage", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
+      Gauge.builder(PREFIX + "cpu.systemLoadAverage", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
             .description("Displays the system load average for the last minute. The system load average is the sum of the number of runnable entities queued to the available processors and the number of runnable entities running on the available processors averaged over a period of time. The way in which the load average is calculated is operating system specific but is typically a damped time-dependent average. If the load average is not available, a negative value is displayed. This attribute is designed to provide a hint about the system load and may be queried frequently. The load average might be unavailable on some platforms where it is expensive to implement this method.")
             .register(registry);
 
       if (processCpuLoadMethod != null) {
-         Gauge.builder("cpu.processCpuLoad", () -> invoke(processCpuLoadMethod))
+         Gauge.builder(PREFIX + "cpu.processCpuLoad", () -> invoke(processCpuLoadMethod))
                .description("Displays the \"recent cpu usage\" for the Java virtual machine process.")
                .register(registry);
       }
 
       if (processCpuTimeMethod != null) {
-         Gauge.builder("cpu.processCpuTime", () -> invoke(processCpuTimeMethod))
+         Gauge.builder(PREFIX + "cpu.processCpuTime", () -> invoke(processCpuTimeMethod))
                .description("Displays the CPU time, in nanoseconds, used by the process on which the Java virtual machine is running.")
                .register(registry);
       }
