@@ -57,12 +57,12 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
 
    public void testMetricsAreRegistered() {
       MetricsCollector mc0 = manager(0).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
-      List<Meter> meters0 = mc0.getVendorRegistry().getMeters();
+      List<Meter> meters0 = mc0.registry().getMeters();
       assertThat(meters0).isNotEmpty();
       assertThat(meters0.get(0).getId().getName()).startsWith("vendor.ispn");
 
       MetricsCollector mc1 = manager(1).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
-      List<Meter> meters1 = mc1.getVendorRegistry().getMeters();
+      List<Meter> meters1 = mc1.registry().getMeters();
       assertThat(meters1).isNotEmpty();
       assertThat(meters1.get(0).getId().getName()).startsWith("vendor.ispn");
 
@@ -70,7 +70,7 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
       Tag nodeNameTag = Tag.of(Constants.NODE_TAG_NAME, gcfg0.transport().nodeName());
       Tag cacheManagerTag = Tag.of(Constants.CACHE_MANAGER_TAG_NAME, gcfg0.cacheManagerName());
 
-      Collection<Gauge> statsEvictions = mc0.getVendorRegistry().find("vendor.ispn_cache_container_stats_evictions").gauges();
+      Collection<Gauge> statsEvictions = mc0.registry().find("vendor.ispn_cache_container_stats_evictions").gauges();
       assertThat(statsEvictions).hasSize(1);
       Gauge statsEviction = statsEvictions.iterator().next();
       statsEviction.getId().getTags().contains(nodeNameTag);
