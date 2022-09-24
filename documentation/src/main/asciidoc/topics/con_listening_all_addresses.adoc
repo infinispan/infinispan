@@ -24,10 +24,10 @@ For example, `10.129.2.100/23` and `10.129.4.100/23` are in different subnets bu
 
 For this reason, {brandname} Server overrides netmasks that the host system provides with netmasks that follow IANA conventions for private and reserved networks:
 
-* IPv4: `10.0.0.0/8`, `192.168.0.0/16`, `172.16.0.0/12`, `169.254.0.0/16` and `240.0.0.0/4`
+* IPv4: `10.0.0.0/8`, `100.64.0.0/10`, 192.168.0.0/16`, `172.16.0.0/12`, `169.254.0.0/16` and `240.0.0.0/4`
 * IPv6: `fc00::/7` and `fe80::/10`
 
-See `RFC 1918` for IPv4 or `RFC 4193` and `RFC 3513` for IPv6.
+See `RFC 1112`, `RFC 1918`, `RFC 3927`, `RFC 6598` for IPv4 or `RFC 4193`, `RFC 3513` for IPv6.
 
 [NOTE]
 ====
@@ -37,6 +37,10 @@ You can optionally configure the Hot Rod connector to use the netmask that the h
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}infinispan-server-{schemaversion}.html[{brandname} Server schema reference]
+* link:https://datatracker.ietf.org/doc/html/rfc1112[RFC 1112]
 * link:https://datatracker.ietf.org/doc/html/rfc1918[RFC 1918]
+* link:https://datatracker.ietf.org/doc/html/rfc3513[RFC 3513]
+* link:https://datatracker.ietf.org/doc/html/rfc3927[RFC 3927]
 * link:https://datatracker.ietf.org/doc/html/rfc4193[RFC 4193]
-* link:https://www.rfc-editor.org/rfc/rfc3513.html[RFC 3513]
+* link:https://datatracker.ietf.org/doc/html/rfc6598[RFC 6598]
+

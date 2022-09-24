@@ -6,7 +6,9 @@ import java.io.ObjectOutput;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -17,7 +19,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 
 /**
  * A Hot Rod server address which encapsulates a multi-homed server. This class enumerates all available addresses on
- * all of the local interfaces.
+ * all the local interfaces.
  *
  * @author Tristan Tarrant
  * @author Galder Zamarreño
@@ -136,41 +138,57 @@ public class MultiHomedServerAddress implements ServerAddress {
    }
 
    public static class InetAddressWithNetMask {
+      // RFC 1918 10.0.0.0/8
+      public static final InetAddressWithNetMask RFC1918_CIDR_10 = new InetAddressWithNetMask(new byte[]{10, 0, 0, 0}, (short) 8);
+      // RFC 1918 172.16.0.0/12
+      public static final InetAddressWithNetMask RFC1918_CIDR_172 = new InetAddressWithNetMask(new byte[]{(byte) 172, (byte) 16, 0, 0}, (short) 12);
+      // RFC 1918 192.168.0.0/16
+      public static final InetAddressWithNetMask RFC1918_CIDR_192 = new InetAddressWithNetMask(new byte[]{(byte) 192, (byte) 168, 0, 0}, (short) 16);
+      // RFC 3927 169.254.0.0/16
+      public static final InetAddressWithNetMask RFC3927_LINK_LOCAL = new InetAddressWithNetMask(new byte[]{(byte) 169, (byte) 254, 0, 0}, (short) 16);
+      // RFC 1112 240.0.0.0/4
+      public static final InetAddressWithNetMask RFC1112_RESERVED = new InetAddressWithNetMask(new byte[]{(byte) 240, 0, 0, 0}, (short) 4);
+      // RFC 6598 100.64.0.0/10
+      public static final InetAddressWithNetMask RFC6598_SHARED_SPACE = new InetAddressWithNetMask(new byte[]{(byte) 100, (byte) 64, 0, 0}, (short) 10);
+      // RFC 4193 fc00::/7
+      public static final InetAddressWithNetMask RFC4193_ULA = new InetAddressWithNetMask(new byte[]{(byte) 0xfc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, (short) 7);
+      // RFC 4193 fe80::/10
+      public static final InetAddressWithNetMask RFC4193_LINK_LOCAL = new InetAddressWithNetMask(new byte[]{(byte) 0xfe, (byte) 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, (short) 10);
+      public static final List<InetAddressWithNetMask> PRIVATE_NETWORKS = Arrays.asList(
+            RFC1918_CIDR_10,
+            RFC1918_CIDR_172,
+            RFC1918_CIDR_192,
+            RFC3927_LINK_LOCAL,
+            RFC1112_RESERVED,
+            RFC6598_SHARED_SPACE,
+            RFC4193_ULA,
+            RFC4193_LINK_LOCAL
+      );
       final InetAddress address;
       final short prefixLength;
 
       public InetAddressWithNetMask(InetAddress address, short prefixLength, boolean networkPrefixOverride) {
          this.address = address;
+         short prefix = prefixLength;
          if (networkPrefixOverride) {
             byte[] a = address.getAddress();
-            if (a.length == 4) { // IPv4
-               if (a[0] == 10) {
-                  this.prefixLength = 8;
-               } else if (a[0] == (byte) 192 && a[1] == (byte) 168) {
-                  this.prefixLength = 16;
-               } else if (a[0] == (byte) 172 && a[1] >= 16 && a[1] <= 31) {
-                  this.prefixLength = 12;
-               } else if (a[0] == (byte) 169 && a[1] == (byte) 254) {
-                  this.prefixLength = 16;
-               } else if (a[0] >= (byte) 240 && a[0] <= (byte) 255) {
-                  this.prefixLength = 4;
-               } else {
-                  this.prefixLength = prefixLength;
-               }
-            } else { // IPv6
-               if (a[0] == (byte) 0xfd && a[1] == 0) {
-                  this.prefixLength = 8;
-               } else if (a[0] == (byte) 0xfc && a[1] == 0) {
-                  this.prefixLength = 7;
-               } else if (a[0] == (byte) 0xfe && a[1] == (byte) 80) {
-                  this.prefixLength = 10;
-               } else {
-                  this.prefixLength = prefixLength;
+            for (InetAddressWithNetMask net : PRIVATE_NETWORKS) {
+               if (inetAddressMatchesInterfaceAddress(a, net.address.getAddress(), net.prefixLength)) {
+                  prefix = net.prefixLength;
+                  break;
                }
             }
-         } else {
-            this.prefixLength = prefixLength;
          }
+         this.prefixLength = prefix;
+      }
+
+      private InetAddressWithNetMask(byte[] address, short prefixLength) {
+         try {
+            this.address = InetAddress.getByAddress(address);
+         } catch (UnknownHostException e) {
+            throw new IllegalArgumentException(e);
+         }
+         this.prefixLength = prefixLength;
       }
 
       public InetAddressWithNetMask(InetAddress address, short prefixLength) {

@@ -14,11 +14,11 @@ import org.testng.annotations.Test;
 public class InetAddressWithNetMaskTest {
 
    public void testNetmasksOverrides() throws UnknownHostException {
-      InetAddress address;
-      MultiHomedServerAddress.InetAddressWithNetMask addressWithNetMask;
       // Private/reserved ranges
       // 10.0.0.0/8
       check((byte) 10, (byte) 1, (byte) 2, (byte) 3, (short) 21, (short) 8);
+      // 100.64.0.0/10
+      check((byte) 100, (byte) 64, (byte) 2, (byte) 3, (short) 21, (short) 10);
       // 169.254.0.0/16
       check((byte) 169, (byte) 254, (byte) 2, (byte) 3, (short) 21, (short) 16);
       // 172.16.0.0/12
@@ -31,8 +31,10 @@ public class InetAddressWithNetMaskTest {
       // Public ranges
       // Below 10.0.0.0/8
       check((byte) 8, (byte) 1, (byte) 2, (byte) 3, (short) 21, (short) 21);
-      // Between 10.0.0.0/8 and 169.254.0.0/16
-      check((byte) 100, (byte) 1, (byte) 2, (byte) 3, (short) 21, (short) 21);
+      // Between 10.0.0.0/8 and 100.64.0.0/10
+      check((byte) 100, (byte) 63, (byte) 2, (byte) 3, (short) 21, (short) 21);
+      // Between 100.64.0.0/10 and 169.254.0.0/16
+      check((byte) 100, (byte) 130, (byte) 2, (byte) 3, (short) 21, (short) 21);
       // Between 169.254.0.0/16 and 172.16.0.0/12
       check((byte) 170, (byte) 1, (byte) 2, (byte) 3, (short) 21, (short) 21);
       // Between 172.16.0.0/12 and 192.168.0.0
