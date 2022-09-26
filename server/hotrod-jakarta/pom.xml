@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>infinispan-server-hotrod-jakarta</artifactId>
+    <name>Infinispan Hot Rod Server Jakarta EE</name>
     <description>Infinispan Hot Rod Server Jakarta EE</description>
 
     <properties>
