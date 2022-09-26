@@ -77,6 +77,21 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cachestore-jdbc-jakarta</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cachestore-jdbc-common</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cachestore-jdbc-common-jakarta</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-cachestore-sql</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
@@ -97,12 +112,27 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cdi-common-jakarta</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-cdi-embedded</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cdi-embedded-jakarta</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-cdi-remote</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cdi-remote-jakarta</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
@@ -118,6 +148,11 @@
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-hotrod</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-hotrod-jakarta</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
@@ -209,7 +244,7 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-hibernate-cache-v53</artifactId>
+                <artifactId>infinispan-hibernate-cache-v60</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
@@ -254,6 +289,11 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-query-jakarta</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-query-dsl</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
@@ -282,6 +322,11 @@
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-server-hotrod</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-server-hotrod-jakarta</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <!-- TODO should be here? -->
@@ -376,6 +421,11 @@
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-tools</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-tools-jakarta</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
