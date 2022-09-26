@@ -137,9 +137,7 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
                                                     .valueMarshaller(new UTF8StringMarshaller())
                                                     .build());
          Object jsonValue = jsonCache.get("key");
-         assertEquals("\n{\n" +
-                      "   \"_type\": \"org.infinispan.commons.NullValue\"\n" +
-                      "}\n", jsonValue);
+         assertEquals("{\"_type\":\"org.infinispan.commons.NullValue\"}", jsonValue);
       }
    }
 }
