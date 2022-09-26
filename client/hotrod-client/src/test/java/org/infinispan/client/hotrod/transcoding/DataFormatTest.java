@@ -8,9 +8,9 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createServerModeCacheManager;
-import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.util.Collections;
@@ -79,7 +79,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, new HotRodServerConfigurationBuilder());
-      server.addCacheEventFilterFactory("static-filter-factory", new EventLogListener.StaticCacheEventFilterFactory(42));
+      server.addCacheEventFilterFactory("static-filter-factory", new EventLogListener.StaticCacheEventFilterFactory<>(42));
       server.addCacheEventFilterFactory("raw-static-filter-factory", new EventLogListener.RawStaticCacheEventFilterFactory());
       return server;
    }
@@ -232,7 +232,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
             .keyType(APPLICATION_JSON).keyMarshaller(new UTF8StringMarshaller()).build());
 
       Set<String> jsonKeys = new HashSet<>(jsonCache.keySet());
-      jsonKeys.forEach(k -> assertTrue(k.contains("\"_type\": \"org.infinispan.test.client.DataFormatTest.ComplexKey\"")));
+      jsonKeys.forEach(k -> assertTrue(k, k.contains("\"_type\":\"org.infinispan.test.client.DataFormatTest.ComplexKey\"")));
 
       Map<String, String> newEntries = new HashMap<>();
 
@@ -268,7 +268,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
 
       withClientListener(l, remote -> {
          remoteCache.put(complexKey, complexValue);
-         l.expectOnlyCreatedEvent("\n{\n   \"_type\": \"org.infinispan.test.client.DataFormatTest.ComplexKey\",\n   \"id\": \"Key-1\",\n   \"ratio\": 89.88\n}\n");
+         l.expectOnlyCreatedEvent("{\"_type\":\"org.infinispan.test.client.DataFormatTest.ComplexKey\",\"id\":\"Key-1\",\"ratio\":89.88}");
       });
    }
 
@@ -298,7 +298,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
          jsonCache.put("{\"_type\":\"int32\",\"_value\":1}", Util.threadLocalRandomUUID().toString());
          l.expectNoEvents();
          jsonCache.put("{\"_type\":\"int32\",\"_value\":2}", Util.threadLocalRandomUUID().toString());
-         l.expectOnlyCreatedEvent("\n{\n   \"_type\": \"int32\",\n   \"_value\": 2\n}\n");
+         l.expectOnlyCreatedEvent("{\"_type\":\"int32\",\"_value\":2}");
       });
    }
 
