@@ -19,12 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.Version;
-import org.infinispan.server.logging.log4j.XmlConfigurationFactory;
 import org.infinispan.server.tool.Main;
 
 /**
@@ -37,8 +35,15 @@ public class Bootstrap extends Main {
    private Path loggingFile;
 
    static {
-      System.setProperty("log4j2.contextSelector", "org.apache.logging.log4j.core.selector.BasicContextSelector");
-      System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+      staticInitializer();
+   }
+
+   // This method is here solely for replacement with Quarkus, do not remove or rename without updating Infinispan Quarkus
+   private static void staticInitializer() {
+      String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
+      if (Boolean.parseBoolean(includeLoggingResource)) {
+         BootstrapLogging.staticInitializer();
+      }
    }
 
    public Bootstrap(PrintStream stdOut, PrintStream stdErr, ExitHandler exitHandler, Properties properties) {
@@ -153,13 +158,8 @@ public class Bootstrap extends Main {
          stdErr.printf("Cannot read %s", loggingFile);
          return;
       }
-      System.setProperty("log4j.configurationFactory", XmlConfigurationFactory.class.getName());
-      System.setProperty("log4j.configurationFile", loggingFile.toAbsolutePath().toString());
-      LogManager logManager = LogManager.getLogManager();
-      if (logManager instanceof org.infinispan.server.loader.LogManager) {
-         ((org.infinispan.server.loader.LogManager) logManager).setDelegate(new org.apache.logging.log4j.jul.LogManager());
-      }
 
+      configureLogging();
       logJVMInformation();
 
       Runtime.getRuntime().addShutdownHook(new ShutdownHook(exitHandler));
@@ -171,6 +171,14 @@ public class Bootstrap extends Main {
       try (Server server = new Server(serverRoot, configurationFiles, properties)) {
          server.setExitHandler(exitHandler);
          server.run().join();
+      }
+   }
+
+   // This method is here solely for replacement with Quarkus, do not remove or rename without updating Infinispan Quarkus
+   protected void configureLogging() {
+      String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
+      if (Boolean.parseBoolean(includeLoggingResource)) {
+         BootstrapLogging.configureLogging(loggingFile);
       }
    }
 
