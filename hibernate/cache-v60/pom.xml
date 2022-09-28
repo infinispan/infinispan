@@ -35,7 +35,7 @@
       <dependency>
          <groupId>jakarta.transaction</groupId>
          <artifactId>jakarta.transaction-api</artifactId>
-         <version>2.0.0</version>
+         <version>${version.jakarta.transaction}</version>
       </dependency>
       <dependency>
          <groupId>org.glassfish.jaxb</groupId>
