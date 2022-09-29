@@ -5,6 +5,66 @@
       "def": {
         "enums": [
           {
+            "name": "AuthorizationPermission",
+            "enum_fields": [
+              {
+                "name": "NONE"
+              },
+              {
+                "name": "LIFECYCLE_PERMISSION",
+                "integer": 1
+              },
+              {
+                "name": "READ",
+                "integer": 2
+              },
+              {
+                "name": "WRITE",
+                "integer": 4
+              },
+              {
+                "name": "EXEC",
+                "integer": 8
+              },
+              {
+                "name": "LISTEN",
+                "integer": 16
+              },
+              {
+                "name": "BULK_READ",
+                "integer": 32
+              },
+              {
+                "name": "ALL_READ",
+                "integer": 34
+              },
+              {
+                "name": "BULK_WRITE",
+                "integer": 64
+              },
+              {
+                "name": "ALL_WRITE",
+                "integer": 68
+              },
+              {
+                "name": "ADMIN",
+                "integer": 128
+              },
+              {
+                "name": "CREATE",
+                "integer": 256
+              },
+              {
+                "name": "MONITOR",
+                "integer": 512
+              },
+              {
+                "name": "ALL",
+                "integer": 2147483647
+              }
+            ]
+          },
+          {
             "name": "EventLogLevel",
             "enum_fields": [
               {
@@ -322,6 +382,17 @@
             ]
           },
           {
+            "name": "Subject",
+            "fields": [
+              {
+                "id": 1,
+                "name": "principals",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "IracEntryVersion",
             "fields": [
               {
@@ -434,6 +505,27 @@
                 "id": 1,
                 "name": "roles",
                 "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "CacheRoleImpl",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "inheritable",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "permissions",
+                "type": "AuthorizationPermission",
                 "is_repeated": true
               }
             ]
