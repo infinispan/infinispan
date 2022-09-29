@@ -278,7 +278,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager(cacheName).getCache(cacheName);
       writeInitialData(cache1);
 
-      GlobalConfigurationBuilder globalBuilder = defaultGlobalConfigurationBuilder();
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       if (sci != null) globalBuilder.serialization().addContextInitializer(sci);
 
       EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.createClusteredCacheManager(false,
