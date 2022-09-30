@@ -20,7 +20,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.annotation.test.PoemTest")
-public class PoemTest extends SingleHotRodServerTest  {
+public class PoemTest extends SingleHotRodServerTest {
 
    private static final Extractor<Object[], Object> FIRST_ELEMENT_OF_THE_ARRAY = (item) -> item[0];
 
