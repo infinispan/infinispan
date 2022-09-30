@@ -110,7 +110,7 @@
       <!-- === Component Versions === -->
       <version.component.console>9.4.10.Final</version.component.console>
       <version.component.infinispan>${project.version}</version.component.infinispan>
-      <version.protostream>4.2.5.Final</version.protostream>
+      <version.protostream>4.2.6.Final</version.protostream>
 
       <!-- Java source/target version -->
       <version.java>11</version.java>
