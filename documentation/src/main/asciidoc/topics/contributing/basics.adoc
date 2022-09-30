@@ -3,14 +3,14 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 == Pre-requisites
 |=============
-| Java 11   | {brandname} is baselined on Java 8 but needs to be built with Java 11 (we build with OpenJDK)
+| Java 11   | {brandname} is baselined on Java 11 but needs to be built with Java 11 (we build with OpenJDK)
 | Maven 3.5 | The {brandname} build uses Maven, and you should be using at least Maven 3.5
 | Git       | The {brandname} source code is stored in Git.
 |=============
 
 == Java compatibility
 
-{brandname} can run with Java 8 or greater. However it *must* be compiled at least with Java 11.
+{brandname} can run with Java 11 or greater.
 
 == Issue Management
 

@@ -8,7 +8,7 @@ management tooling, and either the {brandname} server or core libraries.
 
 To run {brandname}, you'll need:
 
-* Java 11 JDK at a minimum. {brandname} but also works with JDK 17.
+* Java 11 JDK at a minimum. {brandname} but also works with JDK 17, 18 and 19.
 * Maven 3.2 or later. {brandname} also works with Gradle and Ivy.
 
 == JDK
