@@ -1,6 +1,6 @@
 <distributed-cache>
   <persistence passivation="true">
-     <file-store shared="false">
+      <file-store>
         <data path="data"/>
         <index path="index"/>
         <write-behind modification-queue-size="2048" />

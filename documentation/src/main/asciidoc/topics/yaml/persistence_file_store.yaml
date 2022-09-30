@@ -2,7 +2,6 @@ distributedCache:
   persistence:
     passivation: "true"
     fileStore:
-      shared: "false"
       data:
         path: "data"
       index:

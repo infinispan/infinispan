@@ -2,5 +2,4 @@ distributedCache:
   persistence:
     passivation: "true"
     singleFileStore:
-      shared: "false"
       preload: "true"

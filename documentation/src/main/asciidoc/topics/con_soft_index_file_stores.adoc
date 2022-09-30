@@ -1,0 +1,37 @@
+[id='soft-index-file-stores_{context}']
+= Soft-Index file stores
+
+`SoftIndexFileStore` is the default implementation for file-based cache stores and stores data in a set of append-only files.
+
+When append-only files:
+
+* Reach their maximum size, {brandname} creates a new file and starts writing to it.
+* Reach the compaction threshold of less than 50% usage, {brandname} overwrites the entries to a new file and then deletes the old file.
+
+For an example of a configuration that sets `SoftIndexFileStore` as the default implementation, see link:{config_docs}#write-through_persistence[Write-through cache stores].
+
+.B+ trees
+
+To improve performance, append-only files in a `SoftIndexFileStore` are indexed using a **B+ Tree** that can be stored both on disk and in memory.
+The in-memory index uses Java soft references to ensure it can be rebuilt if removed by Garbage Collection (GC) then requested again.
+
+Because `SoftIndexFileStore` uses Java soft references to keep indexes in memory, it helps prevent out-of-memory exceptions.
+GC removes indexes before they consume too much memory while still falling back to disk.
+
+You can configure any number of B+ trees with the `segments` attribute on the `index` element declaratively or with the `indexSegments()` method programmatically.
+By default {brandname} creates up to 16 B+ trees, which means there can be up to 16 indexes.
+Having multiple indexes prevents bottlenecks from concurrent writes to an index and reduces the number of entries that {brandname} needs to keep in memory.
+As it iterates over a soft-index file store, {brandname} reads all entries in an index at the same time.
+
+Each entry in the B+ tree is a node.
+By default, the size of each node is limited to 4096 bytes.
+`SoftIndexFileStore` throws an exception if keys are longer after serialization occurs.
+
+.Segmentation
+
+Soft-index file stores are always segmented.
+
+[NOTE]
+====
+The `AdvancedStore.purgeExpired()` method is not implemented in `SoftIndexFileStore`.
+====

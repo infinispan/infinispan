@@ -3,7 +3,6 @@
     "persistence": {
       "passivation": true,
       "file-store" : {
-        "shared": false,
         "data": {
           "path": "data"
         },
