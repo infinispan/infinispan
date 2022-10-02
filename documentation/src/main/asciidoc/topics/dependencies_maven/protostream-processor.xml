@@ -5,6 +5,7 @@
       <artifactId>infinispan-bom</artifactId>
       <version>${version.infinispan}</version>
       <type>pom</type>
+      <scope>import</scope>
     </dependency>
   </dependencies>
 </dependencyManagement>
