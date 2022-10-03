@@ -40,6 +40,10 @@ public class AuthorizationCertIT extends AbstractAuthorization {
       return SERVER_TEST;
    }
 
+   protected String expectedServerPrincipalName(TestUser user) {
+      return String.format("CN=%s,OU=Infinispan,O=JBoss,L=Red Hat", user.getUser());
+   }
+
    @Override
    protected void addClientBuilders(TestUser user) {
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();

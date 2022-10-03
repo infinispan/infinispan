@@ -191,7 +191,7 @@ public class TaskContext {
    }
 
    @ProtoField(2)
-   Subject subject() {
+   public Subject subject() {
       return subject;
    }
 

@@ -31,7 +31,7 @@ public final class ScriptConversions {
    }
 
    public Map<String, Object> convertParameters(TaskContext context) {
-      if (context.getParameters().isEmpty()) return null;
+      if (!context.getParameters().isPresent()) return null;
       Map<String, Object> contextParams = context.getParameters().get();
       if (contextParams == Collections.EMPTY_MAP) {
          return new HashMap<>(2);

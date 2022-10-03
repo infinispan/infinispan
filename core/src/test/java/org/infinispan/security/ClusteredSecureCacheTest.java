@@ -115,7 +115,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
                      } else {
                         // Ensure the Subject returned by the consumer matches the one it was invoked with
                         for(Principal principal : v.getPrincipals()) {
-                           subject.getPrincipals().stream().filter(p -> p.getName().equals(principal.getName())).findFirst().orElseThrow();
+                           subject.getPrincipals().stream().filter(p -> p.getName().equals(principal.getName())).findFirst().orElseThrow(RuntimeException::new);
                         }
                      }
                   }
