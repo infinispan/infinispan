@@ -82,14 +82,15 @@ public final class Security {
    }
 
    private static Deque<Subject> pre(Subject subject) {
+      if (subject == null) {
+         return null;
+      }
       Deque<Subject> stack = SUBJECT.get();
       if (stack == null) {
          stack = new ArrayDeque<>(3);
          SUBJECT.set(stack);
       }
-      if (subject != null) {
-         stack.push(subject);
-      }
+      stack.push(subject);
       return stack;
    }
 

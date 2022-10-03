@@ -6,6 +6,7 @@ import java.util.Collection;
 import javax.security.auth.Subject;
 
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.Security;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
@@ -30,8 +31,11 @@ public class DistributedHelloServerTask implements ServerTask<Object> {
 
       if (greetee == null) {
          if (taskContext.getSubject().isPresent()) {
-            Subject subject = taskContext.getSubject().get();
+            Subject subject = Security.getSubject();
             greetee = subject.getPrincipals().iterator().next().getName();
+            if (!greetee.equals(Security.getSubject().getPrincipals().iterator().next().getName())) {
+               throw new RuntimeException("Subjects do not match");
+            }
          } else {
             greetee = "world";
          }

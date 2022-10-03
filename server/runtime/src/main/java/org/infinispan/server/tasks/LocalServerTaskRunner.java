@@ -2,6 +2,7 @@ package org.infinispan.server.tasks;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.security.Security;
 import org.infinispan.tasks.TaskContext;
 
 /**
@@ -19,7 +20,7 @@ public class LocalServerTaskRunner implements ServerTaskRunner {
    public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
       ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
       try {
-         return CompletableFuture.completedFuture(task.run(context));
+         return CompletableFuture.completedFuture(Security.doAs(context.subject(), task, context));
       } catch (Exception e) {
          CompletableFuture<T> finishedWithException = new CompletableFuture<>();
          finishedWithException.completeExceptionally(e);

@@ -36,7 +36,7 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
             results.add(v);
          }
       };
-      CompletableFuture<Void> future = Security.doAs(context.getSubject().orElse(null), (PrivilegedAction<CompletableFuture<Void>>) () -> clusterExecutor.submitConsumer(
+      CompletableFuture<Void> future = Security.doAs(context.subject(), (PrivilegedAction<CompletableFuture<Void>>) () -> clusterExecutor.submitConsumer(
             new DistributedServerTask<>(taskName, masterCacheNode.getName(), context),
             triConsumer
       ));
