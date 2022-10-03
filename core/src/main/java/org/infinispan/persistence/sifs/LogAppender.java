@@ -43,7 +43,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    private final java.nio.ByteBuffer REUSED_BUFFER = java.nio.ByteBuffer.allocate(EntryHeader.HEADER_SIZE_11_0);
 
    // These variables are only ever read from the provided executor and rxjava guarantees visibility
-   // to it so they don't need to be volatile or synchronized
+   // to them, so they don't need to be volatile or synchronized
    private int currentOffset = 0;
    private long seqId = 0;
    private int receivedCount = 0;
