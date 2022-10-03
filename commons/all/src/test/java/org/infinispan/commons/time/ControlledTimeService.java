@@ -13,6 +13,7 @@ public class ControlledTimeService extends DefaultTimeService {
    private static final Log log = LogFactory.getLog(ControlledTimeService.class);
 
    private final Object id;
+   private TimeService actualTimeService;
    protected volatile long currentMillis;
 
    public ControlledTimeService() {
@@ -49,6 +50,14 @@ public class ControlledTimeService extends DefaultTimeService {
 
    public void advance(long delta, TimeUnit timeUnit) {
       advance(timeUnit.toMillis(delta));
+   }
+
+   public TimeService getActualTimeService() {
+      return actualTimeService;
+   }
+
+   public void setActualTimeService(TimeService actualTimeService) {
+      this.actualTimeService = actualTimeService;
    }
 
    public synchronized void advance(long deltaMillis) {
