@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.security.Security;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 
@@ -29,8 +30,10 @@ public class HelloServerTask implements ServerTask<Object> {
       if (greetee == null) {
          if (ctx.getSubject().isPresent()) {
             Subject subject = ctx.getSubject().get();
-            System.out.println(subject);
             greetee = subject.getPrincipals().iterator().next().getName();
+            if (!greetee.equals(Security.getSubject().getPrincipals().iterator().next().getName())) {
+               throw new RuntimeException("Subjects do not match");
+            }
          } else {
             greetee = "world";
          }

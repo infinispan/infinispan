@@ -10,10 +10,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.manager.ClusterExecutionPolicy;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 
@@ -89,9 +92,10 @@ class LocalClusterExecutor implements ClusterExecutor {
 
    <T> CompletableFuture<T> localInvocation(Function<? super EmbeddedCacheManager, ? extends T> function) {
       CompletableFuture<T> future = new CompletableFuture<>();
+      Subject subject = Security.getSubject();
       localExecutor.execute(() -> {
          try {
-            T result = function.apply(manager);
+            T result = Security.doAs(subject, function, manager);
             future.complete(result);
          } catch (Throwable t) {
             future.completeExceptionally(t);

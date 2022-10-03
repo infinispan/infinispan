@@ -13,6 +13,7 @@ import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,22 +123,6 @@ public abstract class AbstractAuthorization {
       sync(adminCache.put("k", "v"));
       assertEquals("v", sync(adminCache.get("k")).getBody());
       assertStatus(OK, adminCache.getAvailability());
-   }
-
-   @Test
-   public void testRestCacheDistribution() {
-      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
-
-      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
-         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
-         assertStatus(OK, cache.getAvailability());
-      }
-
-      // Types with no access.
-      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
-         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
-         assertStatus(FORBIDDEN, cache.getAvailability());
-      }
    }
 
    @Test
@@ -655,6 +640,10 @@ public abstract class AbstractAuthorization {
          assertStatus(FORBIDDEN, client.getRestore("restore"));
          assertStatus(FORBIDDEN, client.deleteRestore("restore"));
       }
+   }
+
+   protected String expectedServerPrincipalName(TestUser user) {
+      return user.getUser();
    }
 
    private <K, V> RemoteCache<K, V> hotRodCreateAuthzCache(String... explicitRoles) {
