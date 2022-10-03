@@ -119,6 +119,8 @@ class Compactor implements Consumer<Object> {
    public void completeFile(int file, int currentSize, long nextExpirationTime) {
       Stats stats = getStats(file, currentSize, nextExpirationTime);
       stats.setCompleted();
+      // It is possible this was a logFile that was compacted
+      stats.scheduled = false;
       if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
          schedule(file, stats);
       }
@@ -199,6 +201,7 @@ class Compactor implements Consumer<Object> {
          if (fileSize >= 0) {
             stats.setTotal(fileSize);
          }
+         stats.setNextExpirationTime(ExpiryHelper.mostRecentExpirationTime(stats.nextExpirationTime, expirationTime));
       }
       return stats;
    }
@@ -353,13 +356,18 @@ class Compactor implements Consumer<Object> {
                   // that can expire yet
                   // Note that log files do not set the expiration time, so it is always -1 in that case, but we still
                   // want to check just in case some files are expired there.
+                  // Note that we when compacting an expired entry from the log file we first write to the compacted
+                  // file and then notify the subscriber. Assuming the subscriber then invokes remove expired it
+                  // will actually cause two writes for the same expired entry. This is required though in case if
+                  // the entry is not removed from the listener as we don't want to keep returning the same entry
+                  // to the listener that it has expired.
                   if (stats.markedForDeletion() || (!isLogFile && stats.nextExpirationTime == -1) || stats.nextExpirationTime > currentTimeMilliseconds) {
                      log.tracef("Skipping expiration for file %d since it is marked for deletion: %s or its expiration time %s is not yet",
                            (Object) fileId, stats.markedForDeletion(), stats.nextExpirationTime);
                      continue;
                   }
-                  // Make sure we don't start another compactoin for this file while performing expiration
-                  stats.scheduled = true;
+                  // Make sure we don't start another compaction for this file while performing expiration
+                  stats.setScheduled();
                }
                compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
             }
@@ -471,7 +479,7 @@ class Compactor implements Consumer<Object> {
                   } else if (entry.file == scheduledFile && entry.offset == ~scheduledOffset) {
                      // The temporary table doesn't know how many entries we have for a key, so we shouldn't truncate
                      // or drop
-                     log.tracef("Key for %d:%d ignored as it was expired");
+                     log.tracef("Key for %d:%d ignored as it was expired but was in temporary table");
                      scheduledOffset += header.totalLength();
                      continue;
                   } else {
@@ -663,7 +671,7 @@ class Compactor implements Consumer<Object> {
    static class Stats {
       private final AtomicInteger free;
       private volatile int total;
-      private final long nextExpirationTime;
+      private volatile long nextExpirationTime;
       /* File is not 'completed' when we have not loaded that yet completely.
          Files created by log appender/compactor are completed as soon as it closes them.
          File cannot be scheduled for compaction until it's completed.
@@ -699,6 +707,10 @@ class Compactor implements Consumer<Object> {
          return nextExpirationTime;
       }
 
+      public void setNextExpirationTime(long nextExpirationTime) {
+         this.nextExpirationTime = nextExpirationTime;
+      }
+
       public boolean readyToBeScheduled(double compactionThreshold, int free) {
          int total = this.total;
          return completed && !scheduled && total >= 0 && free >= total * compactionThreshold;
@@ -726,6 +738,18 @@ class Compactor implements Consumer<Object> {
 
       public boolean markedForDeletion() {
          return this.markedForDeletion;
+      }
+
+      @Override
+      public String toString() {
+         return "Stats{" +
+               "free=" + free +
+               ", total=" + total +
+               ", nextExpirationTime=" + nextExpirationTime +
+               ", completed=" + completed +
+               ", scheduled=" + scheduled +
+               ", markedForDeletion=" + markedForDeletion +
+               '}';
       }
    }
 }
