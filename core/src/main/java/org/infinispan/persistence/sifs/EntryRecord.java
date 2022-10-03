@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import org.infinispan.commons.util.Util;
+
 /**
  * Helper for reading/writing entries into file.
  *
@@ -47,7 +49,18 @@ public class EntryRecord {
    }
 
    public long getLastUsed() {
-      return meta == null ? -1 :meta.getLastUsed();
+      return meta == null ? -1 : meta.getLastUsed();
+   }
+
+   @Override
+   public String toString() {
+      return "EntryRecord{" +
+            "header=" + header +
+            ", key=" + Util.printArray(key) +
+            ", value=" + Util.printArray(value) +
+            ", meta=" + meta +
+            ", internalMetadata=" + Util.printArray(internalMetadata) +
+            '}';
    }
 
    public EntryRecord loadMetadataAndValue(FileProvider.Handle handle, int offset, boolean saveValue) throws IOException {
