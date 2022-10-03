@@ -89,7 +89,15 @@ class NettyTransportConnectionStats {
 
       @Override
       public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
-         return SecurityActions.getGlobalComponentRegistry(embeddedCacheManager).getComponent(ProtocolServer.class, serverName).getTransport().getNumberOfLocalConnections();
+         ProtocolServer<?> protocolServer = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager)
+               .getComponent(ProtocolServer.class, serverName);
+         // protocol server not registered; so no connections are open.
+         if (protocolServer == null) {
+            return 0;
+         }
+         Transport transport = protocolServer.getTransport();
+         // check if the transport is up; otherwise no connections are open
+         return transport == null ? 0 : transport.getNumberOfLocalConnections();
       }
 
       public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ConnectionAdderTask> {
