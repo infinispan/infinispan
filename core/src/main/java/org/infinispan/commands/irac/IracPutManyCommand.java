@@ -129,6 +129,10 @@ public class IracPutManyCommand extends IracUpdateKeyCommand<IntSet> {
       throw new IllegalStateException();
    }
 
+   public boolean isEmpty() {
+      return updateList.isEmpty();
+   }
+
    private interface Update {
       byte getType();
 

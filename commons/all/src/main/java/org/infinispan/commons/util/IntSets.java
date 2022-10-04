@@ -178,7 +178,8 @@ public class IntSets {
     * @return concurrent set
     */
    public static IntSet concurrentSet(int maxExclusive) {
-      return new ConcurrentSmallIntSet(maxExclusive);
+      // if maxExclusive = 0; then we have an empty set
+      return maxExclusive == 0 ? immutableEmptySet() : new ConcurrentSmallIntSet(maxExclusive);
    }
 
    /**
@@ -189,6 +190,10 @@ public class IntSets {
     * @return concurrent copy
     */
    public static IntSet concurrentCopyFrom(IntSet intSet, int maxExclusive) {
+      // if maxExclusive = 0; then we have an empty set
+      if (maxExclusive == 0) {
+         return immutableEmptySet();
+      }
       ConcurrentSmallIntSet cis = new ConcurrentSmallIntSet(maxExclusive);
       intSet.forEach((IntConsumer) cis::set);
       return cis;

@@ -45,13 +45,16 @@ class ConcurrentSmallIntSet implements IntSet {
    private final AtomicInteger currentSize = new AtomicInteger();
 
    /**
-    * Creates a new, empty map which can accommodate ints in value up to {@code minCapacityExclusive - 1}. This number
+    * Creates a new, empty map which can accommodate ints in value up to {@code maxCapacityExclusive - 1}. This number
     * will be rounded up to the nearest 32.
-    * @param minCapacityExclusive The implementation performs sizing to ensure values up to this can be stored
+    * @param maxCapacityExclusive The implementation performs sizing to ensure values up to this can be stored
     */
-   public ConcurrentSmallIntSet(int minCapacityExclusive) {
+   public ConcurrentSmallIntSet(int maxCapacityExclusive) {
+      if (maxCapacityExclusive < 1) {
+         throw new IllegalArgumentException("maxCapacityExclusive (" + maxCapacityExclusive + ") < 1");
+      }
       // We add 31 as that is 2^5 -1 so we round up
-      int intLength = intIndex(minCapacityExclusive + 31);
+      int intLength = intIndex(maxCapacityExclusive + 31);
       array = new AtomicIntegerArray(intLength);
    }
 

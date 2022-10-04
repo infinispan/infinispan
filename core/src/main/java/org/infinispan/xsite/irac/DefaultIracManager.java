@@ -436,21 +436,26 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             cmd.addUpdate(data.state.getKey(), data.entry.getValue(), data.entry.getMetadata(), data.entry.getInternalMetadata().iracMetadata());
          }
       }
-      IracResponseCollector rspCollector = new IracResponseCollector(commandsFactory.getCacheName(), validState, this::onBatchResponse);
-      try {
-         for (IracXSiteBackup backup : asyncBackups) {
-            if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
-               continue; // backup is offline
+
+      IracResponseCollector rspCollector = null;
+      if (!cmd.isEmpty()) {
+         rspCollector = new IracResponseCollector(commandsFactory.getCacheName(), validState, this::onBatchResponse);
+         try {
+            for (IracXSiteBackup backup : asyncBackups) {
+               if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
+                  continue; // backup is offline
+               }
+               rspCollector.dependsOn(backup, sendToRemoteSite(backup, cmd));
             }
-            rspCollector.dependsOn(backup, sendToRemoteSite(backup, cmd));
+         } catch (Throwable throwable) {
+            // safety net; should never happen
+            // onUnexpectedThrowable() log the exception!
+            for (IracStateData data : batch) {
+               data.state.retry();
+            }
+            onUnexpectedThrowable(throwable);
+            rspCollector = null;
          }
-      } catch (Throwable throwable) {
-         // marshalling error? JGroups error?
-         for (IracStateData data : batch) {
-            data.state.retry();
-         }
-         onUnexpectedThrowable(throwable);
-         return Completable.complete();
       }
 
       if (!invalidState.isEmpty()) {
@@ -461,7 +466,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          removeStateFromCluster(invalidState);
       }
 
-      return Completable.fromCompletionStage(rspCollector.freeze());
+      return rspCollector == null ? Completable.complete() : Completable.fromCompletionStage(rspCollector.freeze());
    }
 
    private CompletionStage<Void> sendClearUpdate() {
