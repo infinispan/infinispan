@@ -43,6 +43,15 @@ public class AllowListConfigurationBuilder implements Builder<AllowListConfigura
    /**
     * Helper method that allows for registration of classes to the {@link ClassAllowList}.
     */
+   public <T> AllowListConfigurationBuilder addClasses(String... classes) {
+      List<String> classNames = Arrays.asList(classes);
+      this.classes.addAll(classNames);
+      return this;
+   }
+
+   /**
+    * Helper method that allows for registration of classes to the {@link ClassAllowList}.
+    */
    public <T> AllowListConfigurationBuilder addClasses(Class... classes) {
       List<String> classNames = Arrays.stream(classes).map(Class::getName).collect(Collectors.toList());
       this.classes.addAll(classNames);
