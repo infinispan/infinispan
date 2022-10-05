@@ -1,0 +1,19 @@
+{
+  "infinispan": {
+    "cache-container": {
+      "serialization": {
+        "allow-list": {
+          "class": [
+            "org.infinispan.test.data.Rock",
+            "org.infinispan.test.data.Paper",
+            "org.infinispan.test.data.Scissors"
+          ],
+          "regex": [
+            "org.infinispan.test.model.*",
+            "org.infinispan.test.types.*"
+          ]
+        }
+      }
+    }
+  }
+}

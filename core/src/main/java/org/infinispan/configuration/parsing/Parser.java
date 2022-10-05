@@ -204,7 +204,22 @@ public class Parser extends CacheParser {
    }
 
    private void parseAllowList(final ConfigurationReader reader, final AllowListConfigurationBuilder builder, Element outerElement) {
-      while (reader.inTag(outerElement)) {
+      for(int i = 0; i < reader.getAttributeCount(); i++) { // JSON/YAML
+         String[] values = reader.getListAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case CLASS:
+               builder.addClasses(values);
+               break;
+            case REGEX:
+               builder.addRegexps(values);
+               break;
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+      while (reader.inTag(outerElement)) { // XML
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CLASS: {

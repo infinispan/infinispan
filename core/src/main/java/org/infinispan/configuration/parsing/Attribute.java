@@ -222,7 +222,8 @@ public enum Attribute {
     INVALIDATION_THRESHOLD,
     CONTEXT_INITIALIZERS,
     GROUPER,
-    ACCURATE_SIZE;
+    ACCURATE_SIZE,
+    REGEX;
 
     private final String name;
 
