@@ -85,24 +85,24 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       } else {
          future = restClient.cache(name).createWithTemplate("org.infinispan." + CacheMode.DIST_SYNC.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       }
-      RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
-      response.close();
-      if (response.getStatus() != 200) {
-         switch (response.getStatus()) {
-            case 400:
-               throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.getStatus());
-            case 401:
-            case 403:
-               throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.getStatus());
-            default:
-               throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+      try (RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS))) {
+         if (response.getStatus() != 200) {
+            switch (response.getStatus()) {
+               case 400:
+                  throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.getStatus());
+               case 401:
+               case 403:
+                  throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.getStatus());
+               default:
+                  throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+            }
+         } else {
+            // If the request succeeded without authn but we were expecting to authenticate, it's an error
+            if (restClient.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
+               throw new SecurityException("Authentication expected but anonymous access succeeded");
+            }
+            return restClient;
          }
-      } else {
-         // If the request succeeded without authn but we were expecting to authenticate, it's an error
-         if (restClient.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
-            throw new SecurityException("Authentication expected but anonymous access succeeded");
-         }
-         return restClient;
       }
    }
 

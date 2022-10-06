@@ -64,8 +64,18 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @return {@link RemoteCache}, the cache is such exist
     */
    public <K, V> RemoteCache<K, V> get() {
-      RemoteCacheManager remoteCacheManager = testClient.registerResource(testServer.newHotRodClient(clientConfiguration));
+      RemoteCacheManager remoteCacheManager = createRemoteCacheManager();
       String name = testClient.getMethodName(qualifier);
+      return remoteCacheManager.getCache(name);
+   }
+
+   /**
+    * Gets a cache with the provided name
+    *
+    * @return {@link RemoteCache}, the cache is such exist
+    */
+   public <K, V> RemoteCache<K, V> get(String name) {
+      RemoteCacheManager remoteCacheManager = createRemoteCacheManager();
       return remoteCacheManager.getCache(name);
    }
 
