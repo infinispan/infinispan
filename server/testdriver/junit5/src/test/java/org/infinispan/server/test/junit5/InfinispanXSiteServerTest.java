@@ -1,5 +1,7 @@
 package org.infinispan.server.test.junit5;
 
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -13,14 +15,12 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class InfinispanXSiteServerTest {
 
-   protected static final String LON = "LON";
-   protected static final String NYC = "NYC";
    protected static final int NUM_SERVERS = 1;
    protected static final String LON_CACHE_XML_CONFIG =
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"%s\">" +
                "     <backups>" +
-               "        <backup site=\"NYC\" strategy=\"SYNC\"/>" +
+               "        <backup site=\"" + NYC + "\" strategy=\"SYNC\"/>" +
                "     </backups>" +
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
