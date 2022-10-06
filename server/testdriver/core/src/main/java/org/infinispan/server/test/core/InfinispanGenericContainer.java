@@ -78,6 +78,15 @@ public class InfinispanGenericContainer {
       if (containerInfo == null) {
          throw new NullPointerException(String.format("The requested container %s have an invalid state", this.containerId));
       }
+      /*
+       * when the container is not running it will return an empty string
+       * an empty string will be translated to localhost/127.0.0.1:11222
+       * everything will fail because this is a test that is running in a container
+       * failing fast with the error message can help you to not waste time
+       */
+      if (!containerInfo.getState().getRunning()) {
+         throw new IllegalStateException("Server must be running");
+      }
       ContainerNetwork network = containerInfo.getNetworkSettings().getNetworks().values().iterator().next();
       return network.getIpAddress();
    }
