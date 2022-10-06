@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.management.MBeanServerConnection;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.rest.RestClient;
@@ -59,6 +61,10 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
    // Used for internal test
    public MemcachedClient getMemcachedClient(String siteName) {
       return testClients.get(siteName).getMemcachedClient();
+   }
+
+   public MBeanServerConnection getJmxConnection(String siteName, int server) {
+      return testClients.get(siteName).getServerDriver().getJmxConnection(server);
    }
 
    @Override

@@ -1,5 +1,8 @@
 package org.infinispan.server.cli;
 
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
+
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -64,27 +67,27 @@ public class XSiteCliOperations {
    @Test
    public void testSiteView() {
       doWithTerminal(terminal -> {
-         connect(terminal, XSiteIT.LON);
+         connect(terminal, LON);
 
          terminal.send("site name");
-         terminal.assertContains(XSiteIT.LON);
+         terminal.assertContains(LON);
          terminal.clear();
 
          terminal.send("site view");
-         terminal.assertContains(XSiteIT.LON);
-         terminal.assertContains(XSiteIT.NYC);
+         terminal.assertContains(LON);
+         terminal.assertContains(NYC);
          terminal.clear();
 
          disconnect(terminal);
-         connect(terminal, XSiteIT.NYC);
+         connect(terminal, NYC);
 
          terminal.send("site name");
-         terminal.assertContains(XSiteIT.NYC);
+         terminal.assertContains(NYC);
          terminal.clear();
 
          terminal.send("site view");
-         terminal.assertContains(XSiteIT.LON);
-         terminal.assertContains(XSiteIT.NYC);
+         terminal.assertContains(LON);
+         terminal.assertContains(NYC);
          terminal.clear();
       });
    }
@@ -94,16 +97,16 @@ public class XSiteCliOperations {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.clustering().sites().addBackup()
-            .site(XSiteIT.NYC)
+            .site(NYC)
             .strategy(BackupConfiguration.BackupStrategy.ASYNC)
             .stateTransfer().mode(XSiteStateTransferMode.AUTO);
 
-      SERVER_TEST.hotrod(XSiteIT.LON).createRemoteCacheManager()
+      SERVER_TEST.hotrod(LON).createRemoteCacheManager()
             .administration()
             .createCache("st-mode", builder.build());
 
       doWithTerminal(terminal -> {
-         connect(terminal, XSiteIT.LON);
+         connect(terminal, LON);
 
          terminal.send("site state-transfer-mode");
          terminal.assertContains("Usage: site state-transfer-mode [<options>]");
@@ -115,26 +118,26 @@ public class XSiteCliOperations {
          terminal.clear();
 
          //check command invoked in the wrong context
-         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + NYC);
          terminal.assertContains("Command invoked from the wrong context");
          terminal.clear();
 
          //check non xsite cache
          terminal.send("cd caches/___script_cache");
          terminal.clear();
-         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + NYC);
          terminal.assertContains("Not Found: Cache '___script_cache' does not have backup sites.");
          terminal.clear();
 
          //check if --cache overrides the context
-         terminal.send("site state-transfer-mode get --cache=st-mode --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --cache=st-mode --site=" + NYC);
          terminal.assertContains("AUTO");
          terminal.clear();
 
          //check if --cache is not required
          terminal.send("cd ../st-mode");
          terminal.clear();
-         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + NYC);
          terminal.assertContains("AUTO");
          terminal.clear();
 
@@ -144,14 +147,14 @@ public class XSiteCliOperations {
          terminal.clear();
 
          //check set!
-         terminal.send("site state-transfer-mode set --mode=MANUAL --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode set --mode=MANUAL --site=" + NYC);
          terminal.clear();
-         terminal.send("site state-transfer-mode get --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode get --site=" + NYC);
          terminal.assertContains("MANUAL");
          terminal.clear();
 
          //check invalid mode
-         terminal.send("site state-transfer-mode set --mode=ABC --site=" + XSiteIT.NYC);
+         terminal.send("site state-transfer-mode set --mode=ABC --site=" + NYC);
          terminal.assertContains("No enum constant org.infinispan.configuration.cache.XSiteStateTransferMode.ABC");
          terminal.clear();
       });
@@ -160,7 +163,7 @@ public class XSiteCliOperations {
    @Test
    public void testRelayNodeInfo() {
       doWithTerminal(terminal -> {
-         connect(terminal, XSiteIT.LON);
+         connect(terminal, LON);
 
          terminal.send("site is-relay-node");
          terminal.assertContains("true");

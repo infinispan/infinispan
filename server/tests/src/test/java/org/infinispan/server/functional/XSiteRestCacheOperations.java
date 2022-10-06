@@ -4,16 +4,16 @@ import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.commons.test.Eventually.eventuallyEquals;
-import static org.infinispan.server.functional.XSiteIT.LON;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_XML_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_XML_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.NUM_SERVERS;
-import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_XML_CONFIG;
 import static org.infinispan.server.test.core.Common.assertResponse;
 import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

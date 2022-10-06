@@ -2,9 +2,9 @@ package org.infinispan.server.functional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.server.functional.XSiteIT.LON;
-import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
+import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -29,7 +29,7 @@ public class XSiteRestMetricsOperations {
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"%s\" statistics=\"true\">" +
                "     <backups>" +
-               "        <backup site=\"NYC\" strategy=\"ASYNC\"/>" +
+               "        <backup site=\"" + NYC + "\" strategy=\"ASYNC\"/>" +
                "     </backups>" +
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
@@ -38,7 +38,7 @@ public class XSiteRestMetricsOperations {
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"%s\" statistics=\"true\">" +
                "     <backups>" +
-               "        <backup site=\"LON\" strategy=\"ASYNC\"/>" +
+               "        <backup site=\"" + LON + "\" strategy=\"ASYNC\"/>" +
                "     </backups>" +
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
