@@ -88,9 +88,9 @@ include::code_examples/MultiMapCacheEmbedded.java[]
 In almost every case the Multimap Cache will behave as a regular Cache, but some limitations exist in the current version, as follows:
 
 === Support for duplicates
-Duplicates are not supported yet. This means that the multimap won't contain any duplicate key-value pair.
-Whenever put method is called, if the key-value pair already exist, this key-value par won't be added.
-Methods used to check if a key-value pair is already present in the Multimap are the `equals` and `hashcode`.
+A multimap can be configured to store duplicate values for a single key. A duplicate is determined by the value's `equals` method.
+Whenever the put method is called, if multimap is configured to support duplicates, the key-value pair will be added to the collection.
+Invoking remove on the multimap will remove all duplicates if present.
 
 === Eviction
 
