@@ -127,7 +127,7 @@
    <xs:complexType name="data-source-connection-factory">
       <xs:all>
          <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
-         <xs:element type="tns:property" name="connection-property" minOccurs="0">
+         <xs:element type="tns:property" name="connection-property" minOccurs="0" maxOccurs="unbounded">
             <xs:annotation>
                <xs:documentation>Properties for the JDBC driver</xs:documentation>
             </xs:annotation>
