@@ -18,5 +18,14 @@ public enum PartitionHandling {
    /**
     * Allow entries on each partition to diverge, with conflicts resolved during merge.
     */
-   ALLOW_READ_WRITES
+   ALLOW_READ_WRITES {
+      @Override
+      public AvailabilityMode startingAvailability() {
+         return AvailabilityMode.AVAILABLE;
+      }
+   };
+
+   public AvailabilityMode startingAvailability() {
+      return AvailabilityMode.DEGRADED_MODE;
+   }
 }
