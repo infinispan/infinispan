@@ -2350,4 +2350,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Persistence is now available", id = 679)
    void persistenceAvailable();
+
+   @Message(value = "Expiration (Max idle or Lifespan) is not allowed while using a store '%s' that does not support expiration, unless it is configured as read only", id = 680)
+   CacheConfigurationException expirationNotAllowedWhenStoreDoesNotSupport(String storeImpl);
 }
