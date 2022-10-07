@@ -54,7 +54,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
    private final PartitionHandling partitionHandling;
 
-   private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
+   private volatile AvailabilityMode availabilityMode;
 
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject String cacheName;
@@ -68,6 +68,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    public PartitionHandlingManagerImpl(Configuration configuration) {
       partialTransactions = new ConcurrentHashMap<>();
       partitionHandling = configuration.clustering().partitionHandling().whenSplit();
+      availabilityMode = partitionHandling.startingAvailability();
    }
 
    @Override
@@ -296,6 +297,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
                return InfinispanCollections.containsAny(actualMembers, owners);
             }
          case DENY_READ_WRITES:
+            if (cacheTopology.getTopologyId() < 0 && cacheTopology.getRebalanceId() < 0) {
+               return false;
+            }
             // Both reads and writes require all the owners to be in the local partition
             return actualMembers.containsAll(getOwners(cacheTopology, key, isWrite));
          default:
