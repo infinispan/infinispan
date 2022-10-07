@@ -235,7 +235,6 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    @Override
    public Object[] factory() {
       return Arrays.stream(PartitionHandling.values())
-            .filter(ph -> ph != PartitionHandling.ALLOW_READ_WRITES)
             .flatMap(ph -> Arrays.stream(new Object[] {
                   new ThreeNodeGlobalStatePartialRestartTest().withCacheMode(CacheMode.DIST_SYNC).withPartitionHandling(ph),
                   new ThreeNodeGlobalStatePartialRestartTest().withCacheMode(CacheMode.DIST_SYNC).withPartitionHandling(ph).purgeOnStartup(true),
