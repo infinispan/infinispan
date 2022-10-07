@@ -211,16 +211,29 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      interval, MILLISECONDS, t -> !(t instanceof Error)));
       }
       return storeStartup.doOnComplete(() -> {
-         // If a store is not writeable, then max idle works fine as it only expires in memory, thus refreshing
-         // the value that can be read from the store
-         // Max idle is not currently supported with stores, it sorta works with passivation though
-         if (configuration.expiration().maxIdle() > 0 &&
-               stores.stream().anyMatch(status -> !status.hasCharacteristic(Characteristic.READ_ONLY))) {
-            if (!configuration.persistence().passivation()) {
-               throw CONFIG.maxIdleNotAllowedWithoutPassivation();
-            }
-            CONFIG.maxIdleNotTestedWithPassivation();
+         boolean hasMaxIdle = configuration.expiration().maxIdle() > 0;
+         boolean hasLifespan = configuration.expiration().lifespan() > 0;
+
+         if (hasLifespan || hasMaxIdle) {
+            stores.stream().forEach(status -> {
+               // If a store is not writeable, then expiration works fine as it only expires in memory, thus refreshing
+               // the value that can be read from the store
+               if (status.hasCharacteristic(Characteristic.READ_ONLY)) {
+                  return;
+               }
+               if (hasMaxIdle) {
+                  // Max idle is not currently supported with stores, it sorta works with passivation though
+                  if (!configuration.persistence().passivation()) {
+                     throw CONFIG.maxIdleNotAllowedWithoutPassivation();
+                  }
+                  CONFIG.maxIdleNotTestedWithPassivation();
+               }
+               if (!status.hasCharacteristic(Characteristic.EXPIRATION)) {
+                  throw CONFIG.expirationNotAllowedWhenStoreDoesNotSupport(status.store.getClass().getName());
+               }
+            });
          }
+
          allSegmentedOrShared = allStoresSegmentedOrShared();
       });
    }

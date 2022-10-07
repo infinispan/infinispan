@@ -5,6 +5,7 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -19,6 +20,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -29,7 +31,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -105,6 +106,13 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
 
    public AsyncNonBlockingStore(NonBlockingStore<K, V> actual) {
       this.actual = actual;
+   }
+
+   @Override
+   public Set<Characteristic> characteristics() {
+      // Here solely for documentation purposes. This store supports only the characteristics of
+      // the underlying store
+      return super.characteristics();
    }
 
    @Override

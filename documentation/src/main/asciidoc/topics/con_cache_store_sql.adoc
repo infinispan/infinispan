@@ -24,8 +24,13 @@ With {brandname} Server you can add schema through the {brandname} Console or Co
 
 [NOTE]
 ====
-SQL cache stores do not support expiration or segmentation.
+SQL cache stores do not support expiration when writes are allowed or segmentation.
 ====
+
+Since a SQL cache store is designed to be used with an existing database table it would not contain expiration or segmentation metadata.
+However, expiration can be used with a SQL Store when it is configured as read only.
+When used as such, expiration acts as a way to remove stale values from memory, causing the cache to fetch the values from the database again to be cached.
+
 
 [role="_additional-resources"]
 .Additional resources
