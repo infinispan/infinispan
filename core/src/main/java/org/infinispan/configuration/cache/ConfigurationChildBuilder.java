@@ -20,6 +20,8 @@ public interface ConfigurationChildBuilder {
 
    ExpirationConfigurationBuilder expiration();
 
+   QueryConfigurationBuilder query();
+
    IndexingConfigurationBuilder indexing();
 
    InvocationBatchingConfigurationBuilder invocationBatching();

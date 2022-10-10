@@ -27,6 +27,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    private final MemoryConfiguration memoryConfiguration;
    private final EncodingConfiguration encodingConfiguration;
    private final ExpirationConfiguration expirationConfiguration;
+   private final QueryConfiguration queryConfiguration;
    private final IndexingConfiguration indexingConfiguration;
    private final InvocationBatchingConfiguration invocationBatchingConfiguration;
    private final StatisticsConfiguration statisticsConfiguration;
@@ -44,6 +45,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
                  CustomInterceptorsConfiguration customInterceptorsConfiguration,
                  ExpirationConfiguration expirationConfiguration,
                  EncodingConfiguration encodingConfiguration,
+                 QueryConfiguration queryConfiguration,
                  IndexingConfiguration indexingConfiguration,
                  InvocationBatchingConfiguration invocationBatchingConfiguration,
                  StatisticsConfiguration statisticsConfiguration,
@@ -71,6 +73,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.encodingConfiguration = encodingConfiguration;
       this.expirationConfiguration = expirationConfiguration;
+      this.queryConfiguration = queryConfiguration;
       this.indexingConfiguration = indexingConfiguration;
       this.invocationBatchingConfiguration = invocationBatchingConfiguration;
       this.statisticsConfiguration = statisticsConfiguration;
@@ -110,6 +113,10 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    public ExpirationConfiguration expiration() {
       return expirationConfiguration;
+   }
+
+   public QueryConfiguration query() {
+      return queryConfiguration;
    }
 
    public IndexingConfiguration indexing() {
