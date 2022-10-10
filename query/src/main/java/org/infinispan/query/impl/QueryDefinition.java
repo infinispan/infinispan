@@ -30,14 +30,16 @@ public final class QueryDefinition {
    private final String queryString;
    private final IckleParsingResult.StatementType statementType;
    private SearchQueryBuilder searchQueryBuilder;
-   private int maxResults = -1;
+   private int maxResults;
    private int firstResult = 0;
    private long timeout = -1;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
+   private final int defaultMaxResults;
 
    public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
-                          SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
+                          SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider,
+                          int defaultMaxResults) {
       if (queryString == null) {
          throw new IllegalArgumentException("queryString cannot be null");
       }
@@ -50,9 +52,12 @@ public final class QueryDefinition {
       this.queryString = queryString;
       this.statementType = statementType;
       this.queryEngineProvider = queryEngineProvider;
+      this.maxResults = defaultMaxResults;
+      this.defaultMaxResults = defaultMaxResults;
    }
 
-   public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType, SearchQueryBuilder searchQueryBuilder) {
+   public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
+                          SearchQueryBuilder searchQueryBuilder, int defaultMaxResults) {
       if (queryString == null) {
          throw new IllegalArgumentException("queryString cannot be null");
       }
@@ -66,6 +71,8 @@ public final class QueryDefinition {
       this.queryString = queryString;
       this.statementType = statementType;
       this.queryEngineProvider = null;
+      this.maxResults = defaultMaxResults;
+      this.defaultMaxResults = defaultMaxResults;
    }
 
    public String getQueryString() {
@@ -102,6 +109,10 @@ public final class QueryDefinition {
          throw new IllegalStateException("The QueryDefinition has not been initialized, make sure to call initialize(...) first");
       }
       return searchQueryBuilder;
+   }
+
+   public boolean getDefaultMaxResults() {
+      return maxResults == defaultMaxResults;
    }
 
    public int getMaxResults() {
@@ -178,10 +189,16 @@ public final class QueryDefinition {
       public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
          IckleParsingResult.StatementType statementType = IckleParsingResult.StatementType.valueOf(input.readByte());
-         SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
-         QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, queryEngineProvider);
-         queryDefinition.setFirstResult(input.readInt());
-         queryDefinition.setMaxResults(input.readInt());
+         SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> engineProvider =
+               (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
+
+         int firstResult = input.readInt();
+         int maxResults = input.readInt();
+
+         // TODO ISPN-14194 Avoid to externalize the current maxResults as defaultMaxResults
+         QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, engineProvider, maxResults);
+         queryDefinition.setFirstResult(firstResult);
+
          queryDefinition.timeout = input.readLong();
          short paramSize = input.readShort();
          if (paramSize != 0) {

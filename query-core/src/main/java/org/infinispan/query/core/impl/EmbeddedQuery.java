@@ -44,12 +44,20 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
    private IckleFilterAndConverter<?, ?> filter;
 
+   private final int defaultMaxResults;
+
    public EmbeddedQuery(QueryEngine<?> queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
                         String queryString, IckleParsingResult.StatementType statementType,
                         Map<String, Object> namedParameters, String[] projection,
-                        long startOffset, int maxResults, LocalQueryStatistics queryStatistics, boolean local) {
+                        long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local) {
       super(queryFactory, cache, queryString, statementType, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
       this.queryEngine = queryEngine;
+      this.defaultMaxResults = defaultMaxResults;
+
+      if (maxResults == -1) {
+         // apply the default
+         super.maxResults = defaultMaxResults;
+      }
    }
 
    @Override
@@ -110,7 +118,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          throw CONTAINER.unsupportedStatement();
       }
 
-      if (getStartOffset() != 0 || getMaxResults() != -1 && getMaxResults() != Integer.MAX_VALUE) {
+      if (getStartOffset() != 0 || getMaxResults() != defaultMaxResults) {
          throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 
@@ -176,6 +184,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
+            ", defaultMaxResults=" + defaultMaxResults +
             ", timeout=" + timeout +
             '}';
    }

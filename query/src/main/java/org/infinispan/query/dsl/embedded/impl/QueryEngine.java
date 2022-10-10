@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.RowMatcher;
@@ -81,6 +82,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(QueryEngine.class);
 
    private final boolean broadcastQuery;
+   private final int defaultMaxResults;
 
    public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       this(cache, isIndexed, ObjectReflectionMatcher.class);
@@ -88,9 +90,11 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
       super(cache, matcherImplClass);
-      CacheMode cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
+      Configuration configuration = cache.getCacheConfiguration();
+      CacheMode cacheMode = configuration.clustering().cacheMode();
       this.broadcastQuery = cacheMode.isClustered() && !cacheMode.isReplicated();
       this.isIndexed = isIndexed;
+      this.defaultMaxResults = configuration.query().defaultMaxResults();
    }
 
    protected SearchMapping getSearchMapping() {
@@ -487,7 +491,9 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       }
 
       if (!isIndexed) {
-         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
+         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(),
+               namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
+               queryStatistics, local);
       }
 
       IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
@@ -599,7 +605,9 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
       if (expansion == ConstantBooleanExpr.TRUE) {
          // expansion leads to a full non-indexed query or the expansion is too long/complex
-         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
+         return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(),
+               namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
+               queryStatistics, local);
       }
 
       // some fields are indexed, run a hybrid query
@@ -707,11 +715,13 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       }
       String queryString = ickleParsingResult.getQueryString();
       if (broadcastQuery && !local) {
-         QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(), getQueryEngineProvider());
+         QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
+               getQueryEngineProvider(), defaultMaxResults);
          queryDefinition.setNamedParameters(namedParameters);
-         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics);
+         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults);
       }
-      return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache, queryStatistics);
+      return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache,
+            queryStatistics, defaultMaxResults);
    }
 
    protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
