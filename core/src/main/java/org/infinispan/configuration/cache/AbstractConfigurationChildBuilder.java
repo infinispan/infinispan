@@ -47,6 +47,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public QueryConfigurationBuilder query() {
+      return builder.query();
+   }
+
+   @Override
    public IndexingConfigurationBuilder indexing() {
       return builder.indexing();
    }

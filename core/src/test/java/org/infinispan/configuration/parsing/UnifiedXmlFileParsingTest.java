@@ -43,6 +43,7 @@ import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
+import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -128,6 +129,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(2, raftMembers.size());
             assertTrue(raftMembers.contains("a-node"));
             assertTrue(raftMembers.contains("b-node"));
+
+            QueryConfiguration query = getConfiguration(holder, "local").query();
+            assertThat(query.defaultMaxResults()).isEqualTo(100);
+
             IndexingConfiguration indexed = getConfiguration(holder, "indexed-reindex-at-startup").indexing();
             assertThat(indexed.enabled()).isTrue();
             assertThat(indexed.storage()).isEqualTo(IndexStorage.LOCAL_HEAP);

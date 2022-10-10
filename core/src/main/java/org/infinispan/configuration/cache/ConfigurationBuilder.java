@@ -21,6 +21,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final EncodingConfigurationBuilder encoding;
    private final ExpirationConfigurationBuilder expiration;
+   private final QueryConfigurationBuilder query;
    private final IndexingConfigurationBuilder indexing;
    private final InvocationBatchingConfigurationBuilder invocationBatching;
    private final StatisticsConfigurationBuilder statistics;
@@ -42,6 +43,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.customInterceptors = new CustomInterceptorsConfigurationBuilder(this);
       this.encoding = new EncodingConfigurationBuilder(this);
       this.expiration = new ExpirationConfigurationBuilder(this);
+      this.query = new QueryConfigurationBuilder(this);
       this.indexing = new IndexingConfigurationBuilder(this);
       this.invocationBatching = new InvocationBatchingConfigurationBuilder(this);
       this.statistics = new StatisticsConfigurationBuilder(this);
@@ -87,6 +89,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public ExpirationConfigurationBuilder expiration() {
       return expiration;
+   }
+
+   @Override
+   public QueryConfigurationBuilder query() {
+      return query;
    }
 
    @Override
@@ -239,7 +246,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),
-                               expiration.create(), encoding.create(), indexing.create(), invocationBatching.create(),
+                               expiration.create(), encoding.create(), query.create(), indexing.create(), invocationBatching.create(),
                                statistics.create(), persistence.create(), locking.create(), security.create(),
                                transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
    }
@@ -249,6 +256,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.clustering.read(template.clustering());
       this.customInterceptors.read(template.customInterceptors());
       this.expiration.read(template.expiration());
+      this.query.read(template.query());
       this.indexing.read(template.indexing());
       this.invocationBatching.read(template.invocationBatching());
       this.statistics.read(template.statistics());
@@ -276,6 +284,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             "clustering=" + clustering +
             ", customInterceptors=" + customInterceptors +
             ", expiration=" + expiration +
+            ", query=" + query +
             ", indexing=" + indexing +
             ", invocationBatching=" + invocationBatching +
             ", statistics=" + statistics +
