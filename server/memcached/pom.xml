@@ -9,8 +9,8 @@
    </parent>
 
    <artifactId>infinispan-server-memcached</artifactId>
-   <name>Infinispan Memcached Server [deprecated]</name>
-   <description>Infinispan Memcached Server [deprecated]</description>
+   <name>Infinispan Memcached Server</name>
+   <description>Infinispan Memcached Server</description>
 
    <dependencies>
       <dependency>
@@ -50,6 +50,11 @@
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
       </dependency>
    </dependencies>
 

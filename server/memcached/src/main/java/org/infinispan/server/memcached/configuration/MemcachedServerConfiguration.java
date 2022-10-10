@@ -18,9 +18,7 @@ import org.infinispan.server.memcached.MemcachedServer;
  *
  * @author Tristan Tarrant
  * @since 5.3
- * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
-@Deprecated
 @BuiltBy(MemcachedServerConfigurationBuilder.class)
 @ConfigurationFor(MemcachedServer.class)
 public class MemcachedServerConfiguration extends ProtocolServerConfiguration<MemcachedServerConfiguration> {
