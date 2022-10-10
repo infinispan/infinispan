@@ -50,8 +50,9 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
     * Create a IndexedQueryImpl based on a SearchQuery.
     */
    public IndexedQueryImpl(String queryString, IckleParsingResult.StatementType statementType,
-                           SearchQueryBuilder searchQuery, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
-      this(new QueryDefinition(queryString, statementType, searchQuery), cache, queryStatistics);
+                           SearchQueryBuilder searchQuery, AdvancedCache<?, ?> cache,
+                           LocalQueryStatistics queryStatistics, int defaultMaxResults) {
+      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics);
    }
 
    /**
@@ -173,7 +174,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          throw CONTAINER.unsupportedStatement();
       }
 
-      if (queryDefinition.getFirstResult() != 0 || queryDefinition.getMaxResults() != Integer.MAX_VALUE) {
+      if (queryDefinition.getFirstResult() != 0 || !queryDefinition.getDefaultMaxResults()) {
          throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 

@@ -37,13 +37,15 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    private final ClusteredQueryInvoker invoker;
 
-   private int maxResults = Integer.MAX_VALUE;
+   private int maxResults;
 
    private int firstResult = 0;
 
-   public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
+   public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
+                                      LocalQueryStatistics queryStatistics, int defaultMaxResults) {
       super(queryDefinition, cache, queryStatistics);
       this.invoker = new ClusteredQueryInvoker(cache, queryStatistics);
+      this.maxResults = defaultMaxResults;
    }
 
    @Override
@@ -145,7 +147,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
          throw CONTAINER.unsupportedStatement();
       }
 
-      if (queryDefinition.getFirstResult() != 0 || queryDefinition.getMaxResults() != Integer.MAX_VALUE) {
+      if (queryDefinition.getFirstResult() != 0 || !queryDefinition.getDefaultMaxResults()) {
          throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 

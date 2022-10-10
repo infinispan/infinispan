@@ -68,6 +68,8 @@ public class QueryEngine<TypeMetadata> {
     */
    protected final QueryCache queryCache;
 
+   private final int defaultMaxResults;
+
    protected LocalQueryStatistics queryStatistics;
 
    protected static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
@@ -78,6 +80,7 @@ public class QueryEngine<TypeMetadata> {
       this.queryCache = SecurityActions.getGlobalComponentRegistry(cache).getComponent(QueryCache.class);
       this.queryStatistics = SecurityActions.getCacheComponentRegistry(cache).getComponent(LocalQueryStatistics.class);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
+      this.defaultMaxResults = cache.getCacheConfiguration().query().defaultMaxResults();
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
    }
 
@@ -89,6 +92,7 @@ public class QueryEngine<TypeMetadata> {
       if (log.isDebugEnabled()) {
          log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
       }
+
       BaseQuery<?> query = parsingResult.hasGroupingOrAggregations() ?
             buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local) :
             buildQueryNoAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local);
@@ -473,7 +477,7 @@ public class QueryEngine<TypeMetadata> {
       }
 
       return new EmbeddedQuery<>(this, queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters,
-            parsingResult.getProjections(), startOffset, maxResults, queryStatistics, local);
+            parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults, queryStatistics, local);
    }
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {
