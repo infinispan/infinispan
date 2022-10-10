@@ -5,9 +5,7 @@ package org.infinispan.server.memcached;
  *
  * @author Galder Zamarreño
  * @since 4.1
- * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
-@Deprecated
 public enum MemcachedOperation {
    PutRequest,
    TouchRequest,

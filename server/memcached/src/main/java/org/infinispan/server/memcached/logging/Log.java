@@ -15,9 +15,7 @@ import org.jboss.logging.annotations.MessageLogger;
  *
  * @author Galder Zamarreño
  * @since 5.0
- * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
-@Deprecated
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)

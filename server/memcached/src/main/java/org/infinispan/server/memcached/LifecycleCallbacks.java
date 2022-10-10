@@ -12,9 +12,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
  *
  * @author Galder Zamarreño
  * @since 5.0
- * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
-@Deprecated
 @InfinispanModule(name = "server-memcached", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
    @Override

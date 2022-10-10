@@ -10,9 +10,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  *
  * @author Ryan Emerson
  * @since 10.0
- * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
-@Deprecated
 @AutoProtoSchemaBuilder(
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = MemcachedMetadata.class,
