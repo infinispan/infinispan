@@ -10,9 +10,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  *
  * @author Tristan Tarrant
  * @since 5.3
- * @deprecated since 10.1. Will be removed unless a binary protocol encoder/decoder is implemented.
  */
-@Deprecated
 public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MemcachedServerConfiguration, MemcachedServerConfigurationBuilder> implements
       Builder<MemcachedServerConfiguration> {
 
