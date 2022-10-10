@@ -1,0 +1,25 @@
+[id='performance-metric-considerations_{context}']
+= Performance metric considerations
+{brandname} includes so many configurable combinations that determining a single formula for performance metrics that covers all use cases is not possible.  
+
+The purpose of the _{brandname} performance considerations and tuning guidelines_ document is to provide details about use cases and architectures that can help you determine requirements for your {brandname} deployment.
+
+Additionally, consider the following inter-related factors that apply to {brandname}:
+
+* Available CPU and memory resources in cloud environments
+* Caches used in parallel
+* Get, put, query balancing 
+* Peak load and throughput limitations
+* Querying limitations with data set
+* Number of entries per cache
+* Size of cache entries
+
+Given the number of different combinations and unknown external factors, providing a performance calculation that meets all {brandname} use cases is not possible. 
+You cannot compare one performance test to another test if any of the previously listed factors are different. 
+
+You can run basic performance tests with the {brandname} CLI that collects limited performance metrics. 
+You can customize the performance test so that the test outputs results that might meet your needs. 
+Test results provide baseline metrics that can help you determine settings and resources for your {brandname} caching requirements. 
+
+Measure the performance of your current settings and check if they meet your requirements. 
+If your needs are not met, optimize the settings and then re-measure their performance.
