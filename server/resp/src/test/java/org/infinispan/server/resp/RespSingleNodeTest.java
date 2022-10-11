@@ -290,6 +290,11 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set", () -> redis.auth("user", "pass"));
    }
 
+   public void testNotImplementedCommand() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Exceptions.expectException(RedisCommandExecutionException.class, "ERR unknown command", () -> redis.sadd("not-supported", "should error"));
+   }
+
    protected RedisPubSubCommands<String, String> createPubSubConnection() {
       return client.connectPubSub().sync();
    }
