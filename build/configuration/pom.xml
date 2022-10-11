@@ -172,7 +172,7 @@
       <version.lucene>8.11.1</version.lucene>
       <version.metainf-services>1.8</version.metainf-services>
       <version.micrometer>1.9.2</version.micrometer>
-      <version.mockito>5.3.0</version.mockito>
+      <version.mockito>5.3.1</version.mockito>
       <version.mockito_dep.bytebuddy>1.14.4</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.4</version.nashorn>

@@ -164,7 +164,7 @@ public class ServerResource implements ResourceHandler {
       ServerManagement server = invocationHelper.getServer();
       ServerStateManager ignoreManager = server.getServerStateManager();
       return Security.doAs(request.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
-                     .thenApply(r -> builder.build());
+            .thenApply(r -> builder.build());
    }
 
    private CompletionStage<RestResponse> listIgnored(RestRequest request) {
@@ -206,41 +206,50 @@ public class ServerResource implements ResourceHandler {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       String connectorName = request.variables().get("connector");
 
-      ProtocolServer connector = getProtocolServer(request);
+      ProtocolServer<?> connector = getProtocolServer(request);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-
       Json info = Json.object()
             .set("name", connectorName)
-            .set("ip-filter-rules", ipFilterRulesAsJson(connector));
+            .set("ip-filter-rules", ipFilterRulesAsJson(connector))
+            .set("default-cache", connector.getConfiguration().defaultCacheName());
       Transport transport = connector.getTransport();
+      CompletableFuture<Integer> globalConnections;
       if (transport != null) {
          info.set("host", transport.getHostName())
                .set("port", transport.getPort())
                .set("local-connections", transport.getNumberOfLocalConnections())
-               .set("global-connections", transport.getNumberOfGlobalConnections())
                .set("io-threads", transport.getNumberIOThreads())
                .set("pending-tasks", transport.getPendingTasks())
                .set("total-bytes-read", transport.getTotalBytesRead())
                .set("total-bytes-written", transport.getTotalBytesWritten())
                .set("send-buffer-size", transport.getSendBufferSize())
                .set("receive-buffer-size", transport.getReceiveBufferSize());
+         globalConnections = CompletableFuture.supplyAsync(transport::getNumberOfGlobalConnections, invocationHelper.getExecutor());
+      } else {
+         globalConnections = CompletableFutures.completedNull();
       }
-      return Security.doAs(request.getSubject(), () ->
-            serverStateManager.connectorStatus(connectorName).thenApply(b -> builder.contentType(APPLICATION_JSON).entity(info.set("enabled", b)).build()));
+      CompletableFuture<Boolean> connectorStatus = Security.doAs(request.getSubject(), () -> serverStateManager.connectorStatus(connectorName));
+      return connectorStatus.thenCombine(globalConnections, (cs, gc) -> {
+         info.set("enabled", cs);
+         if (gc != null) {
+            info.set("global-connections", gc);
+         }
+         return builder.contentType(APPLICATION_JSON).entity(info).build();
+      });
    }
 
    private CompletionStage<RestResponse> connectorIpFilterList(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
-      ProtocolServer connector = getProtocolServer(request);
+      ProtocolServer<?> connector = getProtocolServer(request);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
       return completedFuture(addEntityAsJson(ipFilterRulesAsJson(connector), builder, isPretty(request)).build());
    }
 
-   private Json ipFilterRulesAsJson(ProtocolServer connector) {
+   private Json ipFilterRulesAsJson(ProtocolServer<?> connector) {
       Collection<IpSubnetFilterRule> rules = connector.getConfiguration().ipFilter().rules();
       Json array = Json.array();
       for (IpSubnetFilterRule rule : rules) {
@@ -249,7 +258,7 @@ public class ServerResource implements ResourceHandler {
       return array;
    }
 
-   private ProtocolServer getProtocolServer(RestRequest restRequest) {
+   private ProtocolServer<?> getProtocolServer(RestRequest restRequest) {
       String connectorName = restRequest.variables().get("connector");
       return invocationHelper.getServer().getProtocolServers().get(connectorName);
    }
@@ -258,7 +267,7 @@ public class ServerResource implements ResourceHandler {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
 
       String connectorName = request.variables().get("connector");
-      ProtocolServer connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
+      ProtocolServer<?> connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
@@ -407,7 +416,7 @@ public class ServerResource implements ResourceHandler {
                   return responseBuilder.status(NOT_FOUND).build();
                }
 
-               return createReportResponse(request, report,  targetName);
+               return createReportResponse(request, report, targetName);
             });
    }
 
