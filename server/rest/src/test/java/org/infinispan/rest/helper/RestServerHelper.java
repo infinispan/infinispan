@@ -1,8 +1,5 @@
 package org.infinispan.rest.helper;
 
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,7 +12,14 @@ import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.DummyServerManagement;
+import org.infinispan.server.core.MockProtocolServer;
+import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A small utility class which helps managing REST server.
@@ -61,8 +65,10 @@ public class RestServerHelper {
 
    public RestServerHelper start(String name) {
       restServerConfigurationBuilder.name(name);
-      restServer.setServerManagement(new DummyServerManagement(), true);
+      Map<String, ProtocolServer> protocolServers = new HashMap<>();
+      restServer.setServerManagement(new DummyServerManagement(cacheManager, protocolServers), true);
       restServer.start(restServerConfigurationBuilder.build(), cacheManager);
+      protocolServers.put("DummyProtocol", new MockProtocolServer("DummyProtocol", restServer.getTransport()));
       return this;
    }
 

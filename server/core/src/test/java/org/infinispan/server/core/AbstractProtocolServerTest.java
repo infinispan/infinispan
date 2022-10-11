@@ -89,6 +89,11 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       }
 
       @Override
+      public void installDetector(Channel ch) {
+
+      }
+
+      @Override
       public ProtocolServerConfiguration getConfiguration() {
          return configuration;
       }
@@ -96,10 +101,6 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       @Override
       public ChannelInitializer<Channel> getInitializer() {
          return null;
-      }
-
-      @Override
-      public void installDetector(Channel ch) {
       }
    }
 
