@@ -4,6 +4,11 @@
 {brandname} Server automatically configures endpoints with authentication mechanisms that match your security realm configuration.
 For example, if you add a Kerberos security realm then {brandname} Server enables the `GSSAPI` and `GS2-KRB5` authentication mechanisms for the Hot Rod endpoint.
 
+[IMPORTANT]
+====
+Currently, you cannot use the Lightweight Directory Access Protocol (LDAP) protocol with the `DIGEST` or `SCRAM` authentication mechanisms, because these mechanisms require access to specific hashed passwords.
+====
+
 .Hot Rod endpoints
 
 {brandname} Server enables the following SASL authentication mechanisms for Hot Rod endpoints when your configuration includes the corresponding security realm:
