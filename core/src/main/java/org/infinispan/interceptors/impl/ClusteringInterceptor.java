@@ -10,8 +10,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.impl.EntryFactory;
@@ -38,6 +36,7 @@ import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 /**
@@ -70,21 +69,8 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
-      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      int currentTopologyId = cacheTopology.getTopologyId();
-      int cmdTopology = command.getTopologyId();
-      if (command instanceof FlagAffectedCommand && ((((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL)))) {
-         getLog().tracef("Skipping topology check for command %s", command);
-         return cacheTopology;
-      }
-      if (getLog().isTraceEnabled()) {
-         getLog().tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
-      }
-      if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
-         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-      }
-      return cacheTopology;
+   protected LocalizedCacheTopology getCacheTopology() {
+      return distributionManager.getCacheTopology();
    }
 
    private static abstract class AbstractTouchResponseCollector extends ValidResponseCollector<Boolean> {
@@ -169,7 +155,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          return invokeNext(ctx, command);
       }
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       // Scattered any node could be a backup, so we have to touch all members
       List<Address> owners = isScattered ? cacheTopology.getActualMembers() : info.readOwners();
