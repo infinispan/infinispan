@@ -35,6 +35,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -67,7 +68,7 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
                command);
          return localResult;
       }
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, distributionManager.getCacheTopology());
       DistributionInfo distributionInfo = cacheTopology.getSegmentDistribution(command.getSegment());
 
       Collection<Address> owners = distributionInfo.writeOwners();

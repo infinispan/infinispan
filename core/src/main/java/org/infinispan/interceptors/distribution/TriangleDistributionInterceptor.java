@@ -64,6 +64,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
+import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.TriangleFunctionsUtil;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -234,7 +235,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          MultiKeyBackupBuilder<C> backupBuilder) {
 
       //local command. we need to split by primary owner to send the command to them
-      final LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      final LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(cacheTopology, command.getAffectedKeys());
 
       return isSynchronous(command) ?
@@ -255,7 +256,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    private <C extends WriteCommand> Object remoteBackupManyKeysWrite(InvocationContext ctx, C command,
          Set<Object> keys) {
       //backup & remote
-      final LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      final LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       return asyncInvokeNext(ctx, command,
             checkRemoteGetIfNeeded(ctx, command, keys, cacheTopology, command.loadType() == OWNER));
    }
@@ -264,7 +265,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          Set<Object> keys,
          MultiKeyBackupBuilder<C> backupBuilder) {
       //primary owner & remote
-      final LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      final LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       //primary, we need to send the command to the backups ordered!
       sendToBackups(command, keys, cacheTopology, backupBuilder);
       return asyncInvokeNext(ctx, command,
@@ -405,7 +406,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          //don't go through the triangle
          return invokeNext(context, command);
       }
-      LocalizedCacheTopology topology = checkTopologyId(command);
+      LocalizedCacheTopology topology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       DistributionInfo distributionInfo = topology.getDistributionForSegment(command.getSegment());
 
       if (distributionInfo.isPrimary()) {

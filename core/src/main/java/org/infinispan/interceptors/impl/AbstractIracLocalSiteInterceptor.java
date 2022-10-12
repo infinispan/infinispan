@@ -22,7 +22,6 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.distribution.Ownership;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -30,6 +29,7 @@ import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.IracUtils;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -94,10 +94,6 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
       command.setInternalMetadata(key, interMetadata);
    }
 
-   protected Ownership getOwnership(int segment) {
-      return getDistributionInfo(segment).writeOwnership();
-   }
-
    protected DistributionInfo getDistributionInfo(int segment) {
       return getCacheTopology().getSegmentDistribution(segment);
    }
@@ -138,16 +134,15 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
    }
 
    protected boolean skipEntryCommit(InvocationContext ctx, WriteCommand command, Object key) {
-      switch (getOwnership(getSegment(command, key))) {
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
+      switch (cacheTopology.getSegmentDistribution(getSegment(command, key)).writeOwnership()) {
          case NON_OWNER:
             //not a write owner, we do nothing
             return true;
          case BACKUP:
             //if it is local, we do nothing.
             //the update happens in the remote context after the primary validated the write
-            if (ctx.isOriginLocal()) {
-               return true;
-            }
+            return ctx.isOriginLocal();
       }
       return false;
    }
@@ -171,8 +166,9 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
     * The primary owner generates a new {@link IracMetadata} and stores it in the {@link WriteCommand}.
     */
    protected void visitNonTxKey(InvocationContext ctx, Object key, WriteCommand command) {
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       int segment = getSegment(command, key);
-      if (getOwnership(segment) != Ownership.PRIMARY) {
+      if (!cacheTopology.getSegmentDistribution(segment).isPrimary()) {
          return;
       }
       Optional<IracMetadata> entryMetadata = IracUtils.findIracMetadataFromCacheEntry(ctx.lookupEntry(key));

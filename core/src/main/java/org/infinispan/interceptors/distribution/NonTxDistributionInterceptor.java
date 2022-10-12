@@ -43,8 +43,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.CacheTopologyUtil;
 
 /**
  * Non-transactional interceptor used by distributed caches that support concurrent writes.
@@ -64,8 +63,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.1
  */
 public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
-
-   private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
 
    private final PutMapHelper putMapHelper = new PutMapHelper(this::createRemoteCallback);
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper(this::createRemoteCallback);
@@ -189,7 +186,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       // it is possible that the function will be applied multiple times on some of the nodes.
       // There is no general solution for this ATM; proper solution will probably record CommandInvocationId
       // in the entry, and implement some housekeeping
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       if (ctx.isOriginLocal()) {
          Map<Address, IntSet> segmentMap = primaryOwnersOfSegments(ch);
@@ -289,7 +286,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       //  it is possible that the function will be applied multiple times on some of the nodes.
       //  There is no general solution for this ATM; proper solution will probably record CommandInvocationId
       //  in the entry, and implement some housekeeping
-      LocalizedCacheTopology topology = checkTopologyId(command);
+      LocalizedCacheTopology topology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       ConsistentHash ch = topology.getWriteConsistentHash();
       if (ctx.isOriginLocal()) {
          Map<Address, IntSet> segmentMap = primaryOwnersOfSegments(ch);
@@ -496,7 +493,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private <C extends WriteCommand> Object writeManyRemoteCallback(WriteManyCommandHelper<C , ?, ?> helper,InvocationContext ctx, C command, Object rv) {
       // The node running this method must be primary owner for all the command's keys
       // Check that the command topology is actual, so we can assume that we really are primary owner
-      LocalizedCacheTopology topology = checkTopologyId(command);
+      LocalizedCacheTopology topology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       Map<Address, IntSet> backups = backupOwnersOfSegments(topology, extractCommandSegments(command, topology));
       if (backups.isEmpty()) {
          return rv;

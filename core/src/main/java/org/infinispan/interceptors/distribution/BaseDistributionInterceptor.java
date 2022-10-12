@@ -66,6 +66,7 @@ import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -132,7 +133,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     */
    protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGetSingleKey(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       int topologyId = cacheTopology.getTopologyId();
 
       DistributionInfo info = retrieveDistributionInfo(cacheTopology, command, key);
@@ -190,7 +191,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       DistributionInfo info = cacheTopology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key,
             keyPartitioner));
 
@@ -232,7 +233,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (log.isTraceEnabled()) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
       }
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       int segment = SegmentSpecificCommand.extractSegment(command, command.getKey(), keyPartitioner);
       DistributionInfo distributionInfo = cacheTopology.getSegmentDistribution(segment);
       Collection<Address> owners = distributionInfo.writeOwners();
@@ -302,7 +303,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private <C extends FlagAffectedCommand & TopologyAffectedCommand>
    CompletionStage<Void> doRemoteGetMany(InvocationContext ctx, C command, Collection<?> keys,
                                          Map<Object, Collection<Address>> unsureOwners, boolean hasSuspectedOwner) {
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, cacheTopology, null, unsureOwners);
       if (requestedKeys.isEmpty()) {
          for (Object key : keys) {
@@ -350,7 +351,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return handleLocalOnlyReadManyCommand(ctx, command, helper.keys(command));
       }
 
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       Collection<?> keys = helper.keys(command);
       if (!ctx.isOriginLocal()) {
          return handleRemoteReadManyCommand(ctx, command, keys, helper);
@@ -477,7 +478,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             for (Object key : keys) {
                contactedNodes.computeIfAbsent(key, k -> new ArrayList<>(4)).add(target);
             }
-            requestedKeys = getKeysByOwner(ctx, keys, checkTopologyId(command), null, contactedNodes);
+            requestedKeys = getKeysByOwner(ctx, keys, CacheTopologyUtil.checkTopology(command, getCacheTopology()), null, contactedNodes);
          }
          int pos = destinationIndex;
          for (Map.Entry<Address, List<Object>> addressKeys : requestedKeys.entrySet()) {
@@ -638,7 +639,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return UnsureResponse.INSTANCE;
       }
       if (readNeedsRemoteValue(command)) {
-         LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+         LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
          Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
          if (log.isTraceEnabled())
             log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
