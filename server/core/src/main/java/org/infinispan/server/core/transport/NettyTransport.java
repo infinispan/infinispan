@@ -32,6 +32,7 @@ import io.netty.channel.group.ChannelGroupFutureListener;
 import io.netty.channel.group.ChannelMatcher;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -245,12 +246,15 @@ public class NettyTransport implements Transport {
 
    @ManagedAttribute(
          description = "Returns the number of I/O threads.",
-         displayName = "Number of I/O threads",
-         dataType = DataType.TRAIT
+         displayName = "Number of I/O threads"
    )
    @Override
    public int getNumberIOThreads() {
-      return configuration.ioThreads();
+      int count = 0;
+      for (EventExecutor unused : ioGroup) {
+         count++;
+      }
+      return count;
    }
 
    @ManagedAttribute(
