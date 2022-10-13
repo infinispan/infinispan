@@ -339,7 +339,8 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
    }
 
    private CompletionStage<RestResponse> queryWithoutPagination(RestCacheClient client, String query) {
-      return client.query(query, -1, 0);
+      // don't do that is very inefficient (see ISPN-14194)
+      return client.query(query, Integer.MAX_VALUE, 0);
    }
 
    private CompletionStage<RestResponse> queryWithDefaultPagination(RestCacheClient client, String query) {
