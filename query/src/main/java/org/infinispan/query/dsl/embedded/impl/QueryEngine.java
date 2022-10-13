@@ -268,7 +268,8 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr), local);
+      // TODO ISPN-13986 Improve the efficiency of aggregation deletege them to Search!
+      BaseQuery<?> baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, Integer.MAX_VALUE, parse(firstPhaseQueryStr), local);
 
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
