@@ -92,6 +92,7 @@ public enum Element {
     PARTITION_HANDLING,
     PROPERTIES,
     PROPERTY,
+    QUERY,
     RECOVERY,
     REGEX,
     REMOTE_SITE,
