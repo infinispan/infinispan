@@ -50,6 +50,7 @@ import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
+import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
@@ -634,6 +635,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       configuration.expiration().attributes().write(writer, Element.EXPIRATION.getLocalName());
       writeMemory(writer, configuration);
       writePersistence(writer, configuration);
+      writeQuery(writer, configuration);
       writeIndexing(writer, configuration);
       writeCustomInterceptors(writer, configuration);
       writeSecurity(writer, configuration);
@@ -708,6 +710,16 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             attributes.write(writer, MemoryConfiguration.MAX_SIZE, Attribute.MAX_SIZE);
          }
          attributes.write(writer, MemoryConfiguration.WHEN_FULL, Attribute.WHEN_FULL);
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeQuery(ConfigurationWriter writer, Configuration configuration) {
+      QueryConfiguration query = configuration.query();
+      AttributeSet attributes = query.attributes();
+      if (attributes.isModified()) {
+         writer.writeStartElement(Element.QUERY);
+         attributes.write(writer, QueryConfiguration.DEFAULT_MAX_RESULTS, Attribute.DEFAULT_MAX_RESULTS);
          writer.writeEndElement();
       }
    }

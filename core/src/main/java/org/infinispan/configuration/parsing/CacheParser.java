@@ -490,6 +490,10 @@ public class CacheParser implements ConfigurationParser {
             this.parsePersistence(reader, holder);
             break;
          }
+         case QUERY: {
+            this.parseQuery(reader, holder);
+            break;
+         }
          case INDEXING: {
             this.parseIndexing(reader, holder);
             break;
@@ -1856,6 +1860,32 @@ public class CacheParser implements ConfigurationParser {
                configBuilder.segmented(segmented);
 
             parseStoreElements(reader, configBuilder);
+         }
+      }
+   }
+
+   private void parseQuery(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case DEFAULT_MAX_RESULTS:
+               builder.query().defaultMaxResults(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      // no nested properties at the moment
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
          }
       }
    }
