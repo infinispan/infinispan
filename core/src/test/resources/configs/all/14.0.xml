@@ -223,6 +223,9 @@
             </indexed-entities>
          </indexing>
       </distributed-cache>
+      <local-cache name="custom-default-max-results">
+         <query default-max-results="10" />
+      </local-cache>
       <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"

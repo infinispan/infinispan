@@ -138,6 +138,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(indexed.storage()).isEqualTo(IndexStorage.LOCAL_HEAP);
             assertThat(indexed.startupMode()).isEqualTo(IndexStartupMode.REINDEX);
             assertThat(indexed.indexedEntityTypes()).containsExactly("TheEntity");
+
+            query = getConfiguration(holder, "custom-default-max-results").query();
+            assertThat(query.defaultMaxResults()).isEqualTo(10);
          }
       },
       INFINISPAN_130(13, 0) {
