@@ -1,4 +1,0 @@
-/**
-   * @Field(analyze = Analyze.YES, store = Store.YES)
-   */
-required string street = 1;
