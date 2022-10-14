@@ -134,6 +134,9 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
             return;
          }
          if (lines == null) {
+            if (parsed.name == null) {
+               throw new ConfigurationReaderException("Incomplete line", Location.of(row, 1));
+            }
             lines = new Node(parsed);
             current = lines;
          } else {
@@ -150,6 +153,10 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                // Child of the current node
                if (parsed.listItem && parsed.name != null) {
                   current = addListItem(parsed, current);
+               } else if (!parsed.listItem && parsed.name == null) {
+                  // It's a value continuation, append it to the current
+                  current.parsed.value = current.parsed.value + " " + parsed.value;
+                  continue;
                }
                current = current.addChild(new Node(parsed));
             } else {
@@ -161,7 +168,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                current = current.addChild(new Node(parsed));
             }
          }
-      } while (parsed != null);
+      } while (true);
    }
 
    private Node addListItem(Parsed parsed, Node current) {
@@ -311,8 +318,8 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   parsed.name = null;
                }
             } else {
-               // Unterminated
-               throw new ConfigurationReaderException("Incomplete line", Location.of(row, 1));
+               // It's probably a continuation of the previous line
+               parsed.value = s.substring(start).trim();
             }
          } else if (state == 3) { // we reached the end of the line
             String val = s.substring(start).trim();
