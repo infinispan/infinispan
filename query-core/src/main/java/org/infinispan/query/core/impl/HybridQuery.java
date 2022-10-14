@@ -57,7 +57,8 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    }
 
    protected CloseableIterator<?> getBaseIterator() {
-      return baseQuery.startOffset(0).maxResults(-1).local(local).iterator();
+      // Hybrid query, as they are, they require an unbounded max results, another reason to avoid using them
+      return baseQuery.startOffset(0).maxResults(Integer.MAX_VALUE).local(local).iterator();
    }
 
    @Override
