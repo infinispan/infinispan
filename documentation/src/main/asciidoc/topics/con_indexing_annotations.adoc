@@ -1,29 +1,50 @@
 [id='indexing-annotations_{context}']
-= Indexing annotations
+= {Brandname} native indexing annotations
 
 When you enable indexing in caches, you configure {brandname} to create indexes.
 You also need to provide {brandname} with a structured representation of the entities in your caches so it can actually index them.
 
-There are two annotations that control the entities and fields that {brandname} indexes:
+[discrete]
+== Overview of the {brandname} indexing annotations
 
-`@Indexed`:: Indicates entities, or Protobuf message types, that {brandname} indexes.
-`@Field`:: Indicates fields that {brandname} indexes and has the following attributes:
-+
+@Indexed:: Indicates entities, or Protobuf message types, that {brandname} indexes.
+
+To indicate the fields that {brandname} indexes use the indexing annotations.
+You can use these annotations the same way for both embedded and remote queries.
+Each of the annotations supports a set of attributes that you can use to further describe how the entity is indexed.
+
+@Basic:: Supports any type of field.
+Use the `@Basic` annotation for numbers and short strings that don't require any transformation or processing.
+Supports the `sortable`, `searchable`, and `projectable` attributes.
+
+@Keyword:: Use this annotation for strings and when you need to apply a normalizer to the field.
+Supports the following attributes: `searchable`, `projectable`, and `sortable`.
+
+@Text:: Use this annotation for larger strings when you need to apply an analyzer. Analyzer lets you configure a larger text string into a searchable format.
+Supports `searchable` and `projectable` attributes.
+
+@Embedded:: Use this annotation for embedded indexes and specify the entity structure.
+The `NESTED` structure preserves the original object relationship structure while the `FLATTENED` structure makes the leaf fields multivalued of the parent entity.
+
+//TODO update the table with attributes
 [%autowidth,cols="1,1,1",stripes=even]
 |===
-|Attribute |Description |Values
+|Attribute |Description |Values | Annotation
 
 |`index`
 |Controls if {brandname} includes fields in indexes.
 |`Index.YES` or `Index.NO`
+|
 
 |`store`
-|Allows {brandname} to store fields in indexes so you can use them for projections.
+|Allows {brandname} to store fields in indexes so you can use projection queries.
 |`Store.YES` or `Store.NO`
+|
 
 |`analyze`
 |Includes fields in full-text searches.
 |`Analyze.NO` or specifies an analyzer definition
+|
 |===
 
 [discrete]
@@ -31,17 +52,17 @@ There are two annotations that control the entities and fields that {brandname} 
 
 You can provide {brandname} with indexing annotations for remote caches in two ways:
 
-* Annotate your Java classes directly with `@Indexed` and `@Field(...)`. +
-You then generate Protobuf schema, `.proto` files, before uploading them to {brandname} Server.
+* Annotate your Java classes directly using `@Basic`, `@Keyword` or `@Text`. +
+You then generate or update your Protobuf schema, `.proto` files, before uploading them to {brandname} Server.
 
-* Annotate Protobuf schema directly with `@Indexed` and `@Field(...)`. +
+* Annotate Protobuf schema directly with `@Indexed` and `@Basic`, `@Keyword` or `@Text`. +
 You then upload your Protobuf schema to {brandname} Server.
 +
-For example, the following schema uses the `@Field` annotation:
+For example, the following schema uses the `@Text` annotation:
 +
 [source,java,options="nowrap",subs=attributes+]
 ----
-include::protobuf/indexed_field.protobuf[]
+include::protobuf/indexed_text.protobuf[]
 ----
 
 [discrete]
@@ -49,4 +70,6 @@ include::protobuf/indexed_field.protobuf[]
 
 For embedded caches, you add indexing annotations to your Java classes according to how {brandname} stores your entries.
 
-Use the `@Indexed` and `@Field` annotations, along with other Hibernate Search annotations such as `@FullTextField`.
+Annotate values with `@Indexed` to add them to indexes.
+Use `@Basic`, `@Keyword` or `@Text` to annotate each field depending how you want {brandname} to index them.
+For embedded indexes use the `@Embedded` annotation and specify the entity structure.
