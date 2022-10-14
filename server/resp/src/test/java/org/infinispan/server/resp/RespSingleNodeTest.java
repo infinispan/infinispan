@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
@@ -20,6 +21,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
@@ -70,7 +75,12 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(true);
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), this.getClass().getSimpleName());
+      Util.recursiveFileRemove(stateDirectory);
+      gcb.globalState().enable().persistentLocation(stateDirectory).configurationStorage(ConfigurationStorage.OVERLAY);
+      gcb.globalState().sharedPersistentLocation(stateDirectory);
+      return TestCacheManagerFactory.createClusteredCacheManager(gcb, new ConfigurationBuilder());
    }
 
    @AfterClass(alwaysRun = true)

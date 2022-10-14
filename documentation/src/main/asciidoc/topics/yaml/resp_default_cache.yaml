@@ -1,0 +1,8 @@
+respCache:
+  replicatedCache:
+    mode: "SYNC"
+    encoding:
+      key:
+        mediaType: "application/octet-stream"
+      value:
+        mediaType: "application/octet-stream"

@@ -1,0 +1,15 @@
+{
+  "respCache": {
+    "replicated-cache": {
+      "mode": "SYNC",
+      "encoding": {
+        "key": {
+          "media-type": "application/octet-stream"
+        },
+        "value": {
+          "media-type": "application/octet-stream"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<replicated-cache name="respCache" mode="SYNC">
+  <encoding>
+    <key media-type="application/octet-stream"/>
+    <value media-type="application/octet-stream"/>
+  </encoding>
+</replicated-cache>

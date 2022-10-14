@@ -1,8 +1,8 @@
 [id='enabling-resp-endpoint_{context}']
 = Enabling the RESP endpoint
 
-Add the `resp-connector` to {brandname} Server configuration to enable the RESP endpoint.
-You can enable the RESP endpoint with:
+The RESP endpoint is enabled by default. However you can add the `resp-connector` to {brandname} Server configuration
+to modify the defaults or add additional RESP endpoints:
 
 * Standalone {brandname} Server deployments, exactly like standalone Redis, where each server instance runs independently of each other.
 * Clustered {brandname} Server deployments, where server instances replicate or distribute data between each other. Clustered deployments provides clients with failover capabilities.
@@ -11,7 +11,36 @@ You can enable the RESP endpoint with:
 
 * Install {brandname} Server.
 
-.Procedure
+.Defaults
+
+On first access, a default cache named 'respCache' will be created based on the 'org.infinispan.template.RESP' configuration template.
+The cache has the following sensible defaults for a regular Redis user.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/resp_default_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/resp_default_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/resp_default_cache.yaml[]
+----
+
+
+* *Replicated cache* for the highest consistency. Cache name is *respCache*
+* Key encoding *application/octet-stream* to store keys as binary objects
+* Value encoding *application/octet-stream* to store values as binary objects
+
+
+.Overriding defaults
 
 . Open your {brandname} Server configuration for editing.
 . Add cache configuration to the `cache-container` section if required.

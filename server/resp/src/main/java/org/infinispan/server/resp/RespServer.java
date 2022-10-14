@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
+import static org.infinispan.server.resp.configuration.RespServerConfiguration.DEFAULT_RESP_CACHE_TEMPLATE;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -40,7 +41,20 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       if (!cacheManager.getCacheManagerConfiguration().features().isAvailable(RESP_SERVER_FEATURE)) {
          throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
-      if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
+      super.startInternal();
+   }
+
+   @Override
+   protected void startCaches() {
+      String defaultRespCacheName = configuration.defaultCacheName();
+      Configuration respCacheConfig = cacheManager.getCacheConfiguration(defaultRespCacheName);
+      if (respCacheConfig != null) {
+         ExpirationConfiguration expConfig = respCacheConfig.expiration();
+         if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)
+            throw log.invalidExpiration(configuration.defaultCacheName());
+         // If the respCache configuration is explicitly defined, start the cache
+         super.startCaches();
+      } else {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
@@ -51,13 +65,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             }
             builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
             builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            builder.template(true);
          }
-         cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
+         cacheManager.administration().getOrCreateTemplate(DEFAULT_RESP_CACHE_TEMPLATE, builder.build());
+         if (configuration.startTransport()) {
+            super.registerAdminOperationsHandler();
+            startTransport();
+         }
       }
-      ExpirationConfiguration expConfig = cacheManager.getCacheConfiguration(configuration.defaultCacheName()).expiration();
-      if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)
-        throw log.invalidExpiration(configuration.defaultCacheName());
-      super.startInternal();
    }
 
    @Override
@@ -90,7 +105,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
     * Returns the cache being used by the Resp server
     */
    public AdvancedCache<byte[], byte[]> getCache() {
-      return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache();
+      return (AdvancedCache<byte[], byte[]>) SecurityActions
+            .getOrCreateCache(cacheManager, configuration.defaultCacheName(), DEFAULT_RESP_CACHE_TEMPLATE)
+            .getAdvancedCache();
    }
 
    public Resp3Handler newHandler() {

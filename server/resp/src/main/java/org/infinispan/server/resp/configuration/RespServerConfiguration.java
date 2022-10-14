@@ -20,6 +20,7 @@ import org.infinispan.server.resp.RespServer;
 public class RespServerConfiguration extends ProtocolServerConfiguration<RespServerConfiguration> {
 
    public static final int DEFAULT_RESP_PORT = 6379;
+   public static final String DEFAULT_RESP_CACHE_TEMPLATE = "org.infinispan.template.RESP";
    public static final String DEFAULT_RESP_CACHE = "respCache";
 
    public static AttributeSet attributeDefinitionSet() {
