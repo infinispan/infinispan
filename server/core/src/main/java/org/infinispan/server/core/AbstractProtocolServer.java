@@ -70,7 +70,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          startTransport();
    }
 
-   private void registerAdminOperationsHandler() {
+   protected void registerAdminOperationsHandler() {
       if (configuration.adminOperationsHandler() != null) {
          TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
          if (taskManager != null) {
@@ -251,7 +251,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       // But the default cache may not be defined (e.g. it might be using a wildcard template)
       String name = defaultCacheName();
       if (name != null) {
-         log.debugf("Starting default cache: %s", configuration.defaultCacheName());
+         log.debugf("Starting default cache: %s", name);
          cacheManager.getCache(name);
       } else {
          log.debugf("No default cache to start");
