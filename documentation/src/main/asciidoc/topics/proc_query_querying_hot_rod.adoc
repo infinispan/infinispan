@@ -62,5 +62,5 @@ include::code_examples/RemoteQuery.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{encoding_docs}[Marshalling and Encoding Data] for more information about creating serialization contexts and registering Protobuf schema.
-* link:{encoding_docs}#protostream-annotations_marshalling[ProtoStream annotations] for more information about the `@ProtoField`, `@ProtoDoc`, and `@AutoProtoSchemaBuilder` annotations.
+* link:{encoding_docs}[Encoding Infinispan caches and marshalling data]
+* link:{encoding_docs}#protostream-annotations_marshalling[Encoding {brandname} caches and marshalling data: ProtoStream annotations]
