@@ -40,6 +40,12 @@ conjunction with `Query.startOffset(long startOffset)` to achieve pagination of 
 Query<Book> query = queryFactory.create("FROM org.infinispan.sample.Book WHERE title like '%clustering%' ORDER BY year").startOffset(20).maxResults(10)
 ----
 
+[NOTE]
+====
+If you don't explicitly set the `maxResults` for a query instance, {brandname} limits the number of results returned by the query to `100`.
+You can change the default limit by setting the `query.default-max-results` cache property.
+====
+
 == Number of hits
 
 The `QueryResult` object has the `.hitCount()` method to return the total number of results of the query, regardless
