@@ -147,7 +147,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
          throw CONTAINER.unsupportedStatement();
       }
 
-      if (queryDefinition.getFirstResult() != 0 || !queryDefinition.getDefaultMaxResults()) {
+      if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
          throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 

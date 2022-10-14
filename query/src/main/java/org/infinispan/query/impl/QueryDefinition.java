@@ -35,11 +35,11 @@ public final class QueryDefinition {
    private long timeout = -1;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
-   private final int defaultMaxResults;
+   private final int originalMaxResults;
 
    public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
                           SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider,
-                          int defaultMaxResults) {
+                          int originalMaxResults) {
       if (queryString == null) {
          throw new IllegalArgumentException("queryString cannot be null");
       }
@@ -52,12 +52,12 @@ public final class QueryDefinition {
       this.queryString = queryString;
       this.statementType = statementType;
       this.queryEngineProvider = queryEngineProvider;
-      this.maxResults = defaultMaxResults;
-      this.defaultMaxResults = defaultMaxResults;
+      this.maxResults = originalMaxResults;
+      this.originalMaxResults = originalMaxResults;
    }
 
    public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
-                          SearchQueryBuilder searchQueryBuilder, int defaultMaxResults) {
+                          SearchQueryBuilder searchQueryBuilder, int originalMaxResults) {
       if (queryString == null) {
          throw new IllegalArgumentException("queryString cannot be null");
       }
@@ -71,8 +71,8 @@ public final class QueryDefinition {
       this.queryString = queryString;
       this.statementType = statementType;
       this.queryEngineProvider = null;
-      this.maxResults = defaultMaxResults;
-      this.defaultMaxResults = defaultMaxResults;
+      this.maxResults = originalMaxResults;
+      this.originalMaxResults = originalMaxResults;
    }
 
    public String getQueryString() {
@@ -111,8 +111,8 @@ public final class QueryDefinition {
       return searchQueryBuilder;
    }
 
-   public boolean getDefaultMaxResults() {
-      return maxResults == defaultMaxResults;
+   public boolean isCustomMaxResults() {
+      return maxResults != originalMaxResults;
    }
 
    public int getMaxResults() {
@@ -195,7 +195,7 @@ public final class QueryDefinition {
          int firstResult = input.readInt();
          int maxResults = input.readInt();
 
-         // TODO ISPN-14194 Avoid to externalize the current maxResults as defaultMaxResults
+         // maxResults becomes the originalMaxResults of the distributed cloned queries
          QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, engineProvider, maxResults);
          queryDefinition.setFirstResult(firstResult);
 
