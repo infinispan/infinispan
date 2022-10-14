@@ -1,0 +1,429 @@
+= {brandname} cache configuration cheat sheet
+
+Use the following information and configuration examples as a quick reference for creating and configuring {brandname} caches.
+
+== Clustered cache modes
+
+Distributed:: Distributed caches offer linear scalability and efficient memory usage by creating fewer copies of each entry across the cluster.
+Distributed caches store a number of copies for each cache entry that is equal to the *Number of owners* that you configure.
++
+[source,xml]
+----
+<distributed-cache />
+----
+
+Replicated:: Replicated caches offer data guarantees and fault tolerance by creating a copy of all entries on each node in the cluster.
++
+[source,xml]
+----
+<replicated-cache />
+----
+
+== Cluster replication
+
+Synchronous replication:: Helps to keep your data consistent but adds latency to cluster traffic that reduces throughput for cache writes.
++
+[source,xml]
+----
+<distributed-cache mode="SYNC" />
+----
+Asynchronous replication:: Reduces latency and increases the speed of write operations but because {brandname} replicates entries from primary owners, asynchronous replication provides a lower guarantee against data loss.
+Cluster topology changes and network errors might also lead to data inconsistency with asynchronous replication.
++
+[source,xml]
+----
+<distributed-cache mode="ASYNC" />
+----
+
+== Cache configuration options
+
+.Encoding
+A format, identified by a media type, that {brandname} uses to store keys and values in caches.
+
+TIP: {brandname} recommends the `application/x-protostream` media type. Protobuf gives you excellent performance as well as interoperability between client applications in different programming languages for both Hot Rod and REST endpoints. Your cache encoding must be compatible with the Hot Rod client marshaller.
+
+[source,xml]
+----
+<distributed-cache mode="SYNC">
+  <encoding>
+    <key media-type="application/x-protostream"/>
+    <value media-type="application/x-protostream"/>
+  </encoding>
+</distributed-cache>
+----
+
+.Expiration
+Controls how long {brandname} keeps entries in a cache and takes effect across clusters.
+
+Lifespan:: The maximum amount of time, in milliseconds, that cache entries can exist.
+If you set the value to -1, entries never expire.
+Lifespan uses a `creation` timestamp and the value for the `lifespan` property to determine when entries expire.
+The creation time for cache entries provides a value that is consistent across clustered caches.
+
+Max-idle:: The maximum amount of time, in milliseconds, that cache entries can remain idle.
+If no operations are performed on entries within the maximum idle time, the entries expire across the cluster.
+If you set the value to -1, entries never expire.
+
+Maximum idle uses a `last used` timestamp and the value for the `max-idle` property to determine when entries expire.
+The last access time for entries is not always the same on all nodes.
+To ensure that entries have the same relative access times across clusters, {brandname} sends touch commands to all owners when keys are accessed.
+This synchronous behavior increases latency of client requests.
+
+TIP: The {brandname} team recommends setting the value for `lifespan` to be at least double of the value that you set for the `max-idle` property. Configuring `max-idle` close to `lifespan` has performance drawbacks.
+
+[source,xml]
+----
+<distributed-cache>
+  <expiration lifespan="5000"
+              max-idle="1000" />
+</distributed-cache>
+----
+
+.Statistics
+Start collecting statistics for your cache.
+Keep disabled for optimal performance.
+
+[source,xml]
+----
+<distributed-cache statistics="true" />
+----
+
+== {brandname} capabilities
+
+=== Bounded caches
+
+.Eviction
+Eviction controls the amount of data that {brandname} keeps in memory and takes effect for each node.
+
+Control the size of data container in one of the following ways:
+
+Max size:: Maximum size of the data container in bytes.
+Eviction occurs when the approximate memory usage of the data container exceeds the maximum size.
++
+[source,xml]
+----
+<distributed-cache>
+  <memory max-size="12MB" when-full="REMOVE"/>
+</distributed-cache>
+----
+
+Max count:: Maximum number of entries.
+Eviction occurs after the container size exceeds the maximum count.
++
+[source,xml]
+----
+<distributed-cache>
+	<memory max-count="124" when-full="REMOVE"/>
+</distributed-cache>
+----
+
+.Eviction strategies
+* `REMOVE` {brandname} performs eviction. This is the default strategy when you define a size for the data container. Because not all nodes evict the same entries you should use eviction with persistent storage to avoid data inconsistency.
+
+* `EXCEPTION` {brandname} throws an exception instead of evicting entries.
+
+If no strategy is defined, but `max-count` or `max-size` is configured, `REMOVE` is used.
+
+=== Indexed caches
+Create indexes of values in your caches for faster queries and full-text search capabilities.
+
+.Index storage
+Persistent:: On the host file system, which is the default and persists indexes between restarts.
++
+[source,xml]
+----
+<distributed-cache>
+  <indexing storage="filesystem">
+    <!-- Indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>
+----
+
+Volatile:: In JVM heap memory, which means that indexes do not survive restarts.
+You should store indexes in JVM heap memory only for small datasets.
++
+[source,xml]
+----
+<distributed-cache>
+  <indexing storage="local-heap">
+    <!-- Indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>
+----
+
+Index reader:: The index reader provides access to the indexes to perform queries.
+As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.
++
+[source,xml]
+----
+<distributed-cache>
+  <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
+    <!-- Sets an interval of one second for the index reader. -->
+    <index-reader refresh-interval="1000"/>
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>
+----
+
+Index writer:: The index writer constructs an index composed of one or more segments (sub-indexes) that can be merged over time to improve performance.
++
+[source,xml]
+----
+<distributed-cache>
+  <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
+    <index-writer commit-interval="2000"
+                  low-level-trace="false"
+                  max-buffered-entries="32"
+                  queue-count="1"
+                  queue-size="10000"
+                  ram-buffer-size="400"
+                  thread-pool-size="2">
+      <index-merge calibrate-by-deletes="true"
+                   factor="3"
+                   max-entries="2000"
+                   min-size="10"
+                   max-size="20"/>
+    </index-writer>
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>
+----
+
+=== Authorization
+Secure your deployment by restricting user access to data.
+
+.Default set of roles
+* Observer
+* Application
+* Admin
+* Monitor
+* Deployer
++
+[source,xml]
+----
+<distributed-cache>
+	<security>
+        <!--Specify one or more user roles -->
+		<authorization enabled="true"
+                  roles="observer application admin monitor"/>
+	</security>
+</distributed-cache>
+----
+
+=== Backups
+Define backup locations for cache data and modify state transfer properties.
+
+Backup strategies:: To back up data to a different cluster, {brandname} can use either a synchronous or asynchronous strategy.
+{brandname} performs conflict resolution with the asynchronous backup strategy.
+
+Remote site:: Specifies the name of the remote site that backs up data to the local cache.
+Remote cache:: Specifies the name of the remote cache that uses the local cache as a backup.
+Timeout:: Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
+
+[cols="a,a", options="header"]
+|===
+| Cluster LON
+| Cluster NYC
+
+|
+[source,xml]
+----
+<distributed-cache>
+  <backups>
+    <backup site="NYC"
+            strategy="ASYNC"
+            timeout="10000" />
+  </backups>
+</distributed-cache>
+----
+|
+[source,xml]
+----
+<distributed-cache name="eu-customers">
+  <backups>
+    <backup site="LON"
+            strategy="ASYNC" />
+  </backups>
+    <!-- Defines the local cache as a backup for a remote cache with a different name. -->
+  <backup-for remote-cache="customers"
+              remote-site="LON" />
+</distributed-cache>
+----
+
+|===
+
+=== Transactional
+
+.Transaction mode
+Configure the mode that {brandname} uses when carrying out transactions to ensure the cache state is consistent.
+
+NOTE: Enable transaction mode for the cache to ensure consistency for conditional operations, such as `putIfAbsent` or `remove`, that require consistent cache data across the cluster.
+
+NON_XA:: Cache will enlist within transactions as a `javax.transaction.Synchronization`.
+NON_DURABLE_XA:: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, without recovery.
+FULL_XA:: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, with recovery.
+
+.Locking mode
+Configure how {brandname} locks keys to perform write operations for transactions.
+Locking keys adds contention that increases latency for write operations.
+You can adjust the amount of contention by using optimistic or pessimistic locking.
+
+Optimistic:: {brandname} locks keys when it invokes the `commit()` method.
+Keys are locked for shorter periods of time which reduces overall latency but makes transaction recovery less efficient.
+Pessimistic:: {brandname} locks keys when it invokes the `put()` method.
+Keys are locked for longer periods of time which increases latency but makes transaction recovery more efficient.
++
+[source,xml]
+----
+<distributed-cache name="deee" mode="SYNC">
+	<transaction
+          <!-- Transaction mode -->
+                mode="NON_XA"
+          <!-- Locking mode -->
+                locking="OPTIMISTIC"/>
+</distributed-cache>
+----
+
+=== Persistence
+Configure non-volatile storage so entries remain available after cluster restarts.
+
+.Passivation
+{brandname} writes entries to persistent storage when it evicts those entries from memory. Passivation ensures that only a single copy of an entry is maintained, either in-memory or in a cache store, and prevents unnecessary and expensive writes to persistent storage.
+[source,xml]
+----
+<distributed-cache>
+  <persistence passivation="true">
+    <!-- Persistence configuration goes here. -->
+  </persistence>
+</distributed-cache>
+----
+
+.Persistent storage configuration
+File store:: File-based cache store on the local host filesystem. For clustered caches, file-based cache stores are unique to each {brandname} node.
++
+[source,xml]
+----
+<distributed-cache>
+	<persistence passivation="false">
+		<file-store>
+			<data path="path/to/data"/>
+			<index path="path/to/index"/>
+		</file-store>
+	</persistence>
+</distributed-cache>
+----
+
+Remote store:: Remote cache stores use the Hot Rod protocol to store data on {brandname} clusters.
+Table SQL store:: Load entries from a single database table.
+Ensure that the appropriate JDBC driver is available to the {brandname} cluster.
+Query SQL store:: Use SQL queries to load entries from one or more database tables, including sub-columns.
+You can also perform insert, update, and delete operations. You must ensure that the appropriate JDBC driver is available to the {brandname} cluster.
+JDBC string-based store:: Use a relational database for persistent storage through a JDBC connection.
+Ensure that the appropriate JDBC driver is available to the {brandname} cluster.
+RocksDB store:: A RocksDB cache store uses two databases; one as a primary store and another to hold expired entries.
+Custom store:: Use a custom cache store that you implement with the {brandname} Persistence SPI.
+
+== Configuration formats
+You can create {brandname} configuration in  XML, JSON, or YAML format.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<distributed-cache owners="2"
+                   mode="SYNC"
+                   statistics="true">
+  <encoding media-type="application/x-protostream"/>
+  <locking isolation="REPEATABLE_READ"/>
+  <transaction mode="FULL_XA"
+               locking="OPTIMISTIC"/>
+  <expiration lifespan="5000"
+              max-idle="1000" />
+  <memory max-count="1000000"
+          when-full="REMOVE"/>
+  <indexing enabled="true"
+            storage="local-heap">
+    <index-reader refresh-interval="1000"/>
+    <indexed-entities>
+      <indexed-entity>org.infinispan.Person</indexed-entity>
+    </indexed-entities>
+  </indexing>
+  <persistence passivation="false">
+    <!-- Persistent storage configuration. -->
+  </persistence>
+</distributed-cache>
+
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+{
+  "distributed-cache": {
+    "owners": 2,
+    "mode": "SYNC",
+    "statistics": true,
+    "encoding": {
+      "media-type": "application/x-protostream"
+    },
+    "locking": {
+      "isolation": "REPEATABLE_READ"
+    },
+    "transaction": {
+      "mode": "FULL_XA",
+      "locking": "OPTIMISTIC"
+    },
+    "expiration": {
+      "lifespan": 5000,
+      "max-idle": 1000
+    },
+    "memory": {
+      "max-count": 1000000,
+      "when-full": "REMOVE"
+    },
+    "indexing": {
+      "enabled": true,
+      "storage": "local-heap",
+      "indexed-entities": [
+        "org.infinispan.Person"
+      ],
+      "index-reader": {
+        "refresh-interval": 1000
+      }
+    },
+    "persistence": {
+      "passivation": false
+    }
+  }
+}
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+distributed-cache:
+  owners: 2
+  mode: SYNC
+  statistics: true
+  encoding:
+    media-type: application/x-protostream
+  locking:
+    isolation: REPEATABLE_READ
+  transaction:
+    mode: FULL_XA
+    locking: OPTIMISTIC
+  expiration:
+    lifespan: 5000
+    max-idle: 1000
+  memory:
+    max-count: 1000000
+    when-full: REMOVE
+  indexing:
+    enabled: true
+    storage: local-heap
+    index-reader:
+      refresh-interval: 1000
+    indexedEntities:
+      - "org.infinispan.Person"
+  persistence:
+    passivation: false
+----
