@@ -123,6 +123,12 @@ Any annotations will simply be copied as comments to the generated `.proto` file
 
 The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
 
+== Query efficiency
+
+The default for maximum results returned by a query that was present in Infinispan 12.1.5.Final and earlier versions has been restored.
+You can now change the default limit by setting the default-max-results cache property.
+The default value of default-max-results is 100.
+Limiting the number of results returned by a query significantly improves performance of queries that don't have an explicit limit set.
 
 = Upgrading from 12.1 to 13.0
 
