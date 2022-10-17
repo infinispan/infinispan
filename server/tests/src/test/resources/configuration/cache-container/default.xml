@@ -1,5 +1,5 @@
 <!-- empty cache container -->
 <cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-fragment-14.0.xsd"
-                 xmlns="urn:infinispan:config:14.0"
+                 xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-fragment-15.0.xsd"
+                 xmlns="urn:infinispan:config:15.0"
                  name="default"/>

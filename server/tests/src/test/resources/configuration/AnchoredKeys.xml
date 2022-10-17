@@ -1,16 +1,16 @@
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:xi="http://www.w3.org/2001/XInclude"
-      xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd
-                            urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
-      xmlns="urn:infinispan:config:14.0"
-      xmlns:server="urn:infinispan:server:14.0">
+      xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd
+                            urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+      xmlns="urn:infinispan:config:15.0"
+      xmlns:server="urn:infinispan:server:15.0">
 
    <xi:include href="jgroups/stacks.xml"/>
 
    <xi:include href="cache-container/clustered-anchored.xml"/>
 
-   <server xmlns="urn:infinispan:server:14.0">
+   <server xmlns="urn:infinispan:server:15.0">
 
       <xi:include href="interfaces/default.xml"/>
 

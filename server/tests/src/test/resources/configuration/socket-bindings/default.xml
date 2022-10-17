@@ -1,6 +1,6 @@
 <socket-bindings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
-                 xmlns="urn:infinispan:server:14.0"
+                 xsi:schemaLocation="urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+                 xmlns="urn:infinispan:server:15.0"
                  default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
    <socket-binding name="memcached" port="11221"/>
    <socket-binding name="default" port="11222"/>

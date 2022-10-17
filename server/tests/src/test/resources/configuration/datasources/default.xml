@@ -1,6 +1,6 @@
 <data-sources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
-           xmlns="urn:infinispan:server:14.0">
+           xsi:schemaLocation="urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+           xmlns="urn:infinispan:server:15.0">
    <data-source name="h2" jndi-name="jdbc/h2" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.h2.driver:org.h2.Driver}"
                           username="${org.infinispan.server.test.database.h2.username:test}"

@@ -1,6 +1,6 @@
 <endpoint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
-          xmlns="urn:infinispan:server:14.0" socket-binding="default" security-realm="default">
+          xsi:schemaLocation="urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+          xmlns="urn:infinispan:server:15.0" socket-binding="default" security-realm="default">
    <hotrod-connector/>
    <hotrod-connector socket-binding="alternate-1">
       <authentication security-realm="alternate">

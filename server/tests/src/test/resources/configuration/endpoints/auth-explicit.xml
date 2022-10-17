@@ -1,6 +1,6 @@
 <endpoint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:14.0 https://infinispan.org/schemas/infinispan-server-14.0.xsd"
-          xmlns="urn:infinispan:server:14.0" socket-binding="default" security-realm="default">
+          xsi:schemaLocation="urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+          xmlns="urn:infinispan:server:15.0" socket-binding="default" security-realm="default">
    <hotrod-connector>
       <authentication>
          <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 SCRAM-SHA-1 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 DIGEST-SHA DIGEST-MD5 PLAIN"

@@ -1,0 +1,186 @@
+<infinispan
+      xmlns="urn:infinispan:config:15.0"
+      xmlns:server="urn:infinispan:server:15.0">
+   <cache-container>
+      <transport server:security-realm="default"/>
+   </cache-container>
+   <server xmlns="urn:infinispan:server:15.0">
+      <interfaces>
+         <interface name="default">
+            <loopback/>
+         </interface>
+         <interface name="another">
+            <loopback/>
+         </interface>
+      </interfaces>
+
+      <socket-bindings default-interface="default" port-offset="${infinispan.socket.binding.port-offset:0}">
+         <socket-binding name="default" port="11222"/>
+         <socket-binding name="hotrod" port="11223"/>
+         <socket-binding name="memcached" port="11221"/>
+         <socket-binding name="memcached-2" port="12221"/>
+         <socket-binding name="rest" port="8080"/>
+      </socket-bindings>
+
+      <security>
+         <credential-stores>
+            <credential-store name="credentials" path="ServerConfigurationSerializerTest-credentials.pfx">
+               <clear-text-credential clear-text="secret"/>
+            </credential-store>
+            <credential-store name="masked" path="ServerConfigurationSerializerTest-credentials.pfx">
+               <masked-credential masked="1Hc4Feq2wJs;pepper99;100"/>
+            </credential-store>
+            <credential-store name="command" path="ServerConfigurationSerializerTest-credentials.pfx">
+               <command-credential command="${build.directory}/test-classes/bin/credential.sh"/>
+            </credential-store>
+         </credential-stores>
+         <security-realms>
+            <security-realm name="default">
+               <server-identities>
+                  <ssl>
+                     <keystore path="ServerConfigurationSerializerTest-keystore.pfx"
+                               relative-to="infinispan.server.config.path"
+                               keystore-password="password" alias="server" key-password="password"
+                               generate-self-signed-certificate-host="localhost"/>
+                     <truststore path="ServerConfigurationSerializerTest-truststore.pfx"
+                                 relative-to="infinispan.server.config.path"
+                                 password="secret"/>
+                     <engine enabled-protocols="TLSV1.1 TLSV1.2 TLSV1.3"
+                             enabled-ciphersuites="DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"
+                             enabled-ciphersuites-tls13="TLS_AES_256_GCM_SHA384"/>
+                  </ssl>
+                  <kerberos principal="kerberos@DOMAIN.ORG" keytab-path="keytab" required="false" debug="false" fail-cache="1000" mechanism-names="KRB5 SPNEGO" relative-to="infinispan.server.config.path"/>
+               </server-identities>
+               <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+                           principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword">
+                  <name-rewriter>
+                     <regex-principal-transformer name="domain-remover" pattern="(.*)@INFINISPAN\.ORG" replacement="$1"/>
+                  </name-rewriter>
+                  <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org">
+                     <attribute-mapping>
+                        <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"
+                                   filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+                        <attribute from="cn2" to="Roles2"
+                                   filter="(&amp;(objectClass=GroupOfUniqueNames)(member={0}))"
+                                   filter-dn="ou=People,dc=infinispan,dc=org"/>
+                        <attribute-reference reference="memberOf" to="Roles3"/>
+                     </attribute-mapping>
+                     <user-password-mapper from="userPassword" verifiable="false"/>
+                  </identity-mapping>
+               </ldap-realm>
+               <local-realm name="test-local"/>
+               <properties-realm groups-attribute="Roles">
+                  <user-properties path="ServerConfigurationParserTest-user.properties" digest-realm-name="digest"
+                                   relative-to="infinispan.server.config.path" plain-text="true"/>
+                  <group-properties path="ServerConfigurationParserTest-group.properties"
+                                    relative-to="infinispan.server.config.path"/>
+               </properties-realm>
+               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+                  <oauth2-introspection host-name-verification-policy="ANY"
+                                        introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
+                                        client-id="infinispan-server"
+                                        client-secret="1fdca4ec-c416-47e0-867a-3d471af7050f"/>
+               </token-realm>
+               <truststore-realm/>
+            </security-realm>
+
+            <security-realm name="using-credentials">
+               <server-identities>
+                  <ssl>
+                     <keystore path="ServerConfigurationSerializerTest-keystore.pfx"
+                               relative-to="infinispan.server.config.path"
+                               alias="server">
+                        <credential-reference store="credentials" alias="keystore"/>
+                     </keystore>
+                     <truststore path="ServerConfigurationSerializerTest-truststore.pfx"
+                                 relative-to="infinispan.server.config.path">
+                        <credential-reference store="credentials" alias="trust"/>
+                     </truststore>
+                  </ssl>
+               </server-identities>
+               <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+                           principal="uid=admin,ou=People,dc=infinispan,dc=org">
+                  <credential-reference store="credentials" alias="ldap"/>
+                  <identity-mapping rdn-identifier="uid" search-dn="ou=People,dc=infinispan,dc=org"/>
+               </ldap-realm>
+               <token-realm name="token-test" principal-claim="username-claim" auth-server-url="http://${org.infinispan.test.host.address}:14567/auth/" client-id="infinispan-console">
+                  <oauth2-introspection host-name-verification-policy="ANY"
+                                        introspection-url="http://${org.infinispan.test.host.address}:14567/auth/realms/infinispan/protocol/openid-connect/token/introspect"
+                                        client-id="infinispan-server">
+                     <credential-reference store="credentials" alias="oauth2"/>
+                  </oauth2-introspection>
+               </token-realm>
+               <truststore-realm />
+            </security-realm>
+            <security-realm name="basic">
+               <properties-realm groups-attribute="Roles">
+                  <user-properties path="ServerConfigurationParserTest-user.properties" digest-realm-name="digest"
+                                   relative-to="infinispan.server.config.path" plain-text="true"/>
+                  <group-properties path="ServerConfigurationParserTest-group.properties"
+                                    relative-to="infinispan.server.config.path"/>
+               </properties-realm>
+            </security-realm>
+         </security-realms>
+      </security>
+
+      <data-sources>
+         <data-source name="database" jndi-name="jdbc/database" statistics="true">
+            <connection-factory driver="org.h2.Driver" username="test" password="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test" new-connection-sql="SELECT 1">
+               <connection-property name="someproperty">somevalue</connection-property>
+            </connection-factory>
+            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000" validate-on-acquisition="500"/>
+         </data-source>
+         <data-source name="database-with-credential" jndi-name="jdbc/database-with-credential" statistics="true">
+            <connection-factory driver="org.h2.Driver" username="test" url="jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test" new-connection-sql="SELECT 1">
+               <credential-reference store="credentials" alias="db"/>
+            </connection-factory>
+            <connection-pool max-size="10" min-size="1" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+         </data-source>
+      </data-sources>
+
+      <endpoints>
+         <endpoint socket-binding="default" security-realm="default" io-threads="12" idle-timeout="1"
+                   receive-buffer-size="2" send-buffer-size="3" tcp-keepalive="true"
+                   tcp-nodelay="true">
+            <hotrod-connector name="hotrod" io-threads="23" tcp-nodelay="false" tcp-keepalive="false"
+                              send-buffer-size="10" receive-buffer-size="20" idle-timeout="2" socket-binding="hotrod"
+                              external-host="external" external-port="12345">
+               <topology-state-transfer await-initial-retrieval="false" lazy-retrieval="false" lock-timeout="12"
+                                        replication-timeout="13"/>
+               <authentication security-realm="default">
+                  <sasl server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth auth-conf"
+                        strength="high medium low"
+                        policy="forward-secrecy no-active no-anonymous no-dictionary no-plain-text pass-credentials">
+                     <property name="prop1">value1</property>
+                     <property name="prop2">value2</property>
+                     <property name="prop3">value3</property>
+                  </sasl>
+               </authentication>
+               <encryption require-ssl-client-auth="true" security-realm="default">
+                  <sni host-name="sni-host-1" security-realm="default"/>
+                  <sni host-name="sni-host-2" security-realm="default"/>
+               </encryption>
+            </hotrod-connector>
+            <rest-connector socket-binding="rest" io-threads="11"
+                            name="rest" context-path="rest" extended-headers="NEVER"
+                            max-content-length="3" compression-level="3">
+               <authentication security-realm="default" mechanisms="DIGEST BASIC"/>
+               <cors-rules>
+                  <cors-rule name="rule1" allow-credentials="true" max-age-seconds="1" allowed-origins="origin1 origin2"
+                             allowed-methods="GET POST"
+                             allowed-headers="Accept"
+                             expose-headers="Accept Content-Type"/>
+                  <cors-rule name="rule2" allowed-origins="*" allowed-methods="GET POST"/>
+               </cors-rules>
+               <encryption require-ssl-client-auth="false" security-realm="default">
+                  <sni host-name="sni-host-3" security-realm="default"/>
+                  <sni host-name="sni-host-4" security-realm="default"/>
+               </encryption>
+            </rest-connector>
+            <memcached-connector name="memcached" socket-binding="memcached" io-threads="1"
+                                 idle-timeout="1" tcp-nodelay="true" tcp-keepalive="true" send-buffer-size="3"
+                                 receive-buffer-size="3" cache="string" client-encoding="application/json"/>
+         </endpoint>
+      </endpoints>
+   </server>
+</infinispan>

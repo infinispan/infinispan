@@ -1,8 +1,8 @@
 <cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xmlns:ce="urn:infinispan:config:cloudevents:14.0"
-                 xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-fragment-14.0.xsd
-                                     urn:infinispan:config:cloudevents:14.0 https://infinispan.org/schemas/infinispan-cloudevents-config-14.0.xsd"
-                 xmlns="urn:infinispan:config:14.0"
+                 xmlns:ce="urn:infinispan:config:cloudevents:15.0"
+                 xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-fragment-15.0.xsd
+                                     urn:infinispan:config:cloudevents:15.0 https://infinispan.org/schemas/infinispan-cloudevents-config-15.0.xsd"
+                 xmlns="urn:infinispan:config:15.0"
                  name="default" statistics="true">
     <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
     <ce:cloudevents bootstrap-servers="${kafka.bootstrap.servers}" cache-entries-topic="cache-entries"/>

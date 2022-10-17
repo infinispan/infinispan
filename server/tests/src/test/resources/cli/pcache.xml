@@ -1,6 +1,6 @@
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="urn:infinispan:config:14.0 https://infinispan.org/schemas/infinispan-config-14.0.xsd"
-            xmlns="urn:infinispan:config:14.0">
+            xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd"
+            xmlns="urn:infinispan:config:15.0">
    <cache-container>
       <distributed-cache name="pcache">
          <encoding>
@@ -8,7 +8,7 @@
             <value media-type="application/x-protostream"/>
          </encoding>
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:14.0">
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:15.0">
                <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
                <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
                   <id-column name="ID_COLUMN" type="VARCHAR(255)" />

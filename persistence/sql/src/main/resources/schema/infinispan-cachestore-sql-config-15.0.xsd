@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema elementFormDefault="qualified" version="1.0"
-           targetNamespace="urn:infinispan:config:store:sql:14.0"
-           xmlns:tns="urn:infinispan:config:store:sql:14.0"
+           targetNamespace="urn:infinispan:config:store:sql:15.0"
+           xmlns:tns="urn:infinispan:config:store:sql:15.0"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:jdbc-common="urn:infinispan:config:store:jdbc-common:14.0">
-  <xs:import namespace="urn:infinispan:config:store:jdbc-common:14.0"
-             schemaLocation="https://infinispan.org/schemas/infinispan-cachestore-jdbc-common-config-14.0.xsd" />
+           xmlns:jdbc-common="urn:infinispan:config:store:jdbc-common:15.0">
+  <xs:import namespace="urn:infinispan:config:store:jdbc-common:15.0"
+             schemaLocation="https://infinispan.org/schemas/infinispan-cachestore-jdbc-common-config-15.0.xsd" />
 
   <xs:element name="table-jdbc-store">
     <xs:complexType>
