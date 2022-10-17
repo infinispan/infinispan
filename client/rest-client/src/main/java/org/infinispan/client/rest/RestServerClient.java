@@ -45,6 +45,8 @@ public interface RestServerClient {
     */
    CompletionStage<RestResponse> report();
 
+   CompletionStage<RestResponse> report(String node);
+
    CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName);
 
    CompletionStage<RestResponse> unIgnoreCache(String cacheManagerName, String cacheName);

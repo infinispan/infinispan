@@ -62,6 +62,11 @@ public class DummyServerStateManager implements ServerStateManager {
    }
 
    @Override
+   public ServerManagement managedServer() {
+      return null;
+   }
+
+   @Override
    public void start() {
    }
 

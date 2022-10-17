@@ -71,6 +71,11 @@ public class RestServerClientOkHttp implements RestServerClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> report(String node) {
+      return client.execute(baseServerURL, "report", node);
+   }
+
+   @Override
    public CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName) {
       return ignoreCacheOp(cacheManagerName, cacheName, "POST");
    }

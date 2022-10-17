@@ -29,4 +29,6 @@ public interface ServerStateManager extends Lifecycle {
    CompletableFuture<Void> setConnectorIpFilterRule(String name, Collection<IpSubnetFilterRule> filterRule);
 
    CompletableFuture<Void> clearConnectorIpFilterRules(String name);
+
+   ServerManagement managedServer();
 }

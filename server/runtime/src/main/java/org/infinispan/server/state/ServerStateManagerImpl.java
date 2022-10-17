@@ -32,6 +32,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.Server;
 import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.server.core.transport.CompositeChannelMatcher;
 import org.infinispan.server.core.transport.IpFilterRuleChannelMatcher;
@@ -142,6 +143,11 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    public CompletableFuture<Void> clearConnectorIpFilterRules(String name) {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       return cache.putAsync(new ScopedState(CONNECTOR_IPFILTER_SCOPE, name), new IpFilterRules()).thenApply(v -> null);
+   }
+
+   @Override
+   public ServerManagement managedServer() {
+      return server;
    }
 
    private void updateLocalIgnoredCaches(IgnoredCaches ignored) {
