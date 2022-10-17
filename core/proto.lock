@@ -322,6 +322,17 @@
             ]
           },
           {
+            "name": "Subject",
+            "fields": [
+              {
+                "id": 1,
+                "name": "principals",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "IracEntryVersion",
             "fields": [
               {
