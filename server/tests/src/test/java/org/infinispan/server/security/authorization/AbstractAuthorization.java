@@ -3,6 +3,7 @@ package org.infinispan.server.security.authorization;
 import static org.infinispan.client.rest.RestResponse.ACCEPTED;
 import static org.infinispan.client.rest.RestResponse.CREATED;
 import static org.infinispan.client.rest.RestResponse.FORBIDDEN;
+import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NOT_MODIFIED;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
@@ -31,8 +32,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -45,6 +48,7 @@ import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -67,6 +71,7 @@ import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 
@@ -663,6 +668,32 @@ public abstract class AbstractAuthorization {
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, allowed.toArray(new TestUser[0])))) {
          RestClusterClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
          assertStatus(FORBIDDEN, client.distribution());
+      }
+   }
+
+   @Test
+   public void testRestServerNodeReport() {
+      RestClusterClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
+      CompletionStage<RestResponse> distribution = restClient.distribution();
+      RestResponse distributionResponse = CompletionStages.join(distribution);
+      assertEquals(OK, distributionResponse.getStatus());
+      Json json = Json.read(distributionResponse.getBody());
+      List<String> nodes = json.asJsonList().stream().map(j -> j.at("node_name").asString()).collect(Collectors.toList());
+
+      RestServerClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
+      for (String name : nodes) {
+         RestResponse response = CompletionStages.join(client.report(name));
+         assertEquals(OK, response.getStatus());
+         assertEquals("application/gzip", response.getHeader("content-type"));
+         assertTrue(response.getHeader("Content-Disposition").startsWith("attachment;"));
+      }
+
+      RestResponse response = CompletionStages.join(client.report("not-a-node-name"));
+      assertEquals(NOT_FOUND, response.getStatus());
+
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
+         RestServerClient otherClient = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().server();
+         assertStatus(FORBIDDEN, otherClient.report(getServerTest().getMethodName()));
       }
    }
 

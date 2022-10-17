@@ -39,15 +39,23 @@ import java.util.concurrent.Executor;
 
 import javax.sql.DataSource;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.io.StringBuilderWriter;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.manager.CacheManagerInfo;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -102,6 +110,9 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/server/report")
             .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
             .handleWith(this::report)
+            .invocation().methods(GET).path("/v2/server/report/{nodeName}")
+            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+            .handleWith(this::nodeReport)
             .invocation().methods(GET).path("/v2/server/cache-managers")
             .handleWith(this::cacheManagers)
             .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}")
@@ -334,24 +345,77 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> report(RestRequest request) {
       ServerManagement server = invocationHelper.getServer();
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
             server.getServerReport().handle((path, t) -> {
                if (t != null) {
-                  return responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).build();
-               } else {
-                  return responseBuilder
-                        .contentType(MediaType.fromString("application/gzip"))
-                        .header("Content-Disposition",
-                              String.format("attachment; filename=\"%s-%s-%3$tY%3$tm%3$td%3$tH%3$tM%3$tS-report.tar.gz\"",
-                                    Version.getBrandName().toLowerCase().replaceAll("\\s", "-"),
-                                    invocationHelper.getRestCacheManager().getNodeName(),
-                                    Calendar.getInstance())
-                        )
-                        .entity(path.toFile()).build();
+                  throw CompletableFutures.asCompletionException(t);
                }
+
+               return createReportResponse(path.toFile(), invocationHelper.getRestCacheManager().getNodeName());
             })
       );
+   }
+
+   private RestResponse createReportResponse(Object report, String filename) {
+      return new NettyRestResponse.Builder()
+            .contentType(MediaType.fromString("application/gzip"))
+            .header("Content-Disposition",
+                  String.format("attachment; filename=\"%s-%s-%3$tY%3$tm%3$td%3$tH%3$tM%3$tS-report.tar.gz\"",
+                        Version.getBrandName().toLowerCase().replaceAll("\\s", "-"),
+                        filename,
+                        Calendar.getInstance())
+            )
+            .entity(report)
+            .build();
+   }
+
+   private CompletionStage<RestResponse> nodeReport(RestRequest restRequest) {
+      String targetName = restRequest.variables().get("nodeName");
+      EmbeddedCacheManager cacheManager = invocationHelper.getProtocolServer().getCacheManager();
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      List<Address> members = cacheManager.getMembers();
+
+      if (invocationHelper.getRestCacheManager().getNodeName().equals(targetName)) {
+         return report(restRequest);
+      }
+
+      if (members == null) {
+         return CompletableFuture.completedFuture(responseBuilder.status(NOT_FOUND).build());
+      }
+
+      ByRef<byte[]> response = new ByRef<>(null);
+      return SecurityActions.getClusterExecutor(cacheManager)
+            .submitConsumer(ecm -> {
+               CacheManagerInfo cmi = ecm.getCacheManagerInfo();
+               if (!cmi.getNodeName().equals(targetName)) return null;
+
+               GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(ecm);
+               BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
+               ServerStateManager ssm = bcr.getComponent(ServerStateManager.class).wired();
+
+               Path reportPath = CompletableFutures.uncheckedAwait(ssm.managedServer().getServerReport().toCompletableFuture());
+               try {
+                  return Files.readAllBytes(reportPath);
+               } catch (IOException e) {
+                  throw new CacheException(e);
+               }
+            }, (ignore, info, t) -> {
+               if (t != null) {
+                  throw CompletableFutures.asCompletionException(t);
+               }
+
+               if (info != null) {
+                  response.set(info);
+               }
+            })
+            .thenApply(ignore -> {
+               byte[] report = response.get();
+               if (report == null) {
+                  return responseBuilder.status(NOT_FOUND).build();
+               }
+
+               return createReportResponse(report,  targetName);
+            });
    }
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {

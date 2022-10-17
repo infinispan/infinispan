@@ -145,10 +145,18 @@ GET /rest/v2/server/threads
 [id='rest_v2_server_report']
 = Getting Diagnostic Reports for {brandname} Servers
 Retrieve aggregated reports for {brandname} Servers with `GET` requests.
+To retrieve the report for the requested server:
 
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/server/report
+----
+
+To retrieve the report of another server in the cluster, reference the node by name:
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/report/{nodeName}
 ----
 
 {brandname} responds with a `tar.gz` archive that contains an aggregated report
