@@ -91,7 +91,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
 
    private static void configureHttpPipeline(ChannelPipeline pipeline, RestServer restServer) {
       //TODO [ISPN-12082]: Rework pipeline removing deprecated codecs
-      Http2MultiplexCodec multiplexCodec = Http2MultiplexCodecBuilder.forServer(new ChannelInitializer<Channel>() {
+      Http2MultiplexCodec multiplexCodec = Http2MultiplexCodecBuilder.forServer(new ChannelInitializer<>() {
          @Override
          protected void initChannel(Channel channel) {
             // Creates the HTTP/2 pipeline, where each stream is handled by a sub-channel.
