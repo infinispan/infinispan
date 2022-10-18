@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -71,11 +72,22 @@ public class AuthenticationCertIT {
    }
 
    @Test
-   public void testTrustedCertificateREST() {
+   public void testTrustedCertificateREST_HTTP11() {
+      testTrustedCertificateREST(Protocol.HTTP_11);
+   }
+
+   @Test
+   public void testTrustedCertificateREST_HTTP20() {
+      testTrustedCertificateREST(Protocol.HTTP_20);
+   }
+
+   private void testTrustedCertificateREST(Protocol protocol) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
-      builder.security()
+      builder
+            .protocol(protocol)
+            .security()
             .authentication()
             .ssl()
             .sniHostName("infinispan")
