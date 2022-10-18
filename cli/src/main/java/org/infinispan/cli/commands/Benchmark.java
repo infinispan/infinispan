@@ -12,6 +12,7 @@ import org.aesh.command.option.Option;
 import org.infinispan.cli.benchmark.BenchmarkOutputFormat;
 import org.infinispan.cli.benchmark.HotRodBenchmark;
 import org.infinispan.cli.benchmark.HttpBenchmark;
+import org.infinispan.cli.benchmark.RespBenchmark;
 import org.infinispan.cli.completers.BenchmarkModeCompleter;
 import org.infinispan.cli.completers.BenchmarkVerbosityModeCompleter;
 import org.infinispan.cli.completers.CacheCompleter;
@@ -32,7 +33,7 @@ import org.openjdk.jmh.runner.options.VerboseMode;
 @MetaInfServices(Command.class)
 @CommandDefinition(name = "benchmark", description = "Benchmarks server performance")
 public class Benchmark extends CliCommand {
-   @Argument(description = "Specifies the URI of the server to benchmark. Supported protocols are http, https, hotrod, hotrods. If you do not set a protocol, the benchmark uses the URI of the current connection.")
+   @Argument(description = "Specifies the URI of the server to benchmark. Supported protocols are http, https, hotrod, hotrods, redis, rediss. If you do not set a protocol, the benchmark uses the URI of the current connection.")
    String uri;
 
    @Option(shortName = 't', defaultValue = "10", description = "Specifies the number of threads to create. Defaults to 10.")
@@ -98,6 +99,10 @@ public class Benchmark extends CliCommand {
          case "http":
          case "https":
             opt.include(HttpBenchmark.class.getSimpleName());
+            break;
+         case "redis":
+         case "rediss":
+            opt.include(RespBenchmark.class.getSimpleName());
             break;
          default:
             throw new IllegalArgumentException("Unknown scheme " + uri.getScheme());
