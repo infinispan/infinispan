@@ -133,7 +133,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    private final AtomicLong replaceIfUnmodifiedBadval = new AtomicLong();
    private final ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
    protected RequestHeader header;
-   volatile ResponseEntry lastResponse;
+   ResponseEntry lastResponse;
 
    private static MemcachedException wrapBadFormat(Throwable throwable) {
       return new MemcachedException(CLIENT_ERROR_BAD_FORMAT + throwable.getMessage(), throwable);
@@ -165,8 +165,10 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          }
       } catch (IOException | NumberFormatException e) {
          ctx.pipeline().fireExceptionCaught(wrapBadFormat(e));
+         resetParams();
       } catch (Exception e) {
-         throw wrapServerError(e);
+         ctx.pipeline().fireExceptionCaught(wrapServerError(e));
+         resetParams();
       }
    }
 
@@ -295,7 +297,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
                   if (entry == null) {
                      return completedFuture(createNotExistResponse(ctx));
                   }
-                  NumericVersion streamVersion = new NumericVersion(params.streamVersion);
+                  NumericVersion streamVersion = new NumericVersion(ctx.parameters.streamVersion);
                   if (!entry.getMetadata().version().equals(streamVersion)) {
                      return completedFuture(createNotExecutedResponse(ctx));
                   }
@@ -442,8 +444,6 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             }
          }
       }
-      // After writing back an error, reset params and revert to initial state
-      resetParams();
    }
 
    private static byte[] checkKeyLength(byte[] k, boolean endOfOp, ByteBuf b) throws StreamCorruptedException {
@@ -1231,7 +1231,7 @@ class OperationContext {
 class ResponseEntry implements BiConsumer<Object, Throwable>, Runnable {
    volatile Object response;
    volatile Throwable throwable;
-   volatile CompletionStage<Void> responseSent;
+   CompletionStage<Void> responseSent;
    final MemcachedDecoder decoder;
    final Channel ch;
 
@@ -1241,6 +1241,7 @@ class ResponseEntry implements BiConsumer<Object, Throwable>, Runnable {
    }
 
    void queueResponse(CompletionStage<Object> operationResponse) {
+      assert ch.eventLoop().inEventLoop();
       AggregateCompletionStage<Void> all = CompletionStages.aggregateCompletionStage();
       if (decoder.lastResponse != null) {
          all.dependsOn(decoder.lastResponse.responseSent);
@@ -1248,7 +1249,7 @@ class ResponseEntry implements BiConsumer<Object, Throwable>, Runnable {
       all.dependsOn(operationResponse.whenComplete(this));
       responseSent = all.freeze()
             .exceptionally(CompletableFutures.toNullFunction())
-            .thenRun(this);
+            .thenRunAsync(this, ch.eventLoop());
       decoder.lastResponse = this;
    }
 
