@@ -26,6 +26,7 @@ import org.wildfly.security.http.Scope;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
 
@@ -57,7 +58,11 @@ public class HttpServerRequestAdapter implements HttpServerRequest {
 
    @Override
    public SSLSession getSSLSession() {
-      SslHandler sslHandler = (SslHandler) ctx.pipeline().get(SslHandler.class.getName());
+      ChannelPipeline pipeline = ctx.pipeline();
+      SslHandler sslHandler = (SslHandler) pipeline.get(SslHandler.class.getName());
+      if (sslHandler == null && pipeline.channel().parent() != null) {
+         sslHandler = (SslHandler) pipeline.channel().parent().pipeline().get(SslHandler.class.getName());
+      }
       return sslHandler != null ? sslHandler.engine().getSession() : null;
    }
 
