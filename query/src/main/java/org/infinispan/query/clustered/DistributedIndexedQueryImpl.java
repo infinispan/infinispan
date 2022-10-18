@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -133,7 +134,8 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
       try {
          partitionHandlingSupport.checkCacheAvailable();
-         List<E> hits = stream(spliteratorUnknownSize(iterator(), 0), false).collect(Collectors.toList());
+         List<E> hits = stream(spliteratorUnknownSize(iterator(), 0), false)
+               .filter(Objects::nonNull).collect(Collectors.toList());
          return new QueryResultImpl<>(resultSize, hits);
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
