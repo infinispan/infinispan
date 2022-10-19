@@ -47,8 +47,7 @@ public class Resp3AuthHandler extends RespRequestHandler {
             successStage = performAuth(ctx, arguments.get(0), arguments.get(1));
             break;
          case "QUIT":
-            // TODO: need to close connection
-            ctx.flush();
+            ctx.close();
             break;
          default:
             if (isAuthorized()) super.handleRequest(ctx, type, arguments);
