@@ -12,6 +12,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.security.PrivilegedAction;
 import java.util.Map;
@@ -171,9 +172,9 @@ public class XSiteResource implements ResourceHandler {
             GlobalStatus siteStatus = collect.get(site);
             return siteStatus == null ?
                   responseBuilder.status(NOT_FOUND).build() :
-                  addEntityAsJson(Json.make(siteStatus), responseBuilder).build();
+                  addEntityAsJson(Json.make(siteStatus), responseBuilder, isPretty(request)).build();
          }
-         return addEntityAsJson(Json.make(collect), responseBuilder).build();
+         return addEntityAsJson(Json.make(collect), responseBuilder, isPretty(request)).build();
       }, invocationHelper.getExecutor());
    }
 
@@ -271,7 +272,7 @@ public class XSiteResource implements ResourceHandler {
 
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
       return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
-            () -> addEntityAsJson(Json.make(Security.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> ops.nodeStatus(site))), responseBuilder).build(),
+            () -> addEntityAsJson(Json.make(Security.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> ops.nodeStatus(site))), responseBuilder, isPretty(request)).build(),
             invocationHelper.getExecutor()))
             .orElseGet(() -> completedFuture(responseBuilder.build()));
 
@@ -283,7 +284,7 @@ public class XSiteResource implements ResourceHandler {
       return xsiteAdmin.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
             () -> {
                T result = Security.doAs(request.getSubject(), (PrivilegedAction<T>) () -> op.apply(ops));
-               return addEntityAsJson(Json.make(result), responseBuilder).build();
+               return addEntityAsJson(Json.make(result), responseBuilder, isPretty(request)).build();
             },
             invocationHelper.getExecutor()))
             .orElseGet(() -> completedFuture(responseBuilder.build()));
@@ -297,7 +298,7 @@ public class XSiteResource implements ResourceHandler {
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
 
       return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops ->
-             ops.asyncGetStateTransferMode(site).thenApply(s -> addEntityAsJson(Json.make(s), responseBuilder).build()))
+             ops.asyncGetStateTransferMode(site).thenApply(s -> addEntityAsJson(Json.make(s), responseBuilder, isPretty(request)).build()))
             .orElseGet(() -> completedFuture(responseBuilder.build()));
    }
 
@@ -366,7 +367,7 @@ public class XSiteResource implements ResourceHandler {
       return supplyAsync(
             () -> {
                Map<String, String> result = Security.doAs(request.getSubject(), operation, globalXSiteAdmin, site);
-               return addEntityAsJson(Json.make(result), responseBuilder).build();
+               return addEntityAsJson(Json.make(result), responseBuilder, isPretty(request)).build();
             },
             invocationHelper.getExecutor()
       );

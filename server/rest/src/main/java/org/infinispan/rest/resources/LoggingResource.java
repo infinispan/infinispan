@@ -5,6 +5,7 @@ import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.util.Collection;
 import java.util.List;
@@ -83,7 +84,7 @@ public final class LoggingResource implements ResourceHandler {
       // We only return loggers declared in the configuration
       LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
       Json loggerConfigs = jsonLoggerConfigs(logContext.getConfiguration().getLoggers().values());
-      return asJsonResponseFuture(loggerConfigs);
+      return asJsonResponseFuture(loggerConfigs, isPretty(request));
    }
 
    private Json jsonLoggerConfigs(Collection<LoggerConfig> loggerConfigs) {
@@ -103,7 +104,7 @@ public final class LoggingResource implements ResourceHandler {
       Map<String, Appender> appendersMap = logContext.getConfiguration().getAppenders();
       Json jsonMap = Json.object();
       appendersMap.forEach((key, value) -> jsonMap.set(key, Json.object().set("name", value.getName())));
-      return asJsonResponseFuture(jsonMap);
+      return asJsonResponseFuture(jsonMap, isPretty(request));
    }
 
    private NettyRestResponse handle(Throwable t) {

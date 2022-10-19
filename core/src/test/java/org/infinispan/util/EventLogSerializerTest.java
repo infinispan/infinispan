@@ -18,16 +18,16 @@ import org.testng.annotations.Test;
 
 @Test(testName = "util.EventLogSerializerTest", groups = "unit")
 public class EventLogSerializerTest extends AbstractInfinispanTest {
-   private static final String JSON_TEMPLATE = "{\n  \"log\" : {\n"
-         + "    \"category\" : \"CLUSTER\",\n    \"content\" : {\n      \"level\" : \"INFO\",\n"
-         + "      \"message\" : \"%s\",\n      \"detail\" : \"%s\"\n    },\n    \"meta\" : {\n"
-         + "      \"instant\" : \"%s\",\n      \"context\" : \"%s\",\n      \"scope\" : null,\n"
-         + "      \"who\" : null\n    }\n  }\n}";
-   private static final String XML_TEMPLATE = "<?xml version=\"1.0\"?>\n"
-         + "<log category=\"CLUSTER\">\n"
-         + "    <content level=\"INFO\" message=\"%s\" detail=\"%s\"/>\n"
-         + "    <meta instant=\"%s\" context=\"%s\" scope=\"\" who=\"\"/>\n"
-         + "</log>\n";
+   private static final String JSON_TEMPLATE = "{\"log\":{"
+         + "\"category\":\"CLUSTER\",\"content\":{\"level\":\"INFO\","
+         + "\"message\":\"%s\",\"detail\":\"%s\"},\"meta\":{"
+         + "\"instant\":\"%s\",\"context\":\"%s\",\"scope\":null,"
+         + "\"who\":null}}}";
+   private static final String XML_TEMPLATE = "<?xml version=\"1.0\"?>"
+         + "<log category=\"CLUSTER\">"
+         + "<content level=\"INFO\" message=\"%s\" detail=\"%s\"/>"
+         + "<meta instant=\"%s\" context=\"%s\" scope=\"\" who=\"\"/>"
+         + "</log>";
    private static final String YAML_TEMPLATE = "log: \n  category: \"CLUSTER\"\n"
          + "  content: \n    level: \"INFO\"\n    message: \"%s\"\n    detail: \"%s\"\n"
          + "  meta: \n    instant: \"%s\"\n    context: \"%s\"\n    scope: ~\n"

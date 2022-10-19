@@ -121,6 +121,17 @@ GET /rest/v2/cache-managers/{cacheManagerName}/config
 |The required format to return the content. Supported formats are _application/json_ and _application/xml_. JSON is assumed if no header is provided.
 |===
 
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
+
 .Reference
 
 link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration]
@@ -143,6 +154,17 @@ configuration, as in the following example:
 include::json/rest_cache_config_response.json[]
 ----
 
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
+
 [id='rest_v2_cache_manager_cache_templates']
 = Listing Available Cache Templates
 Retrieve all available {brandname} cache templates with `GET` requests.
@@ -156,6 +178,17 @@ GET /rest/v2/cache-managers/{cacheManagerName}/cache-configs/templates
 ====
 See link:#rest_v2_create_cache_template[Creating Caches with Templates].
 ====
+
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
 
 [id='rest_v2_cache_manager_cache_list']
 = Obtaining Cache Status and Information
@@ -173,6 +206,17 @@ cache, as in the following example:
 ----
 include::json/rest_caches_info_response.json[]
 ----
+
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
 
 
 [id='rest_v2_cache_manager_stats']
@@ -500,6 +544,21 @@ GET /rest/v2/container/config?action=listen
 |Sets the required format to return content. Supported formats are `application/yaml`, `application/json` and `application/xml`. The default is `application/yaml`. See link:#rest_accept[Accept] for more information.
 |===
 
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`includeCurrentState`
+|OPTIONAL
+|If `true`, the results include the state of the existing configuration in addition to the changes. If set to `false`, the request returns only the changes. The default value is `false`.
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
+
 [id='rest_v2_container_listen']
 = Listening to container events
 
@@ -522,4 +581,19 @@ GET /rest/v2/container?action=listen
 |`Accept`
 |OPTIONAL
 |Sets the required format to return content. Supported formats are `application/yaml`, `application/json` and `application/xml`. The default is `application/yaml`. See link:#rest_accept[Accept] for more information.
+|===
+
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`includeCurrentState`
+|OPTIONAL
+|If `true`, the results include the state of the existing configuration in addition to the changes. If set to `false`, the request returns only the changes. The default value is `false`.
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
 |===

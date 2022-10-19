@@ -11,6 +11,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -68,11 +69,11 @@ public class SearchAdminResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> searchStats(RestRequest restRequest) {
+   private CompletionStage<RestResponse> searchStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-      String cacheName = restRequest.variables().get("cacheName");
-      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
+      String cacheName = request.variables().get("cacheName");
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null) {
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return null;
@@ -82,13 +83,13 @@ public class SearchAdminResource implements ResourceHandler {
          responseBuilder.status(NOT_FOUND).build();
       }
 
-      String scopeParam = restRequest.getParameter("scope");
-
+      String scopeParam = request.getParameter("scope");
+      boolean pretty = isPretty(request);
       if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
          CompletionStage<SearchStatisticsSnapshot> stats = Search.getClusteredSearchStatistics(cache);
-         return stats.thenApply(s -> asJsonResponse(s.toJson()));
+         return stats.thenApply(s -> asJsonResponse(s.toJson(), pretty));
       } else {
-         return Search.getSearchStatistics(cache).computeSnapshot().thenApply(s -> asJsonResponse(s.toJson()));
+         return Search.getSearchStatistics(cache).computeSnapshot().thenApply(s -> asJsonResponse(s.toJson(), pretty));
       }
    }
 
@@ -149,10 +150,11 @@ public class SearchAdminResource implements ResourceHandler {
    private CompletionStage<RestResponse> indexStats(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
+      boolean pretty = isPretty(request);
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      return searchStats.computeLegacyIndexStatistics().thenApply(json -> asJsonResponse(json, responseBuilder));
+      return searchStats.computeLegacyIndexStatistics().thenApply(json -> asJsonResponse(json, responseBuilder, pretty));
    }
 
    private CompletionStage<RestResponse> queryStats(RestRequest request) {
@@ -161,7 +163,7 @@ public class SearchAdminResource implements ResourceHandler {
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      return asJsonResponseFuture(searchStats.getLegacyQueryStatistics(), responseBuilder);
+      return asJsonResponseFuture(searchStats.getLegacyQueryStatistics(), responseBuilder, isPretty(request));
    }
 
    private CompletionStage<RestResponse> clearStats(RestRequest request) {

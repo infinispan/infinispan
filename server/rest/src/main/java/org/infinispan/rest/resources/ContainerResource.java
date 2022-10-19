@@ -19,9 +19,8 @@ import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.reactivex.rxjava3.core.Flowable;
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.security.PrivilegedAction;
@@ -79,6 +78,9 @@ import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogSerializer;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * REST resource to manage the cache container.
@@ -171,7 +173,7 @@ public class ContainerResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       Json cacheManagerInfo = cacheManager.getCacheManagerInfo().toJson();
-      return asJsonResponseFuture(cacheManagerInfo, responseBuilder);
+      return asJsonResponseFuture(cacheManagerInfo, responseBuilder, isPretty(request));
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
@@ -195,7 +197,6 @@ public class ContainerResource implements ResourceHandler {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
-
       EmbeddedCacheManager embeddedCacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
 
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(embeddedCacheManager);
@@ -204,7 +205,7 @@ public class ContainerResource implements ResourceHandler {
 
       try {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         try (ConfigurationWriter writer = ConfigurationWriter.to(baos).withType(format).build()) {
+         try (ConfigurationWriter writer = ConfigurationWriter.to(baos).withType(format).prettyPrint(isPretty(request)).build()) {
             parserRegistry.serialize(writer, globalConfiguration, emptyMap());
          }
          responseBuilder.contentType(format);
@@ -221,40 +222,40 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      return asJsonResponseFuture(cacheManager.getStats().toJson(), responseBuilder);
+      return asJsonResponseFuture(cacheManager.getStats().toJson(), responseBuilder, isPretty(request));
    }
 
 
-   private CompletionStage<RestResponse> getHealth(RestRequest restRequest) {
-      return getHealth(restRequest, false);
+   private CompletionStage<RestResponse> getHealth(RestRequest request) {
+      return getHealth(request, false);
    }
 
-   private CompletionStage<RestResponse> getHealthStatus(RestRequest restRequest) {
-      return getHealth(restRequest, true);
+   private CompletionStage<RestResponse> getHealthStatus(RestRequest request) {
+      return getHealth(request, true);
    }
 
-   private CompletionStage<RestResponse> getHealth(RestRequest restRequest, boolean anon) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(restRequest);
+   private CompletionStage<RestResponse> getHealth(RestRequest request, boolean anon) {
+      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       // If /v2/containers?action=shutdown has been executed, we must still return OK so that the k8s probes don't fail
       // before the StatefulSet has been scaled down
       boolean isStopping = anon && invocationHelper.getServer().getStatus().isStopping();
-      if (restRequest.method() == HEAD || isStopping)
+      if (request.method() == HEAD || isStopping)
          return completedFuture(new NettyRestResponse.Builder().status(OK).build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      Health health = cacheManager.withSubject(restRequest.getSubject()).getHealth();
+      Health health = cacheManager.withSubject(request.getSubject()).getHealth();
       HealthInfo healthInfo = new HealthInfo(health.getClusterHealth(), health.getCacheHealth());
 
       if (anon) {
          responseBuilder
                .contentType(TEXT_PLAIN)
-               .entity(Security.doAs(restRequest.getSubject(), (PrivilegedAction<String>)
+               .entity(Security.doAs(request.getSubject(), (PrivilegedAction<String>)
                      () -> healthInfo.clusterHealth.getHealthStatus().toString()))
                .status(OK);
       } else {
-         addEntityAsJson(healthInfo.toJson(), responseBuilder);
+         addEntityAsJson(healthInfo.toJson(), responseBuilder, isPretty(request));
       }
       return completedFuture(responseBuilder.build());
    }
@@ -287,12 +288,13 @@ public class ContainerResource implements ResourceHandler {
       // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
       LocalTopologyManager finalLocalTopologyManager = localTopologyManager;
       Boolean finalClusterRebalancingEnabled = clusterRebalancingEnabled;
+      boolean pretty = isPretty(request);
       return Flowable.fromIterable(cachesHealth)
             .map(chHealth -> getCacheInfo(request, cacheManager, subjectCacheManager, ignoredCaches,
                                           finalLocalTopologyManager, finalClusterRebalancingEnabled, chHealth))
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList())
-            .map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder).build())
+            .map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder, pretty).build())
             .toCompletionStage();
    }
 
@@ -358,6 +360,7 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+      boolean pretty = isPretty(request);
       EmbeddedCacheManager subjectCacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
 
       Set<String> cacheConfigurationNames = subjectCacheManager.getCacheConfigurationNames();
@@ -365,18 +368,17 @@ public class ContainerResource implements ResourceHandler {
       List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
             .filter(n -> !internalCacheRegistry.isInternalCache(n))
             .distinct()
-            .map(n -> {
-               return getNamedCacheConfiguration(subjectCacheManager, n);
-            })
+            .map(n -> getNamedCacheConfiguration(subjectCacheManager, n, pretty))
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
-      return asJsonResponseFuture(Json.make(configurations), responseBuilder);
+      return asJsonResponseFuture(Json.make(configurations), responseBuilder, pretty);
    }
 
    private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+      boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
 
@@ -387,18 +389,18 @@ public class ContainerResource implements ResourceHandler {
             .filter(n -> SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n).isTemplate())
             .distinct()
             .map(n -> {
-               return getNamedCacheConfiguration(subjectCacheManager, n);
+               return getNamedCacheConfiguration(subjectCacheManager, n, pretty);
             })
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
-      return asJsonResponseFuture(Json.make(configurations), responseBuilder);
+      return asJsonResponseFuture(Json.make(configurations), responseBuilder, pretty);
    }
 
-   private NamedCacheConfiguration getNamedCacheConfiguration(EmbeddedCacheManager subjectCacheManager, String n) {
+   private NamedCacheConfiguration getNamedCacheConfiguration(EmbeddedCacheManager subjectCacheManager, String n, boolean pretty) {
       Configuration config = SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n);
       StringBuilderWriter sw = new StringBuilderWriter();
-      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(pretty).build()) {
          invocationHelper.getParserRegistry().serialize(w, n, config);
       }
       return new NamedCacheConfiguration(n, sw.toString());
@@ -407,7 +409,7 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = backupManager.getBackupNames();
-      return asJsonResponseFuture(Json.make(names));
+      return asJsonResponseFuture(Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> backup(RestRequest request) {
@@ -422,7 +424,7 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = backupManager.getRestoreNames();
-      return asJsonResponseFuture(Json.make(names));
+      return asJsonResponseFuture(Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> restore(RestRequest request) {
@@ -434,16 +436,15 @@ public class ContainerResource implements ResourceHandler {
       });
    }
 
-   private CompletionStage<RestResponse> convertToJson(RestRequest restRequest) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(restRequest);
+   private CompletionStage<RestResponse> convertToJson(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
-
-      ContentSource contents = restRequest.contents();
+      ContentSource contents = request.contents();
 
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(new String(contents.rawContent(), UTF_8));
       Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
       StringBuilderWriter sw = new StringBuilderWriter();
-      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(isPretty(request)).build()) {
          invocationHelper.getParserRegistry().serialize(w, entry.getKey(), entry.getValue().build());
       }
       responseBuilder.contentType(APPLICATION_JSON).entity(sw.toString());
@@ -550,9 +551,10 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> streamConfigurationAndEvents(RestRequest request, boolean includeLifecycle) {
       MediaType mediaType = negotiateMediaType(request, APPLICATION_YAML, APPLICATION_JSON, APPLICATION_XML);
       boolean includeCurrentState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
+      boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-      ConfigurationListener listener = new ConfigurationListener(cacheManager, mediaType, includeCurrentState);
+      ConfigurationListener listener = new ConfigurationListener(cacheManager, mediaType, includeCurrentState, pretty);
       responseBuilder.contentType(TEXT_EVENT_STREAM).entity(listener.getEventStream());
 
       CompletionStage<?> cs = SecurityActions.addListenerAsync(cacheManager, listener);
@@ -563,17 +565,17 @@ public class ContainerResource implements ResourceHandler {
       return cs.thenApply(v -> responseBuilder.build());
    }
 
-   private String serializeConfig(Configuration cacheConfiguration, String name, MediaType mediaType) {
+   private String serializeConfig(Configuration cacheConfiguration, String name, MediaType mediaType, boolean pretty) {
       StringWriter sw = new StringWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).build()) {
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).prettyPrint(pretty).build()) {
          parserRegistry.serialize(writer, null, Collections.singletonMap(name, cacheConfiguration));
       }
       return sw.toString();
    }
 
-   private String serializeEvent(EventLog event, MediaType mediaType) {
+   private String serializeEvent(EventLog event, MediaType mediaType, boolean pretty) {
       StringWriter sw = new StringWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).build()) {
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).prettyPrint(pretty).build()) {
          parserRegistry.serializeWith(writer, new EventLogSerializer(), event);
       }
       return sw.toString();
@@ -584,17 +586,19 @@ public class ContainerResource implements ResourceHandler {
       final EmbeddedCacheManager cacheManager;
       final EventStream eventStream;
       final MediaType mediaType;
+      private final boolean pretty;
 
-      protected ConfigurationListener(EmbeddedCacheManager cacheManager, MediaType mediaType, boolean includeCurrentState) {
+      protected ConfigurationListener(EmbeddedCacheManager cacheManager, MediaType mediaType, boolean includeCurrentState, boolean pretty) {
          this.cacheManager = cacheManager;
          this.mediaType = mediaType;
+         this.pretty = pretty;
          this.eventStream = new EventStream(
                includeCurrentState ?
                      (stream) -> {
                         for (String configName : cacheManager.getCacheConfigurationNames()) {
                            Configuration config = SecurityActions.getCacheConfigurationFromManager(cacheManager, configName);
                            String eventType = config.isTemplate() ? "create-template" : "create-cache";
-                           stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType)));
+                           stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType, pretty)));
                         }
                      } : null,
                () -> Security.doPrivileged((PrivilegedAction<Object>) () -> {
@@ -611,7 +615,7 @@ public class ContainerResource implements ResourceHandler {
       public CompletionStage<Void> onDataLogged(EventLog event) {
          if (event.getCategory() != EventLogCategory.LIFECYCLE) return CompletableFutures.completedNull();
 
-         final ServerSentEvent sse = new ServerSentEvent("lifecycle-event", serializeEvent(event, mediaType));
+         final ServerSentEvent sse = new ServerSentEvent("lifecycle-event", serializeEvent(event, mediaType, pretty));
          return eventStream.sendEvent(sse);
       }
 
@@ -626,7 +630,7 @@ public class ContainerResource implements ResourceHandler {
                case "cache":
                case "template":
                      Configuration config = SecurityActions.getCacheConfigurationFromManager(cacheManager, event.getConfigurationEntityName());
-                     sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType));
+                     sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType, pretty));
                   break;
                default:
                   // Unhandled entity type, ignore

@@ -19,7 +19,7 @@ public interface ConfigurationWriter extends AutoCloseable {
    class Builder {
       private final BufferedWriter writer;
       private MediaType type = MediaType.APPLICATION_XML;
-      private boolean prettyPrint = true;
+      private boolean prettyPrint = false;
       private boolean clearTextSecrets = false;
 
       private Builder(OutputStream os) {
