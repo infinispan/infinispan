@@ -422,7 +422,6 @@
       <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${version.org.wildfly.openssl.natives.windows_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
       <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
       <versionx.org.xerial>3.36.0.1</versionx.org.xerial>
-      <versionx.org.yaml.snakeyaml>1.31</versionx.org.yaml.snakeyaml>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
@@ -1972,12 +1971,6 @@
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>${versionx.org.xerial}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>${versionx.org.yaml.snakeyaml}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

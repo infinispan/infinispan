@@ -1,6 +1,8 @@
 package org.infinispan.commons.configuration.io.yaml;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -9,6 +11,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
@@ -170,5 +175,33 @@ public class YamlConfigurationReaderTest {
          }
       }
       fail("Could not find attribute '" + name + " in element '" + yaml.getLocalName() + "'");
+   }
+
+   @Test
+   public void testYamlMapper() throws IOException {
+      try (Reader r = new InputStreamReader(YamlConfigurationReaderTest.class.getResourceAsStream("/identities.yaml"))) {
+         YamlConfigurationReader yaml = new YamlConfigurationReader(r, new URLConfigurationResourceResolver(null), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE);
+         Map<String, Object> identities = yaml.asMap();
+         assertEquals(1, identities.size());
+         List<Object> credentials = (List<Object>) identities.get("credentials");
+         assertNotNull(credentials);
+         assertEquals(3, credentials.size());
+                  for (Object o : credentials) {
+            Map<String, Object> credential = (Map<String, Object>) o;
+            assertTrue(credential.containsKey("username"));
+            assertTrue(credential.containsKey("password"));
+            assertEquals("changeme", credential.get("password"));
+            if ("my-user-1".equals(credential.get("username"))) {
+               assertTrue(credential.containsKey("roles"));
+               assertEquals(Collections.singletonList("admin"), credential.get("roles"));
+            } else if ("my-user-2".equals(credential.get("username"))) {
+               assertTrue(credential.containsKey("roles"));
+               assertEquals(Collections.singletonList("monitor"), credential.get("roles"));
+            } else {
+               assertEquals("admin", credential.get("username"));
+               assertFalse(credential.containsKey("roles"));
+            }
+         }
+      }
    }
 }
