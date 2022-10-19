@@ -1,0 +1,11 @@
+credentials:
+  - username: admin
+    password: changeme
+  - username: my-user-1
+    password: changeme
+    roles:
+      - admin
+  - username: my-user-2
+    password: changeme
+    roles:
+      - monitor

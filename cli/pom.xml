@@ -49,11 +49,6 @@
          <optional>true</optional> <!-- Configuration converter -->
       </dependency>
       <dependency>
-         <groupId>org.yaml</groupId>
-         <artifactId>snakeyaml</artifactId>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-api</artifactId>
          <scope>compile</scope>

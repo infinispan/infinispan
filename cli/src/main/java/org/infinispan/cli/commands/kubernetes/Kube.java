@@ -1,11 +1,13 @@
 package org.infinispan.cli.commands.kubernetes;
 
+import java.io.StringReader;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
@@ -13,7 +15,10 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 import org.infinispan.cli.commands.Version;
 import org.infinispan.cli.logging.Messages;
-import org.yaml.snakeyaml.Yaml;
+import org.infinispan.commons.configuration.io.NamingStrategy;
+import org.infinispan.commons.configuration.io.PropertyReplacer;
+import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.yaml.YamlConfigurationReader;
 
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.Namespace;
@@ -127,10 +132,10 @@ public class Kube implements Command {
          return Collections.emptyMap();
       }
       String opaqueIdentities = secret.getData().get("identities.yaml");
-      String identitiesYaml = new String(Base64.getDecoder().decode(opaqueIdentities));
-      Yaml yaml = new Yaml();
-      Map<String, List> identities = yaml.load(identitiesYaml);
-      List<Map<String, String>> credentialsList = identities.get("credentials");
+      String yaml = new String(Base64.getDecoder().decode(opaqueIdentities));
+      YamlConfigurationReader reader = new YamlConfigurationReader(new StringReader(yaml), new URLConfigurationResourceResolver(null), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE);
+      Map<String, Object> identities = reader.asMap();
+      List<Map<String, String>> credentialsList = (List<Map<String, String>>) identities.get("credentials");
       Map<String, String> res = new LinkedHashMap<>(identities.size());
       for (Map<String, String> credentials : credentialsList) {
          res.put(credentials.get("username"), credentials.get("password"));
