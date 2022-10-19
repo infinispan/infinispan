@@ -107,6 +107,15 @@ public class DistributionTestHelper {
       return getOwners(key, caches).iterator().next();
    }
 
+   public static <K, V> Cache<K, V> getFirstBackupOwner(Object key, List<Cache<K, V>> caches) {
+      for (Cache<K, V> c : caches) {
+         if (isOwner(c, key) && !isFirstOwner(c, key)) {
+            return c;
+         }
+      }
+      return null;
+   }
+
    public static <K, V> Collection<Cache<K, V>> getNonOwners(Object key, List<Cache<K, V>> caches) {
       List<Cache<K, V>> nonOwners = new ArrayList<>();
       for (Cache<K, V> c : caches)

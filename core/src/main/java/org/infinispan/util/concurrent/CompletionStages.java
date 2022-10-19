@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -145,8 +146,13 @@ public class CompletionStages {
       return stage.handle(handleFunction).thenCompose(Function.identity());
    }
 
+   public static <T, U> CompletionStage<U> handleAndComposeAsync(CompletionStage<T> stage,
+         BiFunction<T, Throwable, CompletionStage<U>> handleFunction, Executor executor) {
+      return stage.handleAsync(handleFunction, executor).thenCompose(Function.identity());
+   }
+
    public static CompletionStage<Void> schedule(Runnable command, ScheduledExecutorService executor,
-                                                  long delay, TimeUnit timeUnit) {
+         long delay, TimeUnit timeUnit) {
       CompletableFuture<Void> future = new CompletableFuture<>();
       executor.schedule(() -> {
          try {
