@@ -7,6 +7,7 @@ import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.security.PrivilegedAction;
 import java.util.Collection;
@@ -88,7 +89,7 @@ public class ClusterResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = Security.doAs(request.getSubject(), (PrivilegedAction<Set<String>>) backupManager::getBackupNames);
-      return asJsonResponseFuture(Json.make(names));
+      return asJsonResponseFuture(Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> backup(RestRequest request) {
@@ -99,7 +100,7 @@ public class ClusterResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = Security.doAs(request.getSubject(), (PrivilegedAction<Set<String>>) backupManager::getRestoreNames);
-      return asJsonResponseFuture(Json.make(names));
+      return asJsonResponseFuture(Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> restore(RestRequest request) {
@@ -107,9 +108,10 @@ public class ClusterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> distribution(RestRequest request) {
+      boolean pretty = isPretty(request);
       return clusterDistribution()
             .thenApply(distributions -> asJsonResponse(Json.array(distributions.stream()
-                  .map(NodeDistributionInfo::toJson).toArray())));
+                  .map(NodeDistributionInfo::toJson).toArray()), pretty));
    }
 
    private CompletionStage<List<NodeDistributionInfo>> clusterDistribution() {

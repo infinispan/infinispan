@@ -7,6 +7,7 @@ import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.util.Comparator;
 import java.util.Set;
@@ -16,9 +17,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -36,7 +38,6 @@ import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
@@ -75,6 +76,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
    private CompletionStage<RestResponse> getSchemasNames(RestRequest request) {
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
             .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
+      boolean pretty = isPretty(request);
 
       return CompletableFuture.supplyAsync(() ->
                   Flowable.fromIterable(cache.keySet())
@@ -91,7 +93,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
                         })
                         .sorted(Comparator.comparing(s -> s.name))
                         .collect(Collectors.toList())
-                        .map(protoSchemas -> asJsonResponse(Json.make(protoSchemas)))
+                        .map(protoSchemas -> asJsonResponse(Json.make(protoSchemas), pretty))
                         .toCompletionStage()
             , invocationHelper.getExecutor())
             .thenCompose(Function.identity());
@@ -173,7 +175,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       for (String type: knownTypes) {
          protobufTypes.add(type);
       }
-      return asJsonResponseFuture(protobufTypes);
+      return asJsonResponseFuture(protobufTypes, isPretty(request));
    }
 
    private CompletionStage<RestResponse> deleteSchema(RestRequest request) {

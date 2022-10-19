@@ -8,6 +8,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.util.Collection;
 import java.util.List;
@@ -169,7 +170,7 @@ public class SecurityResource implements ResourceHandler {
       }
       Json roles = Json.array();
       authorization.roles().entrySet().stream().filter(e -> e.getValue().isInheritable()).forEach(e -> roles.add(e.getKey()));
-      return asJsonResponseFuture(roles);
+      return asJsonResponseFuture(roles, isPretty(request));
    }
 
    private CompletionStage<RestResponse> listPrincipalRoles(RestRequest request) {
@@ -179,7 +180,7 @@ public class SecurityResource implements ResourceHandler {
       }
       Json roles = Json.array();
       principalRoleMapper.list(principal).forEach(r -> roles.add(r));
-      return asJsonResponseFuture(roles);
+      return asJsonResponseFuture(roles, isPretty(request));
    }
 
    private CompletionStage<RestResponse> acl(RestRequest request) {
@@ -206,7 +207,7 @@ public class SecurityResource implements ResourceHandler {
             caches.set(cacheName, aclToJson(cacheACL));
          }
       }
-      return asJsonResponseFuture(acl);
+      return asJsonResponseFuture(acl, isPretty(request));
    }
 
    private Json aclToJson(SubjectACL acl) {
@@ -217,9 +218,9 @@ public class SecurityResource implements ResourceHandler {
       return array;
    }
 
-   private CompletionStage<RestResponse> loginConfiguration(RestRequest restRequest) {
+   private CompletionStage<RestResponse> loginConfiguration(RestRequest request) {
       Map<String, String> loginConfiguration = invocationHelper.getServer().getLoginConfiguration(invocationHelper.getProtocolServer());
-      return asJsonResponseFuture(Json.make(loginConfiguration));
+      return asJsonResponseFuture(Json.make(loginConfiguration), isPretty(request));
    }
 
    private CompletionStage<RestResponse> login(RestRequest restRequest) {
