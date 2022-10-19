@@ -29,6 +29,12 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
    }
 
    @Override
+   public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+      super.channelUnregistered(ctx);
+      requestHandler.handleChannelDisconnect(ctx);
+   }
+
+   @Override
    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
       // Don't read any of the ByteBuf if we disabled reads
       if (disabledRead) {
