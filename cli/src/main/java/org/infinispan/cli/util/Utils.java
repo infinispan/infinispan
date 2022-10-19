@@ -90,6 +90,6 @@ public class Utils {
 
    public static String getFilenameFromURL(URL url) {
       String urlPath = url.getPath();
-      return  urlPath.substring(urlPath.lastIndexOf('/') + 1);
+      return urlPath.substring(urlPath.lastIndexOf('/') + 1);
    }
 }

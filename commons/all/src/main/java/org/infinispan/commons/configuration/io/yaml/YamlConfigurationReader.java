@@ -7,8 +7,10 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -102,7 +104,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
       }
 
       Node next() {
-         if (children != null && !children.isEmpty()) {
+         if (hasChildren()) {
             return children.remove(0);
          } else {
             if (parent == null) {
@@ -115,6 +117,10 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
 
       public String toString() {
          return parsed.toString();
+      }
+
+      boolean hasChildren() {
+         return children != null && !children.isEmpty();
       }
    }
 
@@ -576,6 +582,30 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
       this.attributeNames.add(name);
       this.attributeNamespaces.add(namespace);
       this.attributeValues.add(replaceProperties(value));
+   }
+
+   public Map<String, Object> asMap() {
+      return Collections.singletonMap(lines.parsed.name, asMap(lines));
+   }
+
+   private Object asMap(Node node) {
+      if (node.hasChildren()) {
+         if (node.children.get(0).parsed.listItem) {
+            List<Object> children = new ArrayList<>(node.children.size());
+            for (Node child : node.children) {
+               children.add(asMap(child));
+            }
+            return children;
+         } else {
+            Map<String, Object> children = new LinkedHashMap<>(node.children.size());
+            for (Node child : node.children) {
+               children.put(child.parsed.name, asMap(child));
+            }
+            return children;
+         }
+      } else {
+         return node.parsed.value;
+      }
    }
 
    public static class Parsed {
