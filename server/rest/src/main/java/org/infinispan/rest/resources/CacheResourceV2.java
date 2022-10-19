@@ -26,6 +26,7 @@ import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.badRequestResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.io.ByteArrayOutputStream;
@@ -321,6 +322,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private CompletionStage<RestResponse> convert(RestRequest request, MediaType toType) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      boolean pretty = Boolean.parseBoolean(request.getParameter("pretty"));
       String contents = request.contents().asString();
 
       if (contents == null || contents.isEmpty()) {
@@ -332,7 +334,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
          Configuration configuration = entry.getValue().build();
          StringBuilderWriter out = new StringBuilderWriter();
-         try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(toType).clearTextSecrets(true).prettyPrint(true).build()) {
+         try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(toType).clearTextSecrets(true).prettyPrint(pretty).build()) {
             parserRegistry.serialize(writer, entry.getKey(), configuration);
          }
          return responseBuilder.contentType(toType).entity(out.toString()).build();
@@ -587,27 +589,29 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return CompletableFuture.supplyAsync(() ->
-            asJsonResponse(cache.getAdvancedCache().getStats().toJson()), invocationHelper.getExecutor());
+            asJsonResponse(cache.getAdvancedCache().getStats().toJson(), isPretty(request)), invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getCacheDistribution(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<?> cache = invocationHelper.getRestCacheManager();
+      boolean pretty = isPretty(request);
       return CompletableFuture.supplyAsync(() -> cache.cacheDistribution(cacheName, request), invocationHelper.getExecutor())
             .thenCompose(Function.identity())
-            .thenApply(distributions -> asJsonResponse(Json.array(distributions.stream().map(CacheDistributionInfo::toJson).toArray())));
+            .thenApply(distributions -> asJsonResponse(Json.array(distributions.stream().map(CacheDistributionInfo::toJson).toArray()), pretty));
    }
 
    private CompletionStage<RestResponse> getAllDetails(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
+      boolean pretty = isPretty(request);
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null)
          return notFoundResponseFuture();
 
-      return CompletableFuture.supplyAsync(() -> getDetailResponse(cache), invocationHelper.getExecutor());
+      return CompletableFuture.supplyAsync(() -> getDetailResponse(cache, pretty), invocationHelper.getExecutor());
    }
 
-   private RestResponse getDetailResponse(Cache<?, ?> cache) {
+   private RestResponse getDetailResponse(Cache<?, ?> cache, boolean pretty) {
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
@@ -657,7 +661,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       CacheFullDetail fullDetail = new CacheFullDetail();
       fullDetail.stats = stats;
       StringBuilderWriter sw = new StringBuilderWriter();
-      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
+      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(pretty).build()) {
          invocationHelper.getParserRegistry().serialize(w, cache.getName(), configuration);
       }
       fullDetail.configuration = sw.toString();
@@ -676,12 +680,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.keyStorage = cache.getAdvancedCache().getKeyDataConversion().getStorageMediaType();
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
 
-      return addEntityAsJson(fullDetail.toJson(), new NettyRestResponse.Builder()).build();
+      return addEntityAsJson(fullDetail.toJson(), new NettyRestResponse.Builder(), pretty).build();
    }
 
    private CompletionStage<RestResponse> getCacheConfig(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String cacheName = request.variables().get("cacheName");
+      boolean pretty = Boolean.parseBoolean(request.getParameter("pretty"));
 
       MediaType accept = negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML);
       responseBuilder.contentType(accept);
@@ -695,7 +700,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
 
       ByteArrayOutputStream entity = new ByteArrayOutputStream();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(false).build()) {
+      try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(pretty).build()) {
          parserRegistry.serialize(writer, cacheName, cacheConfiguration);
       } catch (Exception e) {
          throw Util.unchecked(e);
@@ -769,9 +774,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             }
             all.set(entry.getKey(), object);
          }
-         return asJsonResponseFuture(all);
+         return asJsonResponseFuture(all, isPretty(request));
       } else {
-         return asJsonResponseFuture(Json.make(attributes.keySet()));
+         return asJsonResponseFuture(Json.make(attributes.keySet()), isPretty(request));
       }
    }
 
@@ -799,7 +804,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       if (attribute.isImmutable()) {
          throw Log.REST.immutableAttribute(attributeName);
       } else {
-         return asJsonResponseFuture(Json.make(String.valueOf(attribute.get())));
+         return asJsonResponseFuture(Json.make(String.valueOf(attribute.get())), isPretty(request));
       }
    }
 
@@ -828,13 +833,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
 
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-
-      return cache.sizeAsync().thenApply(size -> asJsonResponse(Json.make(size)));
+      boolean pretty = isPretty(request);
+      return cache.sizeAsync().thenApply(size -> asJsonResponse(Json.make(size), pretty));
    }
 
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
       Collection<String> cacheNames = invocationHelper.getRestCacheManager().getCacheNames();
-      return asJsonResponseFuture(Json.make(cacheNames));
+      return asJsonResponseFuture(Json.make(cacheNames), isPretty(request));
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {

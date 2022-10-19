@@ -7,6 +7,7 @@ import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.security.PrivilegedAction;
 import java.util.concurrent.CompletableFuture;
@@ -51,12 +52,12 @@ public class TasksResource implements ResourceHandler {
    private CompletionStage<RestResponse> listTasks(RestRequest request) {
       String type = request.getParameter("type");
       boolean userOnly = type != null && type.equalsIgnoreCase("user");
-
+      boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
 
       return (userOnly ? taskManager.getUserTasksAsync() : taskManager.getTasksAsync())
-            .thenApply(tasks -> asJsonResponse(Json.make(tasks)));
+            .thenApply(tasks -> asJsonResponse(Json.make(tasks), pretty));
    }
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {
@@ -80,6 +81,7 @@ public class TasksResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> runTask(RestRequest request) {
       String taskName = request.variables().get("taskName");
+      boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
       TaskContext taskContext = new TaskContext();
@@ -97,7 +99,7 @@ public class TasksResource implements ResourceHandler {
          if (result instanceof byte[]) {
             builder.contentType(TEXT_PLAIN_TYPE).entity(result);
          } else {
-            addEntityAsJson(Json.make(result), builder);
+            addEntityAsJson(Json.make(result), builder, pretty);
          }
          return builder.build();
       });
