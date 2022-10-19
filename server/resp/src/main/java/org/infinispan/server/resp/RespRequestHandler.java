@@ -37,6 +37,10 @@ public abstract class RespRequestHandler {
       return myStage;
    }
 
+   public void handleChannelDisconnect(ChannelHandlerContext ctx) {
+      // Do nothing by default
+   }
+
    protected <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
          BiConsumer<? super E, Throwable> biConsumer) {
       return stageToReturn(stage, ctx, Objects.requireNonNull(biConsumer), null);

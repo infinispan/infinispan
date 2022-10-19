@@ -81,6 +81,10 @@ public class SubscriberHandler extends RespRequestHandler {
 
    Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
 
+   @Override
+   public void handleChannelDisconnect(ChannelHandlerContext ctx) {
+      removeAllListeners();
+   }
 
    @Override
    public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type,
@@ -123,8 +127,9 @@ public class SubscriberHandler extends RespRequestHandler {
             handler.handleRequest(ctx, type, arguments);
             break;
          case "RESET":
-            return unsubscribeAll(ctx)
-                  .thenCompose(returnedHandler -> returnedHandler.handleRequest(ctx, type, arguments));
+         case "QUIT":
+            removeAllListeners();
+            return handler.handleRequest(ctx, type, arguments);
          case "PSUBSCRIBE":
          case "PUNSUBSCRIBE":
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()));
@@ -145,6 +150,15 @@ public class SubscriberHandler extends RespRequestHandler {
             }
          }
       });
+   }
+
+   private void removeAllListeners() {
+      for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+         Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
+         PubSubListener listener = entry.getValue();
+         respServer.getCache().removeListenerAsync(listener);
+         iterator.remove();
+      }
    }
 
    private CompletionStage<RespRequestHandler> unsubscribeAll(ChannelHandlerContext ctx) {
