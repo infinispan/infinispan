@@ -7,6 +7,7 @@ import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
@@ -144,16 +145,19 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       connection.getStatefulConnection().addListener(new RedisPubSubAdapter<String, String>() {
          @Override
          public void message(String channel, String message) {
+            log.tracef("Received message on channel %s of %s", channel, message);
             handOffQueue.add("message-" + channel + "-" + message);
          }
 
          @Override
          public void subscribed(String channel, long count) {
+            log.tracef("Subscribed to %s with %s", channel, count);
             handOffQueue.add("subscribed-" + channel + "-" + count);
          }
 
          @Override
          public void unsubscribed(String channel, long count) {
+            log.tracef("Unsubscribed to %s with %s", channel, count);
             handOffQueue.add("unsubscribed-" + channel + "-" + count);
          }
       });
@@ -164,11 +168,13 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    @DataProvider(name = "booleans")
    Object[][] booleans() {
       // Reset disabled for now as the client isn't sending a reset command to the server
-      return new Object[][]{/*{true},*/ {false}};
+      return new Object[][]{{true}, {false}};
    }
 
    @Test(dataProvider = "booleans")
-   public void testPubSubUnsubscribe(boolean reset) throws InterruptedException {
+   public void testPubSubUnsubscribe(boolean quit) throws InterruptedException {
+      int listenersBefore = cache.getAdvancedCache().getListeners().size();
+
       RedisPubSubCommands<String, String> connection = createPubSubConnection();
       BlockingQueue<String> handOffQueue = addPubSubListener(connection);
 
@@ -179,20 +185,32 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
       assertEquals("subscribed-test-0", value);
 
+
+      // 2 listeners, one for each sub above
+      assertEquals(listenersBefore + 2, cache.getAdvancedCache().getListeners().size());
       // Unsubscribe to all channels
-      if (reset) {
-         connection.reset();
+      if (quit) {
+         // Originally wanted to use reset or quit, but they don't do what we expect from lettuce
+         connection.getStatefulConnection().close();
+
+         // Have to use eventually as they are removed asynchronously
+         eventuallyEquals(listenersBefore, () -> cache.getAdvancedCache().getListeners().size());
+
+         assertTrue(handOffQueue.isEmpty());
       } else {
          connection.unsubscribe();
-      }
 
-      // Unsubscribed channels can be in different orders
-      for (int i = 0; i < 2; ++i) {
-         value = handOffQueue.poll(10, TimeUnit.SECONDS);
-         assertNotNull("Didn't receive any notifications", value);
-         if (!value.equals("unsubscribed-channel2-0") && !value.equals("unsubscribed-test-0")) {
-            fail("Notification doesn't match expected, was: " + value);
+         // Unsubscribed channels can be in different orders
+         for (int i = 0; i < 2; ++i) {
+            value = handOffQueue.poll(10, TimeUnit.SECONDS);
+            assertNotNull("Didn't receive any notifications", value);
+            if (!value.equals("unsubscribed-channel2-0") && !value.equals("unsubscribed-test-0")) {
+               fail("Notification doesn't match expected, was: " + value);
+            }
          }
+
+         assertEquals(listenersBefore, cache.getAdvancedCache().getListeners().size());
+         assertEquals("PONG", connection.ping());
       }
    }
 
