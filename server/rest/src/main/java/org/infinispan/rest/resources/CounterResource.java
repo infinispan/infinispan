@@ -12,6 +12,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 import static org.infinispan.rest.resources.ResourceUtil.noContent;
 import static org.infinispan.rest.resources.ResourceUtil.noContentResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
@@ -126,13 +127,14 @@ public class CounterResource implements ResourceHandler {
    private CompletionStage<RestResponse> getConfig(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String counterName = request.variables().get("counterName");
+      boolean pretty = Boolean.parseBoolean(request.getParameter("pretty"));
       return invocationHelper.getCounterManager().getConfigurationAsync(counterName).thenApply(cfg -> {
          if (cfg == null) return responseBuilder.status(NOT_FOUND).build();
 
          AbstractCounterConfiguration parsedConfig = ConvertUtil.configToParsedConfig(counterName, cfg);
          CounterConfigurationSerializer ccs = new CounterConfigurationSerializer();
          StringBuilderWriter sw = new StringBuilderWriter();
-         try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
+         try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(pretty).build()) {
             ccs.serializeConfiguration(w, parsedConfig);
          }
          return responseBuilder.entity(sw.toString()).contentType(APPLICATION_JSON).build();
@@ -172,7 +174,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getCounterNames(RestRequest request) throws RestResponseException {
-      return asJsonResponseFuture(Json.make(invocationHelper.getCounterManager().getCounterNames()));
+      return asJsonResponseFuture(Json.make(invocationHelper.getCounterManager().getCounterNames()), isPretty(request));
    }
 
    private CompletionStage<RestResponse> incrementCounter(RestRequest request) {
@@ -212,6 +214,7 @@ public class CounterResource implements ResourceHandler {
                                                                 Function<WeakCounter, CompletionStage<Void>> weakOp,
                                                                 Function<StrongCounter, CompletableFuture<Long>> strongOp) {
       String counterName = request.variables().get("counterName");
+      boolean pretty = isPretty(request);
       CompletionStage<InternalCounterAdmin> stage = invocationHelper.getCounterManager().getOrCreateAsync(counterName);
       return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
          if (throwable != null) {
@@ -231,7 +234,7 @@ public class CounterResource implements ResourceHandler {
                if (t != null) {
                   rsp.completeExceptionally(t);
                } else {
-                  rsp.complete(asJsonResponse(Json.make(rv)));
+                  rsp.complete(asJsonResponse(Json.make(rv), pretty));
                }
             });
          }
@@ -242,6 +245,7 @@ public class CounterResource implements ResourceHandler {
    private <T> CompletionStage<RestResponse> executeCounterCAS(RestRequest request, CASInvocation<StrongCounter, Long, Long, CompletableFuture<T>> invocation) {
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       String counterName = request.variables().get("counterName");
+      boolean pretty = isPretty(request);
 
       Long expect = checkForNumericParam("expect", request, responseBuilder);
       if (expect == null) return completedFuture(responseBuilder.build());
@@ -254,7 +258,7 @@ public class CounterResource implements ResourceHandler {
          if (throwable != null) {
             return handleThrowable(throwable);
          }
-         return invocation.apply(counter, expect, update).thenCompose(value -> asJsonResponseFuture(Json.make(value)));
+         return invocation.apply(counter, expect, update).thenCompose(value -> asJsonResponseFuture(Json.make(value), pretty));
       });
    }
 
