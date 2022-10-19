@@ -1,22 +1,21 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.Resp3Handler.handleThrowable;
 import static org.infinispan.server.resp.Resp3Handler.statusOK;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 
 import javax.security.auth.Subject;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 
-public class Resp3AuthHandler implements RespRequestHandler {
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.CharsetUtil;
+
+public class Resp3AuthHandler extends RespRequestHandler {
 
    protected final RespServer respServer;
    protected AdvancedCache<byte[], byte[]> cache;
@@ -27,8 +26,8 @@ public class Resp3AuthHandler implements RespRequestHandler {
    }
 
    @Override
-   public RespRequestHandler handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
-      boolean success = false;
+   public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+      CompletionStage<Boolean> successStage = null;
       switch (type) {
          case "HELLO":
             byte[] respProtocolBytes = arguments.get(0);
@@ -39,53 +38,53 @@ public class Resp3AuthHandler implements RespRequestHandler {
             }
 
             if (arguments.size() == 4) {
-               success = performAuth(ctx, arguments.get(2), arguments.get(3));
+               successStage = performAuth(ctx, arguments.get(2), arguments.get(3));
             } else {
                helloResponse(ctx);
             }
             break;
          case "AUTH":
-            success = performAuth(ctx, arguments.get(0), arguments.get(1));
+            successStage = performAuth(ctx, arguments.get(0), arguments.get(1));
             break;
          case "QUIT":
             // TODO: need to close connection
             ctx.flush();
             break;
          default:
-            if (isAuthorized()) RespRequestHandler.super.handleRequest(ctx, type, arguments);
+            if (isAuthorized()) super.handleRequest(ctx, type, arguments);
             else handleUnauthorized(ctx);
       }
 
-      return success ? respServer.newHandler() : this;
+      if (successStage != null) {
+         return stageToReturn(successStage, ctx,
+               auth -> auth ? respServer.newHandler() : this);
+      }
+
+      return myStage;
    }
 
-   private boolean performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
+   private CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
       return performAuth(ctx, new String(username, StandardCharsets.UTF_8), new String(password, StandardCharsets.UTF_8));
    }
 
-   private boolean performAuth(ChannelHandlerContext ctx, String username, String password) {
+   private CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, String username, String password) {
       Authenticator authenticator = respServer.getConfiguration().authentication().authenticator();
       if (authenticator == null) {
-         return handleAuthResponse(ctx, null);
+         return CompletableFutures.booleanStage(handleAuthResponse(ctx, null));
       }
-      CompletionStage<Boolean> cs = authenticator.authenticate(username, password.toCharArray())
-            .thenApply(r -> handleAuthResponse(ctx, r))
+      return authenticator.authenticate(username, password.toCharArray())
+            // Note we have to write to our variables in the event loop (in this case cache)
+            .thenApplyAsync(r -> handleAuthResponse(ctx, r), ctx.channel().eventLoop())
             .exceptionally(t -> {
                handleUnauthorized(ctx);
                return false;
             });
-      try {
-         return CompletableFutures.await(cs.toCompletableFuture());
-      } catch (ExecutionException | InterruptedException e) {
-         handleThrowable(ctx, e);
-      }
-
-      return false;
    }
 
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
+      assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         ctx.writeAndFlush(ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", ctx.alloc())));
+         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", ctx.alloc()));
          return false;
       }
 
@@ -95,6 +94,7 @@ public class Resp3AuthHandler implements RespRequestHandler {
    }
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
+      assert ctx.channel().eventLoop().inEventLoop();
       ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", ctx.alloc()));
    }
 
