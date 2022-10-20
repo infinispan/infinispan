@@ -49,7 +49,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
             }
-            builder.encoding().key().mediaType(MediaType.TEXT_PLAIN_TYPE);
+            builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
             builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
