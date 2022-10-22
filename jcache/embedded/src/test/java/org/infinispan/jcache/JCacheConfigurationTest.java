@@ -24,6 +24,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.cache.configuration.MutableConfiguration;
 
 import org.infinispan.AdvancedCache;
@@ -36,6 +37,7 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -48,6 +50,21 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
          cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());
          JCacheManager jCacheManager = new JCacheManager(URI.create("oneCacheManager"), cm, null);
          assertNotNull(jCacheManager.getCache("oneCache"));
+      });
+   }
+
+   public void testNamedCacheConfigurationOnInternalCacheManager() {
+      withCachingProvider(provider -> {
+         try (CacheManager cacheManager = provider.getCacheManager()) {
+            EmbeddedCacheManager embeddedCacheManager = cacheManager.unwrap(EmbeddedCacheManager.class);
+            embeddedCacheManager.defineConfiguration("testCache",
+                    new ConfigurationBuilder().memory().maxCount(1234).build());
+            Cache<Object, Object> testCache = cacheManager.createCache("testCache", new MutableConfiguration<>());
+            assertNotNull(testCache);
+            org.infinispan.Cache unwrap = testCache.unwrap(org.infinispan.Cache.class);
+            Configuration configuration = unwrap.getCacheConfiguration();
+            assertEquals(1234, configuration.memory().maxCount());
+         }
       });
    }
 

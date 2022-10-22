@@ -208,6 +208,7 @@ public class JCacheManager extends AbstractJCacheManager {
          baseConfig = cm.getCacheConfiguration(cacheName);
       }
       ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(configuration);
+      cm.undefineConfiguration(cacheName);
       cm.defineConfiguration(cacheName, adapter.build(baseConfig));
       AdvancedCache<K, V> ispnCache =
             cm.<K, V>getCache(cacheName).getAdvancedCache();
