@@ -73,7 +73,7 @@ The existence of a given value is determined by 'equals' and `hashcode' method's
 == Creating a Multimap Cache
 
 Currently the MultimapCache is configured as a regular cache. This can be done either by code or XML configuration.
-See how to configure a regular Cache in the section link to [configure a cache].
+See how to configure a regular cache in link:{config_docs}#cache-configuration[Configuring {brandname} caches].
 
 === Embedded mode
 
