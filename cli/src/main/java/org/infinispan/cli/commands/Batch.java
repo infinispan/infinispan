@@ -40,6 +40,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             Alter.class,
             Availability.class,
             Backup.class,
+            Benchmark.class,
             Cache.class,
             Cas.class,
             Cd.class,
