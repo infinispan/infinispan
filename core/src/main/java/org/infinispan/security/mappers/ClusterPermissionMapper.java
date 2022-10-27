@@ -3,6 +3,7 @@ package org.infinispan.security.mappers;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
@@ -34,11 +35,12 @@ public class ClusterPermissionMapper implements MutableRolePermissionMapper {
    private static final String CLUSTER_PERMISSION_MAPPER_CACHE = "org.infinispan.PERMISSIONS";
    private EmbeddedCacheManager cacheManager;
    private Cache<String, Role> clusterPermissionMap;
+   private Cache<String, Role> clusterPermissionReadMap;
 
    @Start
    void start() {
       clusterPermissionMap = cacheManager.getCache(CLUSTER_PERMISSION_MAPPER_CACHE);
-      clusterPermissionMap = clusterPermissionMap.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+      clusterPermissionReadMap = clusterPermissionMap.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.CACHE_MODE_LOCAL);
    }
 
    @Override
@@ -48,7 +50,7 @@ public class ClusterPermissionMapper implements MutableRolePermissionMapper {
       CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.clustering().cacheMode(cacheMode)
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(globalConfiguration.isClustered())
             .security().authorization().disable();
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
@@ -63,22 +65,22 @@ public class ClusterPermissionMapper implements MutableRolePermissionMapper {
 
    @Override
    public CompletionStage<Boolean> removeRole(String name) {
-      return clusterPermissionMap.removeAsync(name).thenApply(old -> old != null);
+      return clusterPermissionMap.removeAsync(name).thenApply(Objects::nonNull);
    }
 
    @Override
    public Map<String, Role> getAllRoles() {
-      return isActive() ? clusterPermissionMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) : Collections.emptyMap();
+      return isActive() ? clusterPermissionReadMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) : Collections.emptyMap();
    }
 
    @Override
    public Role getRole(String name) {
-      return isActive() ? clusterPermissionMap.get(name) : null;
+      return isActive() ? clusterPermissionReadMap.get(name) : null;
    }
 
    @Override
    public boolean hasRole(String name) {
-      return isActive() && clusterPermissionMap.containsKey(name);
+      return isActive() && clusterPermissionReadMap.containsKey(name);
    }
 
    private boolean isActive() {
