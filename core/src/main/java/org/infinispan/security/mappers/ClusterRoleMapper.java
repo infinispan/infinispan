@@ -11,6 +11,7 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -36,18 +37,20 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
    private EmbeddedCacheManager cacheManager;
    private static final String CLUSTER_ROLE_MAPPER_CACHE = "org.infinispan.ROLES";
    private Cache<String, RoleSet> clusterRoleMap;
+   private Cache<String, RoleSet> clusterRoleReadMap;
 
    @Start
    void start() {
       clusterRoleMap = cacheManager.getCache(CLUSTER_ROLE_MAPPER_CACHE);
+      clusterRoleReadMap = clusterRoleMap.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.CACHE_MODE_LOCAL);
    }
 
    @Override
    public Set<String> principalToRoles(Principal principal) {
-      if (clusterRoleMap == null) {
+      if (clusterRoleReadMap == null) {
          return Collections.singleton(principal.getName());
       }
-      RoleSet roleSet = clusterRoleMap.get(principal.getName());
+      RoleSet roleSet = clusterRoleReadMap.get(principal.getName());
       if (roleSet != null && !roleSet.roles.isEmpty()) {
          return roleSet.roles;
       } else {
@@ -62,7 +65,7 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
       CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.clustering().cacheMode(cacheMode)
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(globalConfiguration.isClustered())
             .security().authorization().disable();
 
       GlobalComponentRegistry registry = SecurityActions.getGlobalComponentRegistry(cacheManager);

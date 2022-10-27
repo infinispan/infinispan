@@ -1,10 +1,15 @@
 package org.infinispan.security;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.test.TestingUtil.extractField;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
@@ -16,15 +21,18 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.mappers.ClusterPermissionMapper;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName="security.DynamicRBACTest")
+@Test(groups = "functional", testName = "security.DynamicRBACTest")
 public class DynamicRBACTest extends MultipleCacheManagersTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject SUBJECT_A = TestingUtil.makeSubject("A");
@@ -42,6 +50,8 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
          crm = (ClusterRoleMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().principalRoleMapper();
          crm.grant("admin", "admin");
          cpm = (ClusterPermissionMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().rolePermissionMapper();
+         await(cpm.addRole(Role.newRole("wizard", true, AuthorizationPermission.ALL_WRITE)));
+         await(cpm.addRole(Role.newRole("cleric", true, AuthorizationPermission.ALL_READ)));
          return null;
       });
    }
@@ -82,10 +92,6 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
 
    public void testClusterPermissionMapper() {
       Map<String, Role> roles = cpm.getAllRoles();
-      assertEquals(0, roles.size());
-      await(cpm.addRole(Role.newRole("wizard", true, AuthorizationPermission.ALL_WRITE)));
-      await(cpm.addRole(Role.newRole("cleric", true, AuthorizationPermission.ALL_READ)));
-      roles = cpm.getAllRoles();
       assertEquals(2, roles.size());
       assertTrue(roles.containsKey("wizard"));
       assertTrue(roles.containsKey("cleric"));
@@ -105,6 +111,37 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
       await(cpm.removeRole("cleric"));
       roles = cpm.getAllRoles();
       assertEquals(1, roles.size());
+   }
+
+   public void testJoiner() throws PrivilegedActionException {
+      crm.grant("wizard", "gandalf");
+      Cache<?, ?> crmCache = extractField(crm, "clusterRoleMap");
+      ClusterTopologyManager crmTM = TestingUtil.extractComponent(crmCache, ClusterTopologyManager.class);
+      crmTM.setRebalancingEnabled(false);
+      await(cpm.addRole(Role.newRole("rogue", true, AuthorizationPermission.LISTEN)));
+      Cache<?, ?> cpmCache = extractField(cpm, "clusterPermissionMap");
+      ClusterTopologyManager cpmTM = TestingUtil.extractComponent(cpmCache, ClusterTopologyManager.class);
+      cpmTM.setRebalancingEnabled(false);
+      try {
+         EmbeddedCacheManager joiner = Security.doAs(ADMIN, (PrivilegedExceptionAction<EmbeddedCacheManager>) () ->
+               addClusterEnabledCacheManager(getGlobalConfigurationBuilder(), getConfigurationBuilder(), new TransportFlags().withFD(true))
+         );
+         ClusterRoleMapper joinerCrm = Security.doAs(ADMIN, (PrivilegedExceptionAction<ClusterRoleMapper>) () -> (ClusterRoleMapper) joiner.getCacheManagerConfiguration().security().authorization().principalRoleMapper());
+         TestingUtil.TestPrincipal gandalf = new TestingUtil.TestPrincipal("gandalf");
+         assertTrue(crm.principalToRoles(gandalf).contains("wizard"));
+         assertTrue(crm.list("gandalf").contains("wizard"));
+         assertFalse(joinerCrm.principalToRoles(gandalf).contains("wizard"));
+         assertFalse(joinerCrm.list("gandalf").contains("wizard"));
+
+         ClusterPermissionMapper joinerCpm = Security.doAs(ADMIN, (PrivilegedExceptionAction<ClusterPermissionMapper>) () -> (ClusterPermissionMapper) joiner.getCacheManagerConfiguration().security().authorization().rolePermissionMapper());
+         Role rogue0 = cpm.getRole("rogue");
+         assertNotNull(rogue0);
+         Role rogue2 = joinerCpm.getRole("rogue");
+         assertNull(rogue2);
+      } finally {
+         crmTM.setRebalancingEnabled(true);
+         cpmTM.setRebalancingEnabled(true);
+      }
    }
 
    @AfterClass(alwaysRun = true)
