@@ -25,7 +25,7 @@ import org.aesh.readline.terminal.formatting.TerminalString;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
-import org.infinispan.cli.impl.DefaultShell;
+import org.infinispan.cli.impl.KubeShell;
 import org.infinispan.cli.impl.KubernetesContext;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.commons.util.Util;
@@ -161,7 +161,7 @@ public class Shell extends CliCommand {
          args.add("-c");
          args.add(connection.toString());
          Messages.CLI.debugf("cli %s", args);
-         CLI.main(new DefaultShell(), args.toArray(new String[0]), System.getProperties(), false);
+         CLI.main(new KubeShell(), args.toArray(new String[0]), System.getProperties(), false);
          return CommandResult.SUCCESS;
       } catch (Throwable t) {
          TerminalString error = new TerminalString(Util.getRootCause(t).getLocalizedMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));

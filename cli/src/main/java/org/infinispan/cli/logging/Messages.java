@@ -200,8 +200,8 @@ public interface Messages {
    @Message(value = "Filter rule '%s' is not in the format [ACCEPT|REJECT]/{CIDR}")
    IllegalArgumentException illegalFilterRule(String rule);
 
-   @Message(value = "Error executing line %d: '%s'")
-   CommandException batchError(int lineNumber, String line, @Cause Throwable t);
+   @Message(value = "Error executing file: %s, line %d: '%s'")
+   CommandException batchError(String file, int lineNumber, String line, @Cause Throwable t);
 
    @Message("Option '%s' requires option '%s'")
    RequiredOptionException requiresAllOf(String option1, String option2);
