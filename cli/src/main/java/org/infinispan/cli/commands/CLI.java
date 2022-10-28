@@ -67,14 +67,15 @@ import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.cli.impl.CliAliasManager;
 import org.infinispan.cli.impl.CliCommandNotFoundHandler;
 import org.infinispan.cli.impl.CliRuntimeRunner;
+import org.infinispan.cli.impl.CliShell;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.ContextAwareCommandInvocationProvider;
 import org.infinispan.cli.impl.ContextAwareQuitHandler;
 import org.infinispan.cli.impl.ContextImpl;
-import org.infinispan.cli.impl.DefaultShell;
 import org.infinispan.cli.impl.ExitCodeResultHandler;
 import org.infinispan.cli.impl.KubernetesContext;
 import org.infinispan.cli.impl.SSLContextSettings;
+import org.infinispan.cli.impl.StreamShell;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.util.ZeroSecurityHostnameVerifier;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
@@ -161,7 +162,7 @@ public class CLI extends CliCommand {
    boolean trustAll;
 
    @Option(completer = FileOptionCompleter.class, shortName = 'f', description = "File for batch mode")
-   Resource file;
+   String file;
 
    @Option(shortName = 'c', description = "A connection URL. Use '-' to connect to http://localhost:11222")
    String connect;
@@ -226,7 +227,7 @@ public class CLI extends CliCommand {
       }
 
       if (file != null) {
-         return batch(file.getAbsolutePath(), invocation.getShell());
+         return batch(file, invocation.getShell());
       } else {
          if (context.getProperty(Context.Property.AUTOEXEC) != null) {
             batch(context.getProperty(Context.Property.AUTOEXEC), invocation.getShell());
@@ -391,7 +392,16 @@ public class CLI extends CliCommand {
    }
 
    public static void main(String[] args) throws IOException {
-      System.exit(main(new DefaultShell(), args, System.getProperties()));
+      Shell shell = null;
+      for (int i = 0; i < args.length - 1; i++) {
+         if (args[i].equals("-f") && args[i + 1].equals("-")) {
+            shell = new StreamShell();
+         }
+      }
+      if (shell == null) {
+         shell = new CliShell();
+      }
+      System.exit(main(shell, args, System.getProperties()));
    }
 
    public static Path getServerHome(Resource server) {
