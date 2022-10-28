@@ -10,9 +10,9 @@ import org.aesh.readline.tty.terminal.TerminalConnection;
 import org.aesh.readline.util.Parser;
 import org.aesh.terminal.utils.ANSI;
 
-public class DefaultShell extends AeshDelegatingShell {
+public class KubeShell extends AeshDelegatingShell {
 
-   public DefaultShell() throws IOException {
+   public KubeShell() throws IOException {
       super(new TerminalConnection(Charset.defaultCharset(), System.in, System.out));
    }
 
