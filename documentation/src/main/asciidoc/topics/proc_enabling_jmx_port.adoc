@@ -22,6 +22,7 @@ Users must have `controlRole` with read/write access or the `monitorRole` with r
 
 .Procedure
 Start {brandname} Server with a remote JMX port enabled using one of the following ways:
+
 * Enable remote JMX through port `9999`.
 +
 [source,options="nowrap",subs=attributes+]
