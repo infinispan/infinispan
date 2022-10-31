@@ -3,6 +3,7 @@
 
 include::{stories}/assembly_configuring_maven_repository.adoc[leveloffset=+1]
 include::{stories}/assembly_creating_embedded_caches.adoc[leveloffset=+1]
+include::{stories}/assembly_authorization_embedded.adoc[leveloffset=+1]
 include::{stories}/assembly_configuring_statistics_jmx.adoc[leveloffset=+1]
 include::{stories}/assembly_setting_up_clusters.adoc[leveloffset=+1]
 include::{stories}/assembly_clustered_locks.adoc[leveloffset=+1]
