@@ -132,6 +132,11 @@
 :jgroups_extras: https://github.com/jgroups-extras
 
 //
+// Infinispan titles
+//
+:sizing_title: {brandname} performance considerations and tuning guidelines
+
+//
 // Include topic-specific attributes
 //
 include::transaction-attributes.adoc[]

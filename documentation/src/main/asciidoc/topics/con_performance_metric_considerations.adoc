@@ -2,7 +2,7 @@
 = Performance metric considerations
 {brandname} includes so many configurable combinations that determining a single formula for performance metrics that covers all use cases is not possible.  
 
-The purpose of the _{brandname} performance considerations and tuning guidelines_ document is to provide details about use cases and architectures that can help you determine requirements for your {brandname} deployment.
+The purpose of the _{sizing_title}_ document is to provide details about use cases and architectures that can help you determine requirements for your {brandname} deployment.
 
 Additionally, consider the following inter-related factors that apply to {brandname}:
 
