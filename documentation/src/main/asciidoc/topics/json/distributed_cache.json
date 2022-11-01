@@ -25,11 +25,14 @@
       "when-full": "REMOVE"
     },
     "indexing" : {
-      "enabled" : true,
-      "storage" : "local-heap",
-      "index-reader" : {
-        "refresh-interval" : "1000"
-      }
+          "enabled" : true,
+          "storage" : "local-heap",
+          "index-reader" : {
+            "refresh-interval" : "1000"
+          },
+          "indexed-entities": [
+            "org.infinispan.Person"
+          ]
     },
     "partition-handling" : {
       "when-split" : "ALLOW_READ_WRITES",

@@ -27,4 +27,4 @@ include::code_examples/ListenerMyNonBlocking.java[]
 
 [discrete]
 == Asynchronous thread pool
-To tune the thread pool used to dispatch such asynchronous notifications, use the link:{configdocroot}/infinispan-config-{infinispanversion}.html[`<listener-executor />`] XML element in your configuration file.
+To tune the thread pool used to dispatch such asynchronous notifications, use the link:{configdocroot}/infinispan-config-{schemaversion}.html[`<listener-executor />`] XML element in your configuration file.
