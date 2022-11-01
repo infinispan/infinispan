@@ -10,12 +10,13 @@ Use the {brandname} Command Line Interface (CLI) to add remote caches on {brandn
 
 .Procedure
 
-. Start the CLI and enter your credentials when prompted.
+. Start the CLI.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 include::cmd_examples/cli_nix.adoc[]
 ----
+. Run the `connect` command and enter your username and password when prompted.
 +
 . Use the [command]`create cache` command to create remote caches.
 +
