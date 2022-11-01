@@ -22,7 +22,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
-import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
@@ -172,7 +171,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new ImmortalCacheValue.Externalizer(), exts);
       addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer(), exts);
       addInternalExternalizer(new Immutables.ImmutableSetWrapperExternalizer(), exts);
-      addInternalExternalizer(new ReadCommittedEntry.Externalizer(), exts);
       addInternalExternalizer(InDoubtTxInfo.EXTERNALIZER, exts);
       addInternalExternalizer(new IntermediateOperationExternalizer(), exts);
       addInternalExternalizer(new IntSummaryStatisticsExternalizer(), exts);

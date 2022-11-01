@@ -1,5 +1,6 @@
 package org.infinispan.hotrod;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,6 @@ public class AwaitAssertions {
    }
 
    public static <T> T await(Uni<T> actual) {
-      return await(actual.convert().toCompletionStage());
+      return actual.await().atMost(Duration.ofSeconds(10));
    }
 }

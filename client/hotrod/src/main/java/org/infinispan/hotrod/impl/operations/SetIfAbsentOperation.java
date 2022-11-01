@@ -4,7 +4,6 @@ import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 import org.jboss.logging.BasicLogger;
 
 import io.netty.buffer.ByteBuf;
@@ -24,11 +23,6 @@ public class SetIfAbsentOperation<K> extends AbstractPutIfAbsentOperation<K, Boo
          CacheWriteOptions options,
          DataFormat dataFormat) {
       super(operationContext, key, keyBytes, value, options, dataFormat);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      completeResponseExistent(buf, status);
    }
 
    @Override

@@ -333,12 +333,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-      boolean isEntryVisited = command.loadType() != VisitableCommand.LoadType.DONT_LOAD;
-      Object rv = setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
-      if (!isEntryVisited) {
-         return rv;
-      }
-      return makeStage(rv).thenApply(ctx, command, dataReadReturnHandler);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, wrapEntryIfNeeded(ctx, command));
    }
 
    @Override
