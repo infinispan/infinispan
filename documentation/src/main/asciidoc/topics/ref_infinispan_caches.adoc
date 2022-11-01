@@ -16,7 +16,7 @@ Write succinct cache names and cache template names.
 [IMPORTANT]
 ====
 A file system might set a limitation for the length of a file name, so ensure that a cache's name does not exceed this limitation.
-If a cache name exceeds a file system's naming limitation, general operations or initialing operations towards that cache might fail. 
+If a cache name exceeds a file system's naming limitation, general operations or initialing operations towards that cache might fail.
 Write succinct file names.
 ====
 
@@ -83,7 +83,8 @@ include::yaml/infinispan_caches.yaml[]
 include::json/infinispan_caches.json[]
 ----
 
+
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}[{brandname} configuration schema reference]
-* link:http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd[infinispan-config-{infinispanversion}.xsd]
+* link:http://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd[infinispan-config-{infinispanversion}.xsd]

@@ -12,6 +12,9 @@
   <indexing enabled="true"
             storage="local-heap">
     <index-reader refresh-interval="1000"/>
+    <indexed-entities>
+      <indexed-entity>org.infinispan.Person</indexed-entity>
+    </indexed-entities>
   </indexing>
   <partition-handling when-split="ALLOW_READ_WRITES"
                       merge-policy="PREFERRED_NON_NULL"/>
