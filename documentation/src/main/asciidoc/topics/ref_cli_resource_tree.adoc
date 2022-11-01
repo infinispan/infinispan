@@ -11,6 +11,7 @@ caches
 counters
 configurations
 schemas
+tasks
 ----
 
 `caches`::
@@ -35,7 +36,7 @@ server
 `containers`::
 Cache containers on the {brandname} cluster.
 `cluster`::
-Lists {brandname} servers joined to the cluster.
+Lists {brandname} Servers joined to the cluster.
 //dnaro: need to ask. think server is wip.
 `server`::
-Resources for managing and monitoring {brandname} servers.
+Resources for managing and monitoring {brandname} Servers.

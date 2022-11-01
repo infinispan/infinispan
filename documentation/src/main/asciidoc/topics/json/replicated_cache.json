@@ -26,7 +26,10 @@
       "storage" : "local-heap",
       "index-reader" : {
         "refresh-interval" : "1000"
-      }
+        },
+      "indexed-entities": [
+        "org.infinispan.Person"
+      ]
     },
     "partition-handling" : {
       "when-split" : "ALLOW_READ_WRITES",

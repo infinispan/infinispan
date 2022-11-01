@@ -20,6 +20,8 @@ replicatedCache:
     storage: "local-heap"
     indexReader:
       refreshInterval: "1000"
+    indexedEntities:
+      - "org.infinispan.Person"
   partitionHandling:
     whenSplit: "ALLOW_READ_WRITES"
     mergePolicy: "PREFERRED_NON_NULL"
