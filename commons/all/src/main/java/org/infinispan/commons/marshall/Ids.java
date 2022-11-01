@@ -226,8 +226,6 @@ public interface Ids {
    Integer COMMAND_INVOCATION_ID = 154;
    Integer CACHE_ENTRY_GROUP_PREDICATE = 155;
 
-   Integer READ_COMMITTED_ENTRY = 156;
-
    Integer COUNTER_CONFIGURATION = 2000; //from counter
    Integer COUNTER_STATE = 2001; //from counter
 }

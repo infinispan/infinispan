@@ -10,18 +10,11 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_SHARED_STORE;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -370,47 +363,5 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
             ", oldMetadata=" + oldMetadata +
             ", internalMetadata=" + internalMetadata +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ReadCommittedEntry> {
-
-      @Override
-      public Integer getId() {
-         return Ids.READ_COMMITTED_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends ReadCommittedEntry>> getTypeClasses() {
-         return Collections.singleton(ReadCommittedEntry.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ReadCommittedEntry rce) throws IOException {
-         output.writeObject(rce.key);
-         output.writeObject(rce.value);
-         output.writeObject(rce.metadata);
-         output.writeObject(rce.oldValue);
-         output.writeLong(rce.created);
-         output.writeLong(rce.lastUsed);
-         output.writeShort(rce.flags);
-         output.writeObject(rce.internalMetadata);
-         output.writeObject(rce.oldMetadata);
-      }
-
-      @Override
-      public ReadCommittedEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-
-         ReadCommittedEntry rce = new ReadCommittedEntry<>(key, value, metadata);
-         rce.oldValue = input.readObject();
-         rce.created = input.readLong();
-         rce.lastUsed = input.readLong();
-         rce.flags = input.readShort();
-         rce.internalMetadata = (PrivateMetadata) input.readObject();
-         rce.oldMetadata = (Metadata) input.readObject();
-         return rce;
-      }
    }
 }

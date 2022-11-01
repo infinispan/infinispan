@@ -282,12 +282,12 @@ public class HotRodTransport implements AutoCloseable {
       CompletionStage<PingResponse> pingResponse;
       if (started) {
          // Verify if the cache exists on the server first
-         pingResponse = cacheOperationsFactory.newFaultTolerantPingOperation().execute();
-         pingResponse.thenCompose(ping -> {
+         CompletionStage<PingResponse> cs = cacheOperationsFactory.newFaultTolerantPingOperation().execute();
+         pingResponse = cs.thenCompose(ping -> {
             if (ping.isCacheNotFound()) {
                return createRemoteCache(cacheOperationsFactory, cacheName, cacheConfiguration);
             } else {
-               return pingResponse;
+               return cs;
             }
          });
       } else {
