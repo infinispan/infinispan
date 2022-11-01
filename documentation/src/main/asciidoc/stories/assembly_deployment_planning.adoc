@@ -9,6 +9,7 @@ To get the best performance for your {brandname} deployment, you should do the f
 * Determine what type of clustered cache mode best suits your use case and requirements.
 * Understand performance trade-offs and considerations for {brandname} capabilities that provide fault tolerance and consistency guarantees.
 
+include::{topics}/con_performance_metric_considerations.adoc[leveloffset=+1]
 include::{topics}/con_calculate_size_data_set.adoc[leveloffset=+1]
 include::{topics}/con_memory_overhead.adoc[leveloffset=+2]
 include::{topics}/con_jvm_heap_memory_allocation.adoc[leveloffset=+2]
