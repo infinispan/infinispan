@@ -154,6 +154,17 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       }
    }
 
+   @Test(expectedExceptions=CacheConfigurationException.class, expectedExceptionsMessageRegExp = ".*ISPN000651.*")
+   public void testMaxIdleNotAllowedWithoutPassivation() {
+      String cacheName = "testMaxIdleNotAllowedWithoutPassivation";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      cb.expiration().maxIdle(1);
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+      // will start the cache
+      cacheManager.getCache(cacheName);
+   }
+
    public void testRollback() throws SystemException, NotSupportedException {
       if (!transactionalCache) {
          return;
