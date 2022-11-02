@@ -9,7 +9,7 @@ Use the [command]`stats` command either from the context of a resource that prov
 ----
 stats
 ----
-+
+
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/cli_stats_container.json[]
@@ -19,7 +19,7 @@ include::json/cli_stats_container.json[]
 ----
 stats /containers/default/caches/mycache
 ----
-+
+
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/cli_stats_cache.json[]
