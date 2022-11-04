@@ -1,6 +1,6 @@
 CREATE TABLE Person (
   name VARCHAR(255) NOT NULL,
-  picture VARBINARY(255),
+  picture BYTEA,
   sex VARCHAR(255),
   birthdate TIMESTAMP,
   accepted_tos BOOLEAN,

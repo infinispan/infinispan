@@ -45,7 +45,7 @@ include::dependencies_maven/persistence_sql_store.xml[]
 .Declarative
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-query-jdbc-store xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
+query-jdbc-store xmlns="urn:infinispan:config:store:sql:{schemaversion}"
 ----
 +
 .Programmatic
