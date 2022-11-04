@@ -1,4 +1,4 @@
-package org.infinispan.configuration;
+package org.infinispan.configuration.parsing;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
@@ -19,6 +19,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -30,8 +31,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -215,7 +214,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "<cache-container default-cache=\"default\">" +
                   "   <local-cache name=\"default\">\n" +
                   "      <persistence >\n" +
-                  "         <store class=\"org.infinispan.configuration.XmlFileParsingTest$GenericLoader\" preload=\"true\" fetch-state=\"true\" />\n" +
+                  "         <store class=\""+ GenericLoader.class.getName()+ "\" preload=\"true\" fetch-state=\"true\" />\n" +
                   "      </persistence >\n" +
                   "   </local-cache>\n" +
                   "</cache-container>"
@@ -231,7 +230,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testCustomTransport() {
       String config = TestingUtil.wrapXMLWithSchema(
-            "<jgroups transport=\"org.infinispan.configuration.XmlFileParsingTest$CustomTransport\"/>\n" +
+            "<jgroups transport=\"" + CustomTransport.class.getName() + "\"/>\n" +
             "<cache-container default-cache=\"default\">\n" +
             "  <transport cluster=\"ispn-perf-test\"/>\n" +
             "  <distributed-cache name=\"default\"/>\n" +
@@ -631,6 +630,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    private void assertReaperAndTimeoutInfo(Configuration defaultCfg) {
       assertEquals(123, defaultCfg.transaction().reaperWakeUpInterval());
       assertEquals(3123, defaultCfg.transaction().completedTxTimeout());
+   }
+
+   public void testErrorReporting() {
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
+      Exceptions.expectException("^ISPN000327:.* at \\[13,18\\].*", () -> parserRegistry.parseFile("configs/broken.xml"), CacheConfigurationException.class);
    }
 
    public static class CustomTransport extends JGroupsTransport {

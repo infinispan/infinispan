@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.Location;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
@@ -33,12 +34,14 @@ public class JsonConfigurationReaderTest {
          json.require(ConfigurationReader.ElementType.START_DOCUMENT);
          json.nextElement();
          json.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item1");
+         assertLocation(json, 3, 5);
          assertEquals(3, json.getAttributeCount());
          assertAttribute(json, "item5", "v5");
          assertAttribute(json, "item6", "v6");
          assertAttribute(json, "item7", new String[] {"v7", "v8"});
          json.nextElement();
          json.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item2");
+         assertLocation(json, 4, 7);
          assertEquals(4, json.getAttributeCount());
          assertAttribute(json, "a", "1");
          assertAttribute(json, "b", "2");
@@ -46,6 +49,7 @@ public class JsonConfigurationReaderTest {
          assertAttribute(json, "d", "4");
          json.nextElement();
          json.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "camel-item3");
+         assertLocation(json, 8, 9);
          assertEquals("camel-attribute", json.getAttributeName(0));
          assertEquals(properties.getProperty("opinion"), json.getAttributeValue(0));
          assertEquals("another-camel-attribute", json.getAttributeName(1));
@@ -59,6 +63,13 @@ public class JsonConfigurationReaderTest {
          json.nextElement();
          json.require(ConfigurationReader.ElementType.END_DOCUMENT);
       }
+   }
+
+   private void assertLocation(JsonConfigurationReader json, int line, int col) {
+      Location location = json.getLocation();
+      assertEquals("Line", line, location.getLineNumber());
+      assertEquals("Column", col, location.getColumnNumber());
+      System.out.println(location);
    }
 
    private void assertAttribute(JsonConfigurationReader json, String name, String value) {
