@@ -1,6 +1,7 @@
 <distributed-cache>
   <persistence>
-    <query-jdbc-store xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
+    <connection-pool connection-url=""/>
+    <query-jdbc-store xmlns="urn:infinispan:config:store:sql:{schemaversion}"
                       dialect="POSTGRES"
                       shared="true">
       <queries key-columns="name">

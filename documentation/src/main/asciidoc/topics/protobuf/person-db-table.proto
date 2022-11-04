@@ -1,4 +1,4 @@
-package com.example
+package com.example;
 
 enum Sex {
    FEMALE = 1;
