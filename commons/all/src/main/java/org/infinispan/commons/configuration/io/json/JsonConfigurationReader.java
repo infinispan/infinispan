@@ -35,14 +35,14 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
    private final List<Map.Entry<String, Json>> attributes = new ArrayList<>();
    private final String namespace;
    private String name;
-   private Json element;
+   private Json element, current;
    private ElementType type;
 
    public JsonConfigurationReader(BufferedReader reader, ConfigurationResourceResolver resourceResolver, Properties properties, PropertyReplacer replacer, NamingStrategy namingStrategy) {
       super(resourceResolver, properties, replacer, namingStrategy);
       this.reader = reader;
       try (Stream<String> lines = this.reader.lines()) {
-         Map<String, Json> json = Json.read(lines.collect(Collectors.joining())).asJsonMap();
+         Map<String, Json> json = Json.read(lines.collect(Collectors.joining("\n"))).asJsonMap();
          Json namespace = json.remove(NAMESPACE);
          this.namespace = namespace == null ? "" : namespace.asString();
          iteratorStack = new ArrayDeque<>();
@@ -63,6 +63,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
             // this is a map
             Map.Entry<String, ?> e = (Map.Entry<String, ?>) item;
             Json value = (Json) e.getValue();
+            current = value;
             if (value.isPrimitive()) {
                throw new IllegalStateException("Primitive attribute should have been detected as attribute: " + e.getKey());
             } else if (value.isObject()) {
@@ -82,7 +83,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
             type = entry.type;
             if (type == ElementType.START_ELEMENT) {
                nameStack.push(name);
-               element = entry.v;
+               current = element = entry.v;
                if (element.isObject()) {
                   processObject(element);
                } else if (element.isArray()) {
@@ -129,7 +130,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
       }
       Iterator<ElementEntry> it = array.iterator();
       iteratorStack.push(it);
-      element = it.next().v; // Already remove the first one
+      current = element = it.next().v; // Already remove the first one
    }
 
    private void processObject(Json value) {
@@ -168,7 +169,12 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public Location getLocation() {
-      return Location.of(1, 0);
+      if (current != null) {
+         return Location.of(current.getLine(), current.getColumn());
+      } else {
+         return Location.of(1, 0);
+      }
+
    }
 
    @Override
@@ -196,8 +202,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public String getAttributeValue(String name, NamingStrategy strategy) {
-      for (int i = 0; i < attributes.size(); i++) {
-         Map.Entry<String, Json> attribute = attributes.get(i);
+      for (Map.Entry<String, Json> attribute : attributes) {
          if (name.equals(basename(strategy, attribute.getKey()))) {
             return attribute.getValue().asString();
          }
@@ -210,7 +215,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
       Json value = attributes.get(index).getValue();
       if (value.isArray()) {
          List<Json> list = value.asJsonList();
-         String array[] = new String[list.size()];
+         String[] array = new String[list.size()];
          for(int i = 0; i < list.size(); i++) {
             array[i] = replaceProperties(list.get(i).asString());
          }

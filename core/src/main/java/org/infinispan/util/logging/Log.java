@@ -29,6 +29,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.configuration.io.Location;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -1163,8 +1164,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Remote transaction %s timed out. Rolling back after %d ms", id = 326)
    void remoteTransactionTimeout(GlobalTransaction gtx, long ageMilliSeconds);
 
-   @Message(value = "Cannot find a parser for element '%s' in namespace '%s'. Check that your configuration is up-to date for Infinispan '%s' and if you have the proper dependency in the classpath", id = 327)
-   CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri, String version);
+   @Message(value = "Cannot find a parser for element '%s' in namespace '%s' at %s. Check that your configuration is up-to date for Infinispan '%s' and if you have the proper dependency in the classpath", id = 327)
+   CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri, Location location, String version);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Rebalance phase %s confirmed for cache %s on node %s, topology id = %d", id = 328)
