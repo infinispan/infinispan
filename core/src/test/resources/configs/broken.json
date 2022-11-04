@@ -1,0 +1,29 @@
+{
+  "infinispan": {
+    "cacheContainer": {
+      "default-cache": "default",
+      "caches": {
+        "local": {
+          "local-cache": {
+            "statistics": "true",
+            "encoding": {
+              "key": {
+                "media-type": "application/x-java-object"
+              },
+              "value": {
+                "media-type": "application/x-java-object"
+              }
+            },
+            "locking": {
+              "acquire-timeout": "30000",
+              "concurrency-level": "2000",
+              "isolation": "NONE",
+              "striping": "true"
+            },
+            "error": {}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+infinispan:
+  cacheContainer:
+    defaultCache: "default"
+    caches:
+      local:
+        localCache:
+          statistics: "true"
+          encoding:
+            key:
+              mediaType: "application/x-java-object"
+            value:
+              mediaType: "application/x-java-object"
+          locking:
+            acquire-timeout: "30000"
+            concurrency-level: "2000"
+            isolation: "NONE"
+            striping: "true"
+          error: ~
