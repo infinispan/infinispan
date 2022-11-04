@@ -41,6 +41,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
    private Parsed next;
    private ElementType type = ElementType.START_DOCUMENT;
    private int row = 0;
+   private int column = 0;
    private Node lines;
 
    public YamlConfigurationReader(Reader reader, ConfigurationResourceResolver resolver, Properties properties, PropertyReplacer replacer, NamingStrategy namingStrategy) {
@@ -134,7 +135,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                parsed = parseLine(reader.readLine());
             } while (parsed != null && parsed.name == null && parsed.value == null && !parsed.list);
          } catch (IOException e) {
-            throw new ConfigurationReaderException(e, Location.of(row, 1));
+            throw new ConfigurationReaderException(e, Location.of(row, column));
          }
          if (parsed == null) {
             // EOF
@@ -142,7 +143,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          }
          if (lines == null) {
             if (parsed.name == null) {
-               throw new ConfigurationReaderException("Incomplete line", Location.of(row, 1));
+               throw new ConfigurationReaderException("Incomplete line", Location.of(row, column));
             }
             lines = new Node(parsed);
             current = lines;
@@ -220,6 +221,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          int state = 0; // 0=INDENT, 1=KEY, 2=COLON, 3=VALUE, 4=TRAILING
          int start = -1;
          for (int i = 0; i < length; i++) {
+            column = i + 1;
             int c = s.charAt(i);
             switch (c) {
                case ' ':
@@ -464,7 +466,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public Location getLocation() {
-      return Location.of(row, 1);
+      return Location.of(row, column);
    }
 
    @Override

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+   <cache-container default-cache="default">
+      <local-cache name="local" statistics="true">
+         <encoding>
+            <key media-type="application/x-java-object"/>
+            <value media-type="application/x-java-object"/>
+         </encoding>
+         <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
+         <error/>
+      </local-cache>
+   </cache-container>
+
+</infinispan>
+
+

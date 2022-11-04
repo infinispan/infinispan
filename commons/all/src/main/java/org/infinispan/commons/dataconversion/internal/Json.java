@@ -46,23 +46,21 @@ import java.util.regex.Pattern;
 import org.infinispan.commons.dataconversion.MediaType;
 
 /**
- *
  * <p>
  * Represents a JSON (JavaScript Object Notation) entity. For more information about JSON, please see
  * <a href="http://www.json.org" target="_">http://www.json.org</a>.
  * </p>
  *
  * <p>
- * A JSON entity can be one of several things: an object (set of name/Json entity pairs), an array (a list of
- * other JSON entities), a string, a number, a boolean or null. All of those are represented as <code>Json</code>
- * instances. Each of the different types of entities supports a different set of operations. However, this class
- * unifies all operations into a single interface so in Java one is always dealing with a single object type: this class.
- * The approach effectively amounts to dynamic typing where using an unsupported operation won't be detected at
- * compile time, but will throw a runtime {@link UnsupportedOperationException}. It simplifies working with JSON
- * structures considerably and it leads to shorter at cleaner Java code. It makes much easier to work
- * with JSON structure without the need to convert to "proper" Java representation in the form of
- * POJOs and the like. When traversing a JSON, there's no need to type-cast at each step because there's
- * only one type: <code>Json</code>.
+ * A JSON entity can be one of several things: an object (set of name/Json entity pairs), an array (a list of other JSON
+ * entities), a string, a number, a boolean or null. All of those are represented as <code>Json</code> instances. Each
+ * of the different types of entities supports a different set of operations. However, this class unifies all operations
+ * into a single interface so in Java one is always dealing with a single object type: this class. The approach
+ * effectively amounts to dynamic typing where using an unsupported operation won't be detected at compile time, but
+ * will throw a runtime {@link UnsupportedOperationException}. It simplifies working with JSON structures considerably
+ * and it leads to shorter at cleaner Java code. It makes much easier to work with JSON structure without the need to
+ * convert to "proper" Java representation in the form of POJOs and the like. When traversing a JSON, there's no need to
+ * type-cast at each step because there's only one type: <code>Json</code>.
  * </p>
  *
  * <p>
@@ -72,14 +70,13 @@ import org.infinispan.commons.dataconversion.MediaType;
  * </p>
  *
  * <p>
- * The underlying representation of a given <code>Json</code> instance can be obtained by calling
- * the generic {@link #getValue()} method or one of the <code>asXXX</code> methods such
- * as {@link #asBoolean()} or {@link #asString()} etc.
- * JSON objects are represented as Java {@link Map}s while JSON arrays are represented as Java
- * {@link List}s. Because those are mutable aggregate structures, there are two versions of the
- * corresponding <code>asXXX</code> methods: {@link #asMap()} which performs a deep copy of the underlying
- * map, unwrapping every nested Json entity to its Java representation and {@link #asJsonMap()} which
- * simply return the map reference. Similarly there are {@link #asList()} and {@link #asJsonList()}.
+ * The underlying representation of a given <code>Json</code> instance can be obtained by calling the generic
+ * {@link #getValue()} method or one of the <code>asXXX</code> methods such as {@link #asBoolean()} or
+ * {@link #asString()} etc. JSON objects are represented as Java {@link Map}s while JSON arrays are represented as Java
+ * {@link List}s. Because those are mutable aggregate structures, there are two versions of the corresponding
+ * <code>asXXX</code> methods: {@link #asMap()} which performs a deep copy of the underlying map, unwrapping every
+ * nested Json entity to its Java representation and {@link #asJsonMap()} which simply return the map reference.
+ * Similarly there are {@link #asList()} and {@link #asJsonList()}.
  * </p>
  *
  * <h3>Constructing and Modifying JSON Structures</h3>
@@ -253,7 +250,7 @@ import org.infinispan.commons.dataconversion.MediaType;
  * Json errors = schema.validate(inputJson);
  * for (Json error : errors.asJsonList())
  * System.out.println("Validation error " + err);
- *</code></pre>
+ * </code></pre>
  * <h2>
  * Infinispan changes on top of 1.4.2:
  * </h2>
@@ -265,6 +262,7 @@ import org.infinispan.commons.dataconversion.MediaType;
  * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}, {@link ConfigurationInfo}</li>
  * <li>Support for replacing objects</li>
  *  </ul></p>
+ *
  * @author Borislav Iordanov
  * @version 1.4.2
  */
@@ -273,42 +271,39 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * This interface defines how <code>Json</code> instances are constructed. There is a
-    * default implementation for each kind of <code>Json</code> value, but you can provide
-    * your own implementation. For example, you might want a different representation of
-    * an object than a regular <code>HashMap</code>. Or you might want string comparison to be
-    * case insensitive.
+    * This interface defines how <code>Json</code> instances are constructed. There is a default implementation for each
+    * kind of <code>Json</code> value, but you can provide your own implementation. For example, you might want a
+    * different representation of an object than a regular <code>HashMap</code>. Or you might want string comparison to
+    * be case insensitive.
     * </p>
     *
     * <p>
-    * In addition, the {@link #make(Object)} method allows you plug-in your own mapping
-    * of arbitrary Java objects to <code>Json</code> instances. You might want to implement
-    * a Java Beans to JSON mapping or any other JSON serialization that makes sense in your
-    * project.
+    * In addition, the {@link #make(Object)} method allows you plug-in your own mapping of arbitrary Java objects to
+    * <code>Json</code> instances. You might want to implement a Java Beans to JSON mapping or any other JSON
+    * serialization that makes sense in your project.
     * </p>
     *
     * <p>
-    * To avoid implementing all methods in that interface, you can extend the {@link DefaultFactory}
-    * default implementation and simply overwrite the ones you're interested in.
+    * To avoid implementing all methods in that interface, you can extend the {@link DefaultFactory} default
+    * implementation and simply overwrite the ones you're interested in.
     * </p>
     *
     * <p>
-    * The factory implementation used by the <code>Json</code> classes is specified simply by calling
-    * the {@link #setGlobalFactory(Factory)} method. The factory is a static, global variable by default.
-    * If you need different factories in different areas of a single application, you may attach them
-    * to different threads of execution using the {@link #attachFactory(Factory)}. Recall a separate
-    * copy of static variables is made per ClassLoader, so for example in a web application context, that
-    * global factory can be different for each web application (as Java web servers usually use a separate
-    * class loader per application). Thread-local factories are really a provision for special cases.
+    * The factory implementation used by the <code>Json</code> classes is specified simply by calling the
+    * {@link #setGlobalFactory(Factory)} method. The factory is a static, global variable by default. If you need
+    * different factories in different areas of a single application, you may attach them to different threads of
+    * execution using the {@link #attachFactory(Factory)}. Recall a separate copy of static variables is made per
+    * ClassLoader, so for example in a web application context, that global factory can be different for each web
+    * application (as Java web servers usually use a separate class loader per application). Thread-local factories are
+    * really a provision for special cases.
     * </p>
     *
     * @author Borislav Iordanov
-    *
     */
    public interface Factory {
       /**
-       * Construct and return an object representing JSON <code>null</code>. Implementations are
-       * free to cache a return the same instance. The resulting value must return
+       * Construct and return an object representing JSON <code>null</code>. Implementations are free to cache a return
+       * the same instance. The resulting value must return
        * <code>true</code> from <code>isNull()</code> and <code>null</code> from
        * <code>getValue()</code>.
        *
@@ -320,9 +315,10 @@ public class Json implements java.io.Serializable {
        * Construct and return a JSON boolean. The resulting value must return
        * <code>true</code> from <code>isBoolean()</code> and the passed
        * in parameter from <code>getValue()</code>.
+       *
        * @param value The boolean value.
-       * @return A JSON with <code>isBoolean() == true</code>. Implementations
-       * are free to cache and return the same instance for true and false.
+       * @return A JSON with <code>isBoolean() == true</code>. Implementations are free to cache and return the same
+       * instance for true and false.
        */
       Json bool(boolean value);
 
@@ -330,6 +326,7 @@ public class Json implements java.io.Serializable {
        * Construct and return a JSON string. The resulting value must return
        * <code>true</code> from <code>isString()</code> and the passed
        * in parameter from <code>getValue()</code>.
+       *
        * @param value The string to wrap as a JSON value.
        * @return A JSON element with the given string as a value.
        */
@@ -366,13 +363,10 @@ public class Json implements java.io.Serializable {
       Json array();
 
       /**
-       * Construct and return a JSON object. The resulting value can be of any
-       * JSON type. The method is responsible for examining the type of its
-       * argument and performing an appropriate mapping to a <code>Json</code>
-       * instance.
+       * Construct and return a JSON object. The resulting value can be of any JSON type. The method is responsible for
+       * examining the type of its argument and performing an appropriate mapping to a <code>Json</code> instance.
        *
-       * @param anything An arbitray Java object from which to construct a <code>Json</code>
-       * element.
+       * @param anything An arbitray Java object from which to construct a <code>Json</code> element.
        * @return The newly constructed <code>Json</code> instance.
        */
       Json make(Object anything);
@@ -391,36 +385,33 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Represents JSON schema - a specific data format that a JSON entity must
-    * follow. The idea of a JSON schema is very similar to XML. Its main purpose
-    * is validating input.
+    * Represents JSON schema - a specific data format that a JSON entity must follow. The idea of a JSON schema is very
+    * similar to XML. Its main purpose is validating input.
     * </p>
     *
-    *  <p>
-    *  More information about the various JSON schema specifications can be
-    *  found at http://json-schema.org. JSON Schema is an  IETF draft (v4 currently) and
-    *  our implementation follows this set of specifications. A JSON schema is specified
-    *  as a JSON object that contains keywords defined by the specification. Here are
-    *  a few introductory materials:
-    *  <ul>
-    *  <li>http://jsonary.com/documentation/json-schema/ -
-    *  a very well-written tutorial covering the whole standard</li>
-    *  <li>http://spacetelescope.github.io/understanding-json-schema/ -
-    *  online book, tutorial (Python/Ruby based)</li>
-    *  </ul>
-    *  </p>
-    * @author Borislav Iordanov
+    * <p>
+    * More information about the various JSON schema specifications can be found at http://json-schema.org. JSON Schema
+    * is an  IETF draft (v4 currently) and our implementation follows this set of specifications. A JSON schema is
+    * specified as a JSON object that contains keywords defined by the specification. Here are a few introductory
+    * materials:
+    * <ul>
+    * <li>http://jsonary.com/documentation/json-schema/ -
+    * a very well-written tutorial covering the whole standard</li>
+    * <li>http://spacetelescope.github.io/understanding-json-schema/ -
+    * online book, tutorial (Python/Ruby based)</li>
+    * </ul>
+    * </p>
     *
+    * @author Borislav Iordanov
     */
    public interface Schema {
       /**
        * <p>
-       * Validate a JSON document according to this schema. The validations attempts to
-       * proceed even in the face of errors. The return value is always a <code>Json.object</code>
-       * containing the boolean property <code>ok</code>. When <code>ok</code> is <code>true</code>,
-       * the return object contains nothing else. When it is <code>false</code>, the return object
-       * contains a property <code>errors</code> which is an array of error messages for all
-       * detected schema violations.
+       * Validate a JSON document according to this schema. The validations attempts to proceed even in the face of
+       * errors. The return value is always a <code>Json.object</code> containing the boolean property <code>ok</code>.
+       * When <code>ok</code> is <code>true</code>, the return object contains nothing else. When it is
+       * <code>false</code>, the return object contains a property <code>errors</code> which is an array of error
+       * messages for all detected schema violations.
        * </p>
        *
        * @param document The input document.
@@ -533,9 +524,10 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Replace all JSON references, as per the http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
-    * specification, by their referants.
+    * Replace all JSON references, as per the http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 specification, by
+    * their referants.
     * </p>
+    *
     * @param json
     * @param duplicate
     * @param done
@@ -1177,8 +1169,7 @@ public class Json implements java.io.Serializable {
             for (Map.Entry<?, ?> x : properties.entrySet())
                O.set(x.getKey().toString(), factory().make(x.getValue()));
             return O;
-         }
-         else if (anything instanceof Json)
+         } else if (anything instanceof Json)
             return (Json) anything;
          else if (anything instanceof String)
             return factory().string((String) anything);
@@ -1202,10 +1193,9 @@ public class Json implements java.io.Serializable {
             return factory().number((Number) anything);
          else if (anything instanceof Enum) {
             return factory().string(anything.toString());
-         }  else if (anything instanceof MediaType) {
+         } else if (anything instanceof MediaType) {
             return factory().string(anything.toString());
-         }
-         else if (anything.getClass().isArray()) {
+         } else if (anything.getClass().isArray()) {
             Class<?> comp = anything.getClass().getComponentType();
             if (!comp.isPrimitive())
                return Json.array((Object[]) anything);
@@ -1241,9 +1231,9 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>Return the {@link Factory} currently in effect. This is the factory that the {@link #make(Object)} method
-    * will dispatch on upon determining the type of its argument. If you already know the type
-    * of element to construct, you can avoid the type introspection implicit to the make method
-    * and call the factory directly. This will result in an optimization. </p>
+    * will dispatch on upon determining the type of its argument. If you already know the type of element to construct,
+    * you can avoid the type introspection implicit to the make method and call the factory directly. This will result
+    * in an optimization. </p>
     *
     * @return the factory
     */
@@ -1258,8 +1248,8 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Specify a global Json {@link Factory} to be used by all threads that don't have a
-    * specific thread-local factory attached to them.
+    * Specify a global Json {@link Factory} to be used by all threads that don't have a specific thread-local factory
+    * attached to them.
     * </p>
     *
     * @param factory The new global factory
@@ -1270,9 +1260,9 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Attach a thread-local Json {@link Factory} to be used specifically by this thread. Thread-local
-    * Json factories are the only means to have different {@link Factory} implementations used simultaneously
-    * in the same application (well, more accurately, the same ClassLoader).
+    * Attach a thread-local Json {@link Factory} to be used specifically by this thread. Thread-local Json factories are
+    * the only means to have different {@link Factory} implementations used simultaneously in the same application
+    * (well, more accurately, the same ClassLoader).
     * </p>
     *
     * @param factory the new thread local factory
@@ -1283,9 +1273,8 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Clear the thread-local factory previously attached to this thread via the
-    * {@link #attachFactory(Factory)} method. The global factory takes effect after
-    * a call to this method.
+    * Clear the thread-local factory previously attached to this thread via the {@link #attachFactory(Factory)} method.
+    * The global factory takes effect after a call to this method.
     * </p>
     */
    public static void detachFactory() {
@@ -1297,10 +1286,10 @@ public class Json implements java.io.Serializable {
     * Parse a JSON entity from its string representation.
     * </p>
     *
-    * @param jsonAsString A valid JSON representation as per the <a href="http://www.json.org">json.org</a>
-    * grammar. Cannot be <code>null</code>.
-    * @return The JSON entity parsed: an object, array, string, number or boolean, or null. Note that
-    * this method will never return the actual Java <code>null</code>.
+    * @param jsonAsString A valid JSON representation as per the <a href="http://www.json.org">json.org</a> grammar.
+    *                     Cannot be <code>null</code>.
+    * @return The JSON entity parsed: an object, array, string, number or boolean, or null. Note that this method will
+    * never return the actual Java <code>null</code>.
     */
    public static Json read(String jsonAsString) {
       return (Json) new Reader().read(jsonAsString);
@@ -1312,8 +1301,8 @@ public class Json implements java.io.Serializable {
     * </p>
     *
     * @param location A valid URL where to load a JSON document from. Cannot be <code>null</code>.
-    * @return The JSON entity parsed: an object, array, string, number or boolean, or null. Note that
-    * this method will never return the actual Java <code>null</code>.
+    * @return The JSON entity parsed: an object, array, string, number or boolean, or null. Note that this method will
+    * never return the actual Java <code>null</code>.
     */
    public static Json read(URL location) {
       return (Json) new Reader().read(fetchContent(location));
@@ -1323,6 +1312,7 @@ public class Json implements java.io.Serializable {
     * <p>
     * Parse a JSON entity from a {@link CharacterIterator}.
     * </p>
+    *
     * @param it A character iterator.
     * @return the parsed JSON element
     * @see #read(String)
@@ -1347,13 +1337,13 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>Return a new JSON object initialized from the passed list of
-    * name/value pairs. The number of arguments must
-    * be even. Each argument at an even position is taken to be a name
-    * for the following value. The name arguments are normally of type
-    * Java String, but they can be of any other type having an appropriate
+    * name/value pairs. The number of arguments must be even. Each argument at an even position is taken to be a name
+    * for the following value. The name arguments are normally of type Java String, but they can be of any other type
+    * having an appropriate
     * <code>toString</code> method. Each value is first converted
     * to a <code>Json</code> instance using the {@link #make(Object)} method.
     * </p>
+    *
     * @param args A sequence of name value pairs.
     * @return the new JSON object.
     */
@@ -1388,19 +1378,17 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Exposes some internal methods that are useful for {@link Json.Factory} implementations
-    * or other extension/layers of the library.
+    * Exposes some internal methods that are useful for {@link Json.Factory} implementations or other extension/layers
+    * of the library.
     * </p>
     *
     * @author Borislav Iordanov
-    *
     */
    public static class help {
       /**
        * <p>
-       * Perform JSON escaping so that ", <, >, etc. characters are properly encoded in the
-       * JSON string representation before returning to the client code. This is useful when
-       * serializing property names or string values.
+       * Perform JSON escaping so that ", <, >, etc. characters are properly encoded in the JSON string representation
+       * before returning to the client code. This is useful when serializing property names or string values.
        * </p>
        */
       public static String escape(String string) {
@@ -1409,8 +1397,7 @@ public class Json implements java.io.Serializable {
 
       /**
        * <p>
-       * Given a JSON Pointer, as per RFC 6901, return the nested JSON value within
-       * the <code>element</code> parameter.
+       * Given a JSON Pointer, as per RFC 6901, return the nested JSON value within the <code>element</code> parameter.
        * </p>
        */
       public static Json resolvePointer(String pointer, Json element) {
@@ -1424,18 +1411,15 @@ public class Json implements java.io.Serializable {
     * </p>
     *
     * <p>
-    * Maps, Collections and arrays are recursively copied where each of
-    * their elements concerted into <code>Json</code> instances as well. The keys
-    * of a {@link Map} parameter are normally strings, but anything with a meaningful
+    * Maps, Collections and arrays are recursively copied where each of their elements concerted into <code>Json</code>
+    * instances as well. The keys of a {@link Map} parameter are normally strings, but anything with a meaningful
     * <code>toString</code> implementation will work as well.
     * </p>
     *
     * @param anything Any Java object that the current JSON factory in effect is capable of handling.
-    * @return The <code>Json</code>. This method will never return <code>null</code>. It will
-    * throw an {@link IllegalArgumentException} if it doesn't know how to convert the argument
-    * to a <code>Json</code> instance.
-    * @throws IllegalArgumentException when the concrete type of the parameter is
-    * unknown.
+    * @return The <code>Json</code>. This method will never return <code>null</code>. It will throw an
+    * {@link IllegalArgumentException} if it doesn't know how to convert the argument to a <code>Json</code> instance.
+    * @throws IllegalArgumentException when the concrete type of the parameter is unknown.
     */
    public static Json make(Object anything) {
       return factory().make(anything);
@@ -1444,6 +1428,8 @@ public class Json implements java.io.Serializable {
    // end of static utility method section
 
    Json enclosing = null;
+   int line;
+   int column;
 
    protected Json() {
    }
@@ -1452,15 +1438,27 @@ public class Json implements java.io.Serializable {
       this.enclosing = enclosing;
    }
 
+   public Json location(int line, int column) {
+      this.line = line;
+      this.column = column;
+      return this;
+   }
+
+   public int getLine() {
+      return line;
+   }
+
+   public int getColumn() {
+      return column;
+   }
+
    /**
     * <p>Return a string representation of <code>this</code> that does
-    * not exceed a certain maximum length. This is useful in constructing
-    * error messages or any other place where only a "preview" of the
-    * JSON element should be displayed. Some JSON structures can get
-    * very large and this method will help avoid string serializing
-    * the whole of them. </p>
-    * @param maxCharacters The maximum number of characters for
-    * the string representation.
+    * not exceed a certain maximum length. This is useful in constructing error messages or any other place where only a
+    * "preview" of the JSON element should be displayed. Some JSON structures can get very large and this method will
+    * help avoid string serializing the whole of them. </p>
+    *
+    * @param maxCharacters The maximum number of characters for the string representation.
     * @return The string representation of this object.
     */
    public String toString(int maxCharacters) {
@@ -1473,9 +1471,9 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>Explicitly set the parent of this element. The parent is presumably an array
-    * or an object. Normally, there's no need to call this method as the parent is
-    * automatically set by the framework. You may need to call it however, if you implement
-    * your own {@link Factory} with your own implementations of the Json types.
+    * or an object. Normally, there's no need to call this method as the parent is automatically set by the framework.
+    * You may need to call it however, if you implement your own {@link Factory} with your own implementations of the
+    * Json types.
     * </p>
     *
     * @param enclosing The parent element.
@@ -1488,17 +1486,15 @@ public class Json implements java.io.Serializable {
     * @return the <code>Json</code> entity, if any, enclosing this
     * <code>Json</code>. The returned value can be <code>null</code> or
     * a <code>Json</code> object or list, but not one of the primitive types.
-    * @deprecated This method is problematic and underused and it will be soon removed.
     */
    public final Json up() {
       return enclosing;
    }
 
    /**
-    * @return a clone (a duplicate) of this <code>Json</code> entity. Note that cloning
-    * is deep if array and objects. Primitives are also cloned, even though their values are immutable
-    * because the new enclosing entity (the result of the {@link #up()} method) may be different.
-    * since they are immutable.
+    * @return a clone (a duplicate) of this <code>Json</code> entity. Note that cloning is deep if array and objects.
+    * Primitives are also cloned, even though their values are immutable because the new enclosing entity (the result of
+    * the {@link #up()} method) may be different. since they are immutable.
     */
    public Json dup() {
       return this;
@@ -1518,9 +1514,10 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Return the specified property of a <code>Json</code> object or <code>null</code>
-    * if there's no such property. This method applies only to Json objects.
+    * Return the specified property of a <code>Json</code> object or <code>null</code> if there's no such property. This
+    * method applies only to Json objects.
     * </p>
+    *
     * @param property the property name.
     * @return The JSON element that is the value of that property.
     */
@@ -1530,13 +1527,12 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Return the specified property of a <code>Json</code> object if it exists.
-    * If it doesn't, then create a new property with value the <code>def</code>
-    * parameter and return that parameter.
+    * Return the specified property of a <code>Json</code> object if it exists. If it doesn't, then create a new
+    * property with value the <code>def</code> parameter and return that parameter.
     * </p>
     *
     * @param property The property to return.
-    * @param def The default value to set and return in case the property doesn't exist.
+    * @param def      The default value to set and return in case the property doesn't exist.
     */
    public final Json at(String property, Json def) {
       Json x = at(property);
@@ -1548,13 +1544,12 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Return the specified property of a <code>Json</code> object if it exists.
-    * If it doesn't, then create a new property with value the <code>def</code>
-    * parameter and return that parameter.
+    * Return the specified property of a <code>Json</code> object if it exists. If it doesn't, then create a new
+    * property with value the <code>def</code> parameter and return that parameter.
     * </p>
     *
     * @param property The property to return.
-    * @param def The default value to set and return in case the property doesn't exist.
+    * @param def      The default value to set and return in case the property doesn't exist.
     */
    public final Json at(String property, Object def) {
       return at(property, make(def));
@@ -1562,8 +1557,7 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Return true if this <code>Json</code> object has the specified property
-    * and false otherwise.
+    * Return true if this <code>Json</code> object has the specified property and false otherwise.
     * </p>
     *
     * @param property The name of the property.
@@ -1574,14 +1568,13 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Return <code>true</code> if and only if this <code>Json</code> object has a property with
-    * the specified value. In particular, if the object has no such property <code>false</code> is returned.
+    * Return <code>true</code> if and only if this <code>Json</code> object has a property with the specified value. In
+    * particular, if the object has no such property <code>false</code> is returned.
     * </p>
     *
     * @param property The property name.
-    * @param value The value to compare with. Comparison is done via the equals method.
-    * If the value is not an instance of <code>Json</code>, it is first converted to
-    * such an instance.
+    * @param value    The value to compare with. Comparison is done via the equals method. If the value is not an
+    *                 instance of <code>Json</code>, it is first converted to such an instance.
     * @return
     */
    public boolean is(String property, Object value) {
@@ -1590,15 +1583,13 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Return <code>true</code> if and only if this <code>Json</code> array has an element with
-    * the specified value at the specified index. In particular, if the array has no element at
-    * this index, <code>false</code> is returned.
+    * Return <code>true</code> if and only if this <code>Json</code> array has an element with the specified value at
+    * the specified index. In particular, if the array has no element at this index, <code>false</code> is returned.
     * </p>
     *
     * @param index The 0-based index of the element in a JSON array.
-    * @param value The value to compare with. Comparison is done via the equals method.
-    * If the value is not an instance of <code>Json</code>, it is first converted to
-    * such an instance.
+    * @param value The value to compare with. Comparison is done via the equals method. If the value is not an instance
+    *              of <code>Json</code>, it is first converted to such an instance.
     * @return
     */
    public boolean is(int index, Object value) {
@@ -1618,9 +1609,8 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Add an arbitrary Java object to this <code>Json</code> array. The object
-    * is first converted to a <code>Json</code> instance by calling the static
-    * {@link #make} method.
+    * Add an arbitrary Java object to this <code>Json</code> array. The object is first converted to a <code>Json</code>
+    * instance by calling the static {@link #make} method.
     * </p>
     *
     * @param anything Any Java object that can be converted to a Json instance.
@@ -1632,13 +1622,11 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Remove the specified property from a <code>Json</code> object and return
-    * that property.
+    * Remove the specified property from a <code>Json</code> object and return that property.
     * </p>
     *
     * @param property The property to be removed.
-    * @return The property value or <code>null</code> if the object didn't have such
-    * a property to begin with.
+    * @return The property value or <code>null</code> if the object didn't have such a property to begin with.
     */
    public Json atDel(String property) {
       throw new UnsupportedOperationException();
@@ -1646,8 +1634,7 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Remove the element at the specified index from a <code>Json</code> array and return
-    * that element.
+    * Remove the element at the specified index from a <code>Json</code> array and return that element.
     * </p>
     *
     * @param index The index of the element to delete.
@@ -1695,8 +1682,8 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
-    * Remove the specified Java object (converted to a Json instance)
-    * from a <code>Json</code> array. This is equivalent to
+    * Remove the specified Java object (converted to a Json instance) from a <code>Json</code> array. This is equivalent
+    * to
     * <code>remove({@link #make(Object)})</code>.
     * </p>
     *
@@ -1713,7 +1700,7 @@ public class Json implements java.io.Serializable {
     * </p>
     *
     * @param property The property name.
-    * @param value The value of the property.
+    * @param value    The value of the property.
     * @return this
     */
    public Json set(String property, Json value) {
@@ -1726,8 +1713,7 @@ public class Json implements java.io.Serializable {
     * </p>
     *
     * @param property The property name.
-    * @param value The value of the property, converted to a <code>Json</code> representation
-    * with {@link #make}.
+    * @param value    The value of the property, converted to a <code>Json</code> representation with {@link #make}.
     * @return this
     */
    public final Json set(String property, Object value) {
@@ -1738,6 +1724,7 @@ public class Json implements java.io.Serializable {
     * <p>
     * Change the value of a JSON array element. This must be an array.
     * </p>
+    *
     * @param index 0-based index of the element in the array.
     * @param value the new value of the element
     * @return this
@@ -1753,8 +1740,8 @@ public class Json implements java.io.Serializable {
     * <code>Json</code> objects, all properties of the parameter are added to <code>this</code>.
     * If both are arrays, all elements of the parameter are appended to <code>this</code>
     * </p>
-    * @param object The object or array whose properties or elements must be added to this
-    * Json object or array.
+    *
+    * @param object  The object or array whose properties or elements must be added to this Json object or array.
     * @param options A sequence of options that governs the merging process.
     * @return this
     */
@@ -1763,8 +1750,8 @@ public class Json implements java.io.Serializable {
    }
 
    /**
-    * Same as <code>{}@link #with(Json,Json...options)}</code> with each option
-    * argument converted to <code>Json</code> first.
+    * Same as <code>{}@link #with(Json,Json...options)}</code> with each option argument converted to <code>Json</code>
+    * first.
     */
    public Json with(Json object, Object... options) {
       Json[] jopts = new Json[options.length];
@@ -1775,8 +1762,8 @@ public class Json implements java.io.Serializable {
 
    public Json replace(Json oldJson, Json newJson) {
       if (this.isObject()) {
-         for(Map.Entry<String, Json> entry : this.asJsonMap().entrySet()) {
-            if (entry.getValue()== oldJson) {
+         for (Map.Entry<String, Json> entry : this.asJsonMap().entrySet()) {
+            if (entry.getValue() == oldJson) {
                entry.setValue(newJson);
                return newJson;
             }
@@ -1788,100 +1775,90 @@ public class Json implements java.io.Serializable {
    }
 
    /**
-    * @return the underlying value of this <code>Json</code> entity. The actual value will
-    * be a Java Boolean, String, Number, Map, List or null. For complex entities (objects
-    * or arrays), the method will perform a deep copy and extra underlying values recursively
-    * for all nested elements.
+    * @return the underlying value of this <code>Json</code> entity. The actual value will be a Java Boolean, String,
+    * Number, Map, List or null. For complex entities (objects or arrays), the method will perform a deep copy and extra
+    * underlying values recursively for all nested elements.
     */
    public Object getValue() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the boolean value of a boolean <code>Json</code> instance. Call
-    * {@link #isBoolean()} first if you're not sure this instance is indeed a
-    * boolean.
+    * @return the boolean value of a boolean <code>Json</code> instance. Call {@link #isBoolean()} first if you're not
+    * sure this instance is indeed a boolean.
     */
    public boolean asBoolean() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the string value of a string <code>Json</code> instance. Call
-    * {@link #isString()} first if you're not sure this instance is indeed a
-    * string.
+    * @return the string value of a string <code>Json</code> instance. Call {@link #isString()} first if you're not sure
+    * this instance is indeed a string.
     */
    public String asString() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the integer value of a number <code>Json</code> instance. Call
-    * {@link #isNumber()} first if you're not sure this instance is indeed a
-    * number.
+    * @return the integer value of a number <code>Json</code> instance. Call {@link #isNumber()} first if you're not
+    * sure this instance is indeed a number.
     */
    public int asInteger() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the float value of a float <code>Json</code> instance. Call
-    * {@link #isNumber()} first if you're not sure this instance is indeed a
-    * number.
+    * @return the float value of a float <code>Json</code> instance. Call {@link #isNumber()} first if you're not sure
+    * this instance is indeed a number.
     */
    public float asFloat() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the double value of a number <code>Json</code> instance. Call
-    * {@link #isNumber()} first if you're not sure this instance is indeed a
-    * number.
+    * @return the double value of a number <code>Json</code> instance. Call {@link #isNumber()} first if you're not sure
+    * this instance is indeed a number.
     */
    public double asDouble() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the long value of a number <code>Json</code> instance. Call
-    * {@link #isNumber()} first if you're not sure this instance is indeed a
-    * number.
+    * @return the long value of a number <code>Json</code> instance. Call {@link #isNumber()} first if you're not sure
+    * this instance is indeed a number.
     */
    public long asLong() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the short value of a number <code>Json</code> instance. Call
-    * {@link #isNumber()} first if you're not sure this instance is indeed a
-    * number.
+    * @return the short value of a number <code>Json</code> instance. Call {@link #isNumber()} first if you're not sure
+    * this instance is indeed a number.
     */
    public short asShort() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the byte value of a number <code>Json</code> instance. Call
-    * {@link #isNumber()} first if you're not sure this instance is indeed a
-    * number.
+    * @return the byte value of a number <code>Json</code> instance. Call {@link #isNumber()} first if you're not sure
+    * this instance is indeed a number.
     */
    public byte asByte() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return the first character of a string <code>Json</code> instance. Call
-    * {@link #isString()} first if you're not sure this instance is indeed a
-    * string.
+    * @return the first character of a string <code>Json</code> instance. Call {@link #isString()} first if you're not
+    * sure this instance is indeed a string.
     */
    public char asChar() {
       throw new UnsupportedOperationException();
    }
 
    /**
-    * @return a map of the properties of an object <code>Json</code> instance. The map
-    * is a clone of the object and can be modified safely without affecting it. Call
-    * {@link #isObject()} first if you're not sure this instance is indeed a
+    * @return a map of the properties of an object <code>Json</code> instance. The map is a clone of the object and can
+    * be modified safely without affecting it. Call {@link #isObject()} first if you're not sure this instance is indeed
+    * a
     * <code>Json</code> object.
     */
    public Map<String, Object> asMap() {
@@ -1889,9 +1866,8 @@ public class Json implements java.io.Serializable {
    }
 
    /**
-    * @return the underlying map of properties of a <code>Json</code> object. The returned
-    * map is the actual object representation so any modifications to it are modifications
-    * of the <code>Json</code> object itself. Call
+    * @return the underlying map of properties of a <code>Json</code> object. The returned map is the actual object
+    * representation so any modifications to it are modifications of the <code>Json</code> object itself. Call
     * {@link #isObject()} first if you're not sure this instance is indeed a
     * <code>Json</code> object.
     */
@@ -1900,9 +1876,8 @@ public class Json implements java.io.Serializable {
    }
 
    /**
-    * @return a list of the elements of a <code>Json</code> array. The list is a clone
-    * of the array and can be modified safely without affecting it. Call
-    * {@link #isArray()} first if you're not sure this instance is indeed a
+    * @return a list of the elements of a <code>Json</code> array. The list is a clone of the array and can be modified
+    * safely without affecting it. Call {@link #isArray()} first if you're not sure this instance is indeed a
     * <code>Json</code> array.
     */
    public List<Object> asList() {
@@ -1910,9 +1885,8 @@ public class Json implements java.io.Serializable {
    }
 
    /**
-    * @return the underlying {@link List} representation of a <code>Json</code> array.
-    * The returned list is the actual array representation so any modifications to it
-    * are modifications of the <code>Json</code> array itself. Call
+    * @return the underlying {@link List} representation of a <code>Json</code> array. The returned list is the actual
+    * array representation so any modifications to it are modifications of the <code>Json</code> array itself. Call
     * {@link #isArray()} first if you're not sure this instance is indeed a
     * <code>Json</code> array.
     */
@@ -1975,7 +1949,6 @@ public class Json implements java.io.Serializable {
    /**
     * @return <code>true</code> if this is a <code>Json</code> primitive entity
     * (one of string, number or boolean) and <code>false</code> otherwise.
-    *
     */
    public boolean isPrimitive() {
       return isString() || isNumber() || isBoolean();
@@ -1986,10 +1959,9 @@ public class Json implements java.io.Serializable {
     * Json-pad this object as an argument to a callback function.
     * </p>
     *
-    * @param callback The name of the callback function. Can be null or empty,
-    * in which case no padding is done.
-    * @return The jsonpadded, stringified version of this object if the <code>callback</code>
-    * is not null or empty, or just the stringified version of the object.
+    * @param callback The name of the callback function. Can be null or empty, in which case no padding is done.
+    * @return The jsonpadded, stringified version of this object if the <code>callback</code> is not null or empty, or
+    * just the stringified version of the object.
     */
    public String pad(String callback) {
       return (callback != null && callback.length() > 0)
@@ -2002,10 +1974,9 @@ public class Json implements java.io.Serializable {
    //-------------------------------------------------------------------------
 
    /**
-    * Return an object representing the complete configuration
-    * of a merge. The properties of the object represent paths
-    * of the JSON structure being merged and the values represent
-    * the set of options that apply to each path.
+    * Return an object representing the complete configuration of a merge. The properties of the object represent paths
+    * of the JSON structure being merged and the values represent the set of options that apply to each path.
+    *
     * @param options the configuration options
     * @return the configuration object
     */
@@ -2816,8 +2787,8 @@ public class Json implements java.io.Serializable {
     */
 
    /**
-    * A utility class that is used to perform JSON escaping so that ", <, >, etc. characters are
-    * properly encoded in the JSON string representation before returning to the client code.
+    * A utility class that is used to perform JSON escaping so that ", <, >, etc. characters are properly encoded in the
+    * JSON string representation before returning to the client code.
     *
     * <p>This class contains a single method to escape a passed in string value:
     * <pre>
@@ -2928,9 +2899,22 @@ public class Json implements java.io.Serializable {
 
    public static class MalformedJsonException extends RuntimeException {
       private static final long serialVersionUID = 1L;
+      private final int row;
+      private final int column;
 
-      public MalformedJsonException(String msg) {
-         super(msg);
+
+      public MalformedJsonException(String msg, int row, int column) {
+         super(msg + " at [" + row + "," + column + "]");
+         this.row = row;
+         this.column = column;
+      }
+
+      public int getRow() {
+         return row;
+      }
+
+      public int getColumn() {
+         return column;
       }
    }
 
@@ -2947,35 +2931,43 @@ public class Json implements java.io.Serializable {
       public static final int CURRENT = 1;
       public static final int NEXT = 2;
 
-      private static Map<Character, Character> escapes = new HashMap<Character, Character>();
+      private static final Map<Character, Character> escapes = new HashMap<>();
 
       static {
-         escapes.put(Character.valueOf('"'), Character.valueOf('"'));
-         escapes.put(Character.valueOf('\\'), Character.valueOf('\\'));
-         escapes.put(Character.valueOf('/'), Character.valueOf('/'));
-         escapes.put(Character.valueOf('b'), Character.valueOf('\b'));
-         escapes.put(Character.valueOf('f'), Character.valueOf('\f'));
-         escapes.put(Character.valueOf('n'), Character.valueOf('\n'));
-         escapes.put(Character.valueOf('r'), Character.valueOf('\r'));
-         escapes.put(Character.valueOf('t'), Character.valueOf('\t'));
+         escapes.put('"', '"');
+         escapes.put('\\', '\\');
+         escapes.put('/', '/');
+         escapes.put('b', '\b');
+         escapes.put('f', '\f');
+         escapes.put('n', '\n');
+         escapes.put('r', '\r');
+         escapes.put('t', '\t');
       }
 
       private CharacterIterator it;
       private char c;
       private Object token;
-      private StringBuilder buf = new StringBuilder();
+      private final StringBuilder buf = new StringBuilder();
+
+      private int line = 1;
+      private int col = 1;
 
       private char next() {
          if (it.getIndex() == it.getEndIndex())
-            throw new MalformedJsonException("Reached end of input at the " +
-                  it.getIndex() + "th character.");
+            throw new MalformedJsonException("Reached end of input", line, col);
          c = it.next();
+         if (c == '\n') {
+            line++;
+            col = 1;
+         } else {
+            col++;
+         }
          return c;
       }
 
-      private char previous() {
+      private void previous() {
          c = it.previous();
-         return c;
+         col--; // The parser doesn't backtrack through line-feeds, so we can avoid updating the row
       }
 
       private void skipWhiteSpace() {
@@ -2988,7 +2980,7 @@ public class Json implements java.io.Serializable {
                      if (next() == '*' && next() == '/')
                         break;
                   if (c == CharacterIterator.DONE)
-                     throw new MalformedJsonException("Unterminated comment while parsing JSON string.");
+                     throw new MalformedJsonException("Unterminated comment while parsing JSON string.", line, col);
                } else if (c == '/')
                   while (c != '\n' && c != CharacterIterator.DONE)
                      next();
@@ -3027,13 +3019,16 @@ public class Json implements java.io.Serializable {
 
       private void expected(Object expectedToken, Object actual) {
          if (expectedToken != actual)
-            throw new MalformedJsonException("Expected " + expectedToken + ", but got " + actual + " instead");
+            throw new MalformedJsonException("Expected " + expectedToken + ", but got " + actual + " instead", line, col);
       }
 
       @SuppressWarnings("unchecked")
       private <T> T read() {
          skipWhiteSpace();
          char ch = c;
+         // We save the current location before reading the next token
+         int oLine = line;
+         int oCol = col;
          next();
          switch (ch) {
             case '"':
@@ -3049,7 +3044,7 @@ public class Json implements java.io.Serializable {
                token = COMMA;
                break;
             case '{':
-               token = readObject();
+               token = readObject(oLine, oCol);
                break;
             case '}':
                token = OBJECT_END;
@@ -3059,19 +3054,19 @@ public class Json implements java.io.Serializable {
                break;
             case 't':
                if (c != 'r' || next() != 'u' || next() != 'e')
-                  throw new MalformedJsonException("Invalid JSON token: expected 'true' keyword.");
+                  throw new MalformedJsonException("Invalid JSON token: expected 'true' keyword.", line, col);
                next();
                token = factory().bool(Boolean.TRUE);
                break;
             case 'f':
                if (c != 'a' || next() != 'l' || next() != 's' || next() != 'e')
-                  throw new MalformedJsonException("Invalid JSON token: expected 'false' keyword.");
+                  throw new MalformedJsonException("Invalid JSON token: expected 'false' keyword.", line, col);
                next();
                token = factory().bool(Boolean.FALSE);
                break;
             case 'n':
                if (c != 'u' || next() != 'l' || next() != 'l')
-                  throw new MalformedJsonException("Invalid JSON token: expected 'null' keyword.");
+                  throw new MalformedJsonException("Invalid JSON token: expected 'null' keyword.", line, col);
                next();
                token = nil();
                break;
@@ -3079,35 +3074,37 @@ public class Json implements java.io.Serializable {
                c = it.previous();
                if (Character.isDigit(c) || c == '-') {
                   token = readNumber();
-               } else throw new MalformedJsonException("Invalid JSON near position: " + it.getIndex());
+               } else throw new MalformedJsonException("Invalid JSON", line, col);
          }
          return (T) token;
       }
 
-      private String readObjectKey() {
+      private Json readObjectKey() {
          Object key = read();
          if (key == null)
-            throw new MalformedJsonException("Missing object key (don't forget to put quotes!).");
+            throw new MalformedJsonException("Missing object key (don't forget to put quotes!).", line, col);
          else if (key == OBJECT_END)
             return null;
          else if (PUNCTUATION.contains(key))
-            throw new MalformedJsonException("Missing object key, found: " + key);
+            throw new MalformedJsonException("Missing object key, found: " + key, line, col);
          else
-            return ((Json) key).asString();
+            return (Json) key;
       }
 
-      private Json readObject() {
-         Json ret = object();
-         String key = readObjectKey();
+      private Json readObject(int oLine, int oCol) {
+         Json ret = object().location(oLine, oCol);
+         Json key = readObjectKey();
          while (token != OBJECT_END) {
             expected(COLON, read()); // should be a colon
             if (token != OBJECT_END) {
                Json value = read();
-               ret.set(key, value);
+               // We set the location of the value to that of the key
+               value.location(key.getLine(), key.getColumn());
+               ret.set(key.asString(), value);
                if (read() == COMMA) {
                   key = readObjectKey();
-                  if (key == null || PUNCTUATION.contains(key))
-                     throw new MalformedJsonException("Expected a property name, but found: " + key);
+                  if (key == null || PUNCTUATION.contains(key.asString()))
+                     throw new MalformedJsonException("Expected a property name, but found: " + key, line, col);
                } else
                   expected(OBJECT_END, token);
             }
@@ -3116,16 +3113,16 @@ public class Json implements java.io.Serializable {
       }
 
       private Json readArray() {
-         Json ret = array();
+         Json ret = array().location(line, col);
          Object value = read();
          while (token != ARRAY_END) {
             if (PUNCTUATION.contains(value))
-               throw new MalformedJsonException("Expected array element, but found: " + value);
+               throw new MalformedJsonException("Expected array element, but found: " + value, line, col);
             ret.add((Json) value);
             if (read() == COMMA) {
                value = read();
                if (value == ARRAY_END)
-                  throw new MalformedJsonException("Expected array element, but found end of array after command.");
+                  throw new MalformedJsonException("Expected array element, but found end of array after command.", line, col);
             } else
                expected(ARRAY_END, token);
          }
@@ -3133,6 +3130,8 @@ public class Json implements java.io.Serializable {
       }
 
       private Json readNumber() {
+         int nLine = line;
+         int nCol = col;
          int length = 0;
          boolean isFloatingPoint = false;
          buf.setLength(0);
@@ -3159,7 +3158,7 @@ public class Json implements java.io.Serializable {
          Number n = isFloatingPoint
                ? (length < 17) ? Double.valueOf(s) : new BigDecimal(s)
                : (length < 20) ? Long.valueOf(s) : new BigInteger(s);
-         return factory().number(n);
+         return factory().number(n).location(nLine, nCol);
       }
 
       private int addDigits() {
@@ -3171,6 +3170,8 @@ public class Json implements java.io.Serializable {
       }
 
       private Json readString() {
+         int nLine = line;
+         int nCol = col;
          buf.setLength(0);
          while (c != '"') {
             if (c == '\\') {
@@ -3178,9 +3179,9 @@ public class Json implements java.io.Serializable {
                if (c == 'u') {
                   add(unicode());
                } else {
-                  Object value = escapes.get(Character.valueOf(c));
+                  Character value = escapes.get(c);
                   if (value != null) {
-                     add(((Character) value).charValue());
+                     add(value);
                   }
                }
             } else {
@@ -3188,7 +3189,7 @@ public class Json implements java.io.Serializable {
             }
          }
          next();
-         return factory().string(buf.toString());
+         return factory().string(buf.toString()).location(nLine, nCol);
       }
 
       private void add(char cc) {
