@@ -28,7 +28,7 @@ public class InfinispanCacheMeterBinder extends CacheMeterBinder {
    protected Long size() {
       if (cache == null) return 0L;
 
-      return (long) cache.getAdvancedCache().getStats().getCurrentNumberOfEntries();
+      return (long) cache.getAdvancedCache().getStats().getApproximateEntriesInMemory();
    }
 
    @Override
@@ -83,7 +83,7 @@ public class InfinispanCacheMeterBinder extends CacheMeterBinder {
    private void memory(MeterRegistry registry) {
       Gauge.builder("cache.memory.size", cache, cache -> cache.getAdvancedCache().getStats().getCurrentNumberOfEntriesInMemory())
             .tags(getTagsWithCacheName())
-            .description("Number of entries currently in the cache, excluding passivated entries")
+            .description("Approximate number of entries in the cache, excluding passivated entries")
             .register(registry);
 
       if (cache.getCacheConfiguration().memory().evictionStrategy().isEnabled()) {
