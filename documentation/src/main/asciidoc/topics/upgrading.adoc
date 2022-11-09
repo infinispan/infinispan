@@ -2,6 +2,7 @@
 
 == Removals
 
+* The Kryo and Protostuff marshallers have been removed.
 * Extended Statistics module have been removed.
 
 

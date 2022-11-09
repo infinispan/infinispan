@@ -195,7 +195,6 @@
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>4.5.0.Final</version.protostream>
-      <version.protostuff>1.6.2</version.protostuff>
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.4</version.rxjava>
