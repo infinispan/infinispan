@@ -82,7 +82,6 @@
       <module>core</module>
       <module>core-jakarta</module>
       <module>jboss-marshalling</module>
-      <module>extended-statistics</module>
       <module>counter</module>
       <module>multimap</module>
       <module>tools</module>
@@ -3176,7 +3175,6 @@
                               <source>${dir.ispn}/commons/src/main/java</source>
                               <source>${dir.ispn}/commons-test/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>
-                              <source>${dir.ispn}/extended-statistics/src/main/java</source>
                               <source>${dir.ispn}/jcache/commons/src/main/java</source>
                               <source>${dir.ispn}/jcache/embedded/src/main/java</source>
                               <source>${dir.ispn}/jcache/remote/src/main/java</source>
