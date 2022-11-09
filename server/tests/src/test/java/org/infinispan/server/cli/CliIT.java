@@ -172,7 +172,7 @@ public class CliIT {
       AeshTestShell shell = new AeshTestShell();
       CLI.main(shell, new String[]{"-f", getCliResource("batch-error.cli").getPath()}, properties);
       shell.assertContains("Hi CLI running on " + System.getProperty("os.arch"));
-      shell.assertContains("Error executing line 2");
+      shell.assertContains("batch-error.cli, line 2");
    }
 
    @Test
