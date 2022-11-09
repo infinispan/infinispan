@@ -1,6 +1,9 @@
 = Upgrading from 14.0 to 15.0
 
-TODO
+== Removals
+
+* Extended Statistics module have been removed.
+
 
 = Upgrading from 13.0 to 14.0
 

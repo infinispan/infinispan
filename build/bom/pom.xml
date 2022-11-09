@@ -229,11 +229,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-extended-statistics</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-hibernate-cache-commons</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>

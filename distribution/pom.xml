@@ -54,11 +54,6 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-extended-statistics</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-javadoc-all</artifactId>
          <version>${version.infinispan}</version>
          <classifier>javadoc</classifier>
