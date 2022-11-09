@@ -6,12 +6,12 @@ server:
           url: 'ldap://my-ldap-server:10389'
           principal: 'uid=admin,ou=People,dc=infinispan,dc=org'
           credential: strongPassword
-          connectionTimeout': '3000'
-          readTimeout': '30000'
-          connectionPooling': true
-          referralMode': ignore
-          pageSize': '30'
-          directVerification': true
+          connectionTimeout: '3000'
+          readTimeout: '30000'
+          connectionPooling: true
+          referralMode: ignore
+          pageSize: '30'
+          directVerification: true
           identityMapping:
             rdnIdentifier: uid
             searchDn: 'ou=People,dc=infinispan,dc=org'
