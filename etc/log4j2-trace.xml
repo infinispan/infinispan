@@ -9,7 +9,7 @@
 
    <Appenders>
       <Console name="STDOUT">
-         <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable{10}%n"/>
+         <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1.}] %m%throwable{10}%n"/>
       </Console>
       <Routing name="SplitCompressedFile">
          <Routes pattern="$${testName:}">
@@ -18,7 +18,7 @@
                <!-- Use the sys: lookup so system properties set on the command line are preferred -->
                <CompressedFile name="CompressedFile-${testName:}"
                                filename="${sys:infinispan.log.path}/${testName:}${sys:infinispan.module-suffix}.log.gz">
-                  <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
+                  <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1.}] %m%n"/>
                </CompressedFile>
             </Route>
             <!-- This route matches if there is no test name (lookup returns null) -->
@@ -28,7 +28,7 @@
                <CompressedFile name="DefaultCompressedFile"
                                filename="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log.gz"
                                append="true">
-                  <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
+                  <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1.}] %m%n"/>
                </CompressedFile>
             </Route>
          </Routes>
@@ -39,7 +39,7 @@
       <RandomAccessFile name="FailuresFile"
                         fileName="${sys:infinispan.log.path}/test-failures${sys:infinispan.module-suffix}.log"
                         append="true">
-         <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p [%c{1}] %m%n"/>
+         <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p [%c{1.}] %m%n"/>
       </RandomAccessFile>
    </Appenders>
 
