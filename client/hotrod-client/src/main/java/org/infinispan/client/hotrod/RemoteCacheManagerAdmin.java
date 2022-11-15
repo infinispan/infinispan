@@ -108,8 +108,13 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * the cache engine is hot restarted so that index persisted or not persisted state will be preserved.
     *
     * @param cacheName the name of the cache on which the index schema will be updated
+    * @param otherIndexedEntities Optional further indexed type names (fully qualified) to include more types as indexed,
+    *                             that will be dynamically added to the list of the configured indexed entities.
+    *                             This configuration is not persistent, meaning that if the cache (server) restarts,
+    *                             these further added types won’t be considered as indexed types anymore.
+    *
     * @throws HotRodClientException
     */
-   void updateIndexSchema(String cacheName) throws HotRodClientException;
+   void updateIndexSchema(String cacheName, String ... otherIndexedEntities) throws HotRodClientException;
 
 }

@@ -119,7 +119,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
-   public void updateIndexSchema(String name) throws HotRodClientException {
+   public void updateIndexSchema(String name, String ... otherIndexedEntities) throws HotRodClientException {
+      // TODO ISPN-14085 Handle otherIndexedEntities
       await(operationsFactory.newAdminOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))).execute());
    }
 
