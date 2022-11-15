@@ -54,6 +54,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ArrayCollector;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -108,7 +109,6 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CommandAckCollector.MultiTargetCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
@@ -614,8 +614,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       // SKIP_OWNERSHIP_CHECK is added when the entry is prefetched from remote node
       // TODO [rvansa]: local lookup and hinted read, see improvements in package-info
 
-      CacheEntry entry = ctx.lookupEntry(command.getKey());
-      if (entry != null) {
+      if (ctx.isEntryPresent(command.getKey())) {
          return invokeNext(ctx, command);
       }
 
@@ -752,7 +751,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       if (ctx.isOriginLocal()) {
          Map<Address, List<Object>> remoteKeys = new HashMap<>();
          for (Object key : command.getKeys()) {
-            if (ctx.lookupEntry(key) != null) {
+            if (ctx.isEntryPresent(key)) {
                continue;
             }
             DistributionInfo info = cacheTopology.getDistribution(key);
@@ -780,7 +779,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          return asyncInvokeNext(ctx, command, sync);
       } else { // remote
          for (Object key : command.getKeys()) {
-            if (ctx.lookupEntry(key) == null) {
+            if (!ctx.isEntryPresent(key)) {
                return UnsureResponse.INSTANCE;
             }
          }
@@ -870,8 +869,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    @Override
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
       Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (entry != null) {
+      if (ctx.isEntryPresent(key)) {
          // the entry is owned locally (it is NullCacheEntry if it was not found), no need to go remote
          return invokeNext(ctx, command);
       }
@@ -879,7 +877,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          return UnsureResponse.INSTANCE;
       }
       if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
-         if (ctx.lookupEntry(command.getKey()) == null) {
+         if (!ctx.isEntryPresent(command.getKey())) {
             entryFactory.wrapExternalEntry(ctx, command.getKey(), NullCacheEntry.getInstance(), false, false);
          }
          return invokeNext(ctx, command);
@@ -925,7 +923,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       Map<Address, List<Object>> requestedKeys = new HashMap<>();
       List<Object> localKeys = null;
       for (Object key : command.getKeys()) {
-         if (ctx.lookupEntry(key) != null) {
+         if (ctx.isEntryPresent(key)) {
             if (localKeys == null) {
                localKeys = new ArrayList<>();
             }
@@ -1000,7 +998,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
    private Object handleLocalOnlyReadManyCommand(InvocationContext ctx, VisitableCommand command, Collection<?> keys) {
       for (Object key : keys) {
-         if (ctx.lookupEntry(key) == null) {
+         if (!ctx.isEntryPresent(key)) {
             entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
          }
       }
@@ -1010,7 +1008,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private <C extends VisitableCommand & TopologyAffectedCommand> Object handleRemoteReadManyCommand(
          InvocationContext ctx, C command, Collection<?> keys) {
       for (Object key : keys) {
-         if (ctx.lookupEntry(key) == null) {
+         if (!ctx.isEntryPresent(key)) {
             return UnsureResponse.INSTANCE;
          }
       }

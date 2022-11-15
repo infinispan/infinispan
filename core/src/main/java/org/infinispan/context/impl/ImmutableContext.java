@@ -110,13 +110,20 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public void forEachEntry(BiConsumer<Object, CacheEntry> action) { }
+   public void forEachEntry(BiConsumer<Object, CacheEntry> action) {
+   }
 
    @Override
-   public void forEachValue(BiConsumer<Object, CacheEntry> action) { }
+   public void forEachValue(BiConsumer<Object, CacheEntry> action) {
+   }
 
    @Override
    public <K, V> Publisher<CacheEntry<K, V>> publisher() {
       return Flowable.empty();
+   }
+
+   @Override
+   public boolean isEntryPresent(Object key) {
+      return false;
    }
 }

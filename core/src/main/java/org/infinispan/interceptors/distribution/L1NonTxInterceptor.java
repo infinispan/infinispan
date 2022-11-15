@@ -38,6 +38,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.EntryFactory;
@@ -52,7 +53,6 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -321,9 +321,9 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          // If our invalidation was sent when the value wasn't yet cached but is still being requested the context
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
-         if (ctx.lookupEntry(key) == null) {
+         if (!ctx.isEntryPresent(key)) {
             currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-                                                            true, false, currentStage);
+                  true, false, currentStage);
          }
       }
       return asyncInvokeNext(ctx, invalidateL1Command, EntryFactory.expirationCheckDelay(currentStage, initialStage));

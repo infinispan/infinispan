@@ -53,6 +53,8 @@ public interface CacheTransaction {
 
    CacheEntry lookupEntry(Object key);
 
+   boolean isEntryPresent(Object key);
+
    Map<Object, CacheEntry> getLookedUpEntries();
 
    void putLookedUpEntry(Object key, CacheEntry e);

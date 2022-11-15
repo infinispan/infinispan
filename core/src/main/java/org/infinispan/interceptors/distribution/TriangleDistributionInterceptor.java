@@ -48,7 +48,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
@@ -410,7 +409,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       DistributionInfo distributionInfo = topology.getDistributionForSegment(command.getSegment());
 
       if (distributionInfo.isPrimary()) {
-         assert context.lookupEntry(command.getKey()) != null;
+         assert context.isEntryPresent(command.getKey());
          return context.isOriginLocal() ?
                localPrimaryOwnerWrite(context, command, distributionInfo, backupBuilder) :
                remotePrimaryOwnerWrite(context, command, distributionInfo, backupBuilder);
@@ -426,8 +425,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
    }
 
    private Object remoteBackupOwnerWrite(InvocationContext context, DataWriteCommand command) {
-      CacheEntry entry = context.lookupEntry(command.getKey());
-      if (entry == null) {
+      if (!context.isEntryPresent(command.getKey())) {
          if (command.loadType() == OWNER) {
             return asyncInvokeNext(context, command, remoteGetSingleKey(context, command, command.getKey(), true));
          }
@@ -579,8 +577,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          boolean needsPreviousValue) {
       List<Object> remoteKeys = null;
       for (Object key : keys) {
-         CacheEntry cacheEntry = ctx.lookupEntry(key);
-         if (cacheEntry == null && cacheTopology.isWriteOwner(key)) {
+         if (!ctx.isEntryPresent(key) && cacheTopology.isWriteOwner(key)) {
             if (!needsPreviousValue || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {

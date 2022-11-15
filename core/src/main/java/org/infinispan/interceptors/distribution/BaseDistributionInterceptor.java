@@ -32,6 +32,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ArrayCollector;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -65,7 +66,6 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -182,10 +182,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected final Object handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command) {
       Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
+      boolean entryPresent = ctx.isEntryPresent(key);
 
       if (isLocalModeForced(command)) {
-         if (entry == null) {
+         if (!entryPresent) {
             entryFactory.wrapExternalEntry(ctx, key, null, false, true);
          }
          return invokeNext(ctx, command);
@@ -202,7 +202,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return null;
       }
 
-      if (entry == null) {
+      if (!entryPresent) {
          boolean load = shouldLoad(ctx, command, info);
          if (info.isPrimary()) {
             throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
@@ -276,7 +276,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          for (Object key : command.getKeys()) {
-            if (ctx.lookupEntry(key) == null) {
+            if (!ctx.isEntryPresent(key)) {
                entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
             }
          }
@@ -285,7 +285,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       if (!ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
-            if (ctx.lookupEntry(key) == null) {
+            if (!ctx.isEntryPresent(key)) {
                return UnsureResponse.INSTANCE;
             }
          }
@@ -307,7 +307,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, cacheTopology, null, unsureOwners);
       if (requestedKeys.isEmpty()) {
          for (Object key : keys) {
-            if (ctx.lookupEntry(key) == null) {
+            if (!ctx.isEntryPresent(key)) {
                // We got an UnsureResponse or CacheNotFoundResponse from all the owners, retry
                if (hasSuspectedOwner) {
                   // After all the owners are lost, we must wait for a new topology in case the key is still available
@@ -405,7 +405,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private Object handleLocalOnlyReadManyCommand(InvocationContext ctx, VisitableCommand command, Collection<?> keys) {
       for (Object key : keys) {
-         if (ctx.lookupEntry(key) == null) {
+         if (!ctx.isEntryPresent(key)) {
             entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
          }
       }
@@ -415,7 +415,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private <C extends TopologyAffectedCommand & VisitableCommand> Object handleRemoteReadManyCommand(
          InvocationContext ctx, C command, Collection<?> keys, InvocationSuccessFunction<C> remoteReturnHandler) {
       for (Object key : keys) {
-         if (ctx.lookupEntry(key) == null) {
+         if (!ctx.isEntryPresent(key)) {
             return UnsureResponse.INSTANCE;
          }
       }
@@ -529,8 +529,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       Map<Address, List<Object>> requestedKeys = new HashMap<>(capacity);
       int estimateForOneNode = 2 * keys.size() / capacity;
       for (Object key : keys) {
-         CacheEntry entry = ctx.lookupEntry(key);
-         if (entry == null) {
+         if (!ctx.isEntryPresent(key)) {
             DistributionInfo distributionInfo = cacheTopology.getDistribution(key);
             // Let's try to minimize the number of messages by preferring owner to which we've already
             // decided to send message
@@ -592,7 +591,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
-      if (ctx.lookupEntry(command.getKey()) != null) {
+      if (ctx.isEntryPresent(command.getKey())) {
          return invokeNext(ctx, command);
       }
 

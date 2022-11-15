@@ -101,7 +101,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    }
 
    public boolean isKeyEquals(Object key) {
-      return this.key == key || this.key.equals(key);
+      return this.key != null && (this.key == key || this.key.equals(key));
    }
 
    @Override
@@ -177,6 +177,11 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    public boolean isEntryRemovedInContext(final Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
+   }
+
+   @Override
+   public boolean isEntryPresent(Object key) {
+      return isKeyEquals(key);
    }
 
    public void resetState() {

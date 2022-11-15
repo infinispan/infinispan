@@ -76,4 +76,8 @@ public interface InvocationContext extends EntryLookup, Cloneable {
     * @deprecated Since 11, to be removed in 14 with no replacement
     */
    boolean isEntryRemovedInContext(Object key);
+
+   default boolean isEntryPresent(Object key) {
+      return lookupEntry(key) != null;
+   }
 }

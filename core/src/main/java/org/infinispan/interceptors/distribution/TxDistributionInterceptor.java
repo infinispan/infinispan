@@ -49,6 +49,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -75,7 +76,6 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -399,8 +399,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                return null;
             }
          }
-         CacheEntry entry = ctx.lookupEntry(command.getKey());
-         if (entry == null) {
+         if (!ctx.isEntryPresent(command.getKey())) {
             if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
                // in transactional mode, we always need the entry wrapped
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
@@ -433,7 +432,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       for (Map.Entry<K, V> e : entries.entrySet()) {
          K key = e.getKey();
          if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
-            if (ctx.lookupEntry(key) == null) {
+            if (!ctx.isEntryPresent(key)) {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
@@ -455,7 +454,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       for (K key : keys) {
          if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
-            if (ctx.lookupEntry(key) == null) {
+            if (!ctx.isEntryPresent(key)) {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
@@ -476,8 +475,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Object key = command.getKey();
       LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       if (ctx.isOriginLocal()) {
-         CacheEntry entry = ctx.lookupEntry(key);
-         if (entry == null) {
+         if (!ctx.isEntryPresent(key)) {
             if (command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);

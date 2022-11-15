@@ -65,6 +65,11 @@ public class ClearInvocationContext extends AbstractInvocationContext implements
    }
 
    @Override
+   public boolean isEntryPresent(Object key) {
+      return false;
+   }
+
+   @Override
    public boolean isEntryRemovedInContext(Object key) {
       //clear remove all entries
       return true;

@@ -134,6 +134,12 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
+   public boolean isEntryPresent(Object key) {
+      if (lookedUpEntries == null) return false;
+      return lookedUpEntries.containsKey(key);
+   }
+
+   @Override
    public void removeLookedUpEntry(Object key) {
       if (lookedUpEntries != null) lookedUpEntries.remove(key);
    }

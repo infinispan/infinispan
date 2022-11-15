@@ -93,7 +93,7 @@ public class GroupManagerImpl implements GroupManager {
       synchronized (ctx) {
          Map<K, V> group = new HashMap<>();
          entries.forEach(e -> {
-            if (ctx.lookupEntry(e.getKey()) == null) {
+            if (!ctx.isEntryPresent(e.getKey())) {
                entryFactory.running().wrapExternalEntry(ctx, e.getKey(), e, true, false);
                addVersionRead(ctx, e, e.getKey(), versionGenerator.running(), log);
             }

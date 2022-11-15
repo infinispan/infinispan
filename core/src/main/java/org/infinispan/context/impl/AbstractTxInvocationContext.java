@@ -123,4 +123,9 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
    public final T getCacheTransaction() {
       return cacheTransaction;
    }
+
+   @Override
+   public boolean isEntryPresent(Object key) {
+      return cacheTransaction.isEntryPresent(key);
+   }
 }

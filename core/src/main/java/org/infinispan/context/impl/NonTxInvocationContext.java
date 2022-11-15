@@ -41,6 +41,11 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
+   public boolean isEntryPresent(Object key) {
+      return lookedUpEntries.containsKey(key);
+   }
+
+   @Override
    public void removeLookedUpEntry(Object key) {
       lookedUpEntries.remove(key);
    }

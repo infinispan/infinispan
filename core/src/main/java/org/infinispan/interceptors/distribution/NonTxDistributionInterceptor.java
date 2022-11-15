@@ -30,7 +30,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -249,7 +248,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private <C extends WriteCommand, Item> Object handleRemoteWriteOnlyManyCommand(
          InvocationContext ctx, C command, WriteManyCommandHelper<C, ?, Item> helper) {
       for (Object key : command.getAffectedKeys()) {
-         if (ctx.lookupEntry(key) == null) {
+         if (!ctx.isEntryPresent(key)) {
             entryFactory.wrapExternalEntry(ctx, key, null, false, true);
          }
       }
@@ -270,8 +269,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = helper.item2key(item);
          if (segments.contains(keyPartitioner.getSegment(key))) {
             helper.accumulate(myItems, item);
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry == null) {
+            if (!ctx.isEntryPresent(key)) {
                // executed only be write-only commands
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             }
@@ -328,8 +326,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = helper.item2key(item);
          if (segments.contains(keyPartitioner.getSegment(key))) {
             helper.accumulate(myItems, item);
-            CacheEntry cacheEntry = ctx.lookupEntry(key);
-            if (cacheEntry == null) {
+            if (!ctx.isEntryPresent(key)) {
                // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
                if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
@@ -408,8 +405,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       List<Object> remoteKeys = null;
       // check that we have all the data we need
       for (Object key : command.getAffectedKeys()) {
-         CacheEntry cacheEntry = ctx.lookupEntry(key);
-         if (cacheEntry == null) {
+         if (!ctx.isEntryPresent(key)) {
             // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
             if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);

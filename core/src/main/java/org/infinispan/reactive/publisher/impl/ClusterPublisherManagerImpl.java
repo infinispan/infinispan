@@ -35,6 +35,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -76,7 +77,6 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -713,7 +713,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          IntSet segments, InvocationContext ctx) {
       Map<Address, Set<K>> filteredKeys = new HashMap<>();
       for (K key : keys) {
-         if (ctx != null && ctx.lookupEntry(key) != null) {
+         if (ctx != null && ctx.isEntryPresent(key)) {
             continue;
          }
          DistributionInfo distributionInfo = topology.getDistribution(key);
