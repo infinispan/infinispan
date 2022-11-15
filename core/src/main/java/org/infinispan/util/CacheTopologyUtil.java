@@ -27,12 +27,13 @@ public enum CacheTopologyUtil {
    public static LocalizedCacheTopology checkTopology(TopologyAffectedCommand command, LocalizedCacheTopology current) {
       int currentTopologyId = current.getTopologyId();
       int cmdTopology = command.getTopologyId();
+      // Do this check before the cast to prevent type pollution as this method touches a lot of commands
+      if (cmdTopology < 0 || currentTopologyId == cmdTopology) {
+         return current;
+      }
       if (command instanceof FlagAffectedCommand && (((FlagAffectedCommand) command).hasAnyFlag(SKIP_TOPOLOGY_FLAGS))) {
          return current;
       }
-      if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
-         throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
-      }
-      return current;
+      throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
    }
 }
