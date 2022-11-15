@@ -47,6 +47,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -67,7 +68,6 @@ import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.TriangleFunctionsUtil;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -625,7 +625,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
     * The second map is used to initialize the {@link CommandAckCollector} to wait for the backups acknowledges.
     */
    private static class PrimaryOwnerClassifier {
-      private final Map<Address, Collection<Integer>> backups;
+      private final Map<Address, Set<Integer>> backups;
       private final Map<Address, Set<Object>> primaries;
       private final LocalizedCacheTopology cacheTopology;
       private final int entryCount;

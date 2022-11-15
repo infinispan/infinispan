@@ -127,11 +127,11 @@ public class CommandAckCollector {
    /**
     * Creates a collector for {@link org.infinispan.commands.write.PutMapCommand}.
     *
-    * @param id         the id from {@link CommandInvocationId#getId()}.
-    * @param backups    a map between a backup owner and its segments affected.
+    * @param id the id from {@link CommandInvocationId#getId()}.
+    * @param backups a map between a backup owner and its segments affected.
     * @param topologyId the current topology id.
     */
-   public <T> Collector<T> createSegmentBasedCollector(long id, Map<Address, Collection<Integer>> backups, int topologyId) {
+   public <T> Collector<T> createSegmentBasedCollector(long id, Map<Address, Set<Integer>> backups, int topologyId) {
       if (backups.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
@@ -429,10 +429,10 @@ public class CommandAckCollector {
 
    private class SegmentBasedCollector<T> extends BaseCollector<T> {
       @GuardedBy("this")
-      private final Map<Address, Collection<Integer>> backups;
+      private final Map<Address, Set<Integer>> backups;
 
-      SegmentBasedCollector(long id, Map<Address, Collection<Integer>> backups,
-                            int topologyId) {
+      SegmentBasedCollector(long id, Map<Address, Set<Integer>> backups,
+            int topologyId) {
          super(id, topologyId);
          this.backups = backups;
       }
@@ -470,7 +470,7 @@ public class CommandAckCollector {
             return;
          }
          synchronized (this) {
-            Collection<Integer> pendingSegments = backups.getOrDefault(from, Collections.emptyList());
+            Set<Integer> pendingSegments = backups.getOrDefault(from, Collections.emptySet());
             if (pendingSegments.remove(segment) && pendingSegments.isEmpty()) {
                backups.remove(from);
             }
