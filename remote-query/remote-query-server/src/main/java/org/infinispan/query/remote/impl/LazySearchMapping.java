@@ -137,12 +137,13 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    @Override
-   public void restart() {
+   public void restart(Set<String> otherIndexingEntities) {
       long stamp = stampedLock.writeLock();
       try {
          restarting = true;
          InfinispanMapping mapping = (InfinispanMapping) searchMappingRef.get();
-         searchMappingRef = new LazyRef<>(() -> createMapping(Optional.of(mapping.getIntegration())));
+         searchMappingRef = new LazyRef<>(() ->
+               createMapping(Optional.of(mapping.getIntegration()), otherIndexingEntities));
          searchMappingRef.get(); // create it now
       } finally {
          restarting = false;
@@ -165,12 +166,16 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    private SearchMapping createMapping() {
-      return createMapping(Optional.empty());
+      return createMapping(Optional.empty(), null);
    }
 
-   private SearchMapping createMapping(Optional<SearchIntegration> previousIntegration) {
+   private SearchMapping createMapping(Optional<SearchIntegration> previousIntegration, Set<String> otherIndexingEntities) {
       IndexingConfiguration indexingConfiguration = cache.getCacheConfiguration().indexing();
       Set<String> indexedEntityTypes = indexingConfiguration.indexedEntityTypes();
+      if (otherIndexingEntities != null) {
+         indexedEntityTypes.addAll(otherIndexingEntities);
+      }
+
       DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
 
       SearchMapping searchMapping = null;

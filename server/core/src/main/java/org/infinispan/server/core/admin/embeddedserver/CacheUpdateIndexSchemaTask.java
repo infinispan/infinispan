@@ -1,7 +1,8 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,7 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 14.0
  */
 public class CacheUpdateIndexSchemaTask extends AdminServerTask<Void> {
-   private static final Set<String> PARAMETERS = Collections.singleton("name");
+   private static final Set<String> PARAMETERS = Set.of("name", "indexed-entities");
 
    @Override
    public String getTaskContextName() {
@@ -50,8 +51,14 @@ public class CacheUpdateIndexSchemaTask extends AdminServerTask<Void> {
       String name = requireParameter(parameters, "name");
       Cache<Object, Object> cache = cacheManager.getCache(name);
 
+      HashSet<String> otherIndexedEntities = null;
+      String indexedEntities = getParameter(parameters, "indexed-entities");
+      if (indexedEntities != null) {
+         otherIndexedEntities = new HashSet<>(Arrays.asList(indexedEntities.split(",")));
+      }
+
       SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
-      searchMapping.restart();
+      searchMapping.restart(otherIndexedEntities);
 
       return null;
    }

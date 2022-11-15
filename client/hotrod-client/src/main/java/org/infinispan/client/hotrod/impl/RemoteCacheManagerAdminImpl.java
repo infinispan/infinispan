@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl;
 
 import static org.infinispan.client.hotrod.impl.Util.await;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -27,6 +28,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    public static final String CACHE_TEMPLATE = "template";
    public static final String CACHE_CONFIGURATION = "configuration";
    public static final String FLAGS = "flags";
+   public static final String INDEXED_ENTITIES = "indexed-entities";
+
    private final RemoteCacheManager cacheManager;
    private final OperationsFactory operationsFactory;
    private final EnumSet<AdminFlag> flags;
@@ -120,8 +123,14 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
 
    @Override
    public void updateIndexSchema(String name, String ... otherIndexedEntities) throws HotRodClientException {
-      // TODO ISPN-14085 Handle otherIndexedEntities
-      await(operationsFactory.newAdminOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))).execute());
+      Map<String, byte[]> params = new HashMap<>();
+      params.put(CACHE_NAME, string(name));
+
+      if (otherIndexedEntities.length > 0) {
+         params.put(INDEXED_ENTITIES, strings(otherIndexedEntities));
+      }
+
+      await(operationsFactory.newAdminOperation("@@cache@updateindexschema", params).execute());
    }
 
    @Override
@@ -144,6 +153,11 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    private static byte[] flags(EnumSet<AdminFlag> flags) {
       String sFlags = flags.stream().map(AdminFlag::toString).collect(Collectors.joining(","));
       return string(sFlags);
+   }
+
+   private static byte[] strings(String[] strings) {
+      String string = Arrays.stream(strings).collect(Collectors.joining(","));
+      return string(string);
    }
 
    private static byte[] string(String s) {

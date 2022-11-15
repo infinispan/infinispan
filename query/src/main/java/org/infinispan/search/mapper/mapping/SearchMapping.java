@@ -91,6 +91,16 @@ public interface SearchMapping extends AutoCloseable {
     * and restarts from the mapping configuration.
     */
    default void restart() {
+      restart(null);
+   }
+
+   /**
+    * Like {@link #restart()} but allow passing also some further indexed type names (fully qualified)
+    * to include more types as indexed, that will be dynamically added to the list of the configured indexed entities.
+    * This configuration is not persistent, meaning that if the cache (server) restarts,
+    * these further added types won’t be considered as indexed types anymore.
+    */
+   default void restart(Set<String> otherIndexingEntities) {
    }
 
    /**
