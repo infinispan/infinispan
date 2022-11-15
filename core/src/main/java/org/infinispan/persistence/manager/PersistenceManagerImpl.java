@@ -955,7 +955,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
                      int storeSegments = firstStoreStatus.hasCharacteristic(Characteristic.SHAREABLE) ?
                            segmentCount : cacheTopology.getLocalWriteSegmentsCount();
-                     return size * segments.size() / storeSegments;
+                     return storeSegments > 0 ? size * segments.size() / storeSegments : size;
                   });
          }
          return stage.whenComplete((ignore, ignoreT) -> releaseReadLock(stamp));
