@@ -13,7 +13,10 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "stats.ClusteredStatsTest")
@@ -71,6 +74,36 @@ public class ClusteredStatsTest extends SingleStatsTest {
 
       // Eviction stats with passivation can be delayed
       eventuallyEquals((long) actualOwners * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), clusteredStats::getPassivations);
+   }
+
+   // Reproducer for ISPN-14279.
+   // Calling approximate size before joining properly causes a division by 0 with non-segmented store.
+   public void testJoinerStats() {
+      for (int i = 0; i < TOTAL_ENTRIES; i++) {
+         cache.put("key" + i, "value" + i);
+      }
+
+      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+         Cache<?, ?> cache = cacheManagers.get(i).getCache(CACHE_NAME);
+         ClusterTopologyManager crmTM = TestingUtil.extractComponent(cache, ClusterTopologyManager.class);
+         crmTM.setRebalancingEnabled(false);
+      }
+
+      GlobalConfigurationBuilder globalConfigurationBuilder = defaultGlobalConfigurationBuilder();
+      globalConfigurationBuilder.metrics().accurateSize(true);
+      ConfigurationBuilder cb = new ConfigurationBuilder()
+            .read(cache.getAdvancedCache().getCacheConfiguration());
+      cb.persistence().clearStores();
+      Configuration configuration = cb.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .segmented(false)
+         .clustering()
+            .hash().numSegments(1)
+         .build();
+
+      EmbeddedCacheManager ecm = addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(globalConfigurationBuilder.build()), new ConfigurationBuilder());
+      Stats stats = ecm.createCache(CACHE_NAME, configuration).getAdvancedCache().getStats();
+      assertEquals(0, stats.getApproximateEntries());
    }
 
    @Override
