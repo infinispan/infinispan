@@ -6,7 +6,8 @@ This section provides an example configuration for a SQL query cache store that 
 [discrete]
 == SQL statements
 
-SQL data definition language (DDL) statements for the "person" and "address" tables are as follows:
+The following examples show SQL data definition language (DDL) statements for the "person" and "address" tables.
+The data types described in the example are only valid for PostgreSQL database.
 
 .SQL statement for the "person" table
 [source,proto,options="nowrap",subs=attributes+,role="primary"]
