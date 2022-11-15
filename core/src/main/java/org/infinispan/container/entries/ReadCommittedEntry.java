@@ -13,11 +13,11 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_SHA
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -306,8 +306,8 @@ public class ReadCommittedEntry<K, V> implements MVCCEntry<K, V> {
    }
 
    @Override
-   public void setSkipSharedStore() {
-      setFlag(true, SKIP_SHARED_STORE);
+   public void setSkipSharedStore(boolean setSkipSharedStore) {
+      setFlag(setSkipSharedStore, SKIP_SHARED_STORE);
    }
 
    final void setFlag(boolean enable, Flags flag) {

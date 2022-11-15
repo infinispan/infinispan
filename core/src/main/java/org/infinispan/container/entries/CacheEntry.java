@@ -114,15 +114,44 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
 
    /**
     * See {@link #skipLookup()}.
+    *
     * @param skipLookup
     */
    void setSkipLookup(boolean skipLookup);
 
+   default boolean isSkipSharedStore() {
+      return false;
+   }
+
+   default void setSkipSharedStore(boolean setSkipSharedStore) {
+
+   }
+
+   /**
+    * Marks this entry as being expired.  This is a special form of removal.
+    *
+    * @param expired whether or not this entry should be expired
+    */
+   default void setExpired(boolean expired) {
+
+   }
+
+   /**
+    * Returns whether this entry was marked as being expired or not
+    *
+    * @return whether expired has been set
+    */
+   default boolean isExpired() {
+      return false;
+   }
+
    CacheEntry<K, V> clone();
 
-   default void setCreated(long created) {}
+   default void setCreated(long created) {
+   }
 
-   default void setLastUsed(long lastUsed) {}
+   default void setLastUsed(long lastUsed) {
+   }
 
    default PrivateMetadata getInternalMetadata() {
       return null;

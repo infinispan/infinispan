@@ -288,7 +288,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
             command.isReturnEntryNecessary(), command);
    }
 
-   protected Object performRemove(MVCCEntry<?, ?> e, InvocationContext ctx, ValueMatcher valueMatcher, Object key,
+   protected Object performRemove(CacheEntry<?, ?> e, InvocationContext ctx, ValueMatcher valueMatcher, Object key,
          Object prevValue, Object optionalValue, Metadata commandMetadata, boolean notifyRemove, boolean returnEntry,
          DataWriteCommand command) {
 
@@ -505,7 +505,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
       for (Map.Entry<Object, Object> e : inputMap.entrySet()) {
          Object key = e.getKey();
-         MVCCEntry<Object, Object> contextEntry = lookupMvccEntry(ctx, key);
+         CacheEntry<Object, Object> contextEntry = lookupMvccEntry(ctx, key);
          if (contextEntry != null) {
             Object newValue = e.getValue();
             Object previousValue = contextEntry.getValue();
@@ -539,9 +539,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       return delayedValue(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null, previousValues);
    }
 
-   private MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
-      //noinspection unchecked
-      return (MVCCEntry) ctx.lookupEntry(key);
+   private CacheEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
+      return ctx.lookupEntry(key);
    }
 
    @Override
@@ -553,7 +552,7 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitRemoveExpiredCommand(InvocationContext ctx, RemoveExpiredCommand command) throws Throwable {
       Object key = command.getKey();
-      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      CacheEntry<Object, Object> e = ctx.lookupEntry(key);
       Metadata metadata = command.getMetadata();
       // When it isn't the primary owner, just accept the removal as is, trusting the primary did the appropriate checks
       if (command.hasAnyFlag(FlagBitSets.BACKUP_WRITE)) {
@@ -1148,9 +1147,9 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       return Boolean.FALSE;
    }
 
-   private void updateStoreFlags(FlagAffectedCommand command, MVCCEntry e) {
+   private void updateStoreFlags(FlagAffectedCommand command, CacheEntry e) {
       if (command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE)) {
-         e.setSkipSharedStore();
+         e.setSkipSharedStore(true);
       }
    }
 

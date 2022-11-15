@@ -14,18 +14,6 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V> {
    void setChanged(boolean isChanged);
 
    /**
-    * Marks this entry as being expired.  This is a special form of removal.
-    * @param expired whether or not this entry should be expired
-    */
-   void setExpired(boolean expired);
-
-   /**
-    * Returns whether this entry was marked as being expired or not
-    * @return whether expired has been set
-    */
-   boolean isExpired();
-
-   /**
     * Reset the current value of the entry to the value before the command was executed the first time.
     * This is invoked before the command is retried.
     */
@@ -81,13 +69,6 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V> {
 
    default void setLoaded(boolean loaded) {
    }
-
-   /**
-    * @return True if this entry should non be written to shared persistence
-    */
-   boolean isSkipSharedStore();
-
-   void setSkipSharedStore();
 
    @Override
    MVCCEntry<K, V> clone();
