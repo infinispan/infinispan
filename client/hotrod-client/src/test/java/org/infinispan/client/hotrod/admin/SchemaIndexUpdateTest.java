@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
@@ -8,16 +9,22 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.annotation.model.Image;
 import org.infinispan.client.hotrod.annotation.model.Model;
 import org.infinispan.client.hotrod.annotation.model.ModelA;
 import org.infinispan.client.hotrod.annotation.model.ModelB;
+import org.infinispan.client.hotrod.annotation.model.ModelC;
 import org.infinispan.client.hotrod.annotation.model.SchemaA;
 import org.infinispan.client.hotrod.annotation.model.SchemaB;
+import org.infinispan.client.hotrod.annotation.model.SchemaC;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
@@ -88,37 +95,73 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
    }
 
    @Test
-   public void test() {
-      RemoteCache<Integer, Model> cache = remoteCacheManager.getCache(CACHE_NAME);
+   public void updateWithoutAndWithOtherEntities() {
+      RemoteCache<Integer, Object> cache = remoteCacheManager.getCache(CACHE_NAME);
 
       cache.put(1, new ModelA("Fabio"));
 
       Query<Model> query = Search.getQueryFactory(cache).create("from model.Model where original is not null");
-      List<Model> result = query.execute().list();
+      List<Model> models = query.execute().list();
 
-      assertThat(result).extracting("original").containsExactly("Fabio");
-      assertThat(result).hasOnlyElementsOfType(ModelA.class);
+      assertThat(models).extracting("original").containsExactly("Fabio");
+      assertThat(models).hasOnlyElementsOfType(ModelA.class);
 
-      updateSchemaIndex(); // test target
+      updateSchemaIndex(SchemaB.INSTANCE, null); // without otherEntities
 
       cache.put(2, new ModelB("Silvia", "Silvia"));
 
       query = Search.getQueryFactory(cache).create("from model.Model where original is not null");
-      result = query.execute().list();
+      models = query.execute().list();
 
-      assertThat(result).extracting("original").containsExactly("Fabio", "Silvia");
-      assertThat(result).hasOnlyElementsOfType(ModelB.class);
+      assertThat(models).extracting("original").containsExactly("Fabio", "Silvia");
+      assertThat(models).hasOnlyElementsOfType(ModelB.class);
 
       query = Search.getQueryFactory(cache).create("from model.Model where different is not null");
-      result = query.execute().list();
+      models = query.execute().list();
 
-      assertThat(result).extracting("different").containsExactly("Silvia");
-      assertThat(result).hasOnlyElementsOfType(ModelB.class);
+      assertThat(models).extracting("different").containsExactly("Silvia");
+      assertThat(models).hasOnlyElementsOfType(ModelB.class);
+
+      Query<Image> imageQuery = Search.getQueryFactory(cache).create("from model.Image where name is not null");
+
+      // model.Image is not present on the indexedEntities
+      assertThatThrownBy(() -> imageQuery.execute().list())
+            .isInstanceOf(HotRodClientException.class)
+            .hasMessageContaining("Unknown type name : model.Image");
+
+      updateSchemaIndex(SchemaC.INSTANCE, "model.Model model.Image");
+
+      cache.put(3, new ModelC("Elena", "Elena", "Elena"));
+
+      query = Search.getQueryFactory(cache).create("from model.Model where original is not null");
+      models = query.execute().list();
+
+      assertThat(models).extracting("original").containsExactly("Fabio", "Silvia", "Elena");
+      assertThat(models).hasOnlyElementsOfType(ModelC.class);
+
+      query = Search.getQueryFactory(cache).create("from model.Model where different is not null");
+      models = query.execute().list();
+
+      assertThat(models).extracting("different").containsExactly("Silvia", "Elena");
+      assertThat(models).hasOnlyElementsOfType(ModelC.class);
+
+      query = Search.getQueryFactory(cache).create("from model.Model where divergent is not null");
+      models = query.execute().list();
+
+      assertThat(models).extracting("divergent").containsExactly("Elena");
+      assertThat(models).hasOnlyElementsOfType(ModelC.class);
+
+      // now it is possible to play with model.Image message type too
+      List<Image> images = imageQuery.execute().list();
+      assertThat(images).isEmpty();
+
+      cache.put(4, new Image("name"));
+      images = imageQuery.execute().list();
+      assertThat(images).extracting("name").containsExactly("name");
+      assertThat(images).hasOnlyElementsOfType(Image.class);
    }
 
-   private void updateSchemaIndex() {
-      SchemaB schema = SchemaB.INSTANCE;
-
+   private void updateSchemaIndex(GeneratedSchema schema, String newIndexedEntities) {
       // Register proto schema && entity marshaller on client side
       schema.registerSchema(schemaEvolutionClientMarshaller.getSerializationContext());
       schema.registerMarshallers(schemaEvolutionClientMarshaller.getSerializationContext());
@@ -127,6 +170,11 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
       RemoteCache<String, String> metadataCache = remoteCacheManager
             .getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put(schema.getProtoFileName(), schema.getProtoFile());
+
+      if (newIndexedEntities != null) {
+         remoteCacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+               .updateConfigurationAttribute(CACHE_NAME, "indexing.indexed-entities", newIndexedEntities);
+      }
 
       // reindexCache would make this test working as well,
       // the difference is that with updateIndexSchema the index state (Lucene directories) is not touched,
