@@ -4,8 +4,8 @@
          xmlns="urn:infinispan:config:15.0"
          xmlns:ispn="urn:infinispan:config:15.0">
    <stack name="test-tcp" extends="tcp">
-      <MPING mcast_addr="${jgroups.mcast_addr:239.6.7.8}"
-             mcast_port="${jgroups.cluster.mcast_port}"
+      <MPING mcast_addr="${jgroups.xsite.mcast_addr:239.6.7.8}"
+             mcast_port="${jgroups.xsite.mcast_port:55555}"
              num_discovery_runs="3"
              ip_ttl="${jgroups.udp.ip_ttl:2}"
              ispn:stack.combine="REPLACE"
