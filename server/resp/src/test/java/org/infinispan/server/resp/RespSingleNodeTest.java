@@ -1,24 +1,12 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
-import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
-import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
@@ -32,16 +20,28 @@ import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
+import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Base class for single node tests.
@@ -58,13 +58,19 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
-      cacheManager = createTestCacheManager();
+      EmbeddedCacheManager embeddedCacheManager = createTestCacheManager();
+      return embeddedCacheManager;
+   }
+
+   @BeforeClass(alwaysRun = true)
+   @Override
+   protected void createBeforeClass() throws Exception {
+      super.createBeforeClass();
       RespServerConfiguration serverConfiguration = serverConfiguration().build();
       server = startServer(cacheManager, serverConfiguration);
-      client = createClient(30000, server.getPort());
+      client = createClient(30000, serverConfiguration.port());
       redisConnection = client.connect();
-      cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
-      return cacheManager;
+      cache = cacheManager.getCache(serverConfiguration.defaultCacheName());
    }
 
    protected RespServerConfigurationBuilder serverConfiguration() {
@@ -80,6 +86,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       Util.recursiveFileRemove(stateDirectory);
       gcb.globalState().enable().persistentLocation(stateDirectory).configurationStorage(ConfigurationStorage.OVERLAY);
       gcb.globalState().sharedPersistentLocation(stateDirectory);
+      gcb.transport().defaultTransport();
       return TestCacheManagerFactory.createClusteredCacheManager(gcb, new ConfigurationBuilder());
    }
 

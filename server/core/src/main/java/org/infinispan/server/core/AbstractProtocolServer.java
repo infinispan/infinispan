@@ -123,6 +123,8 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    }
 
    protected void startTransport() {
+      if (transport != null) return;
+
       log.debugf("Starting Netty transport for %s on %s:%s", configuration.name(), configuration.host(), configuration.port());
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);

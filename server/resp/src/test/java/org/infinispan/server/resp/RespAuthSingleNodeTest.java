@@ -11,10 +11,15 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 
 /**
  * Test single node with authentication enabled.
@@ -27,6 +32,17 @@ import org.testng.annotations.Test;
 public class RespAuthSingleNodeTest extends RespSingleNodeTest {
    private static final String USERNAME = "admin";
    private static final String PASSWORD = "super-password";
+
+   @BeforeClass(alwaysRun = true)
+   @Override
+   protected void createBeforeClass() throws Exception {
+      super.createBeforeClass();
+      RespServerConfiguration serverConfiguration = serverConfiguration().build();
+      server = startServer(cacheManager, serverConfiguration);
+      client = createClient(30000, serverConfiguration.port());
+      redisConnection = client.connect();
+      cache = cacheManager.getCache(serverConfiguration.defaultCacheName());
+   }
 
    @Override
    protected RespServerConfigurationBuilder serverConfiguration() {
