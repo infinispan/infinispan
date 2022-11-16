@@ -363,6 +363,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       Configuration xmlConfig = registry.parse(cache1Xml).getCurrentConfigurationBuilder().build();
       assertEquals(1200000, xmlConfig.clustering().l1().lifespan());
       assertEquals(60500, xmlConfig.clustering().stateTransfer().timeout());
+
+      response = client.cache("cache1").configuration("application/xml; q=0.9");
+      assertThat(response).isOk();
    }
 
    @Test
