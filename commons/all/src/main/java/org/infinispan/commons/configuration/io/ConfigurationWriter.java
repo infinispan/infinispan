@@ -46,7 +46,7 @@ public interface ConfigurationWriter extends AutoCloseable {
       }
 
       public ConfigurationWriter build() {
-         switch (type.toString()) {
+         switch (type.getTypeSubtype()) {
             case MediaType.APPLICATION_XML_TYPE:
                return new XmlConfigurationWriter(writer, prettyPrint, clearTextSecrets);
             case MediaType.APPLICATION_YAML_TYPE:
