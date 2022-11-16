@@ -3,13 +3,21 @@
             urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd"
          xmlns="urn:infinispan:config:14.0"
          xmlns:ispn="urn:infinispan:config:14.0">
+   <stack name="global" extends="tcp">
+      <MPING mcast_addr="${jgroups.xsite.mcast_addr:239.6.7.8}"
+             mcast_port="${jgroups.xsite.mcast_port:55555}"
+             num_discovery_runs="3"
+             ip_ttl="${jgroups.udp.ip_ttl:2}"
+             ispn:stack.combine="REPLACE"
+      />
+   </stack>
    <stack name="test-tcp" extends="tcp">
       <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
       <relay.RELAY2 site="LON" max_site_masters="3" xmlns="urn:org:jgroups"/>
-      <remote-sites default-stack="tcp">
+      <remote-sites default-stack="global">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>
       </remote-sites>
@@ -20,7 +28,7 @@
       <FD_ALL3 timeout="3000"
                interval="1000"/>
       <relay.RELAY2 site="LON" max_site_masters="3" xmlns="urn:org:jgroups"/>
-      <remote-sites default-stack="tcp">
+      <remote-sites default-stack="global">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>
       </remote-sites>
