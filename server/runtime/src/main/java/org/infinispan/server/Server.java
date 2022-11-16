@@ -686,7 +686,7 @@ public class Server implements ServerManagement, AutoCloseable {
       Path home = serverHome.toPath();
       Path root = serverRoot.toPath();
       ProcessBuilder builder = new ProcessBuilder();
-      builder.command("sh", "-c", home.resolve(reportFile).toString(), Long.toString(pid), root.toString());
+      builder.command("sh", "-c", String.format("%s %s %s", home.resolve(reportFile), pid, root));
       return blockingManager.supplyBlocking(() -> {
          try {
             Process process = builder.start();
