@@ -1,6 +1,12 @@
 package org.infinispan.server.test.core;
 
-import net.spy.memcached.MemcachedClient;
+import java.io.Closeable;
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
@@ -8,12 +14,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.testcontainers.DockerClientFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
+import net.spy.memcached.MemcachedClient;
 
 /**
  * Class that contains all the logic related to the server driver
@@ -84,10 +85,12 @@ public class TestServer {
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder, int port) {
-      // Add all known server addresses
-      for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-         InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      // Add all known server addresses, unless there are some already
+      if (builder.servers().isEmpty()) {
+         for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+            InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
+            builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+         }
       }
       return RestClient.forConfiguration(builder.build());
    }
@@ -96,7 +99,7 @@ public class TestServer {
       List<InetSocketAddress> addresses = new ArrayList<>();
       for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
          InetSocketAddress unresolved = getDriver().getServerSocket(i, 11221);
-         addresses.add(new InetSocketAddress(unresolved.getHostName(), unresolved.getPort()));
+         addresses.add(new InetSocketAddress(unresolved.getHostString(), unresolved.getPort()));
       }
       MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(addresses));
       return new CloseableMemcachedClient(memcachedClient);
@@ -141,7 +144,7 @@ public class TestServer {
     */
    public RestClient newRestClientForServer(RestClientConfigurationBuilder builder, int port, int n) {
       InetSocketAddress serverAddress = getDriver().getServerSocket(n, port);
-      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
       return RestClient.forConfiguration(builder.build());
    }
 

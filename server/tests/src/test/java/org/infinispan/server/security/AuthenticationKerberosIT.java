@@ -5,6 +5,7 @@ import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 
+import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -128,6 +129,9 @@ public class AuthenticationKerberosIT {
                .security().authentication()
                .mechanism(mechanism)
                .clientSubject(Common.createSubject("admin", "INFINISPAN.ORG", "strongPassword".toCharArray()));
+         // Kerberos is strict about the hostname, so we do this by hand
+         InetSocketAddress serverAddress = SERVERS.getServerDriver().getServerSocket(0, 11222);
+         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       if (mechanism.isEmpty()) {
          Exceptions.expectException(SecurityException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());

@@ -1,5 +1,6 @@
 package org.infinispan.server.security.authorization;
 
+import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 
 import javax.security.auth.Subject;
@@ -10,6 +11,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.LdapServerListener;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -33,6 +35,7 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
                .numServers(1)
                .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
                .addListener(new LdapServerListener(true))
+               .runMode(ServerRunMode.EMBEDDED)
                .build();
 
    @Rule
@@ -77,6 +80,9 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
          restBuilder.security().authentication()
                .mechanism("SPNEGO")
                .clientSubject(subject);
+         // Kerberos is strict about the hostname, so we do this by hand
+         InetSocketAddress serverAddress = SERVERS.getServerDriver().getServerSocket(0, 11222);
+         restBuilder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
       }
       hotRodBuilders.put(user, hotRodBuilder);
       restBuilders.put(user, restBuilder);
