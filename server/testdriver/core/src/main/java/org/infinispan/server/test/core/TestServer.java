@@ -79,7 +79,7 @@ public class TestServer {
 
    private void configureHotRodClient(ConfigurationBuilder builder, int port, int i) {
       InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {
@@ -87,10 +87,12 @@ public class TestServer {
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder, int port) {
-      // Add all known server addresses
-      for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-         InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      // Add all known server addresses, unless there are some already
+      if (builder.servers().isEmpty()) {
+         for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
+            InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
+            builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+         }
       }
       return RestClient.forConfiguration(builder.build());
    }
@@ -99,7 +101,7 @@ public class TestServer {
       List<InetSocketAddress> addresses = new ArrayList<>();
       for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
          InetSocketAddress unresolved = getDriver().getServerSocket(i, 11221);
-         addresses.add(new InetSocketAddress(unresolved.getHostName(), unresolved.getPort()));
+         addresses.add(new InetSocketAddress(unresolved.getHostString(), unresolved.getPort()));
       }
       MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(addresses));
       return new CloseableMemcachedClient(memcachedClient);
@@ -144,7 +146,7 @@ public class TestServer {
     */
    public RestClient newRestClientForServer(RestClientConfigurationBuilder builder, int port, int n) {
       InetSocketAddress serverAddress = getDriver().getServerSocket(n, port);
-      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
       return RestClient.forConfiguration(builder.build());
    }
 

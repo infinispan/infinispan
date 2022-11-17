@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -673,6 +674,9 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testRestServerNodeReport() {
+      if (!(getServers().getServerDriver() instanceof ContainerInfinispanServerDriver)) {
+         throw new AssumptionViolatedException("Requires CONTAINER mode");
+      }
       RestClusterClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
       CompletionStage<RestResponse> distribution = restClient.distribution();
       RestResponse distributionResponse = CompletionStages.join(distribution);
@@ -770,6 +774,8 @@ public abstract class AbstractAuthorization {
          RestClientConfiguration cfg = restBuilders.get(user).build();
          boolean followRedirects = !cfg.security().authentication().mechanism().equals("SPNEGO");
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().read(cfg).clearServers().followRedirects(followRedirects);
+         InetSocketAddress serverAddress = getServers().getServerDriver().getServerSocket(0, 11222);
+         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
          RestClient client = getServerTest().rest().withClientConfiguration(builder).get();
          assertStatus(followRedirects ? OK : TEMPORARY_REDIRECT, client.raw().get("/rest/v2/login"));
          Json acl = Json.read(assertStatus(OK, client.raw().get("/rest/v2/security/user/acl")));
