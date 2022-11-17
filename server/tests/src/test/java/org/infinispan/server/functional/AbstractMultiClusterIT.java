@@ -150,7 +150,7 @@ class AbstractMultiClusterIT {
          return serverClients.computeIfAbsent(server, k -> {
             InetSocketAddress serverSocket = driver.getServerSocket(server, 11222);
             final ServerConfigurationBuilder configurationBuilder = new RestClientConfigurationBuilder().addServer()
-                  .host(serverSocket.getHostName()).port(serverSocket.getPort());
+                  .host(serverSocket.getHostString()).port(serverSocket.getPort());
             if (credentials != null) {
                String user = credentials.getKey();
                String pass = credentials.getValue();

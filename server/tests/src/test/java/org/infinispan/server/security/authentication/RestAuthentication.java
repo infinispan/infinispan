@@ -76,7 +76,7 @@ public class RestAuthentication {
 
       InetSocketAddress serverAddress = serverDriver.getServerSocket(0, 11222);
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
-      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
 
       RestClient restClient = RestClient.forConfiguration(builder.build());
 
@@ -91,7 +91,7 @@ public class RestAuthentication {
 
       InetSocketAddress serverAddress = serverDriver.getServerSocket(0, 11222);
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
-      builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
 
       RestClient restClient = RestClient.forConfiguration(builder.build());
       RestResponse response = sync(restClient.raw().get("/rest/v2/caches"));
