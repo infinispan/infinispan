@@ -61,6 +61,10 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       return this;
    }
 
+   public List<ServerConfigurationBuilder> servers() {
+      return servers;
+   }
+
    private static void parseServers(String servers, BiConsumer<String, Integer> c) {
       for (String server : servers.split(";")) {
          Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
