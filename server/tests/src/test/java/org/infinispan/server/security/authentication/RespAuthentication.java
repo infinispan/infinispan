@@ -40,7 +40,7 @@ public class RespAuthentication {
    @Test
    public void testRestReadWrite() {
       InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
-      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostName(), serverSocket.getPort()));
+      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostString(), serverSocket.getPort()));
       try (StatefulRedisConnection<String, String> redisConnection = client.connect()) {
          RedisCommands<String, String> redis = redisConnection.sync();
          redis.set("k1", "v1");
@@ -63,7 +63,7 @@ public class RespAuthentication {
    @Test
    public void testRespCommandDocs() {
       InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
-      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostName(), serverSocket.getPort()));
+      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostString(), serverSocket.getPort()));
       try (StatefulRedisConnection<String, String> redisConnection = client.connect()) {
          RedisCommands<String, String> redis = redisConnection.sync();
          Exceptions.expectException(RedisCommandExecutionException.class, () -> redis.dispatch(CommandType.COMMAND,
