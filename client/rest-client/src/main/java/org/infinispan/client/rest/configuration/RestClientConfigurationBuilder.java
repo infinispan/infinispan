@@ -56,7 +56,16 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       return this;
    }
 
-   public static final void parseServers(String servers, BiConsumer<String, Integer> c) {
+   public RestClientConfigurationBuilder clearServers() {
+      this.servers.clear();
+      return this;
+   }
+
+   public List<ServerConfigurationBuilder> servers() {
+      return servers;
+   }
+
+   public static void parseServers(String servers, BiConsumer<String, Integer> c) {
       for (String server : servers.split(";")) {
          Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
          if (matcher.matches()) {
@@ -71,7 +80,6 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
          } else {
             throw new IllegalArgumentException(server);
          }
-
       }
    }
 
