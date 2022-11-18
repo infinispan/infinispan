@@ -25,6 +25,8 @@ disconnect
 quit
 ----
 
+////
+
 [TIP]
 ====
 Use [command]`echo` to add commands in interactive mode.
@@ -58,3 +60,4 @@ echo describe|bin/cli.sh -c localhost:11222 -f -
   } ]
 }
 ----
+////
