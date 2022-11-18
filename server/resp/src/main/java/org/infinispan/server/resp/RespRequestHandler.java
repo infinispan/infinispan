@@ -8,6 +8,8 @@ import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -18,6 +20,14 @@ import io.netty.channel.ChannelHandlerContext;
 
 public abstract class RespRequestHandler {
    protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedStage(this);
+   protected final RespServer respServer;
+   protected AdvancedCache<byte[], byte[]> cache;
+
+   protected RespRequestHandler(RespServer respServer) {
+      this.respServer = respServer;
+      this.cache = respServer.getCache()
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM);
+   }
 
    /**
     * Handles the RESP request returning a stage that when complete notifies the command has completed as well as

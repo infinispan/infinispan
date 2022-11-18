@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 
@@ -17,12 +16,8 @@ import io.netty.util.CharsetUtil;
 
 public class Resp3AuthHandler extends RespRequestHandler {
 
-   protected final RespServer respServer;
-   protected AdvancedCache<byte[], byte[]> cache;
-
    public Resp3AuthHandler(RespServer server) {
-      this.respServer = server;
-      this.cache = server.getCache();
+      super(server);
    }
 
    @Override
