@@ -19,6 +19,7 @@ import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
@@ -107,7 +108,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
-         handleGet(header, get.join(), null);
+         Object obj = get.join();
+         // To prevent type pollution for a get as a local get should return an InternalCacheEntry
+         if (obj instanceof InternalCacheEntry) {
+            handleGet(header, ((InternalCacheEntry<?, byte[]>) obj).getValue(), ((InternalCacheEntry<?, ?>) obj).getMetadata(), null);
+         } else {
+            handleGet(header, get.join(), null);
+         }
       } else {
          get.whenComplete((result, throwable) -> handleGet(header, result, throwable));
       }
@@ -126,6 +133,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void handleGet(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable) {
+      if (result != null) {
+         handleGet(header, result.getValue(), result.getMetadata(), throwable);
+      } else {
+         handleGet(header, null, null, throwable);
+      }
+   }
+
+   private void handleGet(HotRodHeader header, byte[] result, Metadata metadata, Throwable throwable) {
       if (throwable != null) {
          writeException(header, throwable);
       } else {
@@ -135,17 +150,17 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             try {
                switch (header.op) {
                   case GET:
-                     writeResponse(header, header.encoder().valueResponse(header, server, channel, OperationStatus.Success, result.getValue()));
+                     writeResponse(header, header.encoder().valueResponse(header, server, channel, OperationStatus.Success, result));
                      break;
                   case GET_WITH_VERSION:
-                     NumericVersion numericVersion = (NumericVersion) result.getMetadata().version();
+                     NumericVersion numericVersion = (NumericVersion) metadata.version();
                      long version;
                      if (numericVersion != null) {
                         version = numericVersion.getVersion();
                      } else {
                         version = 0;
                      }
-                     writeResponse(header, header.encoder().valueWithVersionResponse(header, server, channel, result.getValue(), version));
+                     writeResponse(header, header.encoder().valueWithVersionResponse(header, server, channel, result, version));
                      break;
                   default:
                      throw new IllegalStateException();

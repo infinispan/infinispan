@@ -1,5 +1,7 @@
 package org.infinispan.commands;
 
+import org.infinispan.commands.write.AbstractDataWriteCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commons.util.SegmentAwareKey;
 import org.infinispan.distribution.ch.KeyPartitioner;
 
@@ -33,6 +35,10 @@ public interface SegmentSpecificCommand {
     * @return the segment value to use.
     */
    static int extractSegment(ReplicableCommand command, Object key, KeyPartitioner keyPartitioner) {
+      // To reduce type pollution we first check for AbstractDataWriteCommand
+      if (command instanceof AbstractDataWriteCommand) {
+         return ((DataWriteCommand) command).getSegment();
+      }
       if (command instanceof SegmentSpecificCommand) {
          return ((SegmentSpecificCommand) command).getSegment();
       }

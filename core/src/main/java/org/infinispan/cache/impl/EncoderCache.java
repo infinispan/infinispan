@@ -132,9 +132,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return newMap;
    }
 
+   private InternalCacheEntry<K, V> convertEntry(K newKey, V newValue, InternalCacheEntry<K, V> entry) {
+      return entryFactory.create(newKey, newValue, entry);
+   }
+
    private CacheEntry<K, V> convertEntry(K newKey, V newValue, CacheEntry<K, V> entry) {
       if (entry instanceof InternalCacheEntry) {
-         return entryFactory.create(newKey, newValue, (InternalCacheEntry) entry);
+         return convertEntry(newKey, newValue, (InternalCacheEntry<K, V>) entry);
       } else {
          return entryFactory.create(newKey, newValue, entry.getMetadata().version(), entry.getCreated(),
                entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle());
@@ -384,9 +388,25 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       K keyToStorage = keyToStorage(key);
       CompletableFuture<CacheEntry<K, V>> stage = cache.getCacheEntryAsync(keyToStorage);
       if (stage.isDone() && !stage.isCompletedExceptionally()) {
+         Object obj = stage.join();
+         if (obj instanceof InternalCacheEntry) {
+            return CompletableFuture.completedFuture(unwrapCacheEntry(key, keyToStorage, (InternalCacheEntry<K, V>) obj));
+         }
          return CompletableFuture.completedFuture(unwrapCacheEntry(key, keyToStorage, stage.join()));
       }
       return stage.thenApply(returned -> unwrapCacheEntry(key, keyToStorage, returned));
+   }
+
+   // Here to prevent type pollution as we will have ICE most likely and don't want to pollute with CacheEntry
+   private InternalCacheEntry<K, V> unwrapCacheEntry(Object key, K keyToStorage, InternalCacheEntry<K, V> returned) {
+      if (returned != null) {
+         V originalValue = returned.getValue();
+         V valueFromStorage = valueFromStorage(originalValue);
+         if (keyToStorage != key || valueFromStorage != originalValue) {
+            return convertEntry((K) key, valueFromStorage, returned);
+         }
+      }
+      return returned;
    }
 
    private CacheEntry<K, V> unwrapCacheEntry(Object key, K keyToStorage, CacheEntry<K, V> returned) {

@@ -14,12 +14,14 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.AsyncSynchronization;
 import org.infinispan.commons.tx.AsyncXaResource;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.TransactionResourceConverter;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.context.InvocationContext;
@@ -30,7 +32,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -56,8 +57,14 @@ public class InvocationHelper implements TransactionResourceConverter {
    @Inject protected BlockingManager blockingManager;
 
    private static void checkLockOwner(InvocationContext context, VisitableCommand command) {
-      if (context.getLockOwner() == null && command instanceof RemoteLockCommand) {
-         context.setLockOwner(((RemoteLockCommand) command).getKeyLockOwner());
+      if (context.getLockOwner() == null) {
+         // To reduce type pollution we first check for AbstractDataWriteCommand
+         if (command instanceof AbstractDataWriteCommand) {
+            context.setLockOwner(((AbstractDataWriteCommand) command).getKeyLockOwner());
+         }
+         if (command instanceof RemoteLockCommand) {
+            context.setLockOwner(((RemoteLockCommand) command).getKeyLockOwner());
+         }
       }
    }
 

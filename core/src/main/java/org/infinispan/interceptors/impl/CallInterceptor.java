@@ -220,7 +220,12 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW && o != null) {
          if (returnEntry) {
             response = cloneEntry(e);
-            ((CacheEntry<Object, Object>) response).setValue(o);
+            // For type pollution, prefer ICE when possible
+            if (response instanceof InternalCacheEntry) {
+               ((InternalCacheEntry<Object, Object>) response).setValue(o);
+            } else {
+               ((CacheEntry<Object, Object>) response).setValue(o);
+            }
          } else {
             response = o;
          }
