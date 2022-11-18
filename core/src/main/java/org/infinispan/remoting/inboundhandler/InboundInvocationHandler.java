@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -16,19 +17,30 @@ public interface InboundInvocationHandler {
    /**
     * Handles the {@link org.infinispan.commands.ReplicableCommand} from other node belonging to local site.
     *
-    * @param origin  the sender {@link org.infinispan.remoting.transport.Address}
+    * @param origin the sender {@link org.infinispan.remoting.transport.Address}
     * @param command the {@link org.infinispan.commands.ReplicableCommand} to handler
-    * @param reply   the return value is passed to this object in order to be sent back to the origin
-    * @param order   the {@link org.infinispan.remoting.inboundhandler.DeliverOrder} in which the command was sent
+    * @param reply the return value is passed to this object in order to be sent back to the origin
+    * @param order the {@link org.infinispan.remoting.inboundhandler.DeliverOrder} in which the command was sent
     */
    void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order);
 
    /**
+    * @param origin
+    * @param command
+    * @param reply
+    * @param order
+    */
+   default void handleFromCluster(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder order) {
+      handleFromCluster(origin, (ReplicableCommand) command, reply, order);
+   }
+
+   /**
     * Handles the {@link org.infinispan.commands.ReplicableCommand} from remote site.
-    * @param origin  the sender site
+    *
+    * @param origin the sender site
     * @param command the {@link org.infinispan.commands.ReplicableCommand} to handle
-    * @param reply   the return value is passed to this object in order to be sent back to the origin
-    * @param order   the {@link DeliverOrder} in which the command was sent
+    * @param reply the return value is passed to this object in order to be sent back to the origin
+    * @param order the {@link DeliverOrder} in which the command was sent
     */
    void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command, Reply reply, DeliverOrder order);
 }

@@ -8,11 +8,11 @@ import org.infinispan.util.ByteString;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public abstract class BaseClusteredReadCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public abstract class BaseTopologyRpcCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    protected int topologyId = -1;
    private long flags;
 
-   protected BaseClusteredReadCommand(ByteString cacheName, long flagBitSet) {
+   protected BaseTopologyRpcCommand(ByteString cacheName, long flagBitSet) {
       super(cacheName);
       this.flags = flagBitSet;
    }

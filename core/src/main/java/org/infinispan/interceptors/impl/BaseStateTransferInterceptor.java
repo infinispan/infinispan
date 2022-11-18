@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -18,6 +19,7 @@ import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -35,7 +37,6 @@ import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -76,7 +77,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    protected final void logRetry(int currentTopologyId, TopologyAffectedCommand cmd) {
       if (getLog().isTraceEnabled())
          getLog().tracef("Retrying command because of topology change, current topology is %d, command topology %d: %s",
-                         currentTopologyId, cmd.getTopologyId(), cmd);
+               currentTopologyId, cmd.getTopologyId(), cmd);
    }
 
    protected final int currentTopologyId() {
@@ -84,6 +85,21 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       return cacheTopology == null ? -1 : cacheTopology.getTopologyId();
    }
 
+   // Note this is duplicate of the other method, just has a concrete type to avoid type pollution
+   // If this method is updated the other must be kept in sync!
+   protected final void updateTopologyId(AbstractTopologyAffectedCommand command) {
+      // set the topology id if it was not set before (ie. this is local command)
+      // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
+      if (command.getTopologyId() == -1) {
+         CacheTopology cacheTopology = distributionManager.getCacheTopology();
+         // Before the topology is set in STM/StateConsumer the topology in DistributionManager is 0
+         int topologyId = cacheTopology == null ? 0 : cacheTopology.getTopologyId();
+         if (getLog().isTraceEnabled()) getLog().tracef("Setting command topology to %d", topologyId);
+         command.setTopologyId(topologyId);
+      }
+   }
+
+   // Note this method is duplicated above, both must be updated simultaneously!
    protected final void updateTopologyId(TopologyAffectedCommand command) {
       // set the topology id if it was not set before (ie. this is local command)
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
@@ -135,7 +151,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    protected <C extends VisitableCommand & TopologyAffectedCommand & FlagAffectedCommand> Object handleReadCommand(
          InvocationContext ctx, C command) {
-      updateTopologyId(command);
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         updateTopologyId((AbstractTopologyAffectedCommand) command);
+      } else {
+         updateTopologyId(command);
+      }
       if (isScattered) {
          // In scattered mode read requests only go to the primary owner and cannot return a valid value
          // if the primary owner has an older topology

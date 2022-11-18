@@ -8,14 +8,15 @@ import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,16 +26,11 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateResponseCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class StateResponseCommand extends BaseTopologyRpcCommand implements TopologyAffectedCommand {
 
    private static final Log log = LogFactory.getLog(StateResponseCommand.class);
 
    public static final byte COMMAND_ID = 20;
-
-   /**
-    * The topology id of the sender at send time.
-    */
-   private int topologyId;
 
    /**
     * A collections of state chunks to be transferred.
@@ -54,16 +50,16 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    private boolean pushTransfer;
 
    private StateResponseCommand() {
-      super(null);  // for command id uniqueness test
+      this(null);  // for command id uniqueness test
    }
 
    public StateResponseCommand(ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
    public StateResponseCommand(ByteString cacheName, int topologyId, Collection<StateChunk> stateChunks,
                                boolean applyState, boolean pushTransfer) {
-      super(cacheName);
+      this(cacheName);
       this.topologyId = topologyId;
       this.stateChunks = stateChunks;
       this.applyState = applyState;
@@ -91,16 +87,6 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override

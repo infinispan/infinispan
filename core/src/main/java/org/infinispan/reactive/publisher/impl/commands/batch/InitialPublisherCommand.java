@@ -10,9 +10,10 @@ import java.util.function.Function;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -20,7 +21,7 @@ import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.util.ByteString;
 import org.reactivestreams.Publisher;
 
-public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements TopologyAffectedCommand {
+public class InitialPublisherCommand<K, I, R> extends BaseTopologyRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 18;
 
    private String requestId;
@@ -33,19 +34,20 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    private boolean entryStream;
    private boolean trackKeys;
    private Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
-   private int topologyId = -1;
 
    // Only here for CommandIdUniquenessTest
-   private InitialPublisherCommand() { super(null); }
+   private InitialPublisherCommand() {
+      this(null);
+   }
 
    public InitialPublisherCommand(ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
    public InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee,
          int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
          boolean trackKeys, Function<? super Publisher<I>, ? extends Publisher<R>> transformer) {
-      super(cacheName);
+      this(cacheName);
       this.requestId = requestId;
       this.deliveryGuarantee = deliveryGuarantee;
       this.batchSize = batchSize;
@@ -106,16 +108,6 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
 
       PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
       return publisherHandler.register(this);
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override

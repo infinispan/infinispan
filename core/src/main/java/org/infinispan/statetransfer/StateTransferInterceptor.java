@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -203,7 +204,11 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     */
    private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) {
       if (log.isTraceEnabled()) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
-      updateTopologyId(command);
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         updateTopologyId((AbstractTopologyAffectedCommand) command);
+      } else {
+         updateTopologyId(command);
+      }
 
       return invokeNextAndHandle(ctx, command, handleTxReturn);
    }
@@ -260,7 +265,11 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command) {
       if (log.isTraceEnabled()) log.tracef("handleTxWriteCommand for command %s, origin %s", command, ctx.getOrigin());
 
-      updateTopologyId(command);
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         updateTopologyId((AbstractTopologyAffectedCommand) command);
+      } else {
+         updateTopologyId(command);
+      }
       return invokeNextAndHandle(ctx, command, handleTxWriteReturn);
    }
 
@@ -300,9 +309,14 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     * the {@code CACHE_MODE_LOCAL} flag.
     */
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) {
-      if (log.isTraceEnabled()) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
+      if (log.isTraceEnabled())
+         log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
 
-      updateTopologyId(command);
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         updateTopologyId((AbstractTopologyAffectedCommand) command);
+      } else {
+         updateTopologyId(command);
+      }
 
       // Only catch OutdatedTopologyExceptions on the originator
       if (!ctx.isOriginLocal()) {
@@ -359,7 +373,11 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
                                                 VisitableCommand command, Address origin) {
       if (log.isTraceEnabled()) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
-      updateTopologyId((TopologyAffectedCommand) command);
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         updateTopologyId((AbstractTopologyAffectedCommand) command);
+      } else {
+         updateTopologyId((TopologyAffectedCommand) command);
+      }
       return invokeNext(ctx, command);
    }
 

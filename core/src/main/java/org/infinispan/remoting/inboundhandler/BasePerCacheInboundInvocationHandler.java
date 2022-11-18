@@ -6,13 +6,15 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -30,7 +32,6 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -63,8 +64,10 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
-      ReplicableCommand innerCmd = command.getCommand();
-      if (innerCmd instanceof TopologyAffectedCommand) {
+      VisitableCommand innerCmd = command.getCommand();
+      if (innerCmd instanceof AbstractTopologyAffectedCommand) {
+         return ((AbstractTopologyAffectedCommand) innerCmd).getTopologyId();
+      } else if (innerCmd instanceof TopologyAffectedCommand) {
          return ((TopologyAffectedCommand) innerCmd).getTopologyId();
       }
       return NO_TOPOLOGY_COMMAND;

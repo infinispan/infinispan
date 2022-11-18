@@ -18,16 +18,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -56,7 +59,6 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -190,7 +192,18 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    private void checkTopologyId(ReplicableCommand command) {
-      if (command instanceof TopologyAffectedCommand && ((TopologyAffectedCommand) command).getTopologyId() < 0) {
+      boolean exception = false;
+      // These ifs are to prevent type pollution and accept the two common abstract types.
+      // Normally this can be reduced to a single with || in between each but it was still
+      // evaluating as TopoologyAffectedCommand so it was changed to this (could have been a false positive)
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         exception = ((AbstractTopologyAffectedCommand) command).getTopologyId() < 0;
+      } else if (command instanceof BaseTopologyRpcCommand) {
+         exception = ((BaseTopologyRpcCommand) command).getTopologyId() < 0;
+      } else if (command instanceof TopologyAffectedCommand) {
+         exception = ((TopologyAffectedCommand) command).getTopologyId() < 0;
+      }
+      if (exception) {
          throw new IllegalArgumentException("Command does not have a topology id");
       }
    }

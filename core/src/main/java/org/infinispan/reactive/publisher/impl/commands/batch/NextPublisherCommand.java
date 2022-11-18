@@ -5,27 +5,28 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.util.ByteString;
 
-public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class NextPublisherCommand extends BaseTopologyRpcCommand {
    public static final byte COMMAND_ID = 25;
 
    private String requestId;
-   private int topologyId = -1;
 
    // Only here for CommandIdUniquenessTest
-   private NextPublisherCommand() { super(null); }
+   private NextPublisherCommand() {
+      this(null);
+   }
 
    public NextPublisherCommand(ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
    public NextPublisherCommand(ByteString cacheName, String requestId) {
-      super(cacheName);
+      this(cacheName);
       this.requestId = requestId;
    }
 
@@ -33,16 +34,6 @@ public class  NextPublisherCommand extends BaseRpcCommand implements TopologyAff
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
       return publisherHandler.getNext(requestId);
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override

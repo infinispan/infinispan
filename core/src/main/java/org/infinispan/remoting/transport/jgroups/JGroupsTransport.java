@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.management.ObjectName;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -1475,7 +1476,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
    }
 
-   private void sendResponse(org.jgroups.Address target, Response response, long requestId, ReplicableCommand command) {
+   private void sendResponse(org.jgroups.Address target, Response response, long requestId, Object command) {
       if (log.isTraceEnabled())
          log.tracef("%s sending response for request %d to %s: %s", getAddress(), requestId, target, response);
       ByteBuffer bytes;
@@ -1525,7 +1526,8 @@ public class JGroupsTransport implements Transport, ChannelListener {
             return;
          }
 
-         ReplicableCommand command = (ReplicableCommand) marshaller.objectFromByteBuffer(buffer, offset, length);
+         // Don't cast it yet as we want to check the type later to prevent type pollution for CacheRpcCommands
+         Object command = marshaller.objectFromByteBuffer(buffer, offset, length);
          Reply reply;
          if (requestId != Request.NO_REQUEST_ID) {
             if (log.isTraceEnabled())
@@ -1542,7 +1544,11 @@ public class JGroupsTransport implements Transport, ChannelListener {
             xsiteCommand.setOriginSite(originSite);
             invocationHandler.handleFromRemoteSite(originSite, xsiteCommand, reply, deliverOrder);
          } else {
-            invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
+            if (command instanceof CacheRpcCommand) {
+               invocationHandler.handleFromCluster(fromJGroupsAddress(src), (CacheRpcCommand) command, reply, deliverOrder);
+            } else {
+               invocationHandler.handleFromCluster(fromJGroupsAddress(src), (ReplicableCommand) command, reply, deliverOrder);
+            }
          }
       } catch (Throwable t) {
          CLUSTER.errorProcessingRequest(requestId, src, t);

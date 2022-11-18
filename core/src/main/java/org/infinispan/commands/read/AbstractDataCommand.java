@@ -1,20 +1,19 @@
 package org.infinispan.commands.read;
 
-import static org.infinispan.commons.util.EnumUtil.prettyPrintBitSet;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Objects;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
-import org.infinispan.context.Flag;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  * @since 4.0
  */
-public abstract class AbstractDataCommand implements DataCommand, SegmentSpecificCommand {
+public abstract class AbstractDataCommand extends AbstractTopologyAffectedCommand implements DataCommand, SegmentSpecificCommand {
    protected Object key;
    private long flags;
    // These 2 ints have to stay next to each other to ensure they are aligned together
@@ -99,9 +98,5 @@ public abstract class AbstractDataCommand implements DataCommand, SegmentSpecifi
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   protected final String printFlags() {
-      return prettyPrintBitSet(flags, Flag.class);
    }
 }

@@ -10,7 +10,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
@@ -24,9 +24,10 @@ import org.infinispan.util.ByteString;
 
 /**
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
+ *
  * @param <K> the key type
  */
-public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
+public class ReductionPublisherRequestCommand<K> extends BaseTopologyRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 31;
 
    private boolean parallelStream;
@@ -38,29 +39,20 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    private boolean entryStream;
    private Function transformer;
    private Function finalizer;
-   private int topologyId = -1;
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
-   }
 
    // Only here for CommandIdUniquenessTest
-   private ReductionPublisherRequestCommand() { super(null); }
+   private ReductionPublisherRequestCommand() {
+      this(null);
+   }
 
    public ReductionPublisherRequestCommand(ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
    public ReductionPublisherRequestCommand(ByteString cacheName, boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
          IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
          Function transformer, Function finalizer) {
-      super(cacheName);
+      this(cacheName);
       this.parallelStream = parallelStream;
       this.deliveryGuarantee = deliveryGuarantee;
       this.segments = segments;

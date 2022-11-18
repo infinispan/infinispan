@@ -5,7 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSetsExternalization;
 import org.infinispan.util.ByteString;
@@ -16,14 +17,14 @@ import org.infinispan.util.ByteString;
  * @author Ryan Emerson
  * @since 11.0
  */
-abstract class AbstractStateTransferCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+abstract class AbstractStateTransferCommand extends BaseTopologyRpcCommand implements TopologyAffectedCommand {
 
    private final byte commandId;
    protected int topologyId;
    protected IntSet segments;
 
    AbstractStateTransferCommand(byte commandId, ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
       this.commandId = commandId;
    }
 

@@ -11,8 +11,10 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.ComponentRegistry;
@@ -24,7 +26,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,7 +36,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
-public class TxCompletionNotificationCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class TxCompletionNotificationCommand extends BaseTopologyRpcCommand implements TopologyAffectedCommand {
    private static final Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
 
    public static final int COMMAND_ID = 22;
@@ -43,26 +44,25 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
    private XidImpl xid;
    private long internalId;
    private GlobalTransaction gtx;
-   private int topologyId = -1;
 
    @SuppressWarnings("unused")
    private TxCompletionNotificationCommand() {
-      super(null); // For command id uniqueness test
+      this(null); // For command id uniqueness test
    }
 
    public TxCompletionNotificationCommand(XidImpl xid, GlobalTransaction gtx, ByteString cacheName) {
-      super(cacheName);
+      this(cacheName);
       this.xid = xid;
       this.gtx = gtx;
    }
 
    public TxCompletionNotificationCommand(long internalId, ByteString cacheName) {
-      super(cacheName);
+      this(cacheName);
       this.internalId = internalId;
    }
 
    public TxCompletionNotificationCommand(ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
    @Override

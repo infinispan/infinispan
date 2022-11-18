@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
@@ -24,27 +25,16 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
+public abstract class AbstractTransactionBoundaryCommand extends AbstractTopologyAffectedCommand implements TransactionBoundaryCommand {
 
    private static final Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
 
    protected GlobalTransaction globalTx;
    protected final ByteString cacheName;
    private Address origin;
-   private int topologyId = -1;
 
    public AbstractTransactionBoundaryCommand(ByteString cacheName) {
       this.cacheName = cacheName;
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override
@@ -126,7 +116,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    public String toString() {
       return "gtx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +
-            ", topologyId=" + topologyId +
+            ", topologyId=" + getTopologyId() +
             '}';
    }
 

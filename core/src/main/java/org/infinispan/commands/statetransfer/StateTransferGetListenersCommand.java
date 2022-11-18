@@ -8,7 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.statetransfer.StateProvider;
@@ -20,11 +21,9 @@ import org.infinispan.util.ByteString;
  * @author Ryan Emerson
  * @since 11.0
  */
-public class StateTransferGetListenersCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class StateTransferGetListenersCommand extends BaseTopologyRpcCommand implements TopologyAffectedCommand {
 
    public static final byte COMMAND_ID = 118;
-
-   private int topologyId;
 
    // For command id uniqueness test only
    public StateTransferGetListenersCommand() {
@@ -32,11 +31,11 @@ public class StateTransferGetListenersCommand extends BaseRpcCommand implements 
    }
 
    public StateTransferGetListenersCommand(ByteString cacheName) {
-      super(cacheName);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
    public StateTransferGetListenersCommand(ByteString cacheName, int topologyId) {
-      super(cacheName);
+      this(cacheName);
       this.topologyId = topologyId;
    }
 
@@ -45,16 +44,6 @@ public class StateTransferGetListenersCommand extends BaseRpcCommand implements 
       StateProvider stateProvider = registry.getStateTransferManager().getStateProvider();
       Collection<ClusterListenerReplicateCallable<Object, Object>> listeners = stateProvider.getClusterListenersToInstall();
       return CompletableFuture.completedFuture(listeners);
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override

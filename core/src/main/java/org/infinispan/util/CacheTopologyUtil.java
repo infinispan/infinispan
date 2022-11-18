@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.context.impl.FlagBitSets;
@@ -32,6 +33,15 @@ public enum CacheTopologyUtil {
          return current;
       }
       if (command instanceof FlagAffectedCommand && (((FlagAffectedCommand) command).hasAnyFlag(SKIP_TOPOLOGY_FLAGS))) {
+         return current;
+      }
+      throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+   }
+
+   public static LocalizedCacheTopology checkTopology(AbstractTopologyAffectedCommand command, LocalizedCacheTopology current) {
+      int currentTopologyId = current.getTopologyId();
+      int cmdTopology = command.getTopologyId();
+      if (cmdTopology < 0 || currentTopologyId == cmdTopology || command.hasAnyFlag(SKIP_TOPOLOGY_FLAGS)) {
          return current;
       }
       throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;

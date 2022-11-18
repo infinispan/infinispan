@@ -36,7 +36,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand extends BaseClusteredReadCommand implements SegmentSpecificCommand {
+public class ClusteredGetCommand extends BaseTopologyRpcCommand implements SegmentSpecificCommand {
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
@@ -47,7 +47,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
    private Integer segment;
 
    private ClusteredGetCommand() {
-      super(null, EnumUtil.EMPTY_BIT_SET); // For command id uniqueness test
+      this(null); // For command id uniqueness test
    }
 
    public ClusteredGetCommand(ByteString cacheName) {

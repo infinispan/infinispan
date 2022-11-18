@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.context.InvocationContext;
@@ -25,10 +25,9 @@ import org.infinispan.util.ByteString;
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
-public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, TopologyAffectedCommand {
+public class SizeCommand extends BaseTopologyRpcCommand implements FlagAffectedCommand, TopologyAffectedCommand {
    public static final byte COMMAND_ID = 61;
 
-   private int topologyId = -1;
    private long flags = EnumUtil.EMPTY_BIT_SET;
    private IntSet segments;
 
@@ -37,17 +36,19 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
          IntSet segments,
          long flags
    ) {
-      super(cacheName);
+      this(cacheName);
       setFlagsBitSet(flags);
       this.segments = segments;
    }
 
    public SizeCommand(ByteString name) {
-      super(name);
+      super(name, EnumUtil.EMPTY_BIT_SET);
    }
 
    // Only here for CommandIdUniquenessTest
-   private SizeCommand() { super(null); }
+   private SizeCommand() {
+      this(null);
+   }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {

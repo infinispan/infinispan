@@ -17,6 +17,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
@@ -38,7 +39,6 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -103,14 +103,27 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    @Override
+   public void handleFromCluster(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder order) {
+      command.setOrigin(origin);
+      try {
+         handleCacheRpcCommand(origin, command, reply, order);
+      } catch (Throwable t) {
+         if (command.logThrowable(t)) {
+            CLUSTER.exceptionHandlingCommand(command, t);
+         }
+         reply.reply(exceptionHandlingCommand(t));
+      }
+   }
+
+   @Override
    public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
       command.setOrigin(origin);
       try {
          if (command.getCommandId() == HeartBeatCommand.COMMAND_ID) {
             reply.reply(null);
-         } else if (command instanceof CacheRpcCommand) {
-            handleCacheRpcCommand(origin, (CacheRpcCommand) command, reply, order);
          } else {
+            // Note this is not in the block to prevent type pollution, CacheRpcCommand is handled in other method
+            assert !(command instanceof CacheRpcCommand);
             handleReplicableCommand(origin, command, reply, order);
          }
       } catch (Throwable t) {

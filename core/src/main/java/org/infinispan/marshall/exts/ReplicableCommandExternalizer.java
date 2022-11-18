@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
 
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -22,6 +23,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
 import org.infinispan.commands.topology.CacheJoinCommand;
@@ -81,7 +83,11 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
       command.writeTo(output);
-      if (command instanceof TopologyAffectedCommand) {
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         output.writeInt(((AbstractTopologyAffectedCommand) command).getTopologyId());
+      } else if (command instanceof BaseTopologyRpcCommand) {
+         output.writeInt(((BaseTopologyRpcCommand) command).getTopologyId());
+      } else if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
       }
    }
@@ -114,7 +120,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    void readCommandParameters(ObjectInput input, ReplicableCommand command) throws IOException, ClassNotFoundException {
       command.readFrom(input);
-      if (command instanceof TopologyAffectedCommand) {
+      // To prevent type pollution
+      if (command instanceof AbstractTopologyAffectedCommand) {
+         ((AbstractTopologyAffectedCommand) command).setTopologyId(input.readInt());
+      } else if (command instanceof BaseTopologyRpcCommand) {
+         ((BaseTopologyRpcCommand) command).setTopologyId(input.readInt());
+      } else if (command instanceof TopologyAffectedCommand) {
          ((TopologyAffectedCommand) command).setTopologyId(input.readInt());
       }
    }

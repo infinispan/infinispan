@@ -1,9 +1,8 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -27,7 +26,8 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    @Override
    public InvocationContext createRemoteInvocationContextForCommand(
          VisitableCommand cacheCommand, Address origin) {
-      if (cacheCommand instanceof DataCommand && !(cacheCommand instanceof InvalidateCommand)) {
+      // Use abstract class to avoid type pollution
+      if (cacheCommand instanceof AbstractDataCommand) {
          return new SingleKeyNonTxInvocationContext(origin);
       } else if (cacheCommand instanceof PutMapCommand) {
          return new NonTxInvocationContext(((PutMapCommand) cacheCommand).getMap().size(), origin);
