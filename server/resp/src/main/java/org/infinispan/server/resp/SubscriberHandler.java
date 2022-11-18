@@ -14,10 +14,14 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -29,13 +33,12 @@ import io.netty.util.CharsetUtil;
 
 public class SubscriberHandler extends RespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   // Random bytes to keep listener keys separate from others
-   public static final byte[] PREFIX_CHANNEL_BYTES = new byte[]{-114, 16, 78, -3, 127};
+   // Random bytes to keep listener keys separate from others. Means `resp|`.
+   public static final byte[] PREFIX_CHANNEL_BYTES = new byte[]{114, 101, 115, 112, 124};
    private final Resp3Handler handler;
-   private final RespServer respServer;
 
    public SubscriberHandler(RespServer respServer, Resp3Handler prevHandler) {
-      this.respServer = respServer;
+      super(respServer);
       this.handler = prevHandler;
    }
 
@@ -53,16 +56,20 @@ public class SubscriberHandler extends RespRequestHandler {
    @Listener(clustered = true)
    static class PubSubListener {
       private final Channel channel;
+      private final DataConversion keyConversion;
+      private final DataConversion valueConversion;
 
-      PubSubListener(Channel channel) {
+      PubSubListener(Channel channel, DataConversion keyConversion, DataConversion valueConversion) {
          this.channel = channel;
+         this.keyConversion = keyConversion;
+         this.valueConversion = valueConversion;
       }
 
       @CacheEntryCreated
       @CacheEntryModified
-      public CompletionStage<Void> onEvent(CacheEntryEvent<byte[], byte[]> entryEvent) {
-         byte[] key = channelToKey(entryEvent.getKey());
-         byte[] value = entryEvent.getValue();
+      public CompletionStage<Void> onEvent(CacheEntryEvent<Object, Object> entryEvent) {
+         byte[] key = channelToKey((byte[]) keyConversion.fromStorage(entryEvent.getKey()));
+         byte[] value = (byte[]) valueConversion.fromStorage(entryEvent.getValue());
          if (key.length > 0 && value != null && value.length > 0) {
             ByteBuf byteBuf = channel.alloc().buffer(2 + 2
                   + 2 + 7 + 1 + (int) Math.log10(key.length) + 1 + 2
@@ -76,6 +83,22 @@ public class SubscriberHandler extends RespRequestHandler {
             channel.writeAndFlush(byteBuf);
          }
          return CompletableFutures.completedNull();
+      }
+   }
+
+   static class ListenerKeyFilter implements CacheEventFilter<Object, Object> {
+      private final byte[] key;
+      private final DataConversion conversion;
+
+      ListenerKeyFilter(byte[] key, DataConversion conversion) {
+         this.key = key;
+         this.conversion = conversion;
+      }
+
+      @Override
+      public boolean accept(Object eventKey, Object oldValue, Metadata oldMetadata, Object newValue,
+                            Metadata newMetadata, EventType eventType) {
+         return Arrays.equals(key, (byte[]) conversion.fromStorage(eventKey));
       }
    }
 
@@ -99,11 +122,10 @@ public class SubscriberHandler extends RespRequestHandler {
                }
                WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
                if (specificChannelSubscribers.get(wrappedByteArray) == null) {
-                  PubSubListener pubSubListener = new PubSubListener(ctx.channel());
+                  PubSubListener pubSubListener = new PubSubListener(ctx.channel(), cache.getKeyDataConversion(), cache.getValueDataConversion());
                   specificChannelSubscribers.put(wrappedByteArray, pubSubListener);
                   byte[] channel = keyToChannel(keyChannel);
-                  CompletionStage<Void> stage = respServer.getCache().addListenerAsync(pubSubListener,
-                        (key, prevValue, prevMetadata, value, metadata, eventType) -> Arrays.equals(key, channel), null);
+                  CompletionStage<Void> stage = cache.addListenerAsync(pubSubListener, new ListenerKeyFilter(channel, cache.getKeyDataConversion()), null);
                   aggregateCompletionStage.dependsOn(handleStageListenerError(stage, keyChannel, true));
                }
             }
@@ -117,7 +139,7 @@ public class SubscriberHandler extends RespRequestHandler {
                   WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
                   PubSubListener listener = specificChannelSubscribers.remove(wrappedByteArray);
                   if (listener != null) {
-                     aggregateCompletionStage.dependsOn(handleStageListenerError(respServer.getCache().removeListenerAsync(listener), keyChannel, false));
+                     aggregateCompletionStage.dependsOn(handleStageListenerError(cache.removeListenerAsync(listener), keyChannel, false));
                   }
                }
             }
@@ -156,7 +178,7 @@ public class SubscriberHandler extends RespRequestHandler {
       for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
          PubSubListener listener = entry.getValue();
-         respServer.getCache().removeListenerAsync(listener);
+         cache.removeListenerAsync(listener);
          iterator.remove();
       }
    }
@@ -167,7 +189,7 @@ public class SubscriberHandler extends RespRequestHandler {
       for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
          PubSubListener listener = entry.getValue();
-         CompletionStage<Void> stage = respServer.getCache().removeListenerAsync(listener);
+         CompletionStage<Void> stage = cache.removeListenerAsync(listener);
          byte[] keyChannel = entry.getKey().getBytes();
          channels.add(keyChannel);
          aggregateCompletionStage.dependsOn(handleStageListenerError(stage, keyChannel, false));
