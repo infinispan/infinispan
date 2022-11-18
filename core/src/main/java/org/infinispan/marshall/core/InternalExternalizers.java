@@ -76,6 +76,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.ThrowableExternalizer;
 import org.infinispan.marshall.exts.TriangleAckExternalizer;
 import org.infinispan.marshall.exts.UuidExternalizer;
+import org.infinispan.marshall.exts.VisitableCommandExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
@@ -132,6 +133,8 @@ final class InternalExternalizers {
       // Add the stateful externalizer first
       ReplicableCommandExternalizer ext = new ReplicableCommandExternalizer(cmdFactory, gcr);
       addInternalExternalizer(ext, exts);
+      VisitableCommandExternalizer visitExt = new VisitableCommandExternalizer(cmdFactory, gcr);
+      addInternalExternalizer(visitExt, exts);
 
       // Add the rest of stateless externalizers
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer(), exts);

@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.context.InvocationContext;
@@ -100,7 +99,7 @@ public class SingleRpcCommand extends BaseRpcCommand {
             '}';
    }
 
-   public ReplicableCommand getCommand() {
+   public VisitableCommand getCommand() {
       return command;
    }
 

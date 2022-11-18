@@ -10,19 +10,6 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.functional.ReadOnlyKeyCommand;
-import org.infinispan.commands.functional.ReadOnlyManyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.functional.ReadWriteManyCommand;
-import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
-import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
-import org.infinispan.commands.functional.TxReadOnlyManyCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
-import org.infinispan.commands.functional.WriteOnlyManyCommand;
-import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.BaseTopologyRpcCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
@@ -37,21 +24,8 @@ import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.TopologyUpdateStableCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.ComputeCommand;
-import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.IracPutKeyValueCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.impl.ReplicableManagerFunctionCommand;
 import org.infinispan.manager.impl.ReplicableRunnableCommand;
@@ -142,26 +116,12 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
       Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
-            GetKeyValueCommand.class,
-            ClearCommand.class, EvictCommand.class,
-            InvalidateCommand.class, InvalidateL1Command.class,
-            PutKeyValueCommand.class,
-            PutMapCommand.class, RemoveCommand.class, RemoveExpiredCommand.class,
-            ReplaceCommand.class,
-            ComputeCommand.class, ComputeIfAbsentCommand.class,
-            ReadOnlyKeyCommand.class, ReadOnlyManyCommand.class,
-            ReadWriteKeyCommand.class, ReadWriteKeyValueCommand.class,
-            WriteOnlyKeyCommand.class, WriteOnlyKeyValueCommand.class,
-            WriteOnlyManyCommand.class, WriteOnlyManyEntriesCommand.class,
-            ReadWriteManyCommand.class, ReadWriteManyEntriesCommand.class,
-            TxReadOnlyKeyCommand.class, TxReadOnlyManyCommand.class,
             ReplicableRunnableCommand.class, ReplicableManagerFunctionCommand.class,
             HeartBeatCommand.class, CacheStatusRequestCommand.class, RebalancePhaseConfirmCommand.class,
             TopologyUpdateCommand.class, RebalancePolicyUpdateCommand.class,
             RebalanceStartCommand.class, RebalanceStatusRequestCommand.class,
             CacheShutdownCommand.class, CacheShutdownRequestCommand.class, TopologyUpdateStableCommand.class,
             CacheJoinCommand.class, CacheLeaveCommand.class, CacheAvailabilityUpdateCommand.class,
-            IracPutKeyValueCommand.class, TouchCommand.class,
             XSiteViewNotificationCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();

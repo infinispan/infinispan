@@ -17,11 +17,11 @@ import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -133,21 +133,16 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
  */
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
-   @Inject EmbeddedCacheManager cacheManager;
-   @Inject GlobalComponentRegistry globalComponentRegistry;
-   @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES)
-   Map<Byte,ModuleCommandFactory> commandFactories;
+   @Inject
+   EmbeddedCacheManager cacheManager;
+   @Inject
+   GlobalComponentRegistry globalComponentRegistry;
+   @Inject
+   @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES)
+   Map<Byte, ModuleCommandFactory> commandFactories;
 
-   /**
-    * Creates an un-initialized command.  Un-initialized in the sense that parameters will be set, but any components
-    * specific to the cache in question will not be set.
-    *
-    * @param id id of the command
-    * @param type type of the command
-    * @return a replicable command
-    */
-   public ReplicableCommand fromStream(byte id, byte type) {
-      ReplicableCommand command;
+   public VisitableCommand visitableCommandFromStream(byte id, byte type) {
+      VisitableCommand command;
       if (type == 0) {
          switch (id) {
             case PutKeyValueCommand.COMMAND_ID:
@@ -210,12 +205,6 @@ public class RemoteCommandsFactory {
             case RemoveExpiredCommand.COMMAND_ID:
                command = new RemoveExpiredCommand();
                break;
-            case ReplicableRunnableCommand.COMMAND_ID:
-               command = new ReplicableRunnableCommand();
-               break;
-            case ReplicableManagerFunctionCommand.COMMAND_ID:
-               command = new ReplicableManagerFunctionCommand();
-               break;
             case ReadOnlyKeyCommand.COMMAND_ID:
                command = new ReadOnlyKeyCommand();
                break;
@@ -227,6 +216,43 @@ public class RemoteCommandsFactory {
                break;
             case TxReadOnlyManyCommand.COMMAND_ID:
                command = new TxReadOnlyManyCommand<>();
+               break;
+            case IracPutKeyValueCommand.COMMAND_ID:
+               command = new IracPutKeyValueCommand();
+               break;
+            case TouchCommand.COMMAND_ID:
+               command = new TouchCommand();
+               break;
+            default:
+               throw new CacheException("Unknown visitable command id " + id + "!");
+         }
+      } else {
+         ModuleCommandFactory mcf = commandFactories.get(id);
+         if (mcf != null)
+            return (VisitableCommand) mcf.fromStream(id);
+         else
+            throw new CacheException("Unknown visitable command id " + id + "!");
+      }
+      return command;
+   }
+
+   /**
+    * Creates an un-initialized command.  Un-initialized in the sense that parameters will be set, but any components
+    * specific to the cache in question will not be set.
+    *
+    * @param id id of the command
+    * @param type type of the command
+    * @return a replicable command
+    */
+   public ReplicableCommand fromStream(byte id, byte type) {
+      ReplicableCommand command;
+      if (type == 0) {
+         switch (id) {
+            case ReplicableRunnableCommand.COMMAND_ID:
+               command = new ReplicableRunnableCommand();
+               break;
+            case ReplicableManagerFunctionCommand.COMMAND_ID:
+               command = new ReplicableManagerFunctionCommand();
                break;
             case HeartBeatCommand.COMMAND_ID:
                command = HeartBeatCommand.INSTANCE;
@@ -267,24 +293,18 @@ public class RemoteCommandsFactory {
             case CacheAvailabilityUpdateCommand.COMMAND_ID:
                command = new CacheAvailabilityUpdateCommand();
                break;
-            case IracPutKeyValueCommand.COMMAND_ID:
-               command = new IracPutKeyValueCommand();
-               break;
-            case TouchCommand.COMMAND_ID:
-               command = new TouchCommand();
-               break;
             case XSiteViewNotificationCommand.COMMAND_ID:
                command = new XSiteViewNotificationCommand();
                break;
             default:
-               throw new CacheException("Unknown command id " + id + "!");
+               throw new CacheException("Unknown replicable command id " + id + "!");
          }
       } else {
          ModuleCommandFactory mcf = commandFactories.get(id);
          if (mcf != null)
             return mcf.fromStream(id);
          else
-            throw new CacheException("Unknown command id " + id + "!");
+            throw new CacheException("Unknown replicable command id " + id + "!");
       }
       return command;
    }

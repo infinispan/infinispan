@@ -52,6 +52,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -141,7 +142,17 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       // Entry visit notifications used to happen in the CallInterceptor
       // We do it at the end to avoid adding another try/finally block around the notifications
       if (rv != null && !(rv instanceof Response)) {
-         Object value = dataCommand instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
+         Object value;
+         if (dataCommand instanceof GetCacheEntryCommand) {
+            // To prevent type pollution as we prefer ICE when possible
+            if (rv instanceof InternalCacheEntry) {
+               value = ((InternalCacheEntry<?, ?>) rv).getValue();
+            } else {
+               value = ((CacheEntry<?, ?>) rv).getValue();
+            }
+         } else {
+            value = rv;
+         }
          CompletionStage<Void> stage = notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, true, rCtx, dataCommand);
          // If stage is already complete, we can avoid allocating lambda below
          if (CompletionStages.isCompletedSuccessfully(stage)) {
