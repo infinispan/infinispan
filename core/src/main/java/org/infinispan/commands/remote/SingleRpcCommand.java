@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -61,7 +62,10 @@ public class SingleRpcCommand extends BaseRpcCommand {
       command.init(componentRegistry);
       InvocationContextFactory icf = componentRegistry.getInvocationContextFactory().running();
       InvocationContext ctx = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      if (command instanceof RemoteLockCommand) {
+      // Handle type pollution for most common case
+      if (command instanceof AbstractDataWriteCommand) {
+         ctx.setLockOwner(((AbstractDataWriteCommand) command).getKeyLockOwner());
+      } else if (command instanceof RemoteLockCommand) {
          ctx.setLockOwner(((RemoteLockCommand) command).getKeyLockOwner());
       }
       if (log.isTraceEnabled())

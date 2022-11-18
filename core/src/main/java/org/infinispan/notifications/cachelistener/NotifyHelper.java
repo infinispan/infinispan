@@ -4,11 +4,13 @@ import java.util.Collections;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -16,7 +18,6 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 public class NotifyHelper {
    public static CompletionStage<Void> entryCommitted(CacheNotifier notifier, FunctionalNotifier functionalNotifier,
@@ -28,7 +29,13 @@ public class NotifyHelper {
          return CompletableFutures.completedNull();
       }
       CompletionStage<Void> stage;
-      boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
+      boolean isWriteOnly;
+      // To reduce type pollution we first check for AbstractDataWriteCommand
+      if (command instanceof AbstractDataWriteCommand) {
+         isWriteOnly = ((AbstractDataWriteCommand) command).isWriteOnly();
+      } else {
+         isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
+      }
       if (removed) {
          if (command instanceof RemoveExpiredCommand) {
             // It is possible this command was generated from a store and the value is not in memory, thus we have
