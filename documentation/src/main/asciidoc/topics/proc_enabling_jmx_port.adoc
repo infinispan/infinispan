@@ -17,7 +17,7 @@ You can enable remote JMX ports using one of the following approaches:
 * Enable remote JMX ports manually using the standard Java management configuration options.
 
 .Prerequisites
-* For remote JMX with authentication, define user roles using the default security realm.
+* For remote JMX with authentication, define JMX specific user roles using the default security realm.
 Users must have `controlRole` with read/write access or the `monitorRole` with read-only access to access any JMX resources.
 
 .Procedure
