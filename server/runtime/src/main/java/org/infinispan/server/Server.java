@@ -320,7 +320,7 @@ public class Server implements ServerManagement, AutoCloseable {
          }
          if (log.isDebugEnabled()) {
             StringBuilderWriter sw = new StringBuilderWriter();
-            try (ConfigurationWriter w = ConfigurationWriter.to(sw).build()) {
+            try (ConfigurationWriter w = ConfigurationWriter.to(sw).prettyPrint(true).build()) {
                Map<String, Configuration> configs = configurationBuilderHolder.getNamedConfigurationBuilders().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().build()));
                parser.serialize(w, global.build(), configs);
             }
