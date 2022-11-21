@@ -3,6 +3,7 @@ package org.infinispan.factories;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -16,6 +17,7 @@ import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ModuleRepository;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -248,28 +250,46 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
          preStart();
 
          internalStart();
-
-         synchronized (this) {
-            state = ComponentStatus.RUNNING;
-            notifyAll();
+         CompletionStage<Void> cs = delayStart();
+         if (cs == null || CompletionStages.isCompletedSuccessfully(cs)) {
+            updateStatusRunning();
+            postStart();
+         } else {
+            cs.whenComplete((ignore, t) -> {
+               if (t != null) {
+                  componentFailed(t);
+               } else {
+                  updateStatusRunning();
+                  postStart();
+               }
+            });
          }
-
-         postStart();
       } catch (Throwable t) {
-         synchronized (this) {
-            state = ComponentStatus.FAILED;
-            notifyAll();
-         }
-
-         Log.CONFIG.startFailure(getName(), t);
-         try {
-            stop();
-         } catch (Throwable t1) {
-            t.addSuppressed(t1);
-         }
-
-         handleLifecycleTransitionFailure(t);
+         componentFailed(t);
       }
+   }
+
+   private synchronized void updateStatusRunning() {
+      if (state == ComponentStatus.INITIALIZING) {
+         state = ComponentStatus.RUNNING;
+         notifyAll();
+      }
+   }
+
+   private void componentFailed(Throwable t) {
+      synchronized (this) {
+         state = ComponentStatus.FAILED;
+         notifyAll();
+      }
+
+      Log.CONFIG.startFailure(getName(), t);
+      try {
+         stop();
+      } catch (Throwable t1) {
+         t.addSuppressed(t1);
+      }
+
+      handleLifecycleTransitionFailure(t);
    }
 
    protected abstract String getName();
@@ -277,6 +297,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
    protected abstract void preStart();
 
    protected abstract void postStart();
+
+   abstract protected CompletionStage<Void> delayStart();
 
    /**
     * Stops the component and sets its status to {@link org.infinispan.lifecycle.ComponentStatus#TERMINATED} once it

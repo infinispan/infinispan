@@ -266,7 +266,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
             // This relies upon visibility guarantees of reactive streams for publishing map values
             .doOnNext(stores::add)
             .delay(status -> {
-               if (status.config.purgeOnStartup()) {
+               // Caches that need state transfer will clear the store *after* the stable
+               // topology is restored, if needed.
+               if (!configuration.clustering().cacheMode().needsStateTransfer() && status.config.purgeOnStartup()) {
                   return Flowable.fromCompletable(Completable.fromCompletionStage(status.store.clear()));
                }
                return Flowable.empty();

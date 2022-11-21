@@ -135,7 +135,7 @@ class Compactor implements Consumer<Object> {
    boolean addFreeFile(int file, int expectedSize, int freeSize, long expirationTime, boolean canScheduleCompaction) {
       int fileSize = (int) fileProvider.getFileSize(file);
       if (fileSize != expectedSize) {
-         log.tracef("Unable to add file %s as it its size %s does not match expected %s, index may be dirty", fileSize, expectedSize);
+         log.tracef("Unable to add file %s as it its size %s does not match expected %s, index may be dirty", file, fileSize, expectedSize);
          return false;
       }
       Stats stats = new Stats(fileSize, freeSize, expirationTime);

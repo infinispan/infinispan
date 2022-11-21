@@ -199,6 +199,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    @Override
+   public List<Address> currentJoiners(String cacheName) {
+      if (!getStatus().isCoordinator()) return null;
+
+      ClusterCacheStatus status = cacheStatusMap.get(cacheName);
+      return status != null ? status.getExpectedMembers() : null;
+   }
+
+   @Override
    public CompletionStage<CacheStatusResponse> handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo,
                                                           int joinerViewId) {
       CompletionStage<Void> viewStage;
@@ -326,7 +334,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                Map<Address, CacheStatusResponse> cacheResponses =
                      responsesByCache.computeIfAbsent(cacheName, k -> new HashMap<>());
                cacheResponses.put(sender, new CacheStatusResponse(info, cacheTopology, stableTopology,
-                                                                  csr.getAvailabilityMode()));
+                                                                  csr.getAvailabilityMode(), csr.joinedMembers()));
             }
          }
          return null;

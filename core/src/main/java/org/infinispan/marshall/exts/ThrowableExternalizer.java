@@ -25,6 +25,7 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheJoinException;
+import org.infinispan.topology.MissingMembersException;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.UserRaisedFunctionalException;
@@ -72,6 +73,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
    private static final short TIMEOUT = 23;
    private static final short USER_RAISED_FUNCTIONAL = 24;
    private static final short WRITE_SKEW = 25;
+   private static final short MISSING_MEMBERS = 26;
    private final Map<Class<?>, Short> numbers = new HashMap<>(24);
 
    public ThrowableExternalizer() {
@@ -100,6 +102,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
       numbers.put(UserRaisedFunctionalException.class, USER_RAISED_FUNCTIONAL);
       numbers.put(WriteSkewException.class, WRITE_SKEW);
       numbers.put(OutdatedTopologyException.class, OUTDATED_TOPOLOGY);
+      numbers.put(MissingMembersException.class, MISSING_MEMBERS);
    }
 
    @Override
@@ -138,6 +141,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
          case SUSPECT:
             writeMessageAndCause(out, t);
             break;
+         case MISSING_MEMBERS:
          case CACHE_UNREACHABLE:
          case CONTAINER_FULL:
          case DEADLOCK_DETECTED:
@@ -229,6 +233,9 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
             Throwable[] suppressed = MarshallUtil.unmarshallArray(in, Util::throwableArray);
             Object key = in.readObject();
             return addSuppressed(new WriteSkewException(msg, t, key), suppressed);
+         case MISSING_MEMBERS:
+            msg = MarshallUtil.unmarshallString(in);
+            return new MissingMembersException(msg);
          default:
             return readGenericThrowable(in);
       }

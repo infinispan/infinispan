@@ -54,6 +54,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheJoinException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.MissingMembersException;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -2367,4 +2368,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Attribute '%s' of element '%s' has been deprecated since schema version %d.%d. Refer to the upgrade guide", id = 688)
    void attributeDeprecated(String name, String element, int major, int minor);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Recovering cache '%s' but there are missing members, known members %s of a total of %s", id = 689)
+   void recoverFromStateMissingMembers(String cacheName, List<Address> members, int total);
+
+   MissingMembersException recoverFromStateMissingMembers(String cacheName, List<Address> members, String total);
 }

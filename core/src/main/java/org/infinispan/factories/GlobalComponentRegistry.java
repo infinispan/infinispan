@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -281,6 +282,11 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected void postStart() {
       modulesManagerStarted();
+   }
+
+   @Override
+   protected CompletionStage<Void> delayStart() {
+      return null;
    }
 
    private void modulesManagerStarting() {

@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
@@ -37,6 +39,7 @@ import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -44,6 +47,7 @@ import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
@@ -118,6 +122,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<TransactionTable> transactionTable;
    private ComponentRef<VersionGenerator> versionGenerator;
    private ComponentRef<XSiteStateTransferManager> xSiteStateTransferManager;
+   private ComponentRef<InternalCacheRegistry> icr;
    // Global, but we don't cache components at global scope
    private TimeService timeService;
 
@@ -215,6 +220,26 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       }
 
       super.start();
+   }
+
+   /**
+    * The {@link ComponentRegistry} may delay the start after a cluster shutdown. The component waits for
+    * the installation of the previous stable topology to start.
+    *
+    * Caches that do not need state transfer or are private do not need to delay the start.
+    */
+   @Override
+   protected CompletionStage<Void> delayStart() {
+      if (icr == null || icr.wired().isInternalCache(cacheName)) return null;
+
+      synchronized (this) {
+         LocalTopologyManager ltm;
+         if (state == ComponentStatus.INITIALIZING && (ltm = globalComponents.getLocalTopologyManager()) != null) {
+            return ltm.stableTopologyCompletion(cacheName);
+         }
+      }
+
+      return null;
    }
 
    @Override
@@ -407,6 +432,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       transactionTable = basicComponentRegistry.getComponent(org.infinispan.transaction.impl.TransactionTable.class);
       versionGenerator = basicComponentRegistry.getComponent(VersionGenerator.class);
       xSiteStateTransferManager = basicComponentRegistry.getComponent(XSiteStateTransferManager.class);
+      icr = basicComponentRegistry.getComponent(InternalCacheRegistry.class);
       timeService = basicComponentRegistry.getComponent(TimeService.class).running();
 
       // Initialize components that don't have any strong references from the cache

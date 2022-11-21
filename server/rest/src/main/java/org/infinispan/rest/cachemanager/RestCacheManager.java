@@ -22,6 +22,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
@@ -41,6 +42,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.CacheInfo;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
@@ -104,6 +106,10 @@ public class RestCacheManager<V> {
 
    private void checkCacheAvailable(String cacheName) {
       if (!instance.isRunning(cacheName)) {
+         GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(instance);
+         LocalTopologyManager ltm = gcr.getLocalTopologyManager();
+         if (ltm != null) ltm.assertTopologyStable(cacheName);
+
          throw logger.cacheNotFound(cacheName);
       } else if (icr.isInternalCache(cacheName)) {
          if (icr.isPrivateCache(cacheName)) {
