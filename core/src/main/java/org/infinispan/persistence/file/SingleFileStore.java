@@ -187,9 +187,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private void blockingStart() {
-      boolean shouldClear = configuration.purgeOnStartup();
       boolean readOnly = configuration.ignoreModifications();
-      assert !(shouldClear && readOnly) : "Store can't be configured with both purge and ignore modifications";
+      assert !(configuration.purgeOnStartup() && readOnly) : "Store can't be configured with both purge and ignore modifications";
 
       try {
          Path resolvedPath = PersistenceUtil.getLocation(ctx.getGlobalConfiguration(), configuration.location());
@@ -200,17 +199,13 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
             byte[] magicHeader = validateExistingFile(channel, file.getAbsolutePath());
             if (magicHeader != null) {
-               migrateNonSegmented(magicHeader, shouldClear);
-            } else if (!shouldClear) {
+               migrateNonSegmented(magicHeader);
+            } else {
                rebuildIndex();
                processFreeEntries();
-            } else {
-               clear();
             }
          } else if (hasAnyComposedSegmentedFiles()) {
-            if (!shouldClear) {
-               migrateFromComposedSegmentedLoadWriteStore(shouldClear);
-            }
+            migrateFromComposedSegmentedLoadWriteStore();
          } else {
             // No existing files
             if (!readOnly) {
@@ -259,7 +254,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       return null;
    }
 
-   private void migrateNonSegmented(byte[] magicHeader, boolean removeOnly) throws Exception {
+   private void migrateNonSegmented(byte[] magicHeader) throws Exception {
       PERSISTENCE.startMigratingPersistenceData(cacheName());
       File newFile = new File(file.getParentFile(), cacheName() + "_new.dat");
       try {
@@ -270,9 +265,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          }
 
          try (FileChannel newChannel = createNewFile(newFile)) {
-            if (!removeOnly) {
-               copyEntriesFromOldFile(magicHeader, newChannel, channel, file.toString());
-            }
+            copyEntriesFromOldFile(magicHeader, newChannel, channel, file.toString());
          }
 
          //close old file
@@ -427,7 +420,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       return builder.build();
    }
 
-   private void migrateFromComposedSegmentedLoadWriteStore(boolean removeOnly) throws IOException {
+   private void migrateFromComposedSegmentedLoadWriteStore() throws IOException {
       PERSISTENCE.startMigratingPersistenceData(cacheName());
       File newFile = new File(file.getParentFile(), cacheName() + "_new.dat");
       try {
@@ -438,9 +431,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          }
 
          try (FileChannel newChannel = createNewFile(newFile)) {
-            if (!removeOnly) {
-               copyEntriesFromOldSegmentFiles(newChannel);
-            }
+            copyEntriesFromOldSegmentFiles(newChannel);
          }
 
          // Move the new file to the final name

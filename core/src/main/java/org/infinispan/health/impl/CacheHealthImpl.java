@@ -4,6 +4,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 
@@ -22,6 +23,8 @@ class CacheHealthImpl implements CacheHealth {
 
    @Override
    public HealthStatus getStatus() {
+      if (cr.getStatus() == ComponentStatus.INITIALIZING) return HealthStatus.INITIALIZING;
+
       PartitionHandlingManager partitionHandlingManager = cr.getComponent(PartitionHandlingManager.class);
       if (!isComponentHealthy() || partitionHandlingManager.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
          return HealthStatus.DEGRADED;

@@ -28,6 +28,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationExceptionFunction;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -99,6 +100,9 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             if (stoppingAndNotAllowed(status, ctx)) {
                throw CONTAINER.cacheIsStopping(getCacheNamePrefix());
             }
+         case INITIALIZING:
+            LocalTopologyManager ltm = componentRegistry.getComponent(LocalTopologyManager.class);
+            if (ltm != null) ltm.assertTopologyStable(componentRegistry.getCacheName());
          default:
             // Allow the command to run
       }

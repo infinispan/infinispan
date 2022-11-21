@@ -152,6 +152,7 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "initCacheStatusIfAbsent");
       builder.allowBlockingCallsInside(LocalTopologyManagerImpl.class.getName(), "writeCHState");
       builder.allowBlockingCallsInside(LocalTopologyManagerImpl.class.getName(), "deleteCHState");
+      builder.allowBlockingCallsInside(LocalTopologyManagerImpl.class.getName(), "getNumberMembersFromState");
 
       // This can block if there is a store otherwise it won't block
       builder.allowBlockingCallsInside(CacheMgmtInterceptor.class.getName(), "getNumberOfEntries");

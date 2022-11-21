@@ -190,4 +190,8 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       return delegate.handleCacheShutdown(cacheName);
    }
 
+   @Override
+   public CompletionStage<Void> stableTopologyCompletion(String cacheName) {
+      return CompletableFutures.completedNull();
+   }
 }

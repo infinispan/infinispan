@@ -987,7 +987,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
        */
       private <E> Flowable<E> getValuesFlowable(BiFunction<InnerPublisherSubscription.InnerPublisherSubscriptionBuilder<K, I, R>, Map.Entry<Address, IntSet>, Publisher<E>> subToFlowableFunction) {
          return Flowable.defer(() -> {
-            if (!componentRegistry.getStatus().allowInvocations()) {
+            if (!componentRegistry.getStatus().allowInvocations() && !componentRegistry.getStatus().startingUp()) {
                return Flowable.error(new IllegalLifecycleStateException());
             }
             LocalizedCacheTopology topology = distributionManager.getCacheTopology();

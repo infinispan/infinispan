@@ -21,8 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -60,7 +58,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    // The HotRod client starts with topology 0, so we start with 1 to force an update
    public static final int INITIAL_TOPOLOGY_ID = 1;
    public static final int INITIAL_REBALANCE_ID = 1;
-   private static final Hash HASH_FUNCTION = MurmurHash3.getInstance();
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
 
@@ -713,8 +710,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (!memberJoined) {
          if (log.isTraceEnabled()) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
-         return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
+         return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, expectedMembers);
       }
+      final List<Address> current = Collections.unmodifiableList(expectedMembers);
       if (status == ComponentStatus.INSTANTIATED) {
          if (persistentState.isPresent()) {
             if (log.isTraceEnabled()) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
@@ -728,7 +726,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                   topology.getMembers(), topology.getTopologyId()));
                clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode);
                clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology);
-               return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
+               return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current);
             }
          } else {
             if (isFirstMember) {
@@ -754,7 +752,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (topologyBeforeRebalance != null)
          availabilityStrategy.onJoin(this, joiner);
 
-      return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode);
+      return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, current);
    }
 
    CompletionStage<Void> nodeCanJoinFuture(CacheJoinInfo joinInfo) {
@@ -771,9 +769,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    protected CacheTopology restoreCacheTopology(ScopedPersistentState state) {
       if (log.isTraceEnabled()) log.tracef("Attempting to restore CH for cache %s", cacheName);
 
-      ConsistentHash persistedCH = joinInfo.getConsistentHashFactory().fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
+      ConsistentHash originalCH = joinInfo.getConsistentHashFactory().fromPersistentState(state);
+      ConsistentHash persistedCH = originalCH.remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
       if (persistedCH == null || !getExpectedMembers().containsAll(persistedCH.getMembers())) {
-         if (log.isTraceEnabled()) log.tracef("Could not restore CH for cache %s, one or more addresses are missing", cacheName);
+         log.recoverFromStateMissingMembers(cacheName, expectedMembers, originalCH.getMembers().size());
          return null;
       }
 
@@ -805,20 +804,19 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public synchronized CompletionStage<Void> doLeave(Address leaver) throws Exception {
-      if (currentTopology == null)
-         return CompletableFutures.completedNull();
-
       boolean actualLeaver = removeMember(leaver);
       if (!actualLeaver)
+         return CompletableFutures.completedNull();
+
+      if (expectedMembers.isEmpty())
+         clusterTopologyManager.removeCacheStatus(cacheName);
+
+      if (currentTopology == null)
          return CompletableFutures.completedNull();
 
       availabilityStrategy.onGracefulLeave(this, leaver);
 
       updateMembers();
-
-      if (expectedMembers.isEmpty()) {
-         clusterTopologyManager.removeCacheStatus(cacheName);
-      }
       return CompletableFutures.completedNull();
    }
 
