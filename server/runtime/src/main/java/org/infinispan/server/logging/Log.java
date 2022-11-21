@@ -177,8 +177,9 @@ public interface Log extends BasicLogger {
    @Message(value = "HotRod lazy-retrieval has been deprecated and will be removed in a future version with no direct replacement", id = 80044)
    void warnHotRodLazyRetrievalDeprecated();
 
-   @Message(value = "Cannot have multiple endpoints bound to the same socket binding '%s'", id = 80045)
-   CacheConfigurationException endpointSocketBindingConflict(String name);
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "Overriding existing endpoint on socket-binding '%s'", id = 80045)
+   void endpointSocketBindingOverride(String name);
 
    @Message(value = "Unknown credential store '%s'", id = 80046)
    IllegalArgumentException unknownCredentialStore(String store);
