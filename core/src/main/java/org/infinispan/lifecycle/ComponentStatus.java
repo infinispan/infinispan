@@ -56,7 +56,6 @@ public enum ComponentStatus {
          case INSTANTIATED:
          case TERMINATED:
          case STOPPING:
-         case INITIALIZING:
             return false;
          default:
             return true;

@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.fail;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -65,7 +66,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   private void createStatefulCacheManager(String id, boolean clear) {
+   void createStatefulCacheManager(String id, boolean clear) {
       String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), id);
       if (clear)
          Util.recursiveFileRemove(stateDirectory);
@@ -73,13 +74,17 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       global.globalState().enable().persistentLocation(stateDirectory);
 
       ConfigurationBuilder config = new ConfigurationBuilder();
-      applyCacheManagerClusteringConfiguration(config);
+      applyCacheManagerClusteringConfiguration(id, config);
       config.persistence().addSingleFileStore().location(stateDirectory).fetchPersistentState(true);
       EmbeddedCacheManager manager = addClusterEnabledCacheManager(global, null);
       manager.defineConfiguration(CACHE_NAME, config.build());
    }
 
    protected abstract void applyCacheManagerClusteringConfiguration(ConfigurationBuilder config);
+
+   protected void applyCacheManagerClusteringConfiguration(String id, ConfigurationBuilder config) {
+      applyCacheManagerClusteringConfiguration(config);
+   }
 
    protected void shutdownAndRestart(int extraneousNodePosition, boolean reverse) throws Throwable {
       Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
@@ -168,24 +173,31 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   private void assertEquivalent(Map<JGroupsAddress, PersistentUUID> addressMappings,
-         ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash,
-         PersistentUUIDManager persistentUUIDManager) {
+   void assertEquivalent(Map<JGroupsAddress, PersistentUUID> addressMappings, ConsistentHash oldConsistentHash,
+                         ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       assertTrue(isEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager));
    }
 
-   private void checkClusterRestartedCorrectly(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {
+   void checkClusterRestartedCorrectly(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {
       Iterator<Map.Entry<JGroupsAddress, PersistentUUID>> addressIterator = addressMappings.entrySet().iterator();
+      Set<PersistentUUID> uuids = new HashSet<>();
+      for (int i = 0; i < cacheManagers.size(); i++) {
+         LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
+         assertTrue(uuids.add(ltm.getPersistentUUID()));
+      }
+
       for (int i = 0; i < cacheManagers.size(); i++) {
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          // Ensure that nodes have the old UUID
-         assertEquals(addressIterator.next().getValue(), ltm.getPersistentUUID());
+         Map.Entry<JGroupsAddress, PersistentUUID> entry = addressIterator.next();
+         assertTrue(entry.getKey() + " is mapping to the wrong UUID: " +
+             "Expected: " + entry.getValue() + " not found in: " + uuids, uuids.contains(entry.getValue()));
          // Ensure that rebalancing is enabled for the cache
          assertTrue(ltm.isCacheRebalancingEnabled(CACHE_NAME));
       }
    }
 
-   private void checkData() {
+   void checkData() {
       // Ensure that the cache contains the right data
       assertEquals(DATA_SIZE, cache(0, CACHE_NAME).size());
       for (int i = 0; i < DATA_SIZE; i++) {
@@ -193,7 +205,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   private Map<JGroupsAddress, PersistentUUID> createInitialCluster() {
+   Map<JGroupsAddress, PersistentUUID> createInitialCluster() {
       waitForClusterToForm(CACHE_NAME);
       Map<JGroupsAddress, PersistentUUID> addressMappings = new LinkedHashMap<>();
 

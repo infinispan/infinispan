@@ -212,58 +212,48 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
 
-      if (!configuration.purgeOnStartup()) {
-         return blockingManager.runBlocking(() -> {
-            boolean migrateData = false;
-            // we don't destroy the data on startup
-            // get the old files
-            FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1,
-                  configuration.maxFileSize());
-            if (oldFileProvider.hasFiles()) {
-               throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
+      return blockingManager.runBlocking(() -> {
+         boolean migrateData = false;
+         // we don't destroy the data on startup
+         // get the old files
+         FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1,
+             configuration.maxFileSize());
+         if (oldFileProvider.hasFiles()) {
+            throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
+         }
+         oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
+             configuration.maxFileSize());
+         if (oldFileProvider.hasFiles()) {
+            try {
+               index.reset();
+            } catch (IOException e) {
+               throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
             }
-            oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
-                  configuration.maxFileSize());
-            if (oldFileProvider.hasFiles()) {
-               try {
-                  index.reset();
-               } catch (IOException e) {
-                  throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
-               }
-               migrateFromOldFormat(oldFileProvider);
-               migrateData = true;
-            } else if (index.load()) {
-               log.debug("Not building the index - loaded from persisted state");
-               try {
-                  maxSeqId.set(index.getMaxSeqId());
-               } catch (IOException e) {
-                  log.debug("Failed to load index. Rebuilding it.");
-                  buildIndex(maxSeqId);
-               }
-            } else {
-               log.debug("Building the index");
-               try {
-                  index.reset();
-               } catch (IOException e) {
-                  throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
-               }
+            migrateFromOldFormat(oldFileProvider);
+            migrateData = true;
+         } else if (index.load()) {
+            log.debug("Not building the index - loaded from persisted state");
+            try {
+               maxSeqId.set(index.getMaxSeqId());
+            } catch (IOException e) {
+               log.debug("Failed to load index. Rebuilding it.");
                buildIndex(maxSeqId);
             }
-            if (!migrateData) {
-               logAppender.setSeqId(maxSeqId.get() + 1);
+         } else {
+            log.debug("Building the index");
+            try {
+               index.reset();
+            } catch (IOException e) {
+               throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
             }
-            // Compactor may have to write to the index, so it can't be started until after Index has been fully started
-            compactor.start();
-         }, "soft-index-start");
-      }
-      try {
-         index.reset();
-      } catch (IOException e) {
-         throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
-      }
-      compactor.start();
-      log.debug("Not building the index - purge will be executed");
-      return CompletableFutures.completedNull();
+            buildIndex(maxSeqId);
+         }
+         if (!migrateData) {
+            logAppender.setSeqId(maxSeqId.get() + 1);
+         }
+         // Compactor may have to write to the index, so it can't be started until after Index has been fully started
+         compactor.start();
+      }, "soft-index-start");
    }
 
    @Override

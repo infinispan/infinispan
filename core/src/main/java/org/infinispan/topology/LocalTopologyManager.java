@@ -129,4 +129,18 @@ public interface LocalTopologyManager {
     */
    CompletionStage<Void> handleCacheShutdown(String cacheName);
 
+   /**
+    * Returns a {@link CompletionStage} that completes when the cache with the name {@code cacheName} has a
+    * stable topology. Returns null if the cache does not exist.
+    */
+   CompletionStage<Void> stableTopologyCompletion(String cacheName);
+
+   /**
+    * Asserts the cache with the given name has a stable topology installed.
+    *
+    * @param cacheName: The cache name to search.
+    * @throws MissingMembersException: Thrown when the cache does not have a stable topology.
+    */
+   default void assertTopologyStable(String cacheName) { }
+
 }

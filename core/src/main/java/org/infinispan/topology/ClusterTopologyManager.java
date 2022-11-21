@@ -1,5 +1,6 @@
 package org.infinispan.topology;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.factories.scopes.Scope;
@@ -31,6 +32,12 @@ public interface ClusterTopologyManager {
          return this == COORDINATOR || this == RECOVERING_CLUSTER;
       }
    }
+
+   /**
+    * Returns the list of nodes that joined the cache with the given {@code cacheName} if the current
+    * node is the coordinator. If the node is not the coordinator, the method returns null.
+    */
+   List<Address> currentJoiners(String cacheName);
 
    /**
     * Signals that a new member is joining the cache.
