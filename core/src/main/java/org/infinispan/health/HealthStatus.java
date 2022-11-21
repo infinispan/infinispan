@@ -23,6 +23,13 @@ public enum HealthStatus {
    HEALTHY,
 
    /**
+    * The given entity is still initializing.
+    *
+    * <p>This can happen when the entity does not have the time to completely initialize or when it is recovering after a cluster shutdown.</p>
+    */
+   INITIALIZING,
+
+   /**
     * Given entity is healthy but a rebalance is in progress.
     */
    HEALTHY_REBALANCING,

@@ -30,6 +30,7 @@ import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
+import org.infinispan.topology.MissingMembersException;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelFutureListener;
@@ -83,7 +84,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
       } else if (cause instanceof NoSuchElementException) {
          if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
          errorResponse = new NettyRestResponse.Builder().status(NOT_FOUND).entity(unwrapExceptionMessage(cause)).build();
-      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException || cause instanceof EncodingException || cause instanceof Json.MalformedJsonException) {
+      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException || cause instanceof EncodingException || cause instanceof Json.MalformedJsonException || cause instanceof MissingMembersException) {
          if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
          errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(unwrapExceptionMessage(cause)).build();
       } else {

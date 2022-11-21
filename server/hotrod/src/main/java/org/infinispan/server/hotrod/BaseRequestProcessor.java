@@ -14,6 +14,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.topology.MissingMembersException;
 import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
@@ -72,9 +73,13 @@ public class BaseRequestProcessor {
          status = OperationStatus.ParseError;
       } else if (cause instanceof TimeoutException) {
          status = OperationStatus.OperationTimedOut;
-      } else if (cause instanceof IllegalStateException) {
-         // Some internal server code could throw this, so make sure it's logged
-         log.exceptionReported(cause);
+      } else if (cause instanceof IllegalStateException || isExceptionTrace(cause)) {
+         if (isExceptionTrace(cause)) {
+            log.trace("Exception reported", cause);
+         } else {
+            // Some internal server code could throw this, so make sure it's logged
+            log.exceptionReported(cause);
+         }
          if (header != null) {
             status = header.encoder().errorStatus(cause);
             msg = createErrorMsg(cause);
@@ -82,7 +87,8 @@ public class BaseRequestProcessor {
             status = OperationStatus.ServerError;
          }
       } else if (header != null) {
-         log.exceptionReported(cause);
+         if (cause instanceof MissingMembersException) log.warn(cause.getMessage());
+         else log.exceptionReported(cause);
          status = header.encoder().errorStatus(cause);
          msg = createErrorMsg(cause);
       } else {
@@ -146,5 +152,9 @@ public class BaseRequestProcessor {
          initial = initial.getCause();
       }
       return causes.stream().map(Object::toString).collect(Collectors.joining("\n"));
+   }
+
+   private boolean isExceptionTrace(Throwable t) {
+      return t instanceof MissingMembersException;
    }
 }
