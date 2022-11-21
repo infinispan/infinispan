@@ -100,14 +100,12 @@ Some modules that have Jakarta based jars are the following (note there are quit
 * infinispan-client-hotrod
 * infinispan-api
 
-If your application requires using the jakarta instead of javax namespace all you need to do is change your maven
-dependency to use the jakarta scope
+If your application requires using the jakarta instead of javax namespace all you need to do is to append your dependencies with `-jakarta`.
 
 ```xml
 <dependency>
    <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-client-hotrod</artifactId>
-   <classifier>jakarta</classifier>
+   <artifactId>infinispan-client-hotrod-jakarta</artifactId>
 </dependency>
 ```
 

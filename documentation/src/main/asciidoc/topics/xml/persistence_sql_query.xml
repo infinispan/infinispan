@@ -1,20 +1,22 @@
 <distributed-cache>
   <persistence>
-    <connection-pool connection-url=""/>
     <query-jdbc-store xmlns="urn:infinispan:config:store:sql:{schemaversion}"
                       dialect="POSTGRES"
-                      shared="true">
-      <queries key-columns="name">
-        <select-single>SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name WHERE t1.name = :name</select-single>
-        <select-all>SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name</select-all>
-        <delete-single>DELETE FROM Person t1 WHERE t1.name = :name; DELETE FROM Address t2 where t2.name = :name</delete-single>
-        <delete-all>DELETE FROM Person; DELETE FROM Address</delete-all>
-        <upsert>INSERT INTO Person (name,  picture, sex, birthdate, accepted_tos) VALUES (:name, :picture, :sex, :birthdate, :accepted_tos); INSERT INTO Address(name, street, city, zip) VALUES (:name, :street, :city, :zip)</upsert>
-        <size>SELECT COUNT(*) FROM Person</size>
-      </queries>
+                      shared="true" key-columns="name">
+          <connection-pool driver="org.postgresql.Driver"
+                            connection-url="jdbc:postgresql://localhost:5432/postgres"
+                            username="postgres"
+                            password="changeme"/>
+      <queries select-single="SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name WHERE t1.name = :name"
+        select-all="SELECT t1.name, t1.picture, t1.sex, t1.birthdate, t1.accepted_tos, t2.street, t2.city, t2.zip FROM Person t1 JOIN Address t2 ON t1.name = t2.name"
+        delete-single="DELETE FROM Person t1 WHERE t1.name = :name; DELETE FROM Address t2 where t2.name = :name"
+        delete-all="DELETE FROM Person; DELETE FROM Address"
+        upsert="INSERT INTO Person (name,  picture, sex, birthdate, accepted_tos) VALUES (:name, :picture, :sex, :birthdate, :accepted_tos); INSERT INTO Address(name, street, city, zip) VALUES (:name, :street, :city, :zip)"
+        size="SELECT COUNT(*) FROM Person"
+      />
       <schema message-name="Person"
               package="com.example"
               embedded-key="true"/>
     </query-jdbc-store>
   </persistence>
-<distributed-cache>
+</distributed-cache>
