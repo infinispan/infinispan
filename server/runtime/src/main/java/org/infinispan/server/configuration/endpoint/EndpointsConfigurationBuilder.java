@@ -43,8 +43,8 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
    }
 
    public EndpointConfigurationBuilder addEndpoint(String socketBindingName) {
-      if (endpoints.containsKey(socketBindingName)) {
-         throw Server.log.endpointSocketBindingConflict(socketBindingName);
+      if (endpoints.remove(socketBindingName) != null) {
+         Server.log.endpointSocketBindingOverride(socketBindingName);
       }
       EndpointConfigurationBuilder builder = new EndpointConfigurationBuilder(server, socketBindingName);
       endpoints.put(socketBindingName, builder);
