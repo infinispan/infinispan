@@ -5,6 +5,16 @@
 {brandname} Server includes an experimental module that implements the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3 protocol].
 The RESP endpoint allows Redis clients to connect to one or several {brandname}-backed RESP servers and perform cache operations.
 
+//Downstream content
+ifdef::downstream[]
+[IMPORTANT]
+====
+RESP protocol endpoint is available as a technology preview feature.
+====
+
+include::{topics}/ref_tech_preview.adoc[leveloffset=+1]
+endif::downstream[]
+
 include::{topics}/proc_server_enabling_resp.adoc[leveloffset=+1]
 include::{topics}/ref_redis_commands.adoc[leveloffset=+1]
 
