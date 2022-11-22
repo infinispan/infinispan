@@ -1,0 +1,13 @@
+// Downstream only
+[id='tech-preview_{context}']
+= Technology Previews
+
+[role="_abstract"]
+Technology Preview features or capabilities are not supported with Red Hat
+production service-level agreements (SLAs) and might not be functionally
+complete.
+
+Red Hat does not recommend using Technology Preview features or capabilities for production.
+These features provide early access to upcoming product features, which enables you to test functionality and provide feedback during the development process.
+
+For more information, see link:{link_tech_preview}.
