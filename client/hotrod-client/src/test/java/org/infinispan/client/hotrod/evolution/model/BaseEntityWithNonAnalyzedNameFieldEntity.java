@@ -28,8 +28,8 @@ public class BaseEntityWithNonAnalyzedNameFieldEntity implements Model {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseEntityWithNonAnalyzedNameFieldEntity.class, schemaFileName = "model-schema.proto", schemaPackageName = "evolution")
-    public static interface BaseEntityWithNonAnalyzedNameFieldEntitySchema extends GeneratedSchema {
+    @AutoProtoSchemaBuilder(includeClasses = BaseEntityWithNonAnalyzedNameFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    public interface BaseEntityWithNonAnalyzedNameFieldEntitySchema extends GeneratedSchema {
        BaseEntityWithNonAnalyzedNameFieldEntitySchema INSTANCE = new BaseEntityWithNonAnalyzedNameFieldEntitySchemaImpl();
     }
 }

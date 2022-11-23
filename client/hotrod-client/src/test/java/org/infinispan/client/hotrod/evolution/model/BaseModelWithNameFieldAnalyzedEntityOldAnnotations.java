@@ -30,8 +30,8 @@ public class BaseModelWithNameFieldAnalyzedEntityOldAnnotations implements Model
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldAnalyzedEntityOldAnnotations.class, schemaFileName = "model-schema.proto", schemaPackageName = "evolution")
-    public static interface BaseModelWithNameFieldAnalyzedEntityOldAnnotationsSchema extends GeneratedSchema {
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldAnalyzedEntityOldAnnotations.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    public interface BaseModelWithNameFieldAnalyzedEntityOldAnnotationsSchema extends GeneratedSchema {
        BaseModelWithNameFieldAnalyzedEntityOldAnnotationsSchema INSTANCE = new BaseModelWithNameFieldAnalyzedEntityOldAnnotationsSchemaImpl();
     }
 }

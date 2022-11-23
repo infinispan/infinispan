@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.evolution.model;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
-import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.client.hotrod.annotation.model.Model;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
@@ -12,11 +11,6 @@ import org.infinispan.protostream.annotations.ProtoName;
 @Indexed
 @ProtoName("Model") // B
 public class BaseModelWithNameFieldIndexedEntity implements Model {
-
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldIndexedEntity.class, schemaFileName = "model-schema.proto", schemaPackageName = "evolution")
-    public static interface BaseModelWithNameFieldIndexedEntitySchema extends GeneratedSchema {
-        BaseModelWithNameFieldIndexedEntitySchema INSTANCE = new BaseModelWithNameFieldIndexedEntitySchemaImpl();
-    }
 
     @ProtoField(number = 1)
     @Basic(projectable = true)
@@ -32,5 +26,10 @@ public class BaseModelWithNameFieldIndexedEntity implements Model {
     @Override
     public String getId() {
         return id;
+    }
+
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldIndexedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    public interface BaseModelWithNameFieldIndexedEntitySchema extends GeneratedSchema {
+        BaseModelWithNameFieldIndexedEntitySchema INSTANCE = new BaseModelWithNameFieldIndexedEntitySchemaImpl();
     }
 }
