@@ -27,7 +27,7 @@ config.security().authorization().enable();
 +
 ----
 ConfigurationBuilder config = new ConfigurationBuilder();
-config.security().authorization().enable().role("admin");
+config.security().authorization().enable().role("myroleone");
 ----
 
 [role="_additional-resources"]
