@@ -21,7 +21,7 @@ Security.getSubject();
 +
 [source,java]
 ----
-Security.doAs(mySubject, PrivilegedAction<String>() -> cache.put("key", "value"));
+Security.doAs(mySubject, (PrivilegedAction<String>)() -> cache.put("key", "value"));
 ----
 
 [NOTE]

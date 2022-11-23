@@ -1,4 +1,4 @@
-GlobalRoleConfigurationBuilder global = new GlobalConfigurationBuilder();
+GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
   global.security().authorization().enable()
           .principalRoleMapper(new ClusterRoleMapper())
           .role("admin").permission(AuthorizationPermission.ADMIN)

@@ -15,7 +15,7 @@ Dynamically map roles to permissions when using security authorization with {bra
 +
 [source,java,options="nowrap",subs=attributes+]
 ----
-include::code_examples/MutablePermissionMapper.java[]
+include::code_examples/MutableRolePermissionMapper.java[]
 ----
 
 [role="_additional-resources"]
