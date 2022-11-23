@@ -13,12 +13,6 @@ import org.infinispan.protostream.annotations.ProtoName;
 @ProtoName("Model") // E
 public class BaseModelWithNewIndexedFieldEntity implements Model {
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNewIndexedFieldEntity.class, schemaFileName = "model-schema.proto", schemaPackageName = "evolution")
-    public interface BaseModelWithNewIndexedFieldEntitySchema extends GeneratedSchema {
-        BaseModelWithNewIndexedFieldEntitySchema INSTANCE = new BaseModelWithNewIndexedFieldEntitySchemaImpl();
-    }
-
-
     @ProtoField(number = 1)
     @Basic(projectable = true)
     public Integer entityVersion;
@@ -37,5 +31,10 @@ public class BaseModelWithNewIndexedFieldEntity implements Model {
     @Override
     public String getId() {
         return id;
+    }
+
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNewIndexedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    public interface BaseModelWithNewIndexedFieldEntitySchema extends GeneratedSchema {
+        BaseModelWithNewIndexedFieldEntitySchema INSTANCE = new BaseModelWithNewIndexedFieldEntitySchemaImpl();
     }
 }
