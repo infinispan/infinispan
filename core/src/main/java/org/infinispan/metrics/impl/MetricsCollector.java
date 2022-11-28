@@ -24,12 +24,14 @@ import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metrics.Constants;
+import org.infinispan.metrics.config.MicrometerMeterRegistryConfiguration;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.prometheus.PrometheusConfig;
@@ -48,7 +50,7 @@ public class MetricsCollector implements Constants {
 
    private static final Log log = LogFactory.getLog(MetricsCollector.class);
 
-   private PrometheusMeterRegistry registry;
+   private MeterRegistry registry;
 
    private Tag nodeTag;
 
@@ -64,12 +66,12 @@ public class MetricsCollector implements Constants {
    }
 
    public PrometheusMeterRegistry registry() {
-      return registry;
+      return registry instanceof PrometheusMeterRegistry ? (PrometheusMeterRegistry) registry : null;
    }
 
    @Start
    protected void start() {
-      registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+      createMeterRegistry();
       new BaseAdditionalMetrics().bindTo(registry);
       new VendorAdditionalMetrics().bindTo(registry);
 
@@ -122,7 +124,6 @@ public class MetricsCollector implements Constants {
       return hostName + '-' + rand;
    }
 
-   @SuppressWarnings("unchecked")
    public Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, String cacheName) {
       return registerMetrics(instance, attributes, namePrefix, asTag(CACHE_TAG_NAME, cacheName), nodeTag);
    }
@@ -213,6 +214,14 @@ public class MetricsCollector implements Constants {
             log.tracef("Could not remove unexisting metric \"%s\". Metric registry @%x contains %d metrics.",
                   metricId, System.identityHashCode(registry), registry.getMeters().size());
          }
+      }
+   }
+
+   private void createMeterRegistry() {
+      MicrometerMeterRegistryConfiguration configuration = globalConfig.module(MicrometerMeterRegistryConfiguration.class);
+      registry = configuration == null ? null : configuration.meterRegistry();
+      if (registry == null) {
+         registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
       }
    }
 }
