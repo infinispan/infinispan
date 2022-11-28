@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.OPTIONS;
 
@@ -17,6 +18,7 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
 
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 
 /**
@@ -52,9 +54,13 @@ public final class MetricsResource implements ResourceHandler {
          RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder();
 
          try {
+            PrometheusMeterRegistry registry = metricsCollector.registry();
+            if (registry == null) {
+               return builder.status(NOT_FOUND.code()).build();
+            }
             String contentType = TextFormat.chooseContentType(restRequest.getAcceptHeader());
             builder.header("Content-Type", contentType);
-            builder.entity(metricsCollector.registry().scrape(contentType));
+            builder.entity(registry.scrape(contentType));
 
             return builder.build();
          } catch (Exception e) {
