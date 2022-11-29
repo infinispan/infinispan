@@ -154,66 +154,53 @@ final class BytesObjectOutput implements ObjectOutput {
 
    @Override
    public void writeUTF(String s) {
-      int startPos = skipIntSize();
+      int strlen = s.length();
+      int startPos = pos;
+      // First optimize for 1 - 127 case
+      ensureCapacity(strlen + 4);
+      // Note this will be overwritten if not all 1 - 127 characters below
+      writeIntDirect(strlen, startPos);
+
       int localPos = pos; /* avoid getfield opcode */
       byte[] localBuf = bytes; /* avoid getfield opcode */
 
-      int strlen = s.length();
-      int c = 0;
+      localPos += 4;
 
-      int i=0;
-      for (i=0; i<strlen; i++) {
+      int c;
+      int i;
+      for (i = 0; i < strlen; i++) {
          c = s.charAt(i);
-         if (!((c >= 0x0001) && (c <= 0x007F))) break;
+         if (c > 127) break;
 
-         if(localPos == bytes.length) {
-            pos = localPos;
-            ensureCapacity(1);
-            localBuf = bytes;
-         }
          localBuf[localPos++] = (byte) c;
       }
 
-      for (;i < strlen; i++){
+      pos = localPos;
+      // Means we completed with all latin characters
+      if (i == strlen) {
+         return;
+      }
+
+      // Resize the rest assuming worst case of 3 bytes
+      ensureCapacity((strlen - i) * 3);
+
+      localBuf = bytes; /* avoid getfield opcode */
+
+      for (; i < strlen; i++) {
          c = s.charAt(i);
          if ((c >= 0x0001) && (c <= 0x007F)) {
-            if(localPos == bytes.length) {
-               pos = localPos;
-               ensureCapacity(1);
-               localBuf = bytes;
-            }
             localBuf[localPos++] = (byte) c;
-
          } else if (c > 0x07FF) {
-            if(localPos+3 >= bytes.length) {
-               pos = localPos;
-               ensureCapacity(3);
-               localBuf = bytes;
-            }
-
             localBuf[localPos++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
-            localBuf[localPos++] = (byte) (0x80 | ((c >>  6) & 0x3F));
+            localBuf[localPos++] = (byte) (0x80 | ((c >> 6) & 0x3F));
             localBuf[localPos++] = (byte) (0x80 | (c & 0x3F));
          } else {
-            if(localPos + 2 >= bytes.length) {
-               pos = localPos;
-               ensureCapacity(2);
-               localBuf = bytes;
-            }
-
-            localBuf[localPos++] = (byte) (0xC0 | ((c >>  6) & 0x1F));
+            localBuf[localPos++] = (byte) (0xC0 | ((c >> 6) & 0x1F));
             localBuf[localPos++] = (byte) (0x80 | (c & 0x3F));
          }
       }
       pos = localPos;
       writeIntDirect(localPos - 4 - startPos, startPos);
-   }
-
-   private int skipIntSize() {
-      ensureCapacity(4);
-      int count = pos;
-      pos +=4;
-      return count;
    }
 
    private void writeIntDirect(int intValue, int index) {
