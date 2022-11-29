@@ -584,6 +584,11 @@
             <version>${versionx.org.apache.commons.commons-compress}</version>
          </dependency>
          <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-common</artifactId>
+            <version>${version.sshd}</version>
+         </dependency>
+         <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>
             <version>${versionx.commons-dbcp.commons-dbcp}</version>

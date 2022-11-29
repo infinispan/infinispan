@@ -175,6 +175,7 @@
       <version.log4j>2.18.0</version.log4j>
       <version.lucene>8.11.1</version.lucene>
       <version.metainf-services>1.8</version.metainf-services>
+      <version.micrometer>1.9.2</version.micrometer>
       <version.mockito>4.3.1</version.mockito>
       <version.mockito_dep.bytebuddy>1.9.7</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
@@ -198,7 +199,7 @@
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.4</version.rxjava>
-      <version.micrometer>1.9.2</version.micrometer>
+      <version.sshd>2.9.2</version.sshd>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
       <version.io.prometheus>0.15.0</version.io.prometheus>
