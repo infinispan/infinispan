@@ -47,6 +47,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -67,7 +68,6 @@ import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.TriangleFunctionsUtil;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -429,7 +429,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       CacheEntry entry = context.lookupEntry(command.getKey());
       if (entry == null) {
          if (command.loadType() == OWNER) {
-            return asyncInvokeNext(context, command, remoteGetSingleKey(context, command, command.getKey(), true));
+            return asyncInvokeNext(context, command, remoteGetSingleKey(context, command, command.getKey(), true, command.getFlagsBitSet()));
          }
          entryFactory.wrapExternalEntry(context, command.getKey(), null, false, true);
       }

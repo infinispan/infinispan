@@ -44,6 +44,17 @@ public interface SegmentSpecificCommand {
       return keyPartitioner.getSegment(key);
    }
 
+   static int extractSegment(Object command, Object key, KeyPartitioner keyPartitioner) {
+      // To reduce type pollution we first check for AbstractDataCommand
+      if (command instanceof AbstractDataCommand) {
+         return ((AbstractDataCommand) command).getSegment();
+      }
+      if (command instanceof SegmentSpecificCommand) {
+         return ((SegmentSpecificCommand) command).getSegment();
+      }
+      return keyPartitioner.getSegment(key);
+   }
+
    /**
     * Create an {@link SegmentAwareKey} instance with the key and its segment.
     * <p>

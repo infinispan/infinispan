@@ -49,6 +49,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -75,7 +76,6 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -409,7 +409,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // execute on origin
                // Also, operations that need value on backup [delta write] need to do the remote lookup even on
                // non-origin
-               Object result = asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), true));
+               Object result = asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), true, command.getFlagsBitSet()));
                return makeStage(result)
                      .andFinally(ctx, command, (rCtx, rCommand, rv, t) ->
                            updateMatcherForRetry(rCommand));
@@ -489,7 +489,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             // If this node is a write owner we're obliged to apply the value locally even if we can't read it - otherwise
             // we could have stale value after state transfer.
             if (distributionInfo.isWriteOwner() || forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-               return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, key, true));
+               return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, key, true, command.getFlagsBitSet()));
             }
 
             List<Mutation<Object, Object, ?>> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, command, key);
@@ -518,7 +518,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // in transactional mode, we always need the entry wrapped
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
-               return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), true));
+               return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), true, command.getFlagsBitSet()));
             }
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->
@@ -556,9 +556,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGetSingleKey(
-         InvocationContext ctx, C command, Object key, boolean isWrite) {
-      CompletionStage<Void> cf = super.remoteGetSingleKey(ctx, command, key, isWrite);
+   protected CompletionStage<Void> remoteGetSingleKey(InvocationContext ctx, TopologyAffectedCommand command, Object key, boolean isWrite, long flagBitSet) {
+      CompletionStage<Void> cf = super.remoteGetSingleKey(ctx, command, key, isWrite, flagBitSet);
       // If the remoteGetSingleKey is executed on non-origin node, the mutations list already contains all modifications
       // and we are just trying to execute all of them from EntryWrappingIntercepot$EntryWrappingVisitor
       if (!ctx.isOriginLocal() || !ctx.isInTxScope()) {

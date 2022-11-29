@@ -121,7 +121,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
-   protected DistributionInfo retrieveDistributionInfo(LocalizedCacheTopology topology, ReplicableCommand command, Object key) {
+   protected DistributionInfo retrieveDistributionInfo(LocalizedCacheTopology topology, Object command, Object key) {
       return topology.getSegmentDistribution(SegmentSpecificCommand.extractSegment(command, key, keyPartitioner));
    }
 
@@ -131,8 +131,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     * <b>Not thread-safe</b>. The invocation context should not be accessed concurrently from multiple threads,
     * so this method should only be used for single-key commands.
     */
-   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGetSingleKey(
-         InvocationContext ctx, C command, Object key, boolean isWrite) {
+   protected CompletionStage<Void> remoteGetSingleKey(InvocationContext ctx, TopologyAffectedCommand command, Object key, boolean isWrite, long flagBitSet) {
       LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       int topologyId = cacheTopology.getTopologyId();
 
@@ -153,7 +152,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             key, topologyId, info.readOwners());
       }
 
-      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, info.segmentId(), command.getFlagsBitSet());
+      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, info.segmentId(), flagBitSet);
       getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 
@@ -210,7 +209,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return invokeRemotely(ctx, command, info.primary());
          } else {
             if (load) {
-               CompletionStage<?> remoteGet = remoteGetSingleKey(ctx, command, command.getKey(), true);
+               CompletionStage<?> remoteGet = remoteGetSingleKey(ctx, command, command.getKey(), true, command.getFlagsBitSet());
                return asyncInvokeNext(ctx, command, remoteGet);
             } else {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
@@ -602,7 +601,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!readNeedsRemoteValue(command))
          return null;
 
-      return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
+      return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false, command.getFlagsBitSet()));
    }
 
    @Override
