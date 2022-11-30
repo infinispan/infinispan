@@ -115,6 +115,7 @@ import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestCorrelator;
 import org.jgroups.conf.ClassConfigurator;
+import org.jgroups.fork.ForkChannel;
 import org.jgroups.jmx.JmxConfigurator;
 import org.jgroups.protocols.FORK;
 import org.jgroups.protocols.relay.RELAY2;
@@ -481,13 +482,6 @@ public class JGroupsTransport implements Transport, ChannelListener {
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
 
-      String stack = configuration.transport().stack();
-      if (stack != null) {
-         CLUSTER.startingJGroupsChannel(configuration.transport().clusterName(), configuration.transport().stack());
-      } else {
-         CLUSTER.startingJGroupsChannel(configuration.transport().clusterName());
-      }
-
       initChannel();
 
       channel.setUpHandler(channelCallbacks);
@@ -614,6 +608,14 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (log.isDebugEnabled()) {
          log.debugf("JGroups protocol stack: %s\n", channel.getProtocolStack().printProtocolSpec(true));
       }
+
+      String stack = configuration.transport().stack();
+      if (stack != null) {
+         CLUSTER.startingJGroupsChannel(clusterName, stack);
+      } else if (!(channel instanceof ForkChannel)) {
+         CLUSTER.startingJGroupsChannel(clusterName);
+      }
+
       if (connectChannel) {
          try {
             channel.connect(clusterName);
@@ -626,7 +628,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
          // the channel was already started externally, we need to initialize our member list
          receiveClusterView(channel.getView());
       }
-      CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
+      if (!(channel instanceof ForkChannel)) {
+         CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
+      }
    }
 
    // This needs to stay as a separate method to allow for substitution for Substrate
@@ -791,14 +795,18 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
       List<List<Address>> subGroups;
       if (newView instanceof MergeView) {
-         CLUSTER.receivedMergedView(channel.clusterName(), newView);
+         if (!(channel instanceof ForkChannel)) {
+            CLUSTER.receivedMergedView(channel.clusterName(), newView);
+         }
          subGroups = new ArrayList<>();
          List<View> jgroupsSubGroups = ((MergeView) newView).getSubgroups();
          for (View group : jgroupsSubGroups) {
             subGroups.add(fromJGroupsAddressList(group.getMembers()));
          }
       } else {
-         CLUSTER.receivedClusterView(channel.clusterName(), newView);
+         if (!(channel instanceof ForkChannel)) {
+            CLUSTER.receivedClusterView(channel.clusterName(), newView);
+         }
          subGroups = Collections.emptyList();
       }
       long viewId = newView.getViewId().getId();
@@ -882,8 +890,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
       String clusterName = configuration.transport().clusterName();
       try {
          if (disconnectChannel && channel != null && channel.isConnected()) {
-            CLUSTER.disconnectJGroups(clusterName);
-
+            if (!(channel instanceof ForkChannel)) {
+               CLUSTER.disconnectJGroups(clusterName);
+            }
             channel.disconnect();
          }
 
