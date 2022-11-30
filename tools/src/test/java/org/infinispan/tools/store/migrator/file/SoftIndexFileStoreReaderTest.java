@@ -24,18 +24,18 @@ public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
    }
 
    public String getTargetDataDirectory() {
-      return String.format("%s/target-softindex/data/%d/", getSrcDirectory(), segmentCount);
+      return String.format("%s/target-softindex/data/%d/", getSrcDirectory(), targetSegments);
    }
 
    public String getTargetIndexDirectory() {
-      return String.format("%s/target-softindex/index/%d/", getSrcDirectory(), segmentCount);
+      return String.format("%s/target-softindex/index/%d/", getSrcDirectory(), targetSegments);
    }
 
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new SoftIndexFileStoreReaderTest().segmented(59),
-            new SoftIndexFileStoreReaderTest().majorVersion(9).segmented(59),
+            new SoftIndexFileStoreReaderTest().targetSegments(59),
+            new SoftIndexFileStoreReaderTest().majorVersion(9).targetSegments(59),
       };
    }
 
@@ -48,7 +48,7 @@ public class SoftIndexFileStoreReaderTest extends AbstractReaderTest {
             // so if write to the same location with segmented vs not segmented, they will clash
             .dataLocation(getTargetDataDirectory())
             .indexLocation(getTargetIndexDirectory())
-            .preload(true).ignoreModifications(true).segmented(segmentCount > 0);
+            .preload(true).ignoreModifications(true).segmented(targetSegments > 0);
       return builder;
    }
 

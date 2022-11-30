@@ -23,16 +23,16 @@ public class RocksDBReaderTest extends AbstractReaderTest {
    }
 
    private String getTargetDirectory() {
-      return String.format("%s/target/%d/", getSourceDir(), segmentCount);
+      return String.format("%s/target/%d/", getSourceDir(), targetSegments);
    }
 
    @Factory
    public Object[] factory() {
       return new Object[] {
             new RocksDBReaderTest(),
-            new RocksDBReaderTest().segmented(59),
+            new RocksDBReaderTest().targetSegments(59),
             new RocksDBReaderTest().majorVersion(9),
-            new RocksDBReaderTest().majorVersion(9).segmented(59),
+            new RocksDBReaderTest().majorVersion(9).targetSegments(59),
       };
    }
 
@@ -41,7 +41,7 @@ public class RocksDBReaderTest extends AbstractReaderTest {
       String targetDir = getTargetDirectory();
       builder.persistence()
             .addStore(RocksDBStoreConfigurationBuilder.class).location(targetDir).expiredLocation(targetDir + "expired")
-            .preload(true).ignoreModifications(true).segmented(segmentCount > 0);
+            .preload(true).ignoreModifications(true).segmented(targetSegments > 0);
       return builder;
    }
 
