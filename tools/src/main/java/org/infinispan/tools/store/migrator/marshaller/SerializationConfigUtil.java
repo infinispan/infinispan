@@ -6,8 +6,12 @@ import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -26,6 +30,7 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.tools.store.migrator.StoreProperties;
+import org.infinispan.tools.store.migrator.marshaller.infinispan10.Infinispan10Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
 
@@ -56,10 +61,11 @@ public class SerializationConfigUtil {
          throw new IllegalStateException(String.format("Unexpected major version '%d'", majorVersion));
       }
 
+      Marshaller marshaller;
       switch (majorVersion) {
          case 8:
          case 9:
-            Marshaller marshaller = loadMarshallerInstance(props);
+            marshaller = loadMarshallerInstance(props);
             if (marshaller != null) {
                return marshaller;
             }
@@ -68,14 +74,8 @@ public class SerializationConfigUtil {
             return majorVersion == 8 ? new Infinispan8Marshaller(userExts) : new Infinispan9Marshaller(userExts);
          case 10:
          case 11:
-            String marshallerClass = props.get(MARSHALLER, CLASS);
-            PersistenceMarshaller pm = createPersistenceMarshaller(props);
-            if (marshallerClass != null) {
-               // If a custom marshaller was specified, then return PersistenceMarshaller as user values are all wrapped
-               return pm;
-            }
-            // Return the user marshaller so that PersistenceMarshaller object wrapping is avoided
-            return pm.getUserMarshaller();
+            marshaller = loadMarshallerInstance(props);
+            return new Infinispan10Marshaller(marshaller, getSCIClasses(props));
          default:
             return props.isTargetStore() ? null : createPersistenceMarshaller(props);
       }
@@ -138,13 +138,16 @@ public class SerializationConfigUtil {
    }
 
    private static void configureSerializationContextInitializers(StoreProperties props, SerializationConfigurationBuilder builder) {
+      getSCIClasses(props).forEach(builder::addContextInitializer);
+   }
+
+   public static List<SerializationContextInitializer> getSCIClasses(StoreProperties props) {
       String sciString = props.get(MARSHALLER, CONTEXT_INITIALIZERS);
       if (sciString == null)
-         return;
+         return new ArrayList<>();
 
-      for (String impl : sciString.split(",")) {
-         SerializationContextInitializer sci = Util.getInstance(impl, SerializationConfigUtil.class.getClassLoader());
-         builder.addContextInitializers(sci);
-      }
+      return Arrays.stream(sciString.split(","))
+            .map(impl -> Util.<SerializationContextInitializer>getInstance(impl, SerializationConfigUtil.class.getClassLoader()))
+            .collect(Collectors.toList());
    }
 }
