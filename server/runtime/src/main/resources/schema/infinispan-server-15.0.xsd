@@ -182,17 +182,17 @@
    </xs:simpleType>
 
    <xs:complexType name="data-source-connection-pool">
-      <xs:attribute name="max-size" type="xs:nonNegativeInteger" use="required">
+      <xs:attribute name="max-size" type="xs:nonNegativeInteger" use="required" default="2147483647">
          <xs:annotation>
             <xs:documentation>Maximum number of connections in the pool</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="min-size" type="xs:nonNegativeInteger">
+      <xs:attribute name="min-size" type="xs:nonNegativeInteger" default="0">
          <xs:annotation>
             <xs:documentation>Minimum number of connections the pool should hold</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="initial-size" type="xs:nonNegativeInteger">
+      <xs:attribute name="initial-size" type="xs:nonNegativeInteger" default="0">
          <xs:annotation>
             <xs:documentation>Initial number of connections the pool should hold</xs:documentation>
          </xs:annotation>
@@ -206,14 +206,14 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="background-validation" type="xs:nonNegativeInteger">
+      <xs:attribute name="background-validation" type="xs:nonNegativeInteger" default="0">
          <xs:annotation>
             <xs:documentation>
                Time in milliseconds between background validation runs. A duration of 0 means that this feature is disabled.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="validate-on-acquisition" type="xs:nonNegativeInteger">
+      <xs:attribute name="validate-on-acquisition" type="xs:nonNegativeInteger" default="0">
          <xs:annotation>
             <xs:documentation>
                Connections idle for longer than this time, specified in milliseconds, are validated before being
@@ -221,14 +221,14 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="leak-detection" type="xs:nonNegativeInteger">
+      <xs:attribute name="leak-detection" type="xs:nonNegativeInteger" default="0">
          <xs:annotation>
             <xs:documentation>
                Time in milliseconds a connection has to be held before a leak warning
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="idle-removal" type="xs:nonNegativeInteger">
+      <xs:attribute name="idle-removal" type="xs:nonNegativeInteger" default="0">
          <xs:annotation>
             <xs:documentation>
                Time in minutes a connection has to be idle before it can be removed
