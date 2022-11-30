@@ -28,7 +28,7 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    static final AttributeDefinition<String> INITIAL_SQL = AttributeDefinition.builder(Attribute.NEW_CONNECTION_SQL, null, String.class).build();
    static final AttributeDefinition<TransactionIsolation> TRANSACTION_ISOLATION = AttributeDefinition.builder(Attribute.TRANSACTION_ISOLATION, TransactionIsolation.READ_COMMITTED, AgroalConnectionFactoryConfiguration.TransactionIsolation.class).build();
 
-   static final AttributeDefinition<Integer> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, Integer.class).build();
+   static final AttributeDefinition<Integer> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, Integer.MAX_VALUE, Integer.class).build();
    static final AttributeDefinition<Integer> MIN_SIZE = AttributeDefinition.builder(Attribute.MIN_SIZE, 0, Integer.class).build();
    static final AttributeDefinition<Integer> INITIAL_SIZE = AttributeDefinition.builder(Attribute.INITIAL_SIZE, 0, Integer.class).build();
 
