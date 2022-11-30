@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -30,8 +31,10 @@ public class SingleFileStoreReader implements StoreIterator {
 
    public SingleFileStoreReader(StoreProperties props) {
       props.required(Element.LOCATION);
-      String location = props.get(LOCATION) + props.get(CACHE_NAME) + ".dat";
-      File file = new File(location);
+      String filename = props.get(CACHE_NAME) + ".dat";
+      Path path = Path.of(props.get(LOCATION)).resolve(filename);
+      String location = path.toString();
+      File file = path.toFile();
       if (!file.exists() || file.isDirectory())
          throw new CacheException(String.format("Unable to read SingleFileStore at '%s'", location));
 

@@ -60,6 +60,7 @@ import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
+import org.infinispan.tools.store.migrator.marshaller.infinispan10.Infinispan10Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
 import org.testng.AssertJUnit;
@@ -168,8 +169,8 @@ public class MigratorConfigurationTest {
    public void testCorrectMarshallerLoadedForVersion() {
       assertTrue(getMarshallerForVersion(8, SOURCE) instanceof Infinispan8Marshaller);
       assertTrue(getMarshallerForVersion(9, SOURCE) instanceof Infinispan9Marshaller);
-      assertTrue(getMarshallerForVersion(10, SOURCE) instanceof DelegatingUserMarshaller);
-      assertTrue(getMarshallerForVersion(11, SOURCE) instanceof DelegatingUserMarshaller);
+      assertTrue(getMarshallerForVersion(10, SOURCE) instanceof Infinispan10Marshaller);
+      assertTrue(getMarshallerForVersion(11, SOURCE) instanceof Infinispan10Marshaller);
       assertTrue(getMarshallerForVersion(12, SOURCE) instanceof PersistenceMarshaller);
       assertTrue(getMarshallerForVersion(13, SOURCE) instanceof PersistenceMarshaller);
 

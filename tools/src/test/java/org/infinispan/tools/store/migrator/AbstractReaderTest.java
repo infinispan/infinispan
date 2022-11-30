@@ -30,21 +30,27 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
    private static final String TEST_CACHE_NAME = "reader-test";
 
    protected int majorVersion = 8;
-   protected int segmentCount;
+   protected int sourceSegments;
+   protected int targetSegments;
 
    public <T extends AbstractReaderTest> T majorVersion(int majorVersion) {
       this.majorVersion = majorVersion;
       return (T) this;
    }
 
-   public <T extends AbstractReaderTest> T segmented(int segmentCount) {
-      this.segmentCount = segmentCount;
+   public <T extends AbstractReaderTest> T sourceSegments(int segmentCount) {
+      this.sourceSegments = segmentCount;
+      return (T) this;
+   }
+
+   public <T extends AbstractReaderTest> T targetSegments(int segmentCount) {
+      this.targetSegments = segmentCount;
       return (T) this;
    }
 
    @Override
    protected String parameters() {
-      return String.format("[version=%d,segments=%d]", majorVersion, segmentCount);
+      return String.format("[version=%d,sourceSegments%d,targetSegments=%d]", majorVersion, sourceSegments, targetSegments);
    }
 
    /**
@@ -54,8 +60,8 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
     */
    protected ConfigurationBuilder getTargetCacheConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      if (segmentCount > 0) {
-         builder.clustering().hash().numSegments(segmentCount);
+      if (targetSegments > 0) {
+         builder.clustering().hash().numSegments(targetSegments);
       }
       return builder;
    }
@@ -63,14 +69,21 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
    protected void configureStoreProperties(Properties properties, Element type) {
       properties.put(propKey(type, CACHE_NAME), TEST_CACHE_NAME);
       if (type == SOURCE) {
-         properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), 256 + ":" + TestUtil.TestObjectExternalizer.class.getName());
+         if (majorVersion < 10) {
+            properties.put(propKey(type, MARSHALLER, EXTERNALIZERS), 256 + ":" + TestUtil.TestObjectExternalizer.class.getName());
+         } else {
+            properties.put(propKey(type, MARSHALLER, CONTEXT_INITIALIZERS), TestUtil.SCI.INSTANCE.getClass().getName());
+         }
+
+         if (sourceSegments > 0)
+            properties.put(propKey(type, SEGMENT_COUNT), Integer.toString(sourceSegments));
       } else {
          properties.put(propKey(type, MARSHALLER, CONTEXT_INITIALIZERS), TestUtil.SCI.INSTANCE.getClass().getName());
       }
       properties.put(propKey(type, VERSION), type == SOURCE ? String.valueOf(majorVersion): Version.getMajor());
 
-      if (type == TARGET && segmentCount > 0) {
-         properties.put(propKey(type, SEGMENT_COUNT), String.valueOf(segmentCount));
+      if (type == TARGET && targetSegments > 0) {
+         properties.put(propKey(type, SEGMENT_COUNT), String.valueOf(targetSegments));
       }
    }
 
