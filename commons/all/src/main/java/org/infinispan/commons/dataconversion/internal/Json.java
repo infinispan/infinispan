@@ -2828,37 +2828,13 @@ public class Json implements java.io.Serializable {
     * @author Inderjeet Singh
     * @author Joel Leitch
     */
-   static Escaper escaper = new Escaper(false);
+   static Escaper escaper = new Escaper();
 
    final static class Escaper {
 
       private static final char[] HEX_CHARS = {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
       };
-
-      private static final Set<Character> JS_ESCAPE_CHARS;
-      private static final Set<Character> HTML_ESCAPE_CHARS;
-
-      static {
-         Set<Character> mandatoryEscapeSet = new HashSet<Character>();
-         mandatoryEscapeSet.add('"');
-         mandatoryEscapeSet.add('\\');
-         JS_ESCAPE_CHARS = Collections.unmodifiableSet(mandatoryEscapeSet);
-
-         Set<Character> htmlEscapeSet = new HashSet<Character>();
-         htmlEscapeSet.add('<');
-         htmlEscapeSet.add('>');
-         htmlEscapeSet.add('&');
-         htmlEscapeSet.add('=');
-         htmlEscapeSet.add('\'');
-         HTML_ESCAPE_CHARS = Collections.unmodifiableSet(htmlEscapeSet);
-      }
-
-      private final boolean escapeHtmlCharacters;
-
-      Escaper(boolean escapeHtmlCharacters) {
-         this.escapeHtmlCharacters = escapeHtmlCharacters;
-      }
 
       public String escapeJsonString(CharSequence plainText) {
          StringBuilder escapedString = new StringBuilder(plainText.length() + 20);
@@ -2918,12 +2894,8 @@ public class Json implements java.io.Serializable {
       }
 
       private boolean mustEscapeCharInJsString(int codepoint) {
-         if (!Character.isSupplementaryCodePoint(codepoint)) {
-            char c = (char) codepoint;
-            return JS_ESCAPE_CHARS.contains(c)
-                  || (escapeHtmlCharacters && HTML_ESCAPE_CHARS.contains(c));
-         }
-         return false;
+         char c = (char) codepoint;
+         return c == '"' || c == '\\';
       }
 
       private static boolean isControlCharacter(int codePoint) {
