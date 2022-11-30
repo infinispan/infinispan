@@ -2,14 +2,15 @@ package org.infinispan.tools.store.migrator;
 
 import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
+import static org.infinispan.tools.store.migrator.Element.SEGMENT_COUNT;
 import static org.infinispan.tools.store.migrator.Element.TARGET;
 import static org.infinispan.tools.store.migrator.Element.TYPE;
 import static org.infinispan.tools.store.migrator.Element.VERSION;
 
 import java.util.Properties;
 
-import org.infinispan.commons.util.Version;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.Version;
 
 public class StoreProperties{
 
@@ -18,6 +19,17 @@ public class StoreProperties{
    private final StoreType storeType;
    private final String cacheName;
    private final int majorVersion;
+
+   public StoreProperties(StoreProperties properties) {
+      this.root = properties.root;
+      this.storeType = properties.storeType;
+      this.cacheName = properties.cacheName();
+      this.majorVersion = properties.majorVersion();
+
+      Properties clone = new Properties(properties.properties.size());
+      clone.putAll(properties.properties);
+      this.properties = clone;
+   }
 
    public StoreProperties(Element root, Properties properties) {
       this.root = root;
@@ -54,6 +66,17 @@ public class StoreProperties{
 
    public StoreType storeType() {
       return storeType;
+   }
+
+   public boolean isSegmented() {
+      String segmentCount = get(SEGMENT_COUNT);
+      if (segmentCount == null)
+         return false;
+      return Integer.parseInt(segmentCount) > 0;
+   }
+
+   public void put(String value, Element... elements) {
+      properties.put(key(elements), value);
    }
 
    public String get(Element... elements) {
