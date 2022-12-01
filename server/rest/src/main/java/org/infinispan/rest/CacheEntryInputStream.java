@@ -186,8 +186,7 @@ public class CacheEntryInputStream extends InputStream {
                   return VALUE_LABEL[valueLabelCursor++] & 0xff;
                }
 
-               byte[] value = escape(currentEntry.getValue(), valuesAreJson);
-               int cv = valueCursor == value.length ? -1 : value[valueCursor++] & 0xff;
+               int cv = valueCursor == currentValue.length ? -1 : currentValue[valueCursor++] & 0xff;
                cursor++;
                if (cv != -1)
                   return cv;
