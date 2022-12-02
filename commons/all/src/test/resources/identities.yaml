@@ -9,3 +9,4 @@ credentials:
     password: changeme
     roles:
       - monitor
+      - writer

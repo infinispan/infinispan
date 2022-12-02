@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,13 +66,13 @@ public class YamlConfigurationReaderTest {
       assertNull(p.name);
       assertNull(p.value);
       p = yaml.parseLine("  - value");
-      assertEquals(3, p.indent);
-      assertTrue(p.listItem);
+      assertEquals(4, p.indent);
+      assertTrue(p.list);
       assertNull(p.name);
       assertEquals("value", p.value);
       p = yaml.parseLine("  - key: value");
-      assertEquals(3, p.indent);
-      assertTrue(p.listItem);
+      assertEquals(4, p.indent);
+      assertTrue(p.list);
       assertEquals("key", p.name);
       assertEquals("value", p.value);
 
@@ -161,6 +162,28 @@ public class YamlConfigurationReaderTest {
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item9");
          yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item11");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item11");
+         assertEquals(1, yaml.getAttributeCount());
+         assertAttribute(yaml, "e", "3");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "a");
+         assertEquals(1, yaml.getAttributeCount());
+         assertAttribute(yaml, "b", "1");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "a");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "c");
+         assertEquals(1, yaml.getAttributeCount());
+         assertAttribute(yaml, "d", "2");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "c");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item11");
+         yaml.nextElement();
+         yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item11");
+         yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_ELEMENT, DEFAULT_NAMESPACE, "item1");
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.END_DOCUMENT);
@@ -196,7 +219,7 @@ public class YamlConfigurationReaderTest {
                assertEquals(Collections.singletonList("admin"), credential.get("roles"));
             } else if ("my-user-2".equals(credential.get("username"))) {
                assertTrue(credential.containsKey("roles"));
-               assertEquals(Collections.singletonList("monitor"), credential.get("roles"));
+               assertEquals(Arrays.asList("monitor", "writer"), credential.get("roles"));
             } else {
                assertEquals("admin", credential.get("username"));
                assertFalse(credential.containsKey("roles"));
