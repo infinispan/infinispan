@@ -59,6 +59,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
 
    private void printTree(PrintWriter pw, Node node) {
       if (node != null) {
+
          for (int i = 0; i < node.parsed.indent; i++) {
             pw.print(' ');
          }
@@ -132,7 +133,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          try {
             do {
                parsed = parseLine(reader.readLine());
-            } while (parsed != null && parsed.name == null && parsed.value == null && !parsed.listItem);
+            } while (parsed != null && parsed.name == null && parsed.value == null && !parsed.list);
          } catch (IOException e) {
             throw new ConfigurationReaderException(e, Location.of(row, column));
          }
@@ -147,31 +148,38 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
             lines = new Node(parsed);
             current = lines;
          } else {
-            if (parsed.listItem && parsed.value == null) {
-               // Find the parent of the previous element
-               current = findParent(current, parsed);
-               // Copy the last node
-               current = addListItem(parsed, current);
-               current = current.addChild(new Node(parsed));
+            if (parsed.list) {
+               if (parsed.name == null) {
+                  // It's an array
+                  if (current.parsed.indent == parsed.indent) {
+                     current = current.addSibling(new Node(parsed));
+                  } else {
+                     current = current.addChild(new Node(parsed));
+                  }
+               } else {
+                  // Find the parent of the previous element
+                  current = findParent(current, parsed);
+                  if (current.parsed.list) {
+                     current = current.parent;
+                  }
+                  // Clone the parent
+                  current = addListItem(parsed, current);
+                  current = current.addChild(new Node(parsed));
+               }
             } else if (parsed.indent == current.parsed.indent) {
                // Sibling of the current node
                current = current.addSibling(new Node(parsed));
             } else if (parsed.indent > current.parsed.indent) {
                // Child of the current node
-               if (parsed.listItem && parsed.name != null) {
-                  current = addListItem(parsed, current);
-               } else if (!parsed.listItem && parsed.name == null) {
+               if (parsed.name == null) {
                   // It's a value continuation, append it to the current
                   current.parsed.value = current.parsed.value + " " + parsed.value;
-                  continue;
+               } else {
+                  current = current.addChild(new Node(parsed));
                }
-               current = current.addChild(new Node(parsed));
             } else {
-               // Find the parent
+               // Lower indent than, the current owner, climb up the tree to find the parent
                current = findParent(current, parsed);
-               if (parsed.listItem && parsed.name != null) {
-                  current = addListItem(parsed, current);
-               }
                current = current.addChild(new Node(parsed));
             }
          }
@@ -183,12 +191,11 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
       Parsed holder = new Parsed(parsed.row);
       holder.nsPrefix = current.parsed.nsPrefix;
       holder.name = current.parsed.name;
-      holder.indent = parsed.indent;
-      holder.listItem = true;
+      holder.indent = current.parsed.indent + 1;//parsed.indent;
+      holder.list = true;
       current = current.addChild(new Node(holder));
       // And the parsed line is added as a child of the holder
-      parsed.indent += INDENT;
-      parsed.listItem = false;
+      parsed.list = false;
       return current;
    }
 
@@ -284,7 +291,8 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                      }
                   } else if (state == 0) {
                      // It's a list delimiter
-                     parsed.listItem = true;
+                     parsed.list = true;
+                     parsed.indent++;
                   }
                   break;
                case '"':
@@ -317,7 +325,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
             }
          }
          if (state == 1) { // Bare string
-            if (parsed.listItem) {
+            if (parsed.list) {
                if (start > 0) {
                   parsed.value = s.substring(start).trim();
                } else {
@@ -398,7 +406,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                } else {
                   state.pop();
                }
-            } else if (next.listItem && state.peek().listItem) {
+            } else if (next.list && state.peek().list) {
                if (type != ElementType.END_ELEMENT) {
                   // Emit the end element for the current item
                   type = ElementType.END_ELEMENT;
@@ -414,11 +422,11 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          state.push(next);
          int currentIndent = next.indent;
          readNext();
-         if (next != null && next.listItem) {
+         if (next != null && next.list) {
             if (next.name == null) {
                // Bare value list
                Parsed current = state.peek();
-               current.listItem = true;
+               current.list = true;
                current.value = next.value;
                readNext();
             }
@@ -429,12 +437,12 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   setAttributeValue(next.nsPrefix, next.name, next.value);
                   readNext();
                } else {
-                  if (lines != null && lines.parsed.listItem && lines.parsed.name == null && lines.parsed.value != null) {
+                  if (lines != null && lines.parsed.list && lines.parsed.name == null && lines.parsed.value != null) {
                      String name = next.name;
                      String namespace = next.nsPrefix;
                      StringBuilder sb = new StringBuilder();
                      readNext();
-                     while (next != null && next.listItem) {
+                     while (next != null && next.list) {
                         sb.append(replaceProperties(next.value)).append(' ');
                         readNext();
                      }
@@ -539,7 +547,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          elements.add(getElementText());
          nextElement();
          require(ElementType.END_ELEMENT, null, outer);
-         loop = next.listItem;
+         loop = next.list;
          if (loop) {
             nextElement();
          }
@@ -592,7 +600,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
 
    private Object asMap(Node node) {
       if (node.hasChildren()) {
-         if (node.children.get(0).parsed.listItem) {
+         if (node.children.get(0).parsed.list) {
             List<Object> children = new ArrayList<>(node.children.size());
             for (Node child : node.children) {
                children.add(asMap(child));
@@ -613,7 +621,6 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
    public static class Parsed {
       final int row;
       int indent;
-      boolean listItem;
       boolean list;
       String name;
       String nsPrefix;
@@ -625,15 +632,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
 
       @Override
       public String toString() {
-         return "Parsed{" +
-               "row=" + row +
-               ", indent=" + indent +
-               ", list=" + list +
-               ", listItem=" + listItem +
-               ", name='" + name + '\'' +
-               ", nsPrefix='" + nsPrefix + '\'' +
-               ", value='" + value + '\'' +
-               '}';
+         return "{[" + row + "," + indent + "] " + nsPrefix + ":" + name + (list ? "[]" : "") + (value == null ? ":" : (": " + value)) + "}";
       }
    }
 }
