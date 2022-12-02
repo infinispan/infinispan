@@ -33,3 +33,9 @@ item1:
   item10: some idiot
     thought this 
     was a good idea
+  item11:
+    - a:
+        b: 1
+      c:
+        d: 2
+      e: 3
