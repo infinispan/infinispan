@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -10,6 +12,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.util.CompletableFutures;
 
 /**
  * Interceptor that allows for waiting for a command to be invoked, blocking that command and subsequently
@@ -54,32 +57,49 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
       barrier.await(30, TimeUnit.SECONDS);
    }
 
-   private void blockIfNeeded(InvocationContext ctx, VisitableCommand command) throws Exception {
+   private CompletionStage<Void> blockIfNeeded(InvocationContext ctx, VisitableCommand command) {
       if (suspended.get()) {
          log.tracef("Suspended, not blocking command %s", command);
-         return;
+         return null;
       }
       if ((!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(command)) {
-         log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
-         // The first arrive and await is to sync with main thread
-         barrier.await(30, TimeUnit.SECONDS);
-         // Now we actually block until main thread lets us go
-         barrier.await(30, TimeUnit.SECONDS);
-         log.tracef("Command completed blocking completion of %s", command);
+         return CompletableFuture.runAsync(() -> block(command));
       } else {
          log.tracef("Not blocking command %s", command);
+         return null;
       }
    }
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      CompletionStage<Void> blockedBefore = null;
       if (!blockAfter) {
-         blockIfNeeded(ctx, command);
+         blockedBefore = blockIfNeeded(ctx, command);
       }
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         if (blockAfter) {
-            blockIfNeeded(rCtx, rCommand);
-         }
-      });
+      if (blockedBefore != null) {
+         return makeStage(asyncInvokeNext(ctx, command, blockedBefore)).andHandle(ctx, command, this::blockAfterIfNeeded);
+      }
+      return invokeNextAndHandle(ctx, command, this::blockAfterIfNeeded);
+   }
+
+   private void block(VisitableCommand cmd) {
+      try {
+         log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", cmd);
+         // The first arrive and await is to sync with main thread
+         barrier.await(30, TimeUnit.SECONDS);
+         // Now we actually block until main thread lets us go
+         barrier.await(30, TimeUnit.SECONDS);
+         log.tracef("Command completed blocking completion of %s", cmd);
+      } catch (Exception e) {
+         throw CompletableFutures.wrapAsCompletionException(e);
+      }
+   }
+
+   private Object blockAfterIfNeeded(InvocationContext ctx, VisitableCommand cmd, Object rv, Throwable t) throws Throwable {
+      if (!blockAfter) {
+         return valueOrException(rv, t);
+      }
+      CompletionStage<Void> blocked = blockIfNeeded(ctx, cmd);
+      return blocked != null ? delayedValue(blocked, rv, t) : valueOrException(rv, t);
    }
 }
