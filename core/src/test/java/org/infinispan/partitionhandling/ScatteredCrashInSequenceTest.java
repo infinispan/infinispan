@@ -1,19 +1,5 @@
 package org.infinispan.partitionhandling;
 
-import static org.infinispan.commons.test.Exceptions.expectException;
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
@@ -34,6 +20,20 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest")
 public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
@@ -112,7 +112,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       // Block rebalance phase confirmations on the coordinator
       // Must replace the IIH first so it's updated in the transport
       BlockingInboundInvocationHandler blockedRebalanceConfirmations = BlockingInboundInvocationHandler.replace(coordinator.getCacheManager());
-      blockedRebalanceConfirmations.blockBefore(RebalancePhaseConfirmCommand.class, c -> c.getCacheName().equals(getDefaultCacheName()));
+      blockedRebalanceConfirmations.blockRpcBefore(cmd -> cmd instanceof RebalancePhaseConfirmCommand && ((RebalancePhaseConfirmCommand) cmd).getCacheName().equals(getDefaultCacheName()), "Confirmation is missing");
 
       BlockRebalanceTransport controlledTransportCoord = replace(coordinator.getCacheManager());
 

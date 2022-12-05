@@ -95,6 +95,7 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.remoting.transport.raft.RaftManager;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -204,6 +205,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private final Map<String, SiteUnreachableReason> unreachableSites;
    private String localSite;
    private volatile RaftManager raftManager = EmptyRaftManager.INSTANCE;
+   private JGroupsOrderedMessagesProcessor orderedMessagesProcessor;
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -231,6 +233,11 @@ public class JGroupsTransport implements Transport, ChannelListener {
    public JGroupsTransport() {
       this.probeHandler = new ThreadPoolProbeHandler();
       this.unreachableSites = new ConcurrentHashMap<>();
+   }
+
+   @Inject
+   public void inject(BlockingManager blockingManager) {
+      orderedMessagesProcessor = new JGroupsOrderedMessagesProcessor(blockingManager.asExecutor("jgroups-ordered-messages"), this::processMessage);
    }
 
    @Override
@@ -1681,10 +1688,14 @@ public class JGroupsTransport implements Transport, ChannelListener {
       public Object up(Message msg) {
          DeliverOrder order = decodeDeliverMode(msg.getHeader(HEADER_ID), msg.getFlags());
          if (order.preserveOrder()) {
-            processMessage(msg);
+            orderedMessagesProcessor.processSingle(msg);
             return null;
          }
-         nonBlockingExecutor.execute(() -> processMessage(msg));
+         if (isResponse(msg)) {
+            nonBlockingExecutor.execute(() -> processMessage(msg));
+            return null;
+         }
+         processMessage(msg);
          return null;
       }
 
@@ -1692,6 +1703,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       public void up(MessageBatch batch) {
          List<Message> orderedMessages = new ArrayList<>(batch.size());
          List<Message> unorderedMessages = new ArrayList<>(batch.size());
+         List<Message> unorderedResponseMessages = new ArrayList<>(batch.size());
          for (Message msg : batch) {
             if (msg == null) {
                continue;
@@ -1700,9 +1712,12 @@ public class JGroupsTransport implements Transport, ChannelListener {
                orderedMessages.add(msg);
                continue;
             }
-            unorderedMessages.add(msg);
+            (isResponse(msg) ? unorderedResponseMessages : unorderedMessages).add(msg);
          }
          // handle unordered messages first. The order does not matter, and they should never block any thread
+         if (!unorderedResponseMessages.isEmpty()) {
+            nonBlockingExecutor.execute(() -> unorderedResponseMessages.forEach(JGroupsTransport.this::processMessage));
+         }
          handleUnorderedMessages(unorderedMessages);
 
          // handle ordered after because they will block the jgroups thread
@@ -1710,7 +1725,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
          if (orderedSize == 0) {
             return;
          }
-         orderedMessages.forEach(JGroupsTransport.this::processMessage);
+         orderedMessagesProcessor.processMultiple(batch.sender(), orderedMessages);
          batchProbeHandler.addOrderedBatchSize(orderedSize);
       }
    }
@@ -1731,6 +1746,11 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    private static boolean isOrdered(Message msg) {
       return decodeDeliverMode(msg.getHeader(HEADER_ID), msg.getFlags()).preserveOrder();
+   }
+
+   private static boolean isResponse(Message msg) {
+      RequestCorrelator.Header header = msg.getHeader(HEADER_ID);
+      return header != null && header.type == RESPONSE;
    }
 
    private enum SiteUnreachableReason {

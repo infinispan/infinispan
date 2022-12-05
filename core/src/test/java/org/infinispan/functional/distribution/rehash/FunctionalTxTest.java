@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -42,7 +43,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class FunctionalTxTest extends MultipleCacheManagersTest {
    ConfigurationBuilder cb;
-   ControlledConsistentHashFactory chf;
+   ControlledConsistentHashFactory<?> chf;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -132,7 +133,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       future.get(10, TimeUnit.SECONDS);
 
-      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().get("key");
+      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().peek("key");
       assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
    }
 
@@ -172,7 +173,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       future.get(10, TimeUnit.SECONDS);
 
-      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().get("key");
+      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().peek("key");
       assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
    }
 
@@ -189,8 +190,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
    }
 
    private static class BlockingStateConsumer extends DelegatingStateConsumer {
-      private CountDownLatch expectLatch = new CountDownLatch(1);
-      private CountDownLatch blockLatch = new CountDownLatch(1);
+      private final CountDownLatch expectLatch = new CountDownLatch(1);
+      private final CountDownLatch blockLatch = new CountDownLatch(1);
 
       public BlockingStateConsumer(StateConsumer delegate) {
          super(delegate);
@@ -198,13 +199,15 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       @Override
       public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
-         expectLatch.countDown();
-         try {
-            assertTrue(blockLatch.await(10, TimeUnit.SECONDS));
-         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-         }
-         return super.applyState(sender, topologyId, pushTransfer, stateChunks);
+         return CompletableFuture.supplyAsync(() -> {
+            expectLatch.countDown();
+            try {
+               assertTrue(blockLatch.await(10, TimeUnit.SECONDS));
+            } catch (InterruptedException e) {
+               throw new RuntimeException(e);
+            }
+            return super.applyState(sender, topologyId, pushTransfer, stateChunks);
+         });
       }
 
       public void await() {

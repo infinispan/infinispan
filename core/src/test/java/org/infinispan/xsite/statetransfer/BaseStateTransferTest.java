@@ -77,7 +77,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
    }
 
    @Test(groups = "xsite")
-   public void testCancelStateTransfer(Method method) throws InterruptedException {
+   public void testCancelStateTransfer(Method method) {
       takeSiteOffline();
       assertOffline();
       assertNoStateTransferInReceivingSite(null);
@@ -106,10 +106,10 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       ControlledTransport controlledTransport = ControlledTransport.replace(cache(LON, 0));
       controlledTransport.excludeCommands(XSiteBringOnlineCommand.class, XSiteStateTransferStartReceiveCommand.class,
-                                          XSiteStateTransferStartSendCommand.class,
-                                          XSiteStateTransferCancelSendCommand.class,
-                                          XSiteStateTransferFinishReceiveCommand.class,
-                                          XSiteStateTransferStatusRequestCommand.class);
+            XSiteStateTransferStartSendCommand.class,
+            XSiteStateTransferCancelSendCommand.class,
+            XSiteStateTransferFinishReceiveCommand.class,
+            XSiteStateTransferStatusRequestCommand.class);
 
       startStateTransfer();
 
@@ -292,7 +292,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
    }
 
    private void testStateTransferWithConcurrentOperation(final Operation operation, final boolean performBeforeState,
-         final Method method) throws Exception {
+                                                         final Method method) throws Exception {
       assertNotNull(operation);
       assertTrue(operation.replicates());
       takeSiteOffline();
@@ -308,12 +308,21 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       final BackupListener listener = new BackupListener() {
          @Override
-         public void beforeCommand(VisitableCommand command) throws Exception {
-            checkPoint.trigger("before-update");
-            if (!performBeforeState && isUpdatingKeyWithValue(command, key, operation.finalValue())) {
-               //we need to wait for the state transfer before perform the command
-               checkPoint.awaitStrict("update-key", 30, TimeUnit.SECONDS);
-            }
+         public CompletionStage<Void> beforeCommand(VisitableCommand command) {
+            return CompletableFuture.runAsync(() -> {
+               try {
+                  checkPoint.trigger("before-update");
+                  if (!performBeforeState && isUpdatingKeyWithValue(command, key, operation.finalValue())) {
+                     //we need to wait for the state transfer before perform the command
+                     checkPoint.awaitStrict("update-key", 30, TimeUnit.SECONDS);
+                  }
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw CompletableFutures.asCompletionException(e);
+               } catch (TimeoutException e) {
+                  throw CompletableFutures.asCompletionException(e);
+               }
+            });
          }
 
          @Override
@@ -325,15 +334,24 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(XSiteStatePushCommand command) throws Exception {
-            checkPoint.trigger("before-state");
-            //wait until the command is received with the new value. so we make sure that the command saw the old value
-            //and will commit a new value
-            checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
-            if (performBeforeState && containsKey(command.getChunk(), key)) {
-               //command before state... we need to wait
-               checkPoint.awaitStrict("apply-state", 30, TimeUnit.SECONDS);
-            }
+         public CompletionStage<Void> beforeState(XSiteStatePushCommand command) {
+            return CompletableFuture.runAsync(() -> {
+               try {
+                  checkPoint.trigger("before-state");
+                  //wait until the command is received with the new value. so we make sure that the command saw the old value
+                  //and will commit a new value
+                  checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
+                  if (performBeforeState && containsKey(command.getChunk(), key)) {
+                     //command before state... we need to wait
+                     checkPoint.awaitStrict("apply-state", 30, TimeUnit.SECONDS);
+                  }
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw CompletableFutures.asCompletionException(e);
+               } catch (TimeoutException e) {
+                  throw CompletableFutures.asCompletionException(e);
+               }
+            });
          }
 
          @Override
@@ -426,8 +444,9 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       final BackupListener listener = new BackupListener() {
          @Override
-         public void beforeCommand(VisitableCommand command) {
+         public CompletionStage<Void> beforeCommand(VisitableCommand command) {
             commandReceived.set(true);
+            return CompletableFutures.completedNull();
          }
 
          @Override
@@ -436,9 +455,19 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(XSiteStatePushCommand command) throws Exception {
-            checkPoint.trigger("before-state");
-            checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
+         public CompletionStage<Void> beforeState(XSiteStatePushCommand command) {
+            return CompletableFuture.runAsync(() -> {
+               try {
+                  checkPoint.trigger("before-state");
+                  checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw CompletableFutures.asCompletionException(e);
+               } catch (TimeoutException e) {
+                  throw CompletableFutures.asCompletionException(e);
+               }
+            });
+
          }
       };
 
@@ -753,16 +782,18 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
       @Override
       public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
-         checkPoint.trigger("before-start");
-         try {
-            checkPoint.awaitStrict("await-start", 30, TimeUnit.SECONDS);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-         } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-         }
-         super.startStateTransfer(siteName, requestor, minTopologyId);
+         CompletableFuture.runAsync(() -> {
+            checkPoint.trigger("before-start");
+            try {
+               checkPoint.awaitStrict("await-start", 30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw new RuntimeException(e);
+            } catch (TimeoutException e) {
+               throw new RuntimeException(e);
+            }
+            super.startStateTransfer(siteName, requestor, minTopologyId);
+         });
       }
 
       static XSiteStateProviderControl replaceInCache(Cache<?, ?> cache) {
@@ -783,16 +814,18 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
    private static abstract class BackupListener {
 
-      void beforeCommand(VisitableCommand command) throws Exception {
+      CompletionStage<Void> beforeCommand(VisitableCommand command) {
          //no-op by default
+         return CompletableFutures.completedNull();
       }
 
       void afterCommand(VisitableCommand command) {
          //no-op by default
       }
 
-      void beforeState(XSiteStatePushCommand command) throws Exception {
+      CompletionStage<Void> beforeState(XSiteStatePushCommand command) {
          //no-op by default
+         return CompletableFutures.completedNull();
       }
 
       void afterState(XSiteStatePushCommand command) {
@@ -812,21 +845,21 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       @Override
       public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
          try {
-            listener.beforeCommand(command);
+            return listener.beforeCommand(command)
+                  .thenCompose(unused -> super.<O>handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command)));
          } catch (Exception e) {
             return CompletableFuture.failedFuture(e);
          }
-         return super.<O>handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command));
       }
 
       @Override
       public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
          try {
-            listener.beforeState(cmd);
+            return listener.beforeState(cmd)
+                  .thenCompose(unused -> super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd)));
          } catch (Exception e) {
             return CompletableFuture.failedFuture(e);
          }
-         return super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd));
       }
    }
 }

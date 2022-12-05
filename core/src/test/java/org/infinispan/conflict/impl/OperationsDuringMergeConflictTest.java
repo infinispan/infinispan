@@ -1,49 +1,37 @@
 package org.infinispan.conflict.impl;
 
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
-import static org.infinispan.topology.CacheTopology.Phase.READ_OLD_WRITE_ALL;
-import static org.testng.AssertJUnit.fail;
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
-import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
-import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.BlockingPerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.xsite.XSiteReplicateCommand;
 import org.testng.annotations.Test;
 
-/**
- 1. do a split, and let k -> A, k -> B in the two partitions
- 2. initiate a conflict resolution, with merge policy saying that merge A,B = C
- 3. check that members from each partition read A (in p1) or B (in p2)
- 4. let someone from p1 issue a write k -> D, check that both p1 and p2 now reads D
- 5. let the actual merge proceed (be ignored)
- 6. check that all nodes still read D
- 7. let state transfer proceed and check that D is still in
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
- For sanity check, you should be able to disable the write of D and see C everywhere instead.
- And the same should work for removal as well (merge should not overwrite removal), though I think that CommitManager will behave in the same way.
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.topology.CacheTopology.Phase.READ_OLD_WRITE_ALL;
+
+/**
+ * 1. do a split, and let k -> A, k -> B in the two partitions
+ * 2. initiate a conflict resolution, with merge policy saying that merge A,B = C
+ * 3. check that members from each partition read A (in p1) or B (in p2)
+ * 4. let someone from p1 issue a write k -> D, check that both p1 and p2 now reads D
+ * 5. let the actual merge proceed (be ignored)
+ * 6. check that all nodes still read D
+ * 7. let state transfer proceed and check that D is still in
+ * <p>
+ * For sanity check, you should be able to disable the write of D and see C everywhere instead.
+ * And the same should work for removal as well (merge should not overwrite removal), though I think that CommitManager will behave in the same way.
+ *
  * @author Ryan Emerson
  * @since 9.1
  */
@@ -61,6 +49,7 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
       NONE(MERGE_RESULT);
 
       String value;
+
       MergeAction(String value) {
          this.value = value;
       }
@@ -68,7 +57,7 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
+      return new Object[]{
             new OperationsDuringMergeConflictTest(MergeAction.NONE),
             new OperationsDuringMergeConflictTest(MergeAction.PUT),
             new OperationsDuringMergeConflictTest(MergeAction.REMOVE)
@@ -77,10 +66,11 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
 
    private MergeAction mergeAction;
 
-   public OperationsDuringMergeConflictTest(){}
+   public OperationsDuringMergeConflictTest() {
+   }
 
    public OperationsDuringMergeConflictTest(MergeAction mergeAction) {
-      super(DIST_SYNC, null, new int[]{0,1}, new int[]{2,3});
+      super(DIST_SYNC, null, new int[]{0, 1}, new int[]{2, 3});
       this.mergePolicy = ((preferredEntry, otherEntries) -> TestInternalCacheEntryFactory.create(conflictKey, MERGE_RESULT));
       this.description = mergeAction.toString();
       this.mergeAction = mergeAction;
@@ -104,17 +94,17 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
    @Override
    protected void performMerge() {
       boolean modifyDuringMerge = mergeAction != MergeAction.NONE;
-      CountDownLatch conflictLatch = new CountDownLatch(1);
-      CountDownLatch stateTransferLatch = new CountDownLatch(1);
-      try {
-         IntStream.range(0, numMembersInCluster).forEach(i -> {
-            wrapInboundInvocationHandler(cache(i), handler -> new BlockStateResponseCommandHandler(handler, conflictLatch));
-            EmbeddedCacheManager manager = manager(i);
-            InboundInvocationHandler handler = extractGlobalComponent(manager, InboundInvocationHandler.class);
-            BlockingInboundInvocationHandler ourHandler = new BlockingInboundInvocationHandler(handler, stateTransferLatch);
-            replaceComponent(manager, InboundInvocationHandler.class, ourHandler, true);
-         });
+      List<BlockingInboundInvocationHandler> inboundHandlers = IntStream.range(0, numMembersInCluster)
+            .mapToObj(i -> BlockingInboundInvocationHandler.replace(manager(i)))
+            .collect(Collectors.toList());
+      List<BlockingPerCacheInboundInvocationHandler> perCacheInboundInvocationHandlers = IntStream.range(0, numMembersInCluster)
+            .mapToObj(i -> BlockingPerCacheInboundInvocationHandler.replace(cache(i)))
+            .collect(Collectors.toList());
 
+      inboundHandlers.forEach(handler -> handler.blockRpcBefore(cmd -> cmd instanceof TopologyUpdateCommand && ((TopologyUpdateCommand) cmd).getPhase() == READ_OLD_WRITE_ALL, ""));
+      perCacheInboundInvocationHandlers.forEach(handler -> handler.blockRpcBefore(StateResponseCommand.class));
+
+      try {
          assertCacheGet(conflictKey, PARTITION_0_VAL, p0.getNodes());
          assertCacheGet(conflictKey, PARTITION_1_VAL, p1.getNodes());
          partition(0).merge(partition(1), false);
@@ -131,13 +121,13 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
                cache(0).remove(conflictKey);
             }
          }
-         conflictLatch.countDown();
-         stateTransferLatch.countDown();
+         inboundHandlers.forEach(BlockingInboundInvocationHandler::stopBlocking);
+         perCacheInboundInvocationHandlers.forEach(BlockingPerCacheInboundInvocationHandler::stopBlocking);
          TestingUtil.waitForNoRebalance(caches());
          assertCacheGetValAllCaches(mergeAction);
       } catch (Throwable t) {
-         conflictLatch.countDown();
-         stateTransferLatch.countDown();
+         inboundHandlers.forEach(BlockingInboundInvocationHandler::stopBlocking);
+         perCacheInboundInvocationHandlers.forEach(BlockingPerCacheInboundInvocationHandler::stopBlocking);
          throw t;
       }
    }
@@ -146,54 +136,4 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
       assertCacheGet(conflictKey, action.value, cacheIndexes());
    }
 
-   private class BlockingInboundInvocationHandler implements InboundInvocationHandler {
-      final InboundInvocationHandler delegate;
-      final CountDownLatch latch;
-
-      BlockingInboundInvocationHandler(InboundInvocationHandler delegate, CountDownLatch latch) {
-         this.delegate = delegate;
-         this.latch = latch;
-      }
-
-      @Override
-      public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof TopologyUpdateCommand &&
-               ((TopologyUpdateCommand) command).getPhase() == READ_OLD_WRITE_ALL) {
-            awaitLatch(latch);
-         }
-         delegate.handleFromCluster(origin, command, reply, order);
-      }
-
-      @Override
-      public void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order) {
-         delegate.handleFromRemoteSite(origin, command, reply, order);
-      }
-   }
-
-   private class BlockStateResponseCommandHandler extends AbstractDelegatingHandler {
-      final CountDownLatch latch;
-
-      BlockStateResponseCommandHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch latch) {
-         super(delegate);
-         this.latch = latch;
-      }
-
-      @Override
-      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof StateResponseCommand)
-            awaitLatch(latch);
-         delegate.handle(command, reply, order);
-      }
-   }
-
-   private void awaitLatch(CountDownLatch latch) {
-      try {
-         // Timeout has to be large enough to allow for rebalance and subsequent operations, so we double the
-         // rebalance timeout. Timeout necessary as for some reason the latch is not always counted down in the Handler
-         if (!latch.await(120, TimeUnit.SECONDS))
-            fail("CountDownLatch await timedout");
-      } catch (InterruptedException ignore) {
-         fail("CountDownLatch Interrupted");
-      }
-   }
 }

@@ -1,11 +1,11 @@
 package org.infinispan.remoting.inboundhandler;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.xsite.XSiteReplicateCommand;
 
 import java.time.Duration;
 import java.util.List;
@@ -16,53 +16,60 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertTrue;
 
-@Scope(Scopes.GLOBAL)
-public class BlockingInboundInvocationHandler implements InboundInvocationHandler {
-   private final Address address;
-   private final InboundInvocationHandler delegate;
-   private final List<HandlerImpl<ReplicableCommand>> replicableCmdBlockTest = new CopyOnWriteArrayList<>();
-   private final List<HandlerImpl<XSiteReplicateCommand<?>>> xsiteReplicableCmdBlockTest = new CopyOnWriteArrayList<>();
+@Scope(Scopes.NAMED_CACHE)
+public class BlockingPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
 
-   public static BlockingInboundInvocationHandler replace(EmbeddedCacheManager manager) {
-      return wrapGlobalComponent(manager, InboundInvocationHandler.class,
+   private final Address address;
+   private final PerCacheInboundInvocationHandler delegate;
+   private final List<HandlerImpl<ReplicableCommand>> replicableCmdBlockTest = new CopyOnWriteArrayList<>();
+
+   public static BlockingPerCacheInboundInvocationHandler replace(Cache<?, ?> cache) {
+      return wrapInboundInvocationHandler(cache,
             iih -> {
-               if (iih instanceof BlockingInboundInvocationHandler) {
-                  return (BlockingInboundInvocationHandler) iih;
+               if (iih instanceof BlockingPerCacheInboundInvocationHandler) {
+                  return (BlockingPerCacheInboundInvocationHandler) iih;
                }
-               return new BlockingInboundInvocationHandler(iih, manager.getAddress());
-            }, true);
+               return new BlockingPerCacheInboundInvocationHandler(iih, cache.getCacheManager().getAddress());
+            });
    }
 
-   private BlockingInboundInvocationHandler(InboundInvocationHandler delegate, Address address) {
+   private BlockingPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler delegate, Address address) {
       this.delegate = delegate;
       this.address = address;
    }
 
    @Override
-   public void handleFromCluster(Address origin, ReplicableCommand command,
-                                 Reply reply, DeliverOrder order) {
-      for (HandlerImpl<ReplicableCommand> handler : replicableCmdBlockTest) {
-         if (handler.test(command)) {
-            handler.runAfterBlocked(() -> delegate.handleFromCluster(origin, command, reply, order));
-            return;
-         }
-      }
-      delegate.handleFromCluster(origin, command, reply, order);
+   public String toString() {
+      return "PerCacheInboundInvocationHandler@" + address;
    }
 
    @Override
-   public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command,
-                                    Reply reply, DeliverOrder order) {
-      for (HandlerImpl<XSiteReplicateCommand<?>> handler : xsiteReplicableCmdBlockTest) {
+   public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+      for (HandlerImpl<ReplicableCommand> handler : replicableCmdBlockTest) {
          if (handler.test(command)) {
-            handler.runAfterBlocked(() -> delegate.handleFromRemoteSite(origin, command, reply, order));
+            handler.runAfterBlocked(() -> delegate.handle(command, reply, order));
             return;
          }
       }
-      delegate.handleFromRemoteSite(origin, command, reply, order);
+      delegate.handle(command, reply, order);
+   }
+
+   @Override
+   public void setFirstTopologyAsMember(int firstTopologyAsMember) {
+      delegate.setFirstTopologyAsMember(firstTopologyAsMember);
+   }
+
+   @Override
+   public int getFirstTopologyAsMember() {
+      return delegate.getFirstTopologyAsMember();
+   }
+
+   @Override
+   public void checkForReadyTasks() {
+      delegate.checkForReadyTasks();
    }
 
    public BlockHandler blockRpcBefore(Predicate<ReplicableCommand> predicate, String timeoutMessage) {
@@ -75,26 +82,9 @@ public class BlockingInboundInvocationHandler implements InboundInvocationHandle
       return blockRpcBefore(commandToBlock::isInstance, commandToBlock.getSimpleName());
    }
 
-   public BlockHandler blockXSiteBefore(Predicate<XSiteReplicateCommand<?>> predicate, String timeoutMessage) {
-      HandlerImpl<XSiteReplicateCommand<?>> handler = new HandlerImpl<>(predicate, timeoutMessage);
-      xsiteReplicableCmdBlockTest.add(handler);
-      return handler;
-   }
-
-   public <T extends XSiteReplicateCommand<?>> BlockHandler blockXSiteBefore(Class<T> commandToBlock) {
-      return blockXSiteBefore(commandToBlock::isInstance, commandToBlock.getSimpleName());
-   }
-
    public void stopBlocking() {
       replicableCmdBlockTest.forEach(HandlerImpl::unblock);
-      xsiteReplicableCmdBlockTest.forEach(HandlerImpl::unblock);
       replicableCmdBlockTest.clear();
-      xsiteReplicableCmdBlockTest.clear();
-   }
-
-   @Override
-   public String toString() {
-      return "BlockingInboundInvocationHandler@" + address;
    }
 
    private static final class HandlerImpl<T> implements BlockHandler, Predicate<T> {
