@@ -91,7 +91,7 @@ public class StoreMigrator {
       run(false);
    }
 
-   void run(boolean output) throws Exception {
+   public void run(boolean output) throws Exception {
       String batchSizeProp = properties.getProperty(BATCH + "." + SIZE);
       int batchLimit = batchSizeProp != null ? Integer.parseInt(batchSizeProp) : DEFAULT_BATCH_SIZE;
 

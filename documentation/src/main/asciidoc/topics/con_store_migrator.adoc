@@ -1,17 +1,18 @@
 [id='store-migrator_{context}']
 = Cache store migrator
-{brandname} provides the `StoreMigrator.java` utility that recreates data for the latest {brandname} cache store implementations.
+{brandname} provides the CLI `migrate store` command that recreates data for the latest {brandname} cache store implementations.
 
-`StoreMigrator` takes a cache store from a previous version of {brandname} as source and uses a cache store implementation as target.
+The store migrator takes a cache store from a previous version of {brandname} as source and uses a cache store implementation as target.
 
-When you run `StoreMigrator`, it creates the target cache with the cache store type that you define using the `EmbeddedCacheManager` interface.
-`StoreMigrator` then loads entries from the source store into memory and then puts them into the target cache.
+When you run the store migrator, it creates the target cache with the cache store type that you define using the `EmbeddedCacheManager` interface.
+The store migrator then loads entries from the source store into memory and then puts them into the target cache.
 
-`StoreMigrator` also lets you migrate data from one type of cache store to another. For example, you can migrate from a JDBC string-based cache store to a RocksDB cache store.
+The store migrator also lets you migrate data from one type of cache store to another.
+For example, you can migrate from a JDBC string-based cache store to a SIFS cache store.
 
 [IMPORTANT]
 ====
-`StoreMigrator` cannot migrate data from segmented cache stores to:
+The store migrator cannot migrate data from segmented cache stores to:
 
 * Non-segmented cache store.
 * Segmented cache stores that have a different number of segments.

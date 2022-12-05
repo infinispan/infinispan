@@ -62,21 +62,19 @@
       <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-cachestore-remote</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-cachestore-rocksdb</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>gnu.getopt</groupId>
-         <artifactId>java-getopt</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>

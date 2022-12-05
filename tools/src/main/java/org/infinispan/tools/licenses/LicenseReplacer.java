@@ -27,8 +27,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import gnu.getopt.Getopt;
-
 /**
  * Looks for "unknown" or "empty" license information and replaces.
  * <p>
@@ -55,20 +53,19 @@ public class LicenseReplacer {
    public static void main(String[] argv) throws Exception {
       LicenseReplacer replacer = new LicenseReplacer();
       File outputFile = new File(System.getProperty("user.dir"), "licenses.xml");
-      Getopt opts = new Getopt("license-replacer", argv, "vl:i:o:");
-      for (int opt = opts.getopt(); opt > -1; opt = opts.getopt()) {
-         switch (opt) {
-            case 'v':
+      for (int i = 0; i < argv.length; i++) {
+         switch (argv[i]) {
+            case "-v":
                replacer.setVerbose();
                break;
-            case 'i':
-               replacer.loadOverwriteXML(opts.getOptarg());
+            case "-i":
+               replacer.loadOverwriteXML(argv[++i]);
                break;
-            case 'o':
-               outputFile = new File(opts.getOptarg());
+            case "-o":
+               outputFile = new File(argv[++i]);
                break;
-            case 'l':
-               replacer.loadLicenseFromXML(opts.getOptarg());
+            case "-l":
+               replacer.loadLicenseFromXML(argv[++i]);
                break;
          }
       }
@@ -99,7 +96,7 @@ public class LicenseReplacer {
             .appendChild(aggregated.createElement("licenseSummary"))
             .appendChild(aggregated.createElement("dependencies"));
 
-      List<Node> childs = new LinkedList<>();
+      List<Node> children = new LinkedList<>();
       if (licensesDoc != null && licensesDoc != emptyDocument) {
          for (Dependency dep : parseXMLDependencies(licensesDoc)) {
             Node depNode = aggregated.adoptNode(dep.getNode().cloneNode(true));
@@ -118,10 +115,10 @@ public class LicenseReplacer {
                         .ifPresent(node -> depNode.appendChild(aggregated.adoptNode(node.cloneNode(true))));
                }
             }
-            childs.add(depNode);
+            children.add(depNode);
          }
       }
-      childs.forEach(aggregatedDependencies::appendChild);
+      children.forEach(aggregatedDependencies::appendChild);
       ToolUtils.printDocument(aggregated, os);
 
    }

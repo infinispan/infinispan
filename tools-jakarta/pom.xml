@@ -62,11 +62,6 @@
         </dependency>
 
         <dependency>
-            <groupId>gnu.getopt</groupId>
-            <artifactId>java-getopt</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core-jakarta</artifactId>
             <version>${project.version}</version>

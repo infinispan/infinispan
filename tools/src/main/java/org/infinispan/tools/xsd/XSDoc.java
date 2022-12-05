@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -20,8 +21,6 @@ import org.infinispan.tools.ToolUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import gnu.getopt.Getopt;
 
 public class XSDoc {
 
@@ -160,22 +159,24 @@ public class XSDoc {
    public static void main(String[] argv) throws Exception {
       XSDoc xsDoc = new XSDoc();
       String outputDir = System.getProperty("user.dir");
-      Collection<String> skipSchema = new HashSet<>(32);
-      Getopt opts = new Getopt("xsdoc", argv, "o:s:");
-      for (int opt = opts.getopt(); opt > -1; opt = opts.getopt()) {
-         switch (opt) {
-            case 'o':
-               outputDir = opts.getOptarg();
+      HashSet<String> skipSchema = new HashSet<>(32);
+      LinkedHashSet<String> files = new LinkedHashSet<>();
+      for (int i = 0; i < argv.length; i++) {
+         switch (argv[i]) {
+            case "-o":
+               outputDir = argv[++i];
                break;
-            case 's':
-               skipSchema.add(ToolUtils.getBaseFileName(opts.getOptarg()));
+            case "-s":
+               skipSchema.add(ToolUtils.getBaseFileName(argv[++i]));
                break;
+            default:
+               files.add(argv[i]);
          }
       }
       File outDir = new File(outputDir);
       outDir.mkdirs();
-      for (int i = opts.getOptind(); i < argv.length; i++) {
-         xsDoc.load(argv[i], skipSchema.contains(ToolUtils.getBaseFileName(argv[i])));
+      for (String file : files) {
+         xsDoc.load(file, skipSchema.contains(ToolUtils.getBaseFileName(file)));
       }
       xsDoc.transformAll(outDir);
       xsDoc.generateIndex(outDir);

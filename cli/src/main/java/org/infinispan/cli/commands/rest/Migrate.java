@@ -1,19 +1,25 @@
 package org.infinispan.cli.commands.rest;
 
 import java.io.File;
+import java.io.FileReader;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
+import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Option;
+import org.aesh.command.option.OptionGroup;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.converters.NullableIntegerConverter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.impl.StoreMigratorHelper;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.Resource;
@@ -27,7 +33,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "migrate", description = "Migration operations", groupCommands = {Migrate.Cluster.class})
+@GroupCommandDefinition(name = "migrate", description = "Migration operations", groupCommands = {Migrate.Store.class, Migrate.Cluster.class})
 public class Migrate extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -43,6 +49,43 @@ public class Migrate extends CliCommand {
       // This command serves only to wrap the sub-commands
       invocation.println(invocation.getHelpInfo());
       return CommandResult.FAILURE;
+   }
+
+   @CommandDefinition(name = "store", description = "Migrates store data")
+   public static class Store extends CliCommand {
+      @OptionGroup(shortName = 'P', description = "Sets a migration property")
+      Map<String, String> propertyMap;
+      @Option(completer = FileOptionCompleter.class, shortName = 'p', name = "properties", description = "Migration configuration properties")
+      org.aesh.io.Resource propertiesFile;
+
+      @Option(shortName = 'v', hasValue = false)
+      boolean verbose;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         Properties props = new Properties();
+         try {
+            if (propertiesFile != null) {
+               props.load(new FileReader(this.propertiesFile.getAbsolutePath()));
+            }
+            props.putAll(propertyMap);
+            if (props.isEmpty()) {
+               throw Messages.MSG.missingStoreMigratorProperties();
+            }
+            StoreMigratorHelper.run(props, verbose);
+            return CommandResult.SUCCESS;
+         } catch (Exception e) {
+            throw new CommandException(e);
+         }
+      }
    }
 
    @GroupCommandDefinition(name = "cluster", description = "Performs data migration between clusters", groupCommands = {Migrate.ClusterConnect.class, Migrate.ClusterDisconnect.class, Migrate.ClusterSourceConnection.class, Migrate.ClusterSynchronize.class}, activator = ConnectionActivator.class)

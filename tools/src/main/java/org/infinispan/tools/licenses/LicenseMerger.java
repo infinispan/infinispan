@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
@@ -22,8 +23,6 @@ import org.infinispan.tools.ToolUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import gnu.getopt.Getopt;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -114,30 +113,32 @@ public class LicenseMerger {
       File outputFile = new File(System.getProperty("user.dir"), "licenses.xml");
       boolean inclusiveMode = false;
       boolean verbose = false;
-      Getopt opts = new Getopt("license-merger", argv, "vio:r:");
-      for (int opt = opts.getopt(); opt > -1; opt = opts.getopt()) {
-         switch (opt) {
-            case 'v':
+      LinkedHashSet<String> files = new LinkedHashSet<>();
+      for(int i = 0; i < argv.length; i++) {
+         switch (argv[i]) {
+            case "-v":
                verbose = true;
                licenseMerger.setVerbose(true);
                break;
-            case 'i':
+            case "-i":
                inclusiveMode = true;
                break;
-            case 'o':
-               outputFile = new File(opts.getOptarg());
+            case "-o":
+               outputFile = new File(argv[++i]);
                break;
-            case 'r':
-               String[] responseData = new String(Files.readAllBytes(Paths.get(opts.getOptarg())), StandardCharsets.UTF_8).split("\\s+");
+            case "-r":
+               String[] responseData = new String(Files.readAllBytes(Paths.get(argv[++i])), StandardCharsets.UTF_8).split("\\s+");
                for(String filename : responseData) {
                   licenseMerger.loadLicense(filename);
                }
                break;
+            default:
+               files.add(argv[i]);
          }
       }
       outputFile.getParentFile().mkdirs();
-      for (int i = opts.getOptind(); i < argv.length; i++) {
-         licenseMerger.loadLicense(argv[i]);
+      for (String file : files) {
+         licenseMerger.loadLicense(file);
       }
       try (OutputStream os = new FileOutputStream(outputFile)) {
          licenseMerger.write(inclusiveMode, os);

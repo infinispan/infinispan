@@ -4,7 +4,6 @@
 {brandname} provides a utility to migrate data from one cache store to another.
 
 include::{topics}/con_store_migrator.adoc[leveloffset=+1]
-include::{topics}/proc_getting_store_migrator.adoc[leveloffset=+1]
 include::{topics}/proc_configuring_store_migrator.adoc[leveloffset=+1]
 include::{topics}/ref_store_migrator_properties.adoc[leveloffset=+2]
 include::{topics}/proc_migrating_cache_stores.adoc[leveloffset=+1]
