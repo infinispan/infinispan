@@ -19,6 +19,7 @@ import java.util.zip.ZipFile;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.ContainerResource;
 import org.infinispan.util.concurrent.BlockingManager;

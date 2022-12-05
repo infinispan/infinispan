@@ -16,7 +16,7 @@ public class GetEmbeddedCacheManagerAction extends AbstractAdvancedCacheAction<E
    }
 
    @Override
-   public EmbeddedCacheManager run() {
+   public EmbeddedCacheManager get() {
       return cache.getCacheManager();
    }
 }

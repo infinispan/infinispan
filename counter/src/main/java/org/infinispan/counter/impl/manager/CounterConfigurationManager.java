@@ -34,6 +34,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -246,10 +247,10 @@ public class CounterConfigurationManager {
             try {
                GlobalConfiguration configuration = SecurityActions.getCacheManagerConfiguration(cacheManager);
                String threadName = "CounterCacheStartThread," + configuration.transport().nodeName();
-               SecurityActions.setThreadName(threadName);
+               Thread.currentThread().setName(threadName);
                cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME);
             } finally {
-               SecurityActions.setThreadName(oldName);
+               Thread.currentThread().setName(oldName);
             }
          }, CounterModuleLifecycle.COUNTER_CACHE_NAME);
       }

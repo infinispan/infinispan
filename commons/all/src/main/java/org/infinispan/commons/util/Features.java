@@ -46,7 +46,7 @@ public class Features {
 
    public boolean isAvailable(String featureName) {
       String name = FEATURE_PREFIX + featureName;
-      String sysprop = SecurityActions.getProperty(name);
+      String sysprop = System.getProperty(name);
       if (sysprop != null) {
          return Boolean.parseBoolean(sysprop);
       } else {

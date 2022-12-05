@@ -34,6 +34,7 @@ import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.rest.tracing.RestTelemetryService;
+import org.infinispan.security.actions.SecurityActions;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 

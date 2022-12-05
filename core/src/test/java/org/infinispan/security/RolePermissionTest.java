@@ -1,7 +1,6 @@
 package org.infinispan.security;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
+import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
 
@@ -41,26 +40,26 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
-      authzManager = Security.doAs(ADMIN, new PrivilegedExceptionAction<AuthorizationManager>() {
-
-         @Override
-         public AuthorizationManager run() throws Exception {
+      authzManager = Security.doAs(ADMIN, (Supplier<AuthorizationManager>) () -> {
+         try {
             cacheManager = createCacheManager();
-            if (cache == null) cache = cacheManager.getCache();
-            return cache.getAdvancedCache().getAuthorizationManager();
+         } catch (Exception e) {
+            throw new RuntimeException(e);
          }
+         if (cache == null) cache = cacheManager.getCache();
+         return cache.getAdvancedCache().getAuthorizationManager();
       });
    }
 
    public void testPermissionAndRole() {
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          authzManager.checkPermission(AuthorizationPermission.EXEC, "role1");
          return null;
       });
    }
 
    public void testPermissionAndNoRole() {
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          authzManager.checkPermission(AuthorizationPermission.EXEC);
          return null;
       });
@@ -68,7 +67,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions=SecurityException.class)
    public void testWrongPermissionAndNoRole() {
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          authzManager.checkPermission(AuthorizationPermission.LISTEN);
          return null;
       });
@@ -76,7 +75,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions=SecurityException.class)
    public void testWrongPermissionAndRole() {
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          authzManager.checkPermission(AuthorizationPermission.LISTEN, "role1");
          return null;
       });
@@ -84,7 +83,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions=SecurityException.class)
    public void testPermissionAndWrongRole() {
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          authzManager.checkPermission(AuthorizationPermission.EXEC, "role2");
          return null;
       });
@@ -92,14 +91,14 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions=SecurityException.class)
    public void testWrongPermissionAndWrongRole() {
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          authzManager.checkPermission(AuthorizationPermission.LISTEN, "role2");
          return null;
       });
    }
 
    public void testNoPrincipalInSubject() {
-      Security.doAs(SUBJECT_WITHOUT_PRINCIPAL, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_WITHOUT_PRINCIPAL, () -> {
          authzManager.checkPermission(AuthorizationPermission.NONE);
          return null;
       });
@@ -107,7 +106,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          RolePermissionTest.super.teardown();
          return null;
       });
@@ -115,7 +114,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          cacheManager.getCache().clear();
          return null;
       });

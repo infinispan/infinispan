@@ -29,6 +29,7 @@ import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.LogFactory;
@@ -55,7 +56,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
    @Override
    @SuppressWarnings("rawtypes")
    public long synchronizeData(Cache<Object, Object> cache, int readBatch, int threads) throws CacheException {
-      ComponentRegistry cr = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
+      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
       String cacheName = cache.getName();

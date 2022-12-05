@@ -16,7 +16,7 @@ public class GetCacheManagerCoordinatorAddress extends AbstractEmbeddedCacheMana
    }
 
    @Override
-   public Address run() {
+   public Address get() {
       return cacheManager.getCoordinator();
    }
 }

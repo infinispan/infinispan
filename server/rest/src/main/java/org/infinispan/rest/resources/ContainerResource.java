@@ -22,7 +22,6 @@ import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
-import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -71,9 +70,9 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ServerStateManager;
-import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
@@ -224,7 +223,7 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      return CompletableFuture.supplyAsync(() -> Security.doAs(request.getSubject(), (PrivilegedAction<CacheContainerStats>) () -> cacheManager.getStats()).toJson(), invocationHelper.getExecutor())
+      return CompletableFuture.supplyAsync(() -> Security.doAs(request.getSubject(), cacheManager::getStats).toJson(), invocationHelper.getExecutor())
             .thenCompose(json -> asJsonResponseFuture(json, responseBuilder, isPretty(request)));
    }
 
@@ -264,8 +263,7 @@ public class ContainerResource implements ResourceHandler {
       if (anon) {
          responseBuilder
                .contentType(TEXT_PLAIN)
-               .entity(Security.doAs(request.getSubject(), (PrivilegedAction<String>)
-                     () -> healthInfo.clusterHealth.getHealthStatus().toString()))
+               .entity(Security.doAs(request.getSubject(), () -> healthInfo.clusterHealth.getHealthStatus().toString()))
                .status(OK);
       } else {
          addEntityAsJson(healthInfo.toJson(), responseBuilder, isPretty(request));
@@ -304,10 +302,9 @@ public class ContainerResource implements ResourceHandler {
       boolean pretty = isPretty(request);
       return Flowable.fromIterable(cachesHealth)
             .map(chHealth -> getCacheInfo(request, cacheManager, subjectCacheManager, ignoredCaches,
-                                          finalLocalTopologyManager, finalClusterRebalancingEnabled, chHealth))
+                  finalLocalTopologyManager, finalClusterRebalancingEnabled, chHealth))
             .sorted(Comparator.comparing(c -> c.name))
-            .collect(Collectors.toList())
-            .map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder, pretty).build())
+            .collect(Collectors.toList()).map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder, pretty).build())
             .toCompletionStage();
    }
 
@@ -620,9 +617,8 @@ public class ContainerResource implements ResourceHandler {
                            stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType, pretty)));
                         }
                      } : null,
-               () -> Security.doPrivileged((PrivilegedAction<Object>) () -> {
+               () -> Security.doPrivileged(() -> {
                   cacheManager.removeListenerAsync(this);
-                  return null;
                }));
       }
 

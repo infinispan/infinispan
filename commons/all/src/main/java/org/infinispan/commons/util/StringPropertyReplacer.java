@@ -22,7 +22,7 @@ public class StringPropertyReplacer {
    /**
     * New line string constant
     */
-   public static final String NEWLINE = SecurityActions.getProperty("line.separator", "\n");
+   public static final String NEWLINE = System.getProperty("line.separator", "\n");
 
    /**
     * File separator value
@@ -230,11 +230,11 @@ public class StringPropertyReplacer {
 
    private static String resolveKey(String key, Properties props) {
       if (key.startsWith("env.")) {
-         return SecurityActions.getEnv(key.substring(4));
+         return System.getenv(key.substring(4));
       } else if (props != null) {
          return props.getProperty(key);
       } else {
-         return SecurityActions.getProperty(key);
+         return System.getProperty(key);
       }
    }
 }

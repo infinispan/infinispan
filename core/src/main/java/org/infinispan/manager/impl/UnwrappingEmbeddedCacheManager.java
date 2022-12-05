@@ -2,6 +2,7 @@ package org.infinispan.manager.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * EmbeddedCacheManager used for cluster executor invocation so that caches are not wrapped with security

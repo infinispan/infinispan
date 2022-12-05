@@ -16,6 +16,7 @@ import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 
 class ClusterHealthImpl implements ClusterHealth {
 

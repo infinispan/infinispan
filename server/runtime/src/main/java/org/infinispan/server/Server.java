@@ -9,7 +9,6 @@ import java.io.ObjectOutput;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.PrivilegedActionException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +25,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.naming.spi.NamingManager;
 import javax.net.ssl.SSLContext;
 import javax.sql.DataSource;
@@ -218,7 +218,7 @@ public class Server implements ServerManagement, AutoCloseable {
       this(
             new File(DEFAULT_SERVER_ROOT_DIR),
             new File(DEFAULT_CONFIGURATION_FILE),
-            SecurityActions.getSystemProperties()
+            System.getProperties()
       );
    }
 
@@ -286,8 +286,8 @@ public class Server implements ServerManagement, AutoCloseable {
             // This will only happen when running multiple server instances in the same JVM (i.e. embedded tests)
             log.warn("Could not register the ServerInitialContextFactoryBuilder. JNDI will not be available");
          }
-      } catch (PrivilegedActionException e) {
-         throw new RuntimeException(e.getCause());
+      } catch (NamingException e) {
+         throw new RuntimeException(e);
       }
    }
 

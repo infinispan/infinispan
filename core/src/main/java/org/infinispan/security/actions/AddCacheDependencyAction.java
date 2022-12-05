@@ -20,7 +20,7 @@ public class AddCacheDependencyAction extends AbstractEmbeddedCacheManagerAction
    }
 
    @Override
-   public Void run() {
+   public Void get() {
       cacheManager.addCacheDependency(from, to);
       return null;
    }

@@ -22,6 +22,7 @@ import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Entry point for performing Infinispan queries.

@@ -2,7 +2,6 @@ package org.infinispan.security.impl;
 
 import static org.infinispan.util.logging.Log.SECURITY;
 
-import java.security.AccessControlException;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
@@ -94,33 +93,15 @@ public class Authorizer {
 
    public void checkPermission(AuthorizationConfiguration configuration, Subject subject, String explicitName, AuditContext explicitContext, String role, AuthorizationPermission perm) {
       if (globalConfiguration.authorization().enabled()) {
-         if (Security.isPrivileged()) {
-            Security.checkPermission(perm.getSecurityPermission());
-         } else {
+         if (!Security.isPrivileged()) {
             subject = subject != null ? subject : Security.getSubject();
-            try {
-               if (subject != null) {
-                  if (checkSubjectPermissionAndRole(subject, configuration, perm, role)) {
-                     audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.ALLOW);
-                  } else {
-                     checkSecurityManagerPermission(perm);
-                  }
-               } else {
-                  checkSecurityManagerPermission(perm);
-               }
-            } catch (SecurityException e) {
+            if (subject != null && checkSubjectPermissionAndRole(subject, configuration, perm, role)) {
+               audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.ALLOW);
+            } else {
                audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.DENY);
                throw SECURITY.unauthorizedAccess(Util.prettyPrintSubject(subject), perm.toString());
             }
          }
-      }
-   }
-
-   private void checkSecurityManagerPermission(AuthorizationPermission perm) {
-      if (System.getSecurityManager() != null) {
-         System.getSecurityManager().checkPermission(perm.getSecurityPermission());
-      } else {
-         throw new AccessControlException("", perm.getSecurityPermission());
       }
    }
 

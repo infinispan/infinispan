@@ -6,6 +6,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * EventLogManager.

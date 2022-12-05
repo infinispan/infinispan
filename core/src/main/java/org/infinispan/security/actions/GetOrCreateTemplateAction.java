@@ -1,6 +1,6 @@
 package org.infinispan.security.actions;
 
-import java.security.PrivilegedAction;
+import java.util.function.Supplier;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -11,7 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Tristan Tarrant
  * @since 12.1
  */
-public class GetOrCreateTemplateAction implements PrivilegedAction<Configuration> {
+public class GetOrCreateTemplateAction implements Supplier<Configuration> {
 
    private final String cacheName;
    private final EmbeddedCacheManager cacheManager;
@@ -24,7 +24,7 @@ public class GetOrCreateTemplateAction implements PrivilegedAction<Configuration
    }
 
    @Override
-   public Configuration run() {
+   public Configuration get() {
       return cacheManager.administration().getOrCreateTemplate(cacheName, configuration);
    }
 }

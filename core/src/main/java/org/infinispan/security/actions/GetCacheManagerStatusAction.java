@@ -16,7 +16,7 @@ public class GetCacheManagerStatusAction extends AbstractEmbeddedCacheManagerAct
    }
 
    @Override
-   public ComponentStatus run() {
+   public ComponentStatus get() {
       return cacheManager.getStatus();
    }
 

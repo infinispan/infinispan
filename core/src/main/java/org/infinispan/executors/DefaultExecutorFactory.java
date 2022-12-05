@@ -1,6 +1,5 @@
 package org.infinispan.executors;
 
-import java.security.AccessControlContext;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -11,7 +10,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.executors.SecurityAwareExecutorFactory;
+import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.NonBlockingThreadFactory;
@@ -23,16 +22,11 @@ import org.infinispan.factories.threads.NonBlockingThreadFactory;
  * @author Tristan Tarrant
  * @since 4.0
  */
-public class DefaultExecutorFactory implements SecurityAwareExecutorFactory {
+public class DefaultExecutorFactory implements ExecutorFactory {
    private final AtomicInteger counter = new AtomicInteger(0);
 
    @Override
    public ExecutorService getExecutor(Properties p) {
-      return getExecutor(p, null);
-   }
-
-   @Override
-   public ExecutorService getExecutor(Properties p, final AccessControlContext context) {
       TypedProperties tp = TypedProperties.toTypedProperties(p);
       int maxThreads = tp.getIntProperty("maxThreads", 1);
       int queueSize = tp.getIntProperty("queueSize", 100000);

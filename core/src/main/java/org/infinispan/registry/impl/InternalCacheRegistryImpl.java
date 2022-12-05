@@ -19,6 +19,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

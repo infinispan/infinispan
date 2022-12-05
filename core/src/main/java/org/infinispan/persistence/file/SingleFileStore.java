@@ -5,8 +5,10 @@ import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
@@ -40,6 +42,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AbstractSegmentedStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
@@ -63,7 +66,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -193,9 +195,9 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       try {
          Path resolvedPath = PersistenceUtil.getLocation(ctx.getGlobalConfiguration(), configuration.location());
          file = getStoreFile(resolvedPath.toString(), cacheName());
-         boolean hasSingleFile = SecurityActions.fileExists(file);
+         boolean hasSingleFile = file.exists();
          if (hasSingleFile) {
-            channel = SecurityActions.openFileChannel(file);
+            channel = new RandomAccessFile(file, "rw").getChannel();
 
             byte[] magicHeader = validateExistingFile(channel, file.getAbsolutePath());
             if (magicHeader != null) {
@@ -210,7 +212,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
             // No existing files
             if (!readOnly) {
                File dir = file.getParentFile();
-               if (!SecurityActions.createDirectoryIfNeeded(dir)) {
+               if (!(dir.mkdirs() || dir.exists())) {
                   throw PERSISTENCE.directoryCannotBeCreated(dir.getAbsolutePath());
                }
 
@@ -231,7 +233,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
       for (int segment = 0; segment < numSegments; segment++) {
          File segmentFile = getComposedSegmentFile(segment);
-         if (SecurityActions.fileExists(segmentFile))
+         if (segmentFile.exists())
             return true;
       }
       return false;
@@ -258,10 +260,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       PERSISTENCE.startMigratingPersistenceData(cacheName());
       File newFile = new File(file.getParentFile(), cacheName() + "_new.dat");
       try {
-         if (SecurityActions.fileExists(newFile)) {
+         if (newFile.exists()) {
             if (log.isTraceEnabled()) log.tracef("Overwriting temporary migration file %s", newFile);
             // Delete file to overwrite permissions as well
-            SecurityActions.deleteFile(newFile);
+            newFile.delete();
          }
 
          try (FileChannel newChannel = createNewFile(newFile)) {
@@ -271,9 +273,9 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          //close old file
          channel.close();
          //replace old file with the new file
-         SecurityActions.moveFile(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
          //reopen the file
-         channel = SecurityActions.openFileChannel(file);
+         channel = new RandomAccessFile(file, "rw").getChannel();
          PERSISTENCE.persistedDataSuccessfulMigrated(cacheName());
       } catch (IOException e) {
          throw PERSISTENCE.persistedDataMigrationFailed(cacheName(), e);
@@ -303,7 +305,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private FileChannel createNewFile(File newFile) throws IOException {
-      FileChannel newChannel = SecurityActions.openFileChannel(newFile);
+      FileChannel newChannel = new RandomAccessFile(newFile, "rw").getChannel();
       try {
          // Write Magic
          newChannel.truncate(0);
@@ -350,7 +352,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
-      return CompletableFutures.booleanStage(SecurityActions.fileExists(file));
+      return CompletableFutures.booleanStage(file.exists());
    }
 
    /**
@@ -424,10 +426,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       PERSISTENCE.startMigratingPersistenceData(cacheName());
       File newFile = new File(file.getParentFile(), cacheName() + "_new.dat");
       try {
-         if (SecurityActions.fileExists(newFile)) {
+         if (newFile.exists()) {
             if (log.isTraceEnabled()) log.tracef("Overwriting temporary migration file %s", newFile);
             // Delete file to overwrite permissions as well
-            SecurityActions.deleteFile(newFile);
+            newFile.delete();
          }
 
          try (FileChannel newChannel = createNewFile(newFile)) {
@@ -435,10 +437,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          }
 
          // Move the new file to the final name
-         SecurityActions.moveFile(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         Files.move(newFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
          // Reopen the file
-         channel = SecurityActions.openFileChannel(file);
+         channel = new RandomAccessFile(file, "rw").getChannel();
 
          // Remove the composed segment files
          removeComposedSegmentedLoadWriteStoreFiles();
@@ -455,8 +457,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
       for (int segment = 0; segment < numSegments; segment++) {
          File segmentFile = getComposedSegmentFile(segment);
-         if (SecurityActions.fileExists(segmentFile)) {
-            try (FileChannel segmentChannel = SecurityActions.openFileChannel(segmentFile)) {
+         if (segmentFile.exists()) {
+            try (FileChannel segmentChannel = new RandomAccessFile(segmentFile, "rw").getChannel()) {
                byte[] magic = validateExistingFile(segmentChannel, segmentFile.toString());
                copyEntriesFromOldFile(magic, newChannel, segmentChannel, segmentFile.toString());
             }
@@ -470,12 +472,12 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       int numSegments = ctx.getCache().getCacheConfiguration().clustering().hash().numSegments();
       for (int segment = 0; segment < numSegments; segment++) {
          File segmentFile = getComposedSegmentFile(segment);
-         if (SecurityActions.fileExists(segmentFile)) {
-            SecurityActions.deleteFile(segmentFile);
+         if (segmentFile.exists()) {
+            segmentFile.delete();
             File parentDir = segmentFile.getParentFile();
             if (parentDir != null && parentDir.isDirectory() && parentDir.list().length == 0) {
                // The segment directory is empty, remove it
-               SecurityActions.deleteFile(parentDir);
+               parentDir.delete();
             }
          }
       }
@@ -562,10 +564,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       // Day before the release of Infinispan 10.0.0.Final
       // This was the first release that SFS migrations on startup could be migrated from via ISPN 10 -> 11 -> 12
       long sanityEpoch = LocalDate.of(2019, 10, 26)
-                                  .atStartOfDay()
-                                  .atZone(ZoneId.systemDefault())
-                                  .toInstant()
-                                  .toEpochMilli();
+            .atStartOfDay()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli();
       long currentTs = timeService.wallClockTime();
 
       int entriesRecovered = 0;
@@ -1242,7 +1244,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
          return publishSegmentKeys(k -> keyMatches(segments, filter, k), 0);
       }
       return Flowable.fromIterable(segments)
-                     .concatMap(segment -> publishSegmentKeys(filter, segment));
+            .concatMap(segment -> publishSegmentKeys(filter, segment));
    }
 
    private Publisher<K> publishSegmentKeys(Predicate<? super K> filter, int segment) {
@@ -1295,7 +1297,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       }
 
       return Flowable.fromIterable(segments)
-                     .concatMap(segment -> publishSegmentEntries(segment, filter, includeValues));
+            .concatMap(segment -> publishSegmentEntries(segment, filter, includeValues));
    }
 
    private Publisher<MarshallableEntry<K, V>> publishSegmentEntries(int segment, Predicate<? super K> filter,
@@ -1311,7 +1313,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private Flowable<MarshallableEntry<K, V>> blockingPublishSegmentEntries(int segment, Predicate<? super K> filter,
-                                                                          boolean includeValues, long stamp) {
+                                                                           boolean includeValues, long stamp) {
       List<KeyValuePair<K, FileEntry>> keysToLoad;
       long now = ctx.getTimeService().wallClockTime();
       if (stamp == 0) {
@@ -1573,10 +1575,10 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
       long stamp = resizeLock.readLock();
       try {
          return Arrays.stream(entries)
-                      .flatMap(segmentEntries -> segmentEntries != null ?
-                                               segmentEntries.entrySet().stream() :
-                                               Stream.empty())
-                      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+               .flatMap(segmentEntries -> segmentEntries != null ?
+                     segmentEntries.entrySet().stream() :
+                     Stream.empty())
+               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       } finally {
          resizeLock.unlockRead(stamp);
       }
@@ -1611,8 +1613,8 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
             // Only use LinkedHashMap (LRU) for entries when cache store is bounded
             Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
-                                         new LinkedHashMap<>(16, 0.75f, true) :
-                                         new HashMap<>();
+                  new LinkedHashMap<>(16, 0.75f, true) :
+                  new HashMap<>();
             entries[segment] = Collections.synchronizedMap(entryMap);
          }
       } finally {

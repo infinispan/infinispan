@@ -15,7 +15,7 @@ public class GetCacheManagerIsCoordinatorAction extends AbstractEmbeddedCacheMan
    }
 
    @Override
-   public Boolean run() {
+   public Boolean get() {
       return cacheManager.isCoordinator();
    }
 }

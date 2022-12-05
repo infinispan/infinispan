@@ -65,17 +65,7 @@ import io.netty.channel.ChannelId;
  */
 class Encoder2x implements VersionedEncoder {
    private static final Log log = LogFactory.getLog(Encoder2x.class, Log.class);
-   private static final int topologyCheckInterval;
-
-   static {
-      String intervalStr = SecurityActions.getSystemProperty("infinispan.server.topology-check-interval");
-      if (intervalStr != null) {
-         topologyCheckInterval = Integer.parseInt(intervalStr);
-      } else {
-         // Default interval of 5 seconds
-         topologyCheckInterval = 5_000;
-      }
-   }
+   private static final int topologyCheckInterval = Integer.getInteger("infinispan.server.topology-check-interval", 5_000);
 
    private static final Encoder2x INSTANCE = new Encoder2x();
 

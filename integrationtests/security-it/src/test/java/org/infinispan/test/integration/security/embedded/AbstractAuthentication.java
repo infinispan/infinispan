@@ -2,7 +2,6 @@ package org.infinispan.test.integration.security.embedded;
 
 import static org.junit.Assert.assertEquals;
 
-import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -95,14 +94,11 @@ public abstract class AbstractAuthentication {
       }
 
       Subject admin = getAdminSubject();
-      Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            manager = new DefaultCacheManager(globalConfig.build());
-            manager.defineConfiguration(CACHE_NAME, cacheConfig.build());
-            secureCache = manager.getCache(CACHE_NAME);
-            secureCache.put(TEST_ENTRY_KEY, TEST_ENTRY_VALUE);
-            return null;
-         }
+      Security.doAs(admin, () -> {
+         manager = new DefaultCacheManager(globalConfig.build());
+         manager.defineConfiguration(CACHE_NAME, cacheConfig.build());
+         secureCache = manager.getCache(CACHE_NAME);
+         secureCache.put(TEST_ENTRY_KEY, TEST_ENTRY_VALUE);
       });
    }
 
@@ -110,144 +106,92 @@ public abstract class AbstractAuthentication {
    public void tearDown() throws Exception {
       if (manager != null) {
          Subject admin = getAdminSubject();
-         Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
-            public Void run() {
-               manager.stop();
-               return null;
-            }
-         });
+         Security.doAs(admin, () -> manager.stop());
       }
    }
 
    @Test
    public void testAdminCRUD() throws Exception {
       Subject admin = getAdminSubject();
-      Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
-            secureCache.putIfAbsent("test", "test value");
-            assertEquals("test value", secureCache.get("test"));
-            secureCache.put("test", "test value2");
-            assertEquals("test value2", secureCache.get("test"));
-            secureCache.remove("test");
-            assertEquals(null, secureCache.get("test"));
-            secureCache.clear();
-            assertEquals(0, secureCache.size());
-            return null;
-         }
+      Security.doAs(admin, () -> {
+         assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
+         secureCache.putIfAbsent("test", "test value");
+         assertEquals("test value", secureCache.get("test"));
+         secureCache.put("test", "test value2");
+         assertEquals("test value2", secureCache.get("test"));
+         secureCache.remove("test");
+         assertEquals(null, secureCache.get("test"));
+         secureCache.clear();
+         assertEquals(0, secureCache.size());
       });
    }
 
    @Test
    public void testWriterWrite() throws Exception {
       Subject writer = getWriterSubject();
-      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.put("test", "test value");
-            return null;
-         }
-      });
+      Security.doAs(writer, () -> secureCache.put("test", "test value")
+      );
    }
 
    @Test
    public void testWriterRemove() throws Exception {
       Subject writer = getWriterSubject();
-      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.remove(TEST_ENTRY_KEY);
-            return null;
-         }
-      });
+      Security.doAs(writer, () -> secureCache.remove(TEST_ENTRY_KEY));
    }
 
-   @Test(expected = java.security.PrivilegedActionException.class)
+   @Test(expected = SecurityException.class)
    public void testWriterRead() throws Exception {
       Subject writer = getWriterSubject();
-      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.get(TEST_ENTRY_KEY);
-            return null;
-         }
-      });
+      Security.doAs(writer, () -> secureCache.get(TEST_ENTRY_KEY));
    }
 
    @Test
    public void testReaderRead() throws Exception {
       Subject reader = getReaderSubject();
-      Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
-            return null;
-         }
-      });
+      Security.doAs(reader, () -> assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY)));
    }
 
-   @Test(expected = java.security.PrivilegedActionException.class)
+   @Test(expected = SecurityException.class)
    public void testReaderWrite() throws Exception {
       Subject reader = getReaderSubject();
-      Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.put("test", "test value");
-            return null;
-         }
-      });
+      Security.doAs(reader, () -> secureCache.put("test", "test value"));
    }
 
-   @Test(expected = java.security.PrivilegedActionException.class)
+   @Test(expected = SecurityException.class)
    public void testReaderRemove() throws Exception {
       Subject reader = getReaderSubject();
-      Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.remove(TEST_ENTRY_KEY);
-            return null;
-         }
-      });
+      Security.doAs(reader, () -> secureCache.remove(TEST_ENTRY_KEY));
    }
 
-   @Test(expected = java.security.PrivilegedActionException.class)
+   @Test(expected = SecurityException.class)
    public void testUnprivilegedRead() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
-      Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.get(TEST_ENTRY_KEY);
-            return null;
-         }
-      });
+      Security.doAs(unprivileged, () -> secureCache.get(TEST_ENTRY_KEY));
    }
 
-   @Test(expected = java.security.PrivilegedActionException.class)
+   @Test(expected = SecurityException.class)
    public void testUnprivilegedWrite() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
-      Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.put("test", "test value");
-            return null;
-         }
-      });
+      Security.doAs(unprivileged, ()-> secureCache.put("test", "test value"));
    }
 
-   @Test(expected = java.security.PrivilegedActionException.class)
+   @Test(expected = SecurityException.class)
    public void testUnprivilegedRemove() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
-      Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
-         public Void run() {
-            secureCache.remove(TEST_ENTRY_KEY);
-            return null;
-         }
-      });
+      Security.doAs(unprivileged, () -> secureCache.remove(TEST_ENTRY_KEY));
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = SecurityException.class)
    public void testUnauthenticatedRead() {
       secureCache.get(TEST_ENTRY_KEY);
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = SecurityException.class)
    public void testUnauthenticatedWrite() {
       secureCache.put("test", "value");
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = SecurityException.class)
    public void testUnauthenticatedRemove() {
       secureCache.remove(TEST_ENTRY_KEY);
    }

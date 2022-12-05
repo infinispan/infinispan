@@ -16,7 +16,7 @@ public class GetCacheConfigurationAction extends AbstractAdvancedCacheAction<Con
    }
 
    @Override
-   public Configuration run() {
+   public Configuration get() {
       return cache.getCacheConfiguration();
    }
 

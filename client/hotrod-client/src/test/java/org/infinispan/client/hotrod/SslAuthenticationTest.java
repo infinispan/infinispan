@@ -3,9 +3,6 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
-
 import javax.security.auth.Subject;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -49,7 +46,7 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global
-         .security()
+            .security()
             .authorization()
                .enable()
                .principalRoleMapper(new CommonNameRoleMapper())
@@ -75,10 +72,13 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Object>) () -> {
-         cacheManager = createCacheManager();
-         if (cache == null) cache = cacheManager.getCache();
-         return null;
+      Security.doAs(ADMIN, () -> {
+         try {
+            cacheManager = createCacheManager();
+            if (cache == null) cache = cacheManager.getCache();
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
       });
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
@@ -94,25 +94,22 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
                .trustStoreType(TestCertificates.KEYSTORE_TYPE);
       serverBuilder
             .authentication()
-               .enable()
-               .serverName("localhost")
-               .addAllowedMech("EXTERNAL")
-               .serverAuthenticationProvider(sap);
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Object>) () -> {
-         hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder);
-         return null;
-      });
+            .enable()
+            .serverName("localhost")
+            .addAllowedMech("EXTERNAL")
+            .serverAuthenticationProvider(sap);
+      Security.doAs(ADMIN, () -> hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager, serverBuilder));
 
       log.info("Started server on port: " + hotrodServer.getPort());
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder
             .addServer()
-               .host("127.0.0.1")
-               .port(hotrodServer.getPort())
+            .host("127.0.0.1")
+            .port(hotrodServer.getPort())
             .socketTimeout(3000)
             .connectionPool()
-               .maxActive(1)
+            .maxActive(1)
             .security()
                .authentication()
                   .enable()
@@ -140,23 +137,20 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, (PrivilegedAction<Object>) () -> {
-         cacheManager.getCache().clear();
-         return null;
-      });
+      Security.doAs(ADMIN, () -> cacheManager.getCache().clear());
    }
 
 
    public void testSSLAuthentication() {
       RemoteCache<String, String> cache = remoteCacheManager.getCache();
-      cache.put("k","v");
+      cache.put("k", "v");
       assertEquals("v", cache.get("k"));
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000287.*")
    public void testSSLUnauthorized() {
       RemoteCache<String, String> cache = remoteCacheManager.getCache(UNAUTHORIZED);
-      cache.put("k1","v1");
+      cache.put("k1", "v1");
       assertEquals("v1", cache.get("k1"));
    }
 }

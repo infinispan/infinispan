@@ -41,6 +41,7 @@ import org.infinispan.security.MutableRolePermissionMapper;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.impl.SubjectACL;

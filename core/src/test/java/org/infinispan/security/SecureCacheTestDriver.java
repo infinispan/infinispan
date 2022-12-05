@@ -156,7 +156,7 @@ public class SecureCacheTestDriver {
       cache.putAsyncEntry("a", "a", metadata);
    }
 
-   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)
+   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE)
    public void testStop(SecureCache<String, String> cache) {
       cache.stop();
       cache.start();
@@ -743,7 +743,7 @@ public class SecureCacheTestDriver {
       cache.getAdvancedCache().removeMaxIdleExpired("a", "a");
    }
 
-   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)
+   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE)
    public void testShutdown(SecureCache<String, String> cache) {
       cache.shutdown();
       cache.start();

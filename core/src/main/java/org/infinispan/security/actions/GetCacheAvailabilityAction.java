@@ -16,7 +16,7 @@ public class GetCacheAvailabilityAction extends AbstractAdvancedCacheAction<Avai
    }
 
    @Override
-   public AvailabilityMode run() {
+   public AvailabilityMode get() {
       return cache.getAvailability();
    }
 

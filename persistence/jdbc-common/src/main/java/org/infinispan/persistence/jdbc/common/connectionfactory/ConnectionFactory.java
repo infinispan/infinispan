@@ -2,6 +2,7 @@ package org.infinispan.persistence.jdbc.common.connectionfactory;
 
 import java.sql.Connection;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.spi.PersistenceException;
 
@@ -16,7 +17,7 @@ public abstract class ConnectionFactory {
     * name.
     */
    public static ConnectionFactory getConnectionFactory(Class<? extends ConnectionFactory> connectionFactoryClass) throws PersistenceException {
-      return SecurityActions.getClassInstance(connectionFactoryClass);
+      return Util.getInstance(connectionFactoryClass);
    }
 
    /**

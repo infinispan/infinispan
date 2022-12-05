@@ -11,7 +11,6 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
-import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.core.impl.QueryEngine;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryImpl;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
@@ -23,7 +22,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * <b>EXPERIMENTAL</b>
@@ -35,9 +34,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 10.1
  */
 public final class Search {
-
-   private static final Log log = LogFactory.getLog(Search.class, Log.class);
-
    private Search() {
       // prevent instantiation
    }

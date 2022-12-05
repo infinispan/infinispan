@@ -12,8 +12,6 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -73,14 +71,7 @@ public class ClassLoaderAwareCache<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    void setContextClassLoader(final ClassLoader classLoader) {
-      PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            Thread.currentThread().setContextClassLoader(classLoader);
-            return null;
-         }
-      };
-      AccessController.doPrivileged(action);
+      Thread.currentThread().setContextClassLoader(classLoader);
    }
 
    class ClassLoaderAwareCommandInterceptor extends BaseAsyncInterceptor {

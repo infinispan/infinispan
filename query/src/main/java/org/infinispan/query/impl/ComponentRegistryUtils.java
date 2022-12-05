@@ -14,6 +14,7 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Lookup methods for various internal components of search module.
@@ -36,7 +37,7 @@ public final class ComponentRegistryUtils {
    }
 
    private static void ensureIndexed(Cache<?, ?> cache) {
-      Configuration cfg = SecurityActions.getCacheConfiguration(cache);
+      Configuration cfg = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       if (!cfg.indexing().enabled()) {
          throw new IllegalStateException("Indexing was not enabled on cache " + cache.getName());
       }

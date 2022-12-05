@@ -13,6 +13,7 @@ import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
 import org.infinispan.server.hotrod.tx.PrepareCoordinator;

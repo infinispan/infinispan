@@ -6,6 +6,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * A {@link ClusteredLockManager} factory for embedded caches.

@@ -5,7 +5,6 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.PrivilegedAction;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestResponse;
@@ -32,10 +31,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    @Override
    public void createBeforeMethod() {
       //Clear schema cache to avoid conflicts between methods
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
-         cacheManagers.get(0).getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME).clear();
-         return null;
-      });
+      Security.doAs(ADMIN, () -> cacheManagers.get(0).getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME).clear());
    }
 
    public void listSchemasWhenEmpty() {

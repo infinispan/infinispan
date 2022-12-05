@@ -20,18 +20,18 @@ public class LegacyKeySupportSystemProperties {
    }
 
    public static String getProperty(String key, String legacyKey) {
-      String val = SecurityActions.getProperty(key);
+      String val = System.getProperty(key);
       if (val == null) {
-         val = SecurityActions.getProperty(legacyKey);
+         val = System.getProperty(legacyKey);
          if (val != null) warnLegacy(legacyKey, key);
       }
       return val;
    }
 
    public static String getProperty(String key, String legacyKey, String defaultValue) {
-      String val = SecurityActions.getProperty(key);
+      String val = System.getProperty(key);
       if (val == null) {
-         val = SecurityActions.getProperty(legacyKey);
+         val = System.getProperty(legacyKey);
          if (val != null)
             warnLegacy(legacyKey, key);
          else

@@ -1,7 +1,5 @@
 package org.infinispan.cdi.common.util;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -186,7 +184,9 @@ public class BeanManagerProvider implements Extension
         }
 
         return result;
-    }    /**
+    }
+
+    /**
      * Detect the right ClassLoader.
      * The lookup order is determined by:
      * <ol>
@@ -198,53 +198,14 @@ public class BeanManagerProvider implements Extension
      * @param o if not <code>null</code> it may get used to detect the classloader.
      * @return The {@link ClassLoader} which should get used to create new instances
      */
-    public static ClassLoader getClassLoader(Object o)
-    {
-        if (System.getSecurityManager() != null)
-        {
-            return AccessController.doPrivileged(new GetClassLoaderAction(o));
-        }
-        else
-        {
-            return getClassLoaderInternal(o);
-        }
-    }
-    static class GetClassLoaderAction implements PrivilegedAction<ClassLoader>
-    {
-        private Object object;
-        GetClassLoaderAction(Object object)
-        {
-            this.object = object;
-        }
-
-        @Override
-        public ClassLoader run()
-        {
-            try
-            {
-                return getClassLoaderInternal(object);
-            }
-            catch (Exception e)
-            {
-                return null;
-            }
-        }
-    }
-
-    private static ClassLoader getClassLoaderInternal(Object o)
-    {
+    public static ClassLoader getClassLoader(Object o) {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-
-        if (loader == null && o != null)
-        {
+        if (loader == null && o != null) {
             loader = o.getClass().getClassLoader();
         }
-
-        if (loader == null)
-        {
+        if (loader == null) {
             loader = BeanManagerProvider.class.getClassLoader();
         }
-
         return loader;
     }
 

@@ -2,7 +2,6 @@ package org.infinispan.rest.cachemanager;
 
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 
-import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +44,7 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.topology.LocalTopologyManager;
@@ -216,7 +216,7 @@ public class RestCacheManager<V> {
       if (subject == null) {
          return instance.administration();
       } else {
-         return Security.doAs(subject, (PrivilegedAction<EmbeddedCacheManagerAdmin>) () -> instance.administration().withSubject(subject));
+         return Security.doAs(subject, () -> instance.administration().withSubject(subject));
       }
    }
 
@@ -240,7 +240,7 @@ public class RestCacheManager<V> {
       }
 
       return requestMembers(dm.getCacheTopology().getMembers(), ecm -> {
-         Cache<?, ?> c = SecurityActions.getCache(cacheName, ecm);
+         Cache<?, ?> c = SecurityActions.getCache(ecm, cacheName);
          return CacheDistributionInfo.resolve(c.getAdvancedCache());
       });
    }
@@ -267,7 +267,7 @@ public class RestCacheManager<V> {
 
                final Address p = primary;
                return requestMembers(members, ecm -> {
-                  Cache<?, ?> c = SecurityActions.getCache(cacheName, ecm);
+                  Cache<?, ?> c = SecurityActions.getCache(ecm, cacheName);
                   boolean isPrimary = p != null && ecm.getAddress().equals(p);
                   return KeyDistributionInfo.resolve(c.getAdvancedCache(), isPrimary);
                }).thenApply(d -> new CompleteKeyDistribution(d, contains));

@@ -1,6 +1,5 @@
 package org.infinispan.server.core.admin;
 
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +45,7 @@ public abstract class AdminOperationsHandler implements TaskEngine {
       return blockingManager.supplyBlocking(() -> {
          try {
             if (context.getSubject().isPresent()) {
-               return Security.doAs(context.getSubject().get(), (PrivilegedAction<T>) () -> task.execute(context));
+               return Security.doAs(context.getSubject().get(), () -> task.execute(context));
             } else {
                return task.execute(context);
             }

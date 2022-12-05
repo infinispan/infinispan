@@ -16,7 +16,7 @@ public class GetGlobalComponentRegistryAction extends AbstractEmbeddedCacheManag
    }
 
    @Override
-   public GlobalComponentRegistry run() {
+   public GlobalComponentRegistry get() {
       return cacheManager.getGlobalComponentRegistry();
    }
 

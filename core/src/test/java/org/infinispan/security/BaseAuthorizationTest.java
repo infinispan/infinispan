@@ -1,6 +1,5 @@
 package org.infinispan.security;
 
-import java.security.PrivilegedAction;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -39,7 +38,7 @@ public abstract class BaseAuthorizationTest extends SingleCacheManagerTest {
          globalRoles.role(perm.toString()).permission(perm);
       }
       ConfigurationBuilder config = createCacheConfiguration(global);
-      return Security.doAs(ADMIN, (PrivilegedAction<EmbeddedCacheManager>) () -> TestCacheManagerFactory.createCacheManager(global, config));
+      return Security.doAs(ADMIN, () -> TestCacheManagerFactory.createCacheManager(global, config));
    }
 
    protected ConfigurationBuilder createCacheConfiguration(GlobalConfigurationBuilder global) {
@@ -59,23 +58,11 @@ public abstract class BaseAuthorizationTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            BaseAuthorizationTest.super.teardown();
-            return null;
-         }
-      });
+      Security.doAs(ADMIN, () -> BaseAuthorizationTest.super.teardown());
    }
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            cacheManager.getCache().clear();
-            return null;
-         }
-      });
+      Security.doAs(ADMIN, () -> cacheManager.getCache().clear());
    }
 }

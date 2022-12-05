@@ -4,8 +4,6 @@ import static org.infinispan.commons.util.ReflectionUtil.invokeMethod;
 import static org.infinispan.transaction.impl.WriteSkewHelper.addVersionRead;
 
 import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,9 +39,12 @@ public class GroupManagerImpl implements GroupManager {
 
    private static final Log log = LogFactory.getLog(GroupManagerImpl.class);
 
-   @Inject ComponentRegistry componentRegistry;
-   @Inject ComponentRef<EntryFactory> entryFactory;
-   @Inject ComponentRef<VersionGenerator> versionGenerator;
+   @Inject
+   ComponentRegistry componentRegistry;
+   @Inject
+   ComponentRef<EntryFactory> entryFactory;
+   @Inject
+   ComponentRef<VersionGenerator> versionGenerator;
 
    private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
    private final List<Grouper<?>> groupers;
@@ -134,25 +135,13 @@ public class GroupManagerImpl implements GroupManager {
 
       @Override
       public Object getGroup(Object instance) {
-         if (System.getSecurityManager() == null) {
-            method.setAccessible(true);
-         } else {
-            AccessController.doPrivileged((PrivilegedAction<List<Method>>) () -> {
-               method.setAccessible(true);
-               return null;
-            });
-         }
+         method.setAccessible(true);
          return invokeMethod(instance, method, Util.EMPTY_OBJECT_ARRAY);
       }
    }
 
    private static GroupMetadata createGroupMetadata(Class<?> clazz) {
-      Collection<Method> possibleMethods;
-      if (System.getSecurityManager() == null) {
-         possibleMethods = ReflectionUtil.getAllMethods(clazz, Group.class);
-      } else {
-         possibleMethods = AccessController.doPrivileged((PrivilegedAction<List<Method>>) () -> ReflectionUtil.getAllMethods(clazz, Group.class));
-      }
+      Collection<Method> possibleMethods = ReflectionUtil.getAllMethods(clazz, Group.class);
       if (possibleMethods.isEmpty())
          return GroupMetadata.NONE;
       else if (possibleMethods.size() == 1)

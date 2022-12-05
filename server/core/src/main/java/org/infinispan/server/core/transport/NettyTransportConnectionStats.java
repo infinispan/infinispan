@@ -12,6 +12,7 @@ import java.util.function.Function;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ProtocolServer;
 
 import io.netty.channel.group.ChannelGroup;

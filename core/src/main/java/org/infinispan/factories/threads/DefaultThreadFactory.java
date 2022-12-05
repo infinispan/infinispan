@@ -57,8 +57,7 @@ public class DefaultThreadFactory implements ThreadFactory {
       this.classLoader = Thread.currentThread().getContextClassLoader();
       this.name = name;
       if (threadGroup == null) {
-         final SecurityManager sm = System.getSecurityManager();
-         threadGroup = sm != null ? sm.getThreadGroup() : Thread.currentThread().getThreadGroup();
+         threadGroup = Thread.currentThread().getThreadGroup();
       }
       this.threadGroup = threadGroup;
       this.initialPriority = initialPriority;
@@ -107,7 +106,7 @@ public class DefaultThreadFactory implements ThreadFactory {
       thread.setName(nameInfo.format(thread, threadNamePattern));
       thread.setPriority(initialPriority);
       thread.setDaemon(true);
-      SecurityActions.setContextClassLoader(thread, classLoader);
+      thread.setContextClassLoader(classLoader);
       return thread;
    }
 

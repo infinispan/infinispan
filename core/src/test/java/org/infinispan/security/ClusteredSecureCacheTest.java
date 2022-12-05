@@ -7,8 +7,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.security.Principal;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -61,49 +59,43 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          authConfig.role(perm.toString());
       }
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+      Security.doAs(ADMIN,() -> {
          createCluster(global, builder, 2);
          waitForClusterToForm();
-         return null;
       });
    }
 
    @Override
    @AfterClass(alwaysRun = true)
    protected void destroy() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
-         ClusteredSecureCacheTest.super.destroy();
-         return null;
-      });
+      Security.doAs(ADMIN, () -> ClusteredSecureCacheTest.super.destroy());
    }
 
    @Override
    @AfterMethod(alwaysRun = true)
    protected void clearContent() throws Throwable {
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          try {
             ClusteredSecureCacheTest.super.clearContent();
          } catch (Throwable e) {
-            throw new Exception(e);
+            throw new RuntimeException(e);
          }
-         return null;
       });
    }
 
    public void testClusteredSecureCache() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          Cache<String, String> cache1 = cache(0);
          Cache<String, String> cache2 = cache(1);
          cache1.put("a", "a");
          cache2.put("b", "b");
          assertEquals("a", cache2.get("a"));
          assertEquals("b", cache1.get("b"));
-         return null;
       });
    }
 
    public void testSecureClusteredExecutor() {
-      ClusterExecutor executor = Security.doAs(SUBJECTS.get(AuthorizationPermission.EXEC), (PrivilegedAction<ClusterExecutor>) () -> manager(0).executor());
+      ClusterExecutor executor = Security.doAs(SUBJECTS.get(AuthorizationPermission.EXEC), () -> manager(0).executor());
       for (final AuthorizationPermission perm : AuthorizationPermission.values()) {
          Subject subject = SUBJECTS.get(perm);
          Security.doAs(subject, () -> {

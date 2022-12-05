@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -71,7 +72,9 @@ public class FileProvider {
       this.dataDir = dataDir.toFile();
       this.prefix = prefix;
       this.maxFileSize = maxFileSize;
-      if (!SecurityActions.createDirectoryIfNeeded(this.dataDir)) {
+      try {
+         Files.createDirectories(dataDir);
+      } catch (IOException e) {
          throw PERSISTENCE.directoryCannotBeCreated(this.dataDir.getAbsolutePath());
       }
    }
@@ -211,9 +214,9 @@ public class FileProvider {
 
       if (fileChannel == null) {
          if (create) {
-            fileChannel = SecurityActions.createChannel(file);
+            fileChannel = new FileOutputStream(file).getChannel();
          } else {
-            fileChannel = SecurityActions.openFileChannel(file);
+            fileChannel = new RandomAccessFile(file, "rw").getChannel();
          }
       }
 
@@ -225,7 +228,7 @@ public class FileProvider {
       try {
          for (;;) {
             File f = newFile(nextFileId);
-            if (SecurityActions.fileExists(f)) {
+            if (f.exists()) {
                if (nextFileId == Integer.MAX_VALUE) {
                   nextFileId = 0;
                } else {

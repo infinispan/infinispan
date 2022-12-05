@@ -1,8 +1,5 @@
 package org.infinispan.client.hotrod.admin;
 
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -40,28 +37,25 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
       template.read(builder.build());
       template.security().authorization().role("admin");
 
-      try {
-         EmbeddedCacheManager cm = Security.doPrivileged((PrivilegedExceptionAction<EmbeddedCacheManager>) () -> {
-            EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(gcb, builder);
-            cacheManager.defineConfiguration("template", builder.build());
-            cacheManager.defineConfiguration(DefaultTemplate.DIST_ASYNC.getTemplateName(), builder.build());
-            return cacheManager;
-         });
 
-         HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-         serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-         SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
-         sap.addUser("admin", "realm", "password".toCharArray(), "admin");
-         serverBuilder.authentication()
-                      .enable()
-                      .serverAuthenticationProvider(sap)
-                      .serverName("localhost")
-                      .addAllowedMech("CRAM-MD5");
-         HotRodServer server = Security.doPrivileged((PrivilegedExceptionAction<HotRodServer>) () -> HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder));
-         servers.add(server);
-         return server;
-      } catch (PrivilegedActionException e) {
-         throw new RuntimeException(e);
-      }
+      EmbeddedCacheManager cm = Security.doPrivileged(() -> {
+         EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(gcb, builder);
+         cacheManager.defineConfiguration("template", builder.build());
+         cacheManager.defineConfiguration(DefaultTemplate.DIST_ASYNC.getTemplateName(), builder.build());
+         return cacheManager;
+      });
+
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
+      sap.addUser("admin", "realm", "password".toCharArray(), "admin");
+      serverBuilder.authentication()
+            .enable()
+            .serverAuthenticationProvider(sap)
+            .serverName("localhost")
+            .addAllowedMech("CRAM-MD5");
+      HotRodServer server = Security.doPrivileged(() -> HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder));
+      servers.add(server);
+      return server;
    }
 }

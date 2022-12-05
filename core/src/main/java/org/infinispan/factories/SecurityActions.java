@@ -1,8 +1,6 @@
 package org.infinispan.factories;
 
 import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -11,7 +9,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * SecurityActions for the org.infinispan.factories package.
- *
+ * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other
  * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
@@ -34,19 +32,10 @@ final class SecurityActions {
    static void setValue(Object instance, String fieldName, Object value) {
       try {
          final Field f = findFieldRecursively(instance.getClass(), fieldName);
-         if (f == null)
+         if (f == null) {
             throw new NoSuchMethodException("Cannot find field " + fieldName + " on " + instance.getClass() + " or superclasses");
-         if (System.getSecurityManager() != null) {
-            AccessController.doPrivileged(new PrivilegedAction<Void>() {
-               @Override
-               public Void run() {
-                  f.setAccessible(true);
-                  return null;
-               }
-            });
-         } else {
-            f.setAccessible(true);
          }
+         f.setAccessible(true);
          f.set(instance, value);
       } catch (Exception e) {
          log.unableToSetValue(e);
@@ -55,7 +44,7 @@ final class SecurityActions {
 
 
    static void applyProperties(Object o, Properties p) {
-      for(Entry<Object, Object> entry : p.entrySet()) {
+      for (Entry<Object, Object> entry : p.entrySet()) {
          setValue(o, (String) entry.getKey(), entry.getValue());
       }
    }

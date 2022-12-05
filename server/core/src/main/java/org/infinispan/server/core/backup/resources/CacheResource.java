@@ -60,6 +60,7 @@ import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -213,7 +214,7 @@ public class CacheResource extends AbstractContainerResource {
    }
 
    private static Void createCacheFunction(String cacheName, String configXml, EmbeddedCacheManager m) {
-      GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
+      GlobalConfiguration globalConfig = SecurityActions.getCacheManagerConfiguration(m);
 
       log.debugf("Create cache %s locally. config=%s", cacheName, configXml);
       ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);

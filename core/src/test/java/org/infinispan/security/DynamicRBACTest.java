@@ -8,9 +8,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -43,7 +40,7 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          addClusterEnabledCacheManager(getGlobalConfigurationBuilder(), getConfigurationBuilder());
          addClusterEnabledCacheManager(getGlobalConfigurationBuilder(), getConfigurationBuilder());
          waitForClusterToForm();
@@ -79,12 +76,12 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
 
    public void testClusterPrincipalMapper() {
       crm.grant("writer", "A");
-      Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_A, () -> {
          cacheManagers.get(0).getCache().put("key", "value");
          return null;
       });
       crm.grant("reader", "B");
-      Security.doAs(SUBJECT_B, (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECT_B, () -> {
          assertEquals("value", cacheManagers.get(0).getCache().get("key"));
          return null;
       });
@@ -95,16 +92,16 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
       assertEquals(2, roles.size());
       assertTrue(roles.containsKey("wizard"));
       assertTrue(roles.containsKey("cleric"));
-      Cache<String, String> cpmCache = Security.doAs(ADMIN, (PrivilegedAction<Cache<String, String>>) () -> {
+      Cache<String, String> cpmCache = Security.doAs(ADMIN, () -> {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          builder.security().authorization().enable().roles("admin", "wizard", "cleric");
          return cacheManagers.get(0).createCache("cpm", builder.build(cacheManagers.get(0).getCacheManagerConfiguration()));
       });
-      Security.doAs(TestingUtil.makeSubject("wizard"), (PrivilegedAction<Void>) () -> {
+      Security.doAs(TestingUtil.makeSubject("wizard"), () -> {
          cpmCache.put("key", "value");
          return null;
       });
-      Security.doAs(TestingUtil.makeSubject("cleric"), (PrivilegedAction<Void>) () -> {
+      Security.doAs(TestingUtil.makeSubject("cleric"), () -> {
          assertEquals("value", cpmCache.get("key"));
          return null;
       });
@@ -113,7 +110,7 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
       assertEquals(1, roles.size());
    }
 
-   public void testJoiner() throws PrivilegedActionException {
+   public void testJoiner() {
       crm.grant("wizard", "gandalf");
       Cache<?, ?> crmCache = extractField(crm, "clusterRoleMap");
       ClusterTopologyManager crmTM = TestingUtil.extractComponent(crmCache, ClusterTopologyManager.class);
@@ -123,17 +120,17 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
       ClusterTopologyManager cpmTM = TestingUtil.extractComponent(cpmCache, ClusterTopologyManager.class);
       cpmTM.setRebalancingEnabled(false);
       try {
-         EmbeddedCacheManager joiner = Security.doAs(ADMIN, (PrivilegedExceptionAction<EmbeddedCacheManager>) () ->
+         EmbeddedCacheManager joiner = Security.doAs(ADMIN, () ->
                addClusterEnabledCacheManager(getGlobalConfigurationBuilder(), getConfigurationBuilder(), new TransportFlags().withFD(true))
          );
-         ClusterRoleMapper joinerCrm = Security.doAs(ADMIN, (PrivilegedExceptionAction<ClusterRoleMapper>) () -> (ClusterRoleMapper) joiner.getCacheManagerConfiguration().security().authorization().principalRoleMapper());
+         ClusterRoleMapper joinerCrm = Security.doAs(ADMIN, () -> (ClusterRoleMapper) joiner.getCacheManagerConfiguration().security().authorization().principalRoleMapper());
          TestingUtil.TestPrincipal gandalf = new TestingUtil.TestPrincipal("gandalf");
          assertTrue(crm.principalToRoles(gandalf).contains("wizard"));
          assertTrue(crm.list("gandalf").contains("wizard"));
          assertFalse(joinerCrm.principalToRoles(gandalf).contains("wizard"));
          assertFalse(joinerCrm.list("gandalf").contains("wizard"));
 
-         ClusterPermissionMapper joinerCpm = Security.doAs(ADMIN, (PrivilegedExceptionAction<ClusterPermissionMapper>) () -> (ClusterPermissionMapper) joiner.getCacheManagerConfiguration().security().authorization().rolePermissionMapper());
+         ClusterPermissionMapper joinerCpm = Security.doAs(ADMIN, () -> (ClusterPermissionMapper) joiner.getCacheManagerConfiguration().security().authorization().rolePermissionMapper());
          Role rogue0 = cpm.getRole("rogue");
          assertNotNull(rogue0);
          Role rogue2 = joinerCpm.getRole("rogue");
@@ -147,7 +144,7 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          DynamicRBACTest.super.destroy();
          return null;
       });
@@ -155,7 +152,7 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          cacheManagers.forEach(cm -> cm.getCache().clear());
          return null;
       });

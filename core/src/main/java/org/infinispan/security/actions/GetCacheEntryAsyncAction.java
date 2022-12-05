@@ -21,7 +21,7 @@ public class GetCacheEntryAsyncAction<K, V> extends AbstractAdvancedCacheAction<
    }
 
    @Override
-   public CompletionStage<CacheEntry<K, V>> run() {
+   public CompletionStage<CacheEntry<K, V>> get() {
       return ((AdvancedCache<K, V>) cache).getCacheEntryAsync(key);
    }
 }

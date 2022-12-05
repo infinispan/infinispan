@@ -1,13 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import static org.infinispan.security.Security.doPrivileged;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 
@@ -21,13 +19,6 @@ import org.infinispan.security.actions.GetCacheComponentRegistryAction;
  * @since 7.1
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
-   }
 
    static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
       return doPrivileged(new GetCacheComponentRegistryAction(cache));

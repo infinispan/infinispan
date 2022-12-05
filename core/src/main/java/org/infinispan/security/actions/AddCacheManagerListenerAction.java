@@ -18,7 +18,7 @@ public class AddCacheManagerListenerAction extends AbstractEmbeddedCacheManagerA
    }
 
    @Override
-   public Void run() {
+   public Void get() {
       cacheManager.addListener(listener);
       return null;
    }

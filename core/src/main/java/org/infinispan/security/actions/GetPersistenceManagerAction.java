@@ -15,7 +15,7 @@ public class GetPersistenceManagerAction extends AbstractEmbeddedCacheManagerAct
    }
 
    @Override
-   public PersistenceManager run() {
+   public PersistenceManager get() {
       ComponentRegistry cr = cacheManager.getGlobalComponentRegistry().getNamedComponentRegistry(cacheName);
       if (cr == null)
          throw new IllegalLifecycleStateException();

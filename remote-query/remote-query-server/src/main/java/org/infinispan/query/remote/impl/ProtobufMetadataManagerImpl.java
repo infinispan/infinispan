@@ -51,6 +51,7 @@ import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotation
 import org.infinispan.query.remote.impl.indexing.search5.Search5Annotations;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -155,8 +156,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
     */
    public Cache<String, String> getCache() {
       if (protobufSchemaCache == null) {
-         Cache<String, String> unwrappedCache = SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME);
-         protobufSchemaCache = unwrappedCache.getAdvancedCache();
+         protobufSchemaCache = SecurityActions.getUnwrappedCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME);
       }
       return protobufSchemaCache;
    }

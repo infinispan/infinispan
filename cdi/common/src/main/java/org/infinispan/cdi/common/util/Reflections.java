@@ -2,7 +2,6 @@ package org.infinispan.cdi.common.util;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -10,8 +9,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -91,28 +88,13 @@ public class Reflections {
     }
 
     /**
-     * Set the accessibility flag on the {@link AccessibleObject} as described in
-     * {@link AccessibleObject#setAccessible(boolean)} within the context of
-     * a {@link PrivilegedAction}.
-     *
-     * @param <A>    member the accessible object type
-     * @param member the accessible object
-     * @return the accessible object after the accessible flag has been altered
-     */
-    public static <A extends AccessibleObject> A setAccessible(A member) {
-        AccessController.doPrivileged(new SetAccessiblePrivilegedAction(member));
-        return member;
-    }
-
-    /**
      * <p>
      * Invoke the specified method on the provided instance, passing any additional
      * arguments included in this method as arguments to the specified method.
      * </p>
      * <p/>
      * <p>
-     * This method attempts to set the accessible flag of the method in a
-     * {@link PrivilegedAction} before invoking the method if the first argument
+     * This method attempts to set the accessible flag of the method before invoking the method if the first argument
      * is true.
      * </p>
      * <p/>
@@ -158,8 +140,7 @@ public class Reflections {
      * </p>
      * <p/>
      * <p>
-     * If instructed, this method attempts to set the accessible flag of the method in a
-     * {@link PrivilegedAction} before invoking the method.
+     * If instructed, this method attempts to set the accessible flag of the method before invoking the method.
      * </p>
      *
      * @param setAccessible flag indicating whether method should first be set as
@@ -191,7 +172,7 @@ public class Reflections {
      */
     public static <T> T invokeMethod(boolean setAccessible, Method method, Class<T> expectedReturnType, Object instance, Object... args) {
         if (setAccessible && !method.isAccessible()) {
-            setAccessible(method);
+            method.setAccessible(true);
         }
 
         try {

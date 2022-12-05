@@ -2,11 +2,9 @@ package org.infinispan.security;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
-
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -44,50 +42,28 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-
-         @Override
-         public Void run() throws Exception {
+      Security.doAs(ADMIN, () -> {
+         try {
             cacheManager = createCacheManager();
-            cache = cacheManager.getCache();
-            return null;
+         } catch (Exception e) {
+            throw new RuntimeException(e);
          }
+         cache = cacheManager.getCache();
       });
    }
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            CustomAuditLoggerTest.super.teardown();
-            return null;
-         }
-      });
+      Security.doAs(ADMIN, () -> CustomAuditLoggerTest.super.teardown());
    }
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            cacheManager.getCache().clear();
-            return null;
-         }
-      });
+      Security.doAs(ADMIN, () -> cacheManager.getCache().clear());
    }
 
    public void testAdminWriteAllow() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            cacheManager.getCache().put("key", "value");
-            return null;
-         }
-
-      });
-
+      Security.doAs(ADMIN, () -> cacheManager.getCache().put("key", "value"));
       String actual = LOGGER.getLastRecord();
       String expected = LOGGER.formatLogRecord(AuthorizationPermission.WRITE.toString(),
             AuditResponse.ALLOW.toString(), ADMIN.toString());
@@ -95,16 +71,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
    }
 
    public void testReaderReadAllow() {
-      Security.doAs(READER, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            cacheManager.getCache().get("key");
-            return null;
-         }
-
-      });
-
+      Security.doAs(READER, () -> cacheManager.getCache().get("key"));
       String actual = LOGGER.getLastRecord();
       String expected = LOGGER.formatLogRecord(AuthorizationPermission.READ.toString(), AuditResponse.ALLOW.toString(),
             READER.toString());
@@ -112,18 +79,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
    }
 
    public void testReaderWriteDeny() {
-      try {
-         Security.doAs(READER, new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-               cacheManager.getCache().put("key", "value");
-               return null;
-            }
-
-         });
-      } catch (SecurityException ingnored) {
-      }
+      Exceptions.expectException(SecurityException.class, () -> Security.doAs(READER, () -> cacheManager.getCache().put("key", "value")));
 
       String actual = LOGGER.getLastRecord();
       String expected = LOGGER.formatLogRecord(AuthorizationPermission.WRITE.toString(), AuditResponse.DENY.toString(),
@@ -138,7 +94,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
 
       @Override
       public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission,
-            AuditResponse response) {
+                        AuditResponse response) {
          lastLogRecord = formatLogRecord(String.valueOf(permission), String.valueOf(response), String.valueOf(subject));
       }
 

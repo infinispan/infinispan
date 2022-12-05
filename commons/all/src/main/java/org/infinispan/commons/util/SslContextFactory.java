@@ -39,7 +39,7 @@ public class SslContextFactory {
 
    static {
       String sslProvider = null;
-      if (Boolean.parseBoolean(SecurityActions.getProperty("org.infinispan.openssl", "true"))) {
+      if (Boolean.parseBoolean(System.getProperty("org.infinispan.openssl", "true"))) {
          try {
             OpenSSLProvider.register();
             SSL.getInstance();

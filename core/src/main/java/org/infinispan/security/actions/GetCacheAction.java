@@ -1,6 +1,6 @@
 package org.infinispan.security.actions;
 
-import java.security.PrivilegedAction;
+import java.util.function.Supplier;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -11,7 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class GetCacheAction implements PrivilegedAction<Cache<?, ?>> {
+public class GetCacheAction<A extends Cache<K, V>, K, V> implements Supplier<A> {
 
    private final String cacheName;
    private final EmbeddedCacheManager cacheManager;
@@ -22,8 +22,8 @@ public class GetCacheAction implements PrivilegedAction<Cache<?, ?>> {
    }
 
    @Override
-   public Cache<?, ?> run() {
-      return cacheManager.getCache(cacheName);
+   public A get() {
+      return (A)cacheManager.getCache(cacheName);
    }
 
 }

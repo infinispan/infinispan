@@ -1,6 +1,5 @@
 package org.infinispan.server.tasks;
 
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -10,6 +9,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.util.function.TriConsumer;
 
@@ -36,7 +36,7 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
             results.add(v);
          }
       };
-      CompletableFuture<Void> future = Security.doAs(context.subject(), (PrivilegedAction<CompletableFuture<Void>>) () -> clusterExecutor.submitConsumer(
+      CompletableFuture<Void> future = Security.doAs(context.subject(), () -> clusterExecutor.submitConsumer(
             new DistributedServerTask<>(taskName, cacheName, context),
             triConsumer
       ));

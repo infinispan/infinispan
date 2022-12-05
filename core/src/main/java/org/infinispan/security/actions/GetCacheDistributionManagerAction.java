@@ -16,7 +16,7 @@ public class GetCacheDistributionManagerAction extends AbstractAdvancedCacheActi
    }
 
    @Override
-   public DistributionManager run() {
+   public DistributionManager get() {
       return cache.getDistributionManager();
    }
 

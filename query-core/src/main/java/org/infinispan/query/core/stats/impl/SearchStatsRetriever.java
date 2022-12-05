@@ -1,5 +1,9 @@
 package org.infinispan.query.core.stats.impl;
 
+import java.util.Collection;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
@@ -10,10 +14,7 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
-
-import java.util.Collection;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Retrieves {@link SearchStatistics} for a cache.

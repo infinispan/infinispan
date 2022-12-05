@@ -16,7 +16,7 @@ public class GetCacheManagerAddress extends AbstractEmbeddedCacheManagerAction<A
    }
 
    @Override
-   public Address run() {
+   public Address get() {
       return cacheManager.getAddress();
    }
 }

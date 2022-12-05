@@ -9,7 +9,6 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
-import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +33,7 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 
 /**
@@ -88,7 +88,7 @@ public class ClusterResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-      Set<String> names = Security.doAs(request.getSubject(), (PrivilegedAction<Set<String>>) backupManager::getBackupNames);
+      Set<String> names = Security.doAs(request.getSubject(), backupManager::getBackupNames);
       return asJsonResponseFuture(Json.make(names), isPretty(request));
    }
 
@@ -99,7 +99,7 @@ public class ClusterResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-      Set<String> names = Security.doAs(request.getSubject(), (PrivilegedAction<Set<String>>) backupManager::getRestoreNames);
+      Set<String> names = Security.doAs(request.getSubject(), backupManager::getRestoreNames);
       return asJsonResponseFuture(Json.make(names), isPretty(request));
    }
 

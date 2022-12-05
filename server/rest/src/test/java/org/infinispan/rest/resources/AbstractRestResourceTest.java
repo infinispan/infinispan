@@ -6,7 +6,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +48,7 @@ import org.infinispan.rest.resources.security.SimpleSecurityDomain;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.server.core.DummyServerStateManager;
 import org.infinispan.server.core.ServerStateManager;
@@ -133,7 +133,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
          cacheManagers.forEach(cm -> cm.defineConfiguration("invalid", getDefaultCacheBuilder().encoding().mediaType(APPLICATION_OBJECT_TYPE).indexing().enabled(true).addIndexedEntities("invalid").build()));
          serverStateManager = new DummyServerStateManager();
          for (EmbeddedCacheManager cm : cacheManagers) {
-            BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class.getName());
+            BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cm).getComponent(BasicComponentRegistry.class);
             bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
             cm.getClassAllowList().addClasses(TestClass.class);
             waitForClusterToForm(cm.getCacheNames().stream().filter(name -> {
@@ -171,20 +171,14 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    @AfterClass
    public void afterClass() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
-         restServers.forEach(RestServerHelper::stop);
-         return null;
-      });
+      Security.doAs(ADMIN, () -> restServers.forEach(RestServerHelper::stop));
       Util.close(client);
       Util.close(adminClient);
    }
 
    @AfterMethod
    public void afterMethod() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
-         restServers.forEach(RestServerHelper::clear);
-         return null;
-      });
+      Security.doAs(ADMIN, () -> restServers.forEach(RestServerHelper::clear));
    }
 
    private void putInCache(String cacheName, Object key, String keyContentType, String value, String contentType) {

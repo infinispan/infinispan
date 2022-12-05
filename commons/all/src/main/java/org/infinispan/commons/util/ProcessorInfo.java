@@ -1,8 +1,5 @@
 package org.infinispan.commons.util;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /**
  * Provides general information about the processors on this host.
  *
@@ -32,11 +29,6 @@ public class ProcessorInfo {
     * @return the available processors on this system.
     */
    public static int availableProcessors() {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged((PrivilegedAction<Integer>) () ->
-               org.infinispan.commons.jdkspecific.ProcessorInfo.availableProcessors());
-      }
-
       return org.infinispan.commons.jdkspecific.ProcessorInfo.availableProcessors();
    }
 

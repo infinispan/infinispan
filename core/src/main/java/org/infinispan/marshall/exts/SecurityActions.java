@@ -2,12 +2,10 @@ package org.infinispan.marshall.exts;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * SecurityActions for the org.infinispan.marshall.exts package.
- *
+ * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other
  * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
@@ -24,39 +22,18 @@ final class SecurityActions {
    }
 
    static Field getField(Class<?> c, String fieldName) {
-      Field field;
-      if (System.getSecurityManager() != null) {
-         field = AccessController.doPrivileged((PrivilegedAction<Field>) () -> {
-            Field f = getDeclaredField(c, fieldName);
-            if (f != null) {
-               f.setAccessible(true);
-            }
-            return f;
-         });
-      } else {
-         field = getDeclaredField(c, fieldName);
-         if (field != null) {
-            field.setAccessible(true);
-         }
+      Field field = getDeclaredField(c, fieldName);
+      if (field != null) {
+         field.setAccessible(true);
       }
       return field;
    }
 
-   private static <T> Constructor<T> doGetConstructor(Class<T> c, Class<?>... parameterTypes) {
+   static <T> Constructor<T> getConstructor(Class<T> c, Class<?>... parameterTypes) {
       try {
          return c.getConstructor(parameterTypes);
       } catch (NoSuchMethodException e) {
          return null;
-      }
-   }
-
-   static <T> Constructor<T> getConstructor(Class<T> c, Class<?>... parameterTypes) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged((PrivilegedAction<Constructor<T>>) () -> {
-            return doGetConstructor(c, parameterTypes);
-         });
-      } else {
-         return doGetConstructor(c, parameterTypes);
       }
    }
 }

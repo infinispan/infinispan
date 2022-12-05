@@ -13,6 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.TaskContext;
 
 /**

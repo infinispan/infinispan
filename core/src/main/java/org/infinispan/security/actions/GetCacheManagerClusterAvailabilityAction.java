@@ -18,7 +18,7 @@ public class GetCacheManagerClusterAvailabilityAction extends AbstractEmbeddedCa
    }
 
    @Override
-   public String run() {
+   public String get() {
       LocalTopologyManagerImpl localTopologyManager = cacheManager.getGlobalComponentRegistry().getComponent(LocalTopologyManagerImpl.class);
       return localTopologyManager != null ? localTopologyManager.getClusterAvailability() : AvailabilityMode.AVAILABLE.toString();
    }

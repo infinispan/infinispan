@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.PrivilegedAction;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.api.BasicCache;
@@ -20,9 +19,7 @@ import org.infinispan.security.Security;
 public class ScriptingUtils {
 
     public static ScriptingManager getScriptingManager(EmbeddedCacheManager manager) {
-       return Security.doPrivileged((PrivilegedAction<ScriptingManager>) () -> {
-          return manager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
-       });
+       return Security.doPrivileged(() -> manager.getGlobalComponentRegistry().getComponent(ScriptingManager.class));
     }
 
     public static void loadData(BasicCache<String, String> cache, String fileName) throws IOException {

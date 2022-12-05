@@ -26,6 +26,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -275,7 +276,7 @@ public class BackupManagerImpl implements BackupManager {
       Lock(String name, EmbeddedCacheManager cm) {
          this.name = String.format("%s-%s", BackupManagerImpl.class.getSimpleName(), name);
          this.cm = cm;
-         this.isClustered = SecurityActions.getGlobalConfiguration(cm).isClustered();
+         this.isClustered = SecurityActions.getCacheManagerConfiguration(cm).isClustered();
       }
 
       CompletionStage<Boolean> lock() {

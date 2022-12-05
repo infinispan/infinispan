@@ -1,5 +1,10 @@
 = Upgrading from 14.0 to 15.0
 
+== SecurityManager
+
+Aligning with the deprecation for removal of the SecurityManager since JDK 17, we no longer support integration with a
+SecurityManager.
+
 == Removals
 
 * The Kryo and Protostuff marshallers have been removed.

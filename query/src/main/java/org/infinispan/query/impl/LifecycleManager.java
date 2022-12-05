@@ -75,6 +75,7 @@ import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -433,15 +434,8 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    private void setMaxBooleanClauses() {
-      String maxClauseCountProp = SecurityActions.getSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP);
-      if (maxClauseCountProp != null) {
-         int maxClauseCount;
-         try {
-            maxClauseCount = Integer.parseInt(maxClauseCountProp);
-         } catch (NumberFormatException e) {
-            CONTAINER.failedToParseSystemProperty(MAX_BOOLEAN_CLAUSES_SYS_PROP, e);
-            throw e;
-         }
+      Integer maxClauseCount = Integer.getInteger(MAX_BOOLEAN_CLAUSES_SYS_PROP);
+      if (maxClauseCount != null) {
          int currentMaxClauseCount = BooleanQuery.getMaxClauseCount();
          if (maxClauseCount > currentMaxClauseCount) {
             CONTAINER.settingBooleanQueryMaxClauseCount(MAX_BOOLEAN_CLAUSES_SYS_PROP, maxClauseCount);

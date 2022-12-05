@@ -201,6 +201,14 @@ public class ReflectionUtil {
       }
    }
 
+   public static void setAccessible(final Method m) {
+      try {
+         m.setAccessible(true);
+      } catch (Exception e) {
+         throw new CacheException("Unable to change method accessibility " + m, e);
+      }
+   }
+
    public static void setAccessibly(Object instance, Field field, Object value) {
       field.setAccessible(true);
       setField(instance, field, value);

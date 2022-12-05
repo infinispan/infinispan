@@ -7,8 +7,9 @@ import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import sun.misc.Unsafe;
 
 /**
- * Entry Size calculator that returns an approximation of how much various primitives, primitive wrappers, Strings,
- * and arrays
+ * Entry Size calculator that returns an approximation of how much various primitives, primitive wrappers, Strings, and
+ * arrays
+ *
  * @author wburns
  * @since 8.0
  */
@@ -21,7 +22,7 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
       Class<?> objClass;
       try {
          objClass = object.getClass();
-      } catch(NullPointerException e) {
+      } catch (NullPointerException e) {
          throw e;
       }
       if (objClass == String.class) {
@@ -30,11 +31,11 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
          long objectSize = roundUpToNearest8(OBJECT_SIZE + POINTER_SIZE + 4 + POINTER_SIZE);
          // We then include the char[] offset and size
          return objectSize + roundUpToNearest8(Unsafe.ARRAY_CHAR_BASE_OFFSET + realString.length() *
-                 Unsafe.ARRAY_CHAR_INDEX_SCALE);
+               Unsafe.ARRAY_CHAR_INDEX_SCALE);
       } else if (objClass == Long.class) {
          long longValue = ((Long) object).longValue();
          if (longValue >= LongCacheConstraints.MIN_CACHE_VALUE &&
-                 longValue <= LongCacheConstraints.MAX_CACHE_VALUE) {
+               longValue <= LongCacheConstraints.MAX_CACHE_VALUE) {
             return 0;
          }
          // We add in the size for a long, plus the object reference and the class ref
@@ -42,7 +43,7 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
       } else if (objClass == Integer.class) {
          int intValue = ((Integer) object).intValue();
          if (intValue >= IntegerCacheConstraints.MIN_CACHE_VALUE &&
-                 intValue <= IntegerCacheConstraints.MAX_CACHE_VALUE) {
+               intValue <= IntegerCacheConstraints.MAX_CACHE_VALUE) {
             return 0;
          }
          // We add in the size for a long, plus the object reference and the class ref
@@ -50,7 +51,7 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
       } else if (objClass == Short.class) {
          short shortValue = ((Short) object).shortValue();
          if (shortValue >= ShortCacheConstraints.MIN_CACHE_VALUE &&
-                 shortValue <= ShortCacheConstraints.MAX_CACHE_VALUE) {
+               shortValue <= ShortCacheConstraints.MAX_CACHE_VALUE) {
             return 0;
          }
          return roundUpToNearest8(Unsafe.ARRAY_SHORT_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
@@ -64,7 +65,7 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
       } else if (objClass == Character.class) {
          char charValue = ((Character) object).charValue();
          if (charValue >= CharacterCacheConstraints.MIN_CACHE_VALUE &&
-                 charValue <= CharacterCacheConstraints.MAX_CACHE_VALUE) {
+               charValue <= CharacterCacheConstraints.MAX_CACHE_VALUE) {
             return 0;
          }
          return roundUpToNearest8(Unsafe.ARRAY_CHAR_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
@@ -83,7 +84,7 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
          // takes up the standard Object pointer worth of size but primitives take up space equivalent to how many byte
          // they occupy.
          long arraySize = roundUpToNearest8(unsafe.arrayBaseOffset(objClass) + unsafe.arrayIndexScale(objClass) *
-                 arrayLength);
+               arrayLength);
          // If the component type isn't primitive we have to add in each of the instances
          if (!compClass.isPrimitive()) {
             // TODO: we could assume some values for given primitive wrappers.
@@ -94,7 +95,7 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
          return arraySize;
       } else {
          throw new IllegalArgumentException("Size of Class " + objClass +
-                 " cannot be determined using given entry size calculator :" + getClass());
+               " cannot be determined using given entry size calculator :" + getClass());
       }
    }
 
@@ -131,32 +132,27 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
    }
 
    /**
-    * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package.
-    * Replace with a simple call to Unsafe.getUnsafe when integrating
-    * into a jdk.
+    * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package. Replace with a simple call to
+    * Unsafe.getUnsafe when integrating into a jdk.
     *
     * @return a sun.misc.Unsafe
     */
    static Unsafe getUnsafe() {
       try {
          return Unsafe.getUnsafe();
-      } catch (SecurityException tryReflectionInstead) {}
-      try {
-         return java.security.AccessController.doPrivileged
-                 (new java.security.PrivilegedExceptionAction<Unsafe>() {
-                    public Unsafe run() throws Exception {
-                       Class<Unsafe> k = Unsafe.class;
-                       for (java.lang.reflect.Field f : k.getDeclaredFields()) {
-                          f.setAccessible(true);
-                          Object x = f.get(null);
-                          if (k.isInstance(x))
-                             return k.cast(x);
-                       }
-                       throw new NoSuchFieldError("the Unsafe");
-                    }});
-      } catch (java.security.PrivilegedActionException e) {
-         throw new RuntimeException("Could not initialize intrinsics",
-                 e.getCause());
+      } catch (SecurityException tryReflectionInstead) {
+         try {
+            Class<Unsafe> k = Unsafe.class;
+            for (java.lang.reflect.Field f : k.getDeclaredFields()) {
+               f.setAccessible(true);
+               Object x = f.get(null);
+               if (k.isInstance(x))
+                  return k.cast(x);
+            }
+            throw new NoSuchFieldError("the Unsafe");
+         } catch (Exception e) {
+            throw new RuntimeException("Could not initialize intrinsics", e.getCause());
+         }
       }
    }
 }

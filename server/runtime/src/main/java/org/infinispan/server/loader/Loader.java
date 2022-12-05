@@ -13,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -74,7 +72,7 @@ public class Loader {
          }
       }
       if (propertyFile != null) {
-         try(Reader r = Files.newBufferedReader(Paths.get(propertyFile))) {
+         try (Reader r = Files.newBufferedReader(Paths.get(propertyFile))) {
             Properties loaded = new Properties();
             loaded.load(r);
             loaded.forEach(properties::putIfAbsent);
@@ -91,7 +89,7 @@ public class Loader {
       }
       String lib = properties.getProperty(INFINISPAN_SERVER_LIB_PATH);
       if (lib != null) {
-         for(String item : lib.split(File.pathSeparator)) {
+         for (String item : lib.split(File.pathSeparator)) {
             serverClassLoader = classLoaderFromPath(Paths.get(item), serverClassLoader);
          }
       } else {
@@ -148,13 +146,10 @@ public class Loader {
             }
          });
          final URL[] array = urls.values().toArray(new URL[urls.size()]);
-         return AccessController.doPrivileged(
-               (PrivilegedAction<URLClassLoader>) () -> {
-                  if (parent == null)
-                     return new URLClassLoader(array);
-                  else
-                     return new URLClassLoader(array, parent);
-               });
+         if (parent == null)
+            return new URLClassLoader(array);
+         else
+            return new URLClassLoader(array, parent);
       } catch (RuntimeException e) {
          throw e;
       } catch (Exception e) {

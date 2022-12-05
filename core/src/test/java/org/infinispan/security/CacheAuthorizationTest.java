@@ -2,8 +2,6 @@ package org.infinispan.security;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,7 +14,7 @@ public class CacheAuthorizationTest extends BaseAuthorizationTest {
 
    public void testAllCombinations() throws Exception {
       Method[] allMethods = SecureCache.class.getMethods();
-      Set<String> methodNames = new HashSet<String>();
+      Set<String> methodNames = new HashSet<>();
    collectmethods:
       for (Method m : allMethods) {
          StringBuilder s = new StringBuilder("test");
@@ -33,8 +31,10 @@ public class CacheAuthorizationTest extends BaseAuthorizationTest {
          methodNames.add(s.toString());
       }
       final SecureCacheTestDriver driver = new SecureCacheTestDriver();
-      final SecureCache<String, String> cache = (SecureCache<String, String>) Security.doAs(
-            ADMIN, (PrivilegedAction<Cache<String, String>>) () -> cacheManager.getCache());
+      final SecureCache<String, String> cache = (SecureCache<String, String>) Security.doAs(ADMIN, () -> {
+         Cache<String, String> c = cacheManager.getCache();
+         return c;
+      });
       for (final String methodName : methodNames) {
          Class<? extends SecureCacheTestDriver> driverClass = driver.getClass();
          try {
@@ -48,21 +48,20 @@ public class CacheAuthorizationTest extends BaseAuthorizationTest {
             for (final AuthorizationPermission perm : AuthorizationPermission.values()) {
                if (perm == AuthorizationPermission.NONE)
                   continue;// Skip
-               if (annotation.needsSecurityManager() && System.getSecurityManager() == null) {
-                  log.debugf("Method %s (skipped, needs SecurityManager)", methodName);
-                  break;
-               }
                log.debugf("Method %s > %s", methodName, perm.toString());
                if (expectedPerm == AuthorizationPermission.NONE) {
                   try {
                      method.invoke(driver, cache);
                   } catch (SecurityException e) {
-                     throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
+                     throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm), e);
                   }
                } else {
-                  Security.doAs(SUBJECTS.get(perm), (PrivilegedExceptionAction<Void>) () -> {
-                     invokeCacheMethod(driver, cache, methodName, method, expectedPerm, perm);
-                     return null;
+                  Security.doAs(SUBJECTS.get(perm),() -> {
+                     try {
+                        invokeCacheMethod(driver, cache, methodName, method, expectedPerm, perm);
+                     } catch (Exception e) {
+                        throw new RuntimeException(e);
+                     }
                   });
                   invokeCacheMethod(driver, cache.withSubject(SUBJECTS.get(perm)), methodName, method, expectedPerm, perm);
                }
@@ -81,13 +80,13 @@ public class CacheAuthorizationTest extends BaseAuthorizationTest {
          method.invoke(driver, cache);
          if (!perm.implies(expectedPerm)) {
             throw new Exception(String.format("Expected SecurityException while invoking %s with permission %s",
-                  methodName, perm.toString()));
+                  methodName, perm));
          }
       } catch (InvocationTargetException e) {
          Throwable cause = e.getCause();
          if (cause instanceof SecurityException) {
             if (perm.implies(expectedPerm)) {
-               throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
+               throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm), e);
             } else {
                // We were expecting a security exception
             }

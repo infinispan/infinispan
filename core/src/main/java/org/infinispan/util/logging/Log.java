@@ -1097,9 +1097,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Attempt to add a permission to a read-only SecurityPermissionCollection", id = 297)
    SecurityException readOnlyPermissionCollection();
 
-   @LogMessage(level = DEBUG)
-   @Message(value = "Using internal security checker", id = 298)
-   void authorizationEnabledWithoutSecurityManager();
+//   @LogMessage(level = DEBUG)
+//   @Message(value = "Using internal security checker", id = 298)
+//   void authorizationEnabledWithoutSecurityManager();
 
    @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s", id = 299)
    TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner);

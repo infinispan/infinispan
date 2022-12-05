@@ -15,7 +15,7 @@ public class GetCacheAuthorizationManagerAction extends AbstractAdvancedCacheAct
    }
 
    @Override
-   public AuthorizationManager run() {
+   public AuthorizationManager get() {
       return cache.getAuthorizationManager();
    }
 

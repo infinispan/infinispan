@@ -16,7 +16,7 @@ public class GetCacheRpcManagerAction extends AbstractAdvancedCacheAction<RpcMan
    }
 
    @Override
-   public RpcManager run() {
+   public RpcManager get() {
       return cache.getRpcManager();
    }
 
