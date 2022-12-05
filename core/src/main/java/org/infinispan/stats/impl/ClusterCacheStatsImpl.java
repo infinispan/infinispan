@@ -363,12 +363,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getNumberOfEntries();
    }
 
-   @Deprecated
-   @Override
-   public long getTotalNumberOfEntries() {
-      return getStores();
-   }
-
    @ManagedAttribute(
          description = "Amount in bytes of memory used across the cluster for entries in this cache with eviction",
          displayName = "Cluster-wide memory used by eviction"

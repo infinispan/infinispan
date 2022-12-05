@@ -76,7 +76,6 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       assertEquals(statsMap.get(ServerStatistics.REMOVE_HITS),"0");
       assertEquals(statsMap.get(ServerStatistics.REMOVE_MISSES),"0");
       assertEquals(statsMap.get(ServerStatistics.RETRIEVALS),"0");
-      assertEquals(statsMap.get(ServerStatistics.TOTAL_NR_OF_ENTRIES),"0");
       assertEquals(statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES), "0");
       assertEquals(statsMap.get(ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE), "0");
       assertEquals(0, remoteCache.size());
@@ -92,7 +91,6 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       remoteCache.put("a","v");
       ServerStatistics serverStatistics = remoteCache.serverStatistics();
       assertIntStatistic(1, serverStatistics, ServerStatistics.STORES);
-      assertIntStatistic(1, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertEquals(1, remoteCache.clientStatistics().getRemoteStores());
       assertIntStatistic(1, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
       assertIntStatistic(1, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
@@ -103,7 +101,6 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       remoteCache.put("a2","v2");
       serverStatistics = remoteCache.serverStatistics();
       assertIntStatistic(2, serverStatistics, ServerStatistics.STORES);
-      assertIntStatistic(2, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertEquals(2, remoteCache.clientStatistics().getRemoteStores());
       assertIntStatistic(2, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
       assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
@@ -114,7 +111,6 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       remoteCache.put("a2","v3");
       serverStatistics = remoteCache.serverStatistics();
       assertIntStatistic(3, serverStatistics, ServerStatistics.STORES);
-      assertIntStatistic(3, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertEquals(3, remoteCache.clientStatistics().getRemoteStores());
       assertIntStatistic(2, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
       assertIntStatistic(2, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
@@ -183,7 +179,6 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
       remoteCache.clear();
       serverStatistics = remoteCache.serverStatistics();
       assertIntStatistic(0, serverStatistics, ServerStatistics.CURRENT_NR_OF_ENTRIES);
-      assertIntStatistic(2, serverStatistics, ServerStatistics.TOTAL_NR_OF_ENTRIES);
       assertIntStatistic(0, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES);
       assertIntStatistic(0, serverStatistics, ServerStatistics.APPROXIMATE_ENTRIES_UNIQUE);
    }

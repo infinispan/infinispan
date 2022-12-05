@@ -47,7 +47,6 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
 
       Map<String, String> s = client().stats();
       assertEquals(s.get("currentNumberOfEntries"), "0");
-      assertEquals(s.get("totalNumberOfEntries"), "0");
       assertEquals(s.get("stores"), "0");
       assertEquals(s.get("retrievals"), "0");
       assertEquals(s.get("hits"), "0");
@@ -61,7 +60,6 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       client().assertPut(m);
       s = client().stats();
       assertEquals(s.get("currentNumberOfEntries"), "1");
-      assertEquals(s.get("totalNumberOfEntries"), "1");
       assertEquals(s.get("stores"), "1");
       bytesRead = assertHigherBytes(bytesRead, s.get("totalBytesRead"));
       bytesWritten = assertHigherBytes(bytesWritten, s.get("totalBytesWritten"));
@@ -80,7 +78,6 @@ public class HotRodStatsTest extends HotRodSingleNodeTest {
       client().clear();
 
       s = client().stats();
-      assertEquals(s.get("totalNumberOfEntries"), "1");
       assertEquals(s.get("currentNumberOfEntries"), "0");
    }
 
