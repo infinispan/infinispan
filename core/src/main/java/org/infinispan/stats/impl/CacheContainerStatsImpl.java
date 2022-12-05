@@ -605,12 +605,6 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return getNumberOfEntries();
    }
 
-   @Deprecated
-   @Override
-   public long getTotalNumberOfEntries() {
-      return getStores();
-   }
-
    @ManagedAttribute(
          description = "Amount in bytes of memory used in a given cache container for entries with eviction",
          displayName = "Container memory used by eviction"
@@ -701,7 +695,6 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
             .set("time_since_reset", getTimeSinceReset())
             .set("current_number_of_entries", getCurrentNumberOfEntries())
             .set("current_number_of_entries_in_memory", getCurrentNumberOfEntriesInMemory())
-            .set("total_number_of_entries", getTotalNumberOfEntries())
             .set("off_heap_memory_used", getOffHeapMemoryUsed())
             .set("data_memory_used", getDataMemoryUsed())
             .set("stores", getStores())

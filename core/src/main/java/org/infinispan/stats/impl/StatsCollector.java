@@ -326,12 +326,6 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
       return getNumberOfEntries();
    }
 
-   @Deprecated
-   @Override
-   public long getTotalNumberOfEntries() {
-      return stores.longValue();
-   }
-
    @ManagedAttribute(
          description = "Amount of memory in bytes allocated for use in eviction for data in the cache",
          displayName = "Memory used by data in the cache"

@@ -3,7 +3,6 @@
   "time_since_reset" : -1,
   "current_number_of_entries" : -1,
   "current_number_of_entries_in_memory" : -1,
-  "total_number_of_entries" : -1,
   "off_heap_memory_used" : -1,
   "data_memory_used" : -1,
   "stores" : -1,

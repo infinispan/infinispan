@@ -7,7 +7,6 @@
   "time_since_reset" : 49,
   "current_number_of_entries" : 0,
   "current_number_of_entries_in_memory" : 0,
-  "total_number_of_entries" : 0,
   "off_heap_memory_used" : 0,
   "data_memory_used" : 0,
   "stores" : 0,

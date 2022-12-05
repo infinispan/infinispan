@@ -65,13 +65,6 @@ public interface Stats extends JsonSerialization {
    int getCurrentNumberOfEntriesInMemory();
 
    /**
-    * Number of entries stored in cache since the cache started running.
-    * @deprecated Since 13.0, please use {@link #getStores()} instead
-    */
-   @Deprecated
-   long getTotalNumberOfEntries();
-
-   /**
     * The amount of off-heap memory used by this cache, or -1 if the cache stores data in the heap.
     */
    long getOffHeapMemoryUsed();

@@ -240,7 +240,6 @@ include::json/rest_cache_stats_response.json[]
 * `time_since_start` shows the time, in seconds, since the Cache Manager started.
 * `time_since_reset` shows the number of seconds since the Cache Manager statistics were last reset.
 * `number_of_entries` shows the total number of entries currently in all caches from the Cache Manager. This statistic returns entries in the local cache instances only.
-* `total_number_of_entries` shows the number of store operations performed across all caches for the Cache Manager.
 * `off_heap_memory_used` shows the amount, in `bytes[]`, of off-heap memory used by this cache container.
 * `data_memory_used` shows the amount, in `bytes[]`, that the current eviction algorithm estimates is in use for data across all caches. Returns `0` if eviction is not enabled.
 * `misses` shows the number of `get()` misses across all caches.

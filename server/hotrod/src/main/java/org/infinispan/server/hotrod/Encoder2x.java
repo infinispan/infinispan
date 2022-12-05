@@ -218,7 +218,7 @@ class Encoder2x implements VersionedEncoder {
    public ByteBuf statsResponse(HotRodHeader header, HotRodServer server, Channel channel, Stats stats,
          NettyTransport transport, ClusterCacheStats clusterCacheStats) {
       ByteBuf buf = writeHeader(header, server, channel, OperationStatus.Success);
-      int numStats = 11;
+      int numStats = 10;
       if (transport != null) {
          numStats += 2;
       }
@@ -234,7 +234,6 @@ class Encoder2x implements VersionedEncoder {
       ExtendedByteBuf.writeUnsignedInt(numStats, buf);
       writePair(buf, "timeSinceStart", String.valueOf(stats.getTimeSinceStart()));
       writePair(buf, "currentNumberOfEntries", String.valueOf(stats.getCurrentNumberOfEntries()));
-      writePair(buf, "totalNumberOfEntries", String.valueOf(stats.getTotalNumberOfEntries()));
       writePair(buf, "stores", String.valueOf(stats.getStores()));
       writePair(buf, "retrievals", String.valueOf(stats.getRetrievals()));
       writePair(buf, "hits", String.valueOf(stats.getHits()));
