@@ -157,6 +157,8 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
             if (!path.contains(".")) return StaticContentResource.DEFAULT_RESOURCE;
             return path;
          }));
+         // if the cache name contains '.' we need to retrieve the console and access to the cache detail. See ISPN-14376
+         resourceManager.registerResource(rootContext, new StaticContentResource(console, "console/cache/", (path, resource) -> StaticContentResource.DEFAULT_RESOURCE));
          resourceManager.registerResource(rootContext, new RedirectResource(rootContext, rootContext + "console/welcome", true));
       }
       if (adminEndpoint) {
