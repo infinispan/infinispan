@@ -89,6 +89,11 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-tools</artifactId>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
          <optional>true</optional>
       </dependency>

@@ -105,6 +105,10 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-tools</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-scripting</artifactId>
       </dependency>
       <dependency>

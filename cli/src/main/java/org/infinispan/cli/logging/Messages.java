@@ -257,4 +257,7 @@ public interface Messages {
 
    @Message("File '%s' does not exist")
    NoSuchFileException nonExistentFile(org.aesh.io.Resource file);
+
+   @Message("The store migrator requires configuration properties to be set")
+   IllegalArgumentException missingStoreMigratorProperties();
 }

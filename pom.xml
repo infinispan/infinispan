@@ -269,7 +269,6 @@
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-io.commons-io>2.8.0</versionx.commons-io.commons-io>
       <versionx.commons-logging.commons-logging>1.2</versionx.commons-logging.commons-logging>
-      <versionx.gnu.getopt.java-getopt>1.0.13</versionx.gnu.getopt.java-getopt>
       <versionx.io.fabric8.kubernetes-client>${version.fabric8.kubernetes-client}</versionx.io.fabric8.kubernetes-client>
       <versionx.io.netty.netty-buffer>${version.netty}</versionx.io.netty.netty-buffer>
       <versionx.io.netty.netty-codec>${version.netty}</versionx.io.netty.netty-codec>
@@ -601,11 +600,6 @@
             <artifactId>commons-logging</artifactId>
             <version>${versionx.commons-logging.commons-logging}</version>
             <scope>runtime</scope>
-         </dependency>
-         <dependency>
-            <groupId>gnu.getopt</groupId>
-            <artifactId>java-getopt</artifactId>
-            <version>${versionx.gnu.getopt.java-getopt}</version>
          </dependency>
          <dependency>
             <groupId>io.agroal</groupId>

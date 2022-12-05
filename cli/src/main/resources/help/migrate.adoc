@@ -18,6 +18,8 @@ SYNOPSIS
 
 *migrate cluster source-connection*
 
+*migrate store*
+
 
 DESCRIPTION
 -----------
@@ -40,6 +42,11 @@ Disconnects the target cluster from the source cluster.
 
 *migrate cluster source-connection*::
 Gets connection configuration of the target cluster. The command will print "Not Found" if the connections hasn't been established.
+
+Migrate stores
+
+*migrate store*::
+Migrates store data.
 
 COMMON OPTIONS
 --------------
@@ -82,3 +89,15 @@ CLUSTER CONNECTION OPTIONS
 
 *-c, --cache*='name'::
 The name of the cache to obtain the connection configuration.
+
+
+STORE OPTIONS
+-------------
+
+*-P
+
+*-p, --properties*='FILE'::
+The path to a properties file containing the migration configuration.
+
+*-v, --verbose*::
+Displays verbose information about the migration process.
