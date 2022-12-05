@@ -7,6 +7,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;

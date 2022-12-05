@@ -64,7 +64,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ParserRegistry(ClassLoader classLoader) {
-      this(classLoader, false, SecurityActions.getSystemProperties());
+      this(classLoader, false, System.getProperties());
    }
 
    public ParserRegistry(ClassLoader classLoader, boolean defaultOnly, Properties properties) {

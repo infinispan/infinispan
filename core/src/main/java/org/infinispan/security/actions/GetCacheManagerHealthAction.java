@@ -12,7 +12,7 @@ public class GetCacheManagerHealthAction extends AbstractEmbeddedCacheManagerAct
    }
 
    @Override
-   public Health run() {
+   public Health get() {
       return cacheManager.getHealth();
    }
 }

@@ -276,7 +276,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     * @throws Exception If registration could not be completed.
     */
    private void register(ResourceDMBean resourceDMBean, ObjectName objectName, MBeanServer mBeanServer) throws Exception {
-      SecurityActions.registerMBean(resourceDMBean, objectName, mBeanServer);
+      mBeanServer.registerMBean(resourceDMBean, objectName);
       if (log.isTraceEnabled()) {
          log.tracef("Registered MBean %s under %s", resourceDMBean, objectName);
       }
@@ -290,7 +290,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
     */
    public void unregisterMBean(ObjectName objectName) throws Exception {
       if (mBeanServer.isRegistered(objectName)) {
-         SecurityActions.unregisterMBean(objectName, mBeanServer);
+         mBeanServer.unregisterMBean(objectName);
          if (log.isTraceEnabled()) {
             log.tracef("Unregistered MBean: %s", objectName);
          }

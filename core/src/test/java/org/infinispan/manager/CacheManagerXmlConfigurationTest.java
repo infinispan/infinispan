@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.PrivilegedAction;
 
 import javax.security.auth.Subject;
 
@@ -36,10 +35,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    @AfterMethod
    public void tearDown() {
       if (cm != null)
-         Security.doAs(KING, (PrivilegedAction<Void>) () -> {
-            cm.stop();
-            return null;
-         });
+         Security.doAs(KING,  () -> cm.stop());
       cm = null;
    }
 
@@ -80,11 +76,11 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    private Configuration getCacheConfiguration(EmbeddedCacheManager cm, String cacheName) {
-      return Security.doAs(KING, (PrivilegedAction<Configuration>) () -> cm.getCacheConfiguration(cacheName));
+      return Security.doAs(KING, () -> cm.getCacheConfiguration(cacheName));
    }
 
    private Configuration getDefaultCacheConfiguration() {
-      return Security.doAs(KING, (PrivilegedAction<Configuration>) () -> cm.getDefaultCacheConfiguration());
+      return Security.doAs(KING, () -> cm.getDefaultCacheConfiguration());
    }
 
    public void testNamedCacheXMLClashingNames() {

@@ -8,7 +8,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 public class GlobalStatePathConfiguration {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
-         .initializer(() -> SecurityActions.getSystemProperty("user.dir"))
+         .initializer(() -> System.getProperty("user.dir"))
          .immutable().build();
 
    public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).immutable().build();

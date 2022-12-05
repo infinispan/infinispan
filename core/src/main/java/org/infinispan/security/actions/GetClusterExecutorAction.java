@@ -1,7 +1,7 @@
 package org.infinispan.security.actions;
 
-import java.security.PrivilegedAction;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.ClusterExecutor;
@@ -13,7 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class GetClusterExecutorAction implements PrivilegedAction<ClusterExecutor> {
+public class GetClusterExecutorAction implements Supplier<ClusterExecutor> {
 
    private final Cache<?, ?> cache;
    private final EmbeddedCacheManager cacheManager;
@@ -29,7 +29,7 @@ public class GetClusterExecutorAction implements PrivilegedAction<ClusterExecuto
    }
 
    @Override
-   public ClusterExecutor run() {
+   public ClusterExecutor get() {
       EmbeddedCacheManager manager;
       if (cache != null) {
          manager = cache.getCacheManager();

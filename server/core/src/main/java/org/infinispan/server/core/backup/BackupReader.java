@@ -26,6 +26,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.resources.ContainerResourceFactory;
 import org.infinispan.server.core.logging.Log;

@@ -43,6 +43,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.QueryStringCreator;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -77,7 +78,7 @@ public class QueryEngine<TypeMetadata> {
    protected QueryEngine(AdvancedCache<?, ?> cache, Class<? extends Matcher> matcherImplClass) {
       this.cache = cache;
       this.matcherImplClass = matcherImplClass;
-      this.queryCache = SecurityActions.getGlobalComponentRegistry(cache).getComponent(QueryCache.class);
+      this.queryCache = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(QueryCache.class);
       this.queryStatistics = SecurityActions.getCacheComponentRegistry(cache).getComponent(LocalQueryStatistics.class);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
       this.defaultMaxResults = cache.getCacheConfiguration().query().defaultMaxResults();

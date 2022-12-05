@@ -9,11 +9,8 @@ import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
-import java.security.PrivilegedAction;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-
-import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -29,6 +26,8 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
@@ -62,7 +61,7 @@ public class TasksResource implements ResourceHandler {
       }
 
       return CompletableFuture.supplyAsync(() -> {
-         String script = Subject.doAs(request.getSubject(), (PrivilegedAction<String>) () -> scriptingManager.getScript(taskName));
+         String script = Security.doAs(request.getSubject(), () -> scriptingManager.getScript(taskName));
          return builder.entity(script).contentType(TEXT_PLAIN_TYPE).build();
       }, invocationHelper.getExecutor());
    }
@@ -89,10 +88,7 @@ public class TasksResource implements ResourceHandler {
       String script = StandardConversions.convertTextToObject(bytes, sourceType);
 
       return CompletableFuture.supplyAsync(() -> {
-         Subject.doAs(request.getSubject(), (PrivilegedAction<Void>) () -> {
-            scriptingManager.addScript(taskName, script);
-            return null;
-         });
+         Security.doAs(request.getSubject(), () -> scriptingManager.addScript(taskName, script));
          return builder.build();
       }, invocationHelper.getExecutor());
    }
@@ -112,8 +108,7 @@ public class TasksResource implements ResourceHandler {
          }
       });
 
-      CompletionStage<Object> runResult = Subject.doAs(request.getSubject(),
-            (PrivilegedAction<CompletionStage<Object>>) () -> taskManager.runTask(taskName, taskContext));
+      CompletionStage<Object> runResult = Security.doAs(request.getSubject(), () -> taskManager.runTask(taskName, taskContext));
 
       return runResult.thenApply(result -> {
          NettyRestResponse.Builder builder = new NettyRestResponse.Builder();

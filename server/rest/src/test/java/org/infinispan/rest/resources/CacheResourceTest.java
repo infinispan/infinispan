@@ -29,7 +29,6 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
-import java.security.PrivilegedAction;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -279,10 +278,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       assertThat(response).isOk();
 
       if (security) {
-         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<Void>) () -> {
-            restServer().ignoreCache("default");
-            return null;
-         });
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()),() -> restServer().ignoreCache("default"));
       } else {
          restServer().ignoreCache("default");
       }
@@ -291,10 +287,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       assertThat(response).isServiceUnavailable();
 
       if (security) {
-         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<Void>) () -> {
-            restServer().unignoreCache("default");
-            return null;
-         });
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), () -> restServer().unignoreCache("default"));
       } else {
          restServer().unignoreCache("default");
       }

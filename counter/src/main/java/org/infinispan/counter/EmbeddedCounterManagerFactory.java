@@ -8,6 +8,7 @@ import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * A {@link CounterManager} factory for embedded cached.

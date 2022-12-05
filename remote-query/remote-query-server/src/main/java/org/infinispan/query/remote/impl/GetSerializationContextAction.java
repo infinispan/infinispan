@@ -1,6 +1,6 @@
 package org.infinispan.query.remote.impl;
 
-import java.security.PrivilegedAction;
+import java.util.function.Supplier;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
@@ -9,7 +9,7 @@ import org.infinispan.protostream.SerializationContext;
  * @author Dan Berindei
  * @since 10.0
  */
-public final class GetSerializationContextAction implements PrivilegedAction<SerializationContext> {
+public final class GetSerializationContextAction implements Supplier<SerializationContext> {
 
    private final EmbeddedCacheManager cacheManager;
 
@@ -18,7 +18,7 @@ public final class GetSerializationContextAction implements PrivilegedAction<Ser
    }
 
    @Override
-   public SerializationContext run() {
+   public SerializationContext get() {
       return ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
    }
 }

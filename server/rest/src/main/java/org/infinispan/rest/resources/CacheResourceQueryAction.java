@@ -25,6 +25,7 @@ import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Helper for handling the 'search' action of the {@link BaseCacheResource}.
@@ -64,7 +65,7 @@ class CacheResourceQueryAction {
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest);
       String queryString = query.getQuery();
 
-      RemoteQueryManager remoteQueryManager = SecurityActions.getComponentRegistry(cache).getComponent(RemoteQueryManager.class);
+      RemoteQueryManager remoteQueryManager = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryManager.class);
       JsonQueryRequest finalQuery = query;
       return CompletableFuture.supplyAsync(() -> {
          try {

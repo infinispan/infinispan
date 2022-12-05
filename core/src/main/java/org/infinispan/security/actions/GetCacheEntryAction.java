@@ -19,7 +19,7 @@ public class GetCacheEntryAction<K, V> extends AbstractAdvancedCacheAction<Cache
    }
 
    @Override
-   public CacheEntry<K, V> run() {
+   public CacheEntry<K, V> get() {
       return ((AdvancedCache<K, V>) cache).getCacheEntry(key);
    }
 }

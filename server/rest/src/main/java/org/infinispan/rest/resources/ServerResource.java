@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.PrivilegedAction;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -66,6 +65,7 @@ import org.infinispan.rest.logging.Messages;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
@@ -164,8 +164,7 @@ public class ServerResource implements ResourceHandler {
       }
       ServerManagement server = invocationHelper.getServer();
       ServerStateManager ignoreManager = server.getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<Void>>) () ->
-                           add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
+      return Security.doAs(restRequest.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
                      .thenApply(r -> builder.build());
    }
 
@@ -191,13 +190,13 @@ public class ServerResource implements ResourceHandler {
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
       switch (restRequest.getAction()) {
          case "start":
-            return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+            return Security.doAs(restRequest.getSubject(), () ->
                   serverStateManager.connectorStart(connectorName).thenApply(r -> builder.build()));
          case "stop":
             if (connector.equals(invocationHelper.getProtocolServer()) || connector.equals(invocationHelper.getProtocolServer().getEnclosingProtocolServer())) {
                return completedFuture(builder.status(CONFLICT).entity(Messages.MSG.connectorMatchesRequest(connectorName)).build());
             } else {
-               return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+               return Security.doAs(restRequest.getSubject(), () ->
                      serverStateManager.connectorStop(connectorName).thenApply(r -> builder.build()));
             }
       }
@@ -229,7 +228,7 @@ public class ServerResource implements ResourceHandler {
                .set("send-buffer-size", transport.getSendBufferSize())
                .set("receive-buffer-size", transport.getReceiveBufferSize());
       }
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+      return Security.doAs(restRequest.getSubject(), () ->
             serverStateManager.connectorStatus(connectorName).thenApply(b -> builder.contentType(APPLICATION_JSON).entity(info.set("enabled", b)).build()));
    }
 
@@ -264,8 +263,7 @@ public class ServerResource implements ResourceHandler {
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
-            serverStateManager.clearConnectorIpFilterRules(connectorName).thenApply(r -> builder.build()));
+      return Security.doAs(restRequest.getSubject(), () -> serverStateManager.clearConnectorIpFilterRules(connectorName).thenApply(r -> builder.build()));
    }
 
    private CompletionStage<RestResponse> listConnectors(RestRequest request) {
@@ -303,8 +301,7 @@ public class ServerResource implements ResourceHandler {
       }
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
-            serverStateManager.setConnectorIpFilterRule(connectorName, rules).thenApply(r -> builder.build()));
+      return Security.doAs(restRequest.getSubject(), () -> serverStateManager.setConnectorIpFilterRule(connectorName, rules).thenApply(r -> builder.build()));
    }
 
    private CompletionStage<RestResponse> memory(RestRequest request) {
@@ -343,8 +340,7 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> report(RestRequest request) {
       ServerManagement server = invocationHelper.getServer();
-      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
-            server.getServerReport().handle((path, t) -> {
+      return Security.doAs(request.getSubject(), () -> server.getServerReport().handle((path, t) -> {
                if (t != null) {
                   throw CompletableFutures.asCompletionException(t);
                }
@@ -418,10 +414,7 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> stop(RestRequest restRequest) {
       return CompletableFuture.supplyAsync(() -> {
-         Security.doAs(restRequest.getSubject(), (PrivilegedAction<?>) () -> {
-            invocationHelper.getServer().serverStop(Collections.emptyList());
-            return null;
-         });
+         Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(Collections.emptyList()));
 
          return new NettyRestResponse.Builder()
                .status(NO_CONTENT).build();

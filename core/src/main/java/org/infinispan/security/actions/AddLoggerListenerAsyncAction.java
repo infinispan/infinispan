@@ -19,7 +19,7 @@ public class AddLoggerListenerAsyncAction extends AbstractEmbeddedCacheManagerAc
    }
 
    @Override
-   public CompletionStage<Void> run() {
+   public CompletionStage<Void> get() {
       return EventLogManager.getEventLogger(cacheManager).addListenerAsync(listener);
    }
 }

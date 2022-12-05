@@ -16,7 +16,7 @@ public class GetCacheManagerClusterNameAction extends AbstractEmbeddedCacheManag
    }
 
    @Override
-   public String run() {
+   public String get() {
       return cacheManager.getClusterName();
    }
 

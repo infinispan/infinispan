@@ -3,10 +3,6 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.Map;
 
@@ -76,18 +72,18 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
-         SecureListenerTest.super.setup();
-         return null;
+      Security.doAs(ADMIN, () -> {
+         try {
+            SecureListenerTest.super.setup();
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
       });
    }
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
-         SecureListenerTest.super.teardown();
-         return null;
-      });
+      Security.doAs(ADMIN, () -> SecureListenerTest.super.teardown());
    }
 
    @Override
@@ -102,12 +98,10 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
 
    @Override
    protected HotRodServer initServer(Map<String, String> mechProperties, int index) {
-      return Security.doAs(ADMIN, (PrivilegedAction<HotRodServer>) () -> {
-         return SecureListenerTest.super.initServer(mechProperties, index);
-      });
+      return Security.doAs(ADMIN, () -> SecureListenerTest.super.initServer(mechProperties, index));
    }
 
-   public void testImplicitRemoveOnClose() throws IOException, PrivilegedActionException {
+   public void testImplicitRemoveOnClose() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWLuser",null, "password"));
 
@@ -130,7 +124,7 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
       eventuallyEquals(0, () -> cacheNotifier.getListeners().size());
    }
 
-   public void testAddListenerWithoutPermission() throws IOException, PrivilegedActionException {
+   public void testAddListenerWithoutPermission() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().saslMechanism("CRAM-MD5").username("RWuser").password("password");
 

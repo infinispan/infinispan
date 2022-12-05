@@ -1,8 +1,6 @@
 package org.infinispan.jboss.marshalling.commons;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import org.jboss.marshalling.AbstractMarshallerFactory;
 import org.jboss.marshalling.Marshalling;
@@ -32,13 +30,7 @@ public class JBossMarshallerFactory extends AbstractMarshallerFactory {
       if (factory == null)
          throw new IllegalStateException(
             "River marshaller factory not found.  Verify that the JBoss Marshalling River jar archive is in the classpath.");
-
-      registry = AccessController.doPrivileged(new PrivilegedAction<SerializableClassRegistry>() {
-          @Override
-          public SerializableClassRegistry run() {
-              return SerializableClassRegistry.getInstance();
-          }
-      });
+      registry = SerializableClassRegistry.getInstance();
    }
 
    @Override

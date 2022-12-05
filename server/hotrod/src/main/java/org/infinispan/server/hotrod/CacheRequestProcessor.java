@@ -22,6 +22,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.iteration.IterationState;

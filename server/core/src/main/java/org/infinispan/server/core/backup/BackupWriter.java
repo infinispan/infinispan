@@ -31,6 +31,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.backup.resources.ContainerResourceFactory;
 import org.infinispan.server.core.logging.Log;
@@ -116,7 +117,7 @@ class BackupWriter {
          stages.dependsOn(
                // Write the global configuration xml
                blockingManager.runBlocking(() ->
-                     writeGlobalConfig(SecurityActions.getGlobalConfiguration(cm), containerRoot), "backupWriter - writeGlobalConfig")
+                     writeGlobalConfig(SecurityActions.getCacheManagerConfiguration(cm), containerRoot), "backupWriter - writeGlobalConfig")
          );
 
          return blockingManager.thenRunBlocking(

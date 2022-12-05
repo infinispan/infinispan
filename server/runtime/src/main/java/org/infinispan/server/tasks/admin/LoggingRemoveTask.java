@@ -13,6 +13,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.admin.AdminServerTask;
 import org.infinispan.tasks.TaskExecutionMode;
 

@@ -69,6 +69,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.server.core.QueryFacade;

@@ -3,8 +3,6 @@ package org.infinispan.tasks;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,93 +30,76 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tasks.SecurityTaskManagerTest")
 public class SecurityTaskManagerTest extends SingleCacheManagerTest {
 
-    static final Subject ADMIN = TestingUtil.makeSubject("admin", "admin");
-    static final Subject HACKER = TestingUtil.makeSubject("hacker", "hacker");
+   static final Subject ADMIN = TestingUtil.makeSubject("admin", "admin");
+   static final Subject HACKER = TestingUtil.makeSubject("hacker", "hacker");
 
-    private TaskManagerImpl taskManager;
-    private DummyTaskEngine taskEngine;
+   private TaskManagerImpl taskManager;
+   private DummyTaskEngine taskEngine;
 
-    @Override
-    protected EmbeddedCacheManager createCacheManager() throws Exception {
-        GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-        global
-                .security()
-                .authorization().enable()
-                .principalRoleMapper(new IdentityRoleMapper())
-                .role("admin").permission(AuthorizationPermission.ALL);
-        ConfigurationBuilder config = new ConfigurationBuilder();
-        config.security().authorization().enable()
-                .role("admin");
-        return TestCacheManagerFactory.createCacheManager(global, config);
-    }
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global
+            .security()
+            .authorization().enable()
+            .principalRoleMapper(new IdentityRoleMapper())
+            .role("admin").permission(AuthorizationPermission.ALL);
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.security().authorization().enable()
+            .role("admin");
+      return TestCacheManagerFactory.createCacheManager(global, config);
+   }
 
-    @Override
-    protected void setup() throws Exception {
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                SecurityTaskManagerTest.super.setup();
+   @Override
+   protected void setup() throws Exception {
+      Security.doAs(ADMIN, () -> {
+         try {
+            SecurityTaskManagerTest.super.setup();
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+         taskManager = (TaskManagerImpl) cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+         taskEngine = new DummyTaskEngine();
+         taskManager.registerTaskEngine(taskEngine);
+      });
+   }
 
-                taskManager = (TaskManagerImpl) cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
-                taskEngine = new DummyTaskEngine();
-                taskManager.registerTaskEngine(taskEngine);
-                return null;
-            }
-        });
-    }
+   @Override
+   protected void teardown() {
+      Security.doAs(ADMIN, () -> SecurityTaskManagerTest.super.teardown());
+   }
 
-    @Override
-    protected void teardown() {
-        Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                SecurityTaskManagerTest.super.teardown();
-                return null;
-            }
-        });
-    }
+   @Override
+   protected void clearContent() {
+      Security.doAs(ADMIN, () -> cacheManager.getCache().clear());
+   }
 
-    @Override
-    protected void clearContent() {
-        Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                cacheManager.getCache().clear();
-                return null;
-            }
-        });
-    }
+   @Test(dataProvider = "principalProvider")
+   public void testTaskExecutionWithAuthorization(String principal, Subject subject) {
+      Security.doAs(subject, () -> {
+         CompletableFuture<Object> slowTask = taskManager.runTask(DummyTaskEngine.DummyTaskTypes.SLOW_TASK.name(), new TaskContext())
+               .toCompletableFuture();
+         Collection<TaskExecution> currentTasks = taskManager.getCurrentTasks();
+         assertEquals(1, currentTasks.size());
 
-    @Test(dataProvider = "principalProvider")
-    public void testTaskExecutionWithAuthorization(String principal, Subject subject) throws Exception {
-        Security.doAs(subject, new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                CompletableFuture<Object> slowTask = taskManager.runTask(DummyTaskEngine.DummyTaskTypes.SLOW_TASK.name(), new TaskContext())
-                      .toCompletableFuture();
-                Collection<TaskExecution> currentTasks = taskManager.getCurrentTasks();
-                assertEquals(1, currentTasks.size());
+         TaskExecution currentTask = currentTasks.iterator().next();
+         assertEquals(DummyTaskEngine.DummyTaskTypes.SLOW_TASK.name(), currentTask.getName());
+         assertEquals(principal, currentTask.getWho().get());
+         taskEngine.getSlowTask().complete("slow");
 
-                TaskExecution currentTask = currentTasks.iterator().next();
-                assertEquals(DummyTaskEngine.DummyTaskTypes.SLOW_TASK.name(), currentTask.getName());
-                assertEquals(principal, currentTask.getWho().get());
-                taskEngine.getSlowTask().complete("slow");
+         assertEquals(0, taskManager.getCurrentTasks().size());
+         try {
+            assertEquals("slow", slowTask.get());
+         } catch (InterruptedException | ExecutionException e) {
+            fail("Exception thrown while getting the slowTask. ");
+         }
 
-                assertEquals(0, taskManager.getCurrentTasks().size());
-                try {
-                    assertEquals("slow", slowTask.get());
-                } catch (InterruptedException | ExecutionException e) {
-                    fail("Exception thrown while getting the slowTask. ");
-                }
+         taskEngine.setSlowTask(new CompletableFuture<>());
+      });
+   }
 
-                taskEngine.setSlowTask(new CompletableFuture<>());
-                return null;
-            }
-        });
-    }
-
-    @DataProvider(name = "principalProvider")
-    private static Object[][] providePrincipals() {
-        return new Object[][] {{"admin", ADMIN}, {"hacker", HACKER}};
-    }
+   @DataProvider(name = "principalProvider")
+   private static Object[][] providePrincipals() {
+      return new Object[][]{{"admin", ADMIN}, {"hacker", HACKER}};
+   }
 }

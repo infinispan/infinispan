@@ -110,7 +110,7 @@ public class ChannelFactory {
          int asyncThreads = maxAsyncThreads(executorService, configuration);
          // static field with default is private in MultithreadEventLoopGroup
          int eventLoopThreads =
-               SecurityActions.getIntProperty("io.netty.eventLoopThreads", ProcessorInfo.availableProcessors() * 2);
+               Integer.getInteger("io.netty.eventLoopThreads", ProcessorInfo.availableProcessors() * 2);
          // Note that each event loop opens a selector which counts
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
          this.eventLoopGroup = configuration.transportFactory().createEventLoopGroup(maxExecutors, executorService);

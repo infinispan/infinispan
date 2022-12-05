@@ -18,6 +18,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**

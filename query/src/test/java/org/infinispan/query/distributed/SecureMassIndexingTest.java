@@ -1,8 +1,5 @@
 package org.infinispan.query.distributed;
 
-
-import java.security.PrivilegedAction;
-
 import javax.security.auth.Subject;
 
 import org.infinispan.security.Security;
@@ -47,14 +44,13 @@ public class SecureMassIndexingTest extends DistributedMassIndexingTest {
    }
 
    private void runAs(Subject subject, TestExecution execution) {
-      Security.doAs(subject, (PrivilegedAction<Void>) () -> {
+      Security.doAs(subject, () -> {
          try {
             execution.apply();
          } catch (Throwable e) {
             e.printStackTrace();
             Assert.fail();
          }
-         return null;
       });
    }
 }

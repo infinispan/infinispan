@@ -27,8 +27,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
@@ -41,7 +39,6 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
-import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.wildfly.security.mechanism.http.UsernamePasswordAuthenticationMechanism;
 
 /**
@@ -83,7 +80,7 @@ final class LocalUserAuthenticationMechanism extends UsernamePasswordAuthenticat
       super(checkNotNullParam("callbackHandler", callbackHandler));
       this.silent = silent;
       this.useSecureRandom = true;
-      this.basePath = new File(getProperty("java.io.tmpdir"));
+      this.basePath = new File(System.getProperty("java.io.tmpdir"));
    }
 
    /**
@@ -179,14 +176,6 @@ final class LocalUserAuthenticationMechanism extends UsernamePasswordAuthenticat
       StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
       response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
       response.setStatusCode(UNAUTHORIZED);
-   }
-
-   private static String getProperty(final String name) {
-      return doPrivileged(new ReadPropertyAction(name, null));
-   }
-
-   private static <T> T doPrivileged(final PrivilegedAction<T> action) {
-      return System.getSecurityManager() != null ? AccessController.doPrivileged(action) : action.run();
    }
 
    private void deleteChallenge(File challengeFile) {

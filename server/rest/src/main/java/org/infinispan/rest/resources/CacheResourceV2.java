@@ -116,6 +116,7 @@ import org.infinispan.rest.stream.CacheKeyStreamProcessor;
 import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;

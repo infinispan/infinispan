@@ -16,7 +16,7 @@ public class GetCacheStatusAction extends AbstractAdvancedCacheAction<ComponentS
    }
 
    @Override
-   public ComponentStatus run() {
+   public ComponentStatus get() {
       return cache.getStatus();
    }
 

@@ -141,7 +141,12 @@ public final class Util {
    }
 
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
-      return SecurityActions.getClassLoaders(appClassLoader);
+      return new ClassLoader[]{
+            appClassLoader,   // User defined classes
+            Util.class.getClassLoader(),           // Infinispan classes (not always on TCCL [modular env])
+            ClassLoader.getSystemClassLoader(),    // Used when load time instrumentation is in effect
+            Thread.currentThread().getContextClassLoader() //Used by jboss-as stuff
+      };
    }
 
    /**
@@ -260,7 +265,8 @@ public final class Util {
    public static <T> T getInstance(Class<T> clazz) {
       try {
          return getInstanceStrict(clazz);
-      } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException iae) {
+      } catch (IllegalAccessException | InstantiationException | NoSuchMethodException |
+               InvocationTargetException iae) {
          throw new CacheConfigurationException("Unable to instantiate class '" + clazz.getName() + "'", iae);
       }
    }
@@ -295,8 +301,8 @@ public final class Util {
     * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls back
     * to an empty constructor.
     * <p/>
-    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link
-    * CacheConfigurationException}.
+    * Any exceptions encountered loading and instantiating the class is wrapped in a
+    * {@link CacheConfigurationException}.
     *
     * @param classname class to instantiate
     * @return an instance of classname
@@ -1141,12 +1147,12 @@ public final class Util {
    /**
     * This method is to be replaced by Java 9 Arrays#equals with the same arguments.
     *
-    * @param a first array to test contents
+    * @param a          first array to test contents
     * @param aFromIndex the offset into the first array to start comparison
-    * @param aToIndex the last element (exclusive) of the first array to compare
-    * @param b second array to test contents
+    * @param aToIndex   the last element (exclusive) of the first array to compare
+    * @param b          second array to test contents
     * @param bFromIndex the offset into the second array to start comparison
-    * @param bToIndex the last element (exclusive) of the second array to compare
+    * @param bToIndex   the last element (exclusive) of the second array to compare
     * @return if the bytes in the two array ranges are equal
     */
    public static boolean arraysEqual(byte[] a, int aFromIndex, int aToIndex, byte[] b, int bFromIndex, int bToIndex) {

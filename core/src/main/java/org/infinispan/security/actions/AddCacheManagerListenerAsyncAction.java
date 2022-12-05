@@ -19,7 +19,7 @@ public class AddCacheManagerListenerAsyncAction extends AbstractEmbeddedCacheMan
    }
 
    @Override
-   public CompletionStage<Void> run() {
+   public CompletionStage<Void> get() {
       return cacheManager.addListenerAsync(listener);
    }
 

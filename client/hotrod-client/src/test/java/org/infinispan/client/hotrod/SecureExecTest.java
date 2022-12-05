@@ -6,9 +6,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,18 +79,18 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
-         SecureExecTest.super.setup();
-         return null;
+      Security.doAs(ADMIN,  () -> {
+         try {
+            SecureExecTest.super.setup();
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
       });
    }
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
-         SecureExecTest.super.teardown();
-         return null;
-      });
+      Security.doAs(ADMIN, () -> SecureExecTest.super.teardown());
    }
 
    @Override
@@ -106,10 +103,10 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
    @Override
    protected HotRodServer initServer(Map<String, String> mechProperties, int index) {
-      return Security.doAs(ADMIN, (PrivilegedAction<HotRodServer>) () -> SecureExecTest.super.initServer(mechProperties, index));
+      return Security.doAs(ADMIN, () -> SecureExecTest.super.initServer(mechProperties, index));
    }
 
-   public void testSimpleScriptExecutionWithValidAuth() throws IOException, PrivilegedActionException {
+   public void testSimpleScriptExecutionWithValidAuth() throws IOException {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
@@ -117,7 +114,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
-   public void testSimpleScriptExecutionWithInvalidAuth() throws IOException, PrivilegedActionException {
+   public void testSimpleScriptExecutionWithInvalidAuth() throws IOException {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
@@ -125,7 +122,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
-   public void testSimpleScriptExecutionWithoutExecPerm() throws IOException, PrivilegedActionException {
+   public void testSimpleScriptExecutionWithoutExecPerm() throws IOException {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWuser", "realm", "password".toCharArray()));
 
@@ -133,7 +130,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
-   public void testUploadWithoutScriptManagerRole() throws IOException, PrivilegedActionException {
+   public void testUploadWithoutScriptManagerRole() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
@@ -142,7 +139,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
-   public void testClearWithoutScriptManagerRole() throws IOException, PrivilegedActionException {
+   public void testClearWithoutScriptManagerRole() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
@@ -150,7 +147,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
       remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE).clear();
    }
 
-   private void runTestWithGivenScript(Configuration config, String scriptPath) throws IOException, PrivilegedActionException {
+   private void runTestWithGivenScript(Configuration config, String scriptPath) throws IOException {
       remoteCacheManager = new RemoteCacheManager(config);
       Map<String, String> params = new HashMap<>();
       params.put("a", "guinness");
@@ -168,14 +165,8 @@ public class SecureExecTest extends AbstractAuthenticationTest {
       assertEquals("guinness", remoteCacheManager.getCache(CACHE_NAME).get("a"));
    }
 
-   protected void uploadScript(String scriptName, String script) throws PrivilegedActionException {
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-         @Override
-         public Void run() throws Exception {
-            cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).put(scriptName, script);
-            return null;
-         }
-      });
+   protected void uploadScript(String scriptName, String script) {
+      Security.doAs(ADMIN, () -> cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).put(scriptName, script));
    }
 
 }

@@ -1,11 +1,9 @@
 package org.infinispan.persistence.async;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import static org.infinispan.security.Security.doPrivileged;
 
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 
 /**
@@ -20,11 +18,6 @@ import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 final class SecurityActions {
 
    private SecurityActions() {
-   }
-
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      return System.getSecurityManager() != null ?
-            AccessController.doPrivileged(action) : Security.doPrivileged(action);
    }
 
    static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {

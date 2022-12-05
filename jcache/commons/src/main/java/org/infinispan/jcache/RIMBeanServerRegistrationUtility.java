@@ -62,7 +62,7 @@ final class RIMBeanServerRegistrationUtility {
          ObjectName objectName = calculateObjectName(cache, objectNameType);
          try {
             if (!mBeanServer.isRegistered(objectName)) {
-               SecurityActions.registerMBean(mBean, objectName, mBeanServer);
+               mBeanServer.registerMBean(mBean, objectName);
             }
          } catch (Exception e) {
             throw new CacheException("Error registering cache MXBeans for CacheManager "
@@ -82,7 +82,7 @@ final class RIMBeanServerRegistrationUtility {
          ObjectName objectName = calculateObjectName(cache, objectNameType);
          try {
             if (mBeanServer.isRegistered(objectName)) {
-               SecurityActions.unregisterMBean(objectName, mBeanServer);
+               mBeanServer.unregisterMBean(objectName);
             }
          } catch (Exception e) {
             throw new CacheException("Error unregistering MBean " + objectName + ". Error was " + e.getMessage(), e);

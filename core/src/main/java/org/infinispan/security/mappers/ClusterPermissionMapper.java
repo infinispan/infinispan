@@ -22,6 +22,7 @@ import org.infinispan.security.AuthorizationMapperContext;
 import org.infinispan.security.MutableRolePermissionMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * ClusterPermissionMapper. This class implements both a {@link MutableRolePermissionMapper} storing the mappings in a

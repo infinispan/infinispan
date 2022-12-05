@@ -21,6 +21,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.logging.Log;

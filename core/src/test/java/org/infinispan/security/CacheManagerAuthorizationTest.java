@@ -3,8 +3,7 @@ package org.infinispan.security;
 import static org.testng.Assert.assertTrue;
 
 import java.lang.reflect.Field;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
 
@@ -28,7 +27,7 @@ public class CacheManagerAuthorizationTest extends BaseAuthorizationTest {
       for (Field f : fields) {
          if (f.getType().equals(Runnable.class)) {
             final Runnable fn = (Runnable) f.get(this);
-            PrivilegedExceptionAction<Boolean> action = () -> {
+            Supplier<Boolean> action = () -> {
                fn.run();
                return true;
             };
@@ -38,7 +37,7 @@ public class CacheManagerAuthorizationTest extends BaseAuthorizationTest {
                if (perm.implies(p.value())) {
                   assertTrue(Security.doAs(subject, action));
                } else {
-                  Exceptions.expectException(PrivilegedActionException.class, SecurityException.class,
+                  Exceptions.expectException(SecurityException.class,
                         () -> Security.doAs(subject, action));
                }
             }

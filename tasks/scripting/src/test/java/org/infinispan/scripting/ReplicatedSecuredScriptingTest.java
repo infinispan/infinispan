@@ -4,15 +4,14 @@ import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.io.IOException;
 import java.util.List;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -39,170 +38,130 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "scripting.ReplicatedSecuredScriptingTest")
 @CleanupAfterTest
 public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
-    static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
-    static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
-    static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
+   static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
+   static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
+   static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
 
-    @Override
-    protected void createCacheManagers() throws Throwable {
-        final GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-        final ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
-        global.security().authorization().enable()
-                .principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL)
-                .role("runner")
-                .permission(AuthorizationPermission.EXEC)
-                .permission(AuthorizationPermission.READ)
-                .permission(AuthorizationPermission.WRITE)
-                .permission(AuthorizationPermission.ADMIN)
-                .role("pheidippides")
-                .permission(AuthorizationPermission.EXEC)
-                .permission(AuthorizationPermission.READ)
-                .permission(AuthorizationPermission.WRITE);
-        builder.security().authorization().enable().role("admin").role("runner").role("pheidippides");
-        builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
-              .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                createCluster(global, builder, 2);
-                defineConfigurationOnAllManagers(SecureScriptingTest.SECURE_CACHE_NAME, builder);
-                for (EmbeddedCacheManager cm : cacheManagers)
-                    cm.getCache(SecureScriptingTest.SECURE_CACHE_NAME);
-                waitForClusterToForm();
-                return null;
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      final GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      final ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      global.security().authorization().enable()
+            .principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL)
+            .role("runner")
+            .permission(AuthorizationPermission.EXEC)
+            .permission(AuthorizationPermission.READ)
+            .permission(AuthorizationPermission.WRITE)
+            .permission(AuthorizationPermission.ADMIN)
+            .role("pheidippides")
+            .permission(AuthorizationPermission.EXEC)
+            .permission(AuthorizationPermission.READ)
+            .permission(AuthorizationPermission.WRITE);
+      builder.security().authorization().enable().role("admin").role("runner").role("pheidippides");
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
+            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      Security.doAs(ADMIN, () -> {
+         createCluster(global, builder, 2);
+         defineConfigurationOnAllManagers(SecureScriptingTest.SECURE_CACHE_NAME, builder);
+         for (EmbeddedCacheManager cm : cacheManagers)
+            cm.getCache(SecureScriptingTest.SECURE_CACHE_NAME);
+         waitForClusterToForm();
+      });
+   }
+
+   @Override
+   @AfterClass(alwaysRun = true)
+   protected void destroy() {
+      Security.doAs(ADMIN, () -> ReplicatedSecuredScriptingTest.super.destroy());
+   }
+
+   @Override
+   @AfterMethod(alwaysRun = true)
+   protected void clearContent() throws Throwable {
+      Security.doAs(ADMIN, () -> {
+         try {
+            ReplicatedSecuredScriptingTest.super.clearContent();
+         } catch (Throwable e) {
+            throw new RuntimeException(e);
+         }
+      });
+   }
+
+   public void testLocalScriptExecutionWithRole() {
+      ScriptingManager scriptingManager = getScriptingManager(manager(0));
+
+      Security.doAs(ADMIN, () -> {
+         try {
+            loadScript(scriptingManager, "/testRole.js");
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         }
+      });
+
+      Security.doAs(PHEIDIPPIDES, () -> {
+         Cache cache = manager(0).getCache(SecureScriptingTest.SECURE_CACHE_NAME);
+         String value = CompletionStages.join(scriptingManager.runScript("testRole.js",
+               new TaskContext().cache(cache).addParameter("a", "value")));
+
+         assertEquals("value", value);
+         assertEquals("value", cache.get("a"));
+      });
+   }
+
+   @Test(expectedExceptions = {SecurityException.class})
+   public void testLocalScriptExecutionWithAuthException() {
+      ScriptingManager scriptingManager = getScriptingManager(manager(0));
+
+      Security.doAs(ADMIN, () -> {
+               try {
+                  loadScript(scriptingManager, "/testRole.js");
+               } catch (IOException e) {
+                  throw new RuntimeException(e);
+               }
             }
-        });
-    }
+      );
 
-    @Override
-    @AfterClass(alwaysRun = true)
-    protected void destroy() {
-        Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                ReplicatedSecuredScriptingTest.super.destroy();
-                return null;
-            }
-        });
-    }
+      Security.doAs(RUNNER, () -> {
+         Cache cache = manager(0).getCache();
+         CompletionStages.join(scriptingManager.runScript("testRole.js",
+               new TaskContext().cache(cache).addParameter("a", "value")));
+         return null;
+      });
+   }
 
-    @Override
-    @AfterMethod(alwaysRun = true)
-    protected void clearContent() throws Throwable {
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                try {
-                    ReplicatedSecuredScriptingTest.super.clearContent();
-                } catch (Throwable e) {
-                    throw new Exception(e);
-                }
-                return null;
-            }
-        });
-    }
+   @Test(enabled = false, description = "Enable when ISPN-6374 is fixed.")
+   public void testDistributedScriptExecutionWithRole() {
+      ScriptingManager scriptingManager = getScriptingManager(manager(0));
 
-    public void testLocalScriptExecutionWithRole() throws Exception {
-        ScriptingManager scriptingManager = getScriptingManager(manager(0));
+      Security.doAs(ADMIN, () -> Exceptions.unchecked(() -> loadScript(scriptingManager, "/testRole_dist.js")));
 
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole.js");
-                return null;
-            }
-        });
+      Security.doAs(RUNNER, () -> {
+         Cache cache = manager(0).getCache();
+         List<JGroupsAddress> value = CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
+               new TaskContext().cache(cache).addParameter("a", "value")));
 
-        Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                Cache cache = manager(0).getCache(SecureScriptingTest.SECURE_CACHE_NAME);
-                String value = CompletionStages.join(scriptingManager.runScript("testRole.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")));
+         assertEquals(value.get(0), manager(0).getAddress());
+         assertEquals(value.get(1), manager(1).getAddress());
+         assertEquals("value", cache.get("a"));
+         assertEquals("value", manager(1).getCache().get("a"));
+      });
+   }
 
-                assertEquals("value", value);
-                assertEquals("value", cache.get("a"));
-                return null;
-            }
-        });
-    }
+   @Test(expectedExceptions = {SecurityException.class})
+   public void testDistributedScriptExecutionWithAuthException() {
+      ScriptingManager scriptingManager = getScriptingManager(manager(0));
 
-    @Test(expectedExceptions = {PrivilegedActionException.class, SecurityException.class})
-    public void testLocalScriptExecutionWithAuthException() throws Exception {
-        ScriptingManager scriptingManager = getScriptingManager(manager(0));
+      Security.doAs(ADMIN, () -> Exceptions.unchecked(() -> loadScript(scriptingManager, "/testRole_dist.js")));
 
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole.js");
-                return null;
-            }
-        });
+      Security.doAs(PHEIDIPPIDES, () -> {
+         Cache cache = manager(0).getCache();
+         CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
+               new TaskContext().cache(cache).addParameter("a", "value")));
+      });
+   }
 
-        Security.doAs(RUNNER, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                Cache cache = manager(0).getCache();
-                CompletionStages.join(scriptingManager.runScript("testRole.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")));
-                return null;
-            }
-        });
-    }
-
-    @Test(enabled = false, description = "Enable when ISPN-6374 is fixed.")
-    public void testDistributedScriptExecutionWithRole() throws Exception {
-        ScriptingManager scriptingManager = getScriptingManager(manager(0));
-
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole_dist.js");
-                return null;
-            }
-        });
-
-        Security.doAs(RUNNER, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                Cache cache = manager(0).getCache();
-                List<JGroupsAddress> value = CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")));
-
-                assertEquals(value.get(0), manager(0).getAddress());
-                assertEquals(value.get(1), manager(1).getAddress());
-                assertEquals("value", cache.get("a"));
-                assertEquals("value", manager(1).getCache().get("a"));
-                return null;
-            }
-        });
-    }
-
-    @Test(expectedExceptions = {PrivilegedActionException.class, SecurityException.class})
-    public void testDistributedScriptExecutionWithAuthException() throws Exception {
-        ScriptingManager scriptingManager = getScriptingManager(manager(0));
-
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                loadScript(scriptingManager, "/testRole_dist.js");
-                return null;
-            }
-        });
-
-        Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                Cache cache = manager(0).getCache();
-                CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
-                        new TaskContext().cache(cache).addParameter("a", "value")));
-                return null;
-            }
-        });
-    }
-
-    @DataProvider(name = "cacheModeProvider")
-    private static Object[][] providePrinciples() {
-        return new Object[][] {{CacheMode.REPL_SYNC}, {CacheMode.DIST_SYNC}};
-    }
+   @DataProvider(name = "cacheModeProvider")
+   private static Object[][] providePrinciples() {
+      return new Object[][]{{CacheMode.REPL_SYNC}, {CacheMode.DIST_SYNC}};
+   }
 }

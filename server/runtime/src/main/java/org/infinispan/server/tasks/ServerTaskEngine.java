@@ -15,6 +15,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
@@ -90,7 +91,7 @@ public class ServerTaskEngine implements TaskEngine {
       String role = task.getRole().orElse(null);
       if (globalauthorizer != null) {
          if (context.getCache().isPresent()) {
-            AuthorizationManager authorizationManager = SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache());
+            AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(context.getCache().get().getAdvancedCache());
             if (authorizationManager != null) {
                // when the cache is secured
                authorizationManager.checkPermission(AuthorizationPermission.EXEC, role);

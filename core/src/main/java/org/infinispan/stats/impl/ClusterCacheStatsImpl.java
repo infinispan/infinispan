@@ -72,6 +72,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.function.TriConsumer;

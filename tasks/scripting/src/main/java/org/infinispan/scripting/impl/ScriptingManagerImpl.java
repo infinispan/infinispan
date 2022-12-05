@@ -32,6 +32,7 @@ import org.infinispan.scripting.logging.Log;
 import org.infinispan.scripting.utils.ScriptConversions;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
@@ -154,7 +155,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       ScriptMetadata metadata = getScriptMetadata(scriptName);
       if (authorizer != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
-               SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
+               SecurityActions.getCacheAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
          if (authorizationManager != null) {
             // when the cache is secured
             authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));

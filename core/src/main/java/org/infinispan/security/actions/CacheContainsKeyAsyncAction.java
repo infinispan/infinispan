@@ -17,7 +17,7 @@ public class CacheContainsKeyAsyncAction<K> extends AbstractAdvancedCacheAction<
    }
 
    @Override
-   public CompletionStage<Boolean> run() {
+   public CompletionStage<Boolean> get() {
       return ((AdvancedCache<K, ?>) cache).containsKeyAsync(key);
    }
 }

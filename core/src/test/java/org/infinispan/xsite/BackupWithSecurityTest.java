@@ -2,7 +2,6 @@ package org.infinispan.xsite;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,14 +57,12 @@ public class BackupWithSecurityTest extends AbstractMultipleSitesTest {
    @Override
    protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, String cacheName,
                                  ConfigurationBuilder cb) {
-      return Security.doAs(ADMIN, (PrivilegedAction<TestSite>) () -> {
-         return BackupWithSecurityTest.super.createSite(siteName, numNodes, gcb, cacheName, cb);
-      });
+      return Security.doAs(ADMIN, () -> BackupWithSecurityTest.super.createSite(siteName, numNodes, gcb, cacheName, cb));
    }
 
    @Override
    protected void killSite(TestSite ts) {
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          BackupWithSecurityTest.super.killSite(ts);
          return null;
       });
@@ -73,16 +70,13 @@ public class BackupWithSecurityTest extends AbstractMultipleSitesTest {
 
    @Override
    protected void clearSite(TestSite ts) {
-      Security.doAs(ADMIN, (PrivilegedAction<Object>) () -> {
-         BackupWithSecurityTest.super.clearSite(ts);
-         return null;
-      });
+      Security.doAs(ADMIN, () -> BackupWithSecurityTest.super.clearSite(ts));
    }
 
    @Override
    protected void afterSitesCreated() {
       super.afterSitesCreated();
-      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+      Security.doAs(ADMIN, () -> {
          ConfigurationBuilder builder = defaultConfigurationForSite(0);
          builder.sites().addBackup().site(siteName(1)).strategy(BackupConfiguration.BackupStrategy.SYNC);
          defineInSite(site(0), XSITECACHE, builder.build());
@@ -96,11 +90,11 @@ public class BackupWithSecurityTest extends AbstractMultipleSitesTest {
    }
 
    public void testBackupCacheAccess() {
-      Security.doAs(SUBJECTS.get(AuthorizationPermission.WRITE), (PrivilegedAction<Void>) () -> {
+      Security.doAs(SUBJECTS.get(AuthorizationPermission.WRITE), () -> {
          site(0).cache(XSITECACHE, 0).put("k1", "v1");
          return null;
       });
-      String v = Security.doAs(SUBJECTS.get(AuthorizationPermission.READ), (PrivilegedAction<String>) () -> (String) site(1).cache(XSITECACHE, 0).get("k1"));
+      String v = Security.doAs(SUBJECTS.get(AuthorizationPermission.READ), () -> (String) site(1).cache(XSITECACHE, 0).get("k1"));
       assertEquals("v1", v);
 
    }

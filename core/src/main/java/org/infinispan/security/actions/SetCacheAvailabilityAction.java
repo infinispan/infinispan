@@ -19,7 +19,7 @@ public class SetCacheAvailabilityAction extends AbstractAdvancedCacheAction<Void
    }
 
    @Override
-   public Void run() {
+   public Void get() {
       cache.setAvailability(availabilityMode);
       return null;
    }

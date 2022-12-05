@@ -22,6 +22,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
@@ -61,7 +62,7 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
 
    public void build(SSLContextBuilder builder, Properties properties, EnumSet<ServerSecurityRealm.Feature> features) {
       if (attributes.isModified()) {
-         Provider[] providers = SecurityActions.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
+         Provider[] providers = SslContextFactory.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
          try {
             final KeyStore keyStore;
             String providerName = attributes.attribute(PROVIDER).get();

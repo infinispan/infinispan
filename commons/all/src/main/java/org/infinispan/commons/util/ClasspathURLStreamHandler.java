@@ -6,15 +6,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
- * A {@link URLStreamHandlerFactory} which can handle <tt>classpath:</tt> URI schemes.
- * It will attempt to load resources from the thread's context classloader (if it exists) and then fallback to the
- * system classloader. The factory must be registered as the URL stream handler factory using the {@link #register()}
- * method.
- *
+ * A {@link URLStreamHandlerFactory} which can handle <tt>classpath:</tt> URI schemes. It will attempt to load resources
+ * from the thread's context classloader (if it exists) and then fallback to the system classloader. The factory must be
+ * registered as the URL stream handler factory using the {@link #register()} method.
+ * <p>
  * On Java 9+, this class is available as a URLStreamHandlerProvider service loader implementation which, if present in
  * the boot classpath, will be automatically registered and used by the {@link URL} class.
  *
@@ -30,14 +27,7 @@ public class ClasspathURLStreamHandler implements URLStreamHandlerFactory {
     * application. Refer to the {@link URL} documentation for restrictions and alternative methods of registration.
     */
    public static void register() {
-      if (System.getSecurityManager() != null) {
-         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-            URL.setURLStreamHandlerFactory(INSTANCE);
-            return null;
-         });
-      } else {
-         URL.setURLStreamHandlerFactory(INSTANCE);
-      }
+      URL.setURLStreamHandlerFactory(INSTANCE);
    }
 
    @Override

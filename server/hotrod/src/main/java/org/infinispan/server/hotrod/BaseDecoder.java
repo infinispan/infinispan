@@ -13,6 +13,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.core.telemetry.TelemetryService;
 import org.infinispan.server.hotrod.logging.Log;

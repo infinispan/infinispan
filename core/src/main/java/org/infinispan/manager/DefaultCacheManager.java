@@ -84,6 +84,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.AuthorizationMapperContextImpl;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -784,9 +785,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private void initializeSecurity(GlobalConfiguration globalConfiguration) {
       GlobalAuthorizationConfiguration authorizationConfig = globalConfiguration.security().authorization();
-      if (authorizationConfig.enabled() && System.getSecurityManager() == null) {
-         CONFIG.authorizationEnabledWithoutSecurityManager();
-      }
       if (authorizationConfig.enabled()) {
          AuthorizationMapperContextImpl context = new AuthorizationMapperContextImpl(this);
          authorizationConfig.principalRoleMapper().setContext(context);

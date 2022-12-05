@@ -1,15 +1,12 @@
 package org.infinispan.query.remote.impl;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import static org.infinispan.security.Security.doPrivileged;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.security.AuthorizationManager;
-import org.infinispan.security.Security;
-import org.infinispan.security.actions.AddCacheDependencyAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.impl.SecureCacheImpl;
 
@@ -21,14 +18,6 @@ import org.infinispan.security.impl.SecureCacheImpl;
  * @since 7.2
  */
 final class SecurityActions {
-
-   private SecurityActions() {
-   }
-
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      return System.getSecurityManager() != null ?
-            AccessController.doPrivileged(action) : Security.doPrivileged(action);
-   }
 
    static RemoteQueryManager getRemoteQueryManager(AdvancedCache<?, ?> cache) {
       return doPrivileged(new GetCacheComponentRegistryAction(cache)).getComponent(RemoteQueryManager.class);
@@ -51,9 +40,5 @@ final class SecurityActions {
 
    static SerializationContext getSerializationContext(EmbeddedCacheManager cacheManager) {
       return doPrivileged(new GetSerializationContextAction(cacheManager));
-   }
-
-   static void addCacheDependency(EmbeddedCacheManager cacheManager, String from, String to) {
-      doPrivileged(new AddCacheDependencyAction(cacheManager, from, to));
    }
 }

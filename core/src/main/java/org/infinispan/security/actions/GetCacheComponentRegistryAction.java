@@ -16,7 +16,7 @@ public class GetCacheComponentRegistryAction extends AbstractAdvancedCacheAction
    }
 
    @Override
-   public ComponentRegistry run() {
+   public ComponentRegistry get() {
       return cache.getComponentRegistry();
    }
 

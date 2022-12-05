@@ -22,6 +22,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.HotRodHeader;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.logging.Log;

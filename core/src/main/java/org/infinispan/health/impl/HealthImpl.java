@@ -13,6 +13,7 @@ import org.infinispan.health.Health;
 import org.infinispan.health.HostInfo;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 
 public class HealthImpl implements Health {
 

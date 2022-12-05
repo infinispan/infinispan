@@ -1,7 +1,5 @@
 package org.infinispan.security.actions;
 
-import java.security.PrivilegedAction;
-
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -11,7 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public final class DefineConfigurationAction implements PrivilegedAction<Void> {
+public final class DefineConfigurationAction implements Runnable {
 
    private final EmbeddedCacheManager cacheManager;
    private final String cacheName;
@@ -24,9 +22,8 @@ public final class DefineConfigurationAction implements PrivilegedAction<Void> {
    }
 
    @Override
-   public Void run() {
+   public void run() {
       cacheManager.defineConfiguration(cacheName, configurationOverride);
-      return null;
    }
 
 }

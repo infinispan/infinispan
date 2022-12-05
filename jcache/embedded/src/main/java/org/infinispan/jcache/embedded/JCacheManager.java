@@ -29,6 +29,7 @@ import org.infinispan.jcache.embedded.logging.Log;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.LogFactory;
 
 /**

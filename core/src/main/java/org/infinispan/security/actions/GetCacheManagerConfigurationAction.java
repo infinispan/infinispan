@@ -16,7 +16,7 @@ public class GetCacheManagerConfigurationAction extends AbstractEmbeddedCacheMan
    }
 
    @Override
-   public GlobalConfiguration run() {
+   public GlobalConfiguration get() {
       return cacheManager.getCacheManagerConfiguration();
    }
 

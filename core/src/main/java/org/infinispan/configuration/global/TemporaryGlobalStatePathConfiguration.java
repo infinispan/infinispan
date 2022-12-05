@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class TemporaryGlobalStatePathConfiguration {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)
-         .initializer(() -> Paths.get(SecurityActions.getSystemProperty("java.io.tmpdir")).toAbsolutePath().toString())
+         .initializer(() -> Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().toString())
          .immutable().build();
 
    public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder("relativeTo", null, String.class).immutable().build();

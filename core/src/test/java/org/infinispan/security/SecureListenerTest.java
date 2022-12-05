@@ -2,9 +2,6 @@ package org.infinispan.security;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
-
 import javax.security.auth.Subject;
 
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
@@ -21,7 +18,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName="security.SecureListenerTest")
+@Test(groups = "functional", testName = "security.SecureListenerTest")
 public class SecureListenerTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject SUBJECT_A = TestingUtil.makeSubject("A", "listener");
@@ -36,71 +33,42 @@ public class SecureListenerTest extends SingleCacheManagerTest {
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       globalRoles
-         .role("listener").permission(AuthorizationPermission.LISTEN)
-         .role("admin").permission(AuthorizationPermission.ALL);
+            .role("listener").permission(AuthorizationPermission.LISTEN)
+            .role("admin").permission(AuthorizationPermission.ALL);
       authConfig.role("listener").role("admin");
       return TestCacheManagerFactory.createCacheManager(global, config);
    }
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-
-         @Override
-         public Void run() throws Exception {
+      Security.doAs(ADMIN, () -> {
+         try {
             cacheManager = createCacheManager();
-            if (cache == null) cache = cacheManager.getCache();
-            return null;
+         } catch (Exception e) {
+            throw new RuntimeException(e);
          }
+         if (cache == null) cache = cacheManager.getCache();
       });
    }
 
    public void testSecureListenerSubject() {
       registerListener(SUBJECT_A);
       registerListener(SUBJECT_B);
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            cacheManager.getCache().put("key", "value");
-            return null;
-         }
-
-      });
+      Security.doAs(ADMIN, () -> cacheManager.getCache().put("key", "value"));
    }
 
    private void registerListener(final Subject subject) {
-      Security.doAs(subject, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            cacheManager.getCache().addListener(new SubjectVerifyingListener(subject));
-            return null;
-         }
-
-      });
+      Security.doAs(subject, () -> cacheManager.getCache().addListener(new SubjectVerifyingListener(subject)));
    }
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            SecureListenerTest.super.teardown();
-            return null;
-         }
-      });
+      Security.doAs(ADMIN, () -> SecureListenerTest.super.teardown());
    }
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            cacheManager.getCache().clear();
-            return null;
-         }
-      });
+      Security.doAs(ADMIN, () -> cacheManager.getCache().clear());
    }
 
    @Listener

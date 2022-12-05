@@ -1,12 +1,11 @@
 package org.infinispan.server;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.security.Provider;
-import java.util.Properties;
+import static org.infinispan.security.Security.doPrivileged;
 
+import java.security.Provider;
+import java.util.function.Supplier;
+
+import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactoryBuilder;
 import javax.naming.spi.NamingManager;
 
@@ -16,7 +15,6 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.impl.Authorizer;
@@ -26,53 +24,29 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 /**
  * SecurityActions for the org.infinispan.server.server package.
  * <p>
- * Do not move. Do not change class and method visibility to avoid being called from other {@link
- * java.security.CodeSource}s, thus granting privilege escalation to external code.
+ * Do not move. Do not change class and method visibility to avoid being called from other
+ * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
  * @author Tristan Tarrant <tristan@infinispan.org>
  * @since 10.0
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
-   }
-
-   private static <T> T doPrivilegedExceptionAction(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
-   }
-
-   static Properties getSystemProperties() {
-      return doPrivileged(System::getProperties);
-   }
 
    static void addSecurityProvider(Provider provider) {
-      doPrivileged(() -> {
-               if (java.security.Security.getProvider(provider.getName()) == null) {
-                  java.security.Security.insertProviderAt(provider, 1);
-               }
-               return null;
-            }
-      );
+      if (java.security.Security.getProvider(provider.getName()) == null) {
+         java.security.Security.insertProviderAt(provider, 1);
+      }
    }
 
    static void startCacheManager(final EmbeddedCacheManager cacheManager) {
-      PrivilegedAction<Void> action = () -> {
+      Runnable action = () -> {
          cacheManager.start();
-         return null;
       };
       doPrivileged(action);
    }
 
    static boolean stopCacheManager(final EmbeddedCacheManager cacheManager) {
-      PrivilegedAction<Boolean> action = () -> {
+      Supplier<Boolean> action = () -> {
          if (cacheManager != null && cacheManager.getStatus().allowInvocations()) {
             cacheManager.stop();
             return true;
@@ -95,9 +69,8 @@ final class SecurityActions {
    }
 
    static void shutdownAllCaches(DefaultCacheManager manager) {
-      PrivilegedAction<Void> action = () -> {
+      Runnable action = () -> {
          manager.shutdownAllCaches();
-         return null;
       };
       doPrivileged(action);
    }
@@ -108,11 +81,8 @@ final class SecurityActions {
    }
 
 
-   static void setInitialContextFactoryBuilder(InitialContextFactoryBuilder initialContextFactoryBuilder) throws PrivilegedActionException {
-      doPrivilegedExceptionAction(() -> {
-         NamingManager.setInitialContextFactoryBuilder(initialContextFactoryBuilder);
-         return null;
-      });
+   static void setInitialContextFactoryBuilder(InitialContextFactoryBuilder initialContextFactoryBuilder) throws NamingException {
+      NamingManager.setInitialContextFactoryBuilder(initialContextFactoryBuilder);
    }
 
    static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {

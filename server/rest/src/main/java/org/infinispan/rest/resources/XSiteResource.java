@@ -12,7 +12,6 @@ import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
-import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -28,7 +27,6 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.JsonUtils;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -39,6 +37,7 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.status.AbstractMixedSiteStatus;
@@ -163,7 +162,7 @@ public class XSiteResource implements ResourceHandler {
       if (globalXSiteAdmin == null) return completedFuture(responseBuilder.status(NOT_FOUND).build());
 
       return supplyAsync(() -> {
-         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), (PrivilegedAction<Map<String, SiteStatus>>) globalXSiteAdmin::globalStatus);
+         Map<String, SiteStatus> globalStatus = Security.doAs(request.getSubject(), globalXSiteAdmin::globalStatus);
          Map<String, GlobalStatus> collect = globalStatus.entrySet().stream().collect(Collectors.toMap(Entry::getKey, GlobalStatus::fromSiteStatus));
          String site = request.variables().get("site");
          if (site != null) {
@@ -239,7 +238,7 @@ public class XSiteResource implements ResourceHandler {
          return completedFuture(responseBuilder.status(NOT_MODIFIED).build());
       }
       return supplyAsync(() -> {
-         String status = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
+         String status = Security.doAs(request.getSubject(), () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
             throw Log.REST.siteOperationFailed(site, status);
          }
@@ -266,7 +265,7 @@ public class XSiteResource implements ResourceHandler {
 
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
       return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
-            () -> addEntityAsJson(Json.make(Security.doAs(request.getSubject(), (PrivilegedAction<Map<Address, String>>) () -> ops.nodeStatus(site))), responseBuilder, isPretty(request)).build(),
+            () -> addEntityAsJson(Json.make(Security.doAs(request.getSubject(), () -> ops.nodeStatus(site))), responseBuilder, isPretty(request)).build(),
             invocationHelper.getExecutor()))
             .orElseGet(() -> completedFuture(responseBuilder.build()));
 
@@ -277,7 +276,7 @@ public class XSiteResource implements ResourceHandler {
       Optional<XSiteAdminOperations> xsiteAdmin = getXSiteAdmin(request, responseBuilder);
       return xsiteAdmin.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
             () -> {
-               T result = Security.doAs(request.getSubject(), (PrivilegedAction<T>) () -> op.apply(ops));
+               T result = Security.doAs(request.getSubject(), () -> op.apply(ops));
                return addEntityAsJson(Json.make(result), responseBuilder, isPretty(request)).build();
             },
             invocationHelper.getExecutor()))
@@ -374,7 +373,7 @@ public class XSiteResource implements ResourceHandler {
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
       return xsiteAdminOpt.<CompletionStage<RestResponse>>map(ops ->
             supplyAsync(() -> {
-               String result = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteOp.apply(ops, site));
+               String result = Security.doAs(request.getSubject(), () -> xsiteOp.apply(ops, site));
                if (!result.equals(XSiteAdminOperations.SUCCESS)) {
                   throw Log.REST.siteOperationFailed(site, result);
                }

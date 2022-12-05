@@ -20,14 +20,12 @@ import static org.testng.AssertJUnit.assertFalse;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -239,8 +237,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testCachesWithIgnoreCache() {
       if (security) {
-         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), (PrivilegedAction<CompletableFuture<Void>>) () -> serverStateManager.ignoreCache(
-               CACHE_1));
+         Security.doAs(TestingUtil.makeSubject(AuthorizationPermission.ADMIN.name()), () -> serverStateManager.ignoreCache(CACHE_1));
       } else {
          serverStateManager.ignoreCache(CACHE_1);
       }

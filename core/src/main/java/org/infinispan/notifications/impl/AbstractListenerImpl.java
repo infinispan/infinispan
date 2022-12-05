@@ -4,10 +4,6 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,6 +20,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -39,7 +36,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 
@@ -224,16 +220,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                if (m.isAnnotationPresent(annotationClass)) {
                   final Class<?> eventClass = annotationEntry.getValue();
                   testListenerMethodValidity(m, eventClass, annotationClass.getName());
-
-                  if (System.getSecurityManager() == null) {
-                     m.setAccessible(true);
-                  } else {
-                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                        m.setAccessible(true);
-                        return null;
-                     });
-                  }
-
+                  ReflectionUtil.setAccessible(m);
                   builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
@@ -270,16 +257,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                if (m.isAnnotationPresent(annotationClass) && canApply(filterAnnotations, annotationClass)) {
                   final Class<?> eventClass = annotationEntry.getValue();
                   testListenerMethodValidity(m, eventClass, annotationClass.getName());
-
-                  if (System.getSecurityManager() == null) {
-                     m.setAccessible(true);
-                  } else {
-                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                        m.setAccessible(true);
-                        return null;
-                     });
-                  }
-
+                  ReflectionUtil.setAccessible(m);
                   builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
@@ -320,16 +298,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                if (m.isAnnotationPresent(annotationClass)) {
                   final Class<?> eventClass = annotationEntry.getValue();
                   testListenerMethodValidity(m, eventClass, annotationClass.getName());
-
-                  if (System.getSecurityManager() == null) {
-                     m.setAccessible(true);
-                  } else {
-                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                        m.setAccessible(true);
-                        return null;
-                     });
-                  }
-
+                  ReflectionUtil.setAccessible(m);
                   listenerInterests.add(annotationClass);
                }
             }
@@ -426,19 +395,24 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
             ClassLoader contextClassLoader = null;
             Transaction transaction = suspendIfNeeded();
             if (classLoader.get() != null) {
-               contextClassLoader = SecurityActions.setContextClassLoader(classLoader.get());
+               contextClassLoader = Thread.currentThread().getContextClassLoader();
+               Thread.currentThread().setContextClassLoader(classLoader.get());
             }
 
             try {
                Object result;
                if (subject != null) {
                   try {
-                     result = Security.doAs(subject, (PrivilegedExceptionAction<Object>) () -> {
+                     result = Security.doAs(subject, () -> {
                         // Don't want to print out Subject as it could have sensitive information
                         getLog().tracef("Invoking listener: %s passing event %s using subject", target, event);
-                        return method.invoke(target, event);
+                        try {
+                           return method.invoke(target, event);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                           throw new RuntimeException(e);
+                        }
                      });
-                  } catch (PrivilegedActionException e) {
+                  } catch (Exception e) {
                      Throwable cause = e.getCause();
                      if (cause instanceof InvocationTargetException) {
                         throw (InvocationTargetException)cause;
@@ -467,7 +441,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                removeListenerAsync(target);
             } finally {
                if (classLoader.get() != null) {
-                  SecurityActions.setContextClassLoader(contextClassLoader);
+                  Thread.currentThread().setContextClassLoader(contextClassLoader);
                }
                resumeIfNeeded(transaction);
             }

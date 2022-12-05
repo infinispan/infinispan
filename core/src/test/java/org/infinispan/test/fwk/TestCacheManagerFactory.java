@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -62,12 +60,14 @@ public class TestCacheManagerFactory {
 
    /**
     * Note this method does not amend the global configuration to reduce overall resource footprint.  It is therefore
-    * suggested to use {@link org.infinispan.test.fwk.TestCacheManagerFactory#createClusteredCacheManager(org.infinispan.configuration.cache.ConfigurationBuilder,
+    * suggested to use
+    * {@link
+    * org.infinispan.test.fwk.TestCacheManagerFactory#createClusteredCacheManager(org.infinispan.configuration.cache.ConfigurationBuilder,
     * TransportFlags)} instead when this is needed
     *
-    * @param start         Whether to start this cache container
-    * @param gcb           The global configuration builder to use
-    * @param c             The default configuration to use
+    * @param start Whether to start this cache container
+    * @param gcb   The global configuration builder to use
+    * @param c     The default configuration to use
     * @return The resultant cache manager that is created
     */
    public static EmbeddedCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gcb,
@@ -366,8 +366,8 @@ public class TestCacheManagerFactory {
    public static void configureJmx(GlobalConfigurationBuilder builder, String jmxDomain,
                                    MBeanServerLookup mBeanServerLookup) {
       builder.jmx().enabled(true)
-             .domain(jmxDomain)
-             .mBeanServerLookup(mBeanServerLookup);
+            .domain(jmxDomain)
+            .mBeanServerLookup(mBeanServerLookup);
    }
 
    public static ConfigurationBuilder getDefaultCacheConfiguration(boolean transactional) {
@@ -420,8 +420,8 @@ public class TestCacheManagerFactory {
 
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
       ThreadPoolExecutorFactory executorFactoryWithQueue =
-         CoreExecutorFactory.executorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
-                                               NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, false);
+            CoreExecutorFactory.executorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
+                  NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, false);
       ThreadPoolExecutorFactory nonBlockingExecutorFactoryWithQueue =
             CoreExecutorFactory.executorFactory(NAMED_EXECUTORS_THREADS_WITH_QUEUE, NAMED_EXECUTORS_THREADS_WITH_QUEUE,
                   NAMED_EXECUTORS_QUEUE_SIZE, NAMED_EXECUTORS_KEEP_ALIVE, true);
@@ -445,7 +445,8 @@ public class TestCacheManagerFactory {
          try {
             Marshaller marshaller = Util.getInstanceStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
             builder.serialization().marshaller(marshaller);
-         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException |
+                  InvocationTargetException e) {
             // No-op, stick to GlobalConfiguration default.
          }
       }
@@ -464,18 +465,13 @@ public class TestCacheManagerFactory {
 
       @Override
       public void close() {
-         PrivilegedAction<Object> action = () -> {
+         Runnable action = () -> {
             if (!ref.getStatus().isTerminated()) {
                TestCacheManagerFactory.log.debugf("Stopping cache manager %s", ref);
                ref.stop();
             }
-            return null;
          };
-         if (System.getSecurityManager() != null) {
-            AccessController.doPrivileged(action);
-         } else {
-            Security.doPrivileged(action);
-         }
+         Security.doPrivileged(action);
       }
    }
 }

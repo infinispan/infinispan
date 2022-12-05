@@ -31,6 +31,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;

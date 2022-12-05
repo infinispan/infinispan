@@ -1,6 +1,6 @@
 package org.infinispan.security.actions;
 
-import java.security.PrivilegedAction;
+import java.util.function.Supplier;
 
 import org.infinispan.Cache;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -11,16 +11,16 @@ import org.infinispan.security.impl.SecureCacheImpl;
  * @author Tristan Tarrant
  * @since 12.1
  */
-public class GetUnwrappedCacheAction<A extends Cache<K, V>, K, V> implements PrivilegedAction<A> {
+public class GetUnwrappedCacheAction<A extends Cache<K, V>, K, V> implements Supplier<A> {
 
-   private final A cache;
+   private final Cache<K, V> cache;
 
-   public GetUnwrappedCacheAction(A cache) {
+   public GetUnwrappedCacheAction(Cache<K, V> cache) {
       this.cache = cache;
    }
 
    @Override
-   public A run() {
+   public A get() {
       if (cache instanceof SecureCacheImpl) {
          return (A) ((SecureCacheImpl) cache).getDelegate();
       } else {

@@ -8,6 +8,7 @@ import javax.security.auth.Subject;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;

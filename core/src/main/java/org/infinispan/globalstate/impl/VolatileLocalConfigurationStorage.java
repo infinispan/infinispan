@@ -22,6 +22,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;

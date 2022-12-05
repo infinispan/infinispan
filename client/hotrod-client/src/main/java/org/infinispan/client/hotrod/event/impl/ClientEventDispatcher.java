@@ -28,6 +28,7 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 
 public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
@@ -73,7 +74,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
             Class<?>[] eventTypes = entry.getValue();
             if (m.isAnnotationPresent(annotationType)) {
                testListenerMethodValidity(m, eventTypes, annotationType.getName());
-               SecurityActions.setAccessible(m);
+               ReflectionUtil.setAccessible(m);
                ClientEventDispatcher.ClientListenerInvocation invocation = new ClientEventDispatcher.ClientListenerInvocation(listener, m);
                listenerMethodMap.computeIfAbsent(annotationType, a -> new ArrayList<>()).add(invocation);
             }
