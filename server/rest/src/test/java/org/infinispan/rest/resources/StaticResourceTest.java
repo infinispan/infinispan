@@ -9,6 +9,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
+import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -29,7 +30,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.DateUtils;
-import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -87,7 +87,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    @Test
    public void testGetFile() {
       RestResponse response = call("/static/nonexistent.html");
-      ResponseAssertion.assertThat(response).isNotFound();
+      assertThat(response).isNotFound();
 
       response = call("/static");
       assertResponse(response, "static-test/index.html", "<h1>Hello</h1>", TEXT_HTML);
@@ -107,39 +107,43 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       RestResponse response1 = call("/console/page.htm");
       RestResponse response2 = call("/console/folder/test.css");
       RestResponse response3 = call("/console");
+      RestResponse response4 = call("/console/cache/people");
+      RestResponse response5 = call("/console/cache/peo.ple");
 
       assertResponse(response1, "static-test/console/page.htm", "console", TEXT_HTML);
       assertResponse(response2, "static-test/console/folder/test.css", ".a", TEXT_CSS);
-      ResponseAssertion.assertThat(response2).isOk();
+      assertThat(response2).isOk();
 
       assertResponse(response3, "static-test/console/index.html", "console", TEXT_HTML);
+      assertThat(response4).isOk();
+      assertThat(response5).isOk();
 
       RestResponse response = call("/console/");
-      ResponseAssertion.assertThat(response).isOk();
+      assertThat(response).isOk();
 
       response = call("/console/create");
-      ResponseAssertion.assertThat(response).isOk();
+      assertThat(response).isOk();
 
       response = call("/notconsole/");
-      ResponseAssertion.assertThat(response).isNotFound();
+      assertThat(response).isNotFound();
    }
 
    private void assertResponse(RestResponse response, String path, String returnedText, MediaType... possibleTypes) {
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).hasMediaType(possibleTypes);
-      ResponseAssertion.assertThat(response).containsReturnedText(returnedText);
+      assertThat(response).isOk();
+      assertThat(response).hasMediaType(possibleTypes);
+      assertThat(response).containsReturnedText(returnedText);
       assertCacheHeaders(path, response);
-      ResponseAssertion.assertThat(response).hasValidDate();
+      assertThat(response).hasValidDate();
    }
 
    private void assertCacheHeaders(String path, RestResponse response) {
       int expireDuration = 60 * 60 * 24 * 31;
       File test = getTestFile(path);
       assertNotNull(test);
-      ResponseAssertion.assertThat(response).hasContentLength(test.length());
-      ResponseAssertion.assertThat(response).hasLastModified(test.lastModified());
-      ResponseAssertion.assertThat(response).hasCacheControlHeaders("private, max-age=" + expireDuration);
-      ResponseAssertion.assertThat(response).expiresAfter(expireDuration);
+      assertThat(response).hasContentLength(test.length());
+      assertThat(response).hasLastModified(test.lastModified());
+      assertThat(response).hasCacheControlHeaders("private, max-age=" + expireDuration);
+      assertThat(response).expiresAfter(expireDuration);
    }
 
    @Test
@@ -149,24 +153,24 @@ public class StaticResourceTest extends AbstractRestResourceTest {
 
 
       RestResponse response = call(path, DateUtils.toRFC1123(lastModified));
-      ResponseAssertion.assertThat(response).isNotModified();
-      ResponseAssertion.assertThat(response).hasNoContent();
+      assertThat(response).isNotModified();
+      assertThat(response).hasNoContent();
 
       response = call(path, "Sun, 15 Aug 1971 15:00:00 GMT");
-      ResponseAssertion.assertThat(response).isOk();
-      ResponseAssertion.assertThat(response).containsReturnedText("<h1>Hello</h1>");
+      assertThat(response).isOk();
+      assertThat(response).containsReturnedText("<h1>Hello</h1>");
 
       response = call(path, DateUtils.toRFC1123(System.currentTimeMillis()));
-      ResponseAssertion.assertThat(response).isNotModified();
-      ResponseAssertion.assertThat(response).hasNoContent();
+      assertThat(response).isNotModified();
+      assertThat(response).hasNoContent();
    }
 
    @Test
    public void testRedirect() {
       RestResponse response = join(noRedirectsClient.raw().get("/"));
 
-      ResponseAssertion.assertThat(response).isRedirect();
-      ResponseAssertion.assertThat(response).hasNoContent();
+      assertThat(response).isRedirect();
+      assertThat(response).hasNoContent();
       assertEquals("/console/welcome", response.headers().get("Location").get(0));
    }
 
