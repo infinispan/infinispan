@@ -71,7 +71,6 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
 
       Map<String, String> stats1 = client1.stats();
       assertEquals(stats1.get("currentNumberOfEntries"), "1");
-      assertEquals(stats1.get("totalNumberOfEntries"), "1");
       assertEquals(stats1.get("stores"), "1");
       assertEquals(stats1.get("hits"), "1");
       assertEquals(stats1.get("retrievals"), "1");
@@ -84,7 +83,6 @@ public class HotRodStatsClusterTest extends HotRodMultiNodeTest {
 
       Map<String, String> stats2 = client2.stats();
       assertEquals(stats2.get("currentNumberOfEntries"), "0");
-      assertEquals(stats2.get("totalNumberOfEntries"), "0");
       assertEquals(stats2.get("stores"), "0");
       assertEquals(stats2.get("hits"), "0");
       assertEquals(stats2.get("retrievals"), "0");

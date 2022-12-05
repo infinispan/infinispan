@@ -4,7 +4,6 @@
     "time_since_start":1,
     "time_since_reset":1,
     "number_of_entries":0,
-    "total_number_of_entries":0,
     "off_heap_memory_used":0,
     "data_memory_used":0,
     "misses":0,

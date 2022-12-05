@@ -361,7 +361,6 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       Map<String, String> s = client().stats();
       assertEquals(s.get("timeSinceStart"), "-1");
       assertEquals(s.get("currentNumberOfEntries"), "-1");
-      assertEquals(s.get("totalNumberOfEntries"), "-1");
       assertEquals(s.get("stores"), "-1");
       assertEquals(s.get("retrievals"), "-1");
       assertEquals(s.get("hits"), "-1");

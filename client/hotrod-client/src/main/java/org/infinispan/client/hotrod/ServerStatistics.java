@@ -24,13 +24,6 @@ public interface ServerStatistics {
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**
-    * Number of entries stored in the cache by the server that receives the request since the cache started running.
-    * @deprecated Since 13.0, please use {@link #STORES} instead.
-    */
-   @Deprecated
-   String TOTAL_NR_OF_ENTRIES = "totalNumberOfEntries";
-
-   /**
     * Approximate current number of entry replicas in the cache on the server that receives the request.
     *
     * <p>Includes both entries in memory and in persistent storage.</p>

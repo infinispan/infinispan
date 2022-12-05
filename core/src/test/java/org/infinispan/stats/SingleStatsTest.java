@@ -36,6 +36,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    protected final int TOTAL_ENTRIES = 5;
    protected StorageType storageType;
    protected boolean countBasedEviction;
+   protected boolean accurateSize = true;
    protected EvictionStrategy evictionStrategy = EvictionStrategy.REMOVE;
    protected Cache<String, String> cache;
    protected Stats stats;
@@ -47,21 +48,24 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
                   Arrays.stream(new Object[]{
                         new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(false).withEvictionStrategy(strategy),
                         new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(true).withEvictionStrategy(strategy),
+                        new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(true).withEvictionStrategy(strategy).withAccurateSize(false),
                         new SingleStatsTest().withStorage(StorageType.HEAP).withCountEviction(true).withEvictionStrategy(strategy),
+                        new SingleStatsTest().withStorage(StorageType.HEAP).withCountEviction(true).withEvictionStrategy(strategy).withAccurateSize(false),
                         new SingleStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true).withEvictionStrategy(strategy),
-                        new SingleStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(false).withEvictionStrategy(strategy)
+                        new SingleStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(false).withEvictionStrategy(strategy),
+                        new SingleStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(false).withEvictionStrategy(strategy).withAccurateSize(false),
                   })
             ).toArray();
    }
 
    @Override
    protected String[] parameterNames() {
-      return concat(super.parameterNames(), "StorageType", "CountBasedEviction", "EvictionStrategy");
+      return concat(super.parameterNames(), "StorageType", "CountBasedEviction", "EvictionStrategy", "AccurateSize");
    }
 
    @Override
    protected Object[] parameterValues() {
-      return concat(super.parameterValues(), storageType, countBasedEviction, evictionStrategy);
+      return concat(super.parameterValues(), storageType, countBasedEviction, evictionStrategy, accurateSize);
    }
 
    @Override
@@ -69,7 +73,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       configure(cfg);
       GlobalConfigurationBuilder global = defaultGlobalConfigurationBuilder();
-      global.metrics().accurateSize(true);
+      global.metrics().accurateSize(accurateSize);
       addClusterEnabledCacheManager(global, cfg);
       cache = cache(0);
       refreshStats();
@@ -124,6 +128,11 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       return this;
    }
 
+   public SingleStatsTest withAccurateSize(boolean accurateSize) {
+      this.accurateSize = accurateSize;
+      return this;
+   }
+
    @AfterMethod
    public void cleanCache() {
       cache.clear();
@@ -131,6 +140,13 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    }
 
    public void testStats() {
+      refreshStats();
+      if (accurateSize) {
+         assertEquals(0, stats.getCurrentNumberOfEntries());
+      } else {
+         assertEquals(-1, stats.getCurrentNumberOfEntries());
+      }
+
       int insertErrors = 0;
       for (int i = 0; i < TOTAL_ENTRIES; i++) {
          try {
@@ -146,14 +162,19 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       int expectedSize = TOTAL_ENTRIES - insertErrors;
 
       refreshStats();
-      assertEquals(expectedSize, stats.getCurrentNumberOfEntries());
-      assertEquals(EVICTION_MAX_ENTRIES, stats.getCurrentNumberOfEntriesInMemory());
 
       // Approximate size stats are the same as the accurate size stats with DummyInMemoryStore
       // Only expiration is ignored, and we do not have expired entries
       assertEquals(expectedSize, stats.getApproximateEntries());
       assertEquals(EVICTION_MAX_ENTRIES, stats.getApproximateEntriesInMemory());
       assertEquals(primaryKeysCount(cache), stats.getApproximateEntriesUnique());
+      if (accurateSize) {
+         assertEquals(expectedSize, stats.getCurrentNumberOfEntries());
+         assertEquals(EVICTION_MAX_ENTRIES, stats.getCurrentNumberOfEntriesInMemory());
+      } else {
+         assertEquals(-1, stats.getCurrentNumberOfEntries());
+         assertEquals(-1, stats.getCurrentNumberOfEntriesInMemory());
+      }
 
       // Eviction stats with passivation can be delayed
       eventuallyEquals((long) expectedSize - EVICTION_MAX_ENTRIES, () -> {
@@ -194,7 +215,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       cache.put("other-key", "value");
 
       refreshStats();
-      assertEquals(TOTAL_ENTRIES + 1, stats.getTotalNumberOfEntries());
+      assertEquals(TOTAL_ENTRIES + 1, stats.getStores());
 
       assertTrue(stats.getAverageReadTime() >= 0);
       assertTrue(stats.getAverageRemoveTime() >= 0);

@@ -29,14 +29,16 @@ public class ClusteredStatsTest extends SingleStatsTest {
    public Object[] factory() {
       return new Object[]{
             new ClusteredStatsTest().withStorage(StorageType.OBJECT).withCountEviction(true),
+            new ClusteredStatsTest().withStorage(StorageType.OBJECT).withCountEviction(true).withAccurateSize(false),
             new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true),
+            new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true).withAccurateSize(false),
       };
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder global = defaultGlobalConfigurationBuilder();
-      global.metrics().accurateSize(true);
+      global.metrics().accurateSize(accurateSize);
       ConfigurationBuilder configBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       configure(configBuilder);
       Configuration config = configBuilder.build();
@@ -69,8 +71,13 @@ public class ClusteredStatsTest extends SingleStatsTest {
       assertEquals(TOTAL_ENTRIES, clusteredStats.getApproximateEntriesUnique());
 
       // Accurate stats try to de-duplicate counts
-      assertEquals(TOTAL_ENTRIES, clusteredStats.getCurrentNumberOfEntries());
-      assertEquals(EVICTION_MAX_ENTRIES, clusteredStats.getCurrentNumberOfEntriesInMemory());
+      if (accurateSize) {
+         assertEquals(TOTAL_ENTRIES, clusteredStats.getCurrentNumberOfEntries());
+         assertEquals(EVICTION_MAX_ENTRIES, clusteredStats.getCurrentNumberOfEntriesInMemory());
+      } else {
+         assertEquals(-1, clusteredStats.getCurrentNumberOfEntries());
+         assertEquals(-1, clusteredStats.getCurrentNumberOfEntriesInMemory());
+      }
 
       // Eviction stats with passivation can be delayed
       eventuallyEquals((long) actualOwners * (TOTAL_ENTRIES - EVICTION_MAX_ENTRIES), clusteredStats::getPassivations);

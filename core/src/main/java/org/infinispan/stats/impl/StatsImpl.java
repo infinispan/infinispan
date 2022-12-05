@@ -196,12 +196,6 @@ public class StatsImpl implements Stats {
       return Math.toIntExact(statsMap.get(NUMBER_OF_ENTRIES_IN_MEMORY));
    }
 
-   @Deprecated
-   @Override
-   public long getTotalNumberOfEntries() {
-      return statsMap.get(STORES);
-   }
-
    @Override
    public long getDataMemoryUsed() {
       return statsMap.get(DATA_MEMORY_USED);
@@ -310,7 +304,6 @@ public class StatsImpl implements Stats {
             .set("approximate_entries_unique", getApproximateEntriesUnique())
             .set("current_number_of_entries", getCurrentNumberOfEntries())
             .set("current_number_of_entries_in_memory", getCurrentNumberOfEntriesInMemory())
-            .set("total_number_of_entries", getTotalNumberOfEntries())
             .set("off_heap_memory_used", getOffHeapMemoryUsed())
             .set("data_memory_used", getDataMemoryUsed())
             .set("stores", getStores())
