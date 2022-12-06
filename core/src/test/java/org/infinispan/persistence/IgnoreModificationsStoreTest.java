@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  *
  * @author Tomas Sykora
  */
-@Test(testName = "persistence.IgnoreModificationsStoreTest", groups = "functional", sequential = true)
+@Test(testName = "persistence.IgnoreModificationsStoreTest", groups = "functional", singleThreaded = true)
 @CleanupAfterMethod
 public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
    private static final long EXPIRATION_TIME = 1_000_000;

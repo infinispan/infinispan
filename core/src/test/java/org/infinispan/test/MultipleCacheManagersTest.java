@@ -42,9 +42,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.test.fwk.FrameworkFailure;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
-import org.infinispan.test.fwk.TestFrameworkFailure;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
@@ -567,14 +567,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          if (factory.getDeclaringClass() == getClass()) {
             if (getClass().getAnnotation(InCacheMode.class) != null ||
                 getClass().getAnnotation(InTransactionMode.class) != null) {
-               return new Object[]{new TestFrameworkFailure<>(getClass(), new IllegalStateException(
+               return new Object[]{new FrameworkFailure<>(getClass(), new IllegalStateException(
                            "Tests with factory() methods ignore @InCacheMode and @InTransactionMode annotations, " +
                            "please remove them."))};
             }
             Object[] instances = factory();
             for (int i = 0; i < instances.length; i++) {
                if (instances[i].getClass() != getClass()) {
-                  instances[i] = new TestFrameworkFailure<>(getClass(), "%s.factory() creates instances of %s",
+                  instances[i] = new FrameworkFailure<>(getClass(), "%s.factory() creates instances of %s",
                                                           getClass().getName(), instances[i].getClass().getName());
                }
             }
@@ -593,7 +593,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
                      (t, m) -> t.transactional(m.isTransactional()));
          allModifiers = asList(cacheModeModifiers, transactionModifiers);
       } catch (Exception e) {
-         return new Object[]{new TestFrameworkFailure<>(getClass(), e)};
+         return new Object[]{new FrameworkFailure<>(getClass(), e)};
       }
 
       int numTests = allModifiers.stream().mapToInt(m -> m.length).reduce(1, (m1, m2) -> m1 * m2);
@@ -603,13 +603,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          ctor = getClass().getConstructor();
       } catch (NoSuchMethodException e) {
-         return new Object[]{new TestFrameworkFailure<>(getClass(), "Missing no-arg constructor in %s", getClass().getName())};
+         return new Object[]{new FrameworkFailure<>(getClass(), "Missing no-arg constructor in %s", getClass().getName())};
       }
       for (int i = 1; i < tests.length; ++i) {
          try {
             tests[i] = ctor.newInstance();
          } catch (Exception e) {
-            return new Object[]{new TestFrameworkFailure<>(getClass(), e)};
+            return new Object[]{new FrameworkFailure<>(getClass(), e)};
          }
       }
       int stride = 1;

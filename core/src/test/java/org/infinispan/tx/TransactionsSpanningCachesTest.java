@@ -12,7 +12,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningCachesTestTest")
+@Test(groups = "functional", singleThreaded = true, testName = "tx.TransactionsSpanningCachesTestTest")
 public class TransactionsSpanningCachesTest extends MultipleCacheManagersTest {
 
    protected StorageType storage1;

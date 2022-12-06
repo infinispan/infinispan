@@ -8,11 +8,13 @@ import org.testng.ITestNGMethod;
 import org.testng.TestNGException;
 import org.testng.internal.MethodInstance;
 import org.testng.internal.TestNGMethod;
+import org.testng.internal.objects.DefaultTestObjectFactory;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlTest;
 
 public class FakeTestClass implements ITestClass {
    private static final long serialVersionUID = -4871120395482207788L;
+   private static final DefaultTestObjectFactory objectFactory = new DefaultTestObjectFactory();
 
    private final Object instance;
    private final ITestNGMethod method;
@@ -22,15 +24,15 @@ public class FakeTestClass implements ITestClass {
                                                          Object instance) {
       Method failMethod;
       try {
-         failMethod = TestFrameworkFailure.class.getMethod("fail");
+         failMethod = FrameworkFailure.class.getMethod("fail");
       } catch (NoSuchMethodException e1) {
          e1.addSuppressed(e);
          e1.printStackTrace(System.err);
          throw new TestNGException(e1);
       }
       Class<?> testClass = instance.getClass();
-      TestFrameworkFailure<?> fakeInstance = new TestFrameworkFailure<>(testClass, e);
-      TestNGMethod testNGMethod = new TestNGMethod(failMethod, context.getSuite().getAnnotationFinder(),
+      FrameworkFailure<?> fakeInstance = new FrameworkFailure<>(testClass, e);
+      TestNGMethod testNGMethod = new TestNGMethod(objectFactory, failMethod, context.getSuite().getAnnotationFinder(),
                                                    xmlTest, fakeInstance);
       ITestClass fakeTestClass = new FakeTestClass(testNGMethod, fakeInstance, xmlTest);
       testNGMethod.setTestClass(fakeTestClass);
@@ -51,11 +53,6 @@ public class FakeTestClass implements ITestClass {
    @Override
    public long[] getInstanceHashCodes() {
       return new long[]{instance.hashCode()};
-   }
-
-   @Override
-   public int getInstanceCount() {
-      return 1;
    }
 
    @Override

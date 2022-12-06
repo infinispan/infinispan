@@ -1,6 +1,5 @@
 package org.infinispan.test.fwk;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -9,6 +8,7 @@ import org.testng.IClass;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestClass;
 import org.testng.ITestNGMethod;
+import org.testng.ITestResult;
 import org.testng.internal.ConstructorOrMethod;
 import org.testng.xml.XmlTest;
 
@@ -37,20 +37,8 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   @Deprecated
-   public Method getMethod() {
-      return method.getMethod();
-   }
-
-   @Override
    public String getMethodName() {
       return name;
-   }
-
-   @Override
-   @Deprecated
-   public Object[] getInstances() {
-      return method.getInstances();
    }
 
    @Override
@@ -179,11 +167,6 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   public int getTotalInvocationCount() {
-      return method.getTotalInvocationCount();
-   }
-
-   @Override
    public int getSuccessPercentage() {
       return method.getSuccessPercentage();
    }
@@ -279,13 +262,18 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   public IRetryAnalyzer getRetryAnalyzer() {
-      return method.getRetryAnalyzer();
+   public IRetryAnalyzer getRetryAnalyzer(ITestResult iTestResult) {
+      return method.getRetryAnalyzer(iTestResult);
    }
 
    @Override
-   public void setRetryAnalyzer(IRetryAnalyzer retryAnalyzer) {
-      method.setRetryAnalyzer(retryAnalyzer);
+   public void setRetryAnalyzerClass(Class<? extends IRetryAnalyzer> aClass) {
+      method.setRetryAnalyzerClass(aClass);
+   }
+
+   @Override
+   public Class<? extends IRetryAnalyzer> getRetryAnalyzerClass() {
+      return method.getRetryAnalyzerClass();
    }
 
    @Override
@@ -341,6 +329,16 @@ public class NamedTestMethod implements ITestNGMethod {
    @Override
    public void setPriority(int priority) {
       method.setPriority(priority);
+   }
+
+   @Override
+   public int getInterceptedPriority() {
+      return method.getInterceptedPriority();
+   }
+
+   @Override
+   public void setInterceptedPriority(int i) {
+      method.setInterceptedPriority(i);
    }
 
    @Override

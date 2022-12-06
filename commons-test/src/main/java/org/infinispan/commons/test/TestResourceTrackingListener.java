@@ -12,6 +12,11 @@ import org.testng.ITestResult;
  * @since 9.0
  */
 public class TestResourceTrackingListener implements ITestListener {
+
+   public TestResourceTrackingListener() {
+      System.out.println();
+   }
+
    @Override
    public void onTestStart(ITestResult result) {
    }
