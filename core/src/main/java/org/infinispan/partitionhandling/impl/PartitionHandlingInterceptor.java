@@ -9,6 +9,7 @@ import java.util.Set;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -233,5 +234,16 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             throw CONTAINER.degradedModeKeysUnavailable(missingKeys);
          }
       }
+   }
+
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) return invokeNext(ctx, command);
+
+      for (Object key : command.getKeys()) {
+         partitionHandlingManager.checkWrite(key);
+      }
+
+      return invokeNext(ctx, command);
    }
 }
