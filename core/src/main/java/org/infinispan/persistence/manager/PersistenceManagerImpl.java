@@ -882,6 +882,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
          CompletionStage<MarshallableEntry<K, V>> loadStage = store.load(segmentOrZero(storeStatus, segment), key);
          return loadStage.thenCompose(e -> {
             if (e != null) {
+               // Read only we apply lifespan expiration to the entry, so it can be reread later
+               // Max Idle is only allowed when the store has passivation, so it can't be read only
+               if (storeStatus.hasCharacteristic(Characteristic.READ_ONLY) && configuration.expiration().lifespan() > 0) {
+                  e = marshallableEntryFactory.cloneWithExpiration((MarshallableEntry) e, timeService.wallClockTime(),
+                        configuration.expiration().lifespan());
+               }
                return CompletableFuture.completedFuture(e);
             } else {
                return loadFromStoresIterator(key, segment, iterator, localInvocation, includeStores);

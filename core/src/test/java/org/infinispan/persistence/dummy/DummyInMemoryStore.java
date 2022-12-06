@@ -22,6 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.TimeService;
@@ -112,7 +113,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
             shouldStartSegments = false;
          } else {
             // Clean up the array for this test
-            TestResourceTracker.addResource(new TestResourceTracker.Cleaner<String>(storeName) {
+            TestResourceTracker.addResource(new TestResourceTracker.Cleaner<>(storeName) {
                @Override
                public void close() {
                   removeStoreData(ref);
@@ -372,6 +373,12 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
    public static AtomicReferenceArray<Map<Object, byte[]>> getStoreDataForName(String storeName) {
       return stores.get(storeName);
+   }
+
+   public byte[] valueToStoredBytes(Object object) throws IOException, InterruptedException {
+      ByteBuffer actualBytes = marshaller.objectToBuffer(object);
+      MarshallableEntry<?, ?> me = ctx.getMarshallableEntryFactory().create(null, actualBytes);
+      return marshaller.objectToByteBuffer(me.getMarshalledValue());
    }
 
    public boolean isEmpty() {
