@@ -1,5 +1,11 @@
 package org.infinispan.persistence;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -9,6 +15,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -20,18 +28,48 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.IgnoreModificationsStoreTest", groups = "functional", sequential = true)
 @CleanupAfterMethod
 public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
+   private static final long EXPIRATION_TIME = 1_000_000;
    DummyInMemoryStore store;
+   ControlledTimeService timeService = new ControlledTimeService();
+
+   boolean expiration;
+
+   IgnoreModificationsStoreTest expiration(boolean expiration) {
+      this.expiration = expiration;
+      return this;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new IgnoreModificationsStoreTest().expiration(false),
+            new IgnoreModificationsStoreTest().expiration(true)
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + expiration + "]";
+   }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
+      if (expiration) {
+         cfg.expiration().lifespan(EXPIRATION_TIME, TimeUnit.MILLISECONDS);
+      }
       cfg
-         .invocationBatching().enable()
-         .persistence()
+            .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-               .ignoreModifications(true);
+            // Disable segmentation so we can more easily add/remove entries manually
+            .segmented(false)
+            // This way we can write to the store still
+            .storeName(IgnoreModificationsStoreTest.class.getName())
+            .ignoreModifications(true);
 
-      return TestCacheManagerFactory.createCacheManager(cfg);
+      EmbeddedCacheManager ecm = TestCacheManagerFactory.createCacheManager(cfg);
+      TestingUtil.replaceComponent(ecm, TimeService.class, timeService, true);
+      return ecm;
    }
 
    @Override
@@ -40,31 +78,50 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
       store = TestingUtil.getFirstStore(cache);
    }
 
-   public void testReadOnlyCacheStore() throws PersistenceException {
-      TestingUtil.writeToAllStores("k1", "v1", cache);
+   public void testReadOnlyCacheStore() throws PersistenceException, IOException, InterruptedException {
+      String storeDataName = IgnoreModificationsStoreTest.class.getName() + "_" + cache.getName();
+      Map<Object, byte[]> storeMap = DummyInMemoryStore.getStoreDataForName(storeDataName).get(0);
+
+      DummyInMemoryStore dummyInMemoryStore = (DummyInMemoryStore) TestingUtil.getFirstStoreWait(cache).delegate();
+      byte[] storedBytes = dummyInMemoryStore.valueToStoredBytes("v1");
+      storeMap.put("k1", storedBytes);
+
+      AssertJUnit.assertEquals("v1", cache.get("k1"));
+
       TestingUtil.writeToAllStores("k2", "v2", cache);
 
-      assert !store.contains("k1") : "READ ONLY - Store should NOT contain k1 key.";
-      assert !store.contains("k2") : "READ ONLY - Store should NOT contain k2 key.";
+      AssertJUnit.assertTrue(store.contains("k1"));
+      AssertJUnit.assertFalse(store.contains("k2"));
 
       // put into cache but not into read only store
-      cache.put("k1", "v1");
       cache.put("k2", "v2");
-      assert "v1".equals(cache.get("k1"));
-      assert "v2".equals(cache.get("k2"));
+      AssertJUnit.assertEquals("v2", cache.get("k2"));
 
-      assert !store.contains("k1") : "READ ONLY - Store should NOT contain k1 key.";
-      assert !store.contains("k2") : "READ ONLY - Store should NOT contain k2 key.";
+      AssertJUnit.assertTrue(store.contains("k1"));
+      AssertJUnit.assertFalse(store.contains("k2"));
 
-      assert !TestingUtil.deleteFromAllStores("k1", cache) : "READ ONLY - Remove operation should return false (no op)";
-      assert !TestingUtil.deleteFromAllStores("k2", cache) : "READ ONLY - Remove operation should return false (no op)";
-      assert !TestingUtil.deleteFromAllStores("k3", cache) : "READ ONLY - Remove operation should return false (no op)";
+      AssertJUnit.assertFalse(TestingUtil.deleteFromAllStores("k1", cache));
+      AssertJUnit.assertFalse(TestingUtil.deleteFromAllStores("k2", cache));
+      AssertJUnit.assertFalse(TestingUtil.deleteFromAllStores("k3", cache));
 
-      assert "v1".equals(cache.get("k1"));
-      assert "v2".equals(cache.get("k2"));
+      AssertJUnit.assertEquals("v1", cache.get("k1"));
+      AssertJUnit.assertEquals("v2", cache.get("k2"));
       cache.remove("k1");
       cache.remove("k2");
-      assert cache.get("k1") == null;
-      assert cache.get("k2") == null;
+      AssertJUnit.assertNotNull(cache.get("k1"));
+      AssertJUnit.assertNull(cache.get("k2"));
+
+      // lastly check what happens if entry is expired but load is called
+      if (expiration) {
+         dummyInMemoryStore = (DummyInMemoryStore) TestingUtil.getFirstStoreWait(cache).delegate();
+         storedBytes = dummyInMemoryStore.valueToStoredBytes("v1-new");
+         storeMap.put("k1", storedBytes);
+
+         AssertJUnit.assertEquals("v1", cache.get("k1"));
+
+         timeService.advance(EXPIRATION_TIME + 1);
+
+         AssertJUnit.assertEquals("v1-new", cache.get("k1"));
+      }
    }
 }

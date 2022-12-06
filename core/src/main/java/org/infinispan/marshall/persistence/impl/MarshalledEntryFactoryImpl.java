@@ -7,6 +7,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -68,6 +69,30 @@ public class MarshalledEntryFactoryImpl implements MarshallableEntryFactory {
    @Override
    public MarshallableEntry create(Object key, MarshalledValue value) {
       return new MarshallableEntryImpl<>(key, value.getValueBytes(), value.getMetadataBytes(), value.getInternalMetadataBytes(), value.getCreated(), value.getLastUsed(), marshaller);
+   }
+
+   @Override
+   public MarshallableEntry cloneWithExpiration(MarshallableEntry me, long creationTime, long lifespan) {
+      Metadata metadata = me.getMetadata();
+      Metadata.Builder builder;
+      if (metadata != null) {
+         // Lifespan already applied, nothing to add here
+         if (metadata.lifespan() > 0) {
+            return me;
+         }
+         builder = metadata.builder();
+      } else {
+         builder = new EmbeddedMetadata.Builder();
+      }
+      metadata = builder.lifespan(lifespan).build();
+      if (!(me instanceof MarshallableEntryImpl)) {
+         return new MarshallableEntryImpl(me.getKey(), me.getValue(), metadata, me.getInternalMetadata(), creationTime, creationTime, marshaller);
+      }
+      MarshallableEntryImpl meCast = (MarshallableEntryImpl) me;
+      meCast.metadata = metadata;
+      meCast.metadataBytes = null;
+      meCast.created = creationTime;
+      return meCast;
    }
 
    @Override

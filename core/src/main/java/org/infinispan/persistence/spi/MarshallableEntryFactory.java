@@ -117,10 +117,21 @@ public interface MarshallableEntryFactory<K,V> {
     * MarshallableEntry#getMetadata()} methods.
     * @throws {@link NullPointerException} if the provided {@link MarshalledValue} is null.
     */
-   MarshallableEntry<K,V> create(Object key, MarshalledValue value);
+   MarshallableEntry<K, V> create(Object key, MarshalledValue value);
+
+   /**
+    * Clone the provided MarshallableEntry if needed to apply lifespan expiration. If the entry already has lifespan
+    * applied this method will do nothing, returning the same MarshallableEntry back.
+    *
+    * @param me the entry to clone if applicable
+    * @param creationTime the creation time to apply for lifespan
+    * @param lifespan the duration for which the entry will expire after the creationTime
+    * @return a new entry if lifespan was applied otherwise the same entry provided
+    */
+   MarshallableEntry<K, V> cloneWithExpiration(MarshallableEntry<K, V> me, long creationTime, long lifespan);
 
    /**
     * @return a cached empty {@link MarshallableEntry} instance.
     */
-   MarshallableEntry<K,V> getEmpty();
+   MarshallableEntry<K, V> getEmpty();
 }
