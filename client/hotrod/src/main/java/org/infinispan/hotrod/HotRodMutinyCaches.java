@@ -2,6 +2,7 @@ package org.infinispan.hotrod;
 
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.api.mutiny.MutinyCache;
@@ -22,25 +23,25 @@ public class HotRodMutinyCaches implements MutinyCaches {
 
    @Override
    public <K, V> Uni<MutinyCache<K, V>> create(String name, CacheConfiguration cacheConfiguration) {
-      return Uni.createFrom().completionStage(hotrod.transport.<K, V>getRemoteCache(name))
+      return Uni.createFrom().completionStage(() -> hotrod.transport.<K, V>getRemoteCache(name))
             .map(r -> new HotRodMutinyCache<>(hotrod, r));
    }
 
    @Override
    public <K, V> Uni<MutinyCache<K, V>> create(String name, String template) {
-      return Uni.createFrom().completionStage(hotrod.transport.<K, V>getRemoteCache(name))
+      return Uni.createFrom().completionStage(() -> hotrod.transport.<K, V>getRemoteCache(name))
             .map(r -> new HotRodMutinyCache<>(hotrod, r));
    }
 
    @Override
    public <K, V> Uni<MutinyCache<K, V>> get(String name) {
-      return Uni.createFrom().completionStage(hotrod.transport.<K, V>getRemoteCache(name))
+      return Uni.createFrom().completionStage(() -> hotrod.transport.<K, V>getRemoteCache(name))
             .map(r -> new HotRodMutinyCache<>(hotrod, r));
    }
 
    @Override
    public Uni<Void> remove(String name) {
-      return Uni.createFrom().completionStage(hotrod.transport.removeCache(name));
+      return Uni.createFrom().completionStage(() -> hotrod.transport.removeCache(name));
    }
 
    @Override
@@ -64,15 +65,6 @@ public class HotRodMutinyCaches implements MutinyCaches {
    }
 
    private Multi<String> toMulti(CompletionStage<Set<String>> cs) {
-      return Multi.createFrom().emitter(emitter ->
-            cs.whenComplete((names, t) -> {
-               if (t != null) {
-                  emitter.fail(t);
-               } else {
-                  names.forEach(emitter::emit);
-                  emitter.complete();
-               }
-            })
-      );
+      return Multi.createFrom().completionStage(cs).onItem().transformToIterable(Function.identity());
    }
 }
