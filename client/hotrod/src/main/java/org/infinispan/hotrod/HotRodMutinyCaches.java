@@ -1,9 +1,12 @@
 package org.infinispan.hotrod;
 
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+
 import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.api.mutiny.MutinyCache;
 import org.infinispan.api.mutiny.MutinyCaches;
-import org.infinispan.hotrod.impl.cache.RemoteCache;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -20,29 +23,30 @@ public class HotRodMutinyCaches implements MutinyCaches {
 
    @Override
    public <K, V> Uni<MutinyCache<K, V>> create(String name, CacheConfiguration cacheConfiguration) {
-      // FIXME
-      return Uni.createFrom().item(hotrod.transport.getRemoteCache(name)).map(r -> new HotRodMutinyCache<>(hotrod, (RemoteCache<K, V>) r));
+      return Uni.createFrom().completionStage(() -> hotrod.transport.<K, V>getRemoteCache(name))
+            .map(r -> new HotRodMutinyCache<>(hotrod, r));
    }
 
    @Override
    public <K, V> Uni<MutinyCache<K, V>> create(String name, String template) {
-      // FIXME
-      return Uni.createFrom().item(hotrod.transport.getRemoteCache(name)).map(r -> new HotRodMutinyCache<>(hotrod, (RemoteCache<K, V>) r));
+      return Uni.createFrom().completionStage(() -> hotrod.transport.<K, V>getRemoteCache(name))
+            .map(r -> new HotRodMutinyCache<>(hotrod, r));
    }
 
    @Override
    public <K, V> Uni<MutinyCache<K, V>> get(String name) {
-      return Uni.createFrom().item(hotrod.transport.getRemoteCache(name)).map(r -> new HotRodMutinyCache<>(hotrod, (RemoteCache<K, V>) r));
+      return Uni.createFrom().completionStage(() -> hotrod.transport.<K, V>getRemoteCache(name))
+            .map(r -> new HotRodMutinyCache<>(hotrod, r));
    }
 
    @Override
    public Uni<Void> remove(String name) {
-      return null;
+      return Uni.createFrom().completionStage(() -> hotrod.transport.removeCache(name));
    }
 
    @Override
    public Multi<String> names() {
-      return null;
+      return Multi.createFrom().deferred(() -> toMulti(hotrod.transport.getCacheNames()));
    }
 
    @Override
@@ -57,6 +61,10 @@ public class HotRodMutinyCaches implements MutinyCaches {
 
    @Override
    public Multi<String> templateNames() {
-      return null;
+      return Multi.createFrom().deferred(() -> toMulti(hotrod.transport.getTemplateNames()));
+   }
+
+   private Multi<String> toMulti(CompletionStage<Set<String>> cs) {
+      return Multi.createFrom().completionStage(cs).onItem().transformToIterable(Function.identity());
    }
 }
