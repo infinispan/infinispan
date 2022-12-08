@@ -184,7 +184,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          throw CONFIG.storeBothReadAndWriteOnly();
       }
 
-      if (readOnly && (purgeOnStartup || shared)) {
+      if (readOnly && (purgeOnStartup || shared || persistence().passivation())) {
          throw CONFIG.storeReadOnlyExceptions();
       }
 
