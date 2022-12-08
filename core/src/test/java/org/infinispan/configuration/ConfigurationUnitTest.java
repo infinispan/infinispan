@@ -415,6 +415,16 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             .validate();
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: .*passivation if it is read only!")
+   public void testPassivationAndIgnoreModificationsPersistence() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.persistence().passivation(true)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .ignoreModifications(true)
+            .validate();
+   }
+
    public static class NonValidatingBuilder implements Builder<Object> {
       public NonValidatingBuilder(GlobalConfigurationBuilder builder) {
       }
