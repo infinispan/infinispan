@@ -2028,7 +2028,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Store cannot be configured with both read and write only!", id = 590)
    CacheConfigurationException storeBothReadAndWriteOnly();
 
-   @Message(value = "Store cannot be configured with purgeOnStartup or shared if it is read only!", id = 591)
+   @Message(value = "Store cannot be configured with purgeOnStartup, shared or passivation if it is read only!", id = 591)
    CacheConfigurationException storeReadOnlyExceptions();
 
    @Message(value = "Store cannot be configured with fetchPersistenceState or preload if it is write only!", id = 592)
