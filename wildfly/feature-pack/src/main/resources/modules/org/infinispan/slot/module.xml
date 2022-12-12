@@ -70,6 +70,9 @@
       <artifact name="${org.apache.lucene:lucene-facet}"/>
 
       <artifact name="${org.infinispan:infinispan-api}"/>
+
+      <artifact name="${org.javassist:javassist}"/>
+      <artifact name="${com.squareup:protoparser}"/>
    </resources>
 
    <dependencies>

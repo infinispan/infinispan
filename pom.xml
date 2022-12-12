@@ -266,6 +266,7 @@
       <versionx.com.postgresqldatabase.postgresql>42.4.3</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
+      <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.com.thoughtworks.xstream.xstream>${version.xstream}</versionx.com.thoughtworks.xstream.xstream>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-io.commons-io>2.8.0</versionx.commons-io.commons-io>
@@ -332,7 +333,7 @@
       <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
       <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
       <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
-      <versionx.org.javassist.javassist>3.26.0-GA</versionx.org.javassist.javassist>
+      <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>2.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
       <versionx.org.jboss.arquillian.junit.arquillian-junit-container>${version.arquillian}</versionx.org.jboss.arquillian.junit.arquillian-junit-container>
       <versionx.org.jboss.arquillian.testng.arquillian-testng-container>${version.arquillian}</versionx.org.jboss.arquillian.testng.arquillian-testng-container>
