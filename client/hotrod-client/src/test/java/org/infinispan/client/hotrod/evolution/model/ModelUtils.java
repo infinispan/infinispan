@@ -123,6 +123,32 @@ public class ModelUtils {
         };
     }
 
+    public static Function<Integer, Model> createBaseModelIndexAttributesEntity(int version) {
+        return i -> {
+            BaseModelIndexAttributesEntity m = new BaseModelIndexAttributesEntity();
+            m.entityVersion = version;
+            m.id = String.valueOf((8 * ID_VERSION_OFFSET) + i);
+            m.number = i;
+            m.name = "modelK # " + i;
+            m.normalizedField = "modelK # lowercase NORMALIZED field " + i;
+            m.analyzedField = "modelK # standard ANALYZED field " + i;
+            return m;
+        };
+    }
+
+    public static Function<Integer, Model> createBaseModelIndexAttributesChangedEntity(int version) {
+        return i -> {
+            BaseModelIndexAttributesChangedEntity m = new BaseModelIndexAttributesChangedEntity();
+            m.entityVersion = version;
+            m.id = String.valueOf((9 * ID_VERSION_OFFSET) + i);
+            m.number = i;
+            m.name = "modelL # " + i;
+            m.normalizedField = "modelL # NORMALIZED field " + i;
+            m.analyzedField = "modelL # keyword ANALYZED field " + i;
+            return m;
+        };
+    }
+
     public static void createModelEntities(RemoteCache<String, Model> cache, int number, Function<Integer, Model> modelProducer) {
         for (int i = 0; i < number; i++) {
             Model m = modelProducer.apply(i);
