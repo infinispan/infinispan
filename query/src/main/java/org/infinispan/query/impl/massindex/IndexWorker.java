@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -21,6 +22,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 
 /**
  * Mass indexer task.
@@ -77,18 +80,24 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
          postIndex(indexUpdater, progressState, notifier);
       } else {
          DataConversion keyDataConversion = cache.getKeyDataConversion();
-         Set<Class<?>> classSet = new HashSet<>();
+         Set<Class<?>> classSet = new HashSet<>(keys.size());
+         AggregateCompletionStage<Void> updates = CompletionStages.aggregateCompletionStage();
+
          for (Object key : keys) {
             Object storedKey = keyDataConversion.toStorage(key);
             Object unwrappedKey = keyDataConversion.extractIndexable(storedKey);
             Object value = cache.get(key);
             if (value != null) {
-               indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey));
+               updates.dependsOn(indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey)));
                classSet.add(value.getClass());
             }
          }
-         indexUpdater.flush(classSet);
-         indexUpdater.refresh(classSet);
+
+         if (!classSet.isEmpty()) {
+            CompletableFutures.uncheckedAwait(updates.freeze().toCompletableFuture());
+            indexUpdater.flush(classSet);
+            indexUpdater.refresh(classSet);
+         }
       }
       return null;
    }
