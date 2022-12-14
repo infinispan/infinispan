@@ -1076,7 +1076,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             }
          }
       }
-      return (T) yaml.get(names[names.length -1 ]);
+      return (T) yaml.get(names[names.length - 1]);
    }
 
    @Test
@@ -1338,6 +1338,45 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       // The availability will always be AVAILABLE
       restResponse = join(adminCacheClient.getAvailability());
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
+   }
+
+   @Test
+   public void testComparison() {
+      RestRawClient rawClient = client.raw();
+
+      String xml = "<distributed-cache name=\"cacheName\" mode=\"SYNC\">\n" +
+            "<memory>\n" +
+            "<object size=\"20\"/>\n" +
+            "</memory>\n" +
+            "</distributed-cache>";
+      String json20 = "{\"distributed-cache\":{\"memory\":{\"object\":{\"size\":\"20\"}}}}";
+      String json30 = "{\"distributed-cache\":{\"memory\":{\"object\":{\"size\":\"30\"}}}}";
+      String jsonrepl = "{\"replicated-cache\":{\"memory\":{\"object\":{\"size\":\"30\"}}}}";
+
+      Map<String, List<String>> form = new HashMap<>();
+      form.put("one", Collections.singletonList(xml));
+      form.put("two", Collections.singletonList(json20));
+
+      CompletionStage<RestResponse> response = rawClient.postMultipartForm("/rest/v2/caches?action=compare", Collections.emptyMap(), form);
+      assertThat(response).isOk();
+
+      form = new HashMap<>();
+      form.put("one", Collections.singletonList(xml));
+      form.put("two", Collections.singletonList(json30));
+
+      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare", Collections.emptyMap(), form);
+      assertThat(response).isConflicted();
+
+      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
+      assertThat(response).isOk();
+
+      form = new HashMap<>();
+      form.put("one", Collections.singletonList(xml));
+      form.put("two", Collections.singletonList(jsonrepl));
+
+      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
+      assertThat(response).isConflicted();
+
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {
