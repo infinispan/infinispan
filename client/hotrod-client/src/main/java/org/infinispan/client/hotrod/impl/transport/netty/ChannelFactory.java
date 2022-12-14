@@ -322,7 +322,7 @@ public class ChannelFactory {
 
          // Only accept the update if it's from the current age and the topology id is greater than the current one
          // Relies on TopologyInfo.switchCluster() to update the topologyAge for caches first
-         if (responseTopologyAge == cacheInfo.getTopologyAge() && responseTopologyId > cacheInfo.getTopologyId()) {
+         if (responseTopologyAge == cacheInfo.getTopologyAge() && responseTopologyId != cacheInfo.getTopologyId()) {
             List<InetSocketAddress> addressList = Arrays.asList(addresses);
             HOTROD.newTopology(responseTopologyId, responseTopologyAge, addresses.length, addressList);
             CacheInfo newCacheInfo;
@@ -330,7 +330,7 @@ public class ChannelFactory {
                SegmentConsistentHash consistentHash =
                      createConsistentHash(segmentOwners, hashFunctionVersion, cacheInfo.getCacheName());
                newCacheInfo = cacheInfo.withNewHash(responseTopologyAge, responseTopologyId, addressList,
-                                                       consistentHash, segmentOwners.length);
+                     consistentHash, segmentOwners.length);
             } else {
                newCacheInfo = cacheInfo.withNewServers(responseTopologyAge, responseTopologyId, addressList);
             }
