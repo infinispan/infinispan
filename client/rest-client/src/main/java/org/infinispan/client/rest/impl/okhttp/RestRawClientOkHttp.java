@@ -11,6 +11,7 @@ import org.infinispan.client.rest.RestResponse;
 
 import okhttp3.FormBody;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.internal.Util;
@@ -35,6 +36,18 @@ public class RestRawClientOkHttp implements RestRawClient {
       headers.forEach(builder::header);
       FormBody.Builder form = new FormBody.Builder();
       formParameters.forEach((k, vs) -> vs.forEach(v -> form.add(k, v)));
+      builder.post(form.build());
+      return restClient.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> postMultipartForm(String url, Map<String, String> headers, Map<String, List<String>> formParameters) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(restClient.getBaseURL() + url);
+      headers.forEach(builder::header);
+      MultipartBody.Builder form = new MultipartBody.Builder();
+      form.setType(MultipartBody.FORM);
+      formParameters.forEach((k, vs) -> vs.forEach(v -> form.addFormDataPart(k, v)));
       builder.post(form.build());
       return restClient.execute(builder);
    }
