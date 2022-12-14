@@ -21,6 +21,8 @@ public interface RestRawClient {
       return post(path, Collections.emptyMap());
    }
 
+   CompletionStage<RestResponse> postMultipartForm(String url, Map<String, String> headers, Map<String, List<String>> formParameters);
+
    CompletionStage<RestResponse> post(String path, String body, String bodyMediaType);
 
    CompletionStage<RestResponse> post(String path, Map<String, String> headers);

@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -82,6 +83,7 @@ import org.infinispan.rest.CacheEntryInputStream;
 import org.infinispan.rest.CacheKeyInputStream;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
+import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.RestResponseException;
@@ -101,7 +103,12 @@ import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
+import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.handler.codec.http.multipart.MemoryAttribute;
 
 /**
  * REST resource to manage the caches.
@@ -170,6 +177,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Misc
             .invocation().methods(POST).path("/v2/caches").withAction("toJSON").deprecated().handleWith(this::convertToJson)
             .invocation().methods(POST).path("/v2/caches").withAction("convert").handleWith(this::convert)
+            .invocation().methods(POST).path("/v2/caches").withAction("compare").handleWith(this::compare)
 
             // All details
             .invocation().methods(GET).path("/v2/caches/{cacheName}").handleWith(this::getAllDetails)
@@ -355,6 +363,46 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private CompletionStage<RestResponse> convert(RestRequest request) {
       return convert(request, negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML));
+   }
+
+   private CompletionStage<RestResponse> compare(RestRequest request) {
+      boolean ignoreMutable = Boolean.parseBoolean(request.getParameter("ignoreMutable"));
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      MediaType contentType = request.contentType();
+      if (!contentType.match(MediaType.MULTIPART_FORM_DATA)) {
+         return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+      }
+      FullHttpRequest nettyRequest = ((NettyRestRequest) request).getFullHttpRequest();
+      DefaultHttpDataFactory factory = new DefaultHttpDataFactory(false);
+      HttpPostMultipartRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
+      List<InterfaceHttpData> datas = decoder.getBodyHttpDatas();
+      if (datas.size() != 2) {
+         return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+      }
+      MemoryAttribute one = (MemoryAttribute) datas.get(0);
+      MemoryAttribute two = (MemoryAttribute) datas.get(1);
+      String s1 = one.content().toString(UTF_8);
+      String s2 = two.content().toString(UTF_8);
+      ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
+      Map<String, ConfigurationBuilder> b1 = parserRegistry.parse(s1, null).getNamedConfigurationBuilders();
+      Map<String, ConfigurationBuilder> b2 = parserRegistry.parse(s2, null).getNamedConfigurationBuilders();
+      if (b1.size() != 1 || b2.size() != 1) {
+         return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+      }
+      Configuration c1 = b1.values().iterator().next().build();
+      Configuration c2 = b2.values().iterator().next().build();
+      boolean result;
+      if (ignoreMutable) {
+         try {
+            c1.validateUpdate(c2);
+            result = true;
+         } catch (Throwable t) {
+            result = false;
+         }
+      } else {
+         result = c1.equals(c2);
+      }
+      return CompletableFuture.completedFuture(responseBuilder.status(result ? NO_CONTENT : CONFLICT).build());
    }
 
    private CompletionStage<RestResponse> streamKeys(RestRequest request) {
