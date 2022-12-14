@@ -119,6 +119,19 @@ curl localhost:11222/rest/v2/caches?action=convert \
 -d '<replicated-cache mode="SYNC" statistics="false"><encoding media-type="application/x-protostream"/><expiration lifespan="300000" /><memory max-size="400MB" when-full="REMOVE"/></replicated-cache>'
 ----
 
+[id='rest_v2_cache_config_compare']
+= Comparing Cache Configurations
+Invoke a `POST` request with a `multipart/form-data` body containing two configurations and the `?action=compare`
+parameter. {brandname} responds with `204 (No Content)` in case the configurations are equal, and `409 (Conflict)` in case they are different.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches?action=compare
+----
+
+Add the `ignoreMutable=true` parameter to ignore mutable attributes in the comparison.
+
+
 [id='rest_v2_cache_detail']
 = Retrieving All Cache Details
 Invoke a `GET` request to retrieve all details for {brandname} caches.
