@@ -1,12 +1,16 @@
 package org.infinispan.server.router.router.impl.singleport;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import org.infinispan.rest.ALPNHandler;
 import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 
 import io.netty.channel.Channel;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -17,32 +21,48 @@ import io.netty.handler.ssl.ApplicationProtocolNames;
  *
  * @author Sebastian Łaskawiec
  */
-class SinglePortChannelInitializer extends NettyChannelInitializer {
+class SinglePortChannelInitializer extends NettyChannelInitializer<SinglePortRouterConfiguration> {
 
-   private final SinglePortUpgradeHandler httpUpgradeHandler;
+   private final RestServer restServer;
+   private final Map<String, ProtocolServer<?>> upgradeServers;
 
-   public SinglePortChannelInitializer(SinglePortEndpointRouter server, NettyTransport transport, RestServer restServer, Map<String, ProtocolServer> upgradeServers) {
+   public SinglePortChannelInitializer(SinglePortEndpointRouter server, NettyTransport transport, RestServer restServer, Map<String, ProtocolServer<?>> upgradeServers) {
       super(server, transport, null, null);
-      httpUpgradeHandler = new SinglePortUpgradeHandler(server.getConfiguration().ssl().enabled(), restServer, upgradeServers);
+      this.restServer = restServer;
+      this.upgradeServers = upgradeServers;
    }
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       super.initializeChannel(ch);
-      httpUpgradeHandler.getUpgradeServers().values().stream()
+      upgradeServers.values().stream()
             .filter(ps -> ps instanceof HotRodServer).findFirst()
             .ifPresent(hotRodServer -> ch.pipeline().addLast(HotRodPingDetector.NAME, new HotRodPingDetector((HotRodServer) hotRodServer))
-      );
+            );
       if (server.getConfiguration().ssl().enabled()) {
-         ch.pipeline().addLast(httpUpgradeHandler);
+         ch.pipeline().addLast(new ALPNHandler(restServer));
       } else {
-         httpUpgradeHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1);
+         ALPNHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1, restServer, upgradeServers);
       }
    }
 
    @Override
    protected ApplicationProtocolConfig getAlpnConfiguration() {
-      return httpUpgradeHandler.getAlpnConfiguration();
+      if (server.getConfiguration().ssl().enabled()) {
+         List<String> supportedProtocols = new ArrayList<>();
+         supportedProtocols.add(ApplicationProtocolNames.HTTP_2);
+         supportedProtocols.add(ApplicationProtocolNames.HTTP_1_1);
+         supportedProtocols.addAll(upgradeServers.keySet());
+
+         return new ApplicationProtocolConfig(
+               ApplicationProtocolConfig.Protocol.ALPN,
+               // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
+               ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+               // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
+               ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+               supportedProtocols);
+      }
+      return null;
    }
 
 }
