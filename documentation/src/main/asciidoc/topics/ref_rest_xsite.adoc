@@ -4,7 +4,7 @@ Retrieve the status of all backup locations with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/x-site/backups/
+GET /rest/v2/caches/{cacheName}/x-site/backups/
 ----
 
 {brandname} responds with the status of each backup location in JSON format, as
@@ -50,7 +50,7 @@ Retrieve the status of a backup location with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/x-site/backups/{siteName}
+GET /rest/v2/caches/{cacheName}/x-site/backups/{siteName}
 ----
 
 {brandname} responds with the status of each node in the site in JSON
@@ -87,7 +87,7 @@ Take backup locations offline with `POST` requests and the
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/x-site/backups/{siteName}?action=take-offline
+POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=take-offline
 ----
 
 
@@ -97,7 +97,7 @@ Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/x-site/backups/{siteName}?action=bring-online
+POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=bring-online
 ----
 
 
@@ -108,7 +108,7 @@ parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/x-site/backups/{siteName}?action=start-push-state
+POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=start-push-state
 ----
 
 
@@ -118,7 +118,7 @@ Cancel state transfer operations with the `?action=cancel-push-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-push-state
+POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-push-state
 ----
 
 [id='rest_v2_xsite_state_push']
@@ -128,7 +128,7 @@ Retrieve status of state transfer operations with the
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/x-site/backups?action=push-state-status
+GET /rest/v2/caches/{cacheName}/x-site/backups?action=push-state-status
 ----
 
 {brandname} responds with the status of state transfer for each backup location
@@ -167,7 +167,7 @@ Clear state transfer status for sending sites with the
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/x-site/local?action=clear-push-state-status
+POST /rest/v2/caches/{cacheName}/x-site/local?action=clear-push-state-status
 ----
 
 [id='rest_v2_xsite_tuning_takeoffline']
@@ -182,7 +182,7 @@ parameters to control when backup locations automatically go offline.
 +
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
+GET /rest/v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
 ----
 +
 The {brandname} response includes `after_failures` and `min_wait` fields as
@@ -199,7 +199,7 @@ follows:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-PUT /v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
+PUT /rest/v2/caches/{cacheName}/x-site/backups/{siteName}/take-offline-config
 ----
 If the operation successfully completes, the service returns `204 (No Content)`.
 
@@ -213,5 +213,5 @@ local cache with the `?action=cancel-receive-state` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-receive-state
+POST /rest/v2/caches/{cacheName}/x-site/backups/{siteName}?action=cancel-receive-state
 ----

@@ -172,6 +172,13 @@ include::json/rest_cache_mutable_attributes.json[]
 
 Add the `full` parameter to obtain values and type information:
 
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/mycache?action=get-mutable-attributes&full=true
+----
+
+{brandname} provides a JSON response such as the following:
+
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/rest_cache_mutable_attributes_full.json[]
@@ -521,7 +528,7 @@ Turn on automatic rebalancing for a specific cache.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=enable-rebalancing
+POST /rest/v2/caches/{cacheName}?action=enable-rebalancing
 ----
 
 [id='rest_v2_caches_disable_rebalancing']
@@ -530,7 +537,7 @@ Turn off automatic rebalancing for a specific cache.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=disable-rebalancing
+POST /rest/v2/caches/{cacheName}?action=disable-rebalancing
 ----
 
 [id='rest_v2_caches_get_availability']
@@ -539,7 +546,7 @@ Retrieve the availability of a cache.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}?action=get-availability
+GET /rest/v2/caches/{cacheName}?action=get-availability
 ----
 
 [NOTE]
@@ -551,7 +558,7 @@ Change the availability of clustered caches when using either the DENY_READ_WRIT
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=set-availability&availability={AVAILABILITY}
+POST /rest/v2/caches/{cacheName}?action=set-availability&availability={AVAILABILITY}
 ----
 
 .Request Parameters

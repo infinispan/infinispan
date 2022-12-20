@@ -94,7 +94,7 @@ parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST  /v2/caches/{cacheName}/search/indexes?action=clear
+POST  /rest/v2/caches/{cacheName}/search/indexes?action=clear
 ----
 
 If the operation successfully completes, the service returns `204 (No Content)`.
@@ -111,7 +111,7 @@ You must enable statistics in the cache configuration or results are empty.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/search/stats
+GET /rest/v2/caches/{cacheName}/search/stats
 ----
 
 .Request Parameters
@@ -157,7 +157,7 @@ Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/search/stats?action=clear
+POST /rest/v2/caches/{cacheName}/search/stats?action=clear
 ----
 
 {brandname} resets only query execution times for the local node only.
@@ -169,7 +169,7 @@ Obtain information about indexes in caches with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/search/indexes/stats
+GET /rest/v2/caches/{cacheName}/search/indexes/stats
 ----
 
 .{brandname} response
@@ -191,7 +191,7 @@ requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/search/query/stats
+GET /rest/v2/caches/{cacheName}/search/query/stats
 ----
 
 .{brandname} response
@@ -216,5 +216,5 @@ Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/search/query/stats?action=clear
+POST /rest/v2/caches/{cacheName}/search/query/stats?action=clear
 ----
