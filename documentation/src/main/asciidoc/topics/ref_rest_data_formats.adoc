@@ -71,8 +71,8 @@ link:https://tools.ietf.org/html/rfc3986#section-2.2[Section 2.2 of the RFC 3986
 == Key-Content-Type Headers
 
 Most REST API calls have the Key included in the URL. {brandname} assumes the
-Key is a _java.lang.String_ when handling those calls, but you can use a
-specific header _Key-Content-Type_ for keys in different formats.
+Key is a `java.lang.String` when handling those calls, but you can use a
+specific header `Key-Content-Type` for keys in different formats.
 
 .Key-Content-Type Header Examples
 
@@ -115,16 +115,16 @@ Key-Content-Type: application/x-java-object;type=java.lang.Double
 The _type_ parameter for `application/x-java-object` is restricted to:
 
 * Primitive wrapper types
-* java.lang.String
+* `java.lang.String`
 * Bytes, making `application/x-java-object;type=Bytes` equivalent to `application/octet-stream;encoding=hex`.
 
 [id='rest_json_proto_conversion']
 == JSON/Protostream Conversion
-When caches are indexed, or specifically configured to store _application/x-protostream`, you can send and receive JSON documents that are automatically converted to and from Protobuf.
+When caches are indexed, or specifically configured to store `application/x-protostream`, you can send and receive JSON documents that are automatically converted to and from Protobuf.
 
 You must register a Protobuf schema for the conversion to work.
 
-To register protobuf schemas via REST, invoke a POST or PUT in the `____protobuf_metadata_` cache as in the following example:
+To register protobuf schemas via REST, invoke a `POST` or `PUT` in the `____protobuf_metadata_` cache as in the following example:
 
 [source]
 ----
@@ -133,7 +133,7 @@ curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:112
 
 When writing JSON documents, a special field *__type_* must be present in the document to identity the Protobuf _Message_  that corresponds to the document.
 
-Person.proto
+.Person.proto
 [source,protobuf,options="nowrap",subs=attributes+,role="primary"]
 ----
 message Person  {
@@ -142,7 +142,7 @@ message Person  {
 }
 ----
 
-Person.json
+.Person.json
 [source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
 {
