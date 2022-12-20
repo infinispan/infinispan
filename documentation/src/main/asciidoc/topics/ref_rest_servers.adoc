@@ -42,7 +42,7 @@ name and the cache.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/server/ignored-caches/{cache-manager}/{cache}
+POST /rest/v2/server/ignored-caches/{cache-manager}/{cache}
 ----
 
 {brandname} responds with `204 (No Content)` if the cache is successfully added to the ignore list or `404 (Not Found)` if the cache or Cache Manager are not found.
@@ -60,7 +60,7 @@ Remove caches from the ignore list with `DELETE` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/server/ignored-caches/{cache-manager}/{cache}
+DELETE /rest/v2/server/ignored-caches/{cache-manager}/{cache}
 ----
 
 {brandname} responds with `204 (No Content)` if the cache is successfully removed from ignore list or `404 (Not Found)` if the cache or Cache Manager are not found.
@@ -71,7 +71,7 @@ Confirm that caches are ignored with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/server/ignored-caches/{cache-manager}
+GET /rest/v2/server/ignored-caches/{cache-manager}
 ----
 
 

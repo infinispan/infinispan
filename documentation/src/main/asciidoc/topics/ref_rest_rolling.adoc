@@ -6,7 +6,7 @@ Connect a target cluster to the source cluster with:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}/rolling-upgrade/source-connection
+POST /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
 
 You must provide a `remote-store` definition in JSON format as the body:
@@ -30,7 +30,7 @@ To obtain the `remote-store` definition of a cache, use a `GET` request:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /v2/caches/{cacheName}/rolling-upgrade/source-connection
+GET /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
 
 If the cache was previously connected, it returns the configuration of the associated `remote-store` in JSON format and status 200 (OK),
@@ -48,7 +48,7 @@ To check if a cache have been connected to a remote cluster, use a `HEAD` reques
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /v2/caches/{cacheName}/rolling-upgrade/source-connection
+HEAD /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
 
 Returns status 200 (OK) if for all nodes of the cluster, `cacheName` has a single remote store configured, and 404 (NOT_FOUND) otherwise.
@@ -59,7 +59,7 @@ and the `?action=sync-data` parameter:
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/{cacheName}?action=sync-data
+POST /rest/v2/caches/{cacheName}?action=sync-data
 ----
 
 When the operation completes, {brandname} responds with the total number of
@@ -72,7 +72,7 @@ cluster with `DELETE` requests:
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/caches/{cacheName}/rolling-upgrade/source-connection
+DELETE /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
 
 If the operation successfully completes, the service returns `204 (No Content)`.
