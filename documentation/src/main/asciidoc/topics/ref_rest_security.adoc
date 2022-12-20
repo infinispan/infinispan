@@ -1,7 +1,8 @@
 [id='rest_security']
 = REST Authentication
 Configure authentication to the REST endpoint with the {brandname} command line
-interface (CLI) and the **user** command. The CLI lets you create and manage
+interface (CLI) and the **user** command.
+The CLI lets you create and manage
 users, passwords, and authorization roles for accessing the REST endpoint.
 
 //Community Only
@@ -13,4 +14,4 @@ endif::community[]
 .Reference
 
 * link:{server_docs}#user_tool-server[Adding Users to Property Realms]
-* link:{server_docs}#endpoint_authentication[Configuring Endpoint Authentication Mechanisms]
+* link:{server_docs}#authentication-mechanisms[Configuring Endpoint Authentication Mechanisms]
