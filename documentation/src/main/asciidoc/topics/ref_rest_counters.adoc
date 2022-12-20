@@ -8,14 +8,12 @@ POST /rest/v2/counters/{counterName}
 ----
 
 .Example Weak Counter
-
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/weak_counter.json[]
 ----
 
 .Example Strong Counter
-
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/strong_counter.json[]
