@@ -91,6 +91,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final List<SerializationContextInitializer> contextInitializers = new ArrayList<>();
    private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
    private TransportFactory transportFactory = TransportFactory.DEFAULT;
+   private boolean tracingPropagationEnabled = ConfigurationProperties.DEFAULT_TRACING_PROPAGATION_ENABLED;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -394,6 +395,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   public ConfigurationBuilder disableTracingPropagation() {
+      this.tracingPropagationEnabled = false;
+      return this;
+   }
+
    @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
@@ -594,7 +600,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
-            contextInitializers, remoteCaches, transportFactory);
+            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled);
    }
 
    // Method that handles default marshaller - needed as a placeholder
