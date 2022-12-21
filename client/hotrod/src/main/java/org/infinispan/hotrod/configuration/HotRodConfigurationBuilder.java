@@ -76,6 +76,7 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    private final List<SerializationContextInitializer> contextInitializers = new ArrayList<>();
    private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
    private TransportFactory transportFactory = TransportFactory.DEFAULT;
+   private boolean tracingPropagationEnabled = ConfigurationProperties.DEFAULT_TRACING_PROPAGATION_ENABLED;
 
    public HotRodConfigurationBuilder() {
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
@@ -310,6 +311,11 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
       return this;
    }
 
+   public HotRodConfigurationBuilder disableTracingPropagation() {
+      this.tracingPropagationEnabled = false;
+      return this;
+   }
+
    @Override
    public HotRodConfigurationBuilder withProperties(Properties properties) {
       //FIXME
@@ -363,7 +369,8 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
             features,
             contextInitializers,
             remoteCaches,
-            transportFactory);
+            transportFactory,
+            tracingPropagationEnabled);
    }
 
    // Method that handles default marshaller - needed as a placeholder

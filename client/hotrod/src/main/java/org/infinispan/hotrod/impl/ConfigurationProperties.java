@@ -99,6 +99,8 @@ public class ConfigurationProperties {
    public static final String CLUSTER_PROPERTIES_PREFIX = ICH + "cluster";
    public static final Pattern CLUSTER_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX + '.');
+   // Tracing properties
+   public static final String TRACING_PROPAGATION_ENABLED = ICH + "tracing.propagation_enabled";
    // Cache properties
    public static final String CACHE_PREFIX= ICH + "cache.";
    public static final String CACHE_CONFIGURATION_SUFFIX = ".configuration";
@@ -124,6 +126,7 @@ public class ConfigurationProperties {
    public static final int DEFAULT_MAX_ACTIVE = -1;
    public static final int DEFAULT_MAX_WAIT = -1;
    public static final int DEFAULT_MIN_IDLE = -1;
+   public static final boolean DEFAULT_TRACING_PROPAGATION_ENABLED = true;
 
    private final TypedProperties props;
 
@@ -523,6 +526,14 @@ public class ConfigurationProperties {
 
    public void setConnectionPoolExhaustedAction(String connectionPoolExhaustedAction) {
       props.setProperty(CONNECTION_POOL_EXHAUSTED_ACTION, connectionPoolExhaustedAction);
+   }
+
+   public boolean isTracingPropagationEnabled() {
+      return props.getBooleanProperty(TRACING_PROPAGATION_ENABLED, DEFAULT_TRACING_PROPAGATION_ENABLED);
+   }
+
+   public void setTracingPropagationEnabled(boolean tracingPropagationEnabled) {
+      props.setProperty(TRACING_PROPAGATION_ENABLED, tracingPropagationEnabled);
    }
 
    /**
