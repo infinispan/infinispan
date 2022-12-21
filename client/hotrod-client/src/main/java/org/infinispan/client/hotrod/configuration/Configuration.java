@@ -113,6 +113,7 @@ public class Configuration {
    private final List<SerializationContextInitializer> contextInitializers;
    private final Map<String, RemoteCacheConfiguration> remoteCaches;
    private final TransportFactory transportFactory;
+   private final boolean tracingPropagationEnabled;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
@@ -123,7 +124,7 @@ public class Configuration {
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches,
-                        TransportFactory transportFactory) {
+                        TransportFactory transportFactory, boolean tracingPropagationEnabled) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -154,6 +155,7 @@ public class Configuration {
       this.contextInitializers = contextInitializers;
       this.remoteCaches = remoteCaches;
       this.transportFactory = transportFactory;
+      this.tracingPropagationEnabled = tracingPropagationEnabled;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -347,6 +349,17 @@ public class Configuration {
 
    public TransportFactory transportFactory() {
       return transportFactory;
+   }
+
+   /**
+    * OpenTelemetry tracing propagation will be activated if this property is true
+    * and if the OpenTelemetry API jar is detected on the classpath.
+    * By default, the property is true.
+    *
+    * @return if the tracing propagation is enabled
+    */
+   public boolean tracingPropagationEnabled() {
+      return tracingPropagationEnabled;
    }
 
    @Override

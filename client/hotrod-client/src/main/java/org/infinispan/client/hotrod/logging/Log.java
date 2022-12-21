@@ -391,4 +391,12 @@ public interface Log extends BasicLogger {
    @Message(value = "OpenTelemetry API is not present in the classpath. Client context tracing will not be propagated.", id = 4109)
    void noOpenTelemetryAPI(@Cause Throwable throwable);
 
+   @LogMessage(level = DEBUG)
+   @Message(value = "OpenTelemetry API is present in the classpath and the tracing propagation is enabled. Client context tracing will be propagated.", id = 4110)
+   void openTelemetryPropagationEnabled();
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "OpenTelemetry API is present in the classpath, but the tracing propagation is not enabled. Client context tracing will not be propagated.", id = 4111)
+   void openTelemetryPropagationDisabled();
+
 }

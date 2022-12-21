@@ -64,6 +64,7 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
    private final List<SerializationContextInitializer> contextInitializers;
    private final Map<String, RemoteCacheConfiguration> remoteCaches;
    private final TransportFactory transportFactory;
+   private final boolean tracingPropagationEnabled;
 
    HotRodConfiguration(AttributeSet attributes,
                        ExecutorFactoryConfiguration asyncExecutorFactory,
@@ -76,7 +77,8 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
                        Features features,
                        List<SerializationContextInitializer> contextInitializers,
                        Map<String, RemoteCacheConfiguration> remoteCaches,
-                       TransportFactory transportFactory) {
+                       TransportFactory transportFactory,
+                       boolean tracingPropagationEnabled) {
       super("", attributes);
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
@@ -90,6 +92,7 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
       this.contextInitializers = contextInitializers;
       this.remoteCaches = remoteCaches;
       this.transportFactory = transportFactory;
+      this.tracingPropagationEnabled = tracingPropagationEnabled;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -237,5 +240,16 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
 
    public TransportFactory transportFactory() {
       return transportFactory;
+   }
+
+   /**
+    * OpenTelemetry tracing propagation will be activated if this property is true
+    * and if the OpenTelemetry API jar is detected on the classpath.
+    * By default, the property is true.
+    *
+    * @return if the tracing propagation is enabled
+    */
+   public boolean tracingPropagationEnabled() {
+      return tracingPropagationEnabled;
    }
 }

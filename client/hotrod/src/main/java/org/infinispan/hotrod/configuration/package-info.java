@@ -396,6 +396,12 @@
  *           <td>Relates to {@link org.infinispan.hotrod.configuration.StatisticsConfigurationBuilder#jmxDomain(java.lang.String)}</td>
  *        </tr>
  *        <tr>
+ *           <td><b>infinispan.client.hotrod.tracing.propagation_enabled</b></td>
+ *           <td>Boolean</td>
+ *           <td>Enabled implicitly by the presence of the OpenTelemetry API cn the client classpath.</td>
+ *           <td>Relates to {@link  org.infinispan.hotrod.configuration.HotRodConfigurationBuilder#disableTracingPropagation()}} ()}</td>
+ *        </tr>
+ *        <tr>
  *           <th colspan="4">Per-cache properties</th>
  *        </tr>
  *        <tr>
