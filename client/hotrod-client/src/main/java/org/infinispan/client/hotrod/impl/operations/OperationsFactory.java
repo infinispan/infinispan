@@ -85,7 +85,12 @@ public class OperationsFactory implements HotRodConstants {
 
       TelemetryService telemetryService = null;
       try {
-         telemetryService = TelemetryService.create();
+         if (cfg.tracingPropagationEnabled()) {
+            telemetryService = TelemetryService.create();
+            log.openTelemetryPropagationEnabled();
+         } else {
+            log.openTelemetryPropagationDisabled();
+         }
       } catch (Throwable e) {
          // missing dependency => no context to propagate to the server
          log.noOpenTelemetryAPI(e);
