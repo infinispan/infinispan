@@ -30,6 +30,7 @@ public class OpenTelemetryClient {
             .addSpanProcessor(spanProcessor);
 
       tracerProvider = builder.build();
+      GlobalOpenTelemetry.resetForTest();
       openTelemetry = OpenTelemetrySdk.builder()
             .setTracerProvider(tracerProvider)
             .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
