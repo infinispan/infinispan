@@ -8,14 +8,17 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
-import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.ControllingPerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.CountHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.mocks.ControlledCommandFactory;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -26,7 +29,6 @@ import org.testng.annotations.Test;
 public class NoPrepareRpcForPessimisticTransactionsTest extends MultipleCacheManagersTest {
 
    private Object k1;
-   private ControlledCommandFactory commandFactory;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -40,60 +42,43 @@ public class NoPrepareRpcForPessimisticTransactionsTest extends MultipleCacheMan
       waitForClusterToForm();
 
       k1 = getKeyForCache(1);
-      commandFactory = ControlledCommandFactory.registerControlledCommandFactory(cache(1), CommitCommand.class);
-   }
-
-   @BeforeMethod
-   void clearStats() {
-      commandFactory.remoteCommandsReceived.set(0);
    }
 
    public void testSingleGetOnPut() throws Exception {
-
-      Operation o = new Operation() {
-         @Override
-         public void execute() {
-            cache(0).put(k1, "v0");
-         }
-      };
-
-      runtTest(o);
+      runtTest(() -> cache(0).put(k1, "v0"));
    }
 
    public void testSingleGetOnRemove() throws Exception {
-
-      Operation o = new Operation() {
-         @Override
-         public void execute() {
-            cache(0).remove(k1);
-         }
-      };
-
-      runtTest(o);
+      runtTest(() -> cache(0).remove(k1));
    }
 
-   private void runtTest(Operation o) throws NotSupportedException, SystemException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
+   private void runtTest(Runnable o) throws NotSupportedException, SystemException, RollbackException, HeuristicMixedException, HeuristicRollbackException {
+      ControllingPerCacheInboundInvocationHandler handler = ControllingPerCacheInboundInvocationHandler.replace(cache(1));
+      CountHandler clusterGetCount = handler.countRpc(ClusteredGetCommand.class);
+      CountHandler lockCount = handler.countRpc(LockControlCommand.class);
+      CountHandler prepareCount = handler.countRpc(PrepareCommand.class);
+      CountHandler txCount = handler.countRpc(TxCompletionNotificationCommand.class);
+
+      clusterGetCount.reset();
+      lockCount.reset();
+      prepareCount.reset();
+      txCount.reset();
+
       log.trace("Here is where the fun starts..");
       tm(0).begin();
 
-      o.execute();
+      o.run();
 
       assertKeyLockedCorrectly(k1);
 
-      assertEquals(commandFactory.remoteCommandsReceived.get(), 2, "2 = cluster get + lock");
+      assertEquals(1, clusterGetCount.sum());
+      assertEquals(1, lockCount.sum());
 
       tm(0).commit();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            //prepare + tx completion notification
-            return  commandFactory.remoteCommandsReceived.get()  == 4;
-         }
+      eventually(() -> {
+         //prepare + tx completion notification
+         return  txCount.sum() == 1 && prepareCount.sum() == 1;
       });
-   }
-
-   private interface Operation {
-      void execute();
    }
 }

@@ -8,7 +8,7 @@ import org.infinispan.container.impl.EntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.inboundhandler.BlockHandler;
-import org.infinispan.remoting.inboundhandler.BlockingPerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.ControllingPerCacheInboundInvocationHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -48,7 +48,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
 
       cache(0).put(key, INITIAL_VALUE);
 
-      final BlockingPerCacheInboundInvocationHandler handler = BlockingPerCacheInboundInvocationHandler.replace(futureBackupOwnerCache);
+      final ControllingPerCacheInboundInvocationHandler handler = ControllingPerCacheInboundInvocationHandler.replace(futureBackupOwnerCache);
       final EntryFactory spyEntryFactory = spyEntryFactory(futureBackupOwnerCache);
 
       //it blocks the StateResponseCommand.class

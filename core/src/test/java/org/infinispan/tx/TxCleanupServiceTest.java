@@ -11,6 +11,9 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.BlockHandler;
+import org.infinispan.remoting.inboundhandler.ControllingPerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.CountHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -21,7 +24,6 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -45,8 +47,9 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    }
 
    public void testTransactionStateNotLost() throws Throwable {
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), VersionedCommitCommand.class);
-      ccf.gate.close();
+      ControllingPerCacheInboundInvocationHandler handler = ControllingPerCacheInboundInvocationHandler.replace(cache(1));
+      BlockHandler commitBlock = handler.blockRpcBefore(VersionedCommitCommand.class);
+      CountHandler commitCount = handler.countRpc(VersionedCommitCommand.class);
 
       final Map<Object, EmbeddedTransaction> keys2Tx = new HashMap<>(TX_COUNT);
 
@@ -56,20 +59,20 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
 
       //fork it into another thread as this is going to block in commit
       Future<Object> future = fork(() -> {
-            for (int i = 0; i < TX_COUNT; i++) {
-               Object k = getKeyForCache(1);
-               tm(0).begin();
-               cache(0).put(k, k);
-               EmbeddedTransaction transaction = ((EmbeddedTransactionManager) tm(0)).getTransaction();
-               keys2Tx.put(k, transaction);
-               tm(0).commit();
-            }
-            return null;
+         for (int i = 0; i < TX_COUNT; i++) {
+            Object k = getKeyForCache(1);
+            tm(0).begin();
+            cache(0).put(k, k);
+            EmbeddedTransaction transaction = ((EmbeddedTransactionManager) tm(0)).getTransaction();
+            keys2Tx.put(k, transaction);
+            tm(0).commit();
+         }
+         return null;
 
       });
 
       //now wait for all the commits to block
-      eventuallyEquals(TX_COUNT, ccf.blockTypeCommandsReceived::get);
+      eventuallyEquals(TX_COUNT, commitCount::sum);
 
       log.tracef("Viewid middle %s", viewId);
 
@@ -98,7 +101,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       eventuallyEquals(migratedTx.size(), () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
       log.trace("Releasing the gate");
-      ccf.gate.open();
+      commitBlock.unblock();
 
       future.get(10, TimeUnit.SECONDS);
 

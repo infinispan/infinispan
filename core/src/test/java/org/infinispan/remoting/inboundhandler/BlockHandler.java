@@ -15,4 +15,6 @@ public interface BlockHandler {
 
    void unblock();
 
+   void awaitUntilCommandCompleted(Duration duration) throws InterruptedException;
+
 }

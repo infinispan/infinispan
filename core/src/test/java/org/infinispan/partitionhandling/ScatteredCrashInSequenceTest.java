@@ -11,7 +11,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.ControllingInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
@@ -111,8 +111,8 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
       // Block rebalance phase confirmations on the coordinator
       // Must replace the IIH first so it's updated in the transport
-      BlockingInboundInvocationHandler blockedRebalanceConfirmations = BlockingInboundInvocationHandler.replace(coordinator.getCacheManager());
-      blockedRebalanceConfirmations.blockRpcBefore(cmd -> cmd instanceof RebalancePhaseConfirmCommand && ((RebalancePhaseConfirmCommand) cmd).getCacheName().equals(getDefaultCacheName()), "Confirmation is missing");
+      ControllingInboundInvocationHandler blockedRebalanceConfirmations = ControllingInboundInvocationHandler.replace(coordinator.getCacheManager());
+      blockedRebalanceConfirmations.blockRpcBefore(cmd -> cmd instanceof RebalancePhaseConfirmCommand && ((RebalancePhaseConfirmCommand) cmd).getCacheName().equals(getDefaultCacheName()));
 
       BlockRebalanceTransport controlledTransportCoord = replace(coordinator.getCacheManager());
 

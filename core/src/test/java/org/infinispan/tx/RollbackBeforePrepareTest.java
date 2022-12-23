@@ -4,19 +4,23 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.remoting.inboundhandler.BlockHandler;
+import org.infinispan.remoting.inboundhandler.ControllingPerCacheInboundInvocationHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 @Test(testName = "tx.RollbackBeforePrepareTest", groups = "functional")
@@ -25,7 +29,6 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
 
    public static final long REPL_TIMEOUT = 1000;
    public static final long LOCK_TIMEOUT = 500;
-   private FailPrepareInterceptor failPrepareInterceptor;
    protected int numOwners = 3;
 
    @Override
@@ -40,15 +43,15 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
 
       createCluster(config, 3);
       waitForClusterToForm();
-      failPrepareInterceptor = new FailPrepareInterceptor();
+      FailPrepareInterceptor failPrepareInterceptor = new FailPrepareInterceptor();
       extractInterceptorChain(advancedCache(2)).addInterceptor(failPrepareInterceptor, 1);
    }
 
 
    public void testCommitNotSentBeforeAllPrepareAreAck() throws Exception {
-
-      ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), PrepareCommand.class);
-      ccf.gate.close();
+      ControllingPerCacheInboundInvocationHandler blockingHandler = ControllingPerCacheInboundInvocationHandler.replace(cache(1));
+      BlockHandler prepare = blockingHandler.blockRpcBefore(PrepareCommand.class);
+      BlockHandler rollback = blockingHandler.blockRpcBefore(RollbackCommand.class);
 
       try {
          cache(0).put("k", "v");
@@ -57,23 +60,20 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
          //expected
       }
 
-      //this will also cause a replication timeout
-      allowRollbackToRun();
+      prepare.awaitUntilBlocked(Duration.of(15, ChronoUnit.SECONDS));
+      rollback.awaitUntilBlocked(Duration.of(15, ChronoUnit.SECONDS));
 
-      ccf.gate.open();
+      rollback.unblock();
+      rollback.awaitUntilCommandCompleted(Duration.of(15, ChronoUnit.SECONDS));
 
-      //give some time for the prepare to execute
-      Thread.sleep(3000);
+      prepare.unblock();
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int remoteTxCount0 = TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount();
-            int remoteTxCount1 = TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount();
-            int remoteTxCount2 = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-            log.tracef("remote0=%s, remote1=%s, remote2=%s", remoteTxCount0, remoteTxCount1, remoteTxCount2);
-            return remoteTxCount0 == 0 && remoteTxCount1 == 0 && remoteTxCount2 == 0;
-         }
+      eventually(() -> {
+         int remoteTxCount0 = TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount();
+         int remoteTxCount1 = TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount();
+         int remoteTxCount2 = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
+         log.tracef("remote0=%s, remote1=%s, remote2=%s", remoteTxCount0, remoteTxCount1, remoteTxCount2);
+         return remoteTxCount0 == 0 && remoteTxCount1 == 0 && remoteTxCount2 == 0;
       });
 
       assertNull(cache(0).get("k"));
@@ -81,15 +81,6 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
       assertNull(cache(2).get("k"));
 
       assertNotLocked("k");
-   }
-
-   /**
-    * by using timeouts here the worse case is to have false positives, i.e. the test to pass when it shouldn't. no
-    * false negatives should be possible. In single threaded suit runs this test will generally fail in order
-    * to highlight a bug.
-    */
-   private static void allowRollbackToRun() throws InterruptedException {
-      Thread.sleep(REPL_TIMEOUT * 15);
    }
 
    public static class FailPrepareInterceptor extends DDAsyncInterceptor {

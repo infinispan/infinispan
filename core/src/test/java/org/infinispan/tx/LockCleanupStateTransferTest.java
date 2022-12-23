@@ -5,6 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -16,6 +18,8 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.remoting.inboundhandler.BlockHandler;
+import org.infinispan.remoting.inboundhandler.ControllingPerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -23,7 +27,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -62,9 +65,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
    }
 
    private void testLockReleasedCorrectly(Class<? extends  ReplicableCommand> toBlock ) throws Throwable {
-
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), toBlock);
-      ccf.gate.close();
+      BlockHandler handler = ControllingPerCacheInboundInvocationHandler.replace(cache(1)).blockRpcBefore(toBlock);
 
       final Set<Object> keys = new HashSet<>(KEY_SET_SIZE);
 
@@ -81,13 +82,13 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       });
 
       //now wait for all the commits to block
-      eventuallyEquals(1, ccf.blockTypeCommandsReceived::get);
+      handler.awaitUntilBlocked(Duration.of(15, ChronoUnit.SECONDS));
 
       if (toBlock == TxCompletionNotificationCommand.class) {
          //at this stage everything should be committed locally
-         DataContainer dc = advancedCache(1).getDataContainer();
+         DataContainer<Object, Object> dc = dataContainer(1);
          for (Object k : keys) {
-            assertEquals(k, dc.get(k).getValue());
+            assertEquals(k, dc.peek(k).getValue());
          }
       }
 
@@ -112,7 +113,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventuallyEquals(1, () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
       log.trace("Releasing the gate");
-      ccf.gate.open();
+      handler.unblock();
 
       // wait for the forked thread to finish its transaction
       future.get(10, TimeUnit.SECONDS);

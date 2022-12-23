@@ -5,7 +5,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.BlockHandler;
-import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.ControllingInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -98,7 +98,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
    }
 
    private BlockHandler blockRemoteGets() {
-      BlockingInboundInvocationHandler handler = BlockingInboundInvocationHandler.replace(manager(1));
+      ControllingInboundInvocationHandler handler = ControllingInboundInvocationHandler.replace(manager(1));
       return handler.blockRpcBefore(ClusteredGetCommand.class);
    }
 }

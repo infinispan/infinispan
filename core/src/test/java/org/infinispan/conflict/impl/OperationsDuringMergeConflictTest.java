@@ -5,8 +5,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.inboundhandler.BlockingInboundInvocationHandler;
-import org.infinispan.remoting.inboundhandler.BlockingPerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.ControllingInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.ControllingPerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -94,14 +94,14 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
    @Override
    protected void performMerge() {
       boolean modifyDuringMerge = mergeAction != MergeAction.NONE;
-      List<BlockingInboundInvocationHandler> inboundHandlers = IntStream.range(0, numMembersInCluster)
-            .mapToObj(i -> BlockingInboundInvocationHandler.replace(manager(i)))
+      List<ControllingInboundInvocationHandler> inboundHandlers = IntStream.range(0, numMembersInCluster)
+            .mapToObj(i -> ControllingInboundInvocationHandler.replace(manager(i)))
             .collect(Collectors.toList());
-      List<BlockingPerCacheInboundInvocationHandler> perCacheInboundInvocationHandlers = IntStream.range(0, numMembersInCluster)
-            .mapToObj(i -> BlockingPerCacheInboundInvocationHandler.replace(cache(i)))
+      List<ControllingPerCacheInboundInvocationHandler> perCacheInboundInvocationHandlers = IntStream.range(0, numMembersInCluster)
+            .mapToObj(i -> ControllingPerCacheInboundInvocationHandler.replace(cache(i)))
             .collect(Collectors.toList());
 
-      inboundHandlers.forEach(handler -> handler.blockRpcBefore(cmd -> cmd instanceof TopologyUpdateCommand && ((TopologyUpdateCommand) cmd).getPhase() == READ_OLD_WRITE_ALL, ""));
+      inboundHandlers.forEach(handler -> handler.blockRpcBefore(cmd -> cmd instanceof TopologyUpdateCommand && ((TopologyUpdateCommand) cmd).getPhase() == READ_OLD_WRITE_ALL));
       perCacheInboundInvocationHandlers.forEach(handler -> handler.blockRpcBefore(StateResponseCommand.class));
 
       try {
@@ -121,13 +121,13 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
                cache(0).remove(conflictKey);
             }
          }
-         inboundHandlers.forEach(BlockingInboundInvocationHandler::stopBlocking);
-         perCacheInboundInvocationHandlers.forEach(BlockingPerCacheInboundInvocationHandler::stopBlocking);
+         inboundHandlers.forEach(ControllingInboundInvocationHandler::stopBlocking);
+         perCacheInboundInvocationHandlers.forEach(ControllingPerCacheInboundInvocationHandler::stopBlocking);
          TestingUtil.waitForNoRebalance(caches());
          assertCacheGetValAllCaches(mergeAction);
       } catch (Throwable t) {
-         inboundHandlers.forEach(BlockingInboundInvocationHandler::stopBlocking);
-         perCacheInboundInvocationHandlers.forEach(BlockingPerCacheInboundInvocationHandler::stopBlocking);
+         inboundHandlers.forEach(ControllingInboundInvocationHandler::stopBlocking);
+         perCacheInboundInvocationHandlers.forEach(ControllingPerCacheInboundInvocationHandler::stopBlocking);
          throw t;
       }
    }
