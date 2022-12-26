@@ -5,6 +5,7 @@ import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 import java.lang.invoke.MethodHandles;
 import java.net.SocketAddress;
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class RemotePublisher<K, E> implements Publisher<CacheEntry<K, E>> {
       if (segments == null) {
          if (segmentConsistentHash != null) {
             int maxSegment = segmentConsistentHash.getNumSegments();
-            this.segments = IntSets.mutableEmptySet(maxSegment);
+            this.segments = IntSets.concurrentSet(maxSegment);
             for (int i = 0; i < maxSegment; ++i) {
                this.segments.set(i);
             }
@@ -65,7 +66,7 @@ public class RemotePublisher<K, E> implements Publisher<CacheEntry<K, E>> {
             this.segments = null;
          }
       } else {
-         this.segments = IntSets.mutableCopyFrom(segments);
+         this.segments = IntSets.concurrentCopyFrom(IntSets.from(segments), Collections.max(segments) + 1);
       }
       this.batchSize = batchSize;
       this.metadata = metadata;
