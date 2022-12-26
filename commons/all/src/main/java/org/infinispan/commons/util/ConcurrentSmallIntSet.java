@@ -66,7 +66,7 @@ class ConcurrentSmallIntSet implements IntSet {
 
    private void checkBounds(int index) {
       if (index >= array.length()) {
-         throw new IllegalArgumentException("Provided integer was larger than originally initialized size");
+         throw new IllegalArgumentException("Provided integer " + index + " was larger than originally initialized size " + array.length());
       }
    }
 
