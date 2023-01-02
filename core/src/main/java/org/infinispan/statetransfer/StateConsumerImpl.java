@@ -716,38 +716,25 @@ public class StateConsumerImpl implements StateConsumer {
             segmentId, cacheName, sender, cacheEntries.size());
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
-      boolean transactional = transactionManager != null;
-      if (transactional) {
-         Object key = NO_KEY;
+      if (transactionManager != null) {
          Transaction transaction = new FakeJTATransaction();
          InvocationContext ctx = icf.createInvocationContext(transaction, false);
          LocalTransaction localTransaction = ((LocalTxInvocationContext) ctx).getCacheTransaction();
-         try {
-            localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
-            for (InternalCacheEntry<?, ?> e : cacheEntries) {
-               key = e.getKey();
-               CompletableFuture<?> future = invokePut(segmentId, ctx, e);
-               if (!future.isDone()) {
-                  throw new IllegalStateException("State transfer in-tx put should always be synchronous");
-               }
-            }
-         } catch (Throwable t) {
-            logApplyException(t, key);
-            return invokeRollback(localTransaction).handle((rv, t1) -> {
-               transactionTable.removeLocalTransaction(localTransaction);
-               if (t1 != null) {
-                  t.addSuppressed(t1);
-               }
-               return null;
-            });
+         CompletableFuture<?> lastFuture = CompletableFutures.completedNull();
+         localTransaction.setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
+         for (InternalCacheEntry<?, ?> e : cacheEntries) {
+            lastFuture = lastFuture.thenCompose(unused -> invokePut(segmentId, ctx, e));
          }
-
-         return invoke1PCPrepare(localTransaction).whenComplete((rv, t) -> {
-            transactionTable.removeLocalTransaction(localTransaction);
-            if (t != null) {
-               logApplyException(t, NO_KEY);
-            }
-         });
+         return lastFuture.handle((unused, throwable) -> throwable != null ?
+                     invokeRollback(localTransaction) :
+                     invoke1PCPrepare(localTransaction))
+               .thenCompose(CompletableFutures.identity())
+               .whenComplete((unused, throwable) -> {
+                  transactionTable.removeLocalTransaction(localTransaction);
+                  if (throwable != null) {
+                     logApplyException(throwable, NO_KEY);
+                  }
+               });
       } else {
          // non-tx cache
          AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
@@ -763,7 +750,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private CompletionStage<?> invoke1PCPrepare(LocalTransaction localTransaction) {
+   private CompletionStage<Object> invoke1PCPrepare(LocalTransaction localTransaction) {
       PrepareCommand prepareCommand;
       if (Configurations.isTxVersioned(configuration)) {
          prepareCommand = commandsFactory.buildVersionedPrepareCommand(localTransaction.getGlobalTransaction(),
@@ -776,10 +763,10 @@ public class StateConsumerImpl implements StateConsumer {
       return interceptorChain.invokeAsync(ctx, prepareCommand);
    }
 
-   private CompletionStage<?> invokeRollback(LocalTransaction localTransaction) {
-      RollbackCommand prepareCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
+   private CompletionStage<Object> invokeRollback(LocalTransaction localTransaction) {
+      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icf.createTxInvocationContext(localTransaction);
-      return interceptorChain.invokeAsync(ctx, prepareCommand);
+      return interceptorChain.invokeAsync(ctx, rollbackCommand);
    }
 
    private CompletableFuture<?> invokePut(int segmentId, InvocationContext ctx, InternalCacheEntry<?, ?> e) {

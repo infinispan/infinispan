@@ -7,21 +7,15 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.CommandController;
+import org.infinispan.interceptors.ControllerBlockingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -142,10 +136,8 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          assertValue(1, i, expected);
       }
 
-      final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      builder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class)
-             .interceptor(new LatchInterceptor(applyStateStartedLatch, applyStateProceedLatch));
+      CommandController controller = ControllerBlockingInterceptor.addBefore(builder, InvocationContextInterceptor.class)
+            .blockCommand(ControllerBlockingInterceptor.PUT_FOR_STATE_TRANSFER);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(builder);
@@ -156,9 +148,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       DataContainer<Object, Object> dc2 = advancedCache(2).getDataContainer();
 
       // wait for state transfer on node C to progress to the point where data segments are about to be applied
-      if (!applyStateStartedLatch.await(15, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      controller.awaitCommandBlocked();
 
       if (op == Operation.CLEAR) {
          log.info("Clearing cache ..");
@@ -205,7 +195,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       }
 
       // allow state transfer to apply state
-      applyStateProceedLatch.countDown();
+      controller.unblockCommand();
 
       // wait for apply state to end
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2));
@@ -246,30 +236,5 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       assertNotNull("Found null on cache " + cacheIndex, ice);
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));
-   }
-
-   static class LatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch applyStateStartedLatch;
-      private final CountDownLatch applyStateProceedLatch;
-
-      public LatchInterceptor(CountDownLatch applyStateStartedLatch, CountDownLatch applyStateProceedLatch) {
-         this.applyStateStartedLatch = applyStateStartedLatch;
-         this.applyStateProceedLatch = applyStateProceedLatch;
-      }
-
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
-         // are performed first and create opportunity for inconsistencies
-         if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            // signal we encounter a state transfer PUT
-            applyStateStartedLatch.countDown();
-            // wait until it is ok to apply state
-            if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
-               throw new TimeoutException();
-            }
-         }
-         return invokeNext(ctx, cmd);
-      }
    }
 }

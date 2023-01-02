@@ -71,15 +71,10 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
    }
 
    @Override
-   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      CompletionStage<Void> blockedBefore = null;
-      if (!blockAfter) {
-         blockedBefore = blockIfNeeded(ctx, command);
-      }
-      if (blockedBefore != null) {
-         return makeStage(asyncInvokeNext(ctx, command, blockedBefore)).andHandle(ctx, command, this::blockAfterIfNeeded);
-      }
-      return invokeNextAndHandle(ctx, command, this::blockAfterIfNeeded);
+   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) {
+      return blockAfter ?
+            invokeNextAndHandle(ctx, command, this::blockAfterIfNeeded) :
+            asyncInvokeNext(ctx, command, blockIfNeeded(ctx, command));
    }
 
    private void block(VisitableCommand cmd) {
@@ -95,11 +90,7 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
       }
    }
 
-   private Object blockAfterIfNeeded(InvocationContext ctx, VisitableCommand cmd, Object rv, Throwable t) throws Throwable {
-      if (!blockAfter) {
-         return valueOrException(rv, t);
-      }
-      CompletionStage<Void> blocked = blockIfNeeded(ctx, cmd);
-      return blocked != null ? delayedValue(blocked, rv, t) : valueOrException(rv, t);
+   private Object blockAfterIfNeeded(InvocationContext ctx, VisitableCommand cmd, Object rv, Throwable t) {
+      return delayedValue(blockIfNeeded(ctx, cmd), rv, t);
    }
 }

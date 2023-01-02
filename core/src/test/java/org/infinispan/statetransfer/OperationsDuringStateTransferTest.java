@@ -6,10 +6,9 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -21,9 +20,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.CommandController;
+import org.infinispan.interceptors.ControllerBlockingInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.BiasedEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
@@ -98,10 +98,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block REMOVE commands right after EntryWrappingInterceptor until we are ready
-      final CountDownLatch removeStartedLatch = new CountDownLatch(1);
-      final CountDownLatch removeProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi())
-                        .interceptor(new RemoveLatchInterceptor(removeStartedLatch, removeProceedLatch));
+      CommandController removeController = blockAfterInterceptor(RemoveCommand.class::isInstance, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -133,9 +130,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for REMOVE command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      if (!removeStartedLatch.await(10, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      removeController.awaitCommandBlocked();
 
       // paranoia, yes the value is still missing from data container
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
@@ -150,7 +145,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).keySet().size());
 
       // allow REMOVE to continue
-      removeProceedLatch.countDown();
+      removeController.unblockCommand();
 
       Object oldVal = getFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
@@ -176,10 +171,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block PUT commands right after EntryWrappingInterceptor until we are ready
-      final CountDownLatch putStartedLatch = new CountDownLatch(1);
-      final CountDownLatch putProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi())
-                        .interceptor(new PutLatchInterceptor(putStartedLatch, putProceedLatch));
+      CommandController putController = blockAfterInterceptor(OperationsDuringStateTransferTest::isNormalPut, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -211,9 +203,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for PUT command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      if (!putStartedLatch.await(10, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      putController.awaitCommandBlocked();
 
       // paranoia, yes the value is still missing from data container
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
@@ -228,7 +218,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).keySet().size());
 
       // allow PUT to continue
-      putProceedLatch.countDown();
+      putController.unblockCommand();
 
       Object oldVal = putFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
@@ -242,10 +232,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block REPLACE commands right after EntryWrappingInterceptor until we are ready
-      final CountDownLatch replaceStartedLatch = new CountDownLatch(1);
-      final CountDownLatch replaceProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi())
-                        .interceptor(new ReplaceLatchInterceptor(replaceStartedLatch, replaceProceedLatch));
+      CommandController replaceController = blockAfterInterceptor(ReplaceCommand.class::isInstance, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -277,9 +264,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for REPLACE command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      if (!replaceStartedLatch.await(10, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      replaceController.awaitCommandBlocked();
 
       // paranoia, yes the value is still missing from data container
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
@@ -294,7 +279,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).keySet().size());
 
       // allow REPLACE to continue
-      replaceProceedLatch.countDown();
+      replaceController.unblockCommand();
 
       Object oldVal = getFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
@@ -308,16 +293,11 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on node B that will block state transfer until we are ready
-      final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class)
-                        .interceptor(new StateTransferLatchInterceptor(applyStateStartedLatch, applyStateProceedLatch));
+      CommandController stateTransferController = ControllerBlockingInterceptor.addBefore(cacheConfigBuilder, InvocationContextInterceptor.class)
+            .blockCommand(OperationsDuringStateTransferTest::isStateTransferPut);
 
       // add an interceptor on node B that will block GET commands until we are ready
-      final CountDownLatch getKeyStartedLatch = new CountDownLatch(1);
-      final CountDownLatch getKeyProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().before(CallInterceptor.class)
-                        .interceptor(new GetLatchInterceptor(getKeyStartedLatch, getKeyProceedLatch));
+      CommandController getController = blockGet();
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -329,9 +309,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
 
       // wait for state transfer on node B to progress to the point where data segments are about to be applied
-      if (!applyStateStartedLatch.await(10, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      stateTransferController.awaitCommandBlocked();
 
       // state transfer is blocked, no keys should be present on node B yet
       assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
@@ -341,12 +319,10 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for GET command on node B to reach beyond *DistributionInterceptor, where it will block.
       // the value seen so far is null
-      if (!getKeyStartedLatch.await(10, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      getController.awaitCommandBlocked();
 
       // allow state transfer to apply state
-      applyStateProceedLatch.countDown();
+      stateTransferController.unblockCommand();
 
       // wait for state transfer to end
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
@@ -354,131 +330,35 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().size());
 
       // allow GET to continue
-      getKeyProceedLatch.countDown();
+      getController.unblockCommand();
 
       Object value = getFuture.get(10, TimeUnit.SECONDS);
       assertEquals("myValue", value);
    }
 
-   static class RemoveLatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch removeStartedLatch;
-      private final CountDownLatch removeProceedLatch;
-
-      public RemoveLatchInterceptor(CountDownLatch removeStartedLatch, CountDownLatch removeProceedLatch) {
-         this.removeStartedLatch = removeStartedLatch;
-         this.removeProceedLatch = removeProceedLatch;
-      }
-
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         if (cmd instanceof RemoveCommand) {
-            // signal we encounter a REMOVE
-            removeStartedLatch.countDown();
-            // wait until it is ok to continue with REMOVE
-            if (!removeProceedLatch.await(10, TimeUnit.SECONDS)) {
-               throw new TimeoutException();
-            }
-         }
-         return invokeNext(ctx, cmd);
-      }
+   private CommandController blockAfterInterceptor(Predicate<VisitableCommand> test, Class<? extends AsyncInterceptor> afterInterceptor) {
+      ControllerBlockingInterceptor interceptor = ControllerBlockingInterceptor.addAfter(cacheConfigBuilder, afterInterceptor);
+      return interceptor.blockCommand(test);
    }
 
-   static class PutLatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch putStartedLatch;
-      private final CountDownLatch putProceedLatch;
-
-      public PutLatchInterceptor(CountDownLatch putStartedLatch, CountDownLatch putProceedLatch) {
-         this.putStartedLatch = putStartedLatch;
-         this.putProceedLatch = putProceedLatch;
-      }
-
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         if (cmd instanceof PutKeyValueCommand &&
-             !((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            // signal we encounter a (non-state-transfer) PUT
-            putStartedLatch.countDown();
-            // wait until it is ok to continue with PUT
-            if (!putProceedLatch.await(10, TimeUnit.SECONDS)) {
-               throw new TimeoutException();
-            }
-         }
-         return invokeNext(ctx, cmd);
-      }
+   private CommandController blockGet() {
+      // we cannot have 2 interceptors of the same class.
+      GetBlockInterceptor getBlockInterceptor = new GetBlockInterceptor();
+      cacheConfigBuilder.customInterceptors().addInterceptor().before(CallInterceptor.class)
+            .interceptor(getBlockInterceptor);
+      return getBlockInterceptor.blockCommand(GetKeyValueCommand.class);
    }
 
-   static class ReplaceLatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch replaceStartedLatch;
-      private final CountDownLatch replaceProceedLatch;
-
-      public ReplaceLatchInterceptor(CountDownLatch replaceStartedLatch, CountDownLatch replaceProceedLatch) {
-         this.replaceStartedLatch = replaceStartedLatch;
-         this.replaceProceedLatch = replaceProceedLatch;
-      }
-
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         if (cmd instanceof ReplaceCommand) {
-            // signal we encounter a REPLACE
-            replaceStartedLatch.countDown();
-            // wait until it is ok to continue with REPLACE
-            if (!replaceProceedLatch.await(10, TimeUnit.SECONDS)) {
-               throw new TimeoutException();
-            }
-         }
-         return invokeNext(ctx, cmd);
-      }
+   private static boolean isNormalPut(VisitableCommand cmd) {
+      return cmd instanceof PutKeyValueCommand && !((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER);
    }
 
-   static class StateTransferLatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch applyStateStartedLatch;
-      private final CountDownLatch applyStateProceedLatch;
-
-      public StateTransferLatchInterceptor(CountDownLatch applyStateStartedLatch,
-                                           CountDownLatch applyStateProceedLatch) {
-         this.applyStateStartedLatch = applyStateStartedLatch;
-         this.applyStateProceedLatch = applyStateProceedLatch;
-      }
-
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         // if this 'put' command is caused by state transfer we block until GET begins
-         if (cmd instanceof PutKeyValueCommand &&
-             ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            // signal we encounter a state transfer PUT
-            applyStateStartedLatch.countDown();
-            // wait until it is ok to apply state
-            if (!applyStateProceedLatch.await(10, TimeUnit.SECONDS)) {
-               throw new TimeoutException();
-            }
-         }
-         return invokeNext(ctx, cmd);
-      }
+   private static boolean isStateTransferPut(VisitableCommand cmd) {
+      return cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER);
    }
 
-   static class GetLatchInterceptor extends BaseAsyncInterceptor {
-      private final CountDownLatch getKeyStartedLatch;
-      private final CountDownLatch getKeyProceedLatch;
+   // need a second interceptor because we don't support having the same interceptor class twice or more
+   static class GetBlockInterceptor extends ControllerBlockingInterceptor {
 
-      public GetLatchInterceptor(CountDownLatch getKeyStartedLatch, CountDownLatch getKeyProceedLatch) {
-         this.getKeyStartedLatch = getKeyStartedLatch;
-         this.getKeyProceedLatch = getKeyProceedLatch;
-      }
-
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         if (cmd instanceof GetKeyValueCommand) {
-            // Only block the first get to come here - they are not concurrent so this check is fine
-            if (getKeyStartedLatch.getCount() != 0) {
-               // signal we encounter a GET
-               getKeyStartedLatch.countDown();
-               // wait until it is ok to continue with GET
-               if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
-                  throw new TimeoutException();
-               }
-            }
-         }
-         return invokeNext(ctx, cmd);
-      }
    }
 }

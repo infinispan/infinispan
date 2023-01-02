@@ -15,6 +15,7 @@ import org.infinispan.conflict.impl.ConflictManagerTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest;
 import org.infinispan.functional.FunctionalTestUtils;
+import org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl;
 import org.infinispan.manager.DefaultCacheManagerHelper;
 import org.infinispan.notifications.cachelistener.CacheListenerVisibilityTest;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
@@ -121,6 +122,8 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
       // The join is used to allow for a sync API for test simplicity - where as the actual store invocation
       // must be non blocking
       builder.allowBlockingCallsInside(WaitNonBlockingStore.class.getName(), "join");
+
+      builder.allowBlockingCallsInside(GlobalConfigurationManagerImpl.class.getName(), "buildConfiguration");
    }
 
    private static void writeJUnitReport(String testName, Throwable throwable, String type) {
