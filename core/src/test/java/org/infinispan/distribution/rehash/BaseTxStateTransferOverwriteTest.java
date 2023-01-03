@@ -535,9 +535,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          // Wait for main thread to sync up
          checkPoint.trigger("pre_state_apply_invoked_for_" + cache);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 20, TimeUnit.SECONDS);
-
-         return forwardedAnswer.answer(invocation);
+         return checkPoint.future("pre_state_apply_release_for_" + cache, 20, TimeUnit.SECONDS, testExecutor())
+                     .thenCompose(unused -> Mocks.callAnotherAnswer(forwardedAnswer, invocation));
       }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyBoolean(), anyCollection());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }

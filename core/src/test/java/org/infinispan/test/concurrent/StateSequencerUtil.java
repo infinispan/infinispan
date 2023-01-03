@@ -5,12 +5,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 
 
 /**
@@ -104,4 +108,18 @@ public class StateSequencerUtil {
          }
       }
    }
+
+   /**
+    * Asynchronous version of {@link #advanceMultiple(StateSequencer, boolean, List)}
+    */
+   public static CompletionStage<Void> advanceMultipleAsync(StateSequencer stateSequencer, boolean condition, List<String> states, Executor executor) {
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      if (condition && states != null) {
+         for (String state : states) {
+            stage.dependsOn(stateSequencer.advanceAsync(state, executor));
+         }
+      }
+      return stage.freeze();
+   }
+
 }

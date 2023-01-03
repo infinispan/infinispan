@@ -31,7 +31,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      txControlInterceptor.prepareProgress.countDown();
+      txControlInterceptor.continuePrepare();
       extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
 
       Future<Void> future = beginAndCommitTx("k", 1);
@@ -93,7 +93,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       killMember(1);
 
       assert caches().size() == 2;
-      txControlInterceptor.prepareProgress.countDown();
+      txControlInterceptor.continuePrepare();
 
       assertNotLocked("k");
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));

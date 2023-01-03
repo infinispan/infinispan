@@ -4,8 +4,6 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.commands.tx.PrepareCommand;
@@ -60,11 +58,11 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
          //expected
       }
 
-      prepare.awaitUntilBlocked(Duration.of(15, ChronoUnit.SECONDS));
-      rollback.awaitUntilBlocked(Duration.of(15, ChronoUnit.SECONDS));
+      prepare.awaitUntilBlocked();
+      rollback.awaitUntilBlocked();
 
       rollback.unblock();
-      rollback.awaitUntilCommandCompleted(Duration.of(15, ChronoUnit.SECONDS));
+      rollback.awaitUntilCommandCompleted();
 
       prepare.unblock();
 

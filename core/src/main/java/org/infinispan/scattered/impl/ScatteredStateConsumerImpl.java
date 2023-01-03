@@ -521,16 +521,15 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(key, icv.getValue(),
                                                                           keyPartitioner.getSegment(key), metadata,
                                                                           STATE_TRANSFER_FLAGS);
-         try {
-            interceptorChain.invoke(icf.createSingleKeyNonTxInvocationContext(), put);
-         } catch (Exception e) {
-            if (!cache.wired().getStatus().allowInvocations()) {
-               log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
-               break;
-            } else {
-               log.problemApplyingStateForKey(key, e);
-            }
-         }
+         interceptorChain.invokeAsync(icf.createSingleKeyNonTxInvocationContext(), put)
+               .exceptionally(e -> {
+                  if (!cache.wired().getStatus().allowInvocations()) {
+                     log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
+                  } else {
+                     log.problemApplyingStateForKey(key, e);
+                  }
+                  return null;
+               });
       }
    }
 

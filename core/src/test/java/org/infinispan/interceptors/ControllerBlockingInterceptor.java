@@ -1,12 +1,7 @@
 package org.infinispan.interceptors;
 
-import static org.testng.AssertJUnit.assertTrue;
-
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.VisitableCommand;
@@ -14,12 +9,14 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.remoting.inboundhandler.BlockHandler;
+import org.infinispan.remoting.inboundhandler.BlockHandlerImpl;
 
 public class ControllerBlockingInterceptor extends BaseAsyncInterceptor {
 
    public static final Predicate<VisitableCommand> PUT_FOR_STATE_TRANSFER = cmd -> cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER);
 
-   private final List<CommandControllerImpl> commandsToBlock = new CopyOnWriteArrayList<>();
+   private final List<BlockHandlerImpl<VisitableCommand>> commandsToBlock = new CopyOnWriteArrayList<>();
 
    public static ControllerBlockingInterceptor addBefore(ConfigurationBuilder builder, Class<? extends AsyncInterceptor> before) {
       ControllerBlockingInterceptor interceptor = new ControllerBlockingInterceptor();
@@ -41,43 +38,23 @@ public class ControllerBlockingInterceptor extends BaseAsyncInterceptor {
 
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      for (CommandControllerImpl controller : commandsToBlock) {
-         if (controller.commandPredicate.test(command)) {
-            controller.blocked.countDown();
-            return asyncInvokeNext(ctx, command, controller.proceed);
+      for (BlockHandlerImpl<VisitableCommand> block : commandsToBlock) {
+         if (block.test(command)) {
+            block.onBlocked();
+            return makeStage(asyncInvokeNext(ctx, command, block.blockingFuture()))
+                  .andFinallyMakeStage(ctx, command, (rCtx, rCommand, rv, throwable) -> block.onFinished());
          }
       }
       return invokeNext(ctx, command);
    }
 
-   public CommandController blockCommand(Class<? extends VisitableCommand> commandClass) {
+   public BlockHandler blockCommand(Class<? extends VisitableCommand> commandClass) {
       return blockCommand(commandClass::isInstance);
    }
 
-   public CommandController blockCommand(Predicate<VisitableCommand> commandPredicate) {
-      CommandControllerImpl impl = new CommandControllerImpl(commandPredicate);
+   public BlockHandler blockCommand(Predicate<VisitableCommand> commandPredicate) {
+      BlockHandlerImpl<VisitableCommand> impl = new BlockHandlerImpl<>(commandPredicate);
       commandsToBlock.add(impl);
       return impl;
-   }
-
-   static class CommandControllerImpl implements CommandController {
-
-      final Predicate<VisitableCommand> commandPredicate;
-      final CountDownLatch blocked = new CountDownLatch(1);
-      final CompletableFuture<Void> proceed = new CompletableFuture<>();
-
-      CommandControllerImpl(Predicate<VisitableCommand> commandPredicate) {
-         this.commandPredicate = commandPredicate;
-      }
-
-      @Override
-      public void awaitCommandBlocked() throws InterruptedException {
-         assertTrue(blocked.await(10, TimeUnit.SECONDS));
-      }
-
-      @Override
-      public void unblockCommand() {
-         proceed.complete(null);
-      }
    }
 }

@@ -18,7 +18,7 @@ public class BatchProbeHandler implements DiagnosticsHandler.ProbeHandler {
    private static final int DEFAULT_MIN_BATCH;
 
    static {
-      DEFAULT_MIN_BATCH = Integer.parseInt(SecurityActions.getSystemProperty("org.infinispan.jgroups-transport.min_batch_size", "10"));
+      DEFAULT_MIN_BATCH = Integer.getInteger("org.infinispan.jgroups-transport.min_batch_size", 10);
    }
 
    private volatile int minBatchSize;

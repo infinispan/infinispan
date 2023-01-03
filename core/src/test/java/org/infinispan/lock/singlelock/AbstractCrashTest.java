@@ -3,6 +3,7 @@ package org.infinispan.lock.singlelock;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -94,25 +95,32 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
 
    public static class TxControlInterceptor extends DDAsyncInterceptor {
 
-      public CountDownLatch prepareProgress = new CountDownLatch(1);
-      public CountDownLatch preparedReceived = new CountDownLatch(1);
-      public CountDownLatch commitReceived = new CountDownLatch(1);
-      public CountDownLatch commitProgress = new CountDownLatch(1);
+      private final CompletableFuture<Void> prepareProgress = new CompletableFuture<>();
+      public final CountDownLatch preparedReceived = new CountDownLatch(1);
+      public final CountDownLatch commitReceived = new CountDownLatch(1);
+      private final CompletableFuture<Void> commitProgress = new CompletableFuture<>();
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+         return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
             preparedReceived.countDown();
-            prepareProgress.await();
+            return delayedValue(prepareProgress, rv, throwable);
          });
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
          commitReceived.countDown();
-         commitProgress.await();
-         return invokeNext(ctx, command);
+         return asyncInvokeNext(ctx, command, commitProgress);
 
+      }
+
+      public void continuePrepare() {
+         prepareProgress.complete(null);
+      }
+
+      public void continueCommit() {
+         commitProgress.complete(null);
       }
    }
 
@@ -135,8 +143,8 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       TestingUtil.replaceField(rpcManager, "rpcManager", transactionTable, TransactionTable.class);
 
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      txControlInterceptor.prepareProgress.countDown();
-      txControlInterceptor.commitProgress.countDown();
+      txControlInterceptor.continuePrepare();
+      txControlInterceptor.continueCommit();
       extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
    }
 

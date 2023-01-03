@@ -14,6 +14,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.OffloadingPerCacheInboundHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -54,6 +55,8 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
    }
 
    public void testCommitDoesntWriteAfterRollback() throws Exception {
+      caches().forEach(c -> OffloadingPerCacheInboundHandler.wrap(c, testExecutor()));
+
       // Start a tx on A: put(k, v1), owners(k) = [B (primary) and C (backup)]
       // Block the prepare on B and C so that it times out
       // Wait for the rollback command to be executed on B and C

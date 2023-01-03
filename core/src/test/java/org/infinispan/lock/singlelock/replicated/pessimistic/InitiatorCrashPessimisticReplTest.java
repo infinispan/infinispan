@@ -27,7 +27,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
 
    public void testInitiatorNodeCrashesBeforeCommit() throws Exception {
       TxControlInterceptor txControlInterceptor = new TxControlInterceptor();
-      txControlInterceptor.prepareProgress.countDown();
+      txControlInterceptor.continuePrepare();
       extractInterceptorChain(advancedCache(1)).addInterceptor(txControlInterceptor, 1);
 
       MagicKey key = new MagicKey("k", cache(0));
@@ -93,7 +93,7 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       killMember(1);
 
       assert caches().size() == 2;
-      txControlInterceptor.prepareProgress.countDown();
+      txControlInterceptor.continuePrepare();
 
       assertNotLocked("k");
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));

@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.remoting.inboundhandler.OffloadingInboundHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -51,6 +52,9 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       sequencer.order("st:block_get_transactions", "tx:before_lock", "tx:block_remote_lock", "st:resume_get_transactions");
       // The tx will be committed (1PC) after cache1 has received all the state, but before the topology is updated
       sequencer.order("st:block_ch_update_on_1", "tx:resume_remote_lock", "tx:after_commit", "st:resume_ch_update_on_0");
+
+      OffloadingInboundHandler.wrap(manager(0), testExecutor());
+      OffloadingInboundHandler.wrap(manager(1), testExecutor());
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.clustering().cacheMode(CacheMode.DIST_SYNC)

@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,6 +19,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -241,7 +243,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       }
    }
 
-   class DelayInterceptor extends BaseCustomAsyncInterceptor {
+   static class DelayInterceptor extends BaseCustomAsyncInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
       private final Class<?> commandToBlock;
@@ -267,50 +269,63 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-               doBlock(ctx, command);
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!rCtx.isInTxScope() && !rCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+               return doBlock(rCtx, rCommand, rv);
             }
+            return rv;
          });
       }
 
       @Override
-      public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-               doBlock(ctx, command);
+      public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) {
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!((TxInvocationContext<?>) rCtx).getCacheTransaction().isFromStateTransfer()) {
+               return doBlock(rCtx, rCommand, rv);
             }
+            return rv;
          });
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-               doBlock(ctx, command);
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!((TxInvocationContext<?>) rCtx).getCacheTransaction().isFromStateTransfer()) {
+               return doBlock(rCtx, rCommand, rv);
             }
+            return rv;
          });
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-            if (!ctx.getCacheTransaction().isFromStateTransfer()) {
-               doBlock(ctx, command);
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+            if (!((TxInvocationContext<?>) rCtx).getCacheTransaction().isFromStateTransfer()) {
+               return doBlock(rCtx, rCommand, rv);
             }
+            return rv;
          });
       }
 
-      private void doBlock(InvocationContext ctx, ReplicableCommand command) throws InterruptedException,
-            TimeoutException {
-         if (commandToBlock != command.getClass())
-            return;
+      private Object doBlock(InvocationContext ctx, ReplicableCommand cmd, Object rv) {
+         if (commandToBlock != cmd.getClass())
+            return rv;
 
-         log.tracef("Delaying command %s originating from %s", command, ctx.getOrigin());
-         Integer myCount = counter.incrementAndGet();
-         checkPoint.trigger("blocked_" + myCount + "_on_" + cache);
-         checkPoint.awaitStrict("resume_" + myCount + "_on_" + cache, 15, SECONDS);
-         log.tracef("Command unblocked: %s", command);
+         CompletableFuture<Void> delay = CompletableFuture.runAsync(() -> {
+            try {
+               log.tracef("Delaying command %s originating from %s", cmd, ctx.getOrigin());
+               int myCount = counter.incrementAndGet();
+               checkPoint.trigger("blocked_" + myCount + "_on_" + cache);
+               checkPoint.awaitStrict("resume_" + myCount + "_on_" + cache, 15, SECONDS);
+               log.tracef("Command unblocked: %s", cmd);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw CompletableFutures.asCompletionException(e);
+            } catch (TimeoutException e) {
+               throw CompletableFutures.asCompletionException(e);
+            }
+         });
+         return delayedValue(delay, rv);
       }
 
       @Override

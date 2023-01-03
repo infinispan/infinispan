@@ -40,7 +40,7 @@ public class InitiatorCrashOptimisticTest extends AbstractInitiatorCrashTest {
       killMember(1);
 
       assert caches().size() == 2;
-      txControlInterceptor.prepareProgress.countDown();
+      txControlInterceptor.continuePrepare();
 
       assertNotLocked(k);
       eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));

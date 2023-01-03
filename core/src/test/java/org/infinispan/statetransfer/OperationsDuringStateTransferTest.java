@@ -22,7 +22,6 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.CommandController;
 import org.infinispan.interceptors.ControllerBlockingInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.BiasedEntryWrappingInterceptor;
@@ -31,6 +30,7 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
+import org.infinispan.remoting.inboundhandler.BlockHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -98,7 +98,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block REMOVE commands right after EntryWrappingInterceptor until we are ready
-      CommandController removeController = blockAfterInterceptor(RemoveCommand.class::isInstance, ewi());
+      BlockHandler removeController = blockAfterInterceptor(RemoveCommand.class::isInstance, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -130,7 +130,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for REMOVE command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      removeController.awaitCommandBlocked();
+      removeController.awaitUntilBlocked();
 
       // paranoia, yes the value is still missing from data container
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
@@ -145,7 +145,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).keySet().size());
 
       // allow REMOVE to continue
-      removeController.unblockCommand();
+      removeController.unblock();
 
       Object oldVal = getFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
@@ -171,7 +171,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block PUT commands right after EntryWrappingInterceptor until we are ready
-      CommandController putController = blockAfterInterceptor(OperationsDuringStateTransferTest::isNormalPut, ewi());
+      BlockHandler putController = blockAfterInterceptor(OperationsDuringStateTransferTest::isNormalPut, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -203,7 +203,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for PUT command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      putController.awaitCommandBlocked();
+      putController.awaitUntilBlocked();
 
       // paranoia, yes the value is still missing from data container
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
@@ -218,7 +218,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).keySet().size());
 
       // allow PUT to continue
-      putController.unblockCommand();
+      putController.unblock();
 
       Object oldVal = putFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
@@ -232,7 +232,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block REPLACE commands right after EntryWrappingInterceptor until we are ready
-      CommandController replaceController = blockAfterInterceptor(ReplaceCommand.class::isInstance, ewi());
+      BlockHandler replaceController = blockAfterInterceptor(ReplaceCommand.class::isInstance, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -264,7 +264,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for REPLACE command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      replaceController.awaitCommandBlocked();
+      replaceController.awaitUntilBlocked();
 
       // paranoia, yes the value is still missing from data container
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
@@ -279,7 +279,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).keySet().size());
 
       // allow REPLACE to continue
-      replaceController.unblockCommand();
+      replaceController.unblock();
 
       Object oldVal = getFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
@@ -293,11 +293,11 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on node B that will block state transfer until we are ready
-      CommandController stateTransferController = ControllerBlockingInterceptor.addBefore(cacheConfigBuilder, InvocationContextInterceptor.class)
+      BlockHandler stateTransferController = ControllerBlockingInterceptor.addBefore(cacheConfigBuilder, InvocationContextInterceptor.class)
             .blockCommand(OperationsDuringStateTransferTest::isStateTransferPut);
 
       // add an interceptor on node B that will block GET commands until we are ready
-      CommandController getController = blockGet();
+      BlockHandler getController = blockGet();
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -309,7 +309,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
 
       // wait for state transfer on node B to progress to the point where data segments are about to be applied
-      stateTransferController.awaitCommandBlocked();
+      stateTransferController.awaitUntilBlocked();
 
       // state transfer is blocked, no keys should be present on node B yet
       assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
@@ -319,10 +319,10 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for GET command on node B to reach beyond *DistributionInterceptor, where it will block.
       // the value seen so far is null
-      getController.awaitCommandBlocked();
+      getController.awaitUntilBlocked();
 
       // allow state transfer to apply state
-      stateTransferController.unblockCommand();
+      stateTransferController.unblock();
 
       // wait for state transfer to end
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
@@ -330,18 +330,18 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(1, cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().size());
 
       // allow GET to continue
-      getController.unblockCommand();
+      getController.unblock();
 
       Object value = getFuture.get(10, TimeUnit.SECONDS);
       assertEquals("myValue", value);
    }
 
-   private CommandController blockAfterInterceptor(Predicate<VisitableCommand> test, Class<? extends AsyncInterceptor> afterInterceptor) {
+   private BlockHandler blockAfterInterceptor(Predicate<VisitableCommand> test, Class<? extends AsyncInterceptor> afterInterceptor) {
       ControllerBlockingInterceptor interceptor = ControllerBlockingInterceptor.addAfter(cacheConfigBuilder, afterInterceptor);
       return interceptor.blockCommand(test);
    }
 
-   private CommandController blockGet() {
+   private BlockHandler blockGet() {
       // we cannot have 2 interceptors of the same class.
       GetBlockInterceptor getBlockInterceptor = new GetBlockInterceptor();
       cacheConfigBuilder.customInterceptors().addInterceptor().before(CallInterceptor.class)

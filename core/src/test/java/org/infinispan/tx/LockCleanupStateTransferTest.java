@@ -5,8 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -82,7 +80,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       });
 
       //now wait for all the commits to block
-      handler.awaitUntilBlocked(Duration.of(15, ChronoUnit.SECONDS));
+      handler.awaitUntilBlocked();
 
       if (toBlock == TxCompletionNotificationCommand.class) {
          //at this stage everything should be committed locally

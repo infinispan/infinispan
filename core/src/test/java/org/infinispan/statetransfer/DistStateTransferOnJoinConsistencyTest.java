@@ -14,9 +14,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.interceptors.CommandController;
 import org.infinispan.interceptors.ControllerBlockingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.remoting.inboundhandler.BlockHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -136,7 +136,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          assertValue(1, i, expected);
       }
 
-      CommandController controller = ControllerBlockingInterceptor.addBefore(builder, InvocationContextInterceptor.class)
+      BlockHandler controller = ControllerBlockingInterceptor.addBefore(builder, InvocationContextInterceptor.class)
             .blockCommand(ControllerBlockingInterceptor.PUT_FOR_STATE_TRANSFER);
 
       log.info("Adding a new node ..");
@@ -148,7 +148,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       DataContainer<Object, Object> dc2 = advancedCache(2).getDataContainer();
 
       // wait for state transfer on node C to progress to the point where data segments are about to be applied
-      controller.awaitCommandBlocked();
+      controller.awaitUntilBlocked();
 
       if (op == Operation.CLEAR) {
          log.info("Clearing cache ..");
@@ -195,7 +195,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       }
 
       // allow state transfer to apply state
-      controller.unblockCommand();
+      controller.unblock();
 
       // wait for apply state to end
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2));

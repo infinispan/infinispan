@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
@@ -21,6 +24,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.GuardedBy;
+import org.jgroups.util.CompletableFutures;
 
 /**
  * Defines a set of logical threads, each with a list of states, and a partial ordering between states.
@@ -314,6 +318,22 @@ public class StateSequencer {
    public void advance(String state) throws TimeoutException, InterruptedException {
       enter(state);
       exit(state);
+   }
+
+   /**
+    * Asynchronous version of {@link #advance(String)}
+    */
+   public CompletionStage<Void> advanceAsync(String state, Executor executor) {
+      return CompletableFuture.runAsync(() -> {
+         try {
+            enter(state);
+            exit(state);
+         } catch (TimeoutException e) {
+            throw CompletableFutures.wrapAsCompletionException(e);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      }, executor);
    }
 
    /**

@@ -9,36 +9,36 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-final class BlockHandlerImpl<T> implements BlockHandler, Predicate<T> {
+public final class BlockHandlerImpl<T> implements BlockHandler, Predicate<T> {
 
    private final Predicate<T> predicate;
-   private final CountDownLatch commandBlockedLatch = new CountDownLatch(1);
-   private final CountDownLatch commandFinishedLatch = new CountDownLatch(1);
-   private final CompletableFuture<Void> afterBlocked = new CompletableFuture<>();
+   private final CountDownLatch blockedLatch = new CountDownLatch(1);
+   private final CountDownLatch finishedLatch = new CountDownLatch(1);
+   private final CompletableFuture<Void> blockingFuture = new CompletableFuture<>();
 
-   BlockHandlerImpl(Predicate<T> predicate) {
+   public BlockHandlerImpl(Predicate<T> predicate) {
       this.predicate = predicate;
    }
 
    @Override
    public boolean isBlocked() {
-      return commandBlockedLatch.getCount() > 0;
+      return blockedLatch.getCount() > 0;
    }
 
    @Override
    public void awaitUntilBlocked(Duration timeout) throws InterruptedException {
       assertTrue("Timeout waiting for the command to block",
-            commandBlockedLatch.await(timeout.toNanos(), TimeUnit.NANOSECONDS));
+            blockedLatch.await(timeout.toNanos(), TimeUnit.NANOSECONDS));
    }
 
    @Override
    public void awaitUntilCommandCompleted(Duration duration) throws InterruptedException {
-      assertTrue(commandFinishedLatch.await(duration.toNanos(), TimeUnit.NANOSECONDS));
+      assertTrue(finishedLatch.await(duration.toNanos(), TimeUnit.NANOSECONDS));
    }
 
    @Override
    public void unblock() {
-      afterBlocked.complete(null);
+      blockingFuture.complete(null);
    }
 
    @Override
@@ -47,7 +47,19 @@ final class BlockHandlerImpl<T> implements BlockHandler, Predicate<T> {
    }
 
    void runAfterBlocked(Runnable action) {
-      commandBlockedLatch.countDown();
-      afterBlocked.thenRunAsync(action, ForkJoinPool.commonPool()).thenRun(commandFinishedLatch::countDown);
+      onBlocked();
+      blockingFuture.thenRunAsync(action, ForkJoinPool.commonPool()).thenRun(this::onFinished);
+   }
+
+   public CompletableFuture<Void> blockingFuture() {
+      return blockingFuture;
+   }
+
+   public void onBlocked() {
+      blockedLatch.countDown();
+   }
+
+   public void onFinished() {
+      finishedLatch.countDown();
    }
 }

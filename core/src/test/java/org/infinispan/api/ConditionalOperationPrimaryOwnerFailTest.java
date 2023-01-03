@@ -15,8 +15,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -68,7 +66,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
       Future<?> killMemberResult = fork(() -> killMember(1));
 
       //await until the key is received from state transfer (the command is blocked now...)
-      stateTransferHandler.awaitUntilBlocked(Duration.of(30, ChronoUnit.SECONDS));
+      stateTransferHandler.awaitUntilBlocked();
       futureBackupOwnerCache.put(key, FINAL_VALUE);
 
       stateTransferHandler.unblock();

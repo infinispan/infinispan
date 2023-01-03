@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
@@ -43,6 +44,7 @@ import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
+import org.infinispan.remoting.inboundhandler.OffloadingPerCacheInboundHandler;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Mocks;
@@ -52,8 +54,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
-
-import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Test to verify distributed stream iterator
@@ -125,6 +125,9 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      // required because the blocking mock blocks the JGroups thread
+      OffloadingPerCacheInboundHandler.wrap(cache1, testExecutor());
 
       CheckPoint checkPoint = new CheckPoint();
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
