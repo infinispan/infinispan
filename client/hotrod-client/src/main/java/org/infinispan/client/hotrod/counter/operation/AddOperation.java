@@ -2,17 +2,15 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 /**
  * Add operation.
@@ -30,9 +28,9 @@ public class AddOperation extends BaseCounterOperation<Long> {
 
    private final long delta;
 
-   public AddOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId, Configuration cfg,
+   public AddOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId, Configuration cfg,
          String counterName, long delta, boolean useConsistentHash) {
-      super(COUNTER_ADD_AND_GET_REQUEST, COUNTER_ADD_AND_GET_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, useConsistentHash);
+      super(COUNTER_ADD_AND_GET_REQUEST, COUNTER_ADD_AND_GET_RESPONSE, channelFactory, topologyId, cfg, counterName, useConsistentHash);
       this.delta = delta;
    }
 

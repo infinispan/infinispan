@@ -195,4 +195,8 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       return header.flags();
    }
 
+   public Codec getCodec() {
+      return codec;
+   }
+
 }

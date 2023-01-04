@@ -48,7 +48,7 @@ import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionOperationFactory;
@@ -106,7 +106,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
    private final MarshallerRegistry marshallerRegistry = new MarshallerRegistry();
    private final Configuration configuration;
-   private Codec codec;
 
    private Marshaller marshaller;
    protected ChannelFactory channelFactory;
@@ -264,7 +263,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public Set<String> getCacheNames() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
       String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
       Set<String> cacheNames = new HashSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
@@ -351,19 +350,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          marshallerRegistry.registerMarshaller(marshaller);
       }
 
-      codec = configuration.version().getCodec();
-
-      listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration);
+      listenerNotifier = new ClientListenerNotifier(marshaller, channelFactory, configuration);
       ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
       if (executorFactory == null) {
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
       asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      channelFactory.start(codec, configuration, marshaller, asyncExecutorService,
+      channelFactory.start(configuration, marshaller, asyncExecutorService,
                            listenerNotifier, marshallerRegistry);
-      counterManager.start(channelFactory, codec, configuration, listenerNotifier);
+      counterManager.start(channelFactory, configuration, listenerNotifier);
 
-      TransactionOperationFactory txOperationFactory = new TransactionOperationFactory(configuration, channelFactory, codec);
+      TransactionOperationFactory txOperationFactory = new TransactionOperationFactory(configuration, channelFactory);
       syncTransactionTable.start(txOperationFactory);
       xaTransactionTable.start(txOperationFactory);
 
@@ -421,13 +418,13 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    public ChannelFactory createChannelFactory() {
-      return new ChannelFactory();
+      return new ChannelFactory(new CodecHolder(configuration.version().getCodec()));
    }
 
    @Override
    public boolean isTransactional(String cacheName) {
       ClientStatistics stats = ClientStatistics.dummyClientStatistics(timeService);
-      OperationsFactory factory = createOperationFactory(cacheName, false, codec, stats);
+      OperationsFactory factory = createOperationFactory(cacheName, false, stats);
       return checkTransactionSupport(cacheName, factory, log);
    }
 
@@ -505,7 +502,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          return cacheName2RemoteCache.get(key).remoteCache();
       }
 
-      OperationsFactory operationsFactory = createOperationFactory(cacheName, forceReturnValue, codec, null);
+      OperationsFactory operationsFactory = createOperationFactory(cacheName, forceReturnValue, null);
       PingResponse pingResponse;
       if (started) {
          // Verify if the cache exists on the server first
@@ -525,7 +522,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                return null;
             }
             // Create and re-ping
-            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
             pingResponse = await(adminOperationsFactory.newAdminOperation("@@cache@getorcreate", params).execute().thenCompose(s -> operationsFactory.newFaultTolerantPingOperation().execute()));
          }
       } else {
@@ -547,7 +544,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
 
       synchronized (cacheName2RemoteCache) {
-         startRemoteCache(remoteCache, operationsFactory.getCodec(), forceReturnValue);
+         startRemoteCache(remoteCache, forceReturnValue);
          RemoteCacheHolder holder = new RemoteCacheHolder(remoteCache, forceReturnValueOverride);
          remoteCache.resolveStorage(pingResponse.isObjectStorage());
          cacheName2RemoteCache.putIfAbsent(key, holder);
@@ -588,9 +585,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return NearCacheService.create(cfg, listenerNotifier);
    }
 
-   private void startRemoteCache(InternalRemoteCache<?, ?> remoteCache, Codec codec, boolean forceReturnValue) {
+   private void startRemoteCache(InternalRemoteCache<?, ?> remoteCache, boolean forceReturnValue) {
       OperationsFactory operationsFactory = createOperationFactory(remoteCache.getName(),
-            forceReturnValue, codec, remoteCache.clientStatistics());
+            forceReturnValue, remoteCache.clientStatistics());
       initRemoteCache(remoteCache, operationsFactory);
       remoteCache.start();
    }
@@ -623,7 +620,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, listenerNotifier, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {
@@ -649,13 +646,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     */
    CounterManager getCounterManager() {
       return counterManager;
-   }
-
-   /**
-    * This method is not a part of the public API. It is exposed for internal purposes only.
-    */
-   public Codec getCodec() {
-      return codec;
    }
 
    /**
@@ -740,9 +730,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return channelFactory.getRetries();
    }
 
-   private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue, Codec codec,
+   private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
                                                     ClientStatistics stats) {
-      return new OperationsFactory(channelFactory, cacheName, forceReturnValue, codec, listenerNotifier, configuration,
+      return new OperationsFactory(channelFactory, cacheName, forceReturnValue, listenerNotifier, configuration,
             stats);
    }
 
