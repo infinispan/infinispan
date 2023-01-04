@@ -4,16 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 /**
  * A counter operation for {@link CounterManager#getCounterNames()}.
@@ -25,9 +23,9 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
    private int size;
    private Collection<String> names;
 
-   public GetCounterNamesOperation(Codec codec, ChannelFactory transportFactory, AtomicReference<ClientTopology> topologyId,
+   public GetCounterNamesOperation(ChannelFactory transportFactory, AtomicReference<ClientTopology> topologyId,
                                    Configuration cfg) {
-      super(COUNTER_GET_NAMES_REQUEST, COUNTER_GET_NAMES_RESPONSE, codec, transportFactory, topologyId, cfg, "", false);
+      super(COUNTER_GET_NAMES_REQUEST, COUNTER_GET_NAMES_RESPONSE, transportFactory, topologyId, cfg, "", false);
    }
 
    @Override

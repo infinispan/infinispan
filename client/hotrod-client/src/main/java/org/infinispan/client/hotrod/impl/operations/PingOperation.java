@@ -33,19 +33,17 @@ public class PingOperation extends NeutralVersionHotRodOperation<PingResponse> i
    private static final Log log = LogFactory.getLog(PingOperation.class);
 
    private final boolean releaseChannel;
-   private final OperationsFactory operationsFactory;
 
    private final PingResponse.Decoder responseBuilder;
 
-   public PingOperation(Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, byte[] cacheName, ChannelFactory channelFactory, boolean releaseChannel, OperationsFactory operationsFactory) {
-      this(PING_REQUEST, PING_RESPONSE, codec, clientTopology, cfg, cacheName, channelFactory, releaseChannel, operationsFactory);
+   public PingOperation(Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, byte[] cacheName, ChannelFactory channelFactory, boolean releaseChannel) {
+      this(PING_REQUEST, PING_RESPONSE, codec, clientTopology, cfg, cacheName, channelFactory, releaseChannel);
    }
 
    protected PingOperation(short requestCode, short responseCode, Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, byte[] cacheName,
-                           ChannelFactory channelFactory, boolean releaseChannel, OperationsFactory operationsFactory) {
+                           ChannelFactory channelFactory, boolean releaseChannel) {
       super(requestCode, responseCode, codec, 0, cfg, cacheName, clientTopology, channelFactory);
       this.releaseChannel = releaseChannel;
-      this.operationsFactory = operationsFactory;
       this.responseBuilder = new PingResponse.Decoder(cfg.version());
    }
 
@@ -73,7 +71,7 @@ public class PingOperation extends NeutralVersionHotRodOperation<PingResponse> i
       if (HotRodConstants.isSuccess(status)) {
          PingResponse pingResponse = responseBuilder.build(status);
          if (pingResponse.getVersion() != null && cfg.version() == ProtocolVersion.PROTOCOL_VERSION_AUTO) {
-            operationsFactory.setCodec(pingResponse.getVersion().getCodec());
+            channelFactory.setNegotiatedCodec(pingResponse.getVersion().getCodec());
          }
          complete(pingResponse);
       } else {

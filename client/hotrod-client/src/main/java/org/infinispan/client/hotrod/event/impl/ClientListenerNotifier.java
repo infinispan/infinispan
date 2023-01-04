@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -43,14 +42,12 @@ public class ClientListenerNotifier {
    private final ConcurrentMap<WrappedByteArray, EventDispatcher<?>> dispatchers = new ConcurrentHashMap<>();
    private final ScheduledThreadPoolExecutor reconnectExecutor;
 
-   private final Codec codec;
    private final Marshaller marshaller;
    private final ChannelFactory channelFactory;
    private final ClassAllowList allowList;
 
-   public ClientListenerNotifier(Codec codec, Marshaller marshaller, ChannelFactory channelFactory,
+   public ClientListenerNotifier(Marshaller marshaller, ChannelFactory channelFactory,
                                  Configuration configuration) {
-      this.codec = codec;
       this.marshaller = marshaller;
       this.channelFactory = channelFactory;
       this.allowList = configuration.getClassAllowList();
@@ -124,7 +121,7 @@ public class ClientListenerNotifier {
    }
 
    public void startClientListener(byte[] listenerId) {
-      EventDispatcher eventDispatcher = dispatchers.get(new WrappedByteArray(listenerId));
+      EventDispatcher<?> eventDispatcher = dispatchers.get(new WrappedByteArray(listenerId));
       eventDispatcher.start();
    }
 
@@ -133,7 +130,7 @@ public class ClientListenerNotifier {
    }
 
    private EventDispatcher<?> removeClientListener(WrappedByteArray listenerId) {
-      EventDispatcher dispatcher = dispatchers.remove(listenerId);
+      EventDispatcher<?> dispatcher = dispatchers.remove(listenerId);
       if (dispatcher == null) {
          if (log.isTraceEnabled()) {
             log.tracef("Client listener %s not present (removed concurrently?)", Util.printArray(listenerId.getBytes()));
@@ -202,10 +199,6 @@ public class ClientListenerNotifier {
          throw HOTROD.unexpectedListenerId(Util.printArray(listenerId));
       }
       return clientEventDispatcher.getDataFormat();
-   }
-
-   public Codec codec() {
-      return codec;
    }
 
    public ClassAllowList allowList() {

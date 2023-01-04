@@ -1,0 +1,53 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
+                            urn:infinispan:config:clustered-locks:13.0 https://infinispan.org/schemas/infinispan-clustered-locks-config-13.0.xsd
+                            urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
+        xmlns="urn:infinispan:config:13.0"
+        xmlns:server="urn:infinispan:server:13.0"
+        xmlns:locks="urn:infinispan:config:clustered-locks:13.0">
+
+    <jgroups>
+        <stack name="test-tcp" extends="tcp">
+            <MERGE3 min_interval="1000" max_interval="5000" stack.combine="REPLACE"/>
+        </stack>
+        <stack name="test-udp" extends="udp">
+            <MERGE3 min_interval="1000" max_interval="5000" stack.combine="REPLACE"/>
+        </stack>
+    </jgroups>
+
+    <cache-container name="default" statistics="true">
+        <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
+        <serialization>
+            <allow-list>
+                <regex>.*</regex>
+            </allow-list>
+        </serialization>
+        <locks:clustered-locks num-owners="-1"/>
+    </cache-container>
+
+    <server xmlns="urn:infinispan:server:13.0">
+
+        <interfaces xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
+                    xmlns="urn:infinispan:server:13.0">
+            <interface name="public">
+                <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+            </interface>
+        </interfaces>
+
+        <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+            <socket-binding name="memcached" port="11221"/>
+            <socket-binding name="default" port="11222"/>
+        </socket-bindings>
+
+        <security>
+            <security-realms>
+                <security-realm name="default">
+                </security-realm>
+            </security-realms>
+        </security>
+
+        <endpoints socket-binding="default" security-realm="default"/>
+    </server>
+</infinispan>

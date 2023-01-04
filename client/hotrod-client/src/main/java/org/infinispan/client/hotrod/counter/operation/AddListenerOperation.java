@@ -4,18 +4,16 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 /**
  * An add listener operation for {@link StrongCounter#addListener(CounterListener)} and {@link
@@ -30,9 +28,9 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
    private final SocketAddress server;
    private Channel channel;
 
-   public AddListenerOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
-         Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
-      super(COUNTER_ADD_LISTENER_REQUEST, COUNTER_ADD_LISTENER_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, false);
+   public AddListenerOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
+                               Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
+      super(COUNTER_ADD_LISTENER_REQUEST, COUNTER_ADD_LISTENER_RESPONSE, channelFactory, topologyId, cfg, counterName, false);
       this.listenerId = listenerId;
       this.server = server;
    }

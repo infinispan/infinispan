@@ -9,12 +9,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.buffer.ByteBuf;
+import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.multimap.metadata.MetadataCollectionImpl;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -22,9 +23,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.multimap.MetadataCollection;
-
-import io.netty.buffer.ByteBuf;
-import net.jcip.annotations.Immutable;
 
 /**
  * Implements "getWithMetadata" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol
@@ -37,10 +35,10 @@ import net.jcip.annotations.Immutable;
 public class GetKeyWithMetadataMultimapOperation<V> extends AbstractMultimapKeyOperation<MetadataCollection<V>> {
    private static final Log log = LogFactory.getLog(GetKeyWithMetadataMultimapOperation.class);
 
-   public GetKeyWithMetadataMultimapOperation(Codec codec, ChannelFactory channelFactory,
+   public GetKeyWithMetadataMultimapOperation(ChannelFactory channelFactory,
                                               Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                               Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics, boolean supportsDuplicates) {
-      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, codec, channelFactory, key,
+      super(GET_MULTIMAP_WITH_METADATA_REQUEST, GET_MULTIMAP_WITH_METADATA_RESPONSE, channelFactory, key,
             keyBytes, cacheName, clientTopology, flags, cfg, dataFormat, clientStatistics, supportsDuplicates);
    }
 

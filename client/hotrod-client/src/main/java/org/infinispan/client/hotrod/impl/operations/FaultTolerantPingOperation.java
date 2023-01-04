@@ -24,15 +24,12 @@ import io.netty.handler.codec.DecoderException;
  */
 public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResponse> {
 
-   private final OperationsFactory operationsFactory;
-
    private final PingResponse.Decoder responseBuilder;
 
    protected FaultTolerantPingOperation(Codec codec, ChannelFactory channelFactory,
                                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
-                                        Configuration cfg, OperationsFactory operationsFactory) {
+                                        Configuration cfg) {
       super(PING_REQUEST, PING_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, null);
-      this.operationsFactory = operationsFactory;
       this.responseBuilder = new PingResponse.Decoder(cfg.version());
    }
 
@@ -47,7 +44,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
       if (HotRodConstants.isSuccess(status)) {
          PingResponse pingResponse = responseBuilder.build(status);
          if (pingResponse.getVersion() != null && cfg.version() == ProtocolVersion.PROTOCOL_VERSION_AUTO) {
-            operationsFactory.setCodec(pingResponse.getVersion().getCodec());
+            channelFactory.setNegotiatedCodec(pingResponse.getVersion().getCodec());
          }
          complete(pingResponse);
       } else {

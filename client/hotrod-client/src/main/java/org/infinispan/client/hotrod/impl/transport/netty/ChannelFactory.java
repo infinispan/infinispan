@@ -44,6 +44,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
@@ -97,8 +98,13 @@ public class ChannelFactory {
    // Servers for which the last connection attempt failed and which have no established connections
    @GuardedBy("lock")
    private final Set<SocketAddress> failedServers = new HashSet<>();
+   private final CodecHolder codecHolder;
 
-   public void start(Codec codec, Configuration configuration, Marshaller marshaller, ExecutorService executorService,
+   public ChannelFactory(CodecHolder codecHolder) {
+      this.codecHolder = codecHolder;
+   }
+
+   public void start(Configuration configuration, Marshaller marshaller, ExecutorService executorService,
                      ClientListenerNotifier listenerNotifier, MarshallerRegistry marshallerRegistry) {
       this.marshallerRegistry = marshallerRegistry;
       lock.writeLock().lock();
@@ -145,7 +151,7 @@ public class ChannelFactory {
          }
          clusters = Immutables.immutableListCopy(clustersDefinitions);
          topologyInfo = new TopologyInfo(configuration, mainCluster);
-         operationsFactory = new OperationsFactory(this, codec, listenerNotifier, configuration);
+         operationsFactory = new OperationsFactory(this, listenerNotifier, configuration);
          maxRetries = configuration.maxRetries();
 
          WrappedByteArray defaultCacheName = wrapBytes(RemoteCacheManager.cacheNameBytes());
@@ -157,7 +163,11 @@ public class ChannelFactory {
    }
 
    public Codec getNegotiatedCodec() {
-      return (operationsFactory == null) ? null : operationsFactory.getCodec();
+      return codecHolder.getCodec();
+   }
+
+   public void setNegotiatedCodec(Codec negotiatedCodec) {
+      codecHolder.setCodec(negotiatedCodec);
    }
 
    private int maxAsyncThreads(ExecutorService executorService, Configuration configuration) {

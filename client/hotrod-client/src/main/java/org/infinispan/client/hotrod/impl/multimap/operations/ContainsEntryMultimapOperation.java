@@ -6,17 +6,15 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ClientStatistics;
+import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 /**
  * Implements "contains entry" for multimap as defined by <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#hot_rod_protocol">Hot
@@ -28,10 +26,10 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class ContainsEntryMultimapOperation extends AbstractMultimapKeyValueOperation<Boolean> {
 
-   public ContainsEntryMultimapOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
+   public ContainsEntryMultimapOperation(ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                          byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
                                          byte[] value, ClientStatistics clientStatistics, boolean supportsDuplicates) {
-      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
+      super(CONTAINS_ENTRY_REQUEST, CONTAINS_ENTRY_RESPONSE, channelFactory, key, keyBytes, cacheName, clientTopology,
             flags, cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS, null, clientStatistics, supportsDuplicates);
    }
 

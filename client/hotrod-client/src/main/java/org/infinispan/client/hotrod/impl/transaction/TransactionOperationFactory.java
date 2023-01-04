@@ -6,7 +6,6 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.operations.CompleteTransactionOperation;
 import org.infinispan.client.hotrod.impl.transaction.operations.ForgetTransactionOperation;
@@ -28,26 +27,24 @@ public class TransactionOperationFactory {
 
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
-   private final Codec codec;
    private final AtomicReference<ClientTopology> clientTopology;
 
-   public TransactionOperationFactory(Configuration configuration, ChannelFactory channelFactory, Codec codec) {
+   public TransactionOperationFactory(Configuration configuration, ChannelFactory channelFactory) {
       this.configuration = configuration;
       this.channelFactory = channelFactory;
-      this.codec = codec;
       clientTopology = channelFactory.createTopologyId(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
    }
 
    CompleteTransactionOperation newCompleteTransactionOperation(Xid xid, boolean commit) {
-      return new CompleteTransactionOperation(codec, channelFactory, clientTopology, configuration, xid, commit);
+      return new CompleteTransactionOperation(channelFactory.getNegotiatedCodec(), channelFactory, clientTopology, configuration, xid, commit);
    }
 
    ForgetTransactionOperation newForgetTransactionOperation(Xid xid) {
-      return new ForgetTransactionOperation(codec, channelFactory, clientTopology, configuration, xid);
+      return new ForgetTransactionOperation(channelFactory.getNegotiatedCodec(), channelFactory, clientTopology, configuration, xid);
    }
 
    RecoveryOperation newRecoveryOperation() {
-      return new RecoveryOperation(codec, channelFactory, clientTopology, configuration);
+      return new RecoveryOperation(channelFactory.getNegotiatedCodec(), channelFactory, clientTopology, configuration);
    }
 
 }
