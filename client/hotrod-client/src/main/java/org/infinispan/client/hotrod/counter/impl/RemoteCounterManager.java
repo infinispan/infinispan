@@ -10,7 +10,6 @@ import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.logging.Log;
@@ -38,8 +37,8 @@ public class RemoteCounterManager implements CounterManager {
       counters = new ConcurrentHashMap<>();
    }
 
-   public void start(ChannelFactory channelFactory, Codec codec, Configuration configuration, ClientListenerNotifier listenerNotifier) {
-      this.factory = new CounterOperationFactory(configuration, channelFactory, codec);
+   public void start(ChannelFactory channelFactory, Configuration configuration, ClientListenerNotifier listenerNotifier) {
+      this.factory = new CounterOperationFactory(configuration, channelFactory);
       this.notificationManager = new NotificationManager(listenerNotifier, factory);
    }
 

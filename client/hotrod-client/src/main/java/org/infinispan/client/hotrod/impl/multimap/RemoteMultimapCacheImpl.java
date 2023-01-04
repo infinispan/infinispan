@@ -51,7 +51,6 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    public void init() {
       operationsFactory = new MultimapOperationsFactory(remoteCacheManager.getChannelFactory(),
             cache.getName(),
-            remoteCacheManager.getCodec(),
             remoteCacheManager.getConfiguration(),
             cache.getDataFormat(),
             cache.clientStatistics());

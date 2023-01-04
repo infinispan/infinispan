@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.counter.operation.RemoveListenerOperation;
 import org.infinispan.client.hotrod.counter.operation.RemoveOperation;
 import org.infinispan.client.hotrod.counter.operation.ResetOperation;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 
@@ -33,61 +32,59 @@ public class CounterOperationFactory {
 
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
-   private final Codec codec;
    private final AtomicReference<ClientTopology> clientTopologyRef;
 
-   CounterOperationFactory(Configuration configuration, ChannelFactory channelFactory, Codec codec) {
+   CounterOperationFactory(Configuration configuration, ChannelFactory channelFactory) {
       this.configuration = configuration;
       this.channelFactory = channelFactory;
-      this.codec = codec;
       clientTopologyRef = channelFactory.createTopologyId(COUNTER_CACHE_NAME);
    }
 
    IsDefinedOperation newIsDefinedOperation(String counterName) {
-      return new IsDefinedOperation(codec, channelFactory, clientTopologyRef, configuration, counterName);
+      return new IsDefinedOperation(channelFactory, clientTopologyRef, configuration, counterName);
    }
 
    GetConfigurationOperation newGetConfigurationOperation(String counterName) {
-      return new GetConfigurationOperation(codec, channelFactory, clientTopologyRef, configuration, counterName);
+      return new GetConfigurationOperation(channelFactory, clientTopologyRef, configuration, counterName);
    }
 
    DefineCounterOperation newDefineCounterOperation(String counterName, CounterConfiguration cfg) {
-      return new DefineCounterOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, cfg);
+      return new DefineCounterOperation(channelFactory, clientTopologyRef, configuration, counterName, cfg);
    }
 
    RemoveOperation newRemoveOperation(String counterName, boolean useConsistentHash) {
-      return new RemoveOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, useConsistentHash);
+      return new RemoveOperation(channelFactory, clientTopologyRef, configuration, counterName, useConsistentHash);
    }
 
    AddOperation newAddOperation(String counterName, long delta, boolean useConsistentHash) {
-      return new AddOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, delta, useConsistentHash);
+      return new AddOperation(channelFactory, clientTopologyRef, configuration, counterName, delta, useConsistentHash);
    }
 
    GetValueOperation newGetValueOperation(String counterName, boolean useConsistentHash) {
-      return new GetValueOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, useConsistentHash);
+      return new GetValueOperation(channelFactory, clientTopologyRef, configuration, counterName, useConsistentHash);
    }
 
    ResetOperation newResetOperation(String counterName, boolean useConsistentHash) {
-      return new ResetOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, useConsistentHash);
+      return new ResetOperation(channelFactory, clientTopologyRef, configuration, counterName, useConsistentHash);
    }
 
    CompareAndSwapOperation newCompareAndSwapOperation(String counterName, long expect, long update,
          CounterConfiguration counterConfiguration) {
-      return new CompareAndSwapOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, expect,
+      return new CompareAndSwapOperation(channelFactory, clientTopologyRef, configuration, counterName, expect,
             update, counterConfiguration);
    }
 
    GetCounterNamesOperation newGetCounterNamesOperation() {
-      return new GetCounterNamesOperation(codec, channelFactory, clientTopologyRef, configuration);
+      return new GetCounterNamesOperation(channelFactory, clientTopologyRef, configuration);
    }
 
    AddListenerOperation newAddListenerOperation(String counterName, byte[] listenerId, SocketAddress server) {
-      return new AddListenerOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, listenerId,
+      return new AddListenerOperation(channelFactory, clientTopologyRef, configuration, counterName, listenerId,
             server);
    }
 
    RemoveListenerOperation newRemoveListenerOperation(String counterName, byte[] listenerId, SocketAddress server) {
-      return new RemoveListenerOperation(codec, channelFactory, clientTopologyRef, configuration, counterName, listenerId,
+      return new RemoveListenerOperation(channelFactory, clientTopologyRef, configuration, counterName, listenerId,
             server);
    }
 }

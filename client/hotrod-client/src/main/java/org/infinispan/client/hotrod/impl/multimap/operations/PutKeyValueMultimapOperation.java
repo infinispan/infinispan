@@ -6,19 +6,17 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
 /**
  * Implements "put" for multimap cache as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -30,13 +28,12 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class PutKeyValueMultimapOperation extends AbstractMultimapKeyValueOperation<Void> {
 
-   public PutKeyValueMultimapOperation(Codec codec,
-                                       ChannelFactory channelFactory,
+   public PutKeyValueMultimapOperation(ChannelFactory channelFactory,
                                        Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
                                        int flags, Configuration cfg, byte[] value, long lifespan,
                                        TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat,
                                        ClientStatistics clientStatistics, boolean supportsDuplicates) {
-      super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
+      super(PUT_MULTIMAP_REQUEST, PUT_MULTIMAP_RESPONSE, channelFactory, key, keyBytes, cacheName, clientTopology,
             flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics, supportsDuplicates);
    }
 
