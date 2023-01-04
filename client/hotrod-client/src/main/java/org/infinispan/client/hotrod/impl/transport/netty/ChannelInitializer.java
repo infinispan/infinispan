@@ -117,7 +117,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       } else {
          channel.pipeline().addLast(ActivationHandler.NAME, ActivationHandler.INSTANCE);
       }
-      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(operationsFactory.getCodec(), channelFactory, configuration, operationsFactory.getListenerNotifier()));
+      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(channelFactory, configuration, operationsFactory.getListenerNotifier()));
       if (configuration.connectionPool().minEvictableIdleTime() > 0) {
          // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
          channel.pipeline().addLast(IdleStateHandlerProvider.NAME,

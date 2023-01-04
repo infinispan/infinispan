@@ -38,7 +38,6 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    // used for HeaderOrEventDecoder, too, as the function is similar
    public static final String NAME = "header-decoder";
 
-   private final Codec codec;
    private final ChannelFactory channelFactory;
    private final Configuration configuration;
    private final ClientListenerNotifier listenerNotifier;
@@ -51,9 +50,8 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private short status;
    private short receivedOpCode;
 
-   public HeaderDecoder(Codec codec, ChannelFactory channelFactory, Configuration configuration, ClientListenerNotifier listenerNotifier) {
+   public HeaderDecoder(ChannelFactory channelFactory, Configuration configuration, ClientListenerNotifier listenerNotifier) {
       super(State.READ_MESSAGE_ID);
-      this.codec = codec;
       this.channelFactory = channelFactory;
       this.configuration = configuration;
       this.listenerNotifier = listenerNotifier;
@@ -79,6 +77,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
    @Override
    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+      Codec codec = operation == null ? channelFactory.getNegotiatedCodec() : operation.getCodec();
       try {
          switch (state()) {
             case READ_MESSAGE_ID:
@@ -183,8 +182,6 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                checkpoint(State.READ_MESSAGE_ID);
                break;
          }
-      } catch (Signal signal) {
-         throw signal;
       } catch (Exception e) {
          // If this is server error make sure to restart the state of decoder
          checkpoint(State.READ_MESSAGE_ID);
@@ -246,9 +243,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
       if (evt instanceof ChannelPoolCloseEvent) {
          closing = true;
-         allCompleteFuture().whenComplete((nil, throwable) -> {
-            ctx.channel().close();
-         });
+         allCompleteFuture().whenComplete((nil, throwable) -> ctx.channel().close());
       } else if (evt instanceof IdleStateEvent) {
          // If we have incomplete operations this channel is not idle!
          if (!incomplete.isEmpty()) {

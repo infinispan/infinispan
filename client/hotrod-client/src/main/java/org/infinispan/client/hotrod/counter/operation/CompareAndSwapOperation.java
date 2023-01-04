@@ -2,9 +2,10 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.logging.Log;
@@ -12,9 +13,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 /**
  * A compare-and-set operation for {@link StrongCounter#compareAndSwap(long, long)} and {@link
@@ -31,9 +29,9 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
    private final long update;
    private final CounterConfiguration counterConfiguration;
 
-   public CompareAndSwapOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
+   public CompareAndSwapOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
                                   Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
-      super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, codec, channelFactory, topologyId, cfg, counterName, true);
+      super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, channelFactory, topologyId, cfg, counterName, true);
       this.expect = expect;
       this.update = update;
       this.counterConfiguration = counterConfiguration;

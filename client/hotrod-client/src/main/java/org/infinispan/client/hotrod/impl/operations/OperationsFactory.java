@@ -55,8 +55,6 @@ public class OperationsFactory implements HotRodConstants {
 
    private final boolean forceReturnValue;
 
-   private Codec codec;
-
    private final ClientListenerNotifier listenerNotifier;
 
    private final String cacheName;
@@ -67,8 +65,7 @@ public class OperationsFactory implements HotRodConstants {
 
    private final TelemetryService telemetryService;
 
-   public OperationsFactory(ChannelFactory channelFactory, String cacheName, boolean forceReturnValue, Codec
-         codec, ClientListenerNotifier listenerNotifier, Configuration cfg, ClientStatistics clientStatistics) {
+   public OperationsFactory(ChannelFactory channelFactory, String cacheName, boolean forceReturnValue, ClientListenerNotifier listenerNotifier, Configuration cfg, ClientStatistics clientStatistics) {
       this.channelFactory = channelFactory;
       this.cacheNameBytes = cacheName == null ? DEFAULT_CACHE_NAME_BYTES : RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
@@ -77,8 +74,6 @@ public class OperationsFactory implements HotRodConstants {
             : new AtomicReference<>(new ClientTopology(-1, cfg.clientIntelligence()));
       this.forceReturnValue = forceReturnValue;
 
-      Codec negotiatedCodec = (channelFactory != null) ? channelFactory.getNegotiatedCodec() : null;
-      this.codec = (negotiatedCodec != null) ? negotiatedCodec : codec;
       this.listenerNotifier = listenerNotifier;
       this.cfg = cfg;
       this.clientStatistics = clientStatistics;
@@ -94,8 +89,8 @@ public class OperationsFactory implements HotRodConstants {
       this.telemetryService = telemetryService;
    }
 
-   public OperationsFactory(ChannelFactory channelFactory, Codec codec, ClientListenerNotifier listenerNotifier, Configuration cfg) {
-      this(channelFactory, null, false, codec, listenerNotifier, cfg, null);
+   public OperationsFactory(ChannelFactory channelFactory, ClientListenerNotifier listenerNotifier, Configuration cfg) {
+      this(channelFactory, null, false, listenerNotifier, cfg, null);
    }
 
    public ClientListenerNotifier getListenerNotifier() {
@@ -111,39 +106,35 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public Codec getCodec() {
-      return codec;
-   }
-
-   public void setCodec(Codec codec) {
-      this.codec = codec;
+      return channelFactory.getNegotiatedCodec();
    }
 
    public <V> GetOperation<V> newGetKeyOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new GetOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat, clientStatistics);
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public <K, V> GetAllParallelOperation<K, V> newGetAllOperation(Set<byte[]> keys, DataFormat dataFormat) {
-      return new GetAllParallelOperation<>(codec, channelFactory, keys, cacheNameBytes, clientTopologyRef, flags(),
+      return new GetAllParallelOperation<>(getCodec(), channelFactory, keys, cacheNameBytes, clientTopologyRef, flags(),
             cfg, dataFormat, clientStatistics);
    }
 
    public <V> RemoveOperation<V> newRemoveOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new RemoveOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat,
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat,
             clientStatistics, telemetryService);
    }
 
    public <V> RemoveIfUnmodifiedOperation<V> newRemoveIfUnmodifiedOperation(Object key, byte[] keyBytes, long version, DataFormat dataFormat) {
       return new RemoveIfUnmodifiedOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, version, dataFormat,
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, version, dataFormat,
             clientStatistics, telemetryService);
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(Object key, byte[] keyBytes,
                                                                        byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version, DataFormat dataFormat) {
       return new ReplaceIfUnmodifiedOperation(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle),
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle),
             cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat, clientStatistics,
             telemetryService);
    }
@@ -155,20 +146,20 @@ public class OperationsFactory implements HotRodConstants {
    public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes, DataFormat dataFormat,
                                                                       SocketAddress listenerServer) {
       return new GetWithMetadataOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat, clientStatistics,
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat, clientStatistics,
             listenerServer);
    }
 
    public StatsOperation newStatsOperation() {
       return new StatsOperation(
-            codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg);
+            getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg);
    }
 
    public <V> PutOperation<V> newPutKeyValueOperation(Object key, byte[] keyBytes, byte[] value,
                                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle,
                                                       TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle),
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle),
             cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
             telemetryService);
    }
@@ -176,7 +167,7 @@ public class OperationsFactory implements HotRodConstants {
    public PutAllParallelOperation newPutAllOperation(Map<byte[], byte[]> map,
                                                      long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutAllParallelOperation(
-            codec, channelFactory, map, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle), cfg,
+            getCodec(), channelFactory, map, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle), cfg,
             lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
    }
 
@@ -184,7 +175,7 @@ public class OperationsFactory implements HotRodConstants {
                                                               long lifespan, TimeUnit lifespanUnit, long maxIdleTime,
                                                               TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new PutIfAbsentOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdleTime),
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdleTime),
             cfg, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics,
             telemetryService);
    }
@@ -192,52 +183,52 @@ public class OperationsFactory implements HotRodConstants {
    public <V> ReplaceOperation<V> newReplaceOperation(Object key, byte[] keyBytes, byte[] values,
                                                       long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat) {
       return new ReplaceOperation<>(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle),
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(lifespan, maxIdle),
             cfg, values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
             telemetryService);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(Object key, byte[] keyBytes, DataFormat dataFormat) {
       return new ContainsKeyOperation(
-            codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat, clientStatistics);
+            getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, dataFormat, clientStatistics);
    }
 
    public ClearOperation newClearOperation() {
       return new ClearOperation(
-            codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, telemetryService);
+            getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, telemetryService);
    }
 
    public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope, DataFormat dataFormat) {
       return new BulkGetKeysOperation<>(
-            codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, scope, dataFormat, clientStatistics);
+            getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, scope, dataFormat, clientStatistics);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, DataFormat dataFormat) {
-      return new AddClientListenerOperation(codec, channelFactory,
+      return new AddClientListenerOperation(getCodec(), channelFactory,
             cacheName, clientTopologyRef, flags(), cfg, listenerNotifier,
             listener, null, null, dataFormat, null, telemetryService);
    }
 
    public AddClientListenerOperation newAddClientListenerOperation(
          Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams, DataFormat dataFormat) {
-      return new AddClientListenerOperation(codec, channelFactory,
+      return new AddClientListenerOperation(getCodec(), channelFactory,
             cacheName, clientTopologyRef, flags(), cfg, listenerNotifier,
             listener, filterFactoryParams, converterFactoryParams, dataFormat, null, telemetryService);
    }
 
    public RemoveClientListenerOperation newRemoveClientListenerOperation(Object listener) {
-      return new RemoveClientListenerOperation(codec, channelFactory,
+      return new RemoveClientListenerOperation(getCodec(), channelFactory,
             cacheNameBytes, clientTopologyRef, flags(), cfg, listenerNotifier, listener);
    }
 
    public AddBloomNearCacheClientListenerOperation newAddNearCacheListenerOperation(Object listener, DataFormat dataFormat,
          int bloomFilterBits, InternalRemoteCache<?, ?> remoteCache) {
-      return new AddBloomNearCacheClientListenerOperation(codec, channelFactory, cacheName, clientTopologyRef, flags(), cfg, listenerNotifier,
+      return new AddBloomNearCacheClientListenerOperation(getCodec(), channelFactory, cacheName, clientTopologyRef, flags(), cfg, listenerNotifier,
             listener, dataFormat, bloomFilterBits, remoteCache);
    }
 
    public UpdateBloomFilterOperation newUpdateBloomFilterOperation(SocketAddress address, byte[] bloomBytes) {
-      return new UpdateBloomFilterOperation(codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, address,
+      return new UpdateBloomFilterOperation(getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, address,
             bloomBytes);
    }
 
@@ -248,7 +239,7 @@ public class OperationsFactory implements HotRodConstants {
     * @param releaseChannel
     */
    public PingOperation newPingOperation(boolean releaseChannel) {
-      return new PingOperation(codec, clientTopologyRef, cfg, cacheNameBytes, channelFactory, releaseChannel, this);
+      return new PingOperation(getCodec(), clientTopologyRef, cfg, cacheNameBytes, channelFactory, releaseChannel);
    }
 
    /**
@@ -260,25 +251,25 @@ public class OperationsFactory implements HotRodConstants {
     */
    public FaultTolerantPingOperation newFaultTolerantPingOperation() {
       return new FaultTolerantPingOperation(
-            codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, this);
+            getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg);
    }
 
    public QueryOperation newQueryOperation(RemoteQuery<?> remoteQuery, DataFormat dataFormat) {
       return new QueryOperation(
-            codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, remoteQuery, dataFormat);
+            getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, remoteQuery, dataFormat);
    }
 
    public SizeOperation newSizeOperation() {
-      return new SizeOperation(codec, channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, telemetryService);
+      return new SizeOperation(getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, flags(), cfg, telemetryService);
    }
 
    public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams, Object key, DataFormat dataFormat) {
-      return new ExecuteOperation<>(codec, channelFactory, cacheNameBytes,
+      return new ExecuteOperation<>(getCodec(), channelFactory, cacheNameBytes,
             clientTopologyRef, flags(), cfg, taskName, marshalledParams, key, dataFormat);
    }
 
    public AdminOperation newAdminOperation(String taskName, Map<String, byte[]> marshalledParams) {
-      return new AdminOperation(codec, channelFactory, cacheNameBytes,
+      return new AdminOperation(getCodec(), channelFactory, cacheNameBytes,
             clientTopologyRef, flags(), cfg, taskName, marshalledParams);
    }
 
@@ -298,7 +289,7 @@ public class OperationsFactory implements HotRodConstants {
       this.flagsMap.remove();
       int intFlags = 0;
       if (threadLocalFlags != null) {
-         intFlags |= threadLocalFlags.intValue();
+         intFlags |= threadLocalFlags;
       }
       if (forceReturnValue) {
          intFlags |= Flag.FORCE_RETURN_VALUE.getFlagInt();
@@ -344,45 +335,45 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, IntSet segments, int batchSize, boolean metadata, DataFormat dataFormat, SocketAddress targetAddress) {
-      return new IterationStartOperation(codec, flags(), cfg, cacheNameBytes, clientTopologyRef, filterConverterFactory, filterParameters, segments, batchSize, channelFactory, metadata, dataFormat, targetAddress);
+      return new IterationStartOperation(getCodec(), flags(), cfg, cacheNameBytes, clientTopologyRef, filterConverterFactory, filterParameters, segments, batchSize, channelFactory, metadata, dataFormat, targetAddress);
    }
 
    public IterationEndOperation newIterationEndOperation(byte[] iterationId, Channel channel) {
-      return new IterationEndOperation(codec, flags(), cfg, cacheNameBytes, clientTopologyRef, iterationId, channelFactory, channel);
+      return new IterationEndOperation(getCodec(), flags(), cfg, cacheNameBytes, clientTopologyRef, iterationId, channelFactory, channel);
    }
 
    public <K, E> IterationNextOperation<K, E> newIterationNextOperation(byte[] iterationId, Channel channel, KeyTracker segmentKeyTracker, DataFormat dataFormat) {
-      return new IterationNextOperation<>(codec, flags(), cfg, cacheNameBytes, clientTopologyRef, iterationId, channel, channelFactory, segmentKeyTracker, dataFormat);
+      return new IterationNextOperation<>(getCodec(), flags(), cfg, cacheNameBytes, clientTopologyRef, iterationId, channel, channelFactory, segmentKeyTracker, dataFormat);
    }
 
    public <K> GetStreamOperation newGetStreamOperation(K key, byte[] keyBytes, int offset) {
-      return new GetStreamOperation(codec, channelFactory, key, keyBytes, offset, cacheNameBytes, clientTopologyRef, flags(), cfg, clientStatistics);
+      return new GetStreamOperation(getCodec(), channelFactory, key, keyBytes, offset, cacheNameBytes, clientTopologyRef, flags(), cfg, clientStatistics);
    }
 
    public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
+      return new PutStreamOperation(getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
    }
 
    public <K> PutStreamOperation newPutStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
+      return new PutStreamOperation(getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, PutStreamOperation.VERSION_PUT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
    }
 
    public <K> PutStreamOperation newPutIfAbsentStreamOperation(K key, byte[] keyBytes, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new PutStreamOperation(codec, channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
+      return new PutStreamOperation(getCodec(), channelFactory, key, keyBytes, cacheNameBytes, clientTopologyRef, flags(), cfg, PutStreamOperation.VERSION_PUT_IF_ABSENT, lifespan, lifespanUnit, maxIdle, maxIdleUnit, clientStatistics, telemetryService);
    }
 
    public AuthMechListOperation newAuthMechListOperation(Channel channel) {
-      return new AuthMechListOperation(codec, clientTopologyRef, cfg, channel, channelFactory);
+      return new AuthMechListOperation(getCodec(), clientTopologyRef, cfg, channel, channelFactory);
    }
 
    public AuthOperation newAuthOperation(Channel channel, String saslMechanism, byte[] response) {
-      return new AuthOperation(codec, clientTopologyRef, cfg, channel, channelFactory, saslMechanism, response);
+      return new AuthOperation(getCodec(), clientTopologyRef, cfg, channel, channelFactory, saslMechanism, response);
    }
 
    public PrepareTransactionOperation newPrepareTransactionOperation(Xid xid, boolean onePhaseCommit,
                                                                      List<Modification> modifications,
                                                                      boolean recoverable, long timeoutMs) {
-      return new PrepareTransactionOperation(codec, channelFactory, cacheNameBytes, clientTopologyRef, cfg, xid,
+      return new PrepareTransactionOperation(getCodec(), channelFactory, cacheNameBytes, clientTopologyRef, cfg, xid,
             onePhaseCommit, modifications, recoverable, timeoutMs);
    }
 }
