@@ -263,7 +263,7 @@ public class RemoteCacheImpl<K, V> implements RemoteCache<K, V> {
    public Flow.Publisher<K> keys(CacheOptions options) {
       assertRemoteCacheManagerIsStarted();
       Flowable<K> flowable = Flowable.fromPublisher(new RemotePublisher<K, Object>(cacheOperationsFactory,
-                  "org.infinispan.server.hotrod.ToEmptyBytesKeyValueFilterConverter",
+                  "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter",
                   Util.EMPTY_BYTE_ARRAY_ARRAY, null, 128, false, dataFormat))
             .map(CacheEntry::key);
       return FlowAdapters.toFlowPublisher(flowable);
