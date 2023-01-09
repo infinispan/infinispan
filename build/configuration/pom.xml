@@ -215,7 +215,7 @@
       <version.spring.session>2.7.0</version.spring.session>
       <version.kafka.client>3.2.3</version.kafka.client>
       <version.xom>1.3.7</version.xom>
-      <version.xstream>1.4.19</version.xstream>
+      <version.xstream>1.4.20</version.xstream>
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.1.1</version.checkstyle.maven-plugin>
