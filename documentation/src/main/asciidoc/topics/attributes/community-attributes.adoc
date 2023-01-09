@@ -131,9 +131,10 @@
 :jgroups_schema: http://www.jgroups.org/schema/jgroups-5.2.xsd
 :jgroups_extras: https://github.com/jgroups-extras
 
-//
-// Infinispan titles
-//
+//Code tutorials
+:code_tutorials: https://infinispan.org/tutorials/simple/simple_tutorials.html
+
+//Titles & Headings
 :sizing_title: {brandname} performance considerations and tuning guidelines
 
 //

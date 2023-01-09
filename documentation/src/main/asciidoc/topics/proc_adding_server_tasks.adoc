@@ -27,4 +27,4 @@ configuration. Alternatively set the allow list using system properties.
 .Reference
 
 * link:{encoding_docs}#adding-deserialization-allowlist_marshaller-implementations[Adding Java Classes to Deserialization Allow Lists]
-* link:{configdocroot}[{brandname} {infinispanversion} Configuration Schema]
+* link:{configdocroot}[{brandname} Configuration Schema]
