@@ -13,5 +13,5 @@ endif::community[]
 
 .Reference
 
-* link:{server_docs}#user_tool-server[Adding Users to Property Realms]
+* link:{server_docs}#creating-users_server-getting-started[Creating {brandname} users]
 * link:{server_docs}#authentication-mechanisms[Configuring Endpoint Authentication Mechanisms]
