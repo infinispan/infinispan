@@ -19,4 +19,10 @@ ifdef::downstream[]
 ====
 The {brandname} Spring Boot starter uses different Spring Boot versions to other projects such as Red Hat OpenShift Application Runtimes. If you want to use a specific Spring Boot version for compatibility with other projects, you must add the correct dependency to your project.
 ====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{code_tutorials}#spring-tutorials[Spring and Spring Boot code tutorials]
+* link:https://access.redhat.com/documentation/en-us/red_hat_support_for_spring_boot/2.5/html-single/spring_boot_runtime_guide/index#using-the-spring-boot-bom-to-manage-dependency-versions_configuring-your-application-to-use-spring-boot[Spring Boot Runtime Guide, Using the Spring Boot BOM to manage dependency versions]
 endif::downstream[]
+
