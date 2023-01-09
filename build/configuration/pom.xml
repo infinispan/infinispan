@@ -86,6 +86,7 @@
       <maven.compiler.target>11</maven.compiler.target>
       <maven.javadoc.skip>false</maven.javadoc.skip>
       <transform.skip>true</transform.skip>
+      <transform.tests.skip>true</transform.tests.skip>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -387,6 +388,38 @@
                               <artifactId>${original.artifactId}</artifactId>
                               <version>${project.version}</version>
                               <classifier>sources</classifier>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>test-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <skip>${transform.tests.skip}</skip>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                              <classifier>tests</classifier>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>test-source-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <skip>${transform.tests.skip}</skip>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                              <classifier>test-sources</classifier>
                            </artifact>
                         </configuration>
                      </execution>
