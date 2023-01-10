@@ -24,7 +24,7 @@ pipeline {
                 script {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
-                    env.JAVA_HOME = tool('JDK 11')
+                    env.JAVA_HOME = tool('JDK 17')
                 }
 
                 // ISPN-9703 Ensure distribution build works on non-prs
