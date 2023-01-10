@@ -4,7 +4,7 @@ Add Hot Rod Java client dependencies to include it in your project.
 
 .Prerequisites
 
-* Java 8 or Java 11
+* Java 11 or greater.
 
 .Procedure
 
