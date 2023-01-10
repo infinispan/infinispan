@@ -2,7 +2,7 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.ServiceLoader;
 
-import org.hibernate.engine.transaction.spi.IsolationDelegate;
+import org.hibernate.resource.transaction.spi.IsolationDelegate;
 
 import jakarta.transaction.Synchronization;
 

@@ -15,7 +15,7 @@
    <modules>
       <module>cache-spi</module>
       <module>cache-commons</module>
-      <module>cache-v60</module>
+      <module>cache-v62</module>
    </modules>
 
    <dependencies>
