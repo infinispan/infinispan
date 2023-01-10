@@ -119,7 +119,7 @@
 
       <!-- Java source/target version -->
       <maven.min.version>3.2.1</maven.min.version>
-      <jdk.min.version>11</jdk.min.version>
+      <jdk.min.version>17</jdk.min.version>
 
       <!-- Dependency versions -->
       <version.aesh>2.6</version.aesh>
