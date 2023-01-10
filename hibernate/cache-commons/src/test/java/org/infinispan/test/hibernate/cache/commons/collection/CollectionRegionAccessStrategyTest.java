@@ -6,21 +6,26 @@
  */
 package org.infinispan.test.hibernate.cache.commons.collection;
 
+import static org.junit.Assert.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.cache.spi.access.SoftLock;
 import org.infinispan.commons.test.categories.Smoke;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.hibernate.cache.commons.access.AccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.NonTxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.commons.access.TxInvalidationCacheAccessDelegate;
-import org.hibernate.cache.spi.access.SoftLock;
-
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.test.hibernate.cache.commons.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
@@ -29,12 +34,6 @@ import org.infinispan.test.hibernate.cache.commons.util.TestingKeyFactory;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static org.junit.Assert.assertFalse;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-
 /**
  * Base class for tests of CollectionRegionAccessStrategy impls.
  *
@@ -42,18 +41,17 @@ import static org.mockito.Mockito.spy;
  * @since 3.5
  */
 @Category(Smoke.class)
-public class CollectionRegionAccessStrategyTest extends
-		AbstractRegionAccessStrategyTest<Object> {
+public class CollectionRegionAccessStrategyTest extends AbstractRegionAccessStrategyTest<Object> {
 	protected static int testCount;
 
 	@Override
 	protected Object generateNextKey() {
-		return TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
+		return TestingKeyFactory.generateCollectionCacheKey(KEY_BASE + testCount++);
 	}
 
 	@Override
 	protected InfinispanBaseRegion getRegion(NodeEnvironment environment) {
-		return environment.getCollectionRegion( REGION_NAME, accessType);
+		return environment.getCollectionRegion(REGION_NAME, accessType);
 	}
 
 	@Override

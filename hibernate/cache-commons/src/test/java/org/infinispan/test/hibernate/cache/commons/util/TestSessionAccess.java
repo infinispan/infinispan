@@ -1,5 +1,9 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.ServiceLoader;
+
 import org.hibernate.Transaction;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.RegionFactory;
@@ -9,10 +13,6 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ControlledTimeService;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
 
 public interface TestSessionAccess {
 
@@ -59,7 +59,7 @@ public interface TestSessionAccess {
 
       boolean afterUpdate(Object session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) throws CacheException;
 
-      Object get(Object session, Object key, long txTimestamp) throws CacheException;
+      Object get(Object session, Object key) throws CacheException;
 
       boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride) throws CacheException;
 

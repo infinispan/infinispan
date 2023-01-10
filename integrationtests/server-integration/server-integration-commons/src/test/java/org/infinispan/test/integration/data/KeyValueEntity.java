@@ -2,11 +2,11 @@ package org.infinispan.test.integration.data;
 
 import java.io.Serializable;
 
-import javax.persistence.Basic;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
 import org.infinispan.protostream.annotations.ProtoField;
+
+import jakarta.persistence.Basic;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
