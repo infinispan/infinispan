@@ -302,6 +302,10 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       newBuilder.read(configuration);
       Configuration newConfiguration = newBuilder.build();
       validateConfiguration(newConfiguration);
+
+      p.setProperty(PROTOCOL_VERSION, "auto");
+      configuration = new ConfigurationBuilder().withProperties(p).build();
+      assertEquals(ProtocolVersion.PROTOCOL_VERSION_AUTO, configuration.version());
    }
 
    public void testSSLContext() {
