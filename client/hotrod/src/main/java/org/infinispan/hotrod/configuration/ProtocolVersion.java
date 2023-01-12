@@ -14,7 +14,7 @@ public enum ProtocolVersion {
    // New VERSIONS go above this line to satisfy compareTo of enum working for VERSIONS
 
    // The version here doesn't matter as long as it is >= 3.0. It must be the LAST version
-   PROTOCOL_VERSION_AUTO(4, 0),
+   PROTOCOL_VERSION_AUTO(4, 0, "AUTO"),
    ;
 
    private static final ProtocolVersion[] VERSIONS = values();
@@ -26,8 +26,12 @@ public enum ProtocolVersion {
    private final int version;
 
    ProtocolVersion(int major, int minor) {
+      this(major, minor, String.format(Locale.ROOT, "%d.%d", major, minor));
+   }
+
+   ProtocolVersion(int major, int minor, String name) {
       assert minor < 10;
-      this.textVersion = String.format(Locale.ROOT, "%d.%d", major, minor);
+      this.textVersion = name;
       this.version = major * 10 + minor;
    }
 
@@ -41,6 +45,9 @@ public enum ProtocolVersion {
    }
 
    public static ProtocolVersion parseVersion(String version) {
+      if ("AUTO".equalsIgnoreCase(version)) {
+         return PROTOCOL_VERSION_AUTO;
+      }
       for (ProtocolVersion v : VERSIONS) {
          if (v.textVersion.equals(version))
             return v;
