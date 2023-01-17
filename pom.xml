@@ -328,7 +328,7 @@
       <versionx.org.apache.maven.maven-plugin-api>${version.maven}</versionx.org.apache.maven.maven-plugin-api>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.6.4</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
-      <versionx.org.assertj.assertj-core>3.4.1</versionx.org.assertj.assertj-core>
+      <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
       <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
