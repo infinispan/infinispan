@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>14.0.7-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-spring-boot3-starter-parent</artifactId>
+    <name>Infinispan Spring Boot 3 Starter Parent</name>
+    <packaging>pom</packaging>
+
+    <description>Infinispan Spring Boot Starter 3 parent POM</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
+        <version.spring.boot>${version.spring.boot3}</version.spring.boot>
+        <version.spring.session>${version.spring6.session}</version.spring.session>
+        <version.spring>${version.spring6}</version.spring>
+        <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
+        <version.micrometer>1.10.3</version.micrometer>
+        <version.jakarta.transaction>${version.jakarta.transaction.2.x.x}</version.jakarta.transaction>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.narayana.jta</groupId>
+                <artifactId>narayana-jta-jakarta</artifactId>
+                <version>${version.narayana-jta-jakarta}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.transaction</groupId>
+                <artifactId>jakarta.transaction-api</artifactId>
+                <version>${version.jakarta.transaction}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${version.jakarta.annotation-api}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <parallel>none</parallel>
+                    <groups combine.self="override">${defaultJUnitGroups}</groups>
+                    <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+                    <disableXmlReport>false</disableXmlReport>
+                    <systemPropertyVariables>
+                        <org.infinispan.test.server.dir>${org.infinispan.test.server.dir}</org.infinispan.test.server.dir>
+                    </systemPropertyVariables>
+                    <properties>
+                        <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
+                        <usedefaultlisteners>false</usedefaultlisteners>
+                        <listener>${junitListener}</listener>
+                    </properties>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit-platform</artifactId>
+                        <version>${version.maven.surefire}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>embedded</module>
+        <module>remote</module>
+        <module>tests</module>
+    </modules>
+</project>
