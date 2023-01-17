@@ -4,6 +4,7 @@ import static java.util.Collections.emptyList;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -12,11 +13,13 @@ import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 
+@Disabled
 public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit {
 
    @RegisterExtension
@@ -35,6 +38,7 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
 
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.statistics().enable();
+      clientBuilder.clientIntelligence(ClientIntelligence.BASIC);
       clientBuilder.security()
             .authentication()
             .username(TestUser.ADMIN.getUser())

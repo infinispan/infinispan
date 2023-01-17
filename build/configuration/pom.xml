@@ -86,6 +86,7 @@
       <maven.compiler.target>11</maven.compiler.target>
       <maven.javadoc.skip>false</maven.javadoc.skip>
       <transform.skip>true</transform.skip>
+      <transform.tests.skip>true</transform.tests.skip>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -154,7 +155,8 @@
       <version.jackson.databind>2.14.1</version.jackson.databind>
       <version.jacoco>0.8.7</version.jacoco>
       <version.jakarta.transaction.legacy>1.3.3</version.jakarta.transaction.legacy>
-      <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
+      <version.jakarta.transaction.2.x.x>2.0.1</version.jakarta.transaction.2.x.x>
+      <version.jakarta.transaction>${version.jakarta.transaction.legacy}</version.jakarta.transaction>
       <version.jakarta.enterprise.cdi>2.0.2</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>2.2.3</version.jakarta.persistence>
       <version.javax.cache>1.1.0</version.javax.cache>
@@ -211,9 +213,20 @@
       <version.opentelemetry.sdk-autoconfigure>1.15.0-alpha</version.opentelemetry.sdk-autoconfigure>
 
       <version.smallrye-mutiny>1.3.1</version.smallrye-mutiny>
-      <version.spring.boot>2.7.0</version.spring.boot>
-      <version.spring5>5.3.20</version.spring5>
+      <!-- Defaults to Spring 5 and Spring Boot 2 -->
+      <version.spring>5.3.24</version.spring>
+      <version.spring.boot>2.7.7</version.spring.boot>
       <version.spring.session>2.7.0</version.spring.session>
+
+      <!-- Spring 6, Spring Boot 3 versions -->
+      <version.spring6>6.0.3</version.spring6>
+      <version.spring.boot3>3.0.1</version.spring.boot3>
+      <version.spring6.session>3.0.0</version.spring6.session>
+
+      <!-- Jakarta Annotations and JTA -->
+      <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
+      <version.narayana-jta-jakarta>5.13.1.Final</version.narayana-jta-jakarta>
+
       <version.kafka.client>3.2.3</version.kafka.client>
       <version.xom>1.3.7</version.xom>
       <version.xstream>1.4.20</version.xstream>
@@ -388,6 +401,38 @@
                               <artifactId>${original.artifactId}</artifactId>
                               <version>${project.version}</version>
                               <classifier>sources</classifier>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>test-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <skip>${transform.tests.skip}</skip>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                              <classifier>tests</classifier>
+                           </artifact>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>test-source-jar</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                           <skip>${transform.tests.skip}</skip>
+                           <artifact>
+                              <groupId>${project.groupId}</groupId>
+                              <artifactId>${original.artifactId}</artifactId>
+                              <version>${project.version}</version>
+                              <classifier>test-sources</classifier>
                            </artifact>
                         </configuration>
                      </execution>
