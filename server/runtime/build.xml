@@ -87,6 +87,7 @@
             <include name="indiana university extreme! lab software license, version 1.1.1 - license.txt"/>
             <include name="isc-license.txt"/>
             <include name="mit license.txt"/>
+            <include name="mozilla public license 1.1.txt"/>
             <include name="ofl-1.1.txt"/>
             <include name="xstream-bsd.txt"/>
          </fileset>
