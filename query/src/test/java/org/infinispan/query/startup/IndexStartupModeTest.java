@@ -87,7 +87,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          // data is still present
          Developer fabio = cache.get("fabio");
          assertThat(fabio).isNotNull();
-         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+         assertThat(fabio.getNick()).isEqualTo("fax4ever");
 
          // but indexes have gone!
          verifyMatches(0, "fax4ever");
@@ -97,7 +97,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          // data is still present
          Developer fabio = cache.get("fabio");
          assertThat(fabio).isNotNull();
-         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+         assertThat(fabio.getNick()).isEqualTo("fax4ever");
 
          eventually(() -> {
             // now indexes are aligned
@@ -109,7 +109,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          // data is still present
          Developer fabio = cache.get("fabio");
          assertThat(fabio).isNotNull();
-         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+         assertThat(fabio.getNick()).isEqualTo("fax4ever");
 
          // but indexes have gone!
          verifyMatches(0, "fax4ever");
@@ -119,7 +119,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          // data is still present
          Developer fabio = cache.get("fabio");
          assertThat(fabio).isNotNull();
-         assertThat(fabio).extracting("nick").containsExactly("fax4ever");
+         assertThat(fabio.getNick()).isEqualTo("fax4ever");
 
          // auto in this case is equivalent to reindex
          eventually(() -> {
