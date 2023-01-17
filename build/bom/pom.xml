@@ -403,6 +403,33 @@
                 <artifactId>infinispan-spring-boot-starter-remote</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-spring6-common</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-spring6-embedded</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-spring6-remote</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-tasks</artifactId>

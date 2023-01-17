@@ -122,10 +122,9 @@
       <module>all</module>
       <module>all/cli</module>
       <module>spring/spring5</module>
-      <module>spring/spring5/spring5-common</module>
-      <module>spring/spring5/spring5-embedded</module>
-      <module>spring/spring5/spring5-remote</module>
       <module>spring/spring-boot</module>
+      <module>spring/spring6</module>
+      <module>spring/spring-boot-3</module>
       <module>cli</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
@@ -393,13 +392,13 @@
       <versionx.org.springframework.boot.spring-boot-starter-actuator>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-actuator>
       <versionx.org.springframework.boot.spring-boot-autoconfigure-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-autoconfigure-processor>
       <versionx.org.springframework.session.spring-session>${version.spring.session}</versionx.org.springframework.session.spring-session>
-      <versionx.org.springframework.spring-beans>${version.spring5}</versionx.org.springframework.spring-beans>
-      <versionx.org.springframework.spring-context>${version.spring5}</versionx.org.springframework.spring-context>
-      <versionx.org.springframework.spring-context-support>${version.spring5}</versionx.org.springframework.spring-context-support>
-      <versionx.org.springframework.spring-core>${version.spring5}</versionx.org.springframework.spring-core>
-      <versionx.org.springframework.spring-expression>${version.spring5}</versionx.org.springframework.spring-expression>
-      <versionx.org.springframework.spring-jdbc>${version.spring5}</versionx.org.springframework.spring-jdbc>
-      <versionx.org.springframework.spring-test>${version.spring5}</versionx.org.springframework.spring-test>
+      <versionx.org.springframework.spring-beans>${version.spring}</versionx.org.springframework.spring-beans>
+      <versionx.org.springframework.spring-context>${version.spring}</versionx.org.springframework.spring-context>
+      <versionx.org.springframework.spring-context-support>${version.spring}</versionx.org.springframework.spring-context-support>
+      <versionx.org.springframework.spring-core>${version.spring}</versionx.org.springframework.spring-core>
+      <versionx.org.springframework.spring-expression>${version.spring}</versionx.org.springframework.spring-expression>
+      <versionx.org.springframework.spring-jdbc>${version.spring}</versionx.org.springframework.spring-jdbc>
+      <versionx.org.springframework.spring-test>${version.spring}</versionx.org.springframework.spring-test>
       <versionx.org.testcontainers.testcontainers>1.17.2</versionx.org.testcontainers.testcontainers>
       <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
@@ -768,7 +767,7 @@
          <dependency>
             <groupId>jakarta.transaction</groupId>
             <artifactId>jakarta.transaction-api</artifactId>
-            <version>${version.jakarta.transaction.legacy}</version>
+            <version>${version.jakarta.transaction}</version>
          </dependency>
          <dependency>
             <groupId>javax.activation</groupId>
@@ -1267,6 +1266,34 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring6-common</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring6-embedded</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring6-remote</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
+            <version>${version.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-query</artifactId>
             <version>${version.infinispan}</version>
             <classifier>tests</classifier>
@@ -1716,6 +1743,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${versionx.org.springframework.boot.spring-boot-starter-web}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <version>${versionx.org.springframework}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
