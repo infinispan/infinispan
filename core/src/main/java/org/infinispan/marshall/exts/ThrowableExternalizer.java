@@ -1,20 +1,11 @@
 package org.infinispan.marshall.exts;
 
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeoutException;
-
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -38,6 +29,16 @@ import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
 public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
 
@@ -172,21 +173,13 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
          case AVAILABILITY:
             return new AvailabilityException();
          case CACHE_CONFIGURATION:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new CacheConfigurationException(msg, t);
+            return readMessageAndCause(in, CacheConfigurationException::new);
          case CACHE_EXCEPTION:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new CacheException(msg, t);
+            return readMessageAndCause(in, CacheException::new);
          case CACHE_LISTENER:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new CacheListenerException(msg, t);
+            return readMessageAndCause(in, CacheListenerException::new);
          case CACHE_JOIN:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new CacheJoinException(msg, t);
+            return readMessageAndCause(in, CacheJoinException::new);
          case CACHE_UNREACHABLE:
             msg = MarshallUtil.unmarshallString(in);
             return new CacheUnreachableException(msg);
@@ -199,51 +192,31 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
             msg = MarshallUtil.unmarshallString(in);
             return new DeadlockDetectedException(msg);
          case EMBEDDED_CACHEMANAGER_STARTUP:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new EmbeddedCacheManagerStartupException(msg, t);
+            return readMessageAndCause(in, EmbeddedCacheManagerStartupException::new);
          case ENCODING:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new EncodingException(msg, t);
+            return readMessageAndCause(in, EncodingException::new);
          case INCORRECT_LISTENER:
             msg = MarshallUtil.unmarshallString(in);
             return new IncorrectListenerException(msg);
          case ILLEGAL_LIFECYLE:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new IllegalLifecycleStateException(msg, t);
+            return readMessageAndCause(in, IllegalLifecycleStateException::new);
          case INVALID_CACHE_USAGE:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new InvalidCacheUsageException(msg, t);
+            return readMessageAndCause(in, InvalidCacheUsageException::new);
          case INVALID_TX:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new InvalidTransactionException(msg, t);
+            return readMessageAndCause(in, InvalidTransactionException::new);
          case MARSHALLING:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new MarshallingException(msg, t);
+            return readMessageAndCause(in, MarshallingException::new);
          case OUTDATED_TOPOLOGY:
             boolean retryNextTopology = in.readBoolean();
             return retryNextTopology ? OutdatedTopologyException.RETRY_NEXT_TOPOLOGY : OutdatedTopologyException.RETRY_SAME_TOPOLOGY;
          case PERSISTENCE:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new PersistenceException(msg, t);
+            return readMessageAndCause(in, PersistenceException::new);
          case REMOTE:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new RemoteException(msg, t);
+            return readMessageAndCause(in, RemoteException::new);
          case RPC:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new RpcException(msg, t);
+            return readMessageAndCause(in, RpcException::new);
          case SUSPECT:
-            msg = MarshallUtil.unmarshallString(in);
-            t = (Throwable) in.readObject();
-            return new SuspectException(msg, t);
+            return readMessageAndCause(in, SuspectException::new);
          case TIMEOUT:
             msg = MarshallUtil.unmarshallString(in);
             return new TimeoutException(msg);
@@ -253,8 +226,9 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
          case WRITE_SKEW:
             msg = MarshallUtil.unmarshallString(in);
             t = (Throwable) in.readObject();
+            Throwable[] suppressed = MarshallUtil.unmarshallArray(in, Util::throwableArray);
             Object key = in.readObject();
-            return new WriteSkewException(msg, t, key);
+            return addSuppressed(new WriteSkewException(msg, t, key), suppressed);
          default:
             return readGenericThrowable(in);
       }
@@ -263,6 +237,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
    private void writeMessageAndCause(ObjectOutput out, Throwable t) throws IOException {
       MarshallUtil.marshallString(t.getMessage(), out);
       out.writeObject(t.getCause());
+      MarshallUtil.marshallArray(t.getSuppressed(), out);
    }
 
    private void writeGenericThrowable(ObjectOutput out, Throwable t) throws IOException {
@@ -270,10 +245,33 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
       writeMessageAndCause(out, t);
    }
 
+   private Throwable readMessageAndCause(ObjectInput in, BiFunction<String, Throwable, Throwable> throwableBuilder) throws ClassNotFoundException, IOException{
+      String msg = MarshallUtil.unmarshallString(in);
+      Throwable cause = (Throwable) in.readObject();
+      return readSuppressed(in, throwableBuilder.apply(msg, cause));
+   }
+
    private Throwable readGenericThrowable(ObjectInput in) throws IOException, ClassNotFoundException {
       String impl = in.readUTF();
       String msg = MarshallUtil.unmarshallString(in);
-      Throwable t = (Throwable) in.readObject();
+      Throwable cause = (Throwable) in.readObject();
+      Throwable throwable = newThrowableInstance(impl, msg, cause);
+      return readSuppressed(in, throwable);
+   }
+
+   private Throwable readSuppressed(ObjectInput in, Throwable t) throws ClassNotFoundException, IOException {
+      return addSuppressed(t, MarshallUtil.unmarshallArray(in, Util::throwableArray));
+   }
+
+   private Throwable addSuppressed(Throwable t, Throwable[] suppressed) {
+      if (suppressed != null) {
+         for (Throwable s : suppressed)
+            t.addSuppressed(s);
+      }
+      return t;
+   }
+
+   private Throwable newThrowableInstance(String impl, String msg, Throwable t) throws ClassNotFoundException {
       try {
          Class<?> clazz = Class.forName(impl);
          if (t == null && msg == null) {

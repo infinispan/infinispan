@@ -73,6 +73,7 @@ public final class Util {
 
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final String[] EMPTY_STRING_ARRAY = new String[0];
+   public static final Throwable[] EMPTY_THROWABLE_ARRAY = new Throwable[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
    public static final byte[][] EMPTY_BYTE_ARRAY_ARRAY = new byte[0][];
    public static final String GENERIC_JBOSS_MARSHALLING_CLASS = "org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller";
@@ -970,6 +971,10 @@ public final class Util {
 
    public static String[] stringArray(int length) {
       return length == 0 ? EMPTY_STRING_ARRAY : new String[length];
+   }
+
+   public static Throwable[] throwableArray(int length) {
+      return length == 0 ? EMPTY_THROWABLE_ARRAY : new Throwable[length];
    }
 
    public static void renameTempFile(File tempFile, File lockFile, File dstFile)
