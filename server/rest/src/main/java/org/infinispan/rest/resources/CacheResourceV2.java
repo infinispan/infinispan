@@ -16,6 +16,8 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.infinispan.commons.util.Util.getRootCause;
+import static org.infinispan.commons.util.Util.unwrapExceptionMessage;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
@@ -597,7 +599,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             }
             responseBuilder.status(OK);
          } catch (Throwable t) {
-            responseBuilder.status(BAD_REQUEST).entity(t.getMessage());
+            responseBuilder.status(BAD_REQUEST).entity(unwrapExceptionMessage(getRootCause(t)));
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());

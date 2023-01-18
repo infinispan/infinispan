@@ -9,6 +9,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_T
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
@@ -314,6 +315,20 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_JSON, cacheConfigConflict));
       assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testUpdateFailure() {
+      String cacheConfig = "localCache:\n  encoding:\n    mediaType: \"application/x-protostream\"\n";
+      String cacheConfigAlter = "localCache:\n  encoding:\n    mediaType: \"application/x-java-serialized-object\"\n";
+
+      RestCacheClient cacheClient = client.cache("mutable");
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(RestEntity.create(APPLICATION_YAML, cacheConfig));
+      assertThat(response).isOk();
+      response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_YAML, cacheConfigAlter));
+      assertThat(response).isBadRequest();
+      String body = join(response).getBody();
+      assertEquals("ISPN029527: Incompatible attribute 'media-type', existing value='application/x-protostream', new value='application/x-java-serialized-object'", body);
    }
 
    @Test

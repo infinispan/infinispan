@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -1083,6 +1084,18 @@ public final class Util {
       } else {
          t.addSuppressed(t1);
       }
+   }
+
+   public static String unwrapExceptionMessage(Throwable t) {
+      // Avoid duplicate messages
+      LinkedHashSet<String> messages = new LinkedHashSet<>();
+      if (t.getMessage() != null) {
+         messages.add(t.getMessage());
+      }
+      for(Throwable suppressed : t.getSuppressed()) {
+         messages.add(suppressed.getMessage());
+      }
+      return String.join("\n", messages);
    }
 
    /**
