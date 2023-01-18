@@ -16,7 +16,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.infinispan.commons.util.Util.getRootCause;
 import static org.infinispan.commons.util.Util.unwrapExceptionMessage;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
@@ -33,6 +32,7 @@ import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.responseFuture;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,13 +41,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
+import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -81,6 +84,7 @@ import org.infinispan.persistence.remote.upgrade.SerializationUtils;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.rest.CacheEntryInputStream;
 import org.infinispan.rest.CacheKeyInputStream;
 import org.infinispan.rest.EventStream;
@@ -599,10 +603,20 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             }
             responseBuilder.status(OK);
          } catch (Throwable t) {
-            responseBuilder.status(BAD_REQUEST).entity(unwrapExceptionMessage(getRootCause(t)));
+            responseBuilder.status(BAD_REQUEST).entity(unwrapExceptionMessage(filterCause(t)));
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
+   }
+
+   public static Throwable filterCause(Throwable re) {
+      if (re == null) return null;
+      Class<? extends Throwable> tClass = re.getClass();
+      Throwable cause = re.getCause();
+      if (cause != null && (tClass == ExecutionException.class || tClass == CompletionException.class || tClass == InvocationTargetException.class || tClass == RemoteException.class || tClass == RuntimeException.class || tClass == CacheListenerException.class))
+         return filterCause(cause);
+      else
+         return re;
    }
 
    private CompletionStage<RestResponse> getCacheStats(RestRequest request) {

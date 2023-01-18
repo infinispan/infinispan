@@ -322,7 +322,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String cacheConfig = "localCache:\n  encoding:\n    mediaType: \"application/x-protostream\"\n";
       String cacheConfigAlter = "localCache:\n  encoding:\n    mediaType: \"application/x-java-serialized-object\"\n";
 
-      RestCacheClient cacheClient = client.cache("mutable");
+      RestCacheClient cacheClient = client.cache("updateFailure");
       CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(RestEntity.create(APPLICATION_YAML, cacheConfig));
       assertThat(response).isOk();
       response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_YAML, cacheConfigAlter));
