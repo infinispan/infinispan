@@ -138,8 +138,8 @@ public interface Log extends BasicLogger {
    @Message(value = "SQL error while fetching stored entry with key: %s, lockingKey: %s", id = 8027)
    void sqlFailureReadingKey(Object key, Object lockingKey, @Cause SQLException e);
 
-   @Message(value = "Attribute '%s' has not been set", id = 8028)
-   CacheConfigurationException tableManipulationAttributeNotSet(String name);
+   @Message(value = "Attribute '%2$s' has not been set on '%1$s'", id = 8028)
+   CacheConfigurationException tableManipulationAttributeNotSet(String groupName, String name);
 
    @Message(value = "A ConnectionFactory has not been specified for this store", id = 8029)
    CacheConfigurationException missingConnectionFactory();

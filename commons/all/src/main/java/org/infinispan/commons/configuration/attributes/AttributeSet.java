@@ -4,6 +4,8 @@ import static org.infinispan.commons.logging.Log.CONFIG;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -11,10 +13,10 @@ import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
- * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of {@link
- * AttributeDefinition}s. AttributeSets are initially unprotected, which means that the contained attributes can be
- * modified. If the {@link #protect()} method is invoked then only attributes which are not {@link
- * AttributeDefinition#isImmutable()} can be modified from then on.
+ * AttributeSet is a container for {@link Attribute}s. It is constructed by passing in a list of
+ * {@link AttributeDefinition}s. AttributeSets are initially unprotected, which means that the contained attributes can
+ * be modified. If the {@link #protect()} method is invoked then only attributes which are not
+ * {@link AttributeDefinition#isImmutable()} can be modified from then on.
  *
  * @author Tristan Tarrant
  * @since 7.2
@@ -25,6 +27,8 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    private final String name;
    private final Map<String, Attribute<?>> attributes;
    private boolean protect;
+
+   private final Map<String, RemovedAttribute> removed;
 
    public AttributeSet(Class<?> klass, AttributeDefinition<?>... attributeDefinitions) {
       this(klass, klass.getSimpleName(), null, attributeDefinitions);
@@ -42,7 +46,15 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
       this(null, name, attributeSet, attributeDefinitions);
    }
 
-   private AttributeSet(Class<?> klass, String name, AttributeSet attributeSet, AttributeDefinition<?>[] attributeDefinitions) {
+   public AttributeSet(Class<?> klass, Enum<?> name, AttributeDefinition<?>... attributeDefinitions) {
+      this(klass, name.name(), null, attributeDefinitions);
+   }
+
+   public AttributeSet(Class<?> klass, String name, AttributeSet attributeSet, AttributeDefinition<?>[] attributeDefinitions) {
+      this(klass, name, attributeSet, attributeDefinitions, null);
+   }
+
+   public AttributeSet(Class<?> klass, String name, AttributeSet attributeSet, AttributeDefinition<?>[] attributeDefinitions, RemovedAttribute[] removedAttributes) {
       this.klass = klass;
       this.name = name;
       if (attributeSet != null) {
@@ -61,6 +73,14 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          if (!attribute.isImmutable())
             attribute.addListener(this);
          this.attributes.put(def.name(), attribute);
+      }
+      if (removedAttributes == null) {
+         this.removed = Collections.emptyMap();
+      } else {
+         this.removed = new HashMap<>(removedAttributes.length);
+         for (RemovedAttribute i : removedAttributes) {
+            removed.put(i.name, i);
+         }
       }
    }
 
@@ -313,18 +333,18 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    }
 
    @Override
-   public void update(AttributeSet other) {
+   public void update(String parentName, AttributeSet other) {
       for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
-         e.getValue().update(other.attribute(e.getKey()));
+         e.getValue().update(parentName, other.attribute(e.getKey()));
       }
    }
 
    @Override
-   public void validateUpdate(AttributeSet other) {
+   public void validateUpdate(String parentName, AttributeSet other) {
       IllegalArgumentException iae = new IllegalArgumentException();
       for (Map.Entry<String, Attribute<?>> e : attributes.entrySet()) {
          try {
-            e.getValue().validateUpdate(other.attribute(e.getKey()));
+            e.getValue().validateUpdate(parentName, other.attribute(e.getKey()));
          } catch (Throwable t) {
             iae.addSuppressed(t);
          }
@@ -398,5 +418,26 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          }
       }
       return properties;
+   }
+
+   public boolean isRemoved(String name, int major, int minor) {
+      RemovedAttribute r = removed.get(name);
+      return r != null && (major < r.major || (major == r.major && minor < r.minor));
+   }
+
+   public static final class RemovedAttribute {
+      final String name;
+      final int major;
+      final int minor;
+
+      public RemovedAttribute(Enum<?> name, int major, int minor) {
+         this(name.toString(), major, minor);
+      }
+
+      public RemovedAttribute(String name, int major, int minor) {
+         this.name = name;
+         this.major = major;
+         this.minor = minor;
+      }
    }
 }

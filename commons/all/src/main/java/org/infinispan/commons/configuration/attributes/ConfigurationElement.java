@@ -88,20 +88,22 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
    }
 
    @Override
-   public void update(T other) {
-      this.attributes.update(other.attributes);
+   public void update(String parentName, T other) {
+      String qualifiedName = qualifiedName(parentName);
+      this.attributes.update(qualifiedName, other.attributes);
       for (int i = 0; i < children.length; i++) {
          ConfigurationElement ours = children[i];
          ConfigurationElement theirs = other.children[i];
-         ours.update(theirs);
+         ours.update(qualifiedName, theirs);
       }
    }
 
    @Override
-   public void validateUpdate(T other) {
-      IllegalArgumentException iae = new IllegalArgumentException();
+   public void validateUpdate(String parentName, T other) {
+      String qualifiedName = qualifiedName(parentName);
+      IllegalArgumentException iae = Log.CONFIG.invalidConfiguration(qualifiedName);
       try {
-         this.attributes.validateUpdate(other.attributes);
+         this.attributes.validateUpdate(qualifiedName, other.attributes);
       } catch (Throwable t) {
          Util.unwrapSuppressed(iae, t);
       }
@@ -109,7 +111,7 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
          ConfigurationElement ours = children[i];
          ConfigurationElement theirs = other.children[i];
          try {
-            ours.validateUpdate(theirs);
+            ours.validateUpdate(qualifiedName, theirs);
          } catch (Throwable t) {
             Util.unwrapSuppressed(iae, t);
          }
@@ -117,6 +119,10 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       if (iae.getSuppressed().length > 0) {
          throw iae;
       }
+   }
+
+   private String qualifiedName(String parentName) {
+      return parentName == null ? element : parentName + "." + element;
    }
 
    @Override

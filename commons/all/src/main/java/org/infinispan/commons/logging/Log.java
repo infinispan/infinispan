@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.util.EnumSet;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -243,6 +244,37 @@ public interface Log extends BasicLogger {
    @Message(value = "OpenTelemetry cannot be configured", id = 954)
    void errorOnLoadingTelemetry();
 
+   @Message(value = "'%s' is not a valid boolean value (true|false|yes|no|y|n|on|off)", id = 955)
+   IllegalArgumentException illegalBooleanValue(String value);
+
+   @Message(value = "'%s' is not one of %s", id = 956)
+   IllegalArgumentException illegalEnumValue(String value, EnumSet<?> set);
+
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cannot load %s", id = 957)
+   void cannotLoadMimeTypes(String mimeTypes);
+
+   @Message(value = "Cannot parse bytes quantity %s", id = 958)
+   IllegalArgumentException cannotParseQuantity(String str);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Property '%s' has been deprecated. Please use '%s' instead.", id = 959)
+   void deprecatedProperty(String oldName, String newName);
+
+   @Message(value = "No attribute '%s' in '%s'", id = 960)
+   IllegalArgumentException noAttribute(String name, String element);
+
+   @Message(value = "Incompatible attribute '%s.%s' existing value='%s', new value='%s'", id = 961)
+   IllegalArgumentException incompatibleAttribute(String parentName, String name, String v1, String v2);
+
+   @Message(value = "Cannot modify protected attribute '%s'", id = 962)
+   IllegalStateException protectedAttribute(String name);
+
+   @Message(value = "Invalid configuration in '%s'", id = 963)
+   IllegalArgumentException invalidConfiguration(String name);
+
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
@@ -256,26 +288,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
    CounterException invalidCounterTypeEncoded();
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Cannot load %s", id = 29523)
-   void cannotLoadMimeTypes(String mimeTypes);
-
-   @Message(value = "Cannot parse bytes quantity %s", id = 29524)
-   IllegalArgumentException cannotParseQuantity(String str);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Property '%s' has been deprecated. Please use '%s' instead.", id = 29525)
-   void deprecatedProperty(String oldName, String newName);
-
-   @Message(value = "No attribute '%s' in '%s'", id = 29526)
-   IllegalArgumentException noAttribute(String name, String element);
-
-   @Message(value = "Incompatible attribute '%s', existing value='%s', new value='%s'", id = 29527)
-   IllegalArgumentException incompatibleAttribute(String name, String v1, String v2);
-
-   @Message(value = "Cannot modify protected attribute '%s'", id = 29528)
-   IllegalStateException protectedAttribute(String name);
 
    //----- counters exceptions // don't use the same id range  ------
 }
