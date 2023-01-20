@@ -10,7 +10,6 @@ import java.util.function.Supplier;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.util.Util;
 
 /**
  * Attribute. This class implements a configuration attribute value holder. A configuration attribute is defined by an
@@ -83,7 +82,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
    }
 
    public void fromString(String value) {
-      set((T) Util.fromString(definition.getType(), value));
+      set(definition.parse(value));
    }
 
    public T computeIfAbsent(Supplier<T> supplier) {
@@ -230,12 +229,12 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
     * @param other
     */
    @Override
-   public void update(Attribute<T> other) {
+   public void update(String elementName, Attribute<T> other) {
       if (this.definition.equals(other.definition)) {
          if (isImmutable()) {
             // Ensure that there are no incompatible changes
             if (definition.isGlobal() && !equals(other)) {
-               throw Log.CONFIG.incompatibleAttribute(definition.name(), String.valueOf(value), String.valueOf(other.value));
+               throw Log.CONFIG.incompatibleAttribute(definition.name(), elementName, String.valueOf(value), String.valueOf(other.value));
             }
          } else if (!equals(other)) {
             if (other.isModified()) {
@@ -251,12 +250,12 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
    }
 
    @Override
-   public void validateUpdate(Attribute<T> other) {
+   public void validateUpdate(String parentName, Attribute<T> other) {
       if (this.definition.equals(other.definition)) {
          if (isImmutable()) {
             // Ensure that there are no incompatible changes
             if (definition.isGlobal() && !Objects.equals(value, other.value)) {
-               throw Log.CONFIG.incompatibleAttribute(definition.name(), String.valueOf(value), String.valueOf(other.value));
+               throw Log.CONFIG.incompatibleAttribute(parentName, definition.name(), String.valueOf(value), String.valueOf(other.value));
             }
          }
       } else {

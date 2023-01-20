@@ -35,13 +35,18 @@ public final class AttributeDefinition<T> {
    private final AttributeInitializer<? extends T> initializer;
    private final AttributeValidator<? super T> validator;
    private final AttributeSerializer<? super T> serializer;
+   private final AttributeParser<? super T> parser;
    private final Class<T> type;
+   private final int deprecatedMajor;
+   private final int deprecatedMinor;
 
    AttributeDefinition(String name, T initialValue, Class<T> type,
                        boolean immutable, boolean autoPersist, boolean global,
                        AttributeCopier<T> copier, AttributeValidator<? super T> validator,
                        AttributeInitializer<? extends T> initializer,
-                       AttributeSerializer<? super T> serializer) {
+                       AttributeSerializer<? super T> serializer,
+                       AttributeParser<? super T> parser,
+                       int deprecatedMajor, int deprecatedMinor) {
       this.name = name;
       this.defaultValue = initialValue;
       this.immutable = immutable;
@@ -51,7 +56,10 @@ public final class AttributeDefinition<T> {
       this.initializer = initializer;
       this.validator = validator;
       this.serializer = serializer;
+      this.parser = parser;
       this.type = type;
+      this.deprecatedMajor = deprecatedMajor;
+      this.deprecatedMinor = deprecatedMinor;
    }
 
    public String name() {
@@ -82,6 +90,10 @@ public final class AttributeDefinition<T> {
       return global;
    }
 
+   public boolean isDeprecated(int major, int minor) {
+      return (major > deprecatedMajor || (major == deprecatedMajor && minor > deprecatedMinor));
+   }
+
    public AttributeCopier<T> copier() {
       return copier;
    }
@@ -96,6 +108,10 @@ public final class AttributeDefinition<T> {
 
    public AttributeSerializer<? super T> serializer() {
       return serializer;
+   }
+
+   public T parse(String value) {
+      return (T) parser.parse(type, value);
    }
 
    public Attribute<T> toAttribute() {
@@ -182,6 +198,9 @@ public final class AttributeDefinition<T> {
       private AttributeInitializer<? extends T> initializer;
       private AttributeValidator<? super T> validator;
       private AttributeSerializer<? super T> serializer = AttributeSerializer.DEFAULT;
+      private AttributeParser<? super T> parser = AttributeParser.DEFAULT;
+      private int deprecatedMajor = Integer.MAX_VALUE;
+      private int deprecatedMinor = Integer.MAX_VALUE;
 
       private Builder(String name, T defaultValue, Class<T> type) {
          this.name = name;
@@ -224,8 +243,19 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
+      public Builder<T> parser(AttributeParser<? super T> parser) {
+         this.parser = parser;
+         return this;
+      }
+
+      public Builder<T> deprecatedSince(int major, int minor) {
+         this.deprecatedMajor = major;
+         this.deprecatedMinor = minor;
+         return this;
+      }
+
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition<>(name, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer, serializer);
+         return new AttributeDefinition<>(name, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer, serializer, parser, deprecatedMajor, deprecatedMinor);
       }
    }
 }

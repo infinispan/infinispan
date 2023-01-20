@@ -21,7 +21,7 @@ import org.infinispan.eviction.EvictionType;
  */
 public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements
                                                                                   Builder<MemoryConfiguration> {
-   private MemoryStorageConfigurationBuilder memoryStorageConfigurationBuilder;
+   private MemoryStorageConfigurationBuilder legacyBuilder;
    private final AttributeSet attributes;
    private final List<String> legacyAttributesUsed = new ArrayList<>();
    private boolean newAttributesUsed = false;
@@ -29,7 +29,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    MemoryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
-      this.memoryStorageConfigurationBuilder = new MemoryStorageConfigurationBuilder(builder);
+      this.legacyBuilder = new MemoryStorageConfigurationBuilder(builder);
       this.attributes = MemoryConfiguration.attributeDefinitionSet();
 
       // Keep new and legacy attributes in sync
@@ -72,6 +72,16 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
                EvictionType evictionType = memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE).get();
                updateLegacySize(evictionType, attribute.get());
             }));
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Deprecated
+   public MemoryStorageConfigurationBuilder legacyBuilder() {
+      return legacyBuilder;
    }
 
    private <T> AttributeListener<T> nonReentrantListener(AttributeListener<T> listener) {
@@ -187,7 +197,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    private <T> Attribute<T> memoryStorageAttribute(AttributeDefinition<T> attributeDefinition) {
-      return memoryStorageConfigurationBuilder.attributes.attribute(attributeDefinition);
+      return legacyBuilder.attributes.attribute(attributeDefinition);
    }
 
    /**
@@ -316,7 +326,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
             }
          }
       }
-      return new MemoryConfiguration(attributes.protect(), memoryStorageConfigurationBuilder.create());
+      return new MemoryConfiguration(attributes.protect(), legacyBuilder.create());
    }
 
    @Override
@@ -394,7 +404,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    @Override
    public String toString() {
       return "MemoryConfigurationBuilder{" +
-            "memoryStorageConfigurationBuilder=" + memoryStorageConfigurationBuilder +
+            "memoryStorageConfigurationBuilder=" + legacyBuilder +
             ", attributes=" + attributes +
             '}';
    }

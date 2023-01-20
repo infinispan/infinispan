@@ -435,10 +435,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                securityRealmBuilder.defaultRealm(value);
                break;
             case CACHE_LIFESPAN:
-               securityRealmBuilder.cacheLifespan(Long.valueOf(value));
+               securityRealmBuilder.cacheLifespan(ParseUtils.parseLong(reader, i, value));
                break;
             case CACHE_MAX_SIZE:
-               securityRealmBuilder.cacheMaxSize(Integer.valueOf(value));
+               securityRealmBuilder.cacheMaxSize(ParseUtils.parseInt(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -527,7 +527,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                jwtBuilder.publicKey(value);
                break;
             case JKU_TIMEOUT:
-               jwtBuilder.jkuTimeout(Long.parseLong(value));
+               jwtBuilder.jkuTimeout(ParseUtils.parseLong(reader, i, value));
                break;
             case CLIENT_SSL_CONTEXT:
                jwtBuilder.clientSSLContext(value);
@@ -536,10 +536,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                jwtBuilder.hostNameVerificationPolicy(value);
                break;
             case CONNECTION_TIMEOUT:
-               jwtBuilder.connectionTimeout(Integer.parseInt(value));
+               jwtBuilder.connectionTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             case READ_TIMEOUT:
-               jwtBuilder.readTimeout(Integer.parseInt(value));
+               jwtBuilder.readTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -572,10 +572,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                oauthBuilder.hostVerificationPolicy(value);
                break;
             case CONNECTION_TIMEOUT:
-               oauthBuilder.connectionTimeout(Integer.parseInt(value));
+               oauthBuilder.connectionTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             case READ_TIMEOUT:
-               oauthBuilder.readTimeout(Integer.parseInt(value));
+               oauthBuilder.readTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -619,10 +619,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                credentialSet = true;
                break;
             case DIRECT_VERIFICATION:
-               ldapRealmConfigBuilder.directEvidenceVerification(Boolean.parseBoolean(value));
+               ldapRealmConfigBuilder.directEvidenceVerification(ParseUtils.parseBoolean(reader, i, value));
                break;
             case PAGE_SIZE:
-               ldapRealmConfigBuilder.pageSize(Integer.parseInt(value));
+               ldapRealmConfigBuilder.pageSize(ParseUtils.parseInt(reader, i, value));
                break;
             case SEARCH_DN:
                if (reader.getSchema().since(13, 0)) {
@@ -639,13 +639,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
                }
                break;
             case CONNECTION_POOLING:
-               ldapRealmConfigBuilder.connectionPooling(Boolean.parseBoolean(value));
+               ldapRealmConfigBuilder.connectionPooling(ParseUtils.parseBoolean(reader, i, value));
                break;
             case CONNECTION_TIMEOUT:
-               ldapRealmConfigBuilder.connectionTimeout(Integer.parseInt(value));
+               ldapRealmConfigBuilder.connectionTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             case READ_TIMEOUT:
-               ldapRealmConfigBuilder.readTimeout(Integer.parseInt(value));
+               ldapRealmConfigBuilder.readTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             case REFERRAL_MODE:
                ldapRealmConfigBuilder.referralMode(DirContextFactory.ReferralMode.valueOf(value.toUpperCase()));
@@ -696,7 +696,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                      // Already seen
                      break;
                   case REPLACE_ALL:
-                     replaceAll = Boolean.parseBoolean(value);
+                     replaceAll = ParseUtils.parseBoolean(reader, i, value);
                      break;
                   default:
                      throw ParseUtils.unexpectedAttribute(reader, i);
@@ -725,10 +725,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                identityMapBuilder.rdnIdentifier(value);
                break;
             case SEARCH_RECURSIVE:
-               identityMapBuilder.searchRecursive(Boolean.valueOf(value));
+               identityMapBuilder.searchRecursive(ParseUtils.parseBoolean(reader, i, value));
                break;
             case SEARCH_TIME_LIMIT:
-               identityMapBuilder.searchTimeLimit(Integer.parseInt(value));
+               identityMapBuilder.searchTimeLimit(ParseUtils.parseInt(reader, i, value));
                break;
             case FILTER_NAME:
                identityMapBuilder.filterName(value);
@@ -769,7 +769,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                }
                break;
             case VERIFIABLE:
-               userMapperBuilder.verifiable(Boolean.parseBoolean(value));
+               userMapperBuilder.verifiable(ParseUtils.parseBoolean(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -839,10 +839,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                attributeBuilder.filterBaseDn(value);
                break;
             case SEARCH_RECURSIVE:
-               attributeBuilder.searchRecursive(Boolean.parseBoolean(value));
+               attributeBuilder.searchRecursive(ParseUtils.parseBoolean(reader, i, value));
                break;
             case ROLE_RECURSION:
-               attributeBuilder.roleRecursion(Integer.parseInt(value));
+               attributeBuilder.roleRecursion(ParseUtils.parseInt(reader, i, value));
                break;
             case ROLE_RECURSION_NAME:
                attributeBuilder.roleRecursionName(value);
@@ -913,7 +913,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                         userPropertiesBuilder.digestRealmName(value);
                         break;
                      case PLAIN_TEXT:
-                        userPropertiesBuilder.plainText(Boolean.parseBoolean(value));
+                        userPropertiesBuilder.plainText(ParseUtils.parseBoolean(reader, i, value));
                         break;
                      default:
                         throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1217,10 +1217,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                builder.relativeTo(value);
                break;
             case DEBUG:
-               builder.debug(Boolean.parseBoolean(value));
+               builder.debug(ParseUtils.parseBoolean(reader, i, value));
                break;
             case FAIL_CACHE:
-               builder.failCache(Long.parseLong(value));
+               builder.failCache(ParseUtils.parseLong(reader, i, value));
                break;
             case MECHANISM_NAMES:
                for (String name : ParseUtils.getListAttributeValue(value)) {
@@ -1233,22 +1233,22 @@ public class ServerConfigurationParser implements ConfigurationParser {
                }
                break;
             case MINIMUM_REMAINING_LIFETIME:
-               builder.minimumRemainingLifetime(Integer.parseInt(value));
+               builder.minimumRemainingLifetime(ParseUtils.parseInt(reader, i, value));
                break;
             case OBTAIN_KERBEROS_TICKET:
-               builder.obtainKerberosTicket(Boolean.parseBoolean(value));
+               builder.obtainKerberosTicket(ParseUtils.parseBoolean(reader, i, value));
                break;
             case REQUEST_LIFETIME:
-               builder.requestLifetime(Integer.parseInt(value));
+               builder.requestLifetime(ParseUtils.parseInt(reader, i, value));
                break;
             case REQUIRED:
-               builder.checkKeyTab(Boolean.parseBoolean(value));
+               builder.checkKeyTab(ParseUtils.parseBoolean(reader, i, value));
                break;
             case SERVER:
-               builder.server(Boolean.parseBoolean(value));
+               builder.server(ParseUtils.parseBoolean(reader, i, value));
                break;
             case WRAP_GSS_CREDENTIAL:
-               builder.wrapGssCredential(Boolean.parseBoolean(value));
+               builder.wrapGssCredential(ParseUtils.parseBoolean(reader, i, value));
                break;
 
             default:
@@ -1305,7 +1305,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                // already parsed
                break;
             case STATISTICS:
-               dataSourceBuilder.statistics(Boolean.parseBoolean(value));
+               dataSourceBuilder.statistics(ParseUtils.parseBoolean(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1354,7 +1354,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                dataSourceBuilder.url(value);
                break;
             case TRANSACTION_ISOLATION:
-               dataSourceBuilder.transactionIsolation(AgroalConnectionFactoryConfiguration.TransactionIsolation.valueOf(value));
+               dataSourceBuilder.transactionIsolation(ParseUtils.parseEnum(reader, i, AgroalConnectionFactoryConfiguration.TransactionIsolation.class, value));
                break;
             case NEW_CONNECTION_SQL:
                dataSourceBuilder.newConnectionSql(value);
@@ -1411,25 +1411,25 @@ public class ServerConfigurationParser implements ConfigurationParser {
                // already parsed
                break;
             case MIN_SIZE:
-               dataSourceBuilder.minSize(Integer.parseInt(value));
+               dataSourceBuilder.minSize(ParseUtils.parseInt(reader, i, value));
                break;
             case INITIAL_SIZE:
-               dataSourceBuilder.initialSize(Integer.parseInt(value));
+               dataSourceBuilder.initialSize(ParseUtils.parseInt(reader, i, value));
                break;
             case BLOCKING_TIMEOUT:
-               dataSourceBuilder.blockingTimeout(Integer.parseInt(value));
+               dataSourceBuilder.blockingTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             case BACKGROUND_VALIDATION:
-               dataSourceBuilder.backgroundValidation(Long.parseLong(value));
+               dataSourceBuilder.backgroundValidation(ParseUtils.parseLong(reader, i, value));
                break;
             case VALIDATE_ON_ACQUISITION:
-               dataSourceBuilder.validateOnAcquisition(Long.parseLong(value));
+               dataSourceBuilder.validateOnAcquisition(ParseUtils.parseLong(reader, i, value));
                break;
             case LEAK_DETECTION:
-               dataSourceBuilder.leakDetection(Long.parseLong(value));
+               dataSourceBuilder.leakDetection(ParseUtils.parseLong(reader, i, value));
                break;
             case IDLE_REMOVAL:
-               dataSourceBuilder.idleRemoval(Integer.parseInt(value));
+               dataSourceBuilder.idleRemoval(ParseUtils.parseInt(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1498,10 +1498,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                // Already seen
                break;
             case ADMIN:
-               endpoint.admin(Boolean.parseBoolean(value));
+               endpoint.admin(ParseUtils.parseBoolean(reader, i, value));
                break;
             case METRICS_AUTH:
-               endpoint.metricsAuth(Boolean.parseBoolean(value));
+               endpoint.metricsAuth(ParseUtils.parseBoolean(reader, i, value));
                break;
             default:
                parseCommonConnectorAttributes(reader, i, builder, endpoint.singlePort());
@@ -1552,52 +1552,52 @@ public class ServerConfigurationParser implements ConfigurationParser {
       builder.authentication().metricsAuth(endpoint.metricsAuth());
    }
 
-   public static void parseCommonConnectorAttributes(ConfigurationReader reader, int index, ServerConfigurationBuilder serverBuilder, ProtocolServerConfigurationBuilder<?, ?> builder) {
-      if (ParseUtils.isNoNamespaceAttribute(reader, index)) {
-         Attribute attribute = Attribute.forName(reader.getAttributeName(index));
-         String value = reader.getAttributeValue(index);
+   public static void parseCommonConnectorAttributes(ConfigurationReader reader, int i, ServerConfigurationBuilder serverBuilder, ProtocolServerConfigurationBuilder<?, ?> builder) {
+      if (ParseUtils.isNoNamespaceAttribute(reader, i)) {
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         String value = reader.getAttributeValue(i);
          switch (attribute) {
             case IDLE_TIMEOUT: {
-               builder.idleTimeout(Integer.parseInt(value));
+               builder.idleTimeout(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case IO_THREADS: {
-               builder.ioThreads(Integer.parseInt(value));
+               builder.ioThreads(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case RECEIVE_BUFFER_SIZE: {
-               builder.recvBufSize(Integer.parseInt(value));
+               builder.recvBufSize(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case REQUIRE_SSL_CLIENT_AUTH: {
-               builder.ssl().requireClientAuth(Boolean.parseBoolean(value));
+               builder.ssl().requireClientAuth(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case SECURITY_REALM: {
                break;
             }
             case SEND_BUFFER_SIZE: {
-               builder.sendBufSize(Integer.parseInt(value));
+               builder.sendBufSize(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case TCP_KEEPALIVE: {
-               builder.tcpKeepAlive(Boolean.parseBoolean(value));
+               builder.tcpKeepAlive(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case TCP_NODELAY: {
-               builder.tcpNoDelay(Boolean.parseBoolean(value));
+               builder.tcpNoDelay(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case WORKER_THREADS: {
                if (reader.getSchema().since(14, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, index);
+                  throw ParseUtils.attributeRemoved(reader, i);
                } else {
                   CONFIG.ignoredAttribute(attribute.toString(), "14.0", attribute.name(), reader.getLocation().getLineNumber());
                }
                break;
             }
             default:
-               throw ParseUtils.unexpectedAttribute(reader, index);
+               throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
    }

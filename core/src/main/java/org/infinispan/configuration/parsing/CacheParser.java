@@ -20,9 +20,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
-import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
@@ -48,7 +46,6 @@ import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.TransactionConfiguration;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
@@ -59,8 +56,6 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.xsite.spi.XSiteMergePolicy;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -181,14 +176,14 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case SIMPLE_CACHE:
-            builder.simpleCache(Boolean.parseBoolean(value));
+            builder.simpleCache(ParseUtils.parseBoolean(reader, index, value));
             break;
          case STATISTICS: {
-            builder.statistics().enabled(Boolean.parseBoolean(value));
+            builder.statistics().enabled(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case STATISTICS_AVAILABLE: {
-            builder.statistics().available(Boolean.parseBoolean(value));
+            builder.statistics().available(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case SPIN_DURATION: {
@@ -200,7 +195,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case UNRELIABLE_RETURN_VALUES: {
-            builder.unsafe().unreliableReturnValues(Boolean.parseBoolean(value));
+            builder.unsafe().unreliableReturnValues(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          default: {
@@ -228,23 +223,7 @@ public class CacheParser implements ConfigurationParser {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       // If backups is present then remove any existing backups as they were added by the default config.
       builder.sites().backups().clear();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case MAX_CLEANUP_DELAY:
-               builder.sites().maxTombstoneCleanupDelay(Long.parseLong(value));
-               break;
-            case TOMBSTONE_MAP_SIZE:
-               builder.sites().tombstoneMapSize(Integer.parseInt(value));
-               break;
-            case MERGE_POLICY:
-               builder.sites().mergePolicy(XSiteMergePolicy.instanceFromString(value, holder.getClassLoader()));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder.sites());
       while (reader.inTag()) {
          Map.Entry<String, String> item = reader.getMapItem(Attribute.SITE);
          Element element = Element.forName(item.getValue());
@@ -271,7 +250,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case WHEN_SPLIT: {
-               ph.whenSplit(PartitionHandling.valueOf(value.toUpperCase()));
+               ph.whenSplit(ParseUtils.parseEnum(reader, i, PartitionHandling.class, value));
                break;
             }
             case MERGE_POLICY: {
@@ -290,43 +269,7 @@ public class CacheParser implements ConfigurationParser {
 
    private void parseBackup(ConfigurationReader reader, ConfigurationBuilder builder, String site) {
       BackupConfigurationBuilder backup = builder.sites().addBackup().site(site);
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case SITE: {
-               // Already seen
-               break;
-            }
-            case STRATEGY: {
-               backup.strategy(BackupConfiguration.BackupStrategy.valueOf(value));
-               break;
-            }
-            case BACKUP_FAILURE_POLICY: {
-               backup.backupFailurePolicy(BackupFailurePolicy.valueOf(value));
-               break;
-            }
-            case TIMEOUT: {
-               backup.replicationTimeout(Long.parseLong(value));
-               break;
-            }
-            case ENABLED: {
-               CONFIG.configDeprecated(attribute);
-               break;
-            }
-            case USE_TWO_PHASE_COMMIT: {
-               backup.useTwoPhaseCommit(Boolean.parseBoolean(value));
-               break;
-            }
-            case FAILURE_POLICY_CLASS: {
-               backup.failurePolicyClass(value);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, backup);
 
       if (backup.site() == null) {
          throw ParseUtils.missingRequired(reader, Collections.singleton(Attribute.SITE));
@@ -351,72 +294,18 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseTakeOffline(ConfigurationReader reader, BackupConfigurationBuilder backup) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case TAKE_BACKUP_OFFLINE_AFTER_FAILURES: {
-               backup.takeOffline().afterFailures(Integer.parseInt(value));
-               break;
-            }
-            case TAKE_BACKUP_OFFLINE_MIN_WAIT: {
-               backup.takeOffline().minTimeToWait(Long.parseLong(value));
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, backup.takeOffline());
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseXSiteStateTransfer(ConfigurationReader reader, BackupConfigurationBuilder backup) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case CHUNK_SIZE:
-               backup.stateTransfer().chunkSize(Integer.parseInt(value));
-               break;
-            case TIMEOUT:
-               backup.stateTransfer().timeout(Long.parseLong(value));
-               break;
-            case MAX_RETRIES:
-               backup.stateTransfer().maxRetries(Integer.parseInt(value));
-               break;
-            case WAIT_TIME:
-               backup.stateTransfer().waitTime(Long.parseLong(value));
-               break;
-            case MODE:
-               backup.stateTransfer().mode(XSiteStateTransferMode.valueOf(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, backup.stateTransfer());
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseBackupFor(ConfigurationReader reader, ConfigurationBuilder builder) {
       builder.sites().backupFor().reset();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case REMOTE_CACHE: {
-               builder.sites().backupFor().remoteCache(value);
-               break;
-            }
-            case REMOTE_SITE: {
-               builder.sites().backupFor().remoteSite(value);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder.sites().backupFor());
       ParseUtils.requireNoContent(reader);
    }
 
@@ -594,46 +483,30 @@ public class CacheParser implements ConfigurationParser {
    private void parseMemory(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
       if (reader.getSchema().since(11, 0)) {
-         for (int i = 0; i < reader.getAttributeCount(); i++) {
-            ParseUtils.requireNoNamespaceAttribute(reader, i);
-            String value = reader.getAttributeValue(i);
-            Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-            switch (attribute) {
-               case STORAGE:
-                  memoryBuilder.storage(StorageType.valueOf(value));
+         ParseUtils.parseAttributes(reader, memoryBuilder);
+      }
+      if (reader.getSchema().since(15, 0)) {
+         ParseUtils.requireNoContent(reader);
+      } else {
+         while (reader.inTag()) {
+            Element element = Element.forName(reader.getLocalName());
+            CONFIG.warnUsingDeprecatedMemoryConfigs(element.getLocalName());
+            switch (element) {
+               case OFF_HEAP:
+                  memoryBuilder.storageType(StorageType.OFF_HEAP);
+                  parseOffHeapMemoryAttributes(reader, holder);
                   break;
-               case MAX_SIZE:
-                  memoryBuilder.maxSize(value);
+               case OBJECT:
+                  memoryBuilder.storageType(StorageType.OBJECT);
+                  parseObjectMemoryAttributes(reader, holder);
                   break;
-               case MAX_COUNT:
-                  memoryBuilder.maxCount(Long.parseLong(value));
-                  break;
-               case WHEN_FULL:
-                  memoryBuilder.whenFull(EvictionStrategy.valueOf(value));
+               case BINARY:
+                  memoryBuilder.storageType(StorageType.BINARY);
+                  parseBinaryMemoryAttributes(reader, holder);
                   break;
                default:
-                  throw ParseUtils.unexpectedAttribute(reader, i);
+                  throw ParseUtils.unexpectedElement(reader);
             }
-         }
-      }
-      while (reader.inTag()) {
-         Element element = Element.forName(reader.getLocalName());
-         CONFIG.warnUsingDeprecatedMemoryConfigs(element.getLocalName());
-         switch (element) {
-            case OFF_HEAP:
-               memoryBuilder.storageType(StorageType.OFF_HEAP);
-               parseOffHeapMemoryAttributes(reader, holder);
-               break;
-            case OBJECT:
-               memoryBuilder.storageType(StorageType.OBJECT);
-               parseObjectMemoryAttributes(reader, holder);
-               break;
-            case BINARY:
-               memoryBuilder.storageType(StorageType.BINARY);
-               parseBinaryMemoryAttributes(reader, holder);
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
          }
       }
    }
@@ -646,10 +519,10 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SIZE:
-               memoryBuilder.size(Long.parseLong(value));
+               memoryBuilder.size(ParseUtils.parseLong(reader, i, value));
                break;
             case EVICTION:
-               memoryBuilder.evictionType(EvictionType.valueOf(value));
+               memoryBuilder.evictionType(ParseUtils.parseEnum(reader, i, EvictionType.class, value));
                break;
             case ADDRESS_COUNT:
                if (reader.getSchema().since(10, 0)) {
@@ -659,7 +532,7 @@ public class CacheParser implements ConfigurationParser {
                }
                break;
             case STRATEGY:
-               memoryBuilder.evictionStrategy(EvictionStrategy.valueOf(value));
+               memoryBuilder.evictionStrategy(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -676,10 +549,10 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SIZE:
-               memoryBuilder.size(Long.parseLong(value));
+               memoryBuilder.size(ParseUtils.parseLong(reader, i, value));
                break;
             case STRATEGY:
-               memoryBuilder.evictionStrategy(EvictionStrategy.valueOf(value));
+               memoryBuilder.evictionStrategy(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -690,29 +563,12 @@ public class CacheParser implements ConfigurationParser {
 
    private void parseBinaryMemoryAttributes(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case SIZE:
-               memoryBuilder.size(Long.parseLong(value));
-               break;
-            case EVICTION:
-               memoryBuilder.evictionType(EvictionType.valueOf(value));
-               break;
-            case STRATEGY:
-               memoryBuilder.evictionStrategy(EvictionStrategy.valueOf(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, memoryBuilder.legacyBuilder());
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseStoreAsBinary(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
-      CONFIG.configDeprecatedUseOther(Element.STORE_AS_BINARY, Element.MEMORY);
+      CONFIG.configDeprecatedUseOther(Element.STORE_AS_BINARY, Element.MEMORY, reader.getLocation());
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Boolean binaryKeys = null;
       Boolean binaryValues = null;
@@ -723,10 +579,10 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case STORE_KEYS_AS_BINARY:
-               binaryKeys = Boolean.parseBoolean(value);
+               binaryKeys = ParseUtils.parseBoolean(reader, i, value);
                break;
             case STORE_VALUES_AS_BINARY:
-               binaryValues = Boolean.parseBoolean(value);
+               binaryValues = ParseUtils.parseBoolean(reader, i, value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -748,7 +604,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED:
-               if (Boolean.parseBoolean(value)) {
+               if (ParseUtils.parseBoolean(reader, i, value)) {
                   encoding.key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
                   encoding.value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
                }
@@ -821,7 +677,7 @@ public class CacheParser implements ConfigurationParser {
                // Already seen
                break;
             case INDEX:
-               interceptorBuilder.index(Integer.parseInt(value));
+               interceptorBuilder.index(ParseUtils.parseInt(reader, i, value));
                break;
             case POSITION:
                interceptorBuilder.position(InterceptorConfiguration.Position.valueOf(value.toUpperCase()));
@@ -834,40 +690,12 @@ public class CacheParser implements ConfigurationParser {
       interceptorBuilder.withProperties(parseProperties(reader, Element.INTERCEPTOR));
    }
 
-   private final void parseLocking(ConfigurationReader reader, ConfigurationBuilder builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case ISOLATION: {
-               builder.locking().isolationLevel(IsolationLevel.valueOf(value));
-               break;
-            }
-            case STRIPING: {
-               builder.locking().useLockStriping(Boolean.parseBoolean(value));
-               break;
-            }
-            case ACQUIRE_TIMEOUT: {
-               builder.locking().lockAcquisitionTimeout(Long.parseLong(value));
-               break;
-            }
-            case CONCURRENCY_LEVEL: {
-               builder.locking().concurrencyLevel(Integer.parseInt(value));
-               break;
-            }
-            case WRITE_SKEW_CHECK: {
-               CONFIG.ignoredAttribute("write skew attribute", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+   private void parseLocking(ConfigurationReader reader, ConfigurationBuilder builder) {
+      ParseUtils.parseAttributes(reader, builder.locking());
       ParseUtils.requireNoContent(reader);
    }
 
-   private final void parseTransaction(ConfigurationReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) {
+   private void parseTransaction(ConfigurationReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) {
       if (!reader.getSchema().since(9, 0)) {
          CacheMode cacheMode = builder.clustering().cacheMode();
          if (!cacheMode.isSynchronous()) {
@@ -880,11 +708,11 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case STOP_TIMEOUT: {
-               builder.transaction().cacheStopTimeout(Long.parseLong(value));
+               builder.transaction().cacheStopTimeout(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case MODE: {
-               TransactionMode txMode = TransactionMode.valueOf(value);
+               TransactionMode txMode = ParseUtils.parseEnum(reader, i, TransactionMode.class, value);
                builder.transaction().transactionMode(txMode.getMode());
                builder.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());
                builder.transaction().recovery().enabled(txMode.isRecoveryEnabled());
@@ -892,7 +720,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case LOCKING: {
-               builder.transaction().lockingMode(LockingMode.valueOf(value));
+               builder.transaction().lockingMode(ParseUtils.parseEnum(reader, i, LockingMode.class, value));
                break;
             }
             case TRANSACTION_MANAGER_LOOKUP_CLASS: {
@@ -900,11 +728,11 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case REAPER_WAKE_UP_INTERVAL: {
-               builder.transaction().reaperWakeUpInterval(Long.parseLong(value));
+               builder.transaction().reaperWakeUpInterval(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case COMPLETED_TX_TIMEOUT: {
-               builder.transaction().completedTxTimeout(Long.parseLong(value));
+               builder.transaction().completedTxTimeout(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case TRANSACTION_PROTOCOL: {
@@ -916,7 +744,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case AUTO_COMMIT: {
-               builder.transaction().autoCommit(Boolean.parseBoolean(value));
+               builder.transaction().autoCommit(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case RECOVERY_INFO_CACHE_NAME: {
@@ -924,7 +752,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case NOTIFICATIONS: {
-               builder.transaction().notifications(Boolean.parseBoolean(value));
+               builder.transaction().notifications(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             default: {
@@ -983,7 +811,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseEviction(ConfigurationReader reader, ConfigurationBuilder builder) {
-      CONFIG.configDeprecatedUseOther(Element.EVICTION, Element.MEMORY);
+      CONFIG.configDeprecatedUseOther(Element.EVICTION, Element.MEMORY, reader.getLocation());
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -995,7 +823,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             case MAX_ENTRIES:
             case SIZE:
-               long size = Long.parseLong(value);
+               long size = ParseUtils.parseLong(reader, i, value);
                if (size >= 0) {
                   builder.memory().size(size);
                }
@@ -1014,20 +842,20 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case MAX_IDLE: {
-               builder.expiration().maxIdle(Long.parseLong(value));
+               builder.expiration().maxIdle(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case LIFESPAN: {
-               builder.expiration().lifespan(Long.parseLong(value));
+               builder.expiration().lifespan(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case INTERVAL: {
-               builder.expiration().wakeUpInterval(Long.parseLong(value));
+               builder.expiration().wakeUpInterval(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case TOUCH: {
                if (reader.getSchema().since(12, 1)) {
-                  builder.expiration().touch(TouchMode.valueOf(value));
+                  builder.expiration().touch(ParseUtils.parseEnum(reader, i, TouchMode.class, value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
@@ -1079,7 +907,7 @@ public class CacheParser implements ConfigurationParser {
       {
       switch (attribute) {
          case SEGMENTS: {
-            builder.clustering().hash().numSegments(Integer.parseInt(value));
+            builder.clustering().hash().numSegments(ParseUtils.parseInt(reader, index, value));
             break;
          }
          case CONSISTENT_HASH_FACTORY: {
@@ -1116,7 +944,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case MODE: {
-            Mode mode = Mode.valueOf(value);
+            Mode mode = ParseUtils.parseEnum(reader, index, Mode.class, value);
             builder.clustering().cacheMode(mode.apply(baseCacheMode));
             break;
          }
@@ -1130,7 +958,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case REMOTE_TIMEOUT: {
-            builder.clustering().remoteTimeout(Long.parseLong(value));
+            builder.clustering().remoteTimeout(ParseUtils.parseLong(reader, index, value));
             break;
          }
          default: {
@@ -1170,19 +998,19 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case AWAIT_INITIAL_TRANSFER: {
-               builder.clustering().stateTransfer().awaitInitialTransfer(Boolean.parseBoolean(value));
+               builder.clustering().stateTransfer().awaitInitialTransfer(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case ENABLED: {
-               builder.clustering().stateTransfer().fetchInMemoryState(Boolean.parseBoolean(value));
+               builder.clustering().stateTransfer().fetchInMemoryState(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case TIMEOUT: {
-               builder.clustering().stateTransfer().timeout(Long.parseLong(value));
+               builder.clustering().stateTransfer().timeout(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case CHUNK_SIZE: {
-               builder.clustering().stateTransfer().chunkSize(Integer.parseInt(value));
+               builder.clustering().stateTransfer().chunkSize(ParseUtils.parseInt(reader, i, value));
                break;
             }
             default: {
@@ -1206,11 +1034,11 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case OWNERS: {
-               builder.clustering().hash().numOwners(Integer.parseInt(value));
+               builder.clustering().hash().numOwners(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case L1_LIFESPAN: {
-               long lifespan = Long.parseLong(value);
+               long lifespan = ParseUtils.parseLong(reader, i, value);
                if (lifespan > 0)
                   builder.clustering().l1().enable().lifespan(lifespan);
                else
@@ -1218,14 +1046,14 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case INVALIDATION_CLEANUP_TASK_FREQUENCY: {
-               builder.clustering().l1().cleanupTaskFrequency(Long.parseLong(value));
+               builder.clustering().l1().cleanupTaskFrequency(ParseUtils.parseLong(reader, i, value));
                break;
             }
             case CAPACITY:
                if (reader.getSchema().since(13, 0)) {
-                  throw CONFIG.attributeRemoved(Attribute.CAPACITY.getLocalName());
+                  throw CONFIG.attributeRemoved(Attribute.CAPACITY.getLocalName(), reader.getLocation());
                }
-               CONFIG.configDeprecatedUseOther(Attribute.CAPACITY, Attribute.CAPACITY_FACTOR);
+               CONFIG.configDeprecatedUseOther(Attribute.CAPACITY, Attribute.CAPACITY_FACTOR, reader.getLocation());
             case CAPACITY_FACTOR: {
                builder.clustering().hash().capacityFactor(Float.parseFloat(value));
                break;
@@ -1260,7 +1088,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED:
-               if (Boolean.parseBoolean(value)) {
+               if (ParseUtils.parseBoolean(reader, i, value)) {
                   groups.enabled();
                } else {
                   groups.disabled();
@@ -1307,15 +1135,15 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case INVALIDATION_BATCH_SIZE: {
-               clusteringBuilder.invalidationBatchSize(Integer.parseInt(value));
+               clusteringBuilder.invalidationBatchSize(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case BIAS_ACQUISITION: {
-               clusteringBuilder.biasAcquisition(BiasAcquisition.valueOf(value));
+               clusteringBuilder.biasAcquisition(ParseUtils.parseEnum(reader, i, BiasAcquisition.class, value));
                break;
             }
             case BIAS_LIFESPAN: {
-               clusteringBuilder.biasLifespan(Long.parseLong(value), TimeUnit.MILLISECONDS);
+               clusteringBuilder.biasLifespan(ParseUtils.parseLong(reader, i, value), TimeUnit.MILLISECONDS);
                break;
             }
             default: {
@@ -1356,27 +1184,7 @@ public class CacheParser implements ConfigurationParser {
 
    private void parsePersistence(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case PASSIVATION:
-               builder.persistence().passivation(Boolean.parseBoolean(value));
-               break;
-            case AVAILABILITY_INTERVAL:
-               builder.persistence().availabilityInterval(Integer.parseInt(value));
-               break;
-            case CONNECTION_ATTEMPTS:
-               builder.persistence().connectionAttempts(Integer.parseInt(value));
-               break;
-            case CONNECTION_INTERVAL:
-               builder.persistence().connectionInterval(Integer.parseInt(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder.persistence());
       // clear in order to override any configuration defined in default cache
       builder.persistence().clearStores();
       while (reader.inTag()) {
@@ -1415,7 +1223,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(attrName);
          switch (attribute) {
             case REMOTE_TIMEOUT:
-               cclb.remoteCallTimeout(Long.parseLong(value));
+               cclb.remoteCallTimeout(ParseUtils.parseLong(reader, i, value));
                break;
             default:
                parseStoreAttribute(reader, i, cclb);
@@ -1469,7 +1277,7 @@ public class CacheParser implements ConfigurationParser {
             }
             case OPEN_FILES_LIMIT:
                if (fileStoreBuilder != null) {
-                  fileStoreBuilder.openFilesLimit(Integer.parseInt(value));
+                  fileStoreBuilder.openFilesLimit(ParseUtils.parseInt(reader, i, value));
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
@@ -1482,7 +1290,7 @@ public class CacheParser implements ConfigurationParser {
                }
                break;
             case PURGE: {
-               actualStoreConfig.purgeOnStartup(Boolean.parseBoolean(value));
+               actualStoreConfig.purgeOnStartup(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             default: {
@@ -1529,10 +1337,10 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case MAX_FILE_SIZE:
-               builder.maxFileSize(Integer.parseInt(value));
+               builder.maxFileSize(ParseUtils.parseInt(reader, i, value));
                break;
             case SYNC_WRITES:
-               builder.syncWrites(Boolean.parseBoolean(value));
+               builder.syncWrites(ParseUtils.parseBoolean(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1557,16 +1365,16 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case SEGMENTS:
-               builder.indexSegments(Integer.parseInt(value));
+               builder.indexSegments(ParseUtils.parseInt(reader, i, value));
                break;
             case INDEX_QUEUE_LENGTH:
-               builder.indexQueueLength(Integer.parseInt(value));
+               builder.indexQueueLength(ParseUtils.parseInt(reader, i, value));
                break;
             case MIN_NODE_SIZE:
-               builder.minNodeSize(Integer.parseInt(value));
+               builder.minNodeSize(ParseUtils.parseInt(reader, i, value));
                break;
             case MAX_NODE_SIZE:
-               builder.maxNodeSize(Integer.parseInt(value));
+               builder.maxNodeSize(ParseUtils.parseInt(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1592,7 +1400,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case MAX_ENTRIES: {
-               storeBuilder.maxEntries(Integer.parseInt(value));
+               storeBuilder.maxEntries(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case FRAGMENTATION_FACTOR: {
@@ -1619,15 +1427,15 @@ public class CacheParser implements ConfigurationParser {
       Attribute attribute = Attribute.forName(reader.getAttributeName(index));
       switch (attribute) {
          case SHARED: {
-            storeBuilder.shared(Boolean.parseBoolean(value));
+            storeBuilder.shared(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case READ_ONLY: {
-            storeBuilder.ignoreModifications(Boolean.parseBoolean(value));
+            storeBuilder.ignoreModifications(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case PRELOAD: {
-            storeBuilder.preload(Boolean.parseBoolean(value));
+            storeBuilder.preload(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case FETCH_STATE: {
@@ -1639,7 +1447,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case PURGE: {
-            storeBuilder.purgeOnStartup(Boolean.parseBoolean(value));
+            storeBuilder.purgeOnStartup(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case SINGLETON: {
@@ -1651,15 +1459,15 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case TRANSACTIONAL: {
-            storeBuilder.transactional(Boolean.parseBoolean(value));
+            storeBuilder.transactional(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          case MAX_BATCH_SIZE: {
-            storeBuilder.maxBatchSize(Integer.parseInt(value));
+            storeBuilder.maxBatchSize(ParseUtils.parseInt(reader, index, value));
             break;
          }
          case SEGMENTED: {
-            storeBuilder.segmented(Boolean.parseBoolean(value));
+            storeBuilder.segmented(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
          default: {
@@ -1710,11 +1518,11 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case MODIFICATION_QUEUE_SIZE: {
-               storeBuilder.modificationQueueSize(Integer.parseInt(value));
+               storeBuilder.modificationQueueSize(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case FAIL_SILENTLY:
-               storeBuilder.failSilently(Boolean.parseBoolean(value));
+               storeBuilder.failSilently(ParseUtils.parseBoolean(reader, i, value));
                break;
             case THREAD_POOL_SIZE: {
                if (reader.getSchema().since(11, 0)) {
@@ -1771,19 +1579,19 @@ public class CacheParser implements ConfigurationParser {
                store = Util.getInstance(value, holder.getClassLoader());
                break;
             case FETCH_STATE:
-               fetchPersistentState = Boolean.valueOf(value);
+               fetchPersistentState = ParseUtils.parseBoolean(reader, i, value);
                break;
             case READ_ONLY:
-               ignoreModifications = Boolean.valueOf(value);
+               ignoreModifications = ParseUtils.parseBoolean(reader, i, value);
                break;
             case PURGE:
-               purgeOnStartup = Boolean.valueOf(value);
+               purgeOnStartup = ParseUtils.parseBoolean(reader, i, value);
                break;
             case PRELOAD:
-               preload = Boolean.parseBoolean(value);
+               preload = ParseUtils.parseBoolean(reader, i, value);
                break;
             case SHARED:
-               shared = Boolean.parseBoolean(value);
+               shared = ParseUtils.parseBoolean(reader, i, value);
                break;
             case SINGLETON:
                if (reader.getSchema().since(10, 0)) {
@@ -1793,10 +1601,10 @@ public class CacheParser implements ConfigurationParser {
                }
                break;
             case TRANSACTIONAL:
-               transactional = Boolean.parseBoolean(value);
+               transactional = ParseUtils.parseBoolean(reader, i, value);
                break;
             case SEGMENTED:
-               segmented = Boolean.parseBoolean(value);
+               segmented = ParseUtils.parseBoolean(reader, i, value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1872,7 +1680,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case DEFAULT_MAX_RESULTS:
-               builder.query().defaultMaxResults(Integer.parseInt(value));
+               builder.query().defaultMaxResults(ParseUtils.parseInt(reader, i, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1900,7 +1708,7 @@ public class CacheParser implements ConfigurationParser {
          switch (attribute) {
             case ENABLED:
                if (reader.getSchema().since(11, 0)) {
-                  builder.indexing().enabled(Boolean.parseBoolean(value));
+                  builder.indexing().enabled(ParseUtils.parseBoolean(reader, i, value));
                   selfEnable = false;
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1913,13 +1721,13 @@ public class CacheParser implements ConfigurationParser {
                if ("LOCAL".equals(value) || "PRIMARY_OWNER".equals(value)) {
                   throw CONFIG.indexModeNotSupported(value);
                }
-               Index index = Index.valueOf(value);
+               Index index = ParseUtils.parseEnum(reader, i, Index.class, value);
                builder.indexing().index(index);
                selfEnable = false;
                break;
             case AUTO_CONFIG:
                CONFIG.autoConfigDeprecated();
-               builder.indexing().autoConfig(Boolean.parseBoolean(value));
+               builder.indexing().autoConfig(ParseUtils.parseBoolean(reader, i, value));
                break;
             case STORAGE:
                builder.indexing().storage(IndexStorage.requireValid(value, CONFIG));
@@ -2017,51 +1825,13 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseIndexReader(ConfigurationReader reader, ConfigurationBuilder builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         if (attribute == Attribute.REFRESH_INTERVAL) {
-            builder.indexing().reader().refreshInterval(Long.parseLong(value));
-         } else {
-            throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder.indexing().reader());
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseIndexWriter(ConfigurationReader reader, ConfigurationBuilder builder) {
       IndexWriterConfigurationBuilder indexWriterBuilder = builder.indexing().writer();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         String value = reader.getAttributeValue(i);
-         switch (attribute) {
-            case THREAD_POOL_SIZE:
-               indexWriterBuilder.threadPoolSize(Integer.parseInt(value));
-               break;
-            case COMMIT_INTERVAL:
-               indexWriterBuilder.commitInterval(Integer.parseInt(value));
-               break;
-            case QUEUE_COUNT:
-               indexWriterBuilder.queueCount(Integer.parseInt(value));
-               break;
-            case QUEUE_SIZE:
-               indexWriterBuilder.queueSize(Integer.parseInt(value));
-               break;
-            case LOW_LEVEL_TRACE:
-               indexWriterBuilder.setLowLevelTrace(Boolean.parseBoolean(value));
-               break;
-            case MAX_BUFFERED_ENTRIES:
-               indexWriterBuilder.maxBufferedEntries(Integer.parseInt(value));
-               break;
-            case RAM_BUFFER_SIZE:
-               indexWriterBuilder.ramBufferSize(Integer.parseInt(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, indexWriterBuilder);
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          if (element == Element.INDEX_MERGE) {
@@ -2073,34 +1843,8 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseIndexWriterMerge(ConfigurationReader reader, ConfigurationBuilder builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         String value = reader.getAttributeValue(i);
-         IndexMergeConfigurationBuilder mergeBuilder = builder.indexing().writer().merge();
-         switch (attribute) {
-            case MAX_ENTRIES:
-               mergeBuilder.maxEntries(Integer.parseInt(value));
-               break;
-            case CALIBRATE_BY_DELETES:
-               mergeBuilder.calibrateByDeletes(Boolean.parseBoolean(value));
-               break;
-            case FACTOR:
-               mergeBuilder.factor(Integer.parseInt(value));
-               break;
-            case MAX_FORCED_SIZE:
-               mergeBuilder.maxForcedSize(Integer.parseInt(value));
-               break;
-            case MAX_SIZE:
-               mergeBuilder.maxSize(Integer.parseInt(value));
-               break;
-            case MIN_SIZE:
-               mergeBuilder.minSize(Integer.parseInt(value));
-               break;
-            default:
-               throw ParseUtils.unexpectedElement(reader);
-         }
-      }
+      IndexMergeConfigurationBuilder mergeBuilder = builder.indexing().writer().merge();
+      ParseUtils.parseAttributes(reader, mergeBuilder);
       ParseUtils.requireNoContent(reader);
    }
 

@@ -817,7 +817,7 @@ public interface Log extends BasicLogger {
    void unableToRemoveEntryAfterActivation(Object key, @Cause Throwable e);
 
    @Message(value = "Unknown migrator %s", id = 215)
-   Exception unknownMigrator(String migratorName);
+   IllegalArgumentException unknownMigrator(String migratorName);
 
    @LogMessage(level = INFO)
    @Message(value = "%d entries migrated to cache %s in %s", id = 216)
@@ -1080,12 +1080,12 @@ public interface Log extends BasicLogger {
    void unrecognizedAttribute(String property);
 
    @LogMessage(level = INFO)
-   @Message(value = "Ignoring XML attribute %s at [%d,%d], please remove from configuration file", id = 293)
-   void ignoreXmlAttribute(Object attribute, int line, int column);
+   @Message(value = "Ignoring attribute %s at %s, please remove from configuration file", id = 293)
+   void ignoreAttribute(Object attribute, Location location);
 
    @LogMessage(level = INFO)
-   @Message(value = "Ignoring XML element %s at [%d,%d], please remove from configuration file", id = 294)
-   void ignoreXmlElement(Object element, int line, int column);
+   @Message(value = "Ignoring element %s at %s, please remove from configuration file", id = 294)
+   void ignoreXmlElement(Object element, Location location);
 
    @Message(value = "No thread pool with name '%s' found", id = 295)
    CacheConfigurationException undefinedThreadPoolName(String name);
@@ -1164,7 +1164,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Remote transaction %s timed out. Rolling back after %d ms", id = 326)
    void remoteTransactionTimeout(GlobalTransaction gtx, long ageMilliSeconds);
 
-   @Message(value = "Cannot find a parser for element '%s' in namespace '%s' at %s. Check that your configuration is up-to date for Infinispan '%s' and if you have the proper dependency in the classpath", id = 327)
+   @Message(value = "Cannot find a parser for element '%s' in namespace '%s' at %s. Check that your configuration is up-to-date for Infinispan '%s' and you have the proper dependency in the classpath", id = 327)
    CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri, Location location, String version);
 
    @LogMessage(level = DEBUG)
@@ -1494,8 +1494,8 @@ public interface Log extends BasicLogger {
    TimeoutException timeoutWaitingForAcks(String timeout, String address, long id);
 
    @LogMessage(level = WARN)
-   @Message(value = "'%s' has been deprecated. Please use '%s' instead", id = 428)
-   void configDeprecatedUseOther(Enum<?> element, Enum<?> other);
+   @Message(value = "'%1$s' at %3$s has been deprecated. Please use '%2$s' instead", id = 428)
+   void configDeprecatedUseOther(Enum<?> element, Enum<?> other, Location location);
 
    @Message(value = "On key %s previous read version (%s) is different from currently read version (%s)", id = 429)
    WriteSkewException writeSkewOnRead(@Param Object key, Object key2, EntryVersion lastVersion, EntryVersion remoteVersion);
@@ -2152,17 +2152,17 @@ public interface Log extends BasicLogger {
    @Description("An attempt was made to initiate cross-site state transfer while the operation was already in progress. Wait for the state transfer operation to complete before initiating a subsequent operation. Alternatively you can cancel the cross-site state transfer operation that is in progress.")
    CacheException xsiteStateTransferAlreadyInProgress(String site);
 
-   @Message(value = "Element '%s' has been removed. Please use element '%s' instead", id = 621)
-   CacheConfigurationException elementRemovedUseOther(String elementName, String newElementName);
+   @Message(value = "Element '%1$s' has been removed at %3$s. Please use element '%2$s' instead", id = 621)
+   CacheConfigurationException elementRemovedUseOther(String elementName, String newElementName, Location location);
 
-   @Message(value = "Element '%s' has been removed with no replacement", id = 622)
-   CacheConfigurationException elementRemoved(String elementName);
+   @Message(value = "Element '%s' at %s has been removed with no replacement", id = 622)
+   CacheConfigurationException elementRemoved(String elementName, Location location);
 
-   @Message(value = "Attribute '%s' has been removed. Please use attribute '%s' instead", id = 623)
-   CacheConfigurationException attributeRemovedUseOther(String attributeName, String newAttributeName);
+   @Message(value = "Attribute '%1$s' has been removed at %3$s. Please use attribute '%2$s' instead", id = 623)
+   CacheConfigurationException attributeRemovedUseOther(String attributeName, String newAttributeName, Location location);
 
-   @Message(value = "Attribute '%s' has been removed with no replacement", id = 624)
-   CacheConfigurationException attributeRemoved(String attributeName);
+   @Message(value = "Attribute '%s' at %s has been removed with no replacement", id = 624)
+   CacheConfigurationException attributeRemoved(String attributeName, Location location);
 
    @LogMessage(level = WARN)
    @Message(value = "Index path not provided and global state disabled, will use the current working directory for storage.", id = 625)
@@ -2354,4 +2354,17 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Expiration (Max idle or Lifespan) is not allowed while using a store '%s' that does not support expiration, unless it is configured as read only", id = 680)
    CacheConfigurationException expirationNotAllowedWhenStoreDoesNotSupport(String storeImpl);
+
+   @Message(value = "Missing required property '%s' for attribute '%s' at %s", id = 681)
+   CacheConfigurationException missingRequiredProperty(String property, String name, Location location);
+
+   @Message(value = "Attribute '%2$s' of element '%1$s' has an illegal value '%3$s' at %4$s: %5$s", id = 686)
+   CacheConfigurationException invalidAttributeValue(String element, String attribute, String value, Location location, String message);
+
+   @Message(value = "Attribute '%2$s' of element '%1$s' has an illegal value '%3$s' at %5$s. Expecting one of %4$s.", id = 687)
+   CacheConfigurationException invalidAttributeEnumValue(String element, String attribute, String value, String world, Location location);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Attribute '%s' of element '%s' has been deprecated since schema version %d.%d. Refer to the upgrade guide", id = 688)
+   void attributeDeprecated(String name, String element, int major, int minor);
 }

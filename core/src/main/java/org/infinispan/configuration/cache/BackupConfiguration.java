@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -18,11 +19,13 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.USE_TWO_PHASE_COMMIT, false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(BackupConfiguration.class, SITE, STRATEGY, REPLICATION_TIMEOUT, FAILURE_POLICY,  FAILURE_POLICY_CLASS, USE_TWO_PHASE_COMMIT);
+      return new AttributeSet(BackupConfiguration.class, Element.BACKUP.toString(), null,
+            new AttributeDefinition[]{SITE, STRATEGY, REPLICATION_TIMEOUT, FAILURE_POLICY, FAILURE_POLICY_CLASS, USE_TWO_PHASE_COMMIT},
+            new AttributeSet.RemovedAttribute[]{new AttributeSet.RemovedAttribute(Attribute.ENABLED, 15, 0)});
    }
 
    private final TakeOfflineConfiguration takeOfflineConfiguration;
-   private final XSiteStateTransferConfiguration xSiteStateTransferConfiguration ;
+   private final XSiteStateTransferConfiguration xSiteStateTransferConfiguration;
 
    public BackupConfiguration(AttributeSet attributes, TakeOfflineConfiguration takeOfflineConfiguration, XSiteStateTransferConfiguration xSiteStateTransferConfiguration) {
       super(Element.BACKUP, attributes, takeOfflineConfiguration, xSiteStateTransferConfiguration);

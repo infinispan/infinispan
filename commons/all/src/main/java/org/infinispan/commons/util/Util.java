@@ -1049,7 +1049,7 @@ public final class Util {
       } else if (klass == Long.class) {
          return Long.valueOf(value);
       } else if (klass == Boolean.class) {
-         return Boolean.valueOf(value);
+         return parseBoolean(value);
       } else if (klass == String.class) {
          return value;
       } else if (klass == String[].class) {
@@ -1067,7 +1067,7 @@ public final class Util {
       } else if (klass == File.class) {
          return new File(value);
       } else if (klass.isEnum()) {
-         return Enum.valueOf(klass, value);
+         return parseEnum(klass, value);
       } else if (klass == Properties.class) {
          try {
             Properties props = new Properties();
@@ -1079,6 +1079,31 @@ public final class Util {
       }
 
       throw new CacheConfigurationException("Cannot convert " + value + " to type " + klass.getName());
+   }
+
+   public static boolean parseBoolean(String value) {
+      switch (value.toLowerCase()) {
+         case "true":
+         case "yes":
+         case "y":
+         case "on":
+            return true;
+         case "false":
+         case "no":
+         case "n":
+         case "off":
+            return false;
+         default:
+            throw Log.CONFIG.illegalBooleanValue(value);
+      }
+   }
+
+   public static <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
+      try {
+         return Enum.valueOf(enumClass, value);
+      } catch (IllegalArgumentException e) {
+         throw Log.CONFIG.illegalEnumValue(value, EnumSet.allOf(enumClass));
+      }
    }
 
    public static void unwrapSuppressed(Throwable t, Throwable t1) {
@@ -1132,5 +1157,13 @@ public final class Util {
          }
       }
       return true;
+   }
+
+   public static RuntimeException unchecked(Throwable t) {
+      if (t instanceof RuntimeException) {
+         return (RuntimeException) t;
+      } else {
+         return new RuntimeException(t);
+      }
    }
 }

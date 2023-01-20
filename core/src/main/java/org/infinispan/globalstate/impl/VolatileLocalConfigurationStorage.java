@@ -12,6 +12,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -23,7 +24,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -98,7 +98,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
       if (existing == null) {
          throw CONFIG.noSuchCacheConfiguration(name);
       } else {
-         existing.validateUpdate(configuration);
+         existing.validateUpdate(name, configuration);
          return CompletableFutures.completedNull();
       }
    }
@@ -109,7 +109,7 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
       if (existing == null) {
          throw CONFIG.noSuchCacheConfiguration(name);
       } else {
-         existing.update(configuration);
+         existing.update(name, configuration);
       }
       return CompletableFutures.completedNull();
    }
