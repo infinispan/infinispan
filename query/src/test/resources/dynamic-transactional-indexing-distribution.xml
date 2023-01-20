@@ -15,9 +15,7 @@
       <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
          <locking acquire-timeout="20000" concurrency-level="500" striping="false" />
          <transaction mode="NON_XA" />
-         <memory>
-            <object size="-1"/>
-         </memory>
+         <memory storage="OBJECT"/>
          <expiration max-idle="-1" />
          <indexing storage="local-heap">
             <indexed-entities>

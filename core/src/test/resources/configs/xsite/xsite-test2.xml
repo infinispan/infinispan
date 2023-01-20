@@ -5,9 +5,9 @@
       <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
       <distributed-cache-configuration name="base">
          <backups>
-            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003" enabled="true"/>
-            <backup site="SFO" strategy="ASYNC" enabled="true"/>
-            <backup site="LON" strategy="SYNC" enabled="false" />
+            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003"/>
+            <backup site="SFO" strategy="ASYNC"/>
+            <backup site="LON" strategy="SYNC"/>
          </backups>
          <backup-for remote-cache="someCache" remote-site="SFO"/>
       </distributed-cache-configuration>

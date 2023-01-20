@@ -13,9 +13,8 @@
       "locking": "OPTIMISTIC"
     },
     "memory": {
-      "object": {
-        "size": 20
-      }
+      "storage": "OBJECT",
+      "max-count": 20
     },
     "state-transfer": {
       "enabled": true,
