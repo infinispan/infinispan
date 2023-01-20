@@ -26,6 +26,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    public static final AttributeDefinition<XSiteEntryMergePolicy> MERGE_POLICY = AttributeDefinition
          .builder(org.infinispan.configuration.parsing.Attribute.MERGE_POLICY, XSiteMergePolicy.DEFAULT, XSiteEntryMergePolicy.class)
          .copier(new MergePolicyAttributeCopier())
+         .parser((klass, value) -> XSiteMergePolicy.instanceFromString(value, null))
          .immutable()
          .build();
    public static final AttributeDefinition<Long> MAX_CLEANUP_DELAY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY, 30000L)

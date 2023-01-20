@@ -5,12 +5,16 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationReaderException;
+import org.infinispan.commons.util.Util;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -29,6 +33,7 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting an unexpected XML element.
+     *
      * @param reader the stream reader
      * @return the exception
      */
@@ -46,6 +51,7 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting an unexpected end tag for an XML element.
+     *
      * @param reader the stream reader
      * @return the exception
      */
@@ -55,8 +61,9 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting an unexpected XML attribute.
+     *
      * @param reader the stream reader
-     * @param index the attribute index
+     * @param index  the attribute index
      * @return the exception
      */
     public static ConfigurationReaderException unexpectedAttribute(final ConfigurationReader reader, final int index) {
@@ -66,8 +73,9 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting an unexpected XML attribute.
+     *
      * @param reader the stream reader
-     * @param name the attribute name
+     * @param name   the attribute name
      * @return the exception
      */
     public static ConfigurationReaderException unexpectedAttribute(final ConfigurationReader reader, final String name) {
@@ -77,8 +85,9 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting an invalid XML attribute value.
+     *
      * @param reader the stream reader
-     * @param index the attribute index
+     * @param index  the attribute index
      * @return the exception
      */
     public static ConfigurationReaderException invalidAttributeValue(final ConfigurationReader reader, final int index) {
@@ -88,9 +97,9 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting a missing, required XML attribute.
-     * @param reader the stream reader
-     * @param required a set of enums whose toString method returns the
-     *        attribute name
+     *
+     * @param reader   the stream reader
+     * @param required a set of enums whose toString method returns the attribute name
      * @return the exception
      */
     public static ConfigurationReaderException missingRequired(final ConfigurationReader reader, final Set<?> required) {
@@ -108,9 +117,9 @@ public final class ParseUtils {
 
     /**
      * Get an exception reporting a missing, required XML child element.
-     * @param reader the stream reader
-     * @param required a set of enums whose toString method returns the
-     *        attribute name
+     *
+     * @param reader   the stream reader
+     * @param required a set of enums whose toString method returns the attribute name
      * @return the exception
      */
     public static ConfigurationReaderException missingRequiredElement(final ConfigurationReader reader, final Set<?> required) {
@@ -127,8 +136,9 @@ public final class ParseUtils {
     }
 
     /**
-     * Checks that the current element has no attributes, throwing an
-     * {@link ConfigurationReaderException} if one is found.
+     * Checks that the current element has no attributes, throwing an {@link ConfigurationReaderException} if one is
+     * found.
+     *
      * @param reader the reader
      * @throws ConfigurationReaderException if an error occurs
      */
@@ -139,9 +149,9 @@ public final class ParseUtils {
     }
 
     /**
-     * Consumes the remainder of the current element, throwing an
-     * {@link ConfigurationReaderException} if it contains any child
-     * elements.
+     * Consumes the remainder of the current element, throwing an {@link ConfigurationReaderException} if it contains
+     * any child elements.
+     *
      * @param reader the reader
      * @throws ConfigurationReaderException if an error occurs
      */
@@ -152,10 +162,10 @@ public final class ParseUtils {
     }
 
     /**
-     * Get an exception reporting that an attribute of a given name has already
-     * been declared in this scope.
+     * Get an exception reporting that an attribute of a given name has already been declared in this scope.
+     *
      * @param reader the stream reader
-     * @param name the name that was redeclared
+     * @param name   the name that was redeclared
      * @return the exception
      */
     public static ConfigurationReaderException duplicateAttribute(final ConfigurationReader reader, final String name) {
@@ -163,10 +173,10 @@ public final class ParseUtils {
     }
 
     /**
-     * Get an exception reporting that an element of a given type and name has
-     * already been declared in this scope.
+     * Get an exception reporting that an element of a given type and name has already been declared in this scope.
+     *
      * @param reader the stream reader
-     * @param name the name that was redeclared
+     * @param name   the name that was redeclared
      * @return the exception
      */
     public static ConfigurationReaderException duplicateNamedElement(final ConfigurationReader reader, final String name) {
@@ -176,12 +186,12 @@ public final class ParseUtils {
 
     /**
      * Read an element which contains only a single boolean attribute.
-     * @param reader the reader
+     *
+     * @param reader        the reader
      * @param attributeName the attribute name, usually "value"
      * @return the boolean value
-     * @throws ConfigurationReaderException if an error occurs or if the
-     *         element does not contain the specified attribute, contains other
-     *         attributes, or contains child elements.
+     * @throws ConfigurationReaderException if an error occurs or if the element does not contain the specified
+     *                                      attribute, contains other attributes, or contains child elements.
      */
     public static boolean readBooleanAttributeElement(final ConfigurationReader reader, final String attributeName)
             throws ConfigurationReaderException {
@@ -193,12 +203,12 @@ public final class ParseUtils {
 
     /**
      * Read an element which contains only a single string attribute.
-     * @param reader the reader
+     *
+     * @param reader        the reader
      * @param attributeName the attribute name, usually "value" or "name"
      * @return the string value
-     * @throws ConfigurationReaderException if an error occurs or if the
-     *         element does not contain the specified attribute, contains other
-     *         attributes, or contains child elements.
+     * @throws ConfigurationReaderException if an error occurs or if the element does not contain the specified
+     *                                      attribute, contains other attributes, or contains child elements.
      */
     public static String readStringAttributeElement(final ConfigurationReader reader, final String attributeName)
             throws ConfigurationReaderException {
@@ -208,9 +218,9 @@ public final class ParseUtils {
     }
 
     /**
-     * Require that the current element have only a single attribute with the
-     * given name.
-     * @param reader the reader
+     * Require that the current element have only a single attribute with the given name.
+     *
+     * @param reader        the reader
      * @param attributeName the attribute name
      * @throws ConfigurationReaderException if an error occurs
      */
@@ -231,13 +241,14 @@ public final class ParseUtils {
     }
 
     public static String requireSingleAttribute(final ConfigurationReader reader, final Enum<?> attribute)
-          throws ConfigurationReaderException {
+            throws ConfigurationReaderException {
         return requireSingleAttribute(reader, attribute.toString());
     }
 
     /**
      * Require all the named attributes, returning their values in order.
-     * @param reader the reader
+     *
+     * @param reader         the reader
      * @param attributeNames the attribute names
      * @return the attribute values in order
      * @throws ConfigurationReaderException if an error occurs
@@ -258,12 +269,12 @@ public final class ParseUtils {
     }
 
     public static String[] requireAttributes(final ConfigurationReader reader, final String... attributeNames)
-          throws ConfigurationReaderException {
+            throws ConfigurationReaderException {
         return requireAttributes(reader, false, attributeNames);
     }
 
     public static String[] requireAttributes(final ConfigurationReader reader, final Enum<?>... attributes)
-          throws ConfigurationReaderException {
+            throws ConfigurationReaderException {
         String attributeNames[] = new String[attributes.length];
         for (int i = 0; i < attributes.length; i++) {
             attributeNames[i] = attributes[i].toString();
@@ -284,22 +295,22 @@ public final class ParseUtils {
     }
 
     public static Namespace[] getNamespaceAnnotations(Class<?> cls) {
-       Namespaces namespacesAnnotation = cls.getAnnotation(Namespaces.class);
+        Namespaces namespacesAnnotation = cls.getAnnotation(Namespaces.class);
 
-       if (namespacesAnnotation != null) {
-          return namespacesAnnotation.value();
-       }
+        if (namespacesAnnotation != null) {
+            return namespacesAnnotation.value();
+        }
 
-       Namespace namespaceAnnotation = cls.getAnnotation(Namespace.class);
-       if (namespaceAnnotation != null) {
-          return new Namespace[] { namespaceAnnotation };
-       }
+        Namespace namespaceAnnotation = cls.getAnnotation(Namespace.class);
+        if (namespaceAnnotation != null) {
+            return new Namespace[]{namespaceAnnotation};
+        }
 
-       return null;
+        return null;
     }
 
     public static String[] getListAttributeValue(String value) {
-       return value.split("\\s+");
+        return value.split("\\s+");
     }
 
     public static String resolvePath(String path, String relativeTo) {
@@ -318,14 +329,14 @@ public final class ParseUtils {
         String property = reader.getAttributeValue(i);
         Object value = reader.getProperty(property);
         if (value == null) {
-            throw new ConfigurationReaderException("Missing required property '" + property +"' for attribute '" + reader.getAttributeName(i) + "'", reader.getLocation());
+            throw CONFIG.missingRequiredProperty(property, reader.getAttributeName(i), reader.getLocation());
         } else {
             return value.toString();
         }
     }
 
     public static void ignoreAttribute(ConfigurationReader reader, String attributeName) {
-       CONFIG.ignoreXmlAttribute(attributeName, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+        CONFIG.ignoreAttribute(attributeName, reader.getLocation());
     }
 
     public static void ignoreAttribute(ConfigurationReader reader, int attributeIndex) {
@@ -333,28 +344,87 @@ public final class ParseUtils {
     }
 
     public static void ignoreAttribute(ConfigurationReader reader, Enum<?> attribute) {
-       CONFIG.ignoreXmlAttribute(attribute, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+        CONFIG.ignoreAttribute(attribute, reader.getLocation());
     }
 
     public static void ignoreElement(ConfigurationReader reader, Enum<?> element) {
-       CONFIG.ignoreXmlElement(element, reader.getLocation().getLineNumber(), reader.getLocation().getColumnNumber());
+        CONFIG.ignoreXmlElement(element, reader.getLocation());
     }
 
     public static CacheConfigurationException elementRemoved(ConfigurationReader reader, String newElementName) {
-        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName);
+        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName, reader.getLocation());
     }
 
     public static CacheConfigurationException elementRemoved(ConfigurationReader reader) {
-        return CONFIG.elementRemoved(reader.getLocalName());
+        return CONFIG.elementRemoved(reader.getLocalName(), reader.getLocation());
     }
 
     public static CacheConfigurationException attributeRemoved(ConfigurationReader reader, int attributeIndex, String newAttributeName) {
         String attributeName = reader.getAttributeName(attributeIndex);
-        return CONFIG.attributeRemovedUseOther(attributeName, newAttributeName);
+        return CONFIG.attributeRemovedUseOther(attributeName, newAttributeName, reader.getLocation());
     }
 
     public static CacheConfigurationException attributeRemoved(ConfigurationReader reader, int attributeIndex) {
         String attributeName = reader.getAttributeName(attributeIndex);
-        return CONFIG.attributeRemoved(attributeName);
+        return CONFIG.attributeRemoved(attributeName, reader.getLocation());
+    }
+
+    public static void parseAttributes(ConfigurationReader reader, Builder<?> builder) {
+        AttributeSet attributes = builder.attributes();
+        int major = reader.getSchema().getMajor();
+        int minor = reader.getSchema().getMinor();
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String name = reader.getAttributeName(i);
+            String value = reader.getAttributeValue(i);
+            org.infinispan.commons.configuration.attributes.Attribute<Object> attribute = attributes.attribute(name);
+            if (attribute == null) {
+                if (attributes.isRemoved(name, major, minor)) {
+                    CONFIG.ignoreAttribute(name, reader.getLocation());
+                } else {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            } else {
+                try {
+                    attribute.fromString(value);
+                    if (attribute.getAttributeDefinition().isDeprecated(major, minor)) {
+                        CONFIG.attributeDeprecated(attribute.name(), attributes.getName(), major, minor);
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw CONFIG.invalidAttributeValue(reader.getLocalName(), name, value, reader.getLocation(), e.getLocalizedMessage());
+                }
+            }
+        }
+    }
+
+    public static Integer parseInt(ConfigurationReader reader, int i, String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (IllegalArgumentException e) {
+            throw CONFIG.invalidAttributeValue(reader.getLocalName(), reader.getAttributeName(i), value, reader.getLocation(), e.getLocalizedMessage());
+        }
+    }
+
+    public static long parseLong(ConfigurationReader reader, int i, String value) {
+        try {
+            return Long.parseLong(value);
+        } catch (IllegalArgumentException e) {
+            throw CONFIG.invalidAttributeValue(reader.getLocalName(), reader.getAttributeName(i), value, reader.getLocation(), e.getLocalizedMessage());
+        }
+    }
+
+    public static <T extends Enum<T>> T parseEnum(ConfigurationReader reader, int i, Class<T> enumClass, String value) {
+        try {
+            return Enum.valueOf(enumClass, value);
+        } catch (IllegalArgumentException e) {
+            throw CONFIG.invalidAttributeEnumValue(reader.getLocalName(), reader.getAttributeName(i), value, EnumSet.allOf(enumClass).toString(), reader.getLocation());
+        }
+    }
+
+    public static boolean parseBoolean(ConfigurationReader reader, int i, String value) {
+        try {
+            return Util.parseBoolean(value);
+        } catch (IllegalArgumentException e) {
+            throw CONFIG.invalidAttributeValue(reader.getLocalName(), reader.getAttributeName(i), value, reader.getLocation(), e.getLocalizedMessage());
+        }
     }
 }
