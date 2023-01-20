@@ -5,7 +5,7 @@
       <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
       <distributed-cache-configuration name="base">
          <backups>
-            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003" enabled="true">
+            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003">
                <take-offline after-failures="123" min-wait="5673"/>
             </backup>
          </backups>
@@ -15,13 +15,13 @@
       <distributed-cache name="inheritor" configuration="base"/>
       <distributed-cache name="noTakeOffline" configuration="base">
          <backups>
-            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12003" enabled="true" />
+            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12003"/>
          </backups>
          <backup-for/>
       </distributed-cache>
       <distributed-cache name="takeOfflineDifferentConfig" configuration="base">
          <backups>
-            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003" enabled="true">
+            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003">
                <take-offline after-failures="321" min-wait="3765"/>
             </backup>
          </backups>

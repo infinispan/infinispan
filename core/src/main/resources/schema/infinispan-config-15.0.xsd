@@ -974,14 +974,16 @@
             Defines query options for cache
           </xs:documentation>
         </xs:annotation>
-        <xs:attribute name="default-max-results" type="xs:integer" default="${Query.default-max-results}">
-          <xs:annotation>
-            <xs:documentation>
-              Limits the number of results returned by a query. Applies to indexed, non-indexed, and hybrid queries.
-              Setting the default-max-results significantly improves performance of queries that don't have an explicit limit set.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
+        <xs:complexType>
+          <xs:attribute name="default-max-results" type="xs:integer" default="${Query.default-max-results}">
+            <xs:annotation>
+              <xs:documentation>
+                Limits the number of results returned by a query. Applies to indexed, non-indexed, and hybrid queries.
+                Setting the default-max-results significantly improves performance of queries that don't have an explicit limit set.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
       </xs:element>
       <xs:element name="indexing" minOccurs="0">
         <xs:annotation>
@@ -1453,48 +1455,6 @@
   </xs:complexType>
 
   <xs:complexType name="memory">
-    <xs:sequence>
-      <xs:choice minOccurs="0" maxOccurs="1">
-        <xs:element name="object" type="tns:memory-object">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'HEAP'.
-              Store keys and values as instance variables in the Java heap.
-              Instances of byte[] are wrapped to ensure equality. This is the
-              default storage format.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:element>
-        <xs:element name="binary" type="tns:memory-binary">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'HEAP'.
-              Store keys and values as bytes in the Java heap. Cache
-              entries are serialized to binary representations. Note that
-              binary storage violates object equality. This occurs because
-              equality is determined by the equivalence of the resulting
-              byte[] instead of the object instances.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:element>
-        <xs:element name="off-heap" type="tns:memory-off-heap">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 11.0. Use instead the 'encoding' element to specify the media type of keys
-              and values, plus the storage attribute as 'OFF_HEAP'.
-              Store keys and values as bytes in native memory. Cache
-              entries are serialized to binary representations. Temporary
-              objects are stored in the Java heap space until processing
-              completes. Note that off-heap storage violates object equality.
-              This occurs because equality is determined by the equivalence of
-              the resulting byte[] instead of the object instances.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:element>
-      </xs:choice>
-    </xs:sequence>
     <xs:attribute name="max-size" type="xs:string">
       <xs:annotation>
         <xs:documentation>
@@ -1569,83 +1529,6 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
-
-  <xs:complexType name="memory-object">
-    <xs:attribute name="size" type="xs:long" default="-1">
-      <xs:annotation>
-        <xs:documentation>
-          Eviction occurs when the number of entries exceeds the size.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="strategy" type="tns:eviction-strategy">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies a strategy for evicting cache entries. Eviction always
-          takes place when you define the size of the data container. If you
-          specify a value for size, then you should configure a strategy.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="memory-binary">
-    <xs:attribute name="size" type="xs:long" default="-1">
-      <xs:annotation>
-        <xs:documentation>
-          Defines the size of the data container as a long. Eviction occurs
-          either when the number of entries or amount of memory exceeds the
-          size.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="eviction" type="tns:eviction-type">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies whether eviction is based on the number of entries or the
-          amount of memory used.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="strategy" type="tns:eviction-strategy">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies a strategy for evicting cache entries. Eviction always
-          takes place when you define the size of the data container. If you
-          specify a value for size, then you should configure a strategy.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="memory-off-heap">
-    <xs:attribute name="size" type="xs:long" default="-1">
-      <xs:annotation>
-        <xs:documentation>
-          Defines the size of the data container as a long. Eviction occurs
-          either when the number of entries or amount of memory exceeds the
-          size.
-      </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="eviction" type="tns:eviction-type">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies whether eviction is based on the number of entries or the
-          amount of memory used.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="strategy" type="tns:eviction-strategy">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies a strategy for evicting cache entries. Eviction always
-          takes place when you define the size of the data container. If you
-          specify a value for size, then you should configure a strategy.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
 
   <xs:complexType name="clustered-cache" abstract="true">
     <xs:complexContent>

@@ -10,9 +10,7 @@
         </serialization>
         <transport cluster="Infinispan-Query-Cluster"/>
         <distributed-cache name="default" remote-timeout="20000" statistics="true">
-            <memory>
-                <off-heap/>
-            </memory>
+            <memory storage="OFF_HEAP"/>
             <indexing storage="local-heap">
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
