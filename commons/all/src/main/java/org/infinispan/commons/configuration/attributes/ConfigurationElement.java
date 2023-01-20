@@ -35,7 +35,7 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
       this.element = element;
       this.repeated = repeated;
       this.attributes = attributes.checkProtection();
-      this.children = children != null ? children : CHILDLESS;
+      this.children = (children != null && children.length > 0) ? children : CHILDLESS;
    }
 
    public final String elementName() {
@@ -142,7 +142,21 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
 
    @Override
    public String toString() {
-      return attributes.toString();
+      if (children == CHILDLESS) {
+         return attributes.toString(null);
+      } else {
+         StringBuilder sb = new StringBuilder();
+         sb.append('[');
+         sb.append(attributes.toString(null));
+         for(ConfigurationElement<?> child : children){
+            sb.append(", ");
+            sb.append(child.elementName());
+            sb.append('=');
+            sb.append(child);
+         }
+         sb.append(']');
+         return sb.toString();
+      }
    }
 
    public boolean isModified() {

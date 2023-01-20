@@ -215,11 +215,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String cacheConfig = getCacheConfig(APPLICATION_JSON_TYPE, cacheName);
 
       Json encoding = Json.read(cacheConfig).at(cacheName).at("local-cache").at("encoding");
-      Json keyMediaType = encoding.at("key").at("media-type");
-      Json valueMediaType = encoding.at("value").at("media-type");
+      Json mediaType = encoding.at("media-type");
 
-      assertEquals(TEXT_PLAIN_TYPE, keyMediaType.asString());
-      assertEquals(TEXT_PLAIN_TYPE, valueMediaType.asString());
+      assertEquals(TEXT_PLAIN_TYPE, mediaType.asString());
    }
 
    private void testCreateAndUseCache(String name) {

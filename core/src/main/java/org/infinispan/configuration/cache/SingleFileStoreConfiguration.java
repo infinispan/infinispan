@@ -5,6 +5,7 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.persistence.file.SingleFileStore;
 
 /**
@@ -57,6 +58,6 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
 
    @Override
    public String toString() {
-      return "SingleFileStoreConfiguration [attributes=" + attributes + "]";
+      return Element.SINGLE_FILE_STORE + attributes.toString(null);
    }
 }
