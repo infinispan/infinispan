@@ -21,6 +21,11 @@ public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfi
       attributes = DataSourcesConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    DataSourceConfigurationBuilder dataSource(String name, String jndiName) {
       if (dataSources.containsKey(name)) {
          throw Server.log.duplicateDataSource(name);

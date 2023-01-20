@@ -25,6 +25,11 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public GlobalAuthorizationConfigurationBuilder authorization() {
       return authorizationBuilder;
    }

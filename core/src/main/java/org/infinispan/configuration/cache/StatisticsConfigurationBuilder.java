@@ -23,6 +23,11 @@ public class StatisticsConfigurationBuilder extends JMXStatisticsConfigurationBu
       this.attributes = StatisticsConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Enable statistics gathering.
     */

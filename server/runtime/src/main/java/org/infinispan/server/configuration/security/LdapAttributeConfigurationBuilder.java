@@ -23,6 +23,11 @@ public class LdapAttributeConfigurationBuilder implements Builder<LdapAttributeC
       this.attributes = LdapAttributeConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public LdapAttributeConfigurationBuilder filter(String filter) {
       attributes.attribute(FILTER).set(filter);
       return this;

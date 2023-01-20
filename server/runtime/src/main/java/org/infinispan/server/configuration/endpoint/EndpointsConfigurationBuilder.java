@@ -32,6 +32,11 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
       attributes = EndpointsConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public EndpointsConfigurationBuilder socketBinding(String socketBinding) {
       attributes.attribute(SOCKET_BINDING).set(socketBinding);
       return this;

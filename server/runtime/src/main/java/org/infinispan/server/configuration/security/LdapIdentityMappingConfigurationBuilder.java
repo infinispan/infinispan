@@ -26,6 +26,11 @@ public class LdapIdentityMappingConfigurationBuilder implements Builder<LdapIden
       this.attributes = LdapIdentityMappingConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public LdapIdentityMappingConfigurationBuilder rdnIdentifier(String rdnIdentifier) {
       attributes.attribute(RDN_IDENTIFIER).set(rdnIdentifier);
       return this;

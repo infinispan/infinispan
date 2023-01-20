@@ -1,6 +1,8 @@
 package org.infinispan.server.core.configuration;
 
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * @author Tristan Tarrant
  * @since 5.3
@@ -9,6 +11,11 @@ public class MockServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    public MockServerConfigurationBuilder() {
       super(12345, MockServerConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

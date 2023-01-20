@@ -26,6 +26,11 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
       attributes = L1Configuration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * <p>
     * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.

@@ -20,6 +20,11 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
       attributes = ScheduledExecutorFactoryConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Specify factory class for executor
     *

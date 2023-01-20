@@ -15,6 +15,11 @@ public class IdColumnConfigurationBuilder implements Builder<IdColumnConfigurati
       attributes = IdColumnConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public IdColumnConfigurationBuilder idColumnName(String idColumnName) {
       attributes.attribute(ID_COLUMN_NAME).set(idColumnName);
       return this;

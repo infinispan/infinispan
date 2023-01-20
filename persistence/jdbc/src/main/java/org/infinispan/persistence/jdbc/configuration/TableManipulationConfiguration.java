@@ -4,6 +4,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.Element;
 import org.infinispan.persistence.jdbc.impl.table.TableManager;
 
 public class TableManipulationConfiguration {
@@ -16,7 +17,7 @@ public class TableManipulationConfiguration {
    public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DROP_ON_EXIT, false).immutable().build();
 
    static AttributeSet attributeSet() {
-      return new AttributeSet(TableManipulationConfiguration.class, TABLE_NAME_PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
+      return new AttributeSet(TableManipulationConfiguration.class, Element.TABLE_JDBC_STORE, TABLE_NAME_PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
    }
 
    private final Attribute<String> tableNamePrefix;

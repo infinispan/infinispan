@@ -51,6 +51,11 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
       this.attributes = KerberosSecurityFactoryConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public KerberosSecurityFactoryConfigurationBuilder principal(String principal) {
       attributes.attribute(PRINCIPAL).set(principal);
       return this;

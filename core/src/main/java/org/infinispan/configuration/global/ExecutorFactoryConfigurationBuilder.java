@@ -20,6 +20,11 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
       this.attributes = ExecutorFactoryConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Specify factory class for executor
     *

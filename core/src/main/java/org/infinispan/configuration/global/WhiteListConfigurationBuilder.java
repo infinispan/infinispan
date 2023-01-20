@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * @deprecated since 12.0. Use {@link AllowListConfigurationBuilder} through @{@link SerializationConfigurationBuilder#allowList()}. Will be removed in 14.0.
@@ -12,6 +13,11 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
 
    WhiteListConfigurationBuilder(AllowListConfigurationBuilder delegate) {
       this.delegate = delegate;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return delegate.attributes();
    }
 
    /**

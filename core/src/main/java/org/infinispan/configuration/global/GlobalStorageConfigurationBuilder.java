@@ -19,6 +19,11 @@ public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurati
       attributes = GlobalStorageConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public GlobalStorageConfigurationBuilder supplier(Supplier<? extends LocalConfigurationStorage> configurationStorageSupplier) {
       attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).set(configurationStorageSupplier);
       return this;

@@ -8,6 +8,7 @@ import static org.infinispan.server.hotrod.configuration.HotRodServerConfigurati
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
@@ -32,6 +33,11 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
 
    public HotRodServerConfigurationBuilder() {
       super(HotRodServer.DEFAULT_HOTROD_PORT, HotRodServerConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

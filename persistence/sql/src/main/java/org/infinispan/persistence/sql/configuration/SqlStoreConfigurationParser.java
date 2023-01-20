@@ -103,32 +103,7 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
    private void parseQueries(ConfigurationReader reader, QueriesJdbcConfigurationBuilder builder) {
       // YAML and JSON this has to be an attribute so support both named attributes under queries
       // as well as elements with XML
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case SELECT_ALL:
-               builder.selectAll(value);
-               break;
-            case SELECT_SINGLE:
-               builder.select(value);
-               break;
-            case DELETE_ALL:
-               builder.deleteAll(value);
-               break;
-            case DELETE_SINGLE:
-               builder.delete(value);
-               break;
-            case UPSERT:
-               builder.upsert(value);
-               break;
-            case SIZE:
-               builder.size(value);
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder);
       if (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          throw ParseUtils.unexpectedElement(reader, element);
@@ -136,24 +111,7 @@ public class SqlStoreConfigurationParser extends AbstractJdbcStoreConfigurationP
    }
 
    private void parseSchema(ConfigurationReader reader, SchemaJdbcConfigurationBuilder<?> builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case KEY_MESSAGE_NAME:
-               builder.keyMessageName(value);
-               break;
-            case MESSAGE_NAME:
-               builder.messageName(value);
-               break;
-            case EMBEDDED_KEY:
-               builder.embeddedKey(Boolean.parseBoolean(value));
-               break;
-            case PACKAGE:
-               builder.packageName(value);
-               break;
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder);
       if (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          throw ParseUtils.unexpectedElement(reader, element);

@@ -48,6 +48,11 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       this.nearCache = new NearCacheConfigurationBuilder(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    RemoteCacheConfigurationBuilder(String name) {
       this(null, name);
    }

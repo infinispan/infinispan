@@ -5,6 +5,7 @@ import java.util.Properties;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -23,6 +24,11 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

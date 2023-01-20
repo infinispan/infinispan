@@ -23,7 +23,6 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
       super(globalConfig);
       attributes = BoundedThreadPoolConfiguration.attributeDefinitionSet();
       attributes.attribute(NAME).set(name);
-
    }
 
    public AttributeSet attributes() {

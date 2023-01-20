@@ -25,6 +25,11 @@ public class EncryptionConfigurationBuilder implements Builder<EncryptionConfigu
       this.attributes = EncryptionConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SniConfigurationBuilder addSni() {
       SniConfigurationBuilder sni = new SniConfigurationBuilder(ssl);
       sniConfigurations.add(sni);

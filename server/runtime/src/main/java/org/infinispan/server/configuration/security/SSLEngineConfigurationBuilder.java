@@ -15,6 +15,11 @@ public class SSLEngineConfigurationBuilder implements Builder<SSLEngineConfigura
       attributes = SSLEngineConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SSLEngineConfigurationBuilder enabledProtocols(String[] protocols) {
       attributes.attribute(SSLEngineConfiguration.ENABLED_PROTOCOLS).set(protocols);
       return this;

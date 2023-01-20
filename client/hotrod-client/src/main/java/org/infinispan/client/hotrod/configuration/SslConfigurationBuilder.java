@@ -12,6 +12,7 @@ import javax.net.ssl.SSLContext;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -40,6 +41,11 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

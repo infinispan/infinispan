@@ -20,6 +20,11 @@ public class DistributedRealmConfigurationBuilder implements RealmProviderBuilde
       this.attributes = DistributedRealmConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public DistributedRealmConfigurationBuilder name(String name) {
       attributes.attribute(NAME).set(name);
       return this;

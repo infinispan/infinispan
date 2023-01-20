@@ -22,6 +22,11 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public DataSourceConfiguration create() {
       return new DataSourceConfiguration(attributes.protect());
    }

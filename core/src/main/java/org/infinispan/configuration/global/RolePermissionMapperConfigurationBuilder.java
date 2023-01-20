@@ -17,6 +17,11 @@ public class RolePermissionMapperConfigurationBuilder extends AbstractGlobalConf
       attributes = RolePermissionMapperConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public RolePermissionMapperConfigurationBuilder mapper(RolePermissionMapper permissionMapper) {
       this.permissionMapper = permissionMapper;
       return this;

@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Role;
 import org.infinispan.security.impl.CacheRoleImpl;
@@ -24,6 +25,11 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
       super(builder.getGlobalConfig());
       this.builder = builder;
       this.name = name;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

@@ -21,6 +21,11 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
       this.refreshInterval = attributes.attribute(REFRESH_INTERVAL);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public IndexReaderConfigurationBuilder refreshInterval(long valueMillis) {
       refreshInterval.set(valueMillis);
       return this;

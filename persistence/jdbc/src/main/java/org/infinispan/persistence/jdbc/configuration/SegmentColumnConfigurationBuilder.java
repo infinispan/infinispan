@@ -19,6 +19,11 @@ public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnC
       attributes = SegmentColumnConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SegmentColumnConfigurationBuilder columnName(String columnName) {
       attributes.attribute(SEGMENT_COLUMN_NAME).set(columnName);
       return this;

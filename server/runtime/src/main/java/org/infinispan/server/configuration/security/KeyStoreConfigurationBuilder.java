@@ -29,6 +29,11 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
       this.attributes = KeyStoreConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public KeyStoreConfigurationBuilder alias(String alias) {
       attributes.attribute(ALIAS).set(alias);
       return this;

@@ -46,6 +46,11 @@ public class AuthenticationConfigurationBuilder extends AbstractConfigurationChi
       super(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Specifies a {@link CallbackHandler} to be used during the authentication handshake. The {@link Callback}s that
     * need to be handled are specific to the chosen SASL mechanism.

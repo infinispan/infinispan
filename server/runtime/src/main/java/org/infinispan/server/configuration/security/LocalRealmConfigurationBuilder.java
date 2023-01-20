@@ -14,6 +14,11 @@ public class LocalRealmConfigurationBuilder implements RealmProviderBuilder<Loca
       this.attributes = LocalRealmConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public LocalRealmConfigurationBuilder name(String name) {
       attributes.attribute(LocalRealmConfiguration.NAME).set(name);
       return this;

@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import java.util.concurrent.ThreadFactory;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 
 /**
@@ -16,6 +17,11 @@ public class ThreadPoolConfigurationBuilder extends AbstractGlobalConfigurationB
 
    public ThreadPoolConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    @Override
