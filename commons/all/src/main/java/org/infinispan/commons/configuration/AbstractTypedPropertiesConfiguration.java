@@ -42,7 +42,7 @@ public abstract class AbstractTypedPropertiesConfiguration {
 
    @Override
    public String toString() {
-      return "AbstractTypedPropertiesConfiguration [attributes=" + attributes + "]";
+      return attributes.toString(null);
    }
 
    public TypedProperties properties() {

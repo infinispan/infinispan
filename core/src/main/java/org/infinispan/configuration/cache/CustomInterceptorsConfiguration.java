@@ -41,7 +41,7 @@ public class CustomInterceptorsConfiguration implements Matchable<CustomIntercep
 
    @Override
    public String toString() {
-      return "CustomInterceptorsConfiguration [interceptors=" + interceptors + "]";
+      return "[interceptors=" + interceptors + "]";
    }
 
    @Override

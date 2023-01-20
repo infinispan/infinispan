@@ -1841,7 +1841,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
 
    @Message(value = "Grouping requires application/x-java-object storage type but was: {key=%s, value=%s}", id = 535)
-   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(String keyMediaType, String valueMediaType);
+   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(MediaType keyMediaType, MediaType valueMediaType);
 
    @Message(value = "Factory doesn't know how to construct component %s", id = 537)
    CacheConfigurationException factoryCannotConstructComponent(String componentName);

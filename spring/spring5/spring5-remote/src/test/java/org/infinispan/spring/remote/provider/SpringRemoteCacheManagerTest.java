@@ -52,7 +52,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
    private SpringRemoteCacheManager objectUnderTest;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cacheManager.defineConfiguration(OTHER_TEST_CACHE_NAME, cacheManager.getDefaultCacheConfiguration());
       return cacheManager;
@@ -139,7 +139,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
     * @throws IOException
     */
    @Test
-   public final void startShouldStartTheNativeRemoteCacheManager() throws IOException {
+   public final void startShouldStartTheNativeRemoteCacheManager() {
       objectUnderTest.start();
 
       assertTrue("Calling start() on SpringRemoteCacheManager should start the enclosed "
@@ -153,7 +153,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
     * @throws IOException
     */
    @Test
-   public final void stopShouldStopTheNativeRemoteCacheManager() throws IOException {
+   public final void stopShouldStopTheNativeRemoteCacheManager() {
       objectUnderTest.stop();
 
       assertFalse("Calling stop() on SpringRemoteCacheManager should stop the enclosed "

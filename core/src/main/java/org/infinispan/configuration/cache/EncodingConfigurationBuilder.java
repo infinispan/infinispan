@@ -7,7 +7,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -17,7 +16,7 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private ContentTypeConfigurationBuilder keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this);
    private ContentTypeConfigurationBuilder valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this);
-   private final Attribute<String> mediaType;
+   private final Attribute<MediaType> mediaType;
 
    private final AttributeSet attributes;
 
@@ -34,22 +33,24 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public void validate() {
-      String globalMediaType = mediaType.get();
+      MediaType globalMediaType = mediaType.get();
       if (globalMediaType != null) {
-         String keyType = keyContentTypeBuilder.mediaType();
-         String valueType = valueContentTypeBuilder.mediaType();
+         MediaType keyType = keyContentTypeBuilder.mediaType();
+         MediaType valueType = valueContentTypeBuilder.mediaType();
          if ((keyType != null && !keyType.equals(globalMediaType)) || valueType != null && !valueType.equals(globalMediaType)) {
             CONFIG.ignoringSpecificMediaTypes();
          }
-         keyContentTypeBuilder.mediaType(globalMediaType);
-         valueContentTypeBuilder.mediaType(globalMediaType);
       }
       keyContentTypeBuilder.validate();
       valueContentTypeBuilder.validate();
    }
 
    public boolean isObjectStorage() {
-      return keyContentTypeBuilder.isObjectStorage() && valueContentTypeBuilder.isObjectStorage();
+      if (!mediaType.isNull()) {
+         return MediaType.APPLICATION_OBJECT.match(mediaType.get());
+      } else {
+         return keyContentTypeBuilder.isObjectStorage() && valueContentTypeBuilder.isObjectStorage();
+      }
    }
 
    public ContentTypeConfigurationBuilder key() {
@@ -61,21 +62,27 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    public EncodingConfigurationBuilder mediaType(String keyValueMediaType) {
-      mediaType.set(keyValueMediaType);
+      mediaType.set(MediaType.fromString(keyValueMediaType));
       return this;
    }
 
    public boolean isStorageBinary() {
-      String keyMediaType = keyContentTypeBuilder.mediaType();
-      String valueMediaType = valueContentTypeBuilder.mediaType();
-      return keyMediaType != null && valueMediaType != null &&
-            MediaType.fromString(keyMediaType).isBinary() && MediaType.fromString(valueMediaType).isBinary();
+      // global takes precedence
+      if (!mediaType.isNull()) {
+         return mediaType.get().isBinary();
+      } else {
+         MediaType keyMediaType = keyContentTypeBuilder.mediaType();
+         MediaType valueMediaType = valueContentTypeBuilder.mediaType();
+         return keyMediaType != null && valueMediaType != null &&
+               keyMediaType.isBinary() && valueMediaType.isBinary();
+      }
    }
 
    @Override
    public EncodingConfiguration create() {
-      ContentTypeConfiguration keyContentType = keyContentTypeBuilder.create();
-      ContentTypeConfiguration valueContentType = valueContentTypeBuilder.create();
+      MediaType globalType = mediaType.get();
+      ContentTypeConfiguration keyContentType = keyContentTypeBuilder.create(globalType);
+      ContentTypeConfiguration valueContentType = valueContentTypeBuilder.create(globalType);
       return new EncodingConfiguration(attributes.protect(), keyContentType, valueContentType);
    }
 
@@ -85,11 +92,6 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
       this.keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this).read(template.keyDataType());
       this.valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this).read(template.valueDataType());
       return this;
-   }
-
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override
