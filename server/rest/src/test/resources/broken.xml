@@ -1,0 +1,8 @@
+<local-cache name="local" statistics="true">
+   <encoding>
+      <key media-type="application/x-java-object"/>
+      <value media-type="application/x-java-object"/>
+   </encoding>
+   <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
+   <error/>
+</local-cache>

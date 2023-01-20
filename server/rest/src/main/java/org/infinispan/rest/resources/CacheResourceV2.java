@@ -1,8 +1,6 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -17,6 +15,7 @@ import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.util.Util.unwrapExceptionMessage;
+import static org.infinispan.rest.RestRequestHandler.filterCause;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
@@ -29,10 +28,9 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.badRequestResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
-import static org.infinispan.rest.resources.ResourceUtil.responseFuture;
 
 import java.io.ByteArrayOutputStream;
-import java.lang.reflect.InvocationTargetException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,16 +39,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -84,7 +79,6 @@ import org.infinispan.persistence.remote.upgrade.SerializationUtils;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
-import org.infinispan.remoting.RemoteException;
 import org.infinispan.rest.CacheEntryInputStream;
 import org.infinispan.rest.CacheKeyInputStream;
 import org.infinispan.rest.EventStream;
@@ -219,9 +213,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       if (remoteStores.size() != 1) {
-         builder.status(INTERNAL_SERVER_ERROR);
-         builder.entity("More than one remote store detected, rolling upgrades aren't supported");
-         return completedFuture(builder.build());
+         throw Log.REST.multipleRemoteStores();
       }
 
       RemoteStoreConfiguration storeConfiguration = remoteStores.get(0).getConfiguration();
@@ -238,12 +230,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
 
       return CompletableFuture.supplyAsync(() -> {
-         try {
-            if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
-               builder.status(NOT_FOUND);
-            }
-         } catch (Exception e) {
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+         if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
+            builder.status(NOT_FOUND);
          }
          return builder.build();
       }, invocationHelper.getExecutor());
@@ -257,15 +245,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-      try {
-         if (upgradeManager.isConnected(MIGRATOR_NAME)) {
-            upgradeManager.disconnectSource(MIGRATOR_NAME);
-         } else {
-            builder.status(HttpResponseStatus.NOT_MODIFIED);
-         }
-      } catch (Exception e) {
-         builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(e.getMessage());
+
+      if (upgradeManager.isConnected(MIGRATOR_NAME)) {
+         upgradeManager.disconnectSource(MIGRATOR_NAME);
+      } else {
+         builder.status(HttpResponseStatus.NOT_MODIFIED);
       }
+
       return completedFuture(builder.build());
    }
 
@@ -303,11 +289,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             } else {
                builder.status(HttpResponseStatus.NOT_MODIFIED);
             }
-         } catch (Exception e) {
-            Throwable rootCause = Util.getRootCause(e);
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+            return builder.build();
+         } catch (IOException e) {
+            throw new RuntimeException(e);
          }
-         return builder.build();
       }, invocationHelper.getExecutor());
    }
 
@@ -319,24 +304,19 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       int readBatch = readBatchReq == null ? 10_000 : Integer.parseInt(readBatchReq);
       if (readBatch < 1) {
-         return CompletableFuture.completedFuture(builder.status(BAD_REQUEST).entity(Log.REST.illegalArgument("read-batch", readBatch).getMessage()).build());
+         throw Log.REST.illegalArgument("read-batch", readBatch);
       }
       int threads = request.getParameter("threads") == null ? ProcessorInfo.availableProcessors() : Integer.parseInt(threadsReq);
       if (threads < 1) {
-         return CompletableFuture.completedFuture(builder.status(BAD_REQUEST).entity(Log.REST.illegalArgument("threads", threads).getMessage()).build());
+         throw Log.REST.illegalArgument("threads", threads);
       }
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
 
       return CompletableFuture.supplyAsync(() -> {
-         try {
-            long hotrod = upgradeManager.synchronizeData(MIGRATOR_NAME, readBatch, threads);
-            builder.entity(Log.REST.synchronizedEntries(hotrod));
-         } catch (Exception e) {
-            Throwable rootCause = Util.getRootCause(e);
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
-         }
+         long hotrod = upgradeManager.synchronizeData(MIGRATOR_NAME, readBatch, threads);
+         builder.entity(Log.REST.synchronizedEntries(hotrod));
          return builder.build();
       }, invocationHelper.getExecutor());
    }
@@ -347,8 +327,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String contents = request.contents().asString();
 
       if (contents == null || contents.isEmpty()) {
-         responseBuilder.status(HttpResponseStatus.BAD_REQUEST);
-         return CompletableFuture.completedFuture(responseBuilder.build());
+         throw Log.REST.missingContent();
       }
       return CompletableFuture.supplyAsync(() -> {
          ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
@@ -376,14 +355,14 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
       MediaType contentType = request.contentType();
       if (!contentType.match(MediaType.MULTIPART_FORM_DATA)) {
-         return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         throw Log.REST.wrongMediaType(MediaType.MULTIPART_FORM_DATA_TYPE, contentType.toString());
       }
       FullHttpRequest nettyRequest = ((NettyRestRequest) request).getFullHttpRequest();
       DefaultHttpDataFactory factory = new DefaultHttpDataFactory(false);
       HttpPostMultipartRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
       List<InterfaceHttpData> datas = decoder.getBodyHttpDatas();
       if (datas.size() != 2) {
-         return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         throw Log.REST.cacheCompareWrongContent();
       }
       MemoryAttribute one = (MemoryAttribute) datas.get(0);
       MemoryAttribute two = (MemoryAttribute) datas.get(1);
@@ -393,17 +372,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Map<String, ConfigurationBuilder> b1 = parserRegistry.parse(s1, null).getNamedConfigurationBuilders();
       Map<String, ConfigurationBuilder> b2 = parserRegistry.parse(s2, null).getNamedConfigurationBuilders();
       if (b1.size() != 1 || b2.size() != 1) {
-         return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         throw Log.REST.cacheCompareWrongContent();
       }
       Configuration c1 = b1.values().iterator().next().build();
       Configuration c2 = b2.values().iterator().next().build();
       boolean result;
       if (ignoreMutable) {
          try {
-            c1.validateUpdate(c2);
+            c1.validateUpdate(null, c2);
             result = true;
          } catch (Throwable t) {
             result = false;
+            responseBuilder.entity(unwrapExceptionMessage(filterCause(t)));
          }
       } else {
          result = c1.equals(c2);
@@ -564,7 +544,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       if (template != null && !template.isEmpty()) {
          if (request.method() == PUT) {
-            return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+            throw Log.REST.wrongMethod(request.method().toString());
          }
          String templateName = template.iterator().next();
          return CompletableFuture.supplyAsync(() -> {
@@ -578,7 +558,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       byte[] bytes = contents.rawContent();
       if (bytes == null || bytes.length == 0) {
          if (request.method() == PUT) {
-            return CompletableFuture.completedFuture(responseBuilder.status(BAD_REQUEST).build());
+            throw Log.REST.wrongMethod(request.method().toString());
          }
          return CompletableFuture.supplyAsync(() -> {
             administration.createCache(cacheName, (String) null);
@@ -593,31 +573,18 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(invocationHelper.getRestCacheManager().getInstance());
       return CompletableFuture.supplyAsync(() -> {
-         try {
-            ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8), sourceType);
-            ConfigurationBuilder cfgBuilder = holder.getCurrentConfigurationBuilder() != null ? holder.getCurrentConfigurationBuilder() : new ConfigurationBuilder();
-            if (request.method() == PUT) {
-               administration.getOrCreateCache(cacheName, cfgBuilder.build(globalConfiguration));
-            } else {
-               administration.createCache(cacheName, cfgBuilder.build(globalConfiguration));
-            }
-            responseBuilder.status(OK);
-         } catch (Throwable t) {
-            responseBuilder.status(BAD_REQUEST).entity(unwrapExceptionMessage(filterCause(t)));
+         ConfigurationBuilderHolder holder = invocationHelper.getParserRegistry().parse(new String(bytes, UTF_8), sourceType);
+         ConfigurationBuilder cfgBuilder = holder.getCurrentConfigurationBuilder() != null ? holder.getCurrentConfigurationBuilder() : new ConfigurationBuilder();
+         if (request.method() == PUT) {
+            administration.getOrCreateCache(cacheName, cfgBuilder.build(globalConfiguration));
+         } else {
+            administration.createCache(cacheName, cfgBuilder.build(globalConfiguration));
          }
+         responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
    }
 
-   public static Throwable filterCause(Throwable re) {
-      if (re == null) return null;
-      Class<? extends Throwable> tClass = re.getClass();
-      Throwable cause = re.getCause();
-      if (cause != null && (tClass == ExecutionException.class || tClass == CompletionException.class || tClass == InvocationTargetException.class || tClass == RemoteException.class || tClass == RuntimeException.class || tClass == CacheListenerException.class))
-         return filterCause(cause);
-      else
-         return re;
-   }
 
    private CompletionStage<RestResponse> getCacheStats(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
@@ -743,7 +710,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(pretty).build()) {
          parserRegistry.serialize(writer, cacheName, cacheConfiguration);
       } catch (Exception e) {
-         return CompletableFuture.completedFuture(responseBuilder.status(INTERNAL_SERVER_ERROR).entity(Util.getRootCause(e)).build());
+         throw Util.unchecked(e);
       }
       responseBuilder.entity(entity);
       return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
@@ -842,7 +809,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       Attribute<?> attribute = cacheConfiguration.findAttribute(attributeName);
       if (attribute.isImmutable()) {
-         return responseFuture(BAD_REQUEST);
+         throw Log.REST.immutableAttribute(attributeName);
       } else {
          return asJsonResponseFuture(Json.make(String.valueOf(attribute.get())), isPretty(request));
       }
@@ -862,13 +829,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
       EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request).withFlags(AdminFlag.UPDATE);
       return CompletableFuture.supplyAsync(() -> {
-         try {
-            attribute.fromString(attributeValue);
-            administration.getOrCreateCache(cacheName, configuration);
-            responseBuilder.status(OK);
-         } catch (Throwable t) {
-            responseBuilder.status(BAD_REQUEST).entity(Util.getRootCause(t).getMessage());
-         }
+         attribute.fromString(attributeValue);
+         administration.getOrCreateCache(cacheName, configuration);
+         responseBuilder.status(OK);
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
    }
@@ -899,7 +862,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             ltm.setCacheRebalancingEnabled(cacheName, enable);
             builder.status(NO_CONTENT);
          } catch (Exception e) {
-            builder.status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+            throw Util.unchecked(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());

@@ -33,9 +33,11 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -85,6 +87,7 @@ import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;
+import org.testng.reporters.Files;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -326,7 +329,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_YAML, cacheConfigAlter));
       assertThat(response).isBadRequest();
       String body = join(response).getBody();
-      assertEquals("ISPN029527: Incompatible attribute 'media-type', existing value='application/x-protostream', new value='application/x-java-serialized-object'", body);
+      assertThat(body).contains("ISPN000961: Incompatible attribute");
    }
 
    @Test
@@ -1040,9 +1043,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String xml = "<infinispan>\n" +
             "    <cache-container>\n" +
             "        <distributed-cache name=\"cacheName\" mode=\"SYNC\">\n" +
-            "            <memory>\n" +
-            "                <object size=\"20\"/>\n" +
-            "            </memory>\n" +
+            "            <memory storage=\"OBJECT\" max-count=\"20\"/>\n" +
             "        </distributed-cache>\n" +
             "    </cache-container>\n" +
             "</infinispan>";
@@ -1088,6 +1089,25 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), yaml, APPLICATION_YAML_TYPE);
       assertThat(response).isOk();
       checkJSON(response, "");
+   }
+
+   @Test
+   public void testBrokenConfiguration() throws IOException {
+      for(String name : Arrays.asList("broken.xml", "broken.yaml", "broken.json")) {
+         CompletionStage<RestResponse> response = createCacheFromResource(name);
+         String body = join(response).getBody();
+         assertThat(body).contains("ISPN000327: Cannot find a parser for element 'error' in namespace '' at [");
+      }
+   }
+
+   private CompletionStage<RestResponse> createCacheFromResource(String name) throws IOException {
+      String cfg;
+      try (InputStream is = CacheResourceV2Test.class.getResourceAsStream("/" + name)) {
+         cfg = Files.readFile(is);
+      }
+      RestEntity entity = RestEntity.create(MediaType.fromExtension(name), cfg);
+      RestCacheClient cache = client.cache(name);
+      return cache.createWithConfiguration(entity);
    }
 
    private void checkJSON(CompletionStage<RestResponse> response, String name) {
@@ -1401,13 +1421,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestRawClient rawClient = client.raw();
 
       String xml = "<distributed-cache name=\"cacheName\" mode=\"SYNC\">\n" +
-            "<memory>\n" +
-            "<object size=\"20\"/>\n" +
-            "</memory>\n" +
+            "<memory storage=\"OBJECT\" max-count=\"20\"/>\n" +
             "</distributed-cache>";
-      String json20 = "{\"distributed-cache\":{\"memory\":{\"object\":{\"size\":\"20\"}}}}";
-      String json30 = "{\"distributed-cache\":{\"memory\":{\"object\":{\"size\":\"30\"}}}}";
-      String jsonrepl = "{\"replicated-cache\":{\"memory\":{\"object\":{\"size\":\"30\"}}}}";
+      String json20 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}";
+      String json30 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"30\"}}}";
+      String jsonrepl = "{\"replicated-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"30\"}}}";
 
       Map<String, List<String>> form = new HashMap<>();
       form.put("one", Collections.singletonList(xml));
@@ -1433,6 +1451,15 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
       assertThat(response).isConflicted();
 
+      form = new HashMap<>();
+      form.put("one", Collections.singletonList("{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\": {\"media-type\":\"text/plain\"} ,\"value\":{\"media-type\":\"text/plain\"}},\"memory\":{\"max-count\":\"50\"}}}"));
+      form.put("two", Collections.singletonList("{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\":{\"media-type\":\"application/x-protostream\"},\"value\":{\"media-type\":\"application/x-protostream\"}},\"memory\":{\"max-count\":\"50\"}}}"));
+      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
+      assertThat(response).isConflicted();
+      assertEquals("ISPN000963: Invalid configuration in 'local-cache'\n" +
+                  "ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
+                  "ISPN000961: Incompatible attribute 'local-cache.encoding.value.media-type' existing value='text/plain', new value='application/x-protostream'",
+            join(response).getBody());
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {

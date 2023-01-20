@@ -50,8 +50,6 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 /**
  * Handler for the counter resource.
  *
@@ -97,14 +95,11 @@ public class CounterResource implements ResourceHandler {
       String contents = request.contents().asString();
 
       if (contents == null || contents.isEmpty()) {
-         responseBuilder.status(HttpResponseStatus.BAD_REQUEST);
-         responseBuilder.entity("Configuration not provided");
-         return completedFuture(responseBuilder.build());
+         throw Log.REST.missingContent();
       }
       CounterConfiguration configuration = createCounterConfiguration(contents);
       if (configuration == null) {
-         responseBuilder.status(HttpResponseStatus.BAD_REQUEST).entity("Invalid configuration");
-         return completedFuture(responseBuilder.build());
+         throw Log.REST.invalidContent();
       }
 
       return invocationHelper.getCounterManager()
@@ -270,17 +265,15 @@ public class CounterResource implements ResourceHandler {
    private Long checkForNumericParam(String name, RestRequest request, NettyRestResponse.Builder builder) {
       List<String> params = request.parameters().get(name);
       if (params == null || params.size() != 1) {
-         builder.status(HttpResponseStatus.BAD_REQUEST)
-               .entity(String.format("A single '%s' param must be provided", name));
+         throw Log.REST.missingArgument(name);
       } else {
+         String value = params.iterator().next();
          try {
-            return Long.valueOf(params.iterator().next());
+            return Long.valueOf(value);
          } catch (NumberFormatException e) {
-            builder.status(HttpResponseStatus.BAD_REQUEST)
-                  .entity(String.format("Param '%s' must be a number", name));
+            throw Log.REST.illegalArgument(name, value);
          }
       }
-      return null;
    }
 
    private MediaType negotiateMediaType(String accept) {

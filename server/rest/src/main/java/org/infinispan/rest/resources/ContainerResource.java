@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -40,6 +39,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.io.StringBuilderWriter;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -187,7 +187,7 @@ public class ContainerResource implements ResourceHandler {
             SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager().setRebalancingEnabled(enable);
             responseBuilder.status(NO_CONTENT);
          } catch (Exception e) {
-            responseBuilder.status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
+            throw Util.unchecked(e);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -211,7 +211,7 @@ public class ContainerResource implements ResourceHandler {
          responseBuilder.contentType(format);
          responseBuilder.entity(baos.toByteArray());
       } catch (Exception e) {
-         responseBuilder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+         throw Util.unchecked(e);
       }
 
       return completedFuture(responseBuilder.build());

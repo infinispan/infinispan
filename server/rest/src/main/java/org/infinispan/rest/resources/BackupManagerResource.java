@@ -1,10 +1,8 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.ACCEPTED;
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE;
@@ -24,6 +22,7 @@ import java.util.concurrent.CompletionStage;
 import org.hibernate.search.util.common.function.TriFunction;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.Util;
 import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.Method;
@@ -69,7 +68,7 @@ class BackupManagerResource {
          case POST:
             return handleCreateBackup(name, request, backupManager, creationConsumer);
          default:
-            return responseFuture(BAD_REQUEST, "Unsupported request method " + method);
+            throw Log.REST.wrongMethod(method.toString());
       }
    }
 
@@ -83,8 +82,9 @@ class BackupManagerResource {
       Json json = body.length() > 0 ? Json.read(body) : Json.object();
       Json dirJson = json.at(DIR_KEY);
       Path workingDir = dirJson == null ? null : Paths.get(dirJson.asString());
-      if (workingDir != null && !Files.isDirectory(workingDir))
-         return responseFuture(BAD_REQUEST, String.format("'%s' must be a directory", DIR_KEY));
+      if (workingDir != null && !Files.isDirectory(workingDir)) {
+         throw Log.REST.notADirectory(dirJson.asString());
+      }
 
       Json requestsJson = json.at(RESOURCES_KEY);
       creationConsumer.accept(name, workingDir, requestsJson);
@@ -99,7 +99,7 @@ class BackupManagerResource {
       BackupManager.Status status = backupManager.getBackupStatus(name);
       switch (status) {
          case FAILED:
-            return responseFuture(INTERNAL_SERVER_ERROR);
+            throw Log.REST.backupFailed();
          case NOT_FOUND:
             return responseFuture(NOT_FOUND);
          case IN_PROGRESS:
@@ -130,7 +130,7 @@ class BackupManagerResource {
          case POST:
             return handleRestore(name, request, backupManager, function);
          default:
-            return responseFuture(BAD_REQUEST, "Unsupported request method " + method);
+            throw Log.REST.wrongMethod(method.toString());
       }
    }
 
@@ -147,9 +147,8 @@ class BackupManagerResource {
             return responseFuture(ACCEPTED);
          case COMPLETE:
             return responseFuture(CREATED);
-         case FAILED:
          default:
-            return responseFuture(INTERNAL_SERVER_ERROR);
+            throw Log.REST.restoreFailed();
       }
    }
 
@@ -182,8 +181,9 @@ class BackupManagerResource {
                resourcesJson = resources;
 
             Json backupPath = json.at(LOCATION_KEY);
-            if (backupPath == null)
-               return responseFuture(BAD_REQUEST, "Required json attribute 'backup-location' not found");
+            if (backupPath == null) {
+               throw Log.REST.missingArgument("backup-location");
+            }
 
             path = Paths.get(backupPath.asString());
          } else {
@@ -205,8 +205,7 @@ class BackupManagerResource {
          );
          return responseFuture(ACCEPTED);
       } catch (IOException e) {
-         LOG.error(e);
-         return responseFuture(INTERNAL_SERVER_ERROR, e.getMessage());
+         throw Util.unchecked(e);
       }
    }
 
@@ -233,9 +232,9 @@ class BackupManagerResource {
    }
 
    private static RestResponse handleDelete(BackupManager.Status s, Throwable t) {
-      if (t != null)
-         return response(INTERNAL_SERVER_ERROR, t.getMessage());
-
+      if (t != null) {
+         throw Util.unchecked(t);
+      }
       switch (s) {
          case NOT_FOUND:
             return response(NOT_FOUND);
@@ -244,7 +243,7 @@ class BackupManagerResource {
          case COMPLETE:
             return response(NO_CONTENT);
          default:
-            return response(INTERNAL_SERVER_ERROR);
+            throw Log.REST.backupDeleteFailed();
       }
    }
 }
