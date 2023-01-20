@@ -22,7 +22,12 @@ public class LockingConfiguration extends ConfigurationElement<LockingConfigurat
    public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STRIPING, false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING);
+      return new AttributeSet(LockingConfiguration.class, Element.LOCKING.toString(), null,
+            new AttributeDefinition[]{
+                  CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING
+            },
+            new AttributeSet.RemovedAttribute[] { new AttributeSet.RemovedAttribute(org.infinispan.configuration.parsing.Attribute.WRITE_SKEW_CHECK, 10, 0)}
+      );
    }
 
    private final Attribute<Integer> concurrencyLevel;

@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -93,11 +94,12 @@ public class YamlConfigurationReaderTest {
 
    @Test
    public void testYamlFile() throws IOException {
-      try (Reader r = new InputStreamReader(YamlConfigurationReaderTest.class.getResourceAsStream("/yaml.yaml"))) {
+      URL url = YamlConfigurationReaderTest.class.getResource("/yaml.yaml");
+      try (Reader r = new InputStreamReader(url.openStream())) {
          Properties properties = new Properties();
          properties.put("opinion", "YAML is awful");
          properties.put("fact", "YAML is really awful");
-         YamlConfigurationReader yaml = new YamlConfigurationReader(r, new URLConfigurationResourceResolver(null), properties, PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE);
+         YamlConfigurationReader yaml = new YamlConfigurationReader(r, new URLConfigurationResourceResolver(url), properties, PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE);
          yaml.require(ConfigurationReader.ElementType.START_DOCUMENT);
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item1");
@@ -202,8 +204,9 @@ public class YamlConfigurationReaderTest {
 
    @Test
    public void testYamlMapper() throws IOException {
-      try (Reader r = new InputStreamReader(YamlConfigurationReaderTest.class.getResourceAsStream("/identities.yaml"))) {
-         YamlConfigurationReader yaml = new YamlConfigurationReader(r, new URLConfigurationResourceResolver(null), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE);
+      URL url = YamlConfigurationReaderTest.class.getResource("/identities.yaml");
+      try (Reader r = new InputStreamReader(url.openStream())) {
+         YamlConfigurationReader yaml = new YamlConfigurationReader(r, new URLConfigurationResourceResolver(url), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE);
          Map<String, Object> identities = yaml.asMap();
          assertEquals(1, identities.size());
          List<Object> credentials = (List<Object>) identities.get("credentials");

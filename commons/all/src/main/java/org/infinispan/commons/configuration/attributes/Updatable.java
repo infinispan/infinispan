@@ -13,7 +13,7 @@ public interface Updatable<T> {
     * Updates the mutable part of this instance with the values of the other instance
     * @param other
     */
-   default void update(T other) {
+   default void update(String parentName, T other) {
       // Do nothing
    }
 
@@ -21,7 +21,7 @@ public interface Updatable<T> {
     * Verifies that updating the mutable part of this instance with the values of the other instance is possible
     * @param other
     */
-   default void validateUpdate(T other) {
+   default void validateUpdate(String parentName, T other) {
       // Do nothing
    }
 }

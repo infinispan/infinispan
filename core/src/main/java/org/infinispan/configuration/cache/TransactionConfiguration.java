@@ -21,7 +21,6 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  *
  * @author pmuir
  * @author Pedro Ruivo
- *
  */
 public class TransactionConfiguration extends ConfigurationElement<TransactionConfiguration> {
    public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_COMMIT, true).immutable().build();
@@ -43,9 +42,13 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NOTIFICATIONS, true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE,
-            TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
-            REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, NOTIFICATIONS);
+      return new AttributeSet(TransactionConfiguration.class, Element.TRANSACTION.toString(), null,
+            new AttributeDefinition[]{
+                  AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE,
+                  TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
+                  REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, NOTIFICATIONS
+            },
+            new AttributeSet.RemovedAttribute[]{new AttributeSet.RemovedAttribute(org.infinispan.configuration.parsing.Attribute.TRANSACTION_PROTOCOL, 11, 0)});
    }
 
    private final Attribute<Boolean> autoCommit;
@@ -80,21 +83,19 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    }
 
    /**
-    * If the cache is transactional (i.e. {@link #transactionMode()} == TransactionMode.TRANSACTIONAL)
-    * and transactionAutoCommit is enabled then for single operation transactions
-    * the user doesn't need to manually start a transaction, but a transactions
-    * is injected by the system. Defaults to true.
+    * If the cache is transactional (i.e. {@link #transactionMode()} == TransactionMode.TRANSACTIONAL) and
+    * transactionAutoCommit is enabled then for single operation transactions the user doesn't need to manually start a
+    * transaction, but a transactions is injected by the system. Defaults to true.
     */
    public boolean autoCommit() {
       return autoCommit.get();
    }
 
    /**
-    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
-    * remote and local transactions to finish. The amount of time to wait for is defined by the
-    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
-    * because even if a new transaction was started just before the cache was stopped, this could
-    * only last as long as the transaction timeout allows it.
+    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing remote and local
+    * transactions to finish. The amount of time to wait for is defined by the cache stop timeout. It is recommended
+    * that this value does not exceed the transaction timeout because even if a new transaction was started just before
+    * the cache was stopped, this could only last as long as the transaction timeout allows it.
     */
    public TransactionConfiguration cacheStopTimeout(long l) {
       cacheStopTimeout.set(l);
@@ -102,19 +103,18 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    }
 
    /**
-    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing
-    * remote and local transactions to finish. The amount of time to wait for is defined by the
-    * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
-    * because even if a new transaction was started just before the cache was stopped, this could
-    * only last as long as the transaction timeout allows it.
+    * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing remote and local
+    * transactions to finish. The amount of time to wait for is defined by the cache stop timeout. It is recommended
+    * that this value does not exceed the transaction timeout because even if a new transaction was started just before
+    * the cache was stopped, this could only last as long as the transaction timeout allows it.
     */
    public long cacheStopTimeout() {
       return cacheStopTimeout.get();
    }
 
    /**
-    * Configures whether the cache uses optimistic or pessimistic locking.
-    * If the cache is not transactional then the locking mode is ignored.
+    * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not transactional then the
+    * locking mode is ignored.
     *
     * @see TransactionConfiguration#transactionMode()
     */
@@ -123,27 +123,27 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    }
 
    /**
-    * Configures whether the cache uses optimistic or pessimistic locking.
-    * If the cache is not transactional then the locking mode is ignored.
+    * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not transactional then the
+    * locking mode is ignored.
     *
     * @see TransactionConfiguration#transactionMode()
     */
-    public TransactionConfiguration lockingMode(LockingMode lockingMode) {
+   public TransactionConfiguration lockingMode(LockingMode lockingMode) {
       this.lockingMode.set(lockingMode);
       return this;
    }
 
    /**
-    * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup.
-    * Calling this method marks the cache as transactional.
+    * Configure Transaction manager lookup directly using an instance of TransactionManagerLookup. Calling this method
+    * marks the cache as transactional.
     */
    public TransactionManagerLookup transactionManagerLookup() {
       return transactionManagerLookup.get();
    }
 
    /**
-    * Configure Transaction Synchronization Registry lookup directly using an instance of
-    * TransactionManagerLookup. Calling this method marks the cache as transactional.
+    * Configure Transaction Synchronization Registry lookup directly using an instance of TransactionManagerLookup.
+    * Calling this method marks the cache as transactional.
     */
    public TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup() {
       return transactionSynchronizationRegistryLookup.get();
@@ -158,9 +158,9 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    }
 
    /**
-    * This method allows configuration of the transaction recovery cache. When this method is
-    * called, it automatically enables recovery. So, if you want it to be disabled, make sure you
-    * call {@link RecoveryConfigurationBuilder#enabled(boolean)} with false as parameter
+    * This method allows configuration of the transaction recovery cache. When this method is called, it automatically
+    * enables recovery. So, if you want it to be disabled, make sure you call
+    * {@link RecoveryConfigurationBuilder#enabled(boolean)} with false as parameter
     */
    public RecoveryConfiguration recovery() {
       return recovery;
@@ -176,26 +176,22 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    /**
     * @see TransactionConfigurationBuilder#completedTxTimeout(long)
     */
-   public long completedTxTimeout()  {
+   public long completedTxTimeout() {
       return completedTxTimeout.get();
    }
 
    /**
-    * Before Infinispan 5.1 you could access the cache both transactionally and
-    * non-transactionally. Naturally the non-transactional access is faster and
-    * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
-    * access is no longer supported, so if you wanna speed up transactional
-    * caches and you're ready to trade some consistency guarantees, you can
-    * enable use1PcForAutoCommitTransactions. <p/>
-    *
-    * What this configuration option does is force an induced transaction,
-    * that has been started by Infinispan as a result of enabling autoCommit,
-    * to commit in a single phase. So only 1 RPC instead of 2RPCs as in the
-    * case of a full 2 Phase Commit (2PC).
+    * Before Infinispan 5.1 you could access the cache both transactionally and non-transactionally. Naturally the
+    * non-transactional access is faster and offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
+    * access is no longer supported, so if you wanna speed up transactional caches and you're ready to trade some
+    * consistency guarantees, you can enable use1PcForAutoCommitTransactions. <p/>
+    * <p>
+    * What this configuration option does is force an induced transaction, that has been started by Infinispan as a
+    * result of enabling autoCommit, to commit in a single phase. So only 1 RPC instead of 2RPCs as in the case of a
+    * full 2 Phase Commit (2PC).
     * <p/>
     * <b>N.B.</b> this option should NOT be used when modifying the
-    * same key from multiple transactions as 1PC does not offer any consistency
-    * guarantees under concurrent access.
+    * same key from multiple transactions as 1PC does not offer any consistency guarantees under concurrent access.
     */
    public boolean use1PcForAutoCommitTransactions() {
       return use1PcForAutoCommitTransactions.get();
@@ -203,8 +199,8 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
 
    /**
     * @return are transactional notifications (
-    *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered} and
-    *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}) triggered?
+    * {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered} and
+    * {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}) triggered?
     */
    public boolean notifications() {
       return notifications.get();

@@ -17,6 +17,11 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public MemoryStorageConfiguration create() {
       return new MemoryStorageConfiguration(attributes.protect());
    }

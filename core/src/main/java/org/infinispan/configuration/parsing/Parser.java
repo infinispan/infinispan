@@ -165,7 +165,7 @@ public class Parser extends CacheParser {
                if (reader.getSchema().since(12, 0)) {
                   throw ParseUtils.elementRemoved(reader, Element.ALLOW_LIST.getLocalName());
                }
-               CONFIG.configDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST);
+               CONFIG.configDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST, reader.getLocation());
                parseAllowList(reader, builder.serialization().allowList(), Element.WHITE_LIST);
                break;
             case ALLOW_LIST: {
@@ -252,7 +252,7 @@ public class Parser extends CacheParser {
                break;
             }
             case ID: {
-               id = Integer.valueOf(value);
+               id = ParseUtils.parseInt(reader, i, value);
                break;
             }
             default: {
@@ -353,19 +353,19 @@ public class Parser extends CacheParser {
                break;
             }
             case CORE_THREADS: {
-               coreThreads = Integer.parseInt(value);
+               coreThreads = ParseUtils.parseInt(reader, i, value);
                break;
             }
             case MAX_THREADS: {
-               maxThreads = Integer.parseInt(value);
+               maxThreads = ParseUtils.parseInt(reader, i, value);
                break;
             }
             case QUEUE_LENGTH: {
-               queueLength = Integer.parseInt(value);
+               queueLength = ParseUtils.parseInt(reader, i, value);
                break;
             }
             case KEEP_ALIVE_TIME: {
-               keepAlive = Long.parseLong(value);
+               keepAlive = ParseUtils.parseLong(reader, i, value);
                break;
             }
             default: {
@@ -459,7 +459,7 @@ public class Parser extends CacheParser {
                break;
             }
             case PRIORITY: {
-               priority = Integer.parseInt(value);
+               priority = ParseUtils.parseInt(reader, i, value);
                break;
             }
             default: {
@@ -723,7 +723,7 @@ public class Parser extends CacheParser {
                break;
             }
             case STATISTICS: {
-               boolean statistics = Boolean.parseBoolean(value);
+               boolean statistics = ParseUtils.parseBoolean(reader, i, value);
                builder.cacheContainer().statistics(statistics);
                if (!reader.getSchema().since(10, 1)) {
                   builder.jmx().enabled(statistics);
@@ -731,11 +731,11 @@ public class Parser extends CacheParser {
                break;
             }
             case SHUTDOWN_HOOK: {
-               builder.shutdown().hookBehavior(ShutdownHookBehavior.valueOf(value));
+               builder.shutdown().hookBehavior(ParseUtils.parseEnum(reader, i, ShutdownHookBehavior.class, value));
                break;
             }
             case ZERO_CAPACITY_NODE: {
-               builder.zeroCapacityNode(Boolean.parseBoolean(value));
+               builder.zeroCapacityNode(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             default: {
@@ -889,24 +889,7 @@ public class Parser extends CacheParser {
 
    private void parseGlobalSecurity(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       GlobalSecurityConfigurationBuilder security = holder.getGlobalConfigurationBuilder().security();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case CACHE_SIZE: {
-               security.securityCacheSize(Integer.parseInt(value));
-               break;
-            }
-            case CACHE_TIMEOUT: {
-               security.securityCacheTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-
+      ParseUtils.parseAttributes(reader, security);
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -1031,8 +1014,8 @@ public class Parser extends CacheParser {
       if (name == null) {
          name = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName())[0];
       }
-      GlobalRoleConfigurationBuilder role = builder.role(name);
       String[] permissions = null;
+      GlobalRoleConfigurationBuilder role = builder.role(name);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -1066,11 +1049,11 @@ public class Parser extends CacheParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case GAUGES: {
-               builder.metrics().gauges(Boolean.parseBoolean(value));
+               builder.metrics().gauges(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case HISTOGRAMS: {
-               builder.metrics().histograms(Boolean.parseBoolean(value));
+               builder.metrics().histograms(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case PREFIX: {
@@ -1078,11 +1061,11 @@ public class Parser extends CacheParser {
                break;
             }
             case NAMES_AS_TAGS: {
-               builder.metrics().namesAsTags(Boolean.parseBoolean(value));
+               builder.metrics().namesAsTags(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case ACCURATE_SIZE: {
-               builder.metrics().accurateSize(Boolean.parseBoolean(value));
+               builder.metrics().accurateSize(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             default: {
@@ -1102,7 +1085,7 @@ public class Parser extends CacheParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
-               builder.jmx().enabled(Boolean.parseBoolean(value));
+               builder.jmx().enabled(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case DOMAIN: {
@@ -1180,7 +1163,7 @@ public class Parser extends CacheParser {
                   break;
                }
                case LOCK_TIMEOUT: {
-                  transport.distributedSyncTimeout(Long.parseLong(value));
+                  transport.distributedSyncTimeout(ParseUtils.parseLong(reader, i, value));
                   break;
                }
                case NODE_NAME: {
@@ -1204,7 +1187,7 @@ public class Parser extends CacheParser {
                }
                case INITIAL_CLUSTER_SIZE: {
                   if (reader.getSchema().since(8, 2)) {
-                     transport.initialClusterSize(Integer.parseInt(value));
+                     transport.initialClusterSize(ParseUtils.parseInt(reader, i, value));
                   } else {
                      throw ParseUtils.unexpectedAttribute(reader, i);
                   }
@@ -1212,7 +1195,7 @@ public class Parser extends CacheParser {
                }
                case INITIAL_CLUSTER_TIMEOUT: {
                   if (reader.getSchema().since(8, 2)) {
-                     transport.initialClusterTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
+                     transport.initialClusterTimeout(ParseUtils.parseLong(reader, i, value), TimeUnit.MILLISECONDS);
                   } else {
                      throw ParseUtils.unexpectedAttribute(reader, i);
                   }
@@ -1231,7 +1214,7 @@ public class Parser extends CacheParser {
       }
       Properties properties = parseProperties(reader, Element.TRANSPORT);
       for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
-         transport.addProperty((String) propertyEntry.getKey(), (String) propertyEntry.getValue());
+         transport.addProperty((String) propertyEntry.getKey(), propertyEntry.getValue());
       }
    }
 
