@@ -28,7 +28,7 @@ public class InvocationBatchingConfiguration implements Matchable<InvocationBatc
 
    @Override
    public String toString() {
-      return "InvocationBatchingConfiguration [attributes=" + attributes + "]";
+      return attributes.toString(null);
    }
 
    @Override

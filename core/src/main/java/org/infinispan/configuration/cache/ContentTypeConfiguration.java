@@ -4,22 +4,21 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.configuration.parsing.Attribute;
 
 /**
  * @since 9.2
  */
 public class ContentTypeConfiguration extends ConfigurationElement<ContentTypeConfiguration> {
+   public static final AttributeDefinition<MediaType> MEDIA_TYPE =
+         AttributeDefinition.builder(Attribute.MEDIA_TYPE, null, MediaType.class).immutable().build();
 
-   public static final String DEFAULT_MEDIA_TYPE = MediaType.APPLICATION_OBJECT_TYPE;
+   private final MediaType mediaType;
 
-   public static final AttributeDefinition<String> MEDIA_TYPE =
-         AttributeDefinition.builder("media-type", null, String.class).immutable().build();
-
-   private final MediaType parsed;
-
-   ContentTypeConfiguration(Enum<?> element, AttributeSet attributes, MediaType parsed) {
+   ContentTypeConfiguration(Enum<?> element, AttributeSet attributes, MediaType parentType) {
       super(element, attributes);
-      this.parsed = parsed;
+      // parent type has precedence
+      this.mediaType = parentType != null ? parentType : attributes.attribute(MEDIA_TYPE).get();
    }
 
    public static AttributeSet attributeDefinitionSet() {
@@ -27,28 +26,14 @@ public class ContentTypeConfiguration extends ConfigurationElement<ContentTypeCo
    }
 
    public MediaType mediaType() {
-      return parsed;
-   }
-
-   public void mediaType(MediaType mediaType) {
-      attributes.attribute(MEDIA_TYPE).set(mediaType.toString());
+      return mediaType;
    }
 
    public boolean isMediaTypeChanged() {
-      return attributes.attribute(MEDIA_TYPE).isModified();
-   }
-
-   public boolean isEncodingChanged() {
-      return attributes.attribute(MEDIA_TYPE).isModified();
+      return mediaType != null;
    }
 
    public boolean isObjectStorage() {
-      String mediaType = attributes.attribute(MEDIA_TYPE).get();
-      return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_OBJECT);
-   }
-
-   public boolean isProtobufStorage() {
-      String mediaType = attributes.attribute(MEDIA_TYPE).get();
-      return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_PROTOSTREAM);
+      return MediaType.APPLICATION_OBJECT.match(mediaType);
    }
 }

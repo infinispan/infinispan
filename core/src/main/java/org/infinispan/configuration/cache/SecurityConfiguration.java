@@ -23,7 +23,7 @@ public class SecurityConfiguration implements Matchable<SecurityConfiguration> {
 
    @Override
    public String toString() {
-      return "SecurityConfiguration [authorization=" + authorization + "]";
+      return "[authorization=" + authorization + ']';
    }
 
    @Override

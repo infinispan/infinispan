@@ -44,10 +44,8 @@ public class UpdatableConfigurationTest {
          assertEquals(IllegalArgumentException.class, t.getClass());
          assertEquals(Log.CONFIG.invalidConfiguration("local-cache").getMessage(), t.getMessage());
          Throwable[] suppressed = t.getSuppressed();
-         assertEquals(3, suppressed.length);
+         assertEquals(1, suppressed.length);
          assertEquals(Log.CONFIG.incompatibleAttribute("local-cache.encoding", "media-type", "text/plain", "application/x-protostream").getMessage(), suppressed[0].getMessage());
-         assertEquals(Log.CONFIG.incompatibleAttribute("local-cache.encoding.key", "media-type", "text/plain", "application/x-protostream").getMessage(), suppressed[1].getMessage());
-         assertEquals(Log.CONFIG.incompatibleAttribute("local-cache.encoding.value", "media-type", "text/plain", "application/x-protostream").getMessage(), suppressed[2].getMessage());
       }
    }
 }

@@ -119,7 +119,7 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
 
    @Override
    public String toString() {
-      return "PersistenceConfiguration [attributes=" + attributes + ", stores=" + stores + "]";
+      return attributes.toString(null) + ", stores=" + stores;
    }
 
    @Override

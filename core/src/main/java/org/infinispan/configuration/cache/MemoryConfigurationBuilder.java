@@ -259,11 +259,9 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    private void checkBinaryRequirement() {
-      String keyType = encoding().key().mediaType();
-      String valueType = encoding().value().mediaType();
       if (!storageType().canStoreReferences()) {
          if (getBuilder().clustering().hash().groups().isEnabled()) {
-            throw CONFIG.groupingOnlyCompatibleWithObjectStorage(keyType, valueType);
+            throw CONFIG.groupingOnlyCompatibleWithObjectStorage(encoding().key().mediaType(), encoding().value().mediaType());
          }
       }
 

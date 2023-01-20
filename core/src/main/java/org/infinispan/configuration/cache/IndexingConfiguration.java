@@ -176,10 +176,8 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    @Override
    public String toString() {
-      return "IndexingConfiguration{" +
-            "readerConfiguration=" + readerConfiguration +
-            ", writerConfiguration=" + writerConfiguration +
-            ", attributes=" + attributes +
-            '}';
+      return attributes.toString(null) +
+            ", reader=" + readerConfiguration +
+            ", writer=" + writerConfiguration;
    }
 }

@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -646,22 +645,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writeEncoding(ConfigurationWriter writer, Configuration configuration) {
-      MediaType keyDataType = configuration.encoding().keyDataType().mediaType();
-      MediaType valueDataType = configuration.encoding().valueDataType().mediaType();
-      if (keyDataType != null || valueDataType != null) {
-         writer.writeStartElement(Element.ENCODING);
-         if (keyDataType != null) {
-            writer.writeStartElement(Element.KEY_DATA_TYPE);
-            writer.writeAttribute(Attribute.MEDIA_TYPE, keyDataType.toString());
-            writer.writeEndElement();
-         }
-         if (valueDataType != null) {
-            writer.writeStartElement(Element.VALUE_DATA_TYPE);
-            writer.writeAttribute(Attribute.MEDIA_TYPE, valueDataType.toString());
-            writer.writeEndElement();
-         }
-         writer.writeEndElement();
-      }
+      configuration.encoding().write(writer);
    }
 
    private void writePartitionHandling(ConfigurationWriter writer, Configuration configuration) {
