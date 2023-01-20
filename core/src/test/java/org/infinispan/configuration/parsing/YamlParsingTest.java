@@ -26,6 +26,6 @@ public class YamlParsingTest extends AbstractInfinispanTest {
 
    public void testErrorReporting() {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
-      Exceptions.expectException("^ISPN000327:.* at \\[18,18\\].*", () -> parserRegistry.parseFile("configs/broken.yaml"), CacheConfigurationException.class);
+      Exceptions.expectException("^ISPN000327:.*broken.yaml\\[18,18\\].*", () -> parserRegistry.parseFile("configs/broken.yaml"), CacheConfigurationException.class);
    }
 }

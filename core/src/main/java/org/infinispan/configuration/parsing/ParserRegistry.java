@@ -138,11 +138,11 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ConfigurationBuilderHolder parse(String s) {
-      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), null, MediaType.APPLICATION_XML);
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
    }
 
    public ConfigurationBuilderHolder parse(String s, MediaType mediaType) {
-      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), null, mediaType);
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), ConfigurationResourceResolver.DEFAULT, mediaType);
    }
 
    /**

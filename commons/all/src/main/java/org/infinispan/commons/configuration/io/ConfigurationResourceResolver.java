@@ -11,4 +11,8 @@ public interface ConfigurationResourceResolver {
    ConfigurationResourceResolver DEFAULT = new URLConfigurationResourceResolver(null);
 
    URL resolveResource(String href) throws IOException;
+
+   default URL getContext() {
+      return null;
+   }
 }

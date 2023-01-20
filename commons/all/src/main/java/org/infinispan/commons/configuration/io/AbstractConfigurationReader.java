@@ -1,5 +1,6 @@
 package org.infinispan.commons.configuration.io;
 
+import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
@@ -8,6 +9,7 @@ import java.util.Properties;
  * @since 12.1
  **/
 public abstract class AbstractConfigurationReader implements ConfigurationReader {
+   private final String name;
    private final Properties properties;
    private final PropertyReplacer replacer;
    private final ConfigurationResourceResolver resolver;
@@ -15,10 +17,17 @@ public abstract class AbstractConfigurationReader implements ConfigurationReader
    private ConfigurationSchemaVersion schema;
 
    protected AbstractConfigurationReader(ConfigurationResourceResolver resolver, Properties properties, PropertyReplacer replacer, NamingStrategy namingStrategy) {
+      URL context = resolver.getContext();
+      this.name = context != null ? context.getPath() : null;
       this.resolver = resolver;
       this.properties = properties;
       this.replacer = replacer;
       this.namingStrategy = namingStrategy;
+   }
+
+   @Override
+   public String getName() {
+      return name;
    }
 
    @Override

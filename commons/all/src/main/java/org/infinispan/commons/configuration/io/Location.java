@@ -4,27 +4,30 @@ package org.infinispan.commons.configuration.io;
  * @since 12.1
  * @author Tristan Tarrant &lt;tristan@infinispan.org%gt;
  */
-public interface Location {
+public class Location {
+  private final String name;
+  private final int line;
+  private final int column;
 
-  int getLineNumber();
+  public Location(String name, int line, int column) {
+    this.name = name;
+    this.line = line;
+    this.column = column;
+  }
 
-  int getColumnNumber();
+  public String getName() {
+    return name;
+  }
 
-  static Location of(int line, int column) {
-    return new Location() {
-      @Override
-      public int getLineNumber() {
-        return line;
-      }
+  public int getLineNumber() {
+    return line;
+  }
 
-      @Override
-      public int getColumnNumber() {
-        return column;
-      }
+  public int getColumnNumber(){
+    return column;
+  }
 
-      public String toString() {
-        return "[" + line + ',' + column + ']';
-      }
-    };
+  public String toString() {
+    return (name != null ? name : "") + "[" + line + ',' + column + ']';
   }
 }
