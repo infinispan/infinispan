@@ -6,10 +6,11 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.StandardConversions.convertCharset;
 import static org.infinispan.server.core.dataconversion.JsonTranscoder.TYPE_PROPERTY;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.nio.charset.Charset;
@@ -43,7 +44,7 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
    }
 
    @Override
-   public void testTranscoderTranscode() throws Exception {
+   public void testTranscoderTranscode() {
       MediaType jsonMediaType = APPLICATION_JSON;
       MediaType personMediaType = MediaType.fromString("application/x-java-object;type=org.infinispan.test.data.Person");
 
@@ -68,8 +69,15 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_JSON, APPLICATION_JSON.withCharset(US_ASCII)));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_UNKNOWN, APPLICATION_JSON));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OCTET_STREAM, APPLICATION_JSON));
+      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_JSON));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, TEXT_PLAIN, APPLICATION_JSON));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OBJECT, APPLICATION_JSON));
+   }
+
+   @Test
+   public void testWWWFormUrlEncoded() {
+      byte[] transcoded = (byte[]) transcoder.transcode("%7B%22k%22%3A%22v%22%7D", APPLICATION_WWW_FORM_URLENCODED, APPLICATION_JSON);
+      assertEquals("{\"k\":\"v\"}", new String(transcoded));
    }
 
    @Test

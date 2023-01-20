@@ -4,6 +4,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
 import java.io.BufferedReader;
@@ -53,7 +54,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
    }
 
    public JsonTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
-      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
+      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_UNKNOWN);
       this.objectMapper = new ObjectMapper().setDefaultTyping(
             new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL, allowList) {
                {
