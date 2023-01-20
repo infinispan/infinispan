@@ -6,9 +6,7 @@
 
    <cache-container name="QueryEnabledGrid-Local-NRTIndexing" default-cache="default" statistics="false">
       <local-cache name="default" statistics="false">
-         <memory>
-            <object size="-1"/>
-         </memory>
+         <memory storage="OBJECT"/>
          <expiration max-idle="-1"/>
          <indexing enabled="false"/>
       </local-cache>
@@ -17,9 +15,7 @@
       <!-- *************************************** -->
       <local-cache name="Indexed">
          <!--  For our test we don't want to keep all data in memory: throw some away -->
-         <memory>
-            <object size="-1"/>
-         </memory>
+         <memory storage="OBJECT"/>
          <indexing storage="local-heap">
             <key-transformers>
                <key-transformer key="org.infinispan.query.test.CustomKey3" transformer="org.infinispan.query.test.CustomKey3Transformer"/>

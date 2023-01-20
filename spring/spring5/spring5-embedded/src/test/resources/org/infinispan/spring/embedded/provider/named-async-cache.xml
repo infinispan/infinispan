@@ -13,7 +13,7 @@
     <cache-container name="SampleCacheManager" statistics="false" default-cache="default">
         <transport stack="test-tcp" cluster="infinispan-cluster" node-name="Node-A" machine="m1" rack="r1" site="LON"/>
         <replicated-cache name="default" statistics="true" mode="SYNC" remote-timeout="20000">
-            <locking isolation="READ_COMMITTED" acquire-timeout="20000" write-skew="false" concurrency-level="5000"
+            <locking isolation="READ_COMMITTED" acquire-timeout="20000" concurrency-level="5000"
                      striping="false"/>
             <store-as-binary/>
             <state-transfer enabled="false" timeout="240000" chunk-size="10000"/>

@@ -5,9 +5,7 @@
          <expiration interval="10500" lifespan="11" max-idle="11"/>
       </local-cache-configuration>
       <local-cache name="foo" statistics="true">
-         <memory max-count="${test.max-count}">
-            <object/>
-         </memory>
+         <memory max-count="${test.max-count}" storage="OBJECT"/>
       </local-cache>
    </cache-container>
 </infinispan>

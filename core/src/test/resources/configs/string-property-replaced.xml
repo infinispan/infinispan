@@ -25,7 +25,6 @@
          <locking
                isolation="${StringPropertyReplacementTest.IsolationLevel:REPEATABLE_READ}"
                acquire-timeout="${StringPropertyReplacementTest.LockAcquisitionTimeout:15000}"
-               write-skew="false"
                concurrency-level="500"/>
          <transaction
                transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
