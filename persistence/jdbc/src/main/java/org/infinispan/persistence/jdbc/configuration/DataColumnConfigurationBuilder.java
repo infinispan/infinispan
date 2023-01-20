@@ -14,6 +14,11 @@ public class DataColumnConfigurationBuilder implements Builder<DataColumnConfigu
       attributes = DataColumnConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public DataColumnConfigurationBuilder dataColumnName(String dataColumnName) {
       attributes.attribute(DATA_COLUMN_NAME).set(dataColumnName);
       return this;

@@ -22,6 +22,11 @@ public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbc
       attributes = ManagedConnectionFactoryConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public void jndiUrl(String jndiUrl) {
       attributes.attribute(JNDI_URL).set(jndiUrl);
    }

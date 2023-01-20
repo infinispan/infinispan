@@ -48,6 +48,11 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.jgroupsConfigurationBuilder = new JGroupsConfigurationBuilder(globalConfig);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Defines the name of the cluster. Nodes only connect to clusters sharing the same name.
     *

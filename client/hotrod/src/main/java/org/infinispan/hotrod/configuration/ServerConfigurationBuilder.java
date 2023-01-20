@@ -24,6 +24,11 @@ public class ServerConfigurationBuilder extends AbstractConfigurationChildBuilde
       super(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public ServerConfigurationBuilder host(String host) {
       attributes.attribute(HOST).set(host);
       return this;

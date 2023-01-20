@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.infinispan.client.rest.RestURI;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -41,6 +42,11 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
       this.servers = new ArrayList<>();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    @Override

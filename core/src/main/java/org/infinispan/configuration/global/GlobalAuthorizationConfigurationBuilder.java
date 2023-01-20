@@ -39,6 +39,11 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
       attributes = GlobalAuthorizationConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public GlobalAuthorizationConfigurationBuilder enable() {
       return this.enabled(true);
    }

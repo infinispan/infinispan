@@ -164,4 +164,9 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
       return this;
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
 }

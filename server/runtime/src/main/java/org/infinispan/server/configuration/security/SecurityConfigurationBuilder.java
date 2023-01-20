@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 
 /**
@@ -15,6 +16,11 @@ public class SecurityConfigurationBuilder implements Builder<SecurityConfigurati
    public SecurityConfigurationBuilder(ServerConfigurationBuilder builder) {
       this.builder = builder;
       this.credentialStoresConfiguration = new CredentialStoresConfigurationBuilder(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public CredentialStoresConfigurationBuilder credentialStores() {

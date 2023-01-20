@@ -32,6 +32,11 @@ public class AllowListConfigurationBuilder implements Builder<AllowListConfigura
       attributes = AllowListConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Helper method that allows for registration of a class to the {@link ClassAllowList}.
     */

@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -17,6 +18,11 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    public MemcachedServerConfigurationBuilder() {
       super(MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT, MemcachedServerConfiguration.attributeDefinitionSet());
       this.defaultCacheName(MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

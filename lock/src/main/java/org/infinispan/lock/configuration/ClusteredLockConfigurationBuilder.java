@@ -15,6 +15,11 @@ public class ClusteredLockConfigurationBuilder implements Builder<ClusteredLockC
    private final AttributeSet attributes = ClusteredLockConfiguration.attributeDefinitionSet();
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public void validate() {
       attributes.attributes().forEach(Attribute::validate);
    }

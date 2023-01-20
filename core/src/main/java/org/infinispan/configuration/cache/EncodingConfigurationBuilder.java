@@ -28,6 +28,11 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public void validate() {
       String globalMediaType = mediaType.get();
       if (globalMediaType != null) {

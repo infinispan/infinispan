@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -23,6 +24,11 @@ public class RespServerConfigurationBuilder extends ProtocolServerConfigurationB
    public RespServerConfigurationBuilder() {
       super(RespServerConfiguration.DEFAULT_RESP_PORT, RespServerConfiguration.attributeDefinitionSet());
       this.defaultCacheName(RespServerConfiguration.DEFAULT_RESP_CACHE);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

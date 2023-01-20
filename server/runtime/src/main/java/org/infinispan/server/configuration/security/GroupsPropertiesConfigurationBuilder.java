@@ -16,6 +16,11 @@ public class GroupsPropertiesConfigurationBuilder implements Builder<GroupsPrope
       attributes = GroupsPropertiesConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public GroupsPropertiesConfigurationBuilder path(String path) {
       attributes.attribute(PATH).set(path);
       return this;

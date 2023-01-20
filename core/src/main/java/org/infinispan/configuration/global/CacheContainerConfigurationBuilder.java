@@ -46,6 +46,11 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       this.shutdown = new ShutdownConfigurationBuilder(globalConfig);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public CacheContainerConfigurationBuilder clusteredDefault() {
       transport().
             defaultTransport()

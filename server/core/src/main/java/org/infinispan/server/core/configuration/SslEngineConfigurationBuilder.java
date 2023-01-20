@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -32,6 +33,11 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    SslEngineConfigurationBuilder(SslConfigurationBuilder parentSslConfigurationBuilder) {
       this.parentSslConfigurationBuilder = parentSslConfigurationBuilder;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

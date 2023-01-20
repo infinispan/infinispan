@@ -36,6 +36,11 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
       this.calibrateByDeletes = attributes.attribute(CALIBRATE_BY_DELETES);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public IndexMergeConfigurationBuilder maxEntries(int value) {
       maxEntries.set(value);
       return this;

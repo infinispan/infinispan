@@ -23,6 +23,7 @@ import javax.xml.validation.SchemaFactory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Version;
@@ -430,6 +431,11 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       }
 
       public NonValidatingBuilder(ConfigurationBuilder builder) {
+      }
+
+      @Override
+      public AttributeSet attributes() {
+         return AttributeSet.EMPTY;
       }
 
       @Override

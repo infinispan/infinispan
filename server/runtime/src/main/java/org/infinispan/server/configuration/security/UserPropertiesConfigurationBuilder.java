@@ -18,6 +18,11 @@ public class UserPropertiesConfigurationBuilder implements Builder<UserPropertie
       attributes = UserPropertiesConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public UserPropertiesConfigurationBuilder path(String path) {
       attributes.attribute(PATH).set(path);
       return this;

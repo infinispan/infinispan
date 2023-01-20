@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * @since 10.0
@@ -16,6 +17,11 @@ public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdent
 
    ServerIdentitiesConfigurationBuilder(RealmConfigurationBuilder realmBuilder) {
       this.realmBuilder = realmBuilder;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public SSLConfigurationBuilder sslConfiguration() {

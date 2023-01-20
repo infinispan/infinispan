@@ -29,6 +29,11 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
       attributes = AuthenticationConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public AuthenticationConfigurationBuilder enable() {
       return enabled(true);
    }

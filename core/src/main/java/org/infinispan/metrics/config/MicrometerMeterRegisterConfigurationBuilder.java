@@ -3,6 +3,7 @@ package org.infinispan.metrics.config;
 import java.util.Objects;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -21,6 +22,11 @@ public class MicrometerMeterRegisterConfigurationBuilder implements Builder<Micr
 
    public MicrometerMeterRegisterConfigurationBuilder(GlobalConfigurationBuilder builder) {
       //required because GlobalConfigurationBuilder#addModule uses reflection
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

@@ -19,6 +19,11 @@ public class SniConfigurationBuilder implements Builder<SniConfiguration> {
       this.attributes = SniConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SniConfigurationBuilder realm(String name) {
       attributes.attribute(SniConfiguration.SECURITY_REALM).set(name);
       return this;

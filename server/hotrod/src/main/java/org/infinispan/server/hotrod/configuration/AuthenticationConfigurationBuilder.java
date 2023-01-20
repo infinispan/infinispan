@@ -30,6 +30,11 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
       this.attributes = AuthenticationConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public AuthenticationConfigurationBuilder enable() {
       this.enabled = true;
       return this;

@@ -28,6 +28,11 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
       attributes = PooledConnectionFactoryConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public PooledConnectionFactoryConfigurationBuilder<S> propertyFile(String propertyFile) {
       attributes.attribute(PROPERTY_FILE).set(propertyFile);
       return this;

@@ -24,6 +24,11 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
       attributes = ContentTypeConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public boolean isObjectStorage() {
       String mediaType = mediaType();
       return mediaType != null && MediaType.fromString(mediaType).match(MediaType.APPLICATION_OBJECT);

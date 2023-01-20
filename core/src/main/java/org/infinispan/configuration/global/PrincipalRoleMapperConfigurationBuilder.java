@@ -16,6 +16,11 @@ public class PrincipalRoleMapperConfigurationBuilder extends AbstractGlobalConfi
       attributes = PrincipalRoleMapperConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public PrincipalRoleMapperConfigurationBuilder mapper(PrincipalRoleMapper principalRoleMapper) {
       this.principalRoleMapper = principalRoleMapper;
       return this;

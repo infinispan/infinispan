@@ -29,6 +29,11 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       attributes = ExpirationConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
     * milliseconds. -1 means the entries never expire.

@@ -25,6 +25,11 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
       super(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Specifies what happens when asking for a connection from a server's pool, and that pool is
     * exhausted.

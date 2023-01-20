@@ -34,6 +34,11 @@ public class ClusteredLockManagerConfigurationBuilder implements Builder<Cluster
       this.builder = builder;
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * @return the default {@link ClusteredLockManagerConfiguration}.
     */

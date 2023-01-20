@@ -24,6 +24,11 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
       attributes = GroupsConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public boolean isEnabled() {
       return attributes.attribute(ENABLED).get();
    }

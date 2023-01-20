@@ -19,6 +19,11 @@ public class PrivateGlobalConfigurationBuilder implements Builder<PrivateGlobalC
       this.attributes = PrivateGlobalConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public PrivateGlobalConfigurationBuilder serverMode(boolean serverMode) {
       this.attributes.attribute(PrivateGlobalConfiguration.SERVER_MODE).set(serverMode);
       return this;

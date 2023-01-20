@@ -23,6 +23,11 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
       attributes = RecoveryConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Enable recovery for this cache
     */

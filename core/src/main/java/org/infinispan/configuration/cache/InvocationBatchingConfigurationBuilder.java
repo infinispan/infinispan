@@ -20,6 +20,11 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
       attributes = InvocationBatchingConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public InvocationBatchingConfigurationBuilder enable() {
       attributes.attribute(ENABLED).set(true);
       enableTransactions();

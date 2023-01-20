@@ -28,6 +28,11 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
       this.attributes = CredentialStoresConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public CredentialStoreConfigurationBuilder addCredentialStore(String name) {
       CredentialStoreConfigurationBuilder credentialStoreBuilder = new CredentialStoreConfigurationBuilder(name);
       credentialStores.put(name, credentialStoreBuilder);

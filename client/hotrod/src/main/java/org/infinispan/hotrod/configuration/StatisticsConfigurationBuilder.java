@@ -30,6 +30,11 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
       super(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Enables or disables client-side statistics collection
     *

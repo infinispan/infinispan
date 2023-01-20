@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.endpoint;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -24,6 +25,11 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
    public SinglePortServerConfigurationBuilder() {
       super(HotRodServer.DEFAULT_HOTROD_PORT, SinglePortRouterConfiguration.attributeDefinitionSet());
       singlePortRouter.enabled(true);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

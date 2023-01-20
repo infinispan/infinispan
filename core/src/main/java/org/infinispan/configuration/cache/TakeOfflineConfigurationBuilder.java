@@ -13,13 +13,18 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  */
 public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration> {
 
-   private final AttributeSet attributes;
+   public final AttributeSet attributes;
    private final BackupConfigurationBuilder backupConfigurationBuilder;
 
    public TakeOfflineConfigurationBuilder(ConfigurationBuilder builder, BackupConfigurationBuilder backupConfigurationBuilder) {
       super(builder);
       attributes = TakeOfflineConfiguration.attributeDefinitionSet();
       this.backupConfigurationBuilder = backupConfigurationBuilder;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    /**

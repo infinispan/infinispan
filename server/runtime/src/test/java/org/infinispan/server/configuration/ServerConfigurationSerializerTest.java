@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
@@ -88,7 +89,7 @@ public class ServerConfigurationSerializerTest {
       }
       log.debug(baos);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = registry.parse(bais, null, type);
+      ConfigurationBuilderHolder holderAfter = registry.parse(bais, ConfigurationResourceResolver.DEFAULT, type);
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();
       GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
       ServerConfiguration serverBefore = globalConfigurationBefore.module(ServerConfiguration.class);
