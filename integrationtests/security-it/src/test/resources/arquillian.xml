@@ -16,7 +16,7 @@
             <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/testnode</property>
             <!--Needed for security domain configuration-->
-            <property name="serverConfig">standalone.xml</property>
+            <property name="serverConfig">standalone-test.xml</property>
             <property name="javaVmArguments">
                ${server.jvm.args}
                -Djboss.node.name=testnode -Djgroups.join_timeout=2000
@@ -33,7 +33,7 @@
             <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node0</property>
             <!-- Needed for security domain configuration -->
-            <property name="serverConfig">standalone-ha.xml</property>
+            <property name="serverConfig">standalone-test.xml</property>
             <property name="javaVmArguments">
                ${server.jvm.args}
                -Djboss.node.name=node0
@@ -56,7 +56,7 @@
          <configuration>
             <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node1</property>
-            <property name="serverConfig">standalone-ha.xml</property>
+            <property name="serverConfig">standalone-test.xml</property>
             <property name="javaVmArguments">
                ${server.jvm.args}
                -Djboss.node.name=node1
@@ -78,7 +78,7 @@
          <configuration>
             <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node1</property>
-            <property name="serverConfig">standalone-ha.xml</property>
+            <property name="serverConfig">standalone-test.xml</property>
             <property name="javaVmArguments">
                ${server.jvm.args}
                -Djboss.node.name=node1
@@ -101,7 +101,7 @@
             <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node0</property>
             <!-- Needed for security domain configuration -->
-            <property name="serverConfig">standalone-ha.xml</property>
+            <property name="serverConfig">standalone-test.xml</property>
             <property name="javaVmArguments">
                ${server.jvm.args}
                -Djboss.node.name=node0
@@ -123,7 +123,7 @@
          <configuration>
             <property name="javaHome">${server.jvm}</property>
             <property name="jbossHome">${basedir}/target/node1</property>
-            <property name="serverConfig">standalone-ha.xml</property>
+            <property name="serverConfig">standalone-test.xml</property>
             <property name="javaVmArguments">
                ${server.jvm.args}
                -Djboss.node.name=node1
