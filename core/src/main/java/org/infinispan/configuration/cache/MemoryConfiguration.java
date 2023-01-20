@@ -164,32 +164,6 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
       return maxCount() > 0;
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MemoryConfiguration that = (MemoryConfiguration) o;
-
-      if (!memoryStorageConfiguration.equals(that.memoryStorageConfiguration)) return false;
-      return attributes.equals(that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = memoryStorageConfiguration.hashCode();
-      result = 31 * result + attributes.hashCode();
-      return result;
-   }
-
-   @Override
-   public String toString() {
-      return "MemoryConfiguration{" +
-             "memoryStorageConfiguration=" + memoryStorageConfiguration +
-             ", attributes=" + attributes +
-             '}';
-   }
-
    /**
     * @deprecated Since 11.0, use {@link #evictionStrategy()}, {@link #maxSize()},
     *       {@link #maxCount()}, {@link #isOffHeap()} instead

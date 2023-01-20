@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -24,20 +25,20 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    private final Attribute<Boolean> simpleCache;
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
-   private final MemoryConfiguration memoryConfiguration;
    private final EncodingConfiguration encodingConfiguration;
    private final ExpirationConfiguration expirationConfiguration;
-   private final QueryConfiguration queryConfiguration;
    private final IndexingConfiguration indexingConfiguration;
    private final InvocationBatchingConfiguration invocationBatchingConfiguration;
-   private final StatisticsConfiguration statisticsConfiguration;
-   private final PersistenceConfiguration persistenceConfiguration;
    private final LockingConfiguration lockingConfiguration;
-   private final TransactionConfiguration transactionConfiguration;
-   private final UnsafeConfiguration unsafeConfiguration;
+   private final MemoryConfiguration memoryConfiguration;
    private final Map<Class<?>, ?> moduleConfiguration;
+   private final PersistenceConfiguration persistenceConfiguration;
+   private final QueryConfiguration queryConfiguration;
    private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
+   private final StatisticsConfiguration statisticsConfiguration;
+   private final TransactionConfiguration transactionConfiguration;
+   private final UnsafeConfiguration unsafeConfiguration;
    private final boolean template;
 
    Configuration(boolean template, AttributeSet attributes,
@@ -181,136 +182,74 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    @Override
    public String toString() {
       return "Configuration{" +
-            "simpleCache=" + simpleCache +
+            "simpleCache=" + simpleCache.get() +
             ", clustering=" + clusteringConfiguration +
             ", customInterceptors=" + customInterceptorsConfiguration +
-            ", encodingConfiguration= " + encodingConfiguration +
+            ", encoding=" + encodingConfiguration +
             ", expiration=" + expirationConfiguration +
+            ", query=" + queryConfiguration +
             ", indexing=" + indexingConfiguration +
             ", invocationBatching=" + invocationBatchingConfiguration +
-            ", statistics=" + statisticsConfiguration +
-            ", persistence=" + persistenceConfiguration +
             ", locking=" + lockingConfiguration +
+            ", memory=" + memoryConfiguration +
             ", modules=" + moduleConfiguration +
+            ", persistence=" + persistenceConfiguration +
             ", security=" + securityConfiguration +
+            ", sites=" + sitesConfiguration +
+            ", statistics=" + statisticsConfiguration +
             ", transaction=" + transactionConfiguration +
             ", unsafe=" + unsafeConfiguration +
-            ", sites=" + sitesConfiguration +
-            ", memory=" + memoryConfiguration +
+            ", template=" + template +
             '}';
    }
 
    @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + (simpleCache.get() ? 0 : 1);
-      result = prime * result + (template ? 1231 : 1237);
-      result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
-      result = prime * result
-            + ((customInterceptorsConfiguration == null) ? 0 : customInterceptorsConfiguration.hashCode());
-      result = prime * result + ((encodingConfiguration == null) ? 0 : encodingConfiguration.hashCode());
-      result = prime * result + ((expirationConfiguration == null) ? 0 : expirationConfiguration.hashCode());
-      result = prime * result + ((indexingConfiguration == null) ? 0 : indexingConfiguration.hashCode());
-      result = prime * result
-            + ((invocationBatchingConfiguration == null) ? 0 : invocationBatchingConfiguration.hashCode());
-      result = prime * result + ((statisticsConfiguration == null) ? 0 : statisticsConfiguration.hashCode());
-      result = prime * result + ((lockingConfiguration == null) ? 0 : lockingConfiguration.hashCode());
-      result = prime * result + ((moduleConfiguration == null) ? 0 : moduleConfiguration.hashCode());
-      result = prime * result + ((persistenceConfiguration == null) ? 0 : persistenceConfiguration.hashCode());
-      result = prime * result + ((securityConfiguration == null) ? 0 : securityConfiguration.hashCode());
-      result = prime * result + ((sitesConfiguration == null) ? 0 : sitesConfiguration.hashCode());
-      result = prime * result + ((transactionConfiguration == null) ? 0 : transactionConfiguration.hashCode());
-      result = prime * result + ((unsafeConfiguration == null) ? 0 : unsafeConfiguration.hashCode());
-      return result;
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      Configuration that = (Configuration) o;
+      return template == that.template
+            && Objects.equals(simpleCache.get(), that.simpleCache.get())
+            && Objects.equals(clusteringConfiguration, that.clusteringConfiguration)
+            && Objects.equals(customInterceptorsConfiguration, that.customInterceptorsConfiguration)
+            && Objects.equals(encodingConfiguration, that.encodingConfiguration)
+            && Objects.equals(expirationConfiguration, that.expirationConfiguration)
+            && Objects.equals(indexingConfiguration, that.indexingConfiguration)
+            && Objects.equals(invocationBatchingConfiguration, that.invocationBatchingConfiguration)
+            && Objects.equals(lockingConfiguration, that.lockingConfiguration)
+            && Objects.equals(memoryConfiguration, that.memoryConfiguration)
+            && Objects.equals(moduleConfiguration, that.moduleConfiguration)
+            && Objects.equals(persistenceConfiguration, that.persistenceConfiguration)
+            && Objects.equals(queryConfiguration, that.queryConfiguration)
+            && Objects.equals(securityConfiguration, that.securityConfiguration)
+            && Objects.equals(sitesConfiguration, that.sitesConfiguration)
+            && Objects.equals(statisticsConfiguration, that.statisticsConfiguration)
+            && Objects.equals(transactionConfiguration, that.transactionConfiguration)
+            && Objects.equals(unsafeConfiguration, that.unsafeConfiguration);
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      Configuration other = (Configuration) obj;
-      if (template != other.template) {
-         return false;
-      }
-      if (!simpleCache.get().equals(other.simpleCache.get())) {
-         return false;
-      }
-      if (clusteringConfiguration == null) {
-         if (other.clusteringConfiguration != null)
-            return false;
-      } else if (!clusteringConfiguration.equals(other.clusteringConfiguration))
-         return false;
-      if (customInterceptorsConfiguration == null) {
-         if (other.customInterceptorsConfiguration != null)
-            return false;
-      } else if (!customInterceptorsConfiguration.equals(other.customInterceptorsConfiguration))
-         return false;
-      if (expirationConfiguration == null) {
-         if (other.expirationConfiguration != null)
-            return false;
-      } else if (!expirationConfiguration.equals(other.expirationConfiguration))
-         return false;
-      if (indexingConfiguration == null) {
-         if (other.indexingConfiguration != null)
-            return false;
-      } else if (!indexingConfiguration.equals(other.indexingConfiguration))
-         return false;
-      if (invocationBatchingConfiguration == null) {
-         if (other.invocationBatchingConfiguration != null)
-            return false;
-      } else if (!invocationBatchingConfiguration.equals(other.invocationBatchingConfiguration))
-         return false;
-      if (statisticsConfiguration == null) {
-         if (other.statisticsConfiguration != null)
-            return false;
-      } else if (!statisticsConfiguration.equals(other.statisticsConfiguration))
-         return false;
-      if (lockingConfiguration == null) {
-         if (other.lockingConfiguration != null)
-            return false;
-      } else if (!lockingConfiguration.equals(other.lockingConfiguration))
-         return false;
-      if (memoryConfiguration == null) {
-         if (other.memoryConfiguration != null)
-            return false;
-      } else if (!memoryConfiguration.equals(other.memoryConfiguration))
-         return false;
-      if (moduleConfiguration == null) {
-         if (other.moduleConfiguration != null)
-            return false;
-      } else if (!moduleConfiguration.equals(other.moduleConfiguration))
-         return false;
-      if (persistenceConfiguration == null) {
-         if (other.persistenceConfiguration != null)
-            return false;
-      } else if (!persistenceConfiguration.equals(other.persistenceConfiguration))
-         return false;
-      if (securityConfiguration == null) {
-         if (other.securityConfiguration != null)
-            return false;
-      } else if (!securityConfiguration.equals(other.securityConfiguration))
-         return false;
-      if (sitesConfiguration == null) {
-         if (other.sitesConfiguration != null)
-            return false;
-      } else if (!sitesConfiguration.equals(other.sitesConfiguration))
-         return false;
-      if (transactionConfiguration == null) {
-         if (other.transactionConfiguration != null)
-            return false;
-      } else if (!transactionConfiguration.equals(other.transactionConfiguration))
-         return false;
-      if (unsafeConfiguration == null) {
-         if (other.unsafeConfiguration != null)
-            return false;
-      } else if (!unsafeConfiguration.equals(other.unsafeConfiguration))
-         return false;
-      return true;
+   public int hashCode() {
+      return Objects.hash(super.hashCode(), simpleCache.get(),
+            clusteringConfiguration,
+            customInterceptorsConfiguration,
+            encodingConfiguration,
+            expirationConfiguration,
+            indexingConfiguration,
+            invocationBatchingConfiguration,
+            lockingConfiguration,
+            memoryConfiguration,
+            moduleConfiguration,
+            persistenceConfiguration,
+            queryConfiguration,
+            securityConfiguration,
+            sitesConfiguration,
+            statisticsConfiguration,
+            transactionConfiguration,
+            unsafeConfiguration,
+            template
+      );
    }
 
    @Override
@@ -321,13 +260,13 @@ public class Configuration extends ConfigurationElement<Configuration> implement
          return false;
       if (!customInterceptorsConfiguration.matches(other.customInterceptorsConfiguration))
          return false;
+      if (!encodingConfiguration.matches(other.encodingConfiguration))
+         return false;
       if (!expirationConfiguration.matches(other.expirationConfiguration))
          return false;
       if (!indexingConfiguration.matches(other.indexingConfiguration))
          return false;
       if (!invocationBatchingConfiguration.matches(other.invocationBatchingConfiguration))
-         return false;
-      if (!statisticsConfiguration.matches(other.statisticsConfiguration))
          return false;
       if (!lockingConfiguration.matches(other.lockingConfiguration))
          return false;
@@ -335,9 +274,13 @@ public class Configuration extends ConfigurationElement<Configuration> implement
          return false;
       if (!persistenceConfiguration.matches(other.persistenceConfiguration))
          return false;
+      if (!queryConfiguration.matches(other.queryConfiguration))
+         return false;
       if (!securityConfiguration.matches(other.securityConfiguration))
          return false;
       if (!sitesConfiguration.matches(other.sitesConfiguration))
+         return false;
+      if (!statisticsConfiguration.matches(other.statisticsConfiguration))
          return false;
       if (!transactionConfiguration.matches(other.transactionConfiguration))
          return false;
