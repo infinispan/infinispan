@@ -6,9 +6,7 @@
 
    <cache-container default-cache="default">
       <local-cache name="default">
-         <memory>
-            <object size="1000"/>
-         </memory>
+         <memory storage="OBJECT" max-count="1000"/>
       </local-cache>
    </cache-container>
 

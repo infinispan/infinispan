@@ -9,8 +9,7 @@
   <cache-container default-cache="default">
     <local-cache name="default">
       <locking isolation="REPEATABLE_READ"
-               acquire-timeout="20000" write-skew="false"
-               concurrency-level="500" striping="false" />
+               acquire-timeout="20000" concurrency-level="500" striping="false" />
     </local-cache>
     <local-cache name="anotherCache">
       <persistence passivation="false">

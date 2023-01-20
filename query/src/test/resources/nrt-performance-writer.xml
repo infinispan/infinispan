@@ -6,9 +6,7 @@
 
    <cache-container name="QueryEnabledGrid-Local-NRTIndexing" default-cache="default" statistics="false">
       <local-cache name="default" statistics="false">
-         <memory>
-            <object size="-1"/>
-         </memory>
+         <memory storage="OBJECT"/>
          <expiration max-idle="-1"/>
          <indexing enabled="false"/>
       </local-cache>
@@ -16,9 +14,7 @@
       <!--  Tested Cache: indexing enabled         -->
       <!-- *************************************** -->
       <local-cache name="Indexed">
-         <memory>
-            <object size="-1"/>
-         </memory>
+         <memory storage="OBJECT"/>
          <indexing storage="filesystem" path="${java.io.tmpdir}/tunedConfDir">
             <index-writer commit-interval="10000"/>
             <indexed-entities>

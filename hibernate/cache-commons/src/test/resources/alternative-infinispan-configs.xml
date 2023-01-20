@@ -24,9 +24,7 @@
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
-         <memory>
-            <object size="10000" />
-         </memory>
+         <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache>
 
       <!-- Default configuration for immutable entities -->
@@ -34,9 +32,7 @@
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
-         <memory>
-            <object size="10000" />
-         </memory>
+         <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache>
 
       <!-- A config appropriate for query caching. Does not replicate queries. -->
@@ -44,9 +40,7 @@
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
-         <memory>
-            <object size="10000" />
-         </memory>
+         <memory storage="OBJECT" max-count="10000"/>
       </local-cache>
 
       <!-- A query cache that replicates queries. Replication is asynchronous. -->
@@ -54,9 +48,7 @@
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
-         <memory>
-            <object size="10000" />
-         </memory>
+         <memory storage="OBJECT" max-count="10000"/>
       </replicated-cache>
 
       <!-- Optimized for timestamp caching. A clustered timestamp cache
@@ -68,9 +60,7 @@
          <transaction mode="NONE"/>
          <expiration interval="0"/>
          <!--  Don't ever evict modification timestamps -->
-         <memory>
-            <object strategy="NONE" />
-         </memory>
+         <memory storage="OBJECT" when-full="NONE"/>
       </replicated-cache>
 
       <!-- This configuration should match to InfinispanRegionFactory.DEFAULT_PENDING_PUTS_CACHE_CONFIGURATION -->
@@ -84,17 +74,13 @@
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
-         <memory>
-            <object size="10000" />
-         </memory>
+         <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache-configuration>
       <invalidation-cache-configuration name="otherregion" remote-timeout="20000" statistics="false" statistics-available="false">
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
-         <memory>
-            <object size="10000" />
-         </memory>
+         <memory storage="OBJECT" max-count="10000"/>
       </invalidation-cache-configuration>
    </cache-container>
 
