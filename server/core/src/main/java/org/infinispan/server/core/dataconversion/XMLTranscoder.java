@@ -3,6 +3,7 @@ package org.infinispan.server.core.dataconversion;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
@@ -47,7 +48,7 @@ public class XMLTranscoder extends OneToManyTranscoder {
    }
 
    public XMLTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
-      super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_UNKNOWN);
+      super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_UNKNOWN);
       xstream = new XStreamEngine();
       xstream.addPermission(NoTypePermission.NONE);
       xstream.addPermission(type -> allowList.isSafeClass(type.getName()));
@@ -65,13 +66,12 @@ public class XMLTranscoder extends OneToManyTranscoder {
             String xmlString = xstream.toXML(content);
             return xmlString.getBytes(destinationType.getCharset());
          }
-         if (contentType.match(TEXT_PLAIN)) {
+         if (contentType.match(TEXT_PLAIN) || contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
             String inputText = StandardConversions.convertTextToObject(content, contentType);
             if (isWellFormed(inputText.getBytes())) return inputText.getBytes();
             String xmlString = xstream.toXML(inputText);
             return xmlString.getBytes(destinationType.getCharset());
-         }
-         if (contentType.match(APPLICATION_OCTET_STREAM) || contentType.match(APPLICATION_UNKNOWN)) {
+         } else if (contentType.match(APPLICATION_OCTET_STREAM) || contentType.match(APPLICATION_UNKNOWN)) {
             String inputText = StandardConversions.convertTextToObject(content, contentType);
             if (isWellFormed(inputText.getBytes())) return inputText.getBytes();
             String xmlString = xstream.toXML(inputText);
