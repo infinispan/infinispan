@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.configuration;
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.KEY2STRING_MAPPER;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
@@ -86,6 +87,11 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
 
       StringTableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, JdbcStringBasedStoreConfigurationBuilder> builder) {
          super(builder);
+      }
+
+      @Override
+      public AttributeSet attributes() {
+         return attributes;
       }
 
       @Override

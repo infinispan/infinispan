@@ -33,6 +33,11 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       this.attributes = SaslConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SaslConfigurationBuilder serverName(String name) {
       attributes.attribute(SaslConfiguration.SERVER_NAME).set(name);
       return this;

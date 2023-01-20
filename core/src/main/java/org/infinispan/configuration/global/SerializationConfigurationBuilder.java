@@ -31,6 +31,11 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       this.attributes = SerializationConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Set the marshaller instance that will marshall and unmarshall cache entries.
     *

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -40,6 +41,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
       this.authentication = new AuthenticationConfigurationBuilder(this);
       this.cors = new CorsConfigurationBuilder();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {

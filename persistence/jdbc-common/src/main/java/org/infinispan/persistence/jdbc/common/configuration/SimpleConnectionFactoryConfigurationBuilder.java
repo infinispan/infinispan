@@ -27,6 +27,11 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
       attributes = SimpleConnectionFactoryConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SimpleConnectionFactoryConfigurationBuilder<S> connectionUrl(String connectionUrl) {
       attributes.attribute(CONNECTION_URL).set(connectionUrl);
       return this;

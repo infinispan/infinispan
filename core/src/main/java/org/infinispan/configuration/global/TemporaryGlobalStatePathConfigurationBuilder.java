@@ -14,6 +14,11 @@ public class TemporaryGlobalStatePathConfigurationBuilder extends AbstractGlobal
       attributes = TemporaryGlobalStatePathConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public TemporaryGlobalStatePathConfigurationBuilder location(String path, String relativeTo) {
       attributes.attribute(GlobalStatePathConfiguration.PATH).set(path);
       attributes.attribute(GlobalStatePathConfiguration.RELATIVE_TO).set(relativeTo);

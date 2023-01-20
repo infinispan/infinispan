@@ -33,6 +33,7 @@ import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrate
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Features;
@@ -102,6 +103,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.transaction = new TransactionConfigurationBuilder(this);
       this.statistics = new StatisticsConfigurationBuilder(this);
       this.remoteCacheBuilders = new HashMap<>();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    @Override

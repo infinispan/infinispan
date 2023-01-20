@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 
 import io.netty.handler.ipfilter.IpFilterRuleType;
@@ -22,6 +23,11 @@ public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration,
 
    public IpFilterConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public IpFilterConfigurationBuilder<T, S> allowFrom(String rule) {

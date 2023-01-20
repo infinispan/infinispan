@@ -21,6 +21,11 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
       super(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Specifies the maximum number of entries that will be held in the near cache.
     *

@@ -26,6 +26,11 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
       attributes = AuthorizationConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Disables authorization for this cache
     */

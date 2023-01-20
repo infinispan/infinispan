@@ -24,6 +24,11 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
       attributes = UnsafeConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Specify whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
     * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.

@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
@@ -30,6 +31,11 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
 
    public ServerConfigurationBuilder(GlobalConfigurationBuilder builder) {
       this.builder = builder;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public ServerConfigurationBuilder properties(Properties properties) {

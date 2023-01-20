@@ -69,6 +69,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       writerConfigurationBuilder = new IndexWriterConfigurationBuilder(this);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public IndexingConfigurationBuilder enabled(boolean enabled) {
       if (attributes.attribute(INDEX).isModified()) {
          throw CONFIG.indexEnabledAndIndexModeAreExclusive();

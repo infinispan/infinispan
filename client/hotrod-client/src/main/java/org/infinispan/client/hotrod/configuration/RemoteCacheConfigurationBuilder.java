@@ -55,6 +55,11 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       this.attributes.attribute(NAME).set(name);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Whether or not to implicitly FORCE_RETURN_VALUE for all calls to this cache.
     */

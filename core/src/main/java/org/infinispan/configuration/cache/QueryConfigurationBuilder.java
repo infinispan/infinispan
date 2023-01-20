@@ -14,6 +14,11 @@ public class QueryConfigurationBuilder extends AbstractConfigurationChildBuilder
       attributes = QueryConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Limits the number of results returned by a query. Applies to indexed, non-indexed, and hybrid queries.
     * Setting the default-max-results significantly improves performance of queries that don't have an explicit limit set.

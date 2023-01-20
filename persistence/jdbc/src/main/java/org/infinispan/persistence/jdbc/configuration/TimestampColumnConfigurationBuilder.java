@@ -14,6 +14,11 @@ public class TimestampColumnConfigurationBuilder implements Builder<TimestampCol
       attributes = TimestampColumnConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public TimestampColumnConfigurationBuilder dataColumnName(String dataColumnName) {
       attributes.attribute(TIMESTAMP_COLUMN_NAME).set(dataColumnName);
       return this;

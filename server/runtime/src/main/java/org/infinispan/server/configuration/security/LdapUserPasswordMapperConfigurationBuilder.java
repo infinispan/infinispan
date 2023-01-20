@@ -16,6 +16,11 @@ public class LdapUserPasswordMapperConfigurationBuilder implements Builder<LdapU
       attributes = LdapUserPasswordMapperConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public LdapUserPasswordMapperConfigurationBuilder from(String from) {
       attributes.attribute(LdapUserPasswordMapperConfiguration.FROM).set(from);
       return this;

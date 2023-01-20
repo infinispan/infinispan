@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * @since 8.1
@@ -20,6 +21,11 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    protected ClusterConfigurationBuilder(ConfigurationBuilder builder, String clusterName) {
       super(builder);
       this.clusterName = clusterName;
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public String getClusterName() {

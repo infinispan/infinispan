@@ -29,6 +29,11 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       stateTransferBuilder = new XSiteStateTransferConfigurationBuilder(builder, this);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * @param site Specifies the name of the backup location for this cache. The name must match a site defined in the
     *             global configuration.

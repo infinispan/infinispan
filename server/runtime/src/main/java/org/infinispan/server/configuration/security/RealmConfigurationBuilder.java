@@ -30,6 +30,11 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
       attributes.attribute(RealmConfiguration.NAME).set(name);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public RealmConfigurationBuilder defaultRealm(String defaultRealm) {
       this.attributes.attribute(DEFAULT_REALM).set(defaultRealm);
       return this;

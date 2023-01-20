@@ -83,7 +83,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case EXTENDED_HEADERS: {
-               builder.extendedHeaders(ExtendedHeaders.valueOf(value));
+               builder.extendedHeaders(ParseUtils.parseEnum(reader, i, ExtendedHeaders.class, value));
                break;
             }
             case NAME: {
@@ -91,11 +91,11 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case MAX_CONTENT_LENGTH: {
-               builder.maxContentLength(Integer.parseInt(value));
+               builder.maxContentLength(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case COMPRESSION_LEVEL: {
-               builder.compressionLevel(Integer.parseInt(value));
+               builder.compressionLevel(ParseUtils.parseInt(reader, i, value));
                break;
             }
             case SOCKET_BINDING: {

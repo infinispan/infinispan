@@ -37,6 +37,11 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
       super(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Disables the SSL support
     */

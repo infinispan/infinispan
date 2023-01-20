@@ -34,6 +34,11 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
       sniDomains.put(SslConfiguration.DEFAULT_SNI_DOMAIN, defaultDomainConfigurationBuilder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Disables the SSL support
     */

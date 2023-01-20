@@ -27,6 +27,11 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
       attributes = GlobalJmxConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Sets properties which are then passed to the MBean Server Lookup implementation specified.
     *

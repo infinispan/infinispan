@@ -27,6 +27,11 @@ public class QueriesJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigur
       this.attributes = QueriesJdbcConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Configures the select statement to be used when reading entries from the database. Note all parameters must be
     * named (i.e. <b>:myname</b>) and the parameters must be the same name and order as the one provided to {@link

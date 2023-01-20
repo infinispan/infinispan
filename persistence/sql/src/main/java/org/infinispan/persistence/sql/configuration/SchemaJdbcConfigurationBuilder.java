@@ -21,6 +21,11 @@ public class SchemaJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigura
       this.attributes = SchemaJdbcConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * The protobuf message name to use to marshall the cache entry to the database. If the value is a single column,
     * this is not required.

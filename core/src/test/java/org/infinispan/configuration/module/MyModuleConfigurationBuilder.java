@@ -1,6 +1,7 @@
 package org.infinispan.configuration.module;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
@@ -16,6 +17,11 @@ public class MyModuleConfigurationBuilder extends AbstractModuleConfigurationBui
 
    public MyModuleConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public MyModuleConfigurationBuilder attribute(String attribute) {

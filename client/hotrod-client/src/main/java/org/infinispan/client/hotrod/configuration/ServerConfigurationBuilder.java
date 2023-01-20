@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * ServerConfigurationBuilder.
@@ -17,6 +18,11 @@ public class ServerConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    ServerConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public ServerConfigurationBuilder host(String host) {

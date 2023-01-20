@@ -38,6 +38,11 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.partitionHandlingConfigurationBuilder = new PartitionHandlingConfigurationBuilder(this);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Cache mode. See {@link CacheMode} for information on the various cache modes available.
     */

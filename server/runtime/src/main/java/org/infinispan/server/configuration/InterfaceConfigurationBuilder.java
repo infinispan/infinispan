@@ -18,6 +18,11 @@ public class InterfaceConfigurationBuilder implements Builder<InterfaceConfigura
       attributes.attribute(NAME).set(name);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public InterfaceConfigurationBuilder address(AddressType addressType, String addressValue) throws IOException {
       address.type(addressType, addressValue);
       this.networkAddress = createNetworkAddress();

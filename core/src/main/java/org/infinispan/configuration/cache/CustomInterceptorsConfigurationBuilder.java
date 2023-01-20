@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -20,6 +21,11 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
 
    CustomInterceptorsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

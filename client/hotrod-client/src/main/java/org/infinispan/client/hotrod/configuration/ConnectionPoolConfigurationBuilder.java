@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
@@ -22,6 +23,11 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
 
    ConnectionPoolConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

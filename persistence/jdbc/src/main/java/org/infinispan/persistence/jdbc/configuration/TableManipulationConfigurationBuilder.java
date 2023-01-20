@@ -1,11 +1,11 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.common.logging.Log.CONFIG;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.BATCH_SIZE;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.CREATE_ON_START;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DROP_ON_EXIT;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.FETCH_SIZE;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TABLE_NAME_PREFIX;
-import static org.infinispan.persistence.jdbc.common.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
@@ -34,6 +34,11 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       super(builder);
       attributes = TableManipulationConfiguration.attributeSet();
       segmentColumn = new SegmentColumnConfigurationBuilder(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    /**
@@ -161,7 +166,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       for(AttributeDefinition<?> definition : definitions) {
          String value = (String) attributes.attribute(definition).get();
          if(value == null || value.isEmpty()) {
-            throw CONFIG.tableManipulationAttributeNotSet(definition.name());
+            throw CONFIG.tableManipulationAttributeNotSet(attributes.getName(), definition.name());
          }
       }
    }

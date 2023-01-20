@@ -41,6 +41,11 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       singlePortBuilder.socketBinding(socketBindingName);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public EndpointConfigurationBuilder securityRealm(String name) {
       attributes.attribute(EndpointConfiguration.SECURITY_REALM).set(name);
       return this;

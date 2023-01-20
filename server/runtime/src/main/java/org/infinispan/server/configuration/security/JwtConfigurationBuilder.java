@@ -22,6 +22,11 @@ public class JwtConfigurationBuilder implements Builder<JwtConfiguration> {
       this.attributes = JwtConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    boolean isModified() {
       return this.attributes.isModified();
    }

@@ -37,6 +37,11 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
       this.builder = builder;
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * @return the default {@link CounterManagerConfiguration}.
     */

@@ -1,5 +1,7 @@
 package org.infinispan.commons.configuration;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Builder. Validates and constructs a configuration bean
  *
@@ -28,4 +30,6 @@ public interface Builder<T> {
     *
     */
    Builder<?> read(T template);
+
+   AttributeSet attributes();
 }

@@ -15,6 +15,11 @@ public class PropertiesRealmConfigurationBuilder implements RealmProviderBuilder
       this.attributes = PropertiesRealmConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public PropertiesRealmConfigurationBuilder name(String name) {
       attributes.attribute(NAME).set(name);
       return this;

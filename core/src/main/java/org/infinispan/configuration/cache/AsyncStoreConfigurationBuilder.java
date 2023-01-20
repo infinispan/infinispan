@@ -29,6 +29,11 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
       this.attributes = attributeSet;
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * If true, all modifications to this cache store happen asynchronously on a separate thread.
     */

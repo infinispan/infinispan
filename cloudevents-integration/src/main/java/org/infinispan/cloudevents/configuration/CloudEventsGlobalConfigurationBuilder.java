@@ -23,6 +23,11 @@ public class CloudEventsGlobalConfigurationBuilder implements Builder<CloudEvent
       this.attributes = CloudEventsGlobalConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public CloudEventsGlobalConfigurationBuilder bootstrapServers(String bootstrapServers) {
       this.attributes.attribute(CloudEventsGlobalConfiguration.BOOTSTRAP_SERVERS).set(bootstrapServers);
       return this;

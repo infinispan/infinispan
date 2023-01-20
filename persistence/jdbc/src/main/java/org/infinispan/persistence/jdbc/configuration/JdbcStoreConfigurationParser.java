@@ -85,8 +85,7 @@ public class JdbcStoreConfigurationParser extends AbstractJdbcStoreConfiguration
       persistenceBuilder.addStore(builder);
    }
 
-   private void parseTable(ConfigurationReader reader, TableManipulationConfigurationBuilder<?, ?> builder)
-         {
+   private void parseTable(ConfigurationReader reader, TableManipulationConfigurationBuilder<?, ?> builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);

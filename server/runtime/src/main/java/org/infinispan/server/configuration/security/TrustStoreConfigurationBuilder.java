@@ -25,6 +25,11 @@ public class TrustStoreConfigurationBuilder implements Builder<TrustStoreConfigu
       this.attributes = TrustStoreConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public TrustStoreConfigurationBuilder password(char[] password) {
       attributes.attribute(PASSWORD).set(new PasswordCredentialSource(password));
       return this;

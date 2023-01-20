@@ -1,6 +1,7 @@
 package org.infinispan.hotrod.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * SecurityConfigurationBuilder.
@@ -15,6 +16,11 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
 
    SecurityConfigurationBuilder(HotRodConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public AuthenticationConfigurationBuilder authentication() {

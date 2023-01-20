@@ -24,6 +24,11 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
       identityMapping = new LdapIdentityMappingConfigurationBuilder(this);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public LdapIdentityMappingConfigurationBuilder identityMapping() {
       return identityMapping;
    }
