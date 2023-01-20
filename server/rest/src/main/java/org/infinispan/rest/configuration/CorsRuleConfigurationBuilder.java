@@ -37,6 +37,11 @@ public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfigurati
       exposeHeaders = attributes.attribute(CorsRuleConfiguration.EXPOSE_HEADERS);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public CorsRuleConfigurationBuilder name(String value) {
       name.set(value);
       return this;

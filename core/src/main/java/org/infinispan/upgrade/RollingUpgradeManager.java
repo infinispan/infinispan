@@ -53,7 +53,7 @@ public class RollingUpgradeManager {
          description = "Synchronizes data from source clusters to target clusters with the specified migrator.",
          displayName = "Synchronizes data from source clusters to target clusters with the specified migrator."
    )
-   public long synchronizeData(@Parameter(name="migratorName", description="Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
+   public long synchronizeData(@Parameter(name="migratorName", description="Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) {
       TargetMigrator migrator = getMigrator(migratorName);
       long start = timeService.time();
       long count = migrator.synchronizeData(cache);
@@ -68,7 +68,7 @@ public class RollingUpgradeManager {
    )
    public long synchronizeData(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName,
                                @Parameter(name = "readBatch", description = "Specifies how many entries to read at a time from source clusters. Default is 10000.") int readBatch,
-                               @Parameter(name = "threads", description = "Specifies the number of threads to use per node when writing data to target clusters. Defaults to number of available processors.") int threads) throws Exception {
+                               @Parameter(name = "threads", description = "Specifies the number of threads to use per node when writing data to target clusters. Defaults to number of available processors.") int threads) {
       TargetMigrator migrator = getMigrator(migratorName);
       long start = timeService.time();
       long count = migrator.synchronizeData(cache, readBatch, threads);
@@ -80,7 +80,7 @@ public class RollingUpgradeManager {
          description = "Disconnects target clusters from source clusters.",
          displayName = "Disconnects target clusters from source clusters."
    )
-   public void disconnectSource(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
+   public void disconnectSource(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) {
       TargetMigrator migrator = getMigrator(migratorName);
       migrator.disconnectSource(cache);
    }
@@ -90,7 +90,7 @@ public class RollingUpgradeManager {
          displayName = "Connects target clusters from source clusters."
    )
    public void connectSource(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName,
-                             @Parameter(name = "configuration", description = "Specifies the configuration of the remote store to add, in JSON format.") StoreConfiguration configuration) throws Exception {
+                             @Parameter(name = "configuration", description = "Specifies the configuration of the remote store to add, in JSON format.") StoreConfiguration configuration) {
       TargetMigrator migrator = getMigrator(migratorName);
       migrator.connectSource(cache, configuration);
    }
@@ -99,12 +99,12 @@ public class RollingUpgradeManager {
          description = "Checks if the target cluster is connected to the source cluster.",
          displayName = "Checks if the target cluster is connected to the source cluster."
    )
-   public boolean isConnected(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) throws Exception {
+   public boolean isConnected(@Parameter(name = "migratorName", description = "Specifies the name of the migrator to use. Set hotrod as the value unless using custom migrators.") String migratorName) {
       TargetMigrator migrator = getMigrator(migratorName);
       return migrator.isConnected(cache);
    }
 
-   private TargetMigrator getMigrator(String name) throws Exception {
+   private TargetMigrator getMigrator(String name) {
       TargetMigrator targetMigrator = targetMigrators.get(name);
       if (targetMigrator == null) {
          throw CONTAINER.unknownMigrator(name);

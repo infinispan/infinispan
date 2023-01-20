@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -73,7 +72,6 @@ import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 import org.infinispan.server.core.transport.Transport;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ipfilter.IpFilterRuleType;
 
 /**
@@ -203,7 +201,7 @@ public class ServerResource implements ResourceHandler {
                      serverStateManager.connectorStop(connectorName).thenApply(r -> builder.build()));
             }
       }
-      return completedFuture(builder.status(BAD_REQUEST).build());
+      throw Log.REST.unknownAction(restRequest.getAction());
    }
 
    private CompletionStage<RestResponse> connectorStatus(RestRequest restRequest) {
@@ -283,13 +281,13 @@ public class ServerResource implements ResourceHandler {
 
       Json json = Json.read(restRequest.contents().asString());
       if (!json.isArray()) {
-         return completedFuture(builder.status(BAD_REQUEST).build());
+         throw Log.REST.invalidContent();
       }
       List<Json> list = json.asJsonList();
       List<IpSubnetFilterRule> rules = new ArrayList<>(list.size());
       for (Json o : list) {
          if (!o.has("type") || !o.has("cidr")) {
-            return completedFuture(builder.status(BAD_REQUEST).build());
+            throw Log.REST.missingArguments("type", "cidr");
          } else {
             rules.add(new IpSubnetFilterRule(o.at("cidr").asString(), IpFilterRuleType.valueOf(o.at("type").asString())));
          }
@@ -462,8 +460,7 @@ public class ServerResource implements ResourceHandler {
                builder.status(SERVICE_UNAVAILABLE).entity(Messages.MSG.dataSourceTestFail(name));
             }
          } catch (Exception e) {
-            Throwable rootCause = Util.getRootCause(e);
-            builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(rootCause.getMessage());
+            throw Util.unchecked(e);
          }
          return builder.build();
       }, invocationHelper.getExecutor());
