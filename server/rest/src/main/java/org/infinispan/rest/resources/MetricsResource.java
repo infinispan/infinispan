@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.OPTIONS;
@@ -9,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -64,9 +64,7 @@ public final class MetricsResource implements ResourceHandler {
 
             return builder.build();
          } catch (Exception e) {
-            RestResponseBuilder<NettyRestResponse.Builder> errorBuilder = new NettyRestResponse.Builder()
-                  .status(INTERNAL_SERVER_ERROR).entity(e.getMessage());
-            return errorBuilder.build();
+            throw Util.unchecked(e);
          }
       }, blockingExecutor);
    }

@@ -110,7 +110,7 @@ public interface Log extends BasicLogger {
    void warnDeprecatedCall(String invocation);
 
    @Message(value = "Security authorization is not enabled on this server.", id = 12027)
-   String authorizationNotEnabled();
+   IllegalArgumentException authorizationNotEnabled();
 
    @Message(value = "The principal-role mapper is not mutable", id = 12028)
    String principalRoleMapperNotMutable();
@@ -120,4 +120,55 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Heap dump generation failed", id = 12030)
    RuntimeException heapDumpFailed(@Cause IOException e);
+
+   @Message(value = "Method requires content", id = 12031)
+   IllegalArgumentException missingContent();
+
+   @Message(value = "Wrong media type '%s'. Expecting '%s'", id = 12032)
+   IllegalArgumentException wrongMediaType(String mediaType, String expected);
+
+   @Message(value = "Wrong content: expecting multipart/form-data with two parts", id = 12033)
+   IllegalArgumentException cacheCompareWrongContent();
+
+   @Message(value = "Wrong method '%s'", id = 12034)
+   IllegalArgumentException wrongMethod(String method);
+
+   @Message(value = "Attribute '%s' is immutable", id = 12035)
+   IllegalArgumentException immutableAttribute(String attributeName);
+
+   @Message(value = "More than one remote store detected, rolling upgrades aren't supported", id = 12036)
+   IllegalStateException multipleRemoteStores();
+
+   @Message(value = "Unknown action '%s'", id = 12037)
+   IllegalArgumentException unknownAction(String action);
+
+   @Message(value = "'%s' must be a directory", id = 12038)
+   IllegalArgumentException notADirectory(String dir);
+
+   @Message(value = "Restore failed", id = 12039)
+   IllegalStateException restoreFailed();
+
+   @Message(value = "Missing required argument '%s'", id = 12040)
+   IllegalArgumentException missingArgument(String arg);
+
+   @Message(value = "Backup delete failed", id = 12041)
+   IllegalStateException backupDeleteFailed();
+
+   @Message(value = "Backup failed", id = 12042)
+   IllegalStateException backupFailed();
+
+   @Message(value = "Invalid request content", id = 12043)
+   IllegalArgumentException invalidContent();
+
+   @Message(value = "Missing at least one argument in '%s'", id = 12044)
+   IllegalArgumentException missingArguments(String... level);
+
+   @Message(value = "Cache '%s' is not indexed", id = 12045)
+   IllegalArgumentException cacheNotIndexed(String cacheName);
+
+   @Message(value = "Cache '%s' does not have statistics enabled", id = 12046)
+   IllegalArgumentException statisticsNotEnabled(String name);
+
+   @Message(value = "Site operation on '%s' failed: '%s'", id = 12047)
+   IllegalStateException siteOperationFailed(String site, String status);
 }

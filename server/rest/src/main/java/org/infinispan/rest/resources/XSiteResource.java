@@ -1,7 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -27,7 +25,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.JsonUtils;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -37,6 +34,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -223,30 +221,26 @@ public class XSiteResource implements ResourceHandler {
       assert current != null;
       String content = request.contents().asString();
       if (content == null || content.isEmpty()) {
-         return completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         throw Log.REST.missingContent();
       }
 
       int afterFailures, minWait;
-      try {
-         Json json = Json.read(content);
-         Json minWaitValue = json.at(MIN_WAIT_FIELD);
-         Json afterFailuresValue = json.at(AFTER_FAILURES_FIELD);
-         if (minWaitValue == null || afterFailuresValue == null) {
-            return completedFuture(responseBuilder.status(BAD_REQUEST).build());
-         }
-         minWait = minWaitValue.asInteger();
-         afterFailures = afterFailuresValue.asInteger();
-      } catch (Exception e) {
-         Throwable rootCause = Util.getRootCause(e);
-         return completedFuture(responseBuilder.status(BAD_REQUEST).entity(rootCause.getMessage()).build());
+
+      Json json = Json.read(content);
+      Json minWaitValue = json.at(MIN_WAIT_FIELD);
+      Json afterFailuresValue = json.at(AFTER_FAILURES_FIELD);
+      if (minWaitValue == null || afterFailuresValue == null) {
+         throw Log.REST.missingArguments(MIN_WAIT_FIELD, AFTER_FAILURES_FIELD);
       }
+      minWait = minWaitValue.asInteger();
+      afterFailures = afterFailuresValue.asInteger();
       if (afterFailures == current.afterFailures() && minWait == current.minTimeToWait()) {
          return completedFuture(responseBuilder.status(NOT_MODIFIED).build());
       }
       return supplyAsync(() -> {
          String status = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteAdmin.amendTakeOffline(site, afterFailures, minWait));
          if (!status.equals(XSiteAdminOperations.SUCCESS)) {
-            responseBuilder.status(INTERNAL_SERVER_ERROR).entity(site);
+            throw Log.REST.siteOperationFailed(site, status);
          }
          return responseBuilder.build();
       }, invocationHelper.getExecutor());
@@ -306,7 +300,7 @@ public class XSiteResource implements ResourceHandler {
       //parse content
       String mode = request.getParameter("mode");
       if (mode == null) {
-         return completedFuture(responseBuilder.status(BAD_REQUEST).build());
+         throw Log.REST.missingArgument("mode");
       }
       //check if site exists
       final String site = request.variables().get("site");
@@ -381,7 +375,7 @@ public class XSiteResource implements ResourceHandler {
             supplyAsync(() -> {
                String result = Security.doAs(request.getSubject(), (PrivilegedAction<String>) () -> xsiteOp.apply(ops, site));
                if (!result.equals(XSiteAdminOperations.SUCCESS)) {
-                  responseBuilder.status(INTERNAL_SERVER_ERROR).entity(result);
+                  throw Log.REST.siteOperationFailed(site, result);
                }
                return responseBuilder.build();
             }, invocationHelper.getExecutor()))

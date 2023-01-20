@@ -1,7 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.MULTIPLE_CHOICES;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -19,6 +17,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
@@ -26,7 +25,6 @@ import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.InfinispanQueryStatisticsInfo;
-import org.infinispan.query.impl.massindex.MassIndexerAlreadyStartedException;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -141,7 +139,7 @@ public class SearchAdminResource implements ResourceHandler {
          SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
          searchMapping.restart();
       } catch (Exception e) {
-         responseBuilder.status(INTERNAL_SERVER_ERROR).entity("Error updating the index schema " + e.getCause());
+         throw Util.unchecked(e);
       }
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
@@ -207,19 +205,12 @@ public class SearchAdminResource implements ResourceHandler {
                }
             });
          } catch (Exception e) {
-            responseBuilder.status(INTERNAL_SERVER_ERROR).entity("Error executing the MassIndexer " + e.getCause());
+            Util.unchecked(e);
          }
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
 
-      return op.apply(indexer).exceptionally(e -> {
-         if (e instanceof MassIndexerAlreadyStartedException) {
-            responseBuilder.status(BAD_REQUEST).entity("MassIndexer already started");
-         } else {
-            responseBuilder.status(INTERNAL_SERVER_ERROR).entity("Error executing the MassIndexer " + e.getCause());
-         }
-         return null;
-      }).thenApply(v -> responseBuilder.build());
+      return op.apply(indexer).thenApply(v -> responseBuilder.build());
    }
 
    private AdvancedCache<?, ?> lookupIndexedCache(RestRequest request, NettyRestResponse.Builder builder) {
@@ -231,7 +222,7 @@ public class SearchAdminResource implements ResourceHandler {
       }
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
       if (!cacheConfiguration.indexing().enabled()) {
-         builder.entity("cache is not indexed").status(BAD_REQUEST).build();
+         throw Log.REST.cacheNotIndexed(cacheName);
       }
       return cache;
    }
@@ -241,7 +232,7 @@ public class SearchAdminResource implements ResourceHandler {
       if (cache != null) {
          Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
          if (!cacheConfiguration.statistics().enabled()) {
-            builder.entity("statistics not enabled").status(BAD_REQUEST);
+            throw Log.REST.statisticsNotEnabled(cache.getName());
          }
       }
       return cache;

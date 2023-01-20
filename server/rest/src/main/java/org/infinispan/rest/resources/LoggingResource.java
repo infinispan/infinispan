@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.PUT;
@@ -23,6 +22,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 
@@ -58,7 +58,7 @@ public final class LoggingResource implements ResourceHandler {
       String level = request.getParameter("level");
       List<String> appenders = request.parameters().get("appender");
       if (level == null && appenders == null) {
-         return completedFuture(new NettyRestResponse.Builder().status(HttpResponseStatus.BAD_REQUEST).build());
+         throw Log.REST.missingArguments("level", "appender");
       }
       return taskManager.runTask("@@logging@set",
             new TaskContext()

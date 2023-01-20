@@ -3,24 +3,38 @@ package org.infinispan.rest;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static org.infinispan.commons.util.Util.unwrapExceptionMessage;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.rest.logging.RestAccessLoggingHandler;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.unix.Errors;
 import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -34,9 +48,10 @@ import io.netty.handler.codec.http.HttpUtil;
  *
  * @author Sebastian Łaskawiec
  */
-public class RestRequestHandler extends BaseHttpRequestHandler {
+public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
    protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
+   private final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;
    private Subject subject;
@@ -49,9 +64,47 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
     * @param restServer Rest Server.
     */
    RestRequestHandler(RestServer restServer) {
+      super(false);
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
       this.authenticator = configuration.authentication().enabled() ? configuration.authentication().authenticator() : null;
+   }
+
+   void handleError(ChannelHandlerContext ctx, FullHttpRequest request, Throwable throwable) {
+      Throwable cause = filterCause(throwable);
+      NettyRestResponse errorResponse;
+      if (cause instanceof RestResponseException) {
+         RestResponseException responseException = (RestResponseException) throwable;
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", responseException);
+         errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
+      } else if (cause instanceof SecurityException) {
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
+         errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(unwrapExceptionMessage(cause)).build();
+      } else if (cause instanceof NoSuchElementException) {
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
+         errorResponse = new NettyRestResponse.Builder().status(NOT_FOUND).entity(unwrapExceptionMessage(cause)).build();
+      } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException || cause instanceof EncodingException || cause instanceof Json.MalformedJsonException) {
+         if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
+         errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(unwrapExceptionMessage(cause)).build();
+      } else {
+         getLogger().errorWhileResponding(throwable);
+         errorResponse = new NettyRestResponse.Builder().status(INTERNAL_SERVER_ERROR).entity(unwrapExceptionMessage(cause)).build();
+      }
+      sendResponse(ctx, request, errorResponse);
+   }
+
+   public static Throwable filterCause(Throwable re) {
+      if (re == null) return null;
+      Class<? extends Throwable> tClass = re.getClass();
+      Throwable cause = re.getCause();
+      if (cause != null && (tClass == ExecutionException.class || tClass == CompletionException.class || tClass == InvocationTargetException.class || tClass == RemoteException.class || tClass == RuntimeException.class || tClass == CacheListenerException.class))
+         return filterCause(cause);
+      else
+         return re;
+   }
+
+   void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
+      ctx.executor().execute(() -> ResponseWriter.forContent(response.getEntity()).writeResponse(ctx, request, response));
    }
 
    @Override
@@ -153,7 +206,6 @@ public class RestRequestHandler extends BaseHttpRequestHandler {
       });
    }
 
-   @Override
    protected Log getLogger() {
       return logger;
    }
