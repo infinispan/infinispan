@@ -254,6 +254,28 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <configuration>
+               <skip>${skipTests}</skip>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>wildfly-prepare</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <target>
+                        <echo message="Copying WildFly configuration" />
+                        <copy file="${project.basedir}/../server-integration/third-party-server/src/test/resources/wildfly/standalone-test.xml" todir="${project.build.directory}/testnode/standalone/configuration" overwrite="true" />
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
