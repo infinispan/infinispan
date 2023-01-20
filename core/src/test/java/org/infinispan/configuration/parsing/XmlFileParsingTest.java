@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -93,7 +94,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    private static ConfigurationBuilderHolder parseStringConfiguration(String config) {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
-      return parserRegistry.parse(is, null, MediaType.APPLICATION_XML);
+      return parserRegistry.parse(is, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
    }
 
    @Test(expectedExceptions=CacheConfigurationException.class)
@@ -132,9 +133,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <memory>\n" +
-            "        <off-heap strategy=\"MANUAL\"/>\n" +
-            "      </memory>\n" +
+            "      <memory storage=\"OFF_HEAP\" when-full=\"MANUAL\" />\n" +
             "   </local-cache>\n" +
             "</cache-container>"
       );
@@ -157,9 +156,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       config = TestingUtil.wrapXMLWithoutSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
-            "      <memory>\n" +
-            "         <binary/>\n" +
-            "      </memory>\n" +
+            "      <memory storage=\"BINARY\"/>\n" +
             "   </local-cache>\n" +
             "</cache-container>"
       );
@@ -634,7 +631,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testErrorReporting() {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
-      Exceptions.expectException("^ISPN000327:.* at \\[13,18\\].*", () -> parserRegistry.parseFile("configs/broken.xml"), CacheConfigurationException.class);
+      Exceptions.expectException("^ISPN000327:.*broken.xml\\[13,18\\].*", () -> parserRegistry.parseFile("configs/broken.xml"), CacheConfigurationException.class);
    }
 
    public static class CustomTransport extends JGroupsTransport {

@@ -41,10 +41,12 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.BlockHoundUtil;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -91,7 +93,6 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -349,7 +350,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
-      this(new ParserRegistry().parse(configurationStream, null, MediaType.APPLICATION_XML), start);
+      this(new ParserRegistry().parse(configurationStream, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML), start);
    }
 
    /**

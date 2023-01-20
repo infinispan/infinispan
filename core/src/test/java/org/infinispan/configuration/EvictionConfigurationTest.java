@@ -17,6 +17,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
@@ -176,82 +177,6 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testParseLegacyXML() {
-      String xmlLegacy = "<infinispan>\n" +
-            "   <cache-container>\n" +
-            "      <local-cache name=\"local\">\n" +
-            "         <memory>\n" +
-            "            <object size=\"20000\" strategy=\"REMOVE\" />\n" +
-            "         </memory>\n" +
-            "      </local-cache>\n" +
-            "   </cache-container>\n" +
-            "</infinispan>";
-
-      testSerializationAndBack(xmlLegacy);
-      ConfigurationBuilderHolder parsed = new ParserRegistry().parse(xmlLegacy);
-      ConfigurationBuilder parsedBuilder = parsed.getNamedConfigurationBuilders().get("local");
-      Configuration afterParsing = parsedBuilder.build();
-
-      assertEquals(afterParsing.memory().maxSizeBytes(), -1);
-      assertEquals(afterParsing.memory().maxCount(), 20_000);
-      assertEquals(afterParsing.memory().storageType(), OBJECT);
-      assertEquals(afterParsing.memory().size(), 20_000);
-      assertEquals(afterParsing.memory().evictionType(), COUNT);
-   }
-
-   @Test
-   public void testParseLegacyXML2() {
-      String xmlLegacy = "<infinispan>\n" +
-            "   <cache-container>\n" +
-            "      <local-cache name=\"local\">\n" +
-            "         <memory>\n" +
-            "            <off-heap size=\"10000000\" eviction=\"MEMORY\" />\n" +
-            "         </memory>\n" +
-            "      </local-cache>\n" +
-            "   </cache-container>\n" +
-            "</infinispan>";
-
-      testSerializationAndBack(xmlLegacy);
-
-      ConfigurationBuilderHolder parsed = new ParserRegistry().parse(xmlLegacy);
-      ConfigurationBuilder parsedBuilder = parsed.getNamedConfigurationBuilders().get("local");
-      Configuration afterParsing = parsedBuilder.build();
-
-      assertEquals(afterParsing.memory().maxSizeBytes(), 10_000_000);
-      assertEquals(afterParsing.memory().maxCount(), -1);
-      assertEquals(afterParsing.memory().storageType(), OFF_HEAP);
-      assertEquals(afterParsing.memory().size(), 10_000_000);
-      assertEquals(afterParsing.memory().evictionType(), MEMORY);
-   }
-
-   @Test
-   public void testParseLegacyXML3() {
-      String xmlLegacy = "<infinispan>\n" +
-            "   <cache-container>\n" +
-            "      <local-cache name=\"local\">\n" +
-            "         <memory>\n" +
-            "            <binary size=\"-1\" />\n" +
-            "         </memory>\n" +
-            "      </local-cache>\n" +
-            "   </cache-container>\n" +
-            "</infinispan>";
-
-      testSerializationAndBack(xmlLegacy);
-
-      ConfigurationBuilderHolder parsed = new ParserRegistry().parse(xmlLegacy);
-      ConfigurationBuilder parsedBuilder = parsed.getNamedConfigurationBuilders().get("local");
-      Configuration afterParsing = parsedBuilder.build();
-
-      assertEquals(afterParsing.memory().storage(), BINARY);
-      assertEquals(afterParsing.memory().maxSizeBytes(), -1);
-      assertEquals(afterParsing.memory().maxCount(), -1);
-      assertEquals(afterParsing.memory().storageType(), BINARY);
-      assertEquals(afterParsing.memory().size(), -1);
-      assertEquals(afterParsing.memory().evictionType(), COUNT);
-
-   }
-
-   @Test
    public void testParseXML() {
       String xml = "<infinispan>\n" +
             "   <cache-container>\n" +
@@ -346,7 +271,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
    @Test
    public void testParseLegacyJSON() {
-      ConfigurationBuilderHolder holder = new ParserRegistry().parse("{\"local-cache\":{ \"memory\":{\"object\":{\"strategy\":\"REMOVE\",\"size\":5000}}}}", MediaType.APPLICATION_JSON);
+      ConfigurationBuilderHolder holder = new ParserRegistry().parse("{\"local-cache\":{ \"memory\":{\"storage\":\"OBJECT\", \"when-full\":\"REMOVE\",\"max-count\":5000}}}", MediaType.APPLICATION_JSON);
       Configuration fromJson = holder.getCurrentConfigurationBuilder().build();
       assertEquals(fromJson.memory().maxSizeBytes(), -1);
       assertEquals(fromJson.memory().maxCount(), 5000);
@@ -477,23 +402,6 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = "ISPN000584.*")
-   public void testErrorForAmbiguousXML() {
-      String xmlNew = "<infinispan>\n" +
-            "   <cache-container>\n" +
-            "      <local-cache name=\"local\">\n" +
-            "         <memory max-size=\"1 MB\" when-full=\"MANUAL\">\n" +
-            "            <off-heap size=\"456\" eviction=\"MEMORY\" />\n" +
-            "         </memory>\n" +
-            "      </local-cache>\n" +
-            "   </cache-container>\n" +
-            "</infinispan>\n";
-
-      ConfigurationBuilderHolder parsed = new ParserRegistry().parse(xmlNew);
-      parsed.getNamedConfigurationBuilders().get("local").build();
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = ".*Cannot configure both maxCount and maxSize.*")
    public void testErrorForMultipleThresholds() {
       ConfigurationBuilder configBuilder = new ConfigurationBuilder();
@@ -510,7 +418,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       REGISTRY.serialize(baos, "local", before);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = REGISTRY.parse(bais, null, MediaType.APPLICATION_XML);
+      ConfigurationBuilderHolder holderAfter = REGISTRY.parse(bais, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
 
       // Parse again from the serialized
       ConfigurationBuilder afterParsing = holderAfter.getNamedConfigurationBuilders().get("local");

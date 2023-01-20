@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
@@ -68,7 +69,14 @@ public interface ConfigurationReader extends AutoCloseable {
             reader.reset();
             return first;
          } catch (IOException e) {
-            throw new ConfigurationReaderException(e, Location.of(1,1));
+            String name = null;
+            if (resolver != null) {
+               URL context = resolver.getContext();
+               if (context != null) {
+                  name = context.getPath();
+               }
+            }
+            throw new ConfigurationReaderException(e, new Location(name, 1,1));
          }
       }
 
@@ -113,6 +121,8 @@ public interface ConfigurationReader extends AutoCloseable {
    static Builder from(String s) {
       return new Builder(new StringReader(s));
    }
+
+   String getName();
 
    /**
     * @return the resource resolver used by this ConfigurationReader to find external references (e.g. includes)
