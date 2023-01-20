@@ -236,7 +236,7 @@
       <version.maven.release>3.0.0-M1</version.maven.release>
       <version.maven.remote.resource>1.5</version.maven.remote.resource>
       <version.maven.resources>3.2.0</version.maven.resources>
-      <version.maven.shade>3.3.0</version.maven.shade>
+      <version.maven.shade>3.4.1</version.maven.shade>
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.surefire>3.0.0-M8</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
