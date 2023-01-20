@@ -1,10 +1,10 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static java.util.Collections.emptyMap;
 import static org.infinispan.query.remote.json.JSONConstants.MAX_RESULTS;
 import static org.infinispan.query.remote.json.JSONConstants.OFFSET;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
+import static org.wildfly.security.http.HttpConstants.BAD_REQUEST;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

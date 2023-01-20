@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -166,7 +165,7 @@ public class SecurityResource implements ResourceHandler {
    private CompletionStage<RestResponse> listAllRoles(RestRequest request) {
       GlobalAuthorizationConfiguration authorization = invocationHelper.getRestCacheManager().getInstance().getCacheManagerConfiguration().security().authorization();
       if (!authorization.enabled()) {
-         return completedFuture(new NettyRestResponse.Builder().status(BAD_REQUEST).entity(Log.REST.authorizationNotEnabled()).build());
+         throw Log.REST.authorizationNotEnabled();
       }
       Json roles = Json.array();
       authorization.roles().entrySet().stream().filter(e -> e.getValue().isInheritable()).forEach(e -> roles.add(e.getKey()));

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 import io.netty.handler.codec.http.cors.CorsConfig;
 
@@ -14,6 +15,11 @@ import io.netty.handler.codec.http.cors.CorsConfig;
 public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
    private List<CorsRuleConfigurationBuilder> corsRules = new ArrayList<>();
    private List<CorsConfig> extraConfigs = new ArrayList<>();
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
+   }
 
    public CorsRuleConfigurationBuilder addNewRule() {
       CorsRuleConfigurationBuilder builder = new CorsRuleConfigurationBuilder();
