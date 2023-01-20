@@ -17,6 +17,11 @@ public class OAuth2ConfigurationBuilder implements Builder<OAuth2Configuration> 
       this.attributes = OAuth2Configuration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    boolean isModified() {
       return this.attributes.isModified();
    }

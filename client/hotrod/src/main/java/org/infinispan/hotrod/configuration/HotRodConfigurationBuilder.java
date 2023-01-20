@@ -88,6 +88,11 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public ServerConfigurationBuilder addServer() {
       ServerConfigurationBuilder builder = new ServerConfigurationBuilder(this);
       this.servers.add(builder);

@@ -19,6 +19,11 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
       attributes = BackupForConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * @param siteName the name of the remote site that backups data into this cache.
     */

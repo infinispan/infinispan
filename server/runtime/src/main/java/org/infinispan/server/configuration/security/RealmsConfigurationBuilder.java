@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * @since 10.0
@@ -14,6 +15,11 @@ public class RealmsConfigurationBuilder implements Builder<RealmsConfiguration> 
    private final Map<String, RealmConfigurationBuilder> securityRealms = new LinkedHashMap<>(2);
 
    public RealmsConfigurationBuilder() {
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public RealmConfigurationBuilder addSecurityRealm(String name) {

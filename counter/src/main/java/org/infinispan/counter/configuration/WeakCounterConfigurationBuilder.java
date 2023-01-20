@@ -1,6 +1,7 @@
 package org.infinispan.counter.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * {@link org.infinispan.counter.api.WeakCounter} configuration builder.
@@ -13,6 +14,11 @@ public class WeakCounterConfigurationBuilder extends
 
    public WeakCounterConfigurationBuilder(CounterManagerConfigurationBuilder builder) {
       super(builder, WeakCounterConfiguration.attributeDefinitionSet());
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override

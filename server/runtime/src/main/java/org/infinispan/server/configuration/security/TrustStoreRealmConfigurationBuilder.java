@@ -14,6 +14,11 @@ public class TrustStoreRealmConfigurationBuilder implements RealmProviderBuilder
       this.attributes = TrustStoreRealmConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public TrustStoreRealmConfigurationBuilder name(String name) {
       attributes.attribute(TrustStoreRealmConfiguration.NAME).set(name);
       return this;

@@ -23,6 +23,11 @@ public class CloudEventsConfigurationBuilder implements Builder<CloudEventsConfi
       this.attributes = CloudEventsConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Enable or disable anchored keys.
     */

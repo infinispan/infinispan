@@ -17,6 +17,11 @@ public class TransportSecurityConfigurationBuilder implements Builder<TransportS
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public void validate() {
    }
 

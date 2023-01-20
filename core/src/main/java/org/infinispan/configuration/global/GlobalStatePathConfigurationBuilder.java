@@ -16,6 +16,11 @@ public class GlobalStatePathConfigurationBuilder extends AbstractGlobalConfigura
       attributes = GlobalStatePathConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public GlobalStatePathConfigurationBuilder location(String path, String relativeTo) {
       location = ParseUtils.resolvePath(path, relativeTo);
       attributes.attribute(GlobalStatePathConfiguration.PATH).set(path);

@@ -13,6 +13,11 @@ public class SocketBindingConfigurationBuilder implements Builder<SocketBindingC
       attributes = SocketBindingConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public SocketBindingConfigurationBuilder binding(String name, int port, String interfaceName) {
       attributes.attribute(SocketBindingConfiguration.NAME).set(name);
       attributes.attribute(SocketBindingConfiguration.PORT).set(port);

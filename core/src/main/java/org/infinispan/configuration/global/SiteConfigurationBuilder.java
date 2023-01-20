@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.Transport;
 
 /**
@@ -15,6 +16,11 @@ public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder
 
    SiteConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

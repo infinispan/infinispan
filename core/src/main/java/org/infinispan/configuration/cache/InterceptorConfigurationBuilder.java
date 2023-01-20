@@ -35,6 +35,11 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       attributes = InterceptorConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Dictates that the custom interceptor appears immediately <i>after</i> the specified interceptor. If the specified
     * interceptor is not found in the interceptor chain, a {@link CacheConfigurationException} will be thrown when the

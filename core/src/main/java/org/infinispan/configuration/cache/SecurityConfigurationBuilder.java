@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -16,6 +17,12 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
       super(builder);
       authorizationBuilder = new AuthorizationConfigurationBuilder(this);
    }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
+   }
+
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {

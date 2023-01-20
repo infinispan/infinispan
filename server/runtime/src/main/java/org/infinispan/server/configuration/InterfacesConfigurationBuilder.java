@@ -5,10 +5,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class InterfacesConfigurationBuilder implements Builder<InterfacesConfiguration> {
 
    private final Map<String, InterfaceConfigurationBuilder> interfaces = new HashMap<>(2);
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
+   }
 
    InterfaceConfigurationBuilder addInterface(String name) {
       InterfaceConfigurationBuilder interfaceConfigurationBuilder = new InterfaceConfigurationBuilder(name);

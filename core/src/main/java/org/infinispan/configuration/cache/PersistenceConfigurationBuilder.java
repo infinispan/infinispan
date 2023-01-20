@@ -31,6 +31,11 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       attributes = PersistenceConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public PersistenceConfigurationBuilder passivation(boolean b) {
       attributes.attribute(PASSIVATION).set(b);
       return this;

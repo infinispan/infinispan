@@ -41,6 +41,11 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
       this.indexMergeConfigurationBuilder = new IndexMergeConfigurationBuilder(builder);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public IndexMergeConfigurationBuilder merge() {
       return indexMergeConfigurationBuilder;
    }

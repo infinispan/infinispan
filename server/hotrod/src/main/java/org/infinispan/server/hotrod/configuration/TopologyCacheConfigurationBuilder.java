@@ -10,6 +10,11 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
       this.attributes = TopologyCacheConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public TopologyCacheConfigurationBuilder lockTimeout(long value) {
       attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_LOCK_TIMEOUT).set(value);
       return this;

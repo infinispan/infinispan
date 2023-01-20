@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.hotrod.security.TokenCallbackHandler;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -48,6 +49,11 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

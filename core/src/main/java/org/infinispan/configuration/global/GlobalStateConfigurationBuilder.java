@@ -34,6 +34,11 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
       this.storageConfiguration = new GlobalStorageConfigurationBuilder(globalConfig);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public GlobalStateConfigurationBuilder enable() {
       return enabled(true);
    }

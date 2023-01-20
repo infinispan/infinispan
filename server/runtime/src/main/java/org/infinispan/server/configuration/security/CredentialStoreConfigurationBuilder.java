@@ -24,6 +24,11 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
       attributes.attribute(NAME).set(name);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public CredentialStoreConfigurationBuilder path(String value) {
       attributes.attribute(PATH).set(value);
       return this;

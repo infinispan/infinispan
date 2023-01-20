@@ -23,6 +23,11 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
       attributes.attribute(NAME).set(clusterName);
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public String getClusterName() {
       return attributes.attribute(NAME).get();
    }

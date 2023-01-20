@@ -17,6 +17,11 @@ class AddressConfigurationBuilder implements Builder<AddressConfiguration> {
       this.attributes = AddressConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    AddressConfigurationBuilder type(AddressType addressType, String value) {
       this.addressType = addressType;
       attributes.attribute(VALUE).set(value);

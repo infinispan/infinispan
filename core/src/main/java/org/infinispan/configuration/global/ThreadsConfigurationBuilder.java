@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ThreadsConfiguration> {
 
@@ -38,6 +39,11 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       this.transportThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.nonBlockingThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.blockingThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    public ThreadFactoryConfigurationBuilder addThreadFactory(String name) {

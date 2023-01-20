@@ -20,6 +20,11 @@ public class SocketBindingsConfigurationBuilder implements Builder<SocketBinding
       attributes = SocketBindingsConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    SocketBindingsConfigurationBuilder socketBinding(String name, int port, String interfaceName) {
       SocketBindingConfigurationBuilder configurationBuilder = new SocketBindingConfigurationBuilder(server);
       configurationBuilder.binding(name, port, interfaceName);

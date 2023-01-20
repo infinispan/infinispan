@@ -1,6 +1,7 @@
 package org.infinispan.security.impl;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -12,6 +13,11 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 public class CreatePermissionConfigurationBuilder extends AbstractModuleConfigurationBuilder implements Builder<CreatePermissionConfiguration>  {
    public CreatePermissionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return null;
    }
 
    @Override

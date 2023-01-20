@@ -28,6 +28,11 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
       attributes = LockingConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Concurrency level for lock containers. Adjust this value according to the number of concurrent
     * threads interacting with Infinispan. Similar to the concurrencyLevel tuning parameter seen in

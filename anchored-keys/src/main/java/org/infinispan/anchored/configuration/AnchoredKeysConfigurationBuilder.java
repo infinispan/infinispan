@@ -39,6 +39,11 @@ public class AnchoredKeysConfigurationBuilder implements Builder<AnchoredKeysCon
       this.attributes = AnchoredKeysConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Enable or disable anchored keys.
     */

@@ -23,6 +23,11 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
       this.attributes = TestGlobalConfiguration.attributeSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public TestGlobalConfigurationBuilder testGlobalComponent(String componentName, Object instance) {
       this.attributes.attribute(TestGlobalConfiguration.GLOBAL_TEST_COMPONENTS).get()
                      .put(componentName, instance);

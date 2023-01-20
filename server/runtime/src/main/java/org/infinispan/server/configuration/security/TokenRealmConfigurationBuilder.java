@@ -21,6 +21,11 @@ public class TokenRealmConfigurationBuilder implements RealmProviderBuilder<Toke
       this.oauth2Configuration = new OAuth2ConfigurationBuilder();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    public JwtConfigurationBuilder jwtConfiguration() {
       return jwtConfiguration;
    }

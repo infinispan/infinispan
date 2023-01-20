@@ -29,6 +29,11 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public void validate() {
       stackConfigurationBuilders.forEach(s -> validate());
       stackFileConfigurationBuilders.forEach(s -> validate());

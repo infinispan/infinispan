@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
 import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
 public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBuilder
@@ -22,6 +23,11 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
 
    protected NearCacheConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

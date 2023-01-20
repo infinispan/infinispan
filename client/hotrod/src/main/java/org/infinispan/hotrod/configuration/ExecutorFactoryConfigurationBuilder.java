@@ -3,6 +3,7 @@ package org.infinispan.hotrod.configuration;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -25,6 +26,11 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
       super(builder);
       this.builder = builder;
       this.properties = new Properties();
+   }
+
+   @Override
+   public AttributeSet attributes() {
+      return AttributeSet.EMPTY;
    }
 
    /**

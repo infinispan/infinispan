@@ -26,6 +26,11 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
       attributes = GlobalMetricsConfiguration.attributeDefinitionSet();
    }
 
+   @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
    /**
     * Metrics are enabled if at least one of the metric types is enabled. See {@link #gauges()}, {@link #histograms()}.
     */

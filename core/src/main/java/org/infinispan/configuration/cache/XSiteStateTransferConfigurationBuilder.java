@@ -30,6 +30,11 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
    public void validate() {
       int chunkSize = attributes.attribute(StateTransferConfiguration.CHUNK_SIZE).get();
       if (chunkSize <= 0) {
