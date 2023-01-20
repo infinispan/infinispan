@@ -170,9 +170,9 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
    @Override
    public Location getLocation() {
       if (current != null) {
-         return Location.of(current.getLine(), current.getColumn());
+         return new Location(getName(), current.getLine(), current.getColumn());
       } else {
-         return Location.of(1, 0);
+         return new Location(getName(), 1, 0);
       }
 
    }
@@ -272,7 +272,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
                && getNamespace() != null && !namespace.equals(getNamespace())
                ? " and" : "")
                + (namespace != null && getNamespace() != null && !namespace.equals(getNamespace())
-               ? " namespace '" + getNamespace() + "'" : ""), Location.of(1, 1));
+               ? " namespace '" + getNamespace() + "'" : ""), new Location(getName(), 1, 1));
       }
    }
 

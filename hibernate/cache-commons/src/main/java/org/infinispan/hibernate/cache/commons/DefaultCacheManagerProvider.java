@@ -12,6 +12,7 @@ import java.util.Properties;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -90,7 +91,7 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
       ClassLoader originalClassLoader = currentThread.getContextClassLoader();
       try {
          currentThread.setContextClassLoader(classLoader);
-         ConfigurationBuilderHolder builderHolder = parser.parse(input, null, mediaType);
+         ConfigurationBuilderHolder builderHolder = parser.parse(input, ConfigurationResourceResolver.DEFAULT, mediaType);
          // Workaround Infinispan's ClassLoader strategies to bend to our will:
          builderHolder.getGlobalConfigurationBuilder().classLoader(classLoader);
          return builderHolder;

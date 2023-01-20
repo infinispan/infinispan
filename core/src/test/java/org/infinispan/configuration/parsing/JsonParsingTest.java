@@ -26,6 +26,6 @@ public class JsonParsingTest extends AbstractInfinispanTest {
 
    public void testErrorReporting() {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
-      Exceptions.expectException("^ISPN000327:.* at \\[23,15\\].*", () -> parserRegistry.parseFile("configs/broken.json"), CacheConfigurationException.class);
+      Exceptions.expectException("^ISPN000327:.*broken.json\\[23,15\\].*", () -> parserRegistry.parseFile("configs/broken.json"), CacheConfigurationException.class);
    }
 }

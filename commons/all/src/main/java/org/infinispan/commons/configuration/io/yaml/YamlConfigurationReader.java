@@ -135,7 +135,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                parsed = parseLine(reader.readLine());
             } while (parsed != null && parsed.name == null && parsed.value == null && !parsed.list);
          } catch (IOException e) {
-            throw new ConfigurationReaderException(e, Location.of(row, column));
+            throw new ConfigurationReaderException(e, new Location(getName(), row, column));
          }
          if (parsed == null) {
             // EOF
@@ -143,7 +143,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          }
          if (lines == null) {
             if (parsed.name == null) {
-               throw new ConfigurationReaderException("Incomplete line", Location.of(row, column));
+               throw new ConfigurationReaderException("Incomplete line", new Location(getName(), row, column));
             }
             lines = new Node(parsed);
             current = lines;
@@ -239,7 +239,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                      parsed.value = s.substring(start, i - 1).trim();
                      return parsed;
                   } else if (state == 1) {
-                     throw new ConfigurationReaderException("Invalid comment", Location.of(row, i));
+                     throw new ConfigurationReaderException("Invalid comment", new Location(getName(), row, i));
                   } else {
                      return parsed; // the rest of the  line is a comment
                   }
@@ -261,7 +261,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   }
                case '\\':
                   if (i + 1 == length) {
-                     throw new ConfigurationReaderException("Incomplete escape sequence", Location.of(row, i));
+                     throw new ConfigurationReaderException("Incomplete escape sequence", new Location(getName(), row, i));
                   } else {
                      i++;
                   }
@@ -279,7 +279,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                      } else if (parts.length == 2 && parts[0].equals("%YAML")) {
                         return parsed;
                      } else {
-                        Log.CONFIG.warn("Unknown directive " + s + " at " + Location.of(row, i));
+                        Log.CONFIG.warn("Unknown directive " + s + " at " + new Location(getName(), row, i));
                      }
                   }
                   break;
@@ -300,7 +300,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   if (state == 0 || state == 2) {
                      int endQuote = s.indexOf(c, i + 1);
                      if (endQuote < 0) {
-                        throw new ConfigurationReaderException("Missing closing quote", Location.of(row, i));
+                        throw new ConfigurationReaderException("Missing closing quote", new Location(getName(), row, i));
                      }
                      String v = s.substring(i + 1, endQuote).trim();
                      if (state == 0) {
@@ -466,7 +466,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public Location getLocation() {
-      return Location.of(row, column);
+      return new Location(getName(), row, column);
    }
 
    @Override
@@ -573,7 +573,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                && getNamespace() != null && !namespace.equals(getNamespace())
                ? " and" : "")
                + (namespace != null && getNamespace() != null && !namespace.equals(getNamespace())
-               ? " namespace '" + getNamespace() + "'" : ""), Location.of(row, 1));
+               ? " namespace '" + getNamespace() + "'" : ""), new Location(getName(), row, 1));
       }
    }
 
