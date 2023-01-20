@@ -1,10 +1,12 @@
 package org.infinispan.cli.commands;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -26,7 +28,9 @@ import org.infinispan.cli.completers.ConfigPropertyCompleter;
 import org.infinispan.cli.completers.MediaTypeCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -156,10 +160,18 @@ public class Config extends CliCommand {
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          InputStream is = null;
          OutputStream os = null;
+         ConfigurationResourceResolver resolver;
          try {
             ParserRegistry registry = new ParserRegistry();
-            is = input == null ? System.in : new FileInputStream(input.getAbsolutePath());
-            ConfigurationBuilderHolder holder = registry.parse(is, null, null); // Auto-detect type
+            if (input == null) {
+               is = System.in;
+               resolver = ConfigurationResourceResolver.DEFAULT;
+            } else {
+               File file = new File(input.getAbsolutePath());
+               is = new FileInputStream(file);
+               resolver = new URLConfigurationResourceResolver(file.toURI().toURL());
+            }
+            ConfigurationBuilderHolder holder = registry.parse(is, resolver, null); // Auto-detect type
             os = output == null ? System.out : new FileOutputStream(output.getAbsolutePath());
             Map<String, Configuration> configurations = new HashMap<>();
             for (Map.Entry<String, ConfigurationBuilder> configuration : holder.getNamedConfigurationBuilders().entrySet()) {
@@ -183,7 +195,7 @@ public class Config extends CliCommand {
                registry.serialize(writer, holder.getGlobalConfigurationBuilder().build(), configurations);
             }
             return CommandResult.SUCCESS;
-         } catch (FileNotFoundException e) {
+         } catch (FileNotFoundException | MalformedURLException e) {
             throw new CommandException(e);
          } finally {
             if (input != null) {

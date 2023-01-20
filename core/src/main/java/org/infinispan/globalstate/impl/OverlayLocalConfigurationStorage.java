@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -133,7 +134,7 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    private Map<String, Configuration> load(File file) {
       try (FileInputStream fis = new FileInputStream(file)) {
          Map<String, Configuration> configurations = new HashMap<>();
-         ConfigurationBuilderHolder holder = parserRegistry.parse(fis, null, MediaType.APPLICATION_XML);
+         ConfigurationBuilderHolder holder = parserRegistry.parse(fis, new URLConfigurationResourceResolver(file.toURI().toURL()), MediaType.APPLICATION_XML);
          for (Map.Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
             String name = entry.getKey();
             Configuration configuration = entry.getValue().build();

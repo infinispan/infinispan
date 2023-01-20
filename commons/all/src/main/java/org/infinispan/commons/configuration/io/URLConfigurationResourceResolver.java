@@ -18,4 +18,9 @@ public class URLConfigurationResourceResolver implements ConfigurationResourceRe
    public URL resolveResource(String href) throws IOException {
       return new URL(context, href);
    }
+
+   @Override
+   public URL getContext() {
+      return context;
+   }
 }

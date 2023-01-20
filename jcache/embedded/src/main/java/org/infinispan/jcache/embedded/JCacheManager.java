@@ -15,6 +15,7 @@ import javax.cache.spi.CachingProvider;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -147,7 +148,7 @@ public class JCacheManager extends AbstractJCacheManager {
          if (this.properties != null) {
             properties.putAll(this.properties);
          }
-         new ParserRegistry(cbh.getClassLoader(), false, properties).parse(configurationStream, cbh, null, MediaType.fromExtension(getURI().toString()));
+         new ParserRegistry(cbh.getClassLoader(), false, properties).parse(configurationStream, cbh, ConfigurationResourceResolver.DEFAULT, MediaType.fromExtension(getURI().toString()));
       } catch (IOException e) {
          // No such file, ignore for now (although we should probably handle this better in the future)
       }

@@ -188,7 +188,7 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public Location getLocation() {
-      return Location.of(state.parser.getLineNumber(), state.parser.getColumnNumber());
+      return new Location(getName(), state.parser.getLineNumber(), state.parser.getColumnNumber());
    }
 
    @Override
