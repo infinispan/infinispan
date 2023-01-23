@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * @author Pedro Ruivo
@@ -109,6 +110,7 @@ public class XSiteRestCacheOperations {
    }
 
    @Test
+   @Category(TraceTests.class)
    public void testHotRodOperationsWithOffHeapSingleFileStore() {
       String lonXML = String.format(LON_CACHE_OFF_HEAP, cacheName);
       lonCache = createRestCacheClient(LON, lonXML);

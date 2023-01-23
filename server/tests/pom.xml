@@ -16,9 +16,11 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
-      <defaultTestGroup/>
-      <defaultExcludedTestGroup/>
-      <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+      <defaultJUnitGroup/>
+      <defaultExcludedJUnitGroups/>
+      <org.infinispan.test.server.dir>
+         ${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}
+      </org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
       <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
@@ -170,6 +172,22 @@
                      <goal>integration-test</goal>
                      <goal>verify</goal>
                   </goals>
+                  <configuration>
+                     <excludedGroups>org.infinispan.server.functional.TraceTests</excludedGroups>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>ISPN-14475</id>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
+                  <configuration>
+                     <groups>org.infinispan.server.functional.TraceTests</groups>
+                     <systemPropertyVariables>
+                        <log4j.configurationFile>../../etc/log4j2-trace.xml</log4j.configurationFile>
+                     </systemPropertyVariables>
+                  </configuration>
                </execution>
             </executions>
          </plugin>
