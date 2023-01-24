@@ -26,6 +26,7 @@
       </stack>
       <stack name="xsite" extends="udp">
          <relay.RELAY2 site="${infinispan.site.name:site1}"
+                       max_site_masters="${infinispan.site.max_relay_nodes:1}"
                        xmlns="urn:org:jgroups"/>
          <remote-sites default-stack="bridge">
             <remote-site name="${infinispan.site.name:site1}"/>
