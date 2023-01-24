@@ -1,0 +1,29 @@
+RAFT(1)
+=======
+:doctype: manpage
+
+
+NAME
+----
+raft - manages the Raft subsystem.
+
+
+SYNOPSIS
+--------
+*raft list*
+
+*raft add* `NODE`
+
+*raft remove* `NODE`
+
+
+EXAMPLES
+--------
+`raft list` +
+Returns the list of node names of the Raft members.
+
+`raft add my-node` +
+Adds the new member, identified by `my-node`, to all registered state machines.
+
+`raft remove my-node` +
+Removes the member, identified by `my-node`, from all registered state machines.

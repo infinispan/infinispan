@@ -1,10 +1,12 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
@@ -23,6 +25,7 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.distribution.NodeDistributionInfo;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -39,6 +42,8 @@ import org.infinispan.server.core.BackupManager;
  * @since 10.0
  */
 public class ClusterResource implements ResourceHandler {
+
+   private static final String MEMBER_PARAMETER = "member";
 
    private final InvocationHelper invocationHelper;
    private final BackupManager backupManager;
@@ -69,6 +74,16 @@ public class ClusterResource implements ResourceHandler {
             .invocation().methods(DELETE, HEAD, POST).path("/v2/cluster/restores/{restoreName}")
                .permission(AuthorizationPermission.ADMIN).name("RESTORE").auditContext(AuditContext.SERVER)
                .handleWith(this::restore)
+            // RAFT ADMIN
+            .invocation().methods(GET).path("/v2/cluster/raft")
+               .permission(AuthorizationPermission.ADMIN).name("RAFT MEMBERS").auditContext(AuditContext.SERVER)
+               .handleWith(this::handleRaftMembers)
+            .invocation().methods(POST, PUT).path("/v2/cluster/raft/{member}")
+               .permission(AuthorizationPermission.ADMIN).name("RAFT ADD MEMBER").auditContext(AuditContext.SERVER)
+               .handleWith(this::handleAddRaftMember)
+            .invocation().methods(DELETE).path("/v2/cluster/raft/{member}")
+               .permission(AuthorizationPermission.ADMIN).name("RAFT REMOVE MEMBER").auditContext(AuditContext.SERVER)
+               .handleWith(this::handleRemoveRaftMember)
             .create();
    }
 
@@ -136,5 +151,36 @@ public class ClusterResource implements ResourceHandler {
                Collection<NodeDistributionInfo> collection = distributions.values();
                return Immutables.immutableListWrap(collection.toArray(new NodeDistributionInfo[0]));
             });
+   }
+
+   private CompletionStage<RestResponse> handleRaftMembers(RestRequest request) {
+      RaftManager raftManager = raftManager();
+      if (!raftManager.isRaftAvailable()) {
+         return CompletableFuture.completedFuture(invocationHelper.noContentResponse(request));
+      }
+      boolean isPretty = isPretty(request);
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.array(raftManager.raftMembers()), isPretty);
+   }
+
+   private CompletionStage<RestResponse> handleAddRaftMember(RestRequest request) {
+      RaftManager raftManager = raftManager();
+      if (!raftManager.isRaftAvailable()) {
+         return CompletableFuture.completedFuture(invocationHelper.notFoundResponse(request));
+      }
+      String raftId = request.variables().get(MEMBER_PARAMETER);
+      return raftManager.addMember(raftId).thenApply(unused -> invocationHelper.newResponse(request, OK));
+   }
+
+   private CompletionStage<RestResponse> handleRemoveRaftMember(RestRequest request) {
+      RaftManager raftManager = raftManager();
+      if (!raftManager.isRaftAvailable()) {
+         return CompletableFuture.completedFuture(invocationHelper.notFoundResponse(request));
+      }
+      String raftId = request.variables().get(MEMBER_PARAMETER);
+      return raftManager.removeMembers(raftId).thenApply(unused -> invocationHelper.newResponse(request, OK));
+   }
+
+   private RaftManager raftManager() {
+      return SecurityActions.getRaftManager(invocationHelper.getRestCacheManager().getInstance());
    }
 }

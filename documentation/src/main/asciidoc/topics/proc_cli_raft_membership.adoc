@@ -1,0 +1,43 @@
+[id='raft_membership_{context}']
+= Raft membership management
+
+Raft requires an explicit list of members to operate.
+{brandname} CLI contains commands to manage the cluster membership.
+Operations to add and remove members go through a quorum in all registered state machines.
+The {brandname} node name uniquely identifies a Raft member.
+
+.Prerequisites
+
+* Create a CLI connection to {brandname}.
+
+.Procedure
+
+. List the current Raft members with [command]`raft list` command:
++
+[source,options="nowrap",subs=attributes+]
+----
+raft list
+----
+
+. Change membership as follows:
++
+* Add a new member `NODE` with [command]`raft add` command:
++
+[source,options="nowrap",subs=attributes+]
+----
+raft add NODE
+----
++
+* Remove the member `NODE` with [command]`raft remove` command:
++
+[source,options="nowrap",subs=attributes+]
+----
+raft remove NODE
+----
+
+[NOTE]
+====
+A quorum on every state machine must accept the membership change. Nodes outside the membership list are unable to join the cluster.
+====
+
+For more information and examples, run the [command]`help raft` command.

@@ -1,7 +1,11 @@
 package org.infinispan.remoting.transport.impl;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.raft.RaftChannelConfiguration;
 import org.infinispan.remoting.transport.raft.RaftManager;
@@ -36,6 +40,21 @@ public enum EmptyRaftManager implements RaftManager {
    @Override
    public String raftId() {
       return null;
+   }
+
+   @Override
+   public CompletionStage<Void> addMember(String raftId) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> removeMembers(String raftId) {
+      return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public Collection<String> raftMembers() {
+      return Collections.emptyList();
    }
 
    @Override

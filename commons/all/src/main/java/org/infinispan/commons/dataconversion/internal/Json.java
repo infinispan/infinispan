@@ -1383,6 +1383,14 @@ public class Json implements java.io.Serializable {
       return A;
    }
 
+   public static <T> Json array(Collection<T> collection) {
+      Json jsonArray = array();
+      for (T obj : collection) {
+         jsonArray.add(factory().make(obj));
+      }
+      return jsonArray;
+   }
+
    /**
     * <p>
     * Exposes some internal methods that are useful for {@link Json.Factory} implementations or other extension/layers

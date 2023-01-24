@@ -8,6 +8,7 @@ import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestMetricsClient;
+import org.infinispan.client.rest.RestRaftClient;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
@@ -112,5 +113,10 @@ public class RestClientJDK implements RestClient {
    @Override
    public RestSecurityClient security() {
       return new RestSecurityClientJDK(rawClient);
+   }
+
+   @Override
+   public RestRaftClient raft() {
+      return new RestRaftClientJDK(rawClient);
    }
 }
