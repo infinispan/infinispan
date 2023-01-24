@@ -1,12 +1,10 @@
 package org.infinispan.spring.remote.session;
 
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.Flag;
@@ -35,7 +33,7 @@ public class InfinispanRemoteSessionRepository extends AbstractInfinispanSession
 
    @Override
    protected void removeFromCacheWithoutNotifications(String originalId) {
-      RemoteCache remoteCache = (RemoteCache) cache.getNativeCache();
+      RemoteCache remoteCache = (RemoteCache) nativeCache;
       if (cache.getWriteTimeout() > 0) {
          try {
             remoteCache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).removeAsync(originalId).get(cache.getWriteTimeout(), TimeUnit.MILLISECONDS);
@@ -51,14 +49,13 @@ public class InfinispanRemoteSessionRepository extends AbstractInfinispanSession
    }
 
    @Override
-   public Map<String, MapSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
+   public Map<String, InfinispanSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
       if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
          return Collections.emptyMap();
       }
 
-      return cache.getNativeCache().values().stream()
-            .map(cacheValue -> (MapSession) cacheValue)
+      return nativeCache.values().stream()
             .filter(session -> indexValue.equals(PrincipalNameResolver.getInstance().resolvePrincipal(session)))
-            .collect(Collectors.toMap(MapSession::getId, Function.identity()));
+            .collect(Collectors.toMap(MapSession::getId, session -> new InfinispanSession(session, false)));
    }
 }

@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportAware;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.session.MapSession;
 import org.springframework.session.config.annotation.web.http.SpringHttpSessionConfiguration;
 
 
@@ -31,14 +30,8 @@ public class InfinispanEmbeddedHttpSessionConfiguration extends SpringHttpSessio
 
       SpringCache cacheForSessions = cacheManager.getCache(cacheName);
 
-      InfinispanEmbeddedSessionRepository sessionRepository = new InfinispanEmbeddedSessionRepository(cacheForSessions) {
-         @Override
-         public MapSession createSession() {
-            MapSession session = super.createSession();
-            session.setMaxInactiveInterval(Duration.ofSeconds(maxInactiveIntervalInSeconds));
-            return session;
-         }
-      };
+      InfinispanEmbeddedSessionRepository sessionRepository = new InfinispanEmbeddedSessionRepository(cacheForSessions);
+      sessionRepository.setDefaultMaxInactiveInterval(Duration.ofSeconds(maxInactiveIntervalInSeconds));
       sessionRepository.setApplicationEventPublisher(eventPublisher);
 
       return sessionRepository;
