@@ -102,6 +102,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       return CONTEXT_INITIALIZER;
    }
 
+   protected void assertPersonEqual(Person firstPerson, Person secondPerson) {
+      assertEquals(firstPerson, secondPerson);
+   }
+
    public void testTwoCachesSameCacheStore() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), "testTwoCachesSameCacheStore", false);
@@ -181,34 +185,34 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       // Just to prove nothing in memory even with stop
       cache.getAdvancedCache().getDataContainer().clear();
 
-      assertEquals(createEmptyPerson("1"), cache.get("k1"));
+      assertPersonEqual(createEmptyPerson("1"), cache.get("k1"));
       Person person2 = createEmptyPerson("2");
       person2.setPicture(pictureBytes);
       person2.setMoneyOwned(4.6);
       person2.setMoneyOwed(5.6f);
       person2.setDecimalField(8.4);
       person2.setRealField(9.2f);
-      assertEquals(person2, cache.get("k2"));
+      assertPersonEqual(person2, cache.get("k2"));
       Person person3 = createEmptyPerson("3");
       person3.setSex(Sex.MALE);
       person3.setMoneyOwned(4.7);
       person3.setMoneyOwed(5.7f);
       person3.setDecimalField(8.5);
       person3.setRealField(9.3f);
-      assertEquals(person3, cache.get("k3"));
-      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), cache.get("k4"));
-      assertEquals(infinispanPerson, cache.get("Infinispan"));
+      assertPersonEqual(person3, cache.get("k3"));
+      assertPersonEqual(new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), cache.get("k4"));
+      assertPersonEqual(infinispanPerson, cache.get("Infinispan"));
 
       cache.stop();
 
       cache.start();
 
       assertEquals(5, cache.entrySet().size());
-      assertEquals(createEmptyPerson("1"), cache.get("k1"));
-      assertEquals(person2, cache.get("k2"));
-      assertEquals(person3, cache.get("k3"));
-      assertEquals(new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), cache.get("k4"));
-      assertEquals(infinispanPerson, cache.get("Infinispan"));
+      assertPersonEqual(createEmptyPerson("1"), cache.get("k1"));
+      assertPersonEqual(person2, cache.get("k2"));
+      assertPersonEqual(person3, cache.get("k3"));
+      assertPersonEqual(new Person("4", new Address("Street", "City", 12345), null, null, null, true, 4.8, 5.8f, 8.6, 9.4f), cache.get("k4"));
+      assertPersonEqual(infinispanPerson, cache.get("Infinispan"));
    }
 
    protected Person createEmptyPerson(String name) {

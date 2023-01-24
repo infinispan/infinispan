@@ -70,6 +70,14 @@ public class Address implements Serializable, JsonSerialization {
       return true;
    }
 
+   public boolean equalsIgnoreStreetWhitespace(Address address) {
+      if (zip != address.zip) return false;
+      if (city != null ? !city.equals(address.city) : address.city != null) return false;
+      if (street != null ? !street.trim().equals(address.street.trim()) : address.street != null) return false;
+
+      return true;
+   }
+
    @Override
    public int hashCode() {
       int result;

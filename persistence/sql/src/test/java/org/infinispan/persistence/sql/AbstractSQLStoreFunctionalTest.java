@@ -4,6 +4,7 @@ import static org.infinispan.persistence.jdbc.common.DatabaseType.H2;
 import static org.infinispan.persistence.jdbc.common.DatabaseType.SQLITE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -123,6 +124,25 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
       return builder;
+   }
+
+   @Override
+   protected void assertPersonEqual(Person firstPerson, Person secondPerson) {
+      switch (DB_TYPE) {
+         // These databases right pad CHAR to use up the entire space
+         case H2:
+         case DB2:
+         case ORACLE:
+         case SQL_SERVER:
+         case POSTGRES:
+            if (!firstPerson.equalsIgnoreWhitespaceAddress(secondPerson)) {
+               fail("expected:<" + firstPerson + "> but was:<" + secondPerson + ">");
+            }
+            break;
+         default:
+            super.assertPersonEqual(firstPerson, secondPerson);
+      }
+
    }
 
    @Override
@@ -425,7 +445,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "NAME VARCHAR(255) NOT NULL, " +
-               "street VARCHAR(255), " +
+               "street CHAR(255), " +
                "city VARCHAR(255), " +
                "zip INT, " +
                "picture " + binaryType() + ", " +
