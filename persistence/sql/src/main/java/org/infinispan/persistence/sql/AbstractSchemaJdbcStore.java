@@ -376,6 +376,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
             case Types.BIT:
             case Types.BOOLEAN:
                return BOOL;
+            case Types.CHAR:
             case Types.VARCHAR:
             case Types.NVARCHAR:
             case Types.LONGVARCHAR:
