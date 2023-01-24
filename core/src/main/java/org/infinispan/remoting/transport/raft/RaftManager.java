@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.raft;
 
+import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.api.Lifecycle;
@@ -48,4 +50,37 @@ public interface RaftManager extends Lifecycle {
     * @return This node raft-id.
     */
    String raftId();
+
+   /**
+    * Adds a new member to the RAFT cluster through consensus.
+    *
+    * <p>
+    * All registered {@link RaftStateMachine} are updated with the new membership.
+    * <b>Warning:</b> This method is not atomic, the membership might diverge because of failures.
+    * </p>
+    *
+    * @param raftId: A unique name of the new node joining.
+    * @return A {@link CompletionStage} that finishes after the operation is applied.
+    */
+   CompletionStage<Void> addMember(String raftId);
+
+   /**
+    * Removes an existing member of the RAFT cluster through consensus.
+    *
+    * <p>
+    * All registered {@link RaftStateMachine} are updated with the new membership.
+    * <b>Warning:</b> This method is not atomic, the membership might diverge because of failures.
+    * </p>
+    *
+    * @param raftId: The node name to remove.
+    * @return A {@link CompletionStage} that finishes after the operation is applied.
+    */
+   CompletionStage<Void> removeMembers(String raftId);
+
+   /**
+    * The actual members in the cluster.
+    *
+    * @return An unmodifiable list containing the IDs of all cluster members.
+    */
+   Collection<String> raftMembers();
 }

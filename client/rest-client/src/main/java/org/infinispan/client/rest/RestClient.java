@@ -108,4 +108,11 @@ public interface RestClient extends AutoCloseable {
     * Server security
     */
    RestSecurityClient security();
+
+   /**
+    * Client to interact with Raft.
+    *
+    * @return The HTTP based Raft client.
+    */
+   RestRaftClient raft();
 }

@@ -53,6 +53,7 @@ import org.infinispan.cli.commands.rest.Logging;
 import org.infinispan.cli.commands.rest.Migrate;
 import org.infinispan.cli.commands.rest.Put;
 import org.infinispan.cli.commands.rest.Query;
+import org.infinispan.cli.commands.rest.Raft;
 import org.infinispan.cli.commands.rest.Rebalance;
 import org.infinispan.cli.commands.rest.Remove;
 import org.infinispan.cli.commands.rest.Reset;
@@ -125,6 +126,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Patch.class,
             Put.class,
             Query.class,
+            Raft.class,
             Rebalance.class,
             Remove.class,
             Reset.class,
