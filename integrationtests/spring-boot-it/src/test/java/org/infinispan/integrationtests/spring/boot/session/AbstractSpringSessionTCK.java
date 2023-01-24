@@ -4,18 +4,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import org.infinispan.integrationtests.spring.boot.session.configuration.InfinispanSessionListener;
+import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository.InfinispanSession;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
-import org.springframework.session.MapSession;
 import org.springframework.session.SessionRepository;
 
 public class AbstractSpringSessionTCK {
 
    @Autowired
-   private SessionRepository<MapSession> sessionRepository;
+   private SessionRepository<InfinispanSession> sessionRepository;
 
    @Autowired
    protected InfinispanSessionListener httpSessionListener;

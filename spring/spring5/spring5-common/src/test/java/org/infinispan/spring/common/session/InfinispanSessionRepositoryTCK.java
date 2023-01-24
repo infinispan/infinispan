@@ -2,7 +2,6 @@ package org.infinispan.spring.common.session;
 
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertNull;
@@ -10,16 +9,13 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.spring.common.provider.SpringCache;
+import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository.InfinispanSession;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.springframework.session.FindByIndexNameSessionRepository;
-import org.springframework.session.MapSession;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
@@ -56,7 +52,7 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test
    public void testCreatingSession() throws Exception {
       //when
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
 
       //then
       assertNotNull(session.getId());
@@ -67,7 +63,7 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test
    public void testSavingSession() throws Exception {
       //when
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
       sessionRepository.save(session);
 
       //then
@@ -77,7 +73,7 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test
    public void testUpdatingTTLOnAccessingData() throws Exception {
       //when
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
       long accessTimeBeforeSaving = session.getLastAccessedTime().toEpochMilli();
 
       sessionRepository.save(session);
@@ -99,7 +95,7 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test
    public void testDeletingSession() throws Exception {
       //when
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
       sessionRepository.save(session);
       sessionRepository.deleteById(session.getId());
 
@@ -110,12 +106,12 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test(timeOut = 5000)
    public void testEvictingSession() throws Exception {
       //when
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
       session.setMaxInactiveInterval(Duration.ofSeconds(1));
       sessionRepository.save(session);
 
       //then
-      while (sessionRepository.getSession(session.getId(), false) != null) {
+      while (sessionRepository.findById(session.getId()) != null) {
          TimeUnit.MILLISECONDS.sleep(500);
       }
    }
@@ -152,7 +148,7 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test
    public void testChangeSessionId() throws Exception {
       //given
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
 
       //when
       String originalId = session.getId();
@@ -175,26 +171,28 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    @Test
    public void testConcurrentSessionAccess() {
       //given
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
+      // setLastAccessedTime will be called by Spring Session's SessionRepositoryRequestWrapper.getSession
+      session.setLastAccessedTime(Instant.now());
       sessionRepository.save(session);
 
       //when
-      MapSession concurrentRequestSession = sessionRepository.findById(session.getId());
+      InfinispanSession slowRequestSession = sessionRepository.findById(session.getId());
+      slowRequestSession.setLastAccessedTime(Instant.now());
+      InfinispanSession fastRequestSession = sessionRepository.findById(session.getId());
+      fastRequestSession.setLastAccessedTime(Instant.now());
+      fastRequestSession.setAttribute("testAttribute", "testValue");
+      sessionRepository.save(fastRequestSession);
+      sessionRepository.save(slowRequestSession);
 
       //then
-      assertNotSame(session, concurrentRequestSession);
-
-      // iterate over the attributes in one request and add an attribute in the other
-      Map<String, Object> sessionAttrs = TestingUtil.extractField(session, "sessionAttrs");
-      Iterator<Map.Entry<String, Object>> iterator = sessionAttrs.entrySet().iterator();
-
-      concurrentRequestSession.setAttribute("foo", "bar");
-
-      assertFalse(iterator.hasNext());
+      assertNotSame(slowRequestSession, fastRequestSession);
+      InfinispanSession updatedSession = sessionRepository.findById(session.getId());
+      assertEquals("testValue", updatedSession.getAttribute("testAttribute"));
    }
 
    protected void addEmptySessionWithPrincipal(AbstractInfinispanSessionRepository sessionRepository, String principalName) {
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
       session.setAttribute(PRINCIPAL_NAME_INDEX_NAME, principalName);
       sessionRepository.save(session);
    }

@@ -1,8 +1,8 @@
 package org.infinispan.spring.embedded.session;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -31,19 +31,21 @@ public class InfinispanEmbeddedSessionRepository extends AbstractInfinispanSessi
 
    @Override
    protected void removeFromCacheWithoutNotifications(String originalId) {
-      Cache nativeCache = (Cache) cache.getNativeCache();
-      nativeCache.getAdvancedCache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).remove(originalId);
+      Cache<String, MapSession> embeddedCache = (Cache<String, MapSession>) nativeCache;
+      embeddedCache.getAdvancedCache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).remove(originalId);
    }
 
    @Override
-   public Map<String, MapSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
+   public Map<String, InfinispanSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
       if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
          return Collections.emptyMap();
       }
 
-      Cache<String, MapSession> embeddedCache = (Cache<String, MapSession>) cache.getNativeCache();
-      return embeddedCache.values().stream()
-                          .filter(session -> indexValue.equals(PrincipalNameResolver.getInstance().resolvePrincipal(session)))
-                          .collect(() -> Collectors.toMap(MapSession::getId, Function.identity()));
+      Cache<String, MapSession> embeddedCache = (Cache<String, MapSession>) nativeCache;
+      Collection<MapSession> sessions =
+            embeddedCache.values().stream()
+                  .filter(session -> indexValue.equals(PrincipalNameResolver.getInstance().resolvePrincipal(session)))
+                  .collect(Collectors::toList);
+      return sessions.stream().collect(Collectors.toMap(MapSession::getId, session -> new InfinispanSession(session, false)));
    }
 }
