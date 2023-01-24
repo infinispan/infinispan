@@ -152,11 +152,22 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       }
    }
 
-   private void createCounter(String name, CounterConfiguration configuration) {
+   @Test
+   public void testCounterCreation() {
+      String counterName = "counter-creation";
+      createCounter(counterName, CounterConfiguration.builder(CounterType.WEAK).initialValue(1).build());
+      assertThat(doCounterCreateRequest(counterName, CounterConfiguration.builder(CounterType.WEAK).initialValue(1).build())).isNotModified();
+      assertThat(doCounterCreateRequest(counterName, CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(2).build())).isNotModified();
+   }
+
+   private CompletionStage<RestResponse> doCounterCreateRequest(String name, CounterConfiguration configuration) {
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig(name, configuration);
       RestEntity restEntity = RestEntity.create(APPLICATION_JSON, counterConfigToJson(config));
-      CompletionStage<RestResponse> response = client.counter(name).create(restEntity);
-      assertThat(response).isOk();
+      return client.counter(name).create(restEntity);
+   }
+
+   private void createCounter(String name, CounterConfiguration configuration) {
+      assertThat(doCounterCreateRequest(name, configuration)).isOk();
    }
 
    private void waitForCounterToReach(String name, int i) {

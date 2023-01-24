@@ -2,6 +2,7 @@ package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -104,7 +105,11 @@ public class CounterResource implements ResourceHandler {
 
       return invocationHelper.getCounterManager()
             .defineCounterAsync(counterName, configuration)
-            .thenApply(r -> responseBuilder.build());
+            .thenApply(created -> created ?
+                  responseBuilder.build() :
+                  responseBuilder.status(NOT_MODIFIED)
+                        .entity("Unable to create counter: " + counterName)
+                        .build());
    }
 
    private CompletionStage<RestResponse> deleteCounter(RestRequest request) {
