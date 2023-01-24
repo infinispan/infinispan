@@ -164,6 +164,11 @@ public class Person implements Serializable, JsonSerialization {
       final Person person = (Person) o;
 
       if (address != null ? !address.equals(person.address) : person.address != null) return false;
+
+      return commonEquals(person);
+   }
+
+   private boolean commonEquals(Person person) {
       if (name != null ? !name.equals(person.name) : person.name != null) return false;
       if (picture != null ? !Arrays.equals(picture, person.picture) : person.picture != null) return false;
       if (sex != null ? !sex.equals(person.sex) : person.sex != null) return false;
@@ -175,6 +180,13 @@ public class Person implements Serializable, JsonSerialization {
       if (realField != person.realField) return false;
 
       return true;
+   }
+
+   public boolean equalsIgnoreWhitespaceAddress(Person person) {
+      if (address != null ? !address.equalsIgnoreStreetWhitespace(person.address) : person.address != null)
+         return false;
+
+      return commonEquals(person);
    }
 
    @Override
