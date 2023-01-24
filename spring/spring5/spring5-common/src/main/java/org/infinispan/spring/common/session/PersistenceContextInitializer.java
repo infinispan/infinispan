@@ -14,6 +14,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = {
             MapSessionProtoAdapter.class,
             MapSessionProtoAdapter.SessionAttribute.class,
+            SessionUpdateRemappingFunctionProtoAdapter.class,
       },
       schemaFileName = "persistence.spring5.session.proto",
       schemaFilePath = "proto/generated",

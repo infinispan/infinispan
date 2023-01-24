@@ -10,12 +10,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.spring.common.provider.SpringCache;
+import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository.InfinispanSession;
 import org.infinispan.spring.common.session.util.EventsWaiter;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.PayloadApplicationEvent;
-import org.springframework.session.MapSession;
 import org.springframework.session.events.SessionCreatedEvent;
 import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionDestroyedEvent;
@@ -42,11 +42,11 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       sessionRepository.setApplicationEventPublisher(eventsCollector);
 
       //when
-      MapSession sessionToBeDeleted = sessionRepository.createSession();
+      InfinispanSession sessionToBeDeleted = sessionRepository.createSession();
       sessionToBeDeleted.setAttribute("foo", "bar");
       sessionRepository.save(sessionToBeDeleted);
 
-      MapSession sessionToBeExpired = sessionRepository.createSession();
+      InfinispanSession sessionToBeExpired = sessionRepository.createSession();
       sessionToBeExpired.setMaxInactiveInterval(Duration.ofSeconds(1));
 
       sessionRepository.save(sessionToBeExpired);
@@ -74,7 +74,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
       EventsCollector eventsCollector = new EventsCollector();
       sessionRepository.setApplicationEventPublisher(eventsCollector);
 
-      MapSession session = sessionRepository.createSession();
+      InfinispanSession session = sessionRepository.createSession();
 
       sessionRepository.save(session);
       session.changeSessionId();
@@ -105,7 +105,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
 
       //when
       sessionRepository.destroy(); //simulate closing app context
-      MapSession sessionToBeExpired = sessionRepository.createSession();
+      InfinispanSession sessionToBeExpired = sessionRepository.createSession();
       sessionRepository.save(sessionToBeExpired);
 
       //then
