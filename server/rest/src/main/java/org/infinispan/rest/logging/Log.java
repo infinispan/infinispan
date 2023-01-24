@@ -181,4 +181,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Predefined roles are not mutable", id = 12050)
    String predefinedRolesAreNotMutable();
+
+   @Message(value = "Argument '%s' is required", id = 12051)
+   IllegalArgumentException argumentMissing(String name);
 }
