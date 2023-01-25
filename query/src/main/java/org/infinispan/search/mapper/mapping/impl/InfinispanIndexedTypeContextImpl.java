@@ -2,6 +2,7 @@ package org.infinispan.search.mapper.mapping.impl;
 
 import org.hibernate.search.engine.backend.index.IndexManager;
 import org.hibernate.search.engine.mapper.mapping.spi.MappedIndexManager;
+import org.hibernate.search.engine.search.projection.spi.ProjectionMappedTypeContext;
 import org.hibernate.search.mapper.pojo.identity.spi.IdentifierMapping;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoIndexedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.model.path.spi.PojoPathFilter;
@@ -10,7 +11,8 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
 
-class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, InfinispanIndexedTypeContext<E> {
+class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, ProjectionMappedTypeContext,
+      InfinispanIndexedTypeContext<E> {
 
    private final PojoRawTypeIdentifier<E> typeIdentifier;
    private final String entityName;
@@ -42,6 +44,11 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Infini
    @Override
    public Class<?> javaClass() {
       return typeIdentifier.javaClass();
+   }
+
+   @Override
+   public boolean loadingAvailable() {
+      return true;
    }
 
    @Override
