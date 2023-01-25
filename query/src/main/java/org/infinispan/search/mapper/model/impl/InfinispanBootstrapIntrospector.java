@@ -14,7 +14,6 @@ import org.hibernate.search.mapper.pojo.model.hcann.spi.AbstractPojoHCAnnBootstr
 import org.hibernate.search.mapper.pojo.model.hcann.spi.PojoHCannOrmGenericContextHelper;
 import org.hibernate.search.mapper.pojo.model.spi.GenericContextAwarePojoGenericTypeModel.RawTypeDeclaringContext;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
-import org.hibernate.search.mapper.pojo.model.spi.PojoGenericTypeModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.hibernate.search.util.common.AssertionFailure;
@@ -36,15 +35,13 @@ public class InfinispanBootstrapIntrospector extends AbstractPojoHCAnnBootstrapI
 
    private final ValueReadHandleFactory valueReadHandleFactory;
    private final PojoHCannOrmGenericContextHelper genericContextHelper;
-   private final RawTypeDeclaringContext<?> missingRawTypeDeclaringContext;
 
    private final Map<Class<?>, PojoRawTypeModel<?>> typeModelCache = new HashMap<>();
 
    public InfinispanBootstrapIntrospector(ValueReadHandleFactory valueReadHandleFactory) {
-      super(new JavaReflectionManager());
+      super(new JavaReflectionManager(), valueReadHandleFactory);
       this.valueReadHandleFactory = valueReadHandleFactory;
       this.genericContextHelper = new PojoHCannOrmGenericContextHelper(this);
-      this.missingRawTypeDeclaringContext = new RawTypeDeclaringContext<>(genericContextHelper, Object.class);
    }
 
    @Override
@@ -63,11 +60,6 @@ public class InfinispanBootstrapIntrospector extends AbstractPojoHCAnnBootstrapI
    @Override
    public PojoRawTypeModel<?> typeModel(String name) {
       throw log.namedTypesNotSupported(name);
-   }
-
-   @Override
-   public <T> PojoGenericTypeModel<T> genericTypeModel(Class<T> clazz) {
-      return missingRawTypeDeclaringContext.createGenericTypeModel(clazz);
    }
 
    @Override

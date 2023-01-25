@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import org.hibernate.search.engine.mapper.model.spi.MappableTypeModel;
 import org.hibernate.search.mapper.pojo.model.spi.JavaClassPojoCaster;
 import org.hibernate.search.mapper.pojo.model.spi.PojoCaster;
+import org.hibernate.search.mapper.pojo.model.spi.PojoConstructorModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoPropertyModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
@@ -61,6 +62,22 @@ public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
    }
 
    @Override
+   public PojoConstructorModel<byte[]> mainConstructor() {
+      return null;
+   }
+
+   @Override
+   public PojoConstructorModel<byte[]> constructor(Class<?>... parameterTypes) {
+      return null;
+   }
+
+   @Override
+   public Collection<PojoConstructorModel<byte[]>> declaredConstructors() {
+      // No support for constructors on dynamic-map types.
+      return Collections.emptyList();
+   }
+
+   @Override
    public Collection<PojoPropertyModel<?>> declaredProperties() {
       // Properties are created by ProtobufMessageBinder
       return Collections.emptySet();
@@ -102,6 +119,16 @@ public class ProtobufRawTypeModel implements PojoRawTypeModel<byte[]> {
 
    @Override
    public <U> Optional<PojoTypeModel<? extends U>> castTo(Class<U> target) {
+      return Optional.empty();
+   }
+
+   @Override
+   public Optional<? extends PojoTypeModel<?>> typeArgument(Class<?> rawSuperType, int typeParameterIndex) {
+      return Optional.empty();
+   }
+
+   @Override
+   public Optional<? extends PojoTypeModel<?>> arrayElementType() {
       return Optional.empty();
    }
 

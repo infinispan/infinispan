@@ -3,8 +3,8 @@ package org.infinispan.query.remote.impl.mapping.model;
 import java.lang.invoke.MethodHandles;
 
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
-import org.hibernate.search.mapper.pojo.model.spi.PojoGenericTypeModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
+import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 
@@ -23,8 +23,8 @@ public class ProtobufBootstrapIntrospector implements PojoBootstrapIntrospector 
    }
 
    @Override
-   public <T> PojoGenericTypeModel<T> genericTypeModel(Class<T> clazz) {
-      return delegate.genericTypeModel(clazz);
+   public ValueHandleFactory annotationValueHandleFactory() {
+      return delegate.annotationValueHandleFactory();
    }
 
    @Override
