@@ -33,7 +33,7 @@ public interface RestTaskClient {
    /**
     * Executes a task with the supplied parameters. Currently only supports String values
     */
-   CompletionStage<RestResponse> exec(String taskName, Map<String, ?> parameters);
+   CompletionStage<RestResponse> exec(String taskName, String cacheName, Map<String, ?> parameters);
 
    /**
     * Uploads a script
@@ -44,7 +44,11 @@ public interface RestTaskClient {
     * Executes a task without parameters
     */
    default CompletionStage<RestResponse> exec(String taskName) {
-      return exec(taskName, Collections.emptyMap());
+      return exec(taskName, null, Collections.emptyMap());
+   }
+
+   default CompletionStage<RestResponse> exec(String taskName, Map<String, ?> parameters) {
+      return exec(taskName, null, parameters);
    }
 
 }

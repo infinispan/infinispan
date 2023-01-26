@@ -12,8 +12,8 @@ import org.infinispan.util.concurrent.BlockingManager;
 
 public class DummyTaskEngine implements TaskEngine {
 
-   enum DummyTaskTypes {
-      SUCCESSFUL_TASK, PARAMETERIZED_TASK, FAILING_TASK, SLOW_TASK
+   public enum DummyTaskTypes {
+      SUCCESSFUL_TASK, PARAMETERIZED_TASK, FAILING_TASK, SLOW_TASK, CACHE_TASK
    }
 
    private final Set<String> tasks;
@@ -55,6 +55,8 @@ public class DummyTaskEngine implements TaskEngine {
          return f;
       case SLOW_TASK:
          return (CompletableFuture<T>) slow;
+      case CACHE_TASK:
+         return (CompletableFuture<T>) CompletableFuture.completedFuture(context.getCache().get().getName());
       }
       throw new IllegalArgumentException();
    }
