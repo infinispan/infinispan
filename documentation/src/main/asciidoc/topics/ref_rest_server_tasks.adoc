@@ -51,3 +51,13 @@ uploads the script, you can execute it with `GET` requests.
 ----
 include::rest_examples/post_v2_tasks_upload.adoc[]
 ----
+
+[id='rest_v2_tasks_download']
+= Downloading Script Tasks
+Download script tasks with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_tasks_download.adoc[]
+----
+

@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
@@ -171,4 +172,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Site operation on '%s' failed: '%s'", id = 12047)
    IllegalStateException siteOperationFailed(String site, String status);
+
+   @Message(value = "No such script '%s'", id = 12048)
+   NoSuchElementException noSuchScript(String taskName);
 }
