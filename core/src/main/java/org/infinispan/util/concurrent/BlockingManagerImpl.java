@@ -1,9 +1,14 @@
 package org.infinispan.util.concurrent;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -40,6 +45,10 @@ public class BlockingManagerImpl implements BlockingManager {
    // This should eventually be the only reference to blocking executor
    @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
    Executor blockingExecutor;
+   @Inject
+   NonBlockingManager nonBlockingManager;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
+   ScheduledExecutorService scheduledExecutorService;
 
    private Scheduler blockingScheduler;
    private Scheduler nonBlockingScheduler;
@@ -352,6 +361,64 @@ public class BlockingManagerImpl implements BlockingManager {
          return supplyBlockingOperation(supplier, traceId, limitedExecutor);
       }
    }
+
+   @Override
+   public <V> ScheduledCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId) {
+      var scheduledStage = new ScheduledBlockingFuture<>(supplier, traceId);
+      log.tracef("Scheduling supply operation %s for %s to run in %s %s", supplier, traceId, delay, unit);
+      scheduledStage.scheduledFuture = scheduledExecutorService.schedule(scheduledStage, delay, unit);
+      return scheduledStage;
+   }
+
+   private class ScheduledBlockingFuture<V> extends CompletableFuture<V> implements ScheduledCompletableStage<V>, Runnable {
+      private volatile ScheduledFuture<?> scheduledFuture;
+
+      private final Supplier<V> supplier;
+      private final Object traceId;
+
+      private ScheduledBlockingFuture(Supplier<V> supplier, Object traceId) {
+         this.supplier = Objects.requireNonNull(supplier);
+         this.traceId = Objects.requireNonNull(traceId);
+      }
+
+      @Override
+      public long getDelay(TimeUnit timeUnit) {
+         return scheduledFuture.getDelay(timeUnit);
+      }
+
+      @Override
+      public int compareTo(Delayed delayed) {
+         if (delayed instanceof ScheduledBlockingFuture) {
+            return scheduledFuture.compareTo(((ScheduledBlockingFuture<?>) delayed).scheduledFuture);
+         }
+         return scheduledFuture.compareTo(delayed);
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+         // We don't actually care if the scheduled task was cancelled, only matters if we can cancel this one
+         scheduledFuture.cancel(true);
+         return super.cancel(mayInterruptIfRunning);
+      }
+
+      @Override
+      public void run() {
+         CompletableFuture.supplyAsync(() -> {
+                  log.tracef("Running blocking supply operation %s", traceId);
+                  return supplier.get();
+               }, blockingExecutor)
+               .whenComplete((v, t) -> {
+                  if (t != null) {
+                     log.tracef("Operation %s completed exceptionally with message %s", traceId, t.getMessage());
+                     nonBlockingManager.completeExceptionally(this, t);
+                  } else {
+                     log.tracef("Operation %s completed normally", traceId);
+                     nonBlockingManager.complete(this, v);
+                  }
+               });
+      }
+   }
+
 
    // This method is designed to be overridden for testing purposes
    protected boolean isCurrentThreadBlocking() {

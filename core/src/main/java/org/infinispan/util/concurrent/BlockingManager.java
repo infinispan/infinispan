@@ -2,6 +2,7 @@ package org.infinispan.util.concurrent;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -247,11 +248,45 @@ public interface BlockingManager {
 
    /**
     * Provides a {@link BlockingExecutor} which is limited to the provided concurrency amount.
+    *
     * @param name name of the limited blocking executor.
     * @param concurrency maximum amount of concurrent operations to be performed via the returned executor.
     * @return a blocking executor limited in the amount of concurrent invocations.
     */
    BlockingExecutor limitedBlockingExecutor(String name, int concurrency);
+
+   /**
+    * Replacement for {@link java.util.concurrent.ScheduledExecutorService#schedule(Runnable, long, TimeUnit)}} that
+    * invokes the {@code Runnable} in a blocking thread only after the elapsed time.
+    * <p>
+    * Unlike other methods in this interface, the submitting thread does not impact this method's behavior.
+    *
+    * @param runnable blocking operation that runs some code.
+    * @param delay the time from now to delay execution
+    * @param unit the time unit of the delay parameter
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
+    * @return a stage that is completed after the runnable is done or throws an exception.
+    */
+   default ScheduledCompletableStage<Void> scheduleRunBlocking(Runnable runnable, long delay, TimeUnit unit, Object traceId) {
+      return scheduleRunBlocking(() -> {
+         runnable.run();
+         return null;
+      }, delay, unit, traceId);
+   }
+
+   /**
+    * Replacement for {@link java.util.concurrent.ScheduledExecutorService#schedule(java.util.concurrent.Callable, long, TimeUnit)}} that
+    * invokes the {@code Callable} in a blocking thread only after the elapsed time.
+    * <p>
+    * Unlike other methods in this interface, the submitting thread does not impact this method's behavior.
+    *
+    * @param supplier blocking operation that runs some code.
+    * @param delay the time from now to delay execution
+    * @param unit the time unit of the delay parameter
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
+    * @return a stage that is completed after the runnable is done or throws an exception.
+    */
+   <V> ScheduledCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId);
 
    /**
     * Executor interface that submits task to a blocking pool that returns a stage that is guaranteed
