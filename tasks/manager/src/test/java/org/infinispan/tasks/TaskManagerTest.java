@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.tasks.DummyTaskEngine.DummyTaskTypes;
@@ -16,7 +17,6 @@ import org.infinispan.tasks.logging.Messages;
 import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -99,9 +99,9 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       assertEquals(DummyTaskTypes.SLOW_TASK.name(), execution.getName());
 
       List<Task> tasks = taskManager.getTasks();
-      assertEquals(4, tasks.size());
+      assertEquals(DummyTaskTypes.values().length, tasks.size());
 
-      Task task = tasks.get(3);
+      Task task = tasks.get(4);
       assertEquals(DummyTaskTypes.SLOW_TASK.name(), task.getName());
       assertEquals("Dummy", task.getType());
       assertEquals(TaskExecutionMode.ONE_NODE, task.getExecutionMode());

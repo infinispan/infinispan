@@ -23,7 +23,7 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
 
    @Override
    public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
-      Cache<?, ?> masterCacheNode = context.getCache().get();
+      String cacheName = context.getCache().map(Cache::getName).orElse(null);
 
       ClusterExecutor clusterExecutor = SecurityActions.getClusterExecutor(context.getCacheManager());
 
@@ -37,7 +37,7 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
          }
       };
       CompletableFuture<Void> future = Security.doAs(context.subject(), (PrivilegedAction<CompletableFuture<Void>>) () -> clusterExecutor.submitConsumer(
-            new DistributedServerTask<>(taskName, masterCacheNode.getName(), context),
+            new DistributedServerTask<>(taskName, cacheName, context),
             triConsumer
       ));
       return (CompletableFuture<T>) future.thenApply(ignore -> results);
