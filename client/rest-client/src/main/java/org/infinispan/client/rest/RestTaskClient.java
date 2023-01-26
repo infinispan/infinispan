@@ -41,6 +41,11 @@ public interface RestTaskClient {
    CompletionStage<RestResponse> uploadScript(String taskName, RestEntity script);
 
    /**
+    * Downloads a script
+    */
+   CompletionStage<RestResponse> downloadScript(String taskName);
+
+   /**
     * Executes a task without parameters
     */
    default CompletionStage<RestResponse> exec(String taskName) {

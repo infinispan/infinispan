@@ -101,6 +101,10 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(join(response).getBody());
       assertEquals("Hello Friend", jsonNode.asString());
+
+      response = taskClient.downloadScript("hello");
+      ResponseAssertion.assertThat(response).isOk();
+      assertEquals(script, join(response).getBody());
    }
 
    @Test

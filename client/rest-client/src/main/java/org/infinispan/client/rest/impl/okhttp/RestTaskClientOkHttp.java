@@ -58,4 +58,11 @@ public class RestTaskClientOkHttp implements RestTaskClient {
       builder.url(baseURL + "/" + sanitize(taskName)).post(((RestEntityAdaptorOkHttp) script).toRequestBody());
       return client.execute(builder);
    }
+
+   @Override
+   public CompletionStage<RestResponse> downloadScript(String taskName) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseURL + "/" + sanitize(taskName) + "?action=script");
+      return client.execute(builder);
+   }
 }
