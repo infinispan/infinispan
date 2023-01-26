@@ -27,6 +27,7 @@ import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.logging.Log;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
@@ -47,7 +48,23 @@ public class TasksResource implements ResourceHandler {
             .invocation().methods(GET).path("/v2/tasks/").handleWith(this::listTasks)
             .invocation().methods(PUT, POST).path("/v2/tasks/{taskName}").handleWith(this::createScriptTask)
             .invocation().methods(POST).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
+            .invocation().methods(GET).path("/v2/tasks/{taskName}").withAction("script").handleWith(this::getScript)
             .create();
+   }
+
+   private CompletionStage<RestResponse> getScript(RestRequest request) {
+      String taskName = request.variables().get("taskName");
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
+      ScriptingManager scriptingManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      if (!scriptingManager.getScriptNames().contains(taskName)) {
+         throw Log.REST.noSuchScript(taskName);
+      }
+
+      return CompletableFuture.supplyAsync(() -> {
+         String script = Subject.doAs(request.getSubject(), (PrivilegedAction<String>) () -> scriptingManager.getScript(taskName));
+         return builder.entity(script).contentType(TEXT_PLAIN_TYPE).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> listTasks(RestRequest request) {
