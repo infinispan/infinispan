@@ -43,8 +43,10 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
    public <T> void complete(CompletableFuture<? super T> future, T value) {
       // This is just best effort to eliminate context switch if there are no dependents.
       if (future.getNumberOfDependents() > 0) {
+         log.tracef("Future has a dependent, completing it in non blocking thread");
          executor.execute(() -> future.complete(value));
       } else {
+         log.tracef("Future has no dependent, completing it in invoking thread");
          future.complete(value);
       }
    }
@@ -53,8 +55,10 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
    public void completeExceptionally(CompletableFuture<?> future, Throwable t) {
       // This is just best effort to eliminate context switch if there are no dependents.
       if (future.getNumberOfDependents() > 0) {
+         log.tracef("Future has a dependent, completing it exceptionally in non blocking thread");
          executor.execute(() -> future.completeExceptionally(t));
       } else {
+         log.tracef("Future has no dependent, completing it exceptionally in invoking thread");
          future.completeExceptionally(t);
       }
    }
