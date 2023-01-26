@@ -15,6 +15,7 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.StandardConversions;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -86,7 +87,10 @@ public class TasksResource implements ResourceHandler {
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
       TaskContext taskContext = new TaskContext();
       request.parameters().forEach((k, v) -> {
-         if (k.startsWith("param.")) {
+         if ("cache".equals(k)) {
+            AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(v.get(0), request);
+            taskContext.cache(cache);
+         } else if (k.startsWith("param.")) {
             taskContext.addParameter(k.substring(6), v.get(0));
          }
       });

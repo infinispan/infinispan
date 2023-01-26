@@ -55,7 +55,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
 
       Json jsonNode = Json.read(response.getBody());
-      assertEquals(4, jsonNode.asList().size());
+      assertEquals(DummyTaskEngine.DummyTaskTypes.values().length, jsonNode.asList().size());
       Json task = jsonNode.at(0);
       assertEquals("Dummy", task.at("type").asString());
       assertEquals("ONE_NODE", task.at("execution_mode").asString());
@@ -101,5 +101,14 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(join(response).getBody());
       assertEquals("Hello Friend", jsonNode.asString());
+   }
+
+   @Test
+   public void testCacheTask() {
+      RestTaskClient taskClient = client.tasks();
+      CompletionStage<RestResponse> response = taskClient.exec("CACHE_TASK", "default", Collections.emptyMap());
+      ResponseAssertion.assertThat(response).isOk();
+      Json jsonNode = Json.read(join(response).getBody());
+      assertEquals("default", jsonNode.asString());
    }
 }
