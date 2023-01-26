@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
+import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -311,11 +312,13 @@ public class LifecycleManager implements ModuleLifecycle {
 
       BlockingManager blockingManager = cr.getGlobalComponentRegistry().getComponent(BlockingManager.class);
       NonBlockingManager nonBlockingManager = cr.getGlobalComponentRegistry().getComponent(NonBlockingManager.class);
+      LuceneWorkExecutorProvider luceneWorkExecutorProvider =
+            cr.getGlobalComponentRegistry().getComponent(LuceneWorkExecutorProvider.class);
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
             extractProperties(globalConfiguration, indexingConfiguration, aggregatedClassLoader),
-            aggregatedClassLoader, mappingProviders, blockingManager, nonBlockingManager);
+            aggregatedClassLoader, mappingProviders, blockingManager, nonBlockingManager, luceneWorkExecutorProvider);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {
