@@ -38,7 +38,7 @@ public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, 
 
    @Override
    public T apply(EmbeddedCacheManager embeddedCacheManager) {
-      Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
+      Cache<Object, Object> cache = cacheName != null ? embeddedCacheManager.getCache(cacheName) : null;
       // todo inject global component registry to be independent of existence of cache.
       GlobalComponentRegistry componentRegistry = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager);
       ServerTaskEngine serverTaskEngine = componentRegistry.getComponent(ServerTaskEngine.class);

@@ -32,12 +32,16 @@ public class RestTaskClientOkHttp implements RestTaskClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> exec(String taskName, Map<String, ?> parameters) {
+   public CompletionStage<RestResponse> exec(String taskName, String cacheName, Map<String, ?> parameters) {
       Objects.requireNonNull(taskName);
       Objects.requireNonNull(parameters);
       Request.Builder builder = new Request.Builder();
       StringBuilder sb = new StringBuilder(baseURL).append('/').append(taskName);
       sb.append("?action=exec");
+      if (cacheName != null) {
+         sb.append("&cache=");
+         sb.append(cacheName);
+      }
       for (Map.Entry<String, ?> parameter : parameters.entrySet()) {
          sb.append("&param.");
          sb.append(parameter.getKey());
