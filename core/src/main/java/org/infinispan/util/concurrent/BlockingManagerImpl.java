@@ -363,14 +363,14 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    @Override
-   public <V> ScheduledCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId) {
+   public <V> ScheduledBlockingCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId) {
       var scheduledStage = new ScheduledBlockingFuture<>(supplier, traceId);
       log.tracef("Scheduling supply operation %s for %s to run in %s %s", supplier, traceId, delay, unit);
       scheduledStage.scheduledFuture = scheduledExecutorService.schedule(scheduledStage, delay, unit);
       return scheduledStage;
    }
 
-   private class ScheduledBlockingFuture<V> extends CompletableFuture<V> implements ScheduledCompletableStage<V>, Runnable {
+   private class ScheduledBlockingFuture<V> extends CompletableFuture<V> implements ScheduledBlockingCompletableStage<V>, Runnable {
       private volatile ScheduledFuture<?> scheduledFuture;
 
       private final Supplier<V> supplier;

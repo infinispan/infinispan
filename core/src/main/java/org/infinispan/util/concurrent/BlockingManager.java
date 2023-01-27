@@ -2,6 +2,7 @@ package org.infinispan.util.concurrent;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -267,7 +268,7 @@ public interface BlockingManager {
     * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
     * @return a stage that is completed after the runnable is done or throws an exception.
     */
-   default ScheduledCompletableStage<Void> scheduleRunBlocking(Runnable runnable, long delay, TimeUnit unit, Object traceId) {
+   default ScheduledBlockingCompletableStage<Void> scheduleRunBlocking(Runnable runnable, long delay, TimeUnit unit, Object traceId) {
       return scheduleRunBlocking(() -> {
          runnable.run();
          return null;
@@ -286,7 +287,7 @@ public interface BlockingManager {
     * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
     * @return a stage that is completed after the runnable is done or throws an exception.
     */
-   <V> ScheduledCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId);
+   <V> ScheduledBlockingCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId);
 
    /**
     * Executor interface that submits task to a blocking pool that returns a stage that is guaranteed
@@ -313,5 +314,8 @@ public interface BlockingManager {
        * @return a stage that, when complete, contains the value returned from the supplier or a throwable.
        */
       <V> CompletionStage<V> supply(Supplier<V> supplier, Object traceId);
+   }
+
+   interface ScheduledBlockingCompletableStage<V> extends ScheduledCompletableStage<V>, ScheduledFuture<V> {
    }
 }
