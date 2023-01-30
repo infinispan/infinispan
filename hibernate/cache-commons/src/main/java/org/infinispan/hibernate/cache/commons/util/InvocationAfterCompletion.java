@@ -6,12 +6,7 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.hibernate.HibernateException;
-import org.hibernate.jdbc.WorkExecutor;
-import org.hibernate.jdbc.WorkExecutorVisitable;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess.TransactionCoordinatorAccess;
 
 import jakarta.transaction.Status;
@@ -52,13 +47,9 @@ public abstract class InvocationAfterCompletion implements Synchronization {
 
 	protected void invokeIsolated(final boolean success) {
 		try {
-			// TODO: isolation without obtaining Connection -> needs HHH-9993
-			tc.createIsolationDelegate().delegateWork(new WorkExecutorVisitable<Void>() {
-				@Override
-				public Void accept(WorkExecutor<Void> executor, Connection connection) throws SQLException {
-					invoke(success);
-					return null;
-				}
+			tc.delegateWork((executor, connection) -> {
+				invoke(success);
+				return null;
 			}, requiresTransaction);
 		}
 		catch (HibernateException e) {
