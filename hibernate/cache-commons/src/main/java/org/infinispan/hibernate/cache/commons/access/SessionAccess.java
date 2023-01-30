@@ -2,7 +2,7 @@ package org.infinispan.hibernate.cache.commons.access;
 
 import java.util.ServiceLoader;
 
-import org.hibernate.engine.transaction.spi.IsolationDelegate;
+import org.hibernate.jdbc.WorkExecutorVisitable;
 
 import jakarta.transaction.Synchronization;
 
@@ -21,7 +21,7 @@ public interface SessionAccess {
 
       void registerLocalSynchronization(Synchronization sync);
 
-      IsolationDelegate createIsolationDelegate();
+      void delegateWork(WorkExecutorVisitable<Void> workExecutorVisitable, boolean requiresTransaction);
 
       boolean isJoined();
 

@@ -42,6 +42,11 @@ public class Sync implements CacheTransactionSynchronization {
    }
 
    @Override
+   public long getCurrentTransactionStartTimestamp() {
+      return transactionStartTimestamp;
+   }
+
+   @Override
    public long getCachingTimestamp() {
       return transactionStartTimestamp;
    }

@@ -1,7 +1,7 @@
 package org.infinispan.hibernate.cache.v62.access;
 
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.engine.transaction.spi.IsolationDelegate;
+import org.hibernate.jdbc.WorkExecutorVisitable;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.infinispan.hibernate.cache.commons.access.SessionAccess;
 import org.kohsuke.MetaInfServices;
@@ -41,8 +41,8 @@ public final class SessionAccessImpl implements SessionAccess {
       }
 
       @Override
-      public IsolationDelegate createIsolationDelegate() {
-         return txCoordinator.createIsolationDelegate();
+      public void delegateWork(WorkExecutorVisitable<Void> workExecutorVisitable, boolean requiresTransaction) {
+         txCoordinator.createIsolationDelegate().delegateWork(workExecutorVisitable, requiresTransaction);
       }
 
       @Override

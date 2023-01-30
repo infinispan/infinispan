@@ -13,13 +13,17 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
+import org.hibernate.Session;
+import org.hibernate.Version;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
 import org.hibernate.cache.spi.CacheKeysFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.testing.TestForIssue;
 import org.hibernate.testing.cache.CachingRegionFactory;
@@ -95,19 +99,45 @@ public class CacheKeySerializationTest extends BaseUnitTestCase {
 		final Object keyClone = ois.readObject();
 
 		try {
-			assertEquals(key, keyClone);
-			assertEquals(keyClone, key);
+			if (Version.getVersionString().contains("6.0")) {
+				assertEquals( key, keyClone );
+				assertEquals( keyClone, key );
 
-			assertEquals(key.hashCode(), keyClone.hashCode());
+				assertEquals( key.hashCode(), keyClone.hashCode() );
 
-			final Object idClone = cacheKeysFactory.getEntityId(keyClone);
+				final Object idClone = cacheKeysFactory.getEntityId( keyClone );
 
-			assertEquals(id.hashCode(), idClone.hashCode());
-			assertEquals(id, idClone);
-			assertEquals(idClone, id);
-			assertTrue(persister.getIdentifierType().isEqual(id, idClone, sessionFactory));
-			assertTrue(persister.getIdentifierType().isEqual(idClone, id, sessionFactory));
-			sessionFactory.close();
+				assertEquals( id.hashCode(), idClone.hashCode() );
+				assertEquals( id, idClone );
+				assertEquals( idClone, id );
+				assertTrue( persister.getIdentifierType().isEqual( id, idClone, sessionFactory ) );
+				assertTrue( persister.getIdentifierType().isEqual( idClone, id, sessionFactory ) );
+			} else {
+				assertEquals(key, keyClone);
+				assertEquals(keyClone, key);
+
+				assertEquals(key.hashCode(), keyClone.hashCode());
+
+				final Object idClone;
+				if (cacheKeysFactory == SimpleCacheKeysFactory.INSTANCE) {
+					idClone = cacheKeysFactory.getEntityId(keyClone);
+				} else {
+					// DefaultCacheKeysFactory#getEntityId will return a disassembled version
+					try (Session session = sessionFactory.openSession()) {
+						idClone = persister.getIdentifierType().assemble(
+								(Serializable) cacheKeysFactory.getEntityId(keyClone),
+								(SharedSessionContractImplementor) session,
+								null
+						);
+					}
+				}
+
+				assertEquals(id.hashCode(), idClone.hashCode());
+				assertEquals(id, idClone);
+				assertEquals(idClone, id);
+				assertTrue(persister.getIdentifierType().isEqual(id, idClone, sessionFactory));
+				assertTrue(persister.getIdentifierType().isEqual(idClone, id, sessionFactory));
+			}
 		}
 		finally {
 			sessionFactory.close();
