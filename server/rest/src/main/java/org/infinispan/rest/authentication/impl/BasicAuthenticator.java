@@ -6,7 +6,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.RestServer;
-import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -21,7 +21,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @author Tristan Tarrant
  * @author Sebastian Łaskawiec
  */
-public class BasicAuthenticator implements Authenticator {
+public class BasicAuthenticator implements RestAuthenticator {
 
    private final SecurityDomain domain;
    private final String authenticateHeader;

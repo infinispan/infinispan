@@ -1,6 +1,8 @@
 package org.infinispan.server.configuration.endpoint;
 
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.server.core.configuration.AuthenticationConfigurationBuilder;
+import org.infinispan.server.core.configuration.NoAuthenticationConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -15,7 +17,7 @@ import org.infinispan.server.router.configuration.builder.SinglePortRouterBuilde
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<SinglePortRouterConfiguration, SinglePortServerConfigurationBuilder> implements ConfigurationBuilderParent {
+public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<SinglePortRouterConfiguration, SinglePortServerConfigurationBuilder, NoAuthenticationConfiguration> implements ConfigurationBuilderParent {
 
    private RoutingBuilder routing = new RoutingBuilder(this);
    private HotRodRouterBuilder hotRodRouter = new HotRodRouterBuilder(this);
@@ -52,6 +54,11 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
          validate();
       }
       return create();
+   }
+
+   @Override
+   public AuthenticationConfigurationBuilder<NoAuthenticationConfiguration> authentication() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

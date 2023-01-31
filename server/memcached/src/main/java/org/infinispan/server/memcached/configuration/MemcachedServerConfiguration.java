@@ -10,6 +10,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 import org.infinispan.server.memcached.MemcachedServer;
 
@@ -21,7 +22,7 @@ import org.infinispan.server.memcached.MemcachedServer;
  */
 @BuiltBy(MemcachedServerConfigurationBuilder.class)
 @ConfigurationFor(MemcachedServer.class)
-public class MemcachedServerConfiguration extends ProtocolServerConfiguration<MemcachedServerConfiguration> {
+public class MemcachedServerConfiguration extends ProtocolServerConfiguration<MemcachedServerConfiguration, SaslAuthenticationConfiguration> {
 
    public static final int DEFAULT_MEMCACHED_PORT = 11211;
    public static final String DEFAULT_MEMCACHED_CACHE = "memcachedCache";
@@ -33,8 +34,8 @@ public class MemcachedServerConfiguration extends ProtocolServerConfiguration<Me
       return new AttributeSet(MemcachedServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(), CLIENT_ENCODING);
    }
 
-   MemcachedServerConfiguration(AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipRules) {
-      super("memcached-connector", attributes, ssl, ipRules);
+   MemcachedServerConfiguration(AttributeSet attributes, SaslAuthenticationConfiguration authentication, SslConfiguration ssl, IpFilterConfiguration ipRules) {
+      super("memcached-connector", attributes, authentication, ssl, ipRules);
       clientEncoding = attributes.attribute(CLIENT_ENCODING);
    }
 

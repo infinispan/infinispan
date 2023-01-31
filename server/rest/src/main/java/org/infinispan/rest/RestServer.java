@@ -12,7 +12,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
-import org.infinispan.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.rest.configuration.RestAuthenticationConfiguration;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.ResourceManager;
 import org.infinispan.rest.framework.RestDispatcher;
@@ -107,7 +107,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       if (restCacheManager != null) {
          restCacheManager.stop();
       }
-      AuthenticationConfiguration auth = configuration.authentication();
+      RestAuthenticationConfiguration auth = configuration.authentication();
       if (auth.enabled()) {
          try {
             auth.authenticator().close();
@@ -128,7 +128,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       RestTelemetryService restTelemetryService = new RestTelemetryService(telemetryService);
 
       this.maxContentLength = configuration.maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
-      AuthenticationConfiguration auth = configuration.authentication();
+      RestAuthenticationConfiguration auth = configuration.authentication();
       if (auth.enabled()) {
          auth.authenticator().init(this);
       }
@@ -197,5 +197,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          }
       }
       return corsRules;
+   }
+
+   @Override
+   public void installDetector(Channel ch) {
+      // NO-OP
    }
 }

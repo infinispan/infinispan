@@ -9,10 +9,10 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.rest.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.CorsConfigurationBuilder;
 import org.infinispan.rest.configuration.CorsRuleConfigurationBuilder;
 import org.infinispan.rest.configuration.ExtendedHeaders;
+import org.infinispan.rest.configuration.RestAuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -228,7 +228,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, String securityRealmName) {
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, RestAuthenticationConfigurationBuilder builder, String securityRealmName) {
       if (securityRealmName == null) {
          securityRealmName = serverBuilder.endpoints().current().securityRealm();
       }

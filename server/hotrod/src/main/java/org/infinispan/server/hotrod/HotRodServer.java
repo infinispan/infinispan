@@ -174,6 +174,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return channel -> channel.pipeline().get(HotRodDecoder.class) != null;
    }
 
+   @Override
+   public void installDetector(Channel ch) {
+      ch.pipeline().addLast(HotRodDetector.NAME, new HotRodDetector(this));
+   }
+
    /**
     * Class used to create to empty filter converters that ignores marshalling of keys and values
     */

@@ -19,25 +19,18 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
-public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
-      implements ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
-   private static final Log log = LogFactory.getLog(ProtocolServerConfigurationBuilder.class, Log.class);
+public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration<T, A>, S extends ProtocolServerConfigurationChildBuilder<T, S, A>, A extends AuthenticationConfiguration>
+      implements ProtocolServerConfigurationChildBuilder<T, S, A>, Builder<T> {
    protected final AttributeSet attributes;
-   protected final SslConfigurationBuilder<T, S> ssl;
-   protected final IpFilterConfigurationBuilder<T, S> ipFilter;
+   protected final SslConfigurationBuilder<T, S, A> ssl;
+   protected final IpFilterConfigurationBuilder<T, S, A> ipFilter;
 
    protected ProtocolServerConfigurationBuilder(int port, AttributeSet attributes) {
       this.attributes = attributes;
       this.ssl = new SslConfigurationBuilder(this);
       this.ipFilter = new IpFilterConfigurationBuilder<>(this);
       port(port);
-
-   }
-
-   protected ProtocolServerConfigurationBuilder(int port) {
-      this(port, ProtocolServerConfiguration.attributeDefinitionSet());
    }
 
    @Override
@@ -112,7 +105,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    }
 
    @Override
-   public IpFilterConfigurationBuilder<T, S> ipFilter() {
+   public IpFilterConfigurationBuilder<T, S, A> ipFilter() {
       return ipFilter;
    }
 
@@ -160,24 +153,26 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    @Override
    public void validate() {
+      authentication().validate();
       ssl.validate();
       if (attributes.attribute(IDLE_TIMEOUT).get() < -1) {
-         throw log.illegalIdleTimeout(attributes.attribute(IDLE_TIMEOUT).get());
+         throw Log.CONFIG.illegalIdleTimeout(attributes.attribute(IDLE_TIMEOUT).get());
       }
       if (attributes.attribute(SEND_BUF_SIZE).get() < 0) {
-         throw log.illegalSendBufferSize(attributes.attribute(SEND_BUF_SIZE).get());
+         throw Log.CONFIG.illegalSendBufferSize(attributes.attribute(SEND_BUF_SIZE).get());
       }
       if (attributes.attribute(RECV_BUF_SIZE).get() < 0) {
-         throw log.illegalReceiveBufferSize(attributes.attribute(RECV_BUF_SIZE).get());
+         throw Log.CONFIG.illegalReceiveBufferSize(attributes.attribute(RECV_BUF_SIZE).get());
       }
       if (attributes.attribute(IO_THREADS).get() < 0) {
-         throw log.illegalIOThreads(attributes.attribute(IO_THREADS).get());
+         throw Log.CONFIG.illegalIOThreads(attributes.attribute(IO_THREADS).get());
       }
    }
 
    @Override
    public Builder<?> read(T template) {
       this.attributes.read(template.attributes());
+      this.authentication().read(template.authentication());
       this.ssl.read(template.ssl());
       this.ipFilter.read(template.ipFilter());
       return this;

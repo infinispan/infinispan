@@ -17,7 +17,7 @@ import org.infinispan.server.resp.RespServer;
  */
 @BuiltBy(RespServerConfigurationBuilder.class)
 @ConfigurationFor(RespServer.class)
-public class RespServerConfiguration extends ProtocolServerConfiguration<RespServerConfiguration> {
+public class RespServerConfiguration extends ProtocolServerConfiguration<RespServerConfiguration, RespAuthenticationConfiguration> {
 
    public static final int DEFAULT_RESP_PORT = 6379;
    public static final String DEFAULT_RESP_CACHE = "respCache";
@@ -26,17 +26,18 @@ public class RespServerConfiguration extends ProtocolServerConfiguration<RespSer
       return new AttributeSet(RespServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet());
    }
 
-   private final AuthenticationConfiguration authentication;
+   private final RespAuthenticationConfiguration authentication;
    private final EncryptionConfiguration encryption;
 
    RespServerConfiguration(AttributeSet attributes, IpFilterConfiguration ipRules, SslConfiguration ssl,
-                           AuthenticationConfiguration authentication, EncryptionConfiguration encryption) {
-      super("resp-connector", attributes, ssl, ipRules);
+                           RespAuthenticationConfiguration authentication, EncryptionConfiguration encryption) {
+      super("resp-connector", attributes, authentication, ssl, ipRules);
       this.authentication = authentication;
       this.encryption = encryption;
    }
 
-   public AuthenticationConfiguration authentication() {
+   @Override
+   public RespAuthenticationConfiguration authentication() {
       return authentication;
    }
 

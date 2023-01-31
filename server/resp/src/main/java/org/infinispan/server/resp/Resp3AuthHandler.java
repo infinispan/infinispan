@@ -1,13 +1,16 @@
 package org.infinispan.server.resp;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.server.resp.commands.AuthResp3Command;
-
-import javax.security.auth.Subject;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import javax.security.auth.Subject;
+
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.resp.commands.AuthResp3Command;
+
+import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3AuthHandler extends CacheRespRequestHandler {
 
@@ -36,7 +39,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    }
 
    private CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, String username, String password) {
-      Authenticator authenticator = respServer.getConfiguration().authentication().authenticator();
+      UsernamePasswordAuthenticator authenticator = respServer.getConfiguration().authentication().authenticator();
       if (authenticator == null) {
          return CompletableFutures.booleanStage(handleAuthResponse(ctx, null));
       }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -11,14 +12,21 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthenticationException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
 
-import org.infinispan.server.core.security.AuthorizingCallbackHandler;
-import org.infinispan.server.core.security.ServerAuthenticationProvider;
+import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.server.core.security.SubjectUserInfo;
+import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
+import org.infinispan.server.core.security.sasl.AuthorizingCallbackHandler;
+import org.infinispan.server.core.security.sasl.SaslAuthenticator;
+import org.infinispan.server.core.security.sasl.SubjectSaslServer;
 
 /**
  * A server authentication handler which maintains a simple map of user names and passwords.
@@ -26,19 +34,38 @@ import org.infinispan.server.core.security.SubjectUserInfo;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @author Tristan Tarrant
  */
-public final class SimpleServerAuthenticationProvider implements ServerAuthenticationProvider {
+public final class SimpleSaslAuthenticator implements SaslAuthenticator {
 
    private final Map<String, Map<String, Entry>> map = new HashMap<>();
 
-   /**
-    * {@inheritDoc}
-    *
-    * @param mechanismName
-    */
-   public AuthorizingCallbackHandler getCallbackHandler(final String mechanismName, final Map<String, String> mechanismProperties) {
+   public SaslServer createSaslServer(String mechanism, List<Principal> principals, String protocol, String serverName, Map<String, String> props) throws SaslException {
+      AuthorizingCallbackHandler callbackHandler = getCallbackHandler();
+      if ("EXTERNAL".equals(mechanism)) {
+         // Find the X500Principal among the supplied principals
+         for (Principal principal : principals) {
+            if (principal instanceof X500Principal) {
+               ExternalSaslServerFactory factory = new ExternalSaslServerFactory((X500Principal) principal);
+               SaslServer saslServer = factory.createSaslServer(mechanism, protocol, serverName, props, callbackHandler);
+               return new SubjectSaslServer(saslServer, principals, callbackHandler);
+            }
+         }
+         throw new IllegalStateException("EXTERNAL mech requires X500Principal");
+      } else {
+         for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), null, true)) {
+            if (factory != null) {
+               SaslServer saslServer = factory.createSaslServer(mechanism, protocol, serverName, props, callbackHandler);
+               if (saslServer != null) {
+                  return new SubjectSaslServer(saslServer, principals, callbackHandler);
+               }
+            }
+         }
+      }
+      return null;
+   }
 
+   private AuthorizingCallbackHandler getCallbackHandler() {
       return new AuthorizingCallbackHandler() {
-         Subject subject = new Subject();
+         final Subject subject = new Subject();
          Principal userPrincipal;
 
          public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -140,11 +167,7 @@ public final class SimpleServerAuthenticationProvider implements ServerAuthentic
       final String canonUserRealm = userRealm.toLowerCase().trim();
       final String canonUserName = userName.toLowerCase().trim();
       synchronized (map) {
-         Map<String, Entry> realmMap = map.get(canonUserRealm);
-         if (realmMap == null) {
-            realmMap = new HashMap<String, Entry>();
-            map.put(canonUserRealm, realmMap);
-         }
+         Map<String, Entry> realmMap = map.computeIfAbsent(canonUserRealm, k -> new HashMap<>());
          realmMap.put(canonUserName, new Entry(canonUserName, canonUserRealm, password, groups != null ? groups : new String[0]));
       }
    }

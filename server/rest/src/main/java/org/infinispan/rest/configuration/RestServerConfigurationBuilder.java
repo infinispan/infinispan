@@ -24,12 +24,12 @@ import io.netty.handler.codec.http.cors.CorsConfig;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class RestServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RestServerConfiguration, RestServerConfigurationBuilder> implements
+public class RestServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RestServerConfiguration, RestServerConfigurationBuilder, RestAuthenticationConfiguration> implements
       Builder<RestServerConfiguration> {
 
    final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
 
-   private final AuthenticationConfigurationBuilder authentication;
+   private final RestAuthenticationConfigurationBuilder authentication;
    private final CorsConfigurationBuilder cors;
    private Path staticResources;
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
@@ -39,7 +39,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT, RestServerConfiguration.attributeDefinitionSet());
-      this.authentication = new AuthenticationConfigurationBuilder(this);
+      this.authentication = new RestAuthenticationConfigurationBuilder(this);
       this.cors = new CorsConfigurationBuilder();
    }
 
@@ -68,6 +68,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   @Override
+   public RestAuthenticationConfigurationBuilder authentication() {
+      return authentication;
+   }
+
    public EncryptionConfigurationBuilder encryption() {
       return encryption;
    }
@@ -80,10 +85,6 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public RestServerConfigurationBuilder staticResources(Path dir) {
       this.staticResources = dir;
       return this;
-   }
-
-   public AuthenticationConfigurationBuilder authentication() {
-      return authentication;
    }
 
    public CorsConfigurationBuilder cors() {
@@ -163,5 +164,4 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public RestServerConfigurationBuilder sendBufSize(int sendBufSize) {
       throw logger.unsupportedConfigurationOption();
    }
-
 }

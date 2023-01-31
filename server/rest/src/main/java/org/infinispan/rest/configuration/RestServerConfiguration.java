@@ -18,7 +18,7 @@ import io.netty.handler.codec.http.cors.CorsConfig;
 
 @BuiltBy(RestServerConfigurationBuilder.class)
 @ConfigurationFor(RestServer.class)
-public class RestServerConfiguration extends ProtocolServerConfiguration<RestServerConfiguration> {
+public class RestServerConfiguration extends ProtocolServerConfiguration<RestServerConfiguration, RestAuthenticationConfiguration> {
    public static final AttributeDefinition<ExtendedHeaders> EXTENDED_HEADERS = AttributeDefinition.builder("extended-headers", ExtendedHeaders.ON_DEMAND).immutable().build();
    public static final AttributeDefinition<String> CONTEXT_PATH = AttributeDefinition.builder("context-path", "rest").immutable().build();
    public static final AttributeDefinition<Integer> MAX_CONTENT_LENGTH = AttributeDefinition.builder("max-content-length", 10 * 1024 * 1024).immutable().build();
@@ -35,17 +35,15 @@ public class RestServerConfiguration extends ProtocolServerConfiguration<RestSer
             EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, COMPRESSION_LEVEL);
    }
 
-   private final AuthenticationConfiguration authentication;
    private final CorsConfiguration cors;
    private final EncryptionConfiguration encryption;
 
    RestServerConfiguration(AttributeSet attributes, SslConfiguration ssl,
-                           Path staticResources, AuthenticationConfiguration authentication,
+                           Path staticResources, RestAuthenticationConfiguration authentication,
                            CorsConfiguration cors,
                            EncryptionConfiguration encryption, IpFilterConfiguration ipRules) {
-      super("rest-connector", attributes, ssl, ipRules);
+      super("rest-connector", attributes, authentication, ssl, ipRules);
       this.staticResources = staticResources;
-      this.authentication = authentication;
       this.extendedHeaders = attributes.attribute(EXTENDED_HEADERS);
       this.contextPath = attributes.attribute(CONTEXT_PATH);
       this.maxContentLength = attributes.attribute(MAX_CONTENT_LENGTH);
@@ -54,7 +52,8 @@ public class RestServerConfiguration extends ProtocolServerConfiguration<RestSer
       this.encryption = encryption;
    }
 
-   public AuthenticationConfiguration authentication() {
+   @Override
+   public RestAuthenticationConfiguration authentication() {
       return authentication;
    }
 

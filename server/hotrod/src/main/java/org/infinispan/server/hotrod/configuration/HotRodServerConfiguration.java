@@ -7,12 +7,13 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.configuration.EncryptionConfiguration;
 import org.infinispan.server.core.configuration.IpFilterConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 import org.infinispan.server.hotrod.HotRodServer;
 
 @BuiltBy(HotRodServerConfigurationBuilder.class)
 @ConfigurationFor(HotRodServer.class)
-public class HotRodServerConfiguration extends ProtocolServerConfiguration {
+public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRodServerConfiguration, SaslAuthenticationConfiguration> {
    public static final String TOPOLOGY_CACHE_NAME_PREFIX = "___hotRodTopologyCache";
 
    public static final AttributeDefinition<String> PROXY_HOST = AttributeDefinition.builder(Attribute.EXTERNAL_HOST, null, String.class).immutable().build();
@@ -21,7 +22,6 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 160).immutable().build();
 
    private final TopologyCacheConfiguration topologyCache;
-   private final AuthenticationConfiguration authentication;
    private final EncryptionConfiguration encryption;
 
    public static AttributeSet attributeDefinitionSet() {
@@ -31,11 +31,10 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    HotRodServerConfiguration(AttributeSet attributes,
                              TopologyCacheConfiguration topologyCache,
-                             SslConfiguration ssl, AuthenticationConfiguration authentication,
+                             SslConfiguration ssl, SaslAuthenticationConfiguration authentication,
                              EncryptionConfiguration encryption, IpFilterConfiguration ipRules) {
-      super(Element.HOTROD_CONNECTOR, attributes, ssl, ipRules);
+      super(Element.HOTROD_CONNECTOR, attributes, authentication, ssl, ipRules);
       this.topologyCache = topologyCache;
-      this.authentication = authentication;
       this.encryption = encryption;
    }
 
@@ -84,7 +83,8 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return !topologyCache.lazyRetrieval();
    }
 
-   public AuthenticationConfiguration authentication() {
+   @Override
+   public SaslAuthenticationConfiguration authentication() {
       return authentication;
    }
 

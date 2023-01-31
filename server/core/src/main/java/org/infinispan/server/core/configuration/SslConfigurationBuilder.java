@@ -18,15 +18,15 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Sebastian Łaskawiec
  * @since 5.3
  */
-public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
-      extends AbstractProtocolServerConfigurationChildBuilder<T, S>
+public class SslConfigurationBuilder<T extends ProtocolServerConfiguration<T, A>, S extends ProtocolServerConfigurationChildBuilder<T, S, A>, A extends AuthenticationConfiguration>
+      extends AbstractProtocolServerConfigurationChildBuilder<T, S, A>
       implements Builder<SslConfiguration> {
 
    private final AttributeSet attributes;
-   private SslEngineConfigurationBuilder defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
+   private SslEngineConfigurationBuilder defaultDomainConfigurationBuilder;
    private Map<String, SslEngineConfigurationBuilder> sniDomains;
 
-   public SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
+   public SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S, A> builder) {
       super(builder);
       attributes = SslConfiguration.attributeDefinitionSet();
       sniDomains = new HashMap<>();

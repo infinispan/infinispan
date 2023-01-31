@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
 
 /**
  * HotRodServerChildConfigurationBuilder.
@@ -14,7 +15,7 @@ public interface HotRodServerChildConfigurationBuilder {
    /**
     * Configures authentication for this endpoint
     */
-   AuthenticationConfigurationBuilder authentication();
+   SaslAuthenticationConfigurationBuilder authentication();
 
    /**
     * Sets the external address of this node, i.e. the address which clients will connect to

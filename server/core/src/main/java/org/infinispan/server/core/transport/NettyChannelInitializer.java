@@ -15,14 +15,14 @@ import io.netty.handler.ssl.SniHandler;
 import io.netty.util.DomainNameMappingBuilder;
 
 /**
-  * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that
-  * each incoming connection deals with a unique decoder instance. Since the encoder does not maintain any state,
-  * a single encoder instance is shared by all incoming connections, if and only if, the protocol mandates an encoder.
-  *
-  * @author Galder Zamarreño
-  * @author Sebastian Łaskawiec
-  * @since 4.1
-  */
+ * Pipeline factory for Netty-based channels. For each pipeline created, a new decoder is created which means that each
+ * incoming connection deals with a unique decoder instance. Since the encoder does not maintain any state, a single
+ * encoder instance is shared by all incoming connections, if and only if, the protocol mandates an encoder.
+ *
+ * @author Galder Zamarreño
+ * @author Sebastian Łaskawiec
+ * @since 4.1
+ */
 public class NettyChannelInitializer<A extends ProtocolServerConfiguration> implements NettyInitializer {
    protected final ProtocolServer<A> server;
    protected final NettyTransport transport;
@@ -44,7 +44,7 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
    public void initializeChannel(Channel ch) throws Exception {
       ChannelPipeline pipeline = ch.pipeline();
       pipeline.addLast("iprules", ipRulesHandler);
-      if(statsHandler != null) {
+      if (statsHandler != null) {
          pipeline.addLast("stats", statsHandler);
       }
       SslConfiguration ssl = server.getConfiguration().ssl();
@@ -64,7 +64,7 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
 
          pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
       }
-      if(decoder != null) {
+      if (decoder != null) {
          //We can not use `decoder` here. Each invocation creates a new instance of decoder and it seems
          //it can not be shared between pipelines.
          //See https://issues.jboss.org/browse/ISPN-7765 for more details.

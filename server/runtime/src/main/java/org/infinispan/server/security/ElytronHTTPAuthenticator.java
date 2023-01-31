@@ -10,7 +10,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.rest.RestServer;
-import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -41,7 +41,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ElytronHTTPAuthenticator implements Authenticator {
+public class ElytronHTTPAuthenticator implements RestAuthenticator {
    private final String name;
    private final String serverPrincipal;
    private final Collection<String> mechanisms;

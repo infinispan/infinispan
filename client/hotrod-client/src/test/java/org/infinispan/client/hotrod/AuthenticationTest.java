@@ -13,7 +13,7 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
+import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
@@ -38,8 +38,8 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    }
 
    @Override
-   protected SimpleServerAuthenticationProvider createAuthenticationProvider() {
-      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
+   protected SimpleSaslAuthenticator createAuthenticationProvider() {
+      SimpleSaslAuthenticator sap = new SimpleSaslAuthenticator();
       sap.addUser("user", "realm", "password".toCharArray());
       return sap;
    }

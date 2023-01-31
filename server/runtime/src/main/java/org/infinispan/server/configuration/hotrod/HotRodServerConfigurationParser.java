@@ -13,13 +13,13 @@ import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.core.configuration.SniConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.Attribute;
-import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.Element;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.hotrod.configuration.SaslConfigurationBuilder;
-import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
+import org.infinispan.server.security.ElytronSASLAuthenticator;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
 
@@ -194,7 +194,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, AuthenticationConfigurationBuilder builder, String securityRealm) {
+   private void parseAuthentication(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, SaslAuthenticationConfigurationBuilder builder, String securityRealm) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -216,7 +216,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          throw Server.log.authenticationWithoutSecurityRealm();
       }
       // Automatically set the digest realm name. It can be overridden by the user
-      builder.addMechProperty(WildFlySasl.REALM_LIST, securityRealm);
+      builder.sasl().addMechProperty(WildFlySasl.REALM_LIST, securityRealm);
       String serverPrincipal = null;
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
@@ -231,10 +231,10 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          }
       }
       builder.securityRealm(securityRealm);
-      builder.serverAuthenticationProvider(new ElytronSASLAuthenticationProvider(securityRealm, serverPrincipal, builder.sasl().mechanisms()));
+      builder.sasl().authenticator(new ElytronSASLAuthenticator(securityRealm, serverPrincipal, builder.sasl().mechanisms()));
    }
 
-   private String parseSasl(ConfigurationReader reader, AuthenticationConfigurationBuilder builder) {
+   private String parseSasl(ConfigurationReader reader, SaslAuthenticationConfigurationBuilder builder) {
       SaslConfigurationBuilder sasl = builder.sasl();
       String serverPrincipal = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -312,7 +312,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       return serverPrincipal;
    }
 
-   void parsePolicy(ConfigurationReader reader, AuthenticationConfigurationBuilder builder) {
+   void parsePolicy(ConfigurationReader reader, SaslAuthenticationConfigurationBuilder builder) {
       if (reader.getAttributeCount() > 0) {
          throw ParseUtils.unexpectedAttribute(reader, 0);
       }

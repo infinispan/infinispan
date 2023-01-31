@@ -10,8 +10,8 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
  * @since 10.0
  */
 public class EncryptionConfiguration extends ConfigurationElement<EncryptionConfiguration> {
-   static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
-   static final AttributeDefinition<Boolean> REQUIRE_CLIENT_AUTH = AttributeDefinition.builder("require-ssl-client-auth", false, Boolean.class).build();
+   static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder(Attribute.SECURITY_REALM, null, String.class).build();
+   static final AttributeDefinition<Boolean> REQUIRE_CLIENT_AUTH = AttributeDefinition.builder(Attribute.REQUIRE_SSL_CLIENT_AUTH, false, Boolean.class).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(EncryptionConfiguration.class, REQUIRE_CLIENT_AUTH, SECURITY_REALM);

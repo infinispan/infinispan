@@ -3,7 +3,6 @@ package org.infinispan.server.core.configuration;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -16,23 +15,23 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfiguration> extends ConfigurationElement<T> {
-   public static final AttributeDefinition<String> DEFAULT_CACHE_NAME = AttributeDefinition.builder("cache", null, String.class).immutable().build();
-   public static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "").immutable().build();
-   public static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", "127.0.0.1").immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", -1).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Integer> IDLE_TIMEOUT = AttributeDefinition.builder("idle-timeout", -1).immutable().build();
-   public static final AttributeDefinition<Set<String>> IGNORED_CACHES = AttributeDefinition.builder("ignored-caches", Collections.emptySet(), (Class<Set<String>>) (Class<?>) Set.class).immutable().build();
-   public static final AttributeDefinition<Integer> RECV_BUF_SIZE = AttributeDefinition.builder("receive-buffer-size", 0).immutable().build();
-   public static final AttributeDefinition<Integer> SEND_BUF_SIZE = AttributeDefinition.builder("send-buffer-size", 0).immutable().build();
-   public static final AttributeDefinition<Boolean> START_TRANSPORT = AttributeDefinition.builder("start-transport", true).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Boolean> TCP_NODELAY = AttributeDefinition.builder("tcp-nodelay", true).immutable().build();
-   public static final AttributeDefinition<Boolean> TCP_KEEPALIVE = AttributeDefinition.builder("tcp-keepalive", false).immutable().build();
-   public static final AttributeDefinition<Integer> IO_THREADS = AttributeDefinition.builder("io-threads", 2 * ProcessorInfo.availableProcessors()).immutable().build();
+public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfiguration, A extends AuthenticationConfiguration> extends ConfigurationElement<T> {
+   public static final AttributeDefinition<String> DEFAULT_CACHE_NAME = AttributeDefinition.builder(Attribute.CACHE, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, "").immutable().build();
+   public static final AttributeDefinition<String> HOST = AttributeDefinition.builder(Attribute.HOST, "127.0.0.1").immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder(Attribute.PORT, -1).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> IDLE_TIMEOUT = AttributeDefinition.builder(Attribute.IDLE_TIMEOUT, -1).immutable().build();
+   public static final AttributeDefinition<Set<String>> IGNORED_CACHES = AttributeDefinition.builder(Attribute.IGNORED_CACHES, Collections.emptySet(), (Class<Set<String>>) (Class<?>) Set.class).immutable().build();
+   public static final AttributeDefinition<Integer> RECV_BUF_SIZE = AttributeDefinition.builder(Attribute.RECEIVE_BUFFER_SIZE, 0).immutable().build();
+   public static final AttributeDefinition<Integer> SEND_BUF_SIZE = AttributeDefinition.builder(Attribute.SEND_BUFFER_SIZE, 0).immutable().build();
+   public static final AttributeDefinition<Boolean> START_TRANSPORT = AttributeDefinition.builder(Attribute.START_TRANSPORT, true).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> TCP_NODELAY = AttributeDefinition.builder(Attribute.TCP_NODELAY, true).immutable().build();
+   public static final AttributeDefinition<Boolean> TCP_KEEPALIVE = AttributeDefinition.builder(Attribute.TCP_KEEPALIVE, false).immutable().build();
+   public static final AttributeDefinition<Integer> IO_THREADS = AttributeDefinition.builder(Attribute.IO_THREADS, 2 * ProcessorInfo.availableProcessors()).immutable().build();
    public static final AttributeDefinition<AdminOperationsHandler> ADMIN_OPERATION_HANDLER = AttributeDefinition.builder("admin-operation-handler", null, AdminOperationsHandler.class)
          .immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zero-capacity-node", false).immutable().build();
-   public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder("socket-binding", null, String.class).immutable().build();
+   public static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder(Attribute.ZERO_CAPACITY_NODE, false).immutable().build();
+   public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder(Attribute.SOCKET_BINDING, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR = AttributeDefinition.builder("implicit-connector", false).immutable().autoPersist(false).build();
 
    private volatile boolean enabled = true;
@@ -44,75 +43,51 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
             IMPLICIT_CONNECTOR);
    }
 
-   private final Attribute<String> defaultCacheName;
-   private final Attribute<String> name;
-   private final Attribute<String> host;
-   private final Attribute<Integer> port;
-   private final Attribute<Integer> idleTimeout;
-   private final Attribute<Integer> recvBufSize;
-   private final Attribute<Integer> sendBufSize;
-   private final Attribute<Boolean> tcpNoDelay;
-   private final Attribute<Boolean> tcpKeepAlive;
-   private final Attribute<Integer> ioThreads;
-   private final Attribute<Boolean> startTransport;
-   private final Attribute<AdminOperationsHandler> adminOperationsHandler;
-   private final Attribute<Boolean> zeroCapacityNode;
-   private final Attribute<String> socketBinding;
-
+   protected final A authentication;
    protected final SslConfiguration ssl;
    protected final IpFilterConfiguration ipFilter;
 
-   protected ProtocolServerConfiguration(Enum<?> element, AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
-      this(element.toString(), attributes, ssl, ipFilter);
+   protected ProtocolServerConfiguration(Enum<?> element, AttributeSet attributes, A authentication, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
+      this(element.toString(), attributes, authentication, ssl, ipFilter);
    }
 
-   protected ProtocolServerConfiguration(String element, AttributeSet attributes, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
+   protected ProtocolServerConfiguration(String element, AttributeSet attributes, A authentication, SslConfiguration ssl, IpFilterConfiguration ipFilter) {
       super(element, attributes, ssl);
+      this.authentication = authentication;
       this.ssl = ssl;
       this.ipFilter = ipFilter;
-
-      defaultCacheName = attributes.attribute(DEFAULT_CACHE_NAME);
-      zeroCapacityNode = attributes.attribute(ZERO_CAPACITY_NODE);
-      name = attributes.attribute(NAME);
-      host = attributes.attribute(HOST);
-      port = attributes.attribute(PORT);
-      idleTimeout = attributes.attribute(IDLE_TIMEOUT);
-      recvBufSize = attributes.attribute(RECV_BUF_SIZE);
-      sendBufSize = attributes.attribute(SEND_BUF_SIZE);
-      startTransport = attributes.attribute(START_TRANSPORT);
-      tcpNoDelay = attributes.attribute(TCP_NODELAY);
-      tcpKeepAlive = attributes.attribute(TCP_KEEPALIVE);
-      ioThreads = attributes.attribute(IO_THREADS);
-      adminOperationsHandler = attributes.attribute(ADMIN_OPERATION_HANDLER);
-      socketBinding = attributes.attribute(SOCKET_BINDING);
    }
 
    public String defaultCacheName() {
-      return defaultCacheName.get();
+      return attributes.attribute(DEFAULT_CACHE_NAME).get();
    }
 
    public String name() {
-      return name.get();
+      return attributes.attribute(NAME).get();
    }
 
    public String host() {
-      return host.get();
+      return attributes.attribute(HOST).get();
    }
 
    public int port() {
-      return port.get();
+      return attributes.attribute(PORT).get();
    }
 
    public int idleTimeout() {
-      return idleTimeout.get();
+      return attributes.attribute(IDLE_TIMEOUT).get();
    }
 
    public int recvBufSize() {
-      return recvBufSize.get();
+      return attributes.attribute(RECV_BUF_SIZE).get();
    }
 
    public int sendBufSize() {
-      return sendBufSize.get();
+      return attributes.attribute(SEND_BUF_SIZE).get();
+   }
+
+   public A authentication() {
+      return authentication;
    }
 
    public SslConfiguration ssl() {
@@ -124,31 +99,31 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
    }
 
    public boolean tcpNoDelay() {
-      return tcpNoDelay.get();
+      return attributes.attribute(TCP_NODELAY).get();
    }
 
    public boolean tcpKeepAlive() {
-      return tcpKeepAlive.get();
+      return attributes.attribute(TCP_KEEPALIVE).get();
    }
 
    public int ioThreads() {
-      return ioThreads.get();
+      return attributes.attribute(IO_THREADS).get();
    }
 
    public boolean startTransport() {
-      return startTransport.get();
+      return attributes.attribute(START_TRANSPORT).get();
    }
 
    public AdminOperationsHandler adminOperationsHandler() {
-      return adminOperationsHandler.get();
+      return attributes.attribute(ADMIN_OPERATION_HANDLER).get();
    }
 
    public String socketBinding() {
-      return socketBinding.get();
+      return attributes.attribute(SOCKET_BINDING).get();
    }
 
    public boolean zeroCapacityNode() {
-      return zeroCapacityNode.get();
+      return attributes.attribute(ZERO_CAPACITY_NODE).get();
    }
 
    public void disable() {

@@ -12,7 +12,7 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
+public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration<T, A>, S extends ProtocolServerConfigurationChildBuilder<T, S, A>, A extends AuthenticationConfiguration>
       extends Self<S> {
    /**
     * Specifies the cache to use as a default cache for the protocol
@@ -60,15 +60,17 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
     */
    S sendBufSize(int sendBufSize);
 
+   AuthenticationConfigurationBuilder<A> authentication();
+
    /**
     * Configures SSL
     */
-   SslConfigurationBuilder<T, S> ssl();
+   SslConfigurationBuilder<T, S, A> ssl();
 
    /**
     * Configures the IP filter rules
     */
-   IpFilterConfigurationBuilder<T, S> ipFilter();
+   IpFilterConfigurationBuilder<T, S, A> ipFilter();
 
    /**
     * Sets the number of I/O threads

@@ -1,4 +1,4 @@
-package org.infinispan.server.resp;
+package org.infinispan.server.core.security;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -6,11 +6,13 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.server.core.ProtocolServer;
+
 
 /**
  * Authentication mechanism.
  */
-public interface Authenticator extends Closeable {
+public interface UsernamePasswordAuthenticator extends Closeable {
 
    /**
     * Performs authentication using the supplied credentials and returns the authenticated {@link Subject}
@@ -18,10 +20,10 @@ public interface Authenticator extends Closeable {
    CompletionStage<Subject> authenticate(String username, char[] password);
 
    /**
-    * Invoked by the {@link RespServer} on startup. Can perform additional configuration
-    * @param respServer
+    * Invoked by the {@link ProtocolServer} on startup. Can perform additional configuration
+    * @param server
     */
-   default void init(RespServer respServer) {}
+   default void init(ProtocolServer<?> server) {}
 
    @Override
    default void close() throws IOException {

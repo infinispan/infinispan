@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.configuration;
+package org.infinispan.server.core.configuration;
 
 import static java.util.Arrays.stream;
 

@@ -5,7 +5,7 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.server.configuration.ServerConfiguration;
-import org.infinispan.server.resp.Authenticator;
+import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -16,7 +16,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 /**
  * @since 14.0
  **/
-public class ElytronRESPAuthenticator implements Authenticator {
+public class ElytronRESPAuthenticator implements UsernamePasswordAuthenticator {
    private final String name;
    private SecurityDomain securityDomain;
    private BlockingManager blockingManager;

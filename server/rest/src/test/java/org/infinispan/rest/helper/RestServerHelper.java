@@ -11,7 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.TestClass;
-import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.DummyServerManagement;
@@ -55,7 +55,7 @@ public class RestServerHelper {
       return new RestServerHelper(cacheManager);
    }
 
-   public RestServerHelper withAuthenticator(Authenticator authenticator) {
+   public RestServerHelper withAuthenticator(RestAuthenticator authenticator) {
       restServerConfigurationBuilder.authentication().authenticator(authenticator);
       return this;
    }

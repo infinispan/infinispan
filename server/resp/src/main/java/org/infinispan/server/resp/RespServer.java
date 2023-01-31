@@ -94,4 +94,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public Resp3Handler newHandler() {
       return new Resp3Handler(this);
    }
+
+   @Override
+   public void installDetector(Channel ch) {
+      ch.pipeline().addLast(RespDetector.NAME, new RespDetector(this));
+   }
 }
