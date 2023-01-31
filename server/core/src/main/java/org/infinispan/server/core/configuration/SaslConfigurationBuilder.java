@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.configuration;
+package org.infinispan.server.core.configuration;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,34 +8,39 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.security.auth.Subject;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.SaslUtils;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
-import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 
 /**
  * @since 10.0
  */
 public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
-   private static final Log log = LogFactory.getLog(SaslConfigurationBuilder.class, Log.class);
 
    private final AttributeSet attributes;
-
+   private SaslAuthenticator saslAuthenticator;
    private Map<String, String> mechProperties = new HashMap<>();
 
-   SaslConfigurationBuilder() {
+   public SaslConfigurationBuilder() {
       this.attributes = SaslConfiguration.attributeDefinitionSet();
    }
 
    @Override
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   public SaslConfigurationBuilder authenticator(SaslAuthenticator saslAuthenticator) {
+      this.saslAuthenticator = saslAuthenticator;
+      return this;
    }
 
    public SaslConfigurationBuilder serverName(String name) {
@@ -45,6 +50,11 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
 
    public String serverName() {
       return attributes.attribute(SaslConfiguration.SERVER_NAME).get();
+   }
+
+   public SaslConfigurationBuilder serverSubject(Subject subject) {
+      attributes.attribute(SaslConfiguration.SERVER_SUBJECT).set(subject);
+      return this;
    }
 
    public SaslConfigurationBuilder addQOP(String value) {
@@ -122,6 +132,9 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
 
    @Override
    public void validate() {
+      if (saslAuthenticator == null) {
+         throw Log.CONFIG.saslAuthenticationProvider();
+      }
       Set<String> allMechs = new LinkedHashSet<>(Arrays.asList(ExternalSaslServerFactory.NAMES));
       for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), null, true)) {
          allMechs.addAll(Arrays.asList(factory.getMechanismNames(mechProperties)));
@@ -131,33 +144,35 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       if (allowedMechs.isEmpty()) {
          mechanismAttr.set(allMechs);
       } else if (!allMechs.containsAll(allowedMechs)) {
-         throw log.invalidAllowedMechs(allowedMechs, allMechs);
+         throw Log.CONFIG.invalidAllowedMechs(allowedMechs, allMechs);
       }
       if (attributes.attribute(SaslConfiguration.SERVER_NAME) == null) {
-         throw log.missingServerName();
+         throw Log.CONFIG.missingServerName();
       }
    }
 
    @Override
    public SaslConfiguration create() {
       Map<String, String> mechProperties = getMechProperties();
-      return new SaslConfiguration(attributes.protect(), mechProperties);
+      return new SaslConfiguration(attributes.protect(), saslAuthenticator, mechProperties);
    }
 
    @Override
    public SaslConfigurationBuilder read(SaslConfiguration template) {
       attributes.read(template.attributes());
       mechProperties = template.mechProperties();
+      saslAuthenticator = template.saslAuthenticationProvider();
       return this;
    }
 
 
-   SaslConfigurationBuilder addMechProperty(String key, String value) {
+   public SaslConfigurationBuilder addMechProperty(String key, String value) {
       mechProperties.put(key, value);
       return this;
    }
 
-   void setMechProperty(Map<String, String> mechProperties) {
+   public SaslConfigurationBuilder mechProperties(Map<String, String> mechProperties) {
       this.mechProperties = mechProperties;
+      return this;
    }
 }

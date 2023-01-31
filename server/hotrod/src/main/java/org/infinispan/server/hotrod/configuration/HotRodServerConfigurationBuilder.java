@@ -5,17 +5,16 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
 
-import java.lang.invoke.MethodHandles;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * HotRodServerConfigurationBuilder.
@@ -23,10 +22,10 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder> implements
+public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder, SaslAuthenticationConfiguration> implements
       Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
-   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
+
+   private final SaslAuthenticationConfigurationBuilder authentication = new SaslAuthenticationConfigurationBuilder(this);
    private final TopologyCacheConfigurationBuilder topologyCache = new TopologyCacheConfigurationBuilder();
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
    private static final String DEFAULT_NAME = "hotrod";
@@ -46,7 +45,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    }
 
    @Override
-   public AuthenticationConfigurationBuilder authentication() {
+   public SaslAuthenticationConfigurationBuilder authentication() {
       return authentication;
    }
 
@@ -134,7 +133,6 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    @Override
    public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template) {
       super.read(template);
-      this.authentication.read(template.authentication());
       this.topologyCache.read(template.topologyCache());
       this.encryption.read(template.encryption());
       return this;
@@ -144,10 +142,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    public void validate() {
       super.validate();
       if (attributes.attribute(PROXY_HOST).isNull() && attributes.attribute(HOST).isNull()) {
-         throw log.missingHostAddress();
+         throw Log.CONFIG.missingHostAddress();
       }
-      authentication.validate();
       topologyCache.validate();
+      encryption.validate();
    }
 
    public HotRodServerConfiguration build(boolean validate) {

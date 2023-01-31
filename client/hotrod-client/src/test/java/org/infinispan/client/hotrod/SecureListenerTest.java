@@ -22,7 +22,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
-import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
+import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.TestingUtil;
@@ -63,8 +63,8 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
    }
 
    @Override
-   protected SimpleServerAuthenticationProvider createAuthenticationProvider() {
-      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
+   protected SimpleSaslAuthenticator createAuthenticationProvider() {
+      SimpleSaslAuthenticator sap = new SimpleSaslAuthenticator();
       sap.addUser("RWLuser", "realm", "password".toCharArray(), null);
       sap.addUser("RWuser", "realm", "password".toCharArray(), null);
       return sap;

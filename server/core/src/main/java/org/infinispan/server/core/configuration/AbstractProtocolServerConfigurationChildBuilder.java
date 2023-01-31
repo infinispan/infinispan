@@ -9,11 +9,11 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
  * @since 9.1
  */
 
-public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
-      implements ProtocolServerConfigurationChildBuilder<T, S> {
-   final protected ProtocolServerConfigurationChildBuilder<T, S> builder;
+public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration<T, A>, S extends ProtocolServerConfigurationChildBuilder<T, S, A>, A extends AuthenticationConfiguration>
+      implements ProtocolServerConfigurationChildBuilder<T, S, A> {
+   final protected ProtocolServerConfigurationChildBuilder<T, S, A> builder;
 
-   protected AbstractProtocolServerConfigurationChildBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
+   protected AbstractProtocolServerConfigurationChildBuilder(ProtocolServerConfigurationChildBuilder<T, S, A> builder) {
       this.builder = builder;
    }
 
@@ -72,7 +72,12 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
-   public SslConfigurationBuilder<T, S> ssl() {
+   public AuthenticationConfigurationBuilder<A> authentication() {
+      return builder.authentication();
+   }
+
+   @Override
+   public SslConfigurationBuilder<T, S, A> ssl() {
       return builder.ssl();
    }
 
@@ -101,7 +106,7 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
-   public IpFilterConfigurationBuilder<T, S> ipFilter() {
+   public IpFilterConfigurationBuilder<T, S, A> ipFilter() {
       return builder.ipFilter();
    }
 

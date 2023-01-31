@@ -23,7 +23,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.LookupResult;
@@ -57,7 +57,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
    protected final RestServerConfiguration configuration;
    private Subject subject;
    private String authorization;
-   private final Authenticator authenticator;
+   private final RestAuthenticator authenticator;
 
    /**
     * Creates new {@link RestRequestHandler}.

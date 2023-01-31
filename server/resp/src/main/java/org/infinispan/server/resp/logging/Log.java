@@ -6,6 +6,7 @@ import java.nio.CharBuffer;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -20,6 +21,9 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   Log CONFIG = Logger.getMessageLogger(Log.class, "org.infinispan.CONFIG");
+   Log SERVER = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");
+
 //   @Message(value = "Cache '%s' has expiration enabled which violates the RESP protocol.", id = 12001)
 //   CacheConfigurationException invalidExpiration(String cacheName);
 

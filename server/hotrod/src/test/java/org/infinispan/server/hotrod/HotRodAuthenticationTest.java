@@ -12,7 +12,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
+import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestAuthMechListResponse;
@@ -34,11 +34,15 @@ public class HotRodAuthenticationTest extends HotRodSingleNodeTest {
 
    @Override
    public HotRodServer createStartHotRodServer(EmbeddedCacheManager cacheManager) {
-      SimpleServerAuthenticationProvider ssap = new SimpleServerAuthenticationProvider();
+      SimpleSaslAuthenticator ssap = new SimpleSaslAuthenticator();
       ssap.addUser("user", "realm", "password".toCharArray());
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      builder.authentication().enable().addAllowedMech("CRAM-MD5").serverAuthenticationProvider(ssap)
-             .serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
+      builder.authentication().enable()
+            .sasl()
+               .authenticator(ssap)
+               .addAllowedMech("CRAM-MD5")
+               .serverName("localhost")
+               .addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
       return startHotRodServer(cacheManager, HotRodTestingUtil.serverPort(), builder);
    }
 

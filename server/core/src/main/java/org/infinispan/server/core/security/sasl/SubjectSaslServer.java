@@ -1,4 +1,4 @@
-package org.infinispan.server.core.security;
+package org.infinispan.server.core.security.sasl;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import javax.security.auth.Subject;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.infinispan.server.core.security.UserPrincipal;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 
 /**

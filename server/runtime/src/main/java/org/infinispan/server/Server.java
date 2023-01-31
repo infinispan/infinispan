@@ -58,7 +58,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.NamedSocketFactory;
 import org.infinispan.rest.RestServer;
-import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -84,6 +84,7 @@ import org.infinispan.server.datasource.DataSourceFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.logging.Log;
+import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.router.RoutingTable;
@@ -93,13 +94,14 @@ import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.RouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
+import org.infinispan.server.router.routes.memcached.MemcachedServerRouteDestination;
 import org.infinispan.server.router.routes.resp.RespServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
 import org.infinispan.server.security.ElytronJMXAuthenticator;
 import org.infinispan.server.security.ElytronRESPAuthenticator;
-import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
+import org.infinispan.server.security.ElytronSASLAuthenticator;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
@@ -353,7 +355,7 @@ public class Server implements ServerManagement, AutoCloseable {
          ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
          ServerConfigurationBuilder serverConfigurationBuilder = global.module(ServerConfigurationBuilder.class);
          for (EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
-            for (ProtocolServerConfigurationBuilder<?, ?> connector : endpoint.connectors()) {
+            for (ProtocolServerConfigurationBuilder<?, ?, ?> connector : endpoint.connectors()) {
                connector.adminOperationsHandler(adminOperationsHandler);
             }
          }
@@ -434,7 +436,7 @@ public class Server implements ServerManagement, AutoCloseable {
                   ProtocolServer protocolServer = Util.getInstance(protocolServerClass);
                   protocolServer.setServerManagement(this, endpoint.admin());
                   if (configuration instanceof HotRodServerConfiguration) {
-                     ElytronSASLAuthenticationProvider.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
+                     ElytronSASLAuthenticator.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                   } else if (configuration instanceof RestServerConfiguration) {
                      ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
                   } else if (configuration instanceof RespServerConfiguration) {
@@ -453,6 +455,8 @@ public class Server implements ServerManagement, AutoCloseable {
                         routes.add(new Route<>(routeSource, new RestServerRouteDestination(protocolServer.getName(), (RestServer) protocolServer)));
                      } else if (protocolServer instanceof RespServer) {
                         routes.add(new Route<>(routeSource, new RespServerRouteDestination(protocolServer.getName(), (RespServer) protocolServer)));
+                     } else if (protocolServer instanceof MemcachedServer) {
+                        routes.add(new Route<>(routeSource, new MemcachedServerRouteDestination(protocolServer.getName(), (MemcachedServer) protocolServer)));
                      }
                      log.protocolStarted(protocolServer.getName());
                   }
@@ -517,7 +521,7 @@ public class Server implements ServerManagement, AutoCloseable {
          }
       }
 
-      Authenticator authenticator = rest.authentication().authenticator();
+      RestAuthenticator authenticator = rest.authentication().authenticator();
       loginConfiguration.put("ready", Boolean.toString(authenticator == null || authenticator.isReadyForHttpChallenge()));
 
       return loginConfiguration;

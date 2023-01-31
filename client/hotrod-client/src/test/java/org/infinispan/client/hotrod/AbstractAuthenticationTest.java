@@ -5,7 +5,7 @@ import java.util.Map;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
+import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -31,16 +31,17 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
    @Override
    protected abstract EmbeddedCacheManager createCacheManager() throws Exception;
 
-   protected abstract SimpleServerAuthenticationProvider createAuthenticationProvider();
+   protected abstract SimpleSaslAuthenticator createAuthenticationProvider();
 
    protected HotRodServer initServer(Map<String, String> mechProperties, int index) {
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder.authentication()
          .enable()
-         .serverName("localhost")
-         .addAllowedMech("CRAM-MD5")
-         .serverAuthenticationProvider(createAuthenticationProvider());
-      serverBuilder.authentication().mechProperties(mechProperties);
+            .sasl()
+               .serverName("localhost")
+               .addAllowedMech("CRAM-MD5")
+               .authenticator(createAuthenticationProvider());
+      serverBuilder.authentication().sasl().mechProperties(mechProperties);
       int port = HotRodTestingUtil.serverPort() + index;
       HotRodServer server = HotRodTestingUtil.startHotRodServer(cacheManager, port, serverBuilder);
       log.info("Started server on port: " + server.getPort());

@@ -3,25 +3,26 @@ package org.infinispan.server.resp.configuration;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
-import org.infinispan.server.resp.Authenticator;
+import org.infinispan.server.core.configuration.AuthenticationConfiguration;
+import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 
 /**
- * AuthenticationConfiguration.
+ * RespAuthenticationConfiguration.
  *
  * @author Tristan Tarrant
  * @since 14.0
  */
-public class AuthenticationConfiguration extends ConfigurationElement<AuthenticationConfiguration> {
+public class RespAuthenticationConfiguration extends ConfigurationElement<RespAuthenticationConfiguration> implements AuthenticationConfiguration {
    public static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).immutable().build();
 
    private final boolean enabled;
-   private final Authenticator authenticator;
+   private final UsernamePasswordAuthenticator authenticator;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AuthenticationConfiguration.class, SECURITY_REALM);
+      return new AttributeSet(RespAuthenticationConfiguration.class, SECURITY_REALM);
    }
 
-   AuthenticationConfiguration(AttributeSet attributes, Authenticator authenticator, boolean enabled) {
+   RespAuthenticationConfiguration(AttributeSet attributes, UsernamePasswordAuthenticator authenticator, boolean enabled) {
       super("authentication", attributes);
       this.enabled = enabled;
       this.authenticator = authenticator;
@@ -31,7 +32,7 @@ public class AuthenticationConfiguration extends ConfigurationElement<Authentica
       return enabled;
    }
 
-   public Authenticator authenticator() {
+   public UsernamePasswordAuthenticator authenticator() {
       return authenticator;
    }
 

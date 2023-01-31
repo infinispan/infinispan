@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.rest.configuration.RestAuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -16,12 +17,13 @@ import org.infinispan.server.configuration.security.RealmConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.resp.configuration.RespAuthenticationConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
 import org.infinispan.server.security.ElytronRESPAuthenticator;
-import org.infinispan.server.security.ElytronSASLAuthenticationProvider;
+import org.infinispan.server.security.ElytronSASLAuthenticator;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -31,7 +33,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 public class EndpointConfigurationBuilder implements Builder<EndpointConfiguration> {
    private final AttributeSet attributes;
 
-   private final List<ProtocolServerConfigurationBuilder<?, ?>> connectorBuilders = new ArrayList<>(2);
+   private final List<ProtocolServerConfigurationBuilder<?, ?, ?>> connectorBuilders = new ArrayList<>(2);
    private final SinglePortServerConfigurationBuilder singlePortBuilder = new SinglePortServerConfigurationBuilder();
    private boolean implicitConnectorSecurity;
 
@@ -78,7 +80,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       return attributes.attribute(EndpointConfiguration.METRICS_AUTH).get();
    }
 
-   public List<ProtocolServerConfigurationBuilder<?, ?>> connectors() {
+   public List<ProtocolServerConfigurationBuilder<?, ?, ?>> connectors() {
       return connectorBuilders;
    }
 
@@ -86,7 +88,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       return singlePortBuilder;
    }
 
-   public <T extends ProtocolServerConfigurationBuilder<?, ?>> T addConnector(Class<T> klass) {
+   public <T extends ProtocolServerConfigurationBuilder<?, ?, ?>> T addConnector(Class<T> klass) {
       try {
          T builder = klass.getConstructor().newInstance();
          connectorBuilders.add(builder);
@@ -99,7 +101,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
 
    @Override
    public void validate() {
-      Map<String, List<ProtocolServerConfigurationBuilder<?, ?>>> buildersPerClass = connectorBuilders.stream()
+      Map<String, List<ProtocolServerConfigurationBuilder<?, ?, ?>>> buildersPerClass = connectorBuilders.stream()
             .collect(Collectors.groupingBy(s -> s.getClass().getSimpleName() + "/" + s.socketBinding()));
       buildersPerClass.values().stream().filter(c -> c.size() > 1).findFirst().ifPresent(c -> {
          String names = c.stream().map(ProtocolServerConfigurationBuilder::name).collect(Collectors.joining(","));
@@ -116,7 +118,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       boolean implicitSecurity = implicitConnectorSecurity && securityRealm() != null;
       bindingsConfiguration.applySocketBinding(attributes.attribute(EndpointConfiguration.SOCKET_BINDING).get(), singlePortBuilder, singlePortBuilder);
       List<ProtocolServerConfiguration> connectors = new ArrayList<>(connectorBuilders.size());
-      for (ProtocolServerConfigurationBuilder<?, ?> builder : connectorBuilders) {
+      for (ProtocolServerConfigurationBuilder<?, ?, ?> builder : connectorBuilders) {
          bindingsConfiguration.applySocketBinding(builder.socketBinding(), builder, singlePortBuilder);
          if (implicitSecurity) {
             if (builder instanceof HotRodServerConfigurationBuilder) {
@@ -148,20 +150,20 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
 
    public static void enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, HotRodServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
-      AuthenticationConfigurationBuilder authentication = builder.authentication();
+      SaslAuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
          authentication.securityRealm(securityRealmName);
          Server.log.debugf("Using endpoint realm \"%s\" for Hot Rod", securityRealmName);
       }
       ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
       // Only add implicit mechanisms if the user has not set any explicitly
-      if (!authentication.hasMechanisms()) {
+      if (!authentication.sasl().hasMechanisms()) {
          String serverPrincipal = null;
          for (KerberosSecurityFactoryConfiguration identity : securityRealm.getServerIdentities().kerberosConfigurations()) {
             if (identity.getPrincipal().startsWith("hotrod/")) {
                authentication
                      .enable()
-                     .addMechanisms(SaslMechanismInformation.Names.GS2_KRB5, SaslMechanismInformation.Names.GSSAPI);
+                     .sasl().addMechanisms(SaslMechanismInformation.Names.GS2_KRB5, SaslMechanismInformation.Names.GSSAPI);
                serverPrincipal = identity.getPrincipal();
                break;
             }
@@ -170,19 +172,19 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.TOKEN)) {
             authentication
                   .enable()
-                  .addMechanisms(SaslMechanismInformation.Names.OAUTHBEARER);
+                  .sasl().addMechanisms(SaslMechanismInformation.Names.OAUTHBEARER);
             Server.log.debug("Enabled OAUTHBEARER mechanism for Hot Rod");
          }
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.TRUST)) {
             authentication
                   .enable()
-                  .addMechanisms(SaslMechanismInformation.Names.EXTERNAL);
+                  .sasl().addMechanisms(SaslMechanismInformation.Names.EXTERNAL);
             Server.log.debug("Enabled EXTERNAL mechanism for Hot Rod");
          }
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
             authentication
                   .enable()
-                  .addMechanisms(
+                  .sasl().addMechanisms(
                         SaslMechanismInformation.Names.SCRAM_SHA_512,
                         SaslMechanismInformation.Names.SCRAM_SHA_384,
                         SaslMechanismInformation.Names.SCRAM_SHA_256,
@@ -200,17 +202,17 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             if (securityRealm.hasFeature(ServerSecurityRealm.Feature.ENCRYPT)) {
                authentication
                      .enable()
-                     .addMechanisms(SaslMechanismInformation.Names.PLAIN);
+                     .sasl().addMechanisms(SaslMechanismInformation.Names.PLAIN);
                Server.log.debug("Enabled PLAIN mechanism for Hot Rod");
             }
          }
-         authentication.serverAuthenticationProvider(new ElytronSASLAuthenticationProvider(authentication.securityRealm(), serverPrincipal, authentication.sasl().mechanisms()));
+         authentication.sasl().authenticator(new ElytronSASLAuthenticator(authentication.securityRealm(), serverPrincipal, authentication.sasl().mechanisms()));
       }
    }
 
    public static void enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RestServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
-      org.infinispan.rest.configuration.AuthenticationConfigurationBuilder authentication = builder.authentication();
+      RestAuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
          authentication.securityRealm(securityRealmName);
       }
@@ -258,9 +260,9 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       }
    }
 
-   private ProtocolServerConfigurationBuilder<?, ?> enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RespServerConfigurationBuilder builder) {
+   private ProtocolServerConfigurationBuilder<?, ?, ?> enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, RespServerConfigurationBuilder builder) {
       // Set the security realm only if it has not been set already
-      org.infinispan.server.resp.configuration.AuthenticationConfigurationBuilder authentication = builder.authentication();
+      RespAuthenticationConfigurationBuilder authentication = builder.authentication();
       if (!authentication.hasSecurityRealm()) {
          authentication.securityRealm(securityRealmName);
       }

@@ -33,6 +33,7 @@ import io.netty.handler.ipfilter.IpFilterRule;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
+   Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
    Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
    Log SERVER = Logger.getMessageLogger(Log.class, LOG_ROOT + "SERVER");
 //   @LogMessage(level = WARN)
@@ -176,6 +177,18 @@ public interface Log extends BasicLogger {
    void ioUringNotAvailable(String message);
 
    @LogMessage(level = INFO)
-   @Message(value = "Using transport: %s")
+   @Message(value = "Using transport: %s", id = 5055)
    void usingTransport(String transportName);
+
+   @Message(value = "Cannot enable authentication without specifying a SaslAuthenticationProvider", id = 5056)
+   CacheConfigurationException saslAuthenticationProvider();
+
+   @Message(value = "The specified allowedMechs [%s] contains mechs which are unsupported by the underlying factories [%s]", id = 5057)
+   CacheConfigurationException invalidAllowedMechs(Set<String> allowedMechs, Set<String> allMechs);
+
+   @Message(value = "A serverName must be specified when enabling authentication", id = 5058)
+   CacheConfigurationException missingServerName();
+
+   @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 5059)
+   SecurityException externalMechNotAllowedWithoutSSLClientCert();
 }

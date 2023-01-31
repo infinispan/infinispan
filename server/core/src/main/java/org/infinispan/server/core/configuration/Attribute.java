@@ -1,4 +1,4 @@
-package org.infinispan.server.configuration.memcached;
+package org.infinispan.server.core.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,13 +11,29 @@ public enum Attribute {
    UNKNOWN(null), // must be first
 
    CACHE,
-   CACHE_CONTAINER,
-   CLIENT_ENCODING,
+   HOST,
    IDLE_TIMEOUT,
+   IGNORED_CACHES,
    IO_THREADS,
+   MECHANISMS,
    NAME,
-   PROTOCOL,
-   SOCKET_BINDING;
+   POLICY,
+   PORT,
+   QOP,
+   RECEIVE_BUFFER_SIZE,
+   REQUIRE_SSL_CLIENT_AUTH,
+   SECURITY_REALM,
+   SEND_BUFFER_SIZE,
+   SERVER_NAME,
+   SERVER_PRINCIPAL,
+   SOCKET_BINDING,
+   START_TRANSPORT,
+   STRENGTH,
+   TCP_KEEPALIVE,
+   TCP_NODELAY,
+   VALUE,
+   ZERO_CAPACITY_NODE
+   ;
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

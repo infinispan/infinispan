@@ -11,7 +11,7 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.infinispan.server.configuration.ServerConfiguration;
-import org.infinispan.server.core.security.ServerAuthenticationProvider;
+import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
@@ -36,20 +36,20 @@ import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ElytronSASLAuthenticationProvider implements ServerAuthenticationProvider {
+public class ElytronSASLAuthenticator implements SaslAuthenticator {
    private final String name;
    private final String serverPrincipal;
    private final Collection<String> mechanisms;
    private SaslAuthenticationFactory saslAuthenticationFactory;
 
-   public ElytronSASLAuthenticationProvider(String name, String serverPrincipal, Collection<String> mechanisms) {
+   public ElytronSASLAuthenticator(String name, String serverPrincipal, Collection<String> mechanisms) {
       this.name = name;
       this.serverPrincipal = serverPrincipal;
       this.mechanisms = mechanisms;
    }
 
    public static void init(HotRodServerConfiguration configuration, ServerConfiguration serverConfiguration, ScheduledExecutorService timeoutExecutor) {
-      ElytronSASLAuthenticationProvider authenticator = (ElytronSASLAuthenticationProvider) configuration.authentication().serverAuthenticationProvider();
+      ElytronSASLAuthenticator authenticator = (ElytronSASLAuthenticator) configuration.authentication().sasl().mechanisms();
       if (authenticator != null) {
          authenticator.init(serverConfiguration, timeoutExecutor);
       }

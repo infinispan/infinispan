@@ -15,13 +15,13 @@ import io.netty.handler.ipfilter.IpFilterRuleType;
  * @author Tristan Tarrant
  * @since 12.1
  */
-public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
-      extends AbstractProtocolServerConfigurationChildBuilder<T, S>
+public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration<T, A>, S extends ProtocolServerConfigurationChildBuilder<T, S, A>, A extends AuthenticationConfiguration>
+      extends AbstractProtocolServerConfigurationChildBuilder<T, S, A>
       implements Builder<IpFilterConfiguration> {
 
    private final List<IpSubnetFilterRule> rules = new ArrayList<>();
 
-   public IpFilterConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
+   public IpFilterConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S, A> builder) {
       super(builder);
    }
 
@@ -30,12 +30,12 @@ public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration,
       return AttributeSet.EMPTY;
    }
 
-   public IpFilterConfigurationBuilder<T, S> allowFrom(String rule) {
+   public IpFilterConfigurationBuilder<T, S, A> allowFrom(String rule) {
       rules.add(new IpSubnetFilterRule(rule, IpFilterRuleType.ACCEPT));
       return this;
    }
 
-   public IpFilterConfigurationBuilder<T, S> rejectFrom(String rule) {
+   public IpFilterConfigurationBuilder<T, S, A> rejectFrom(String rule) {
       rules.add(new IpSubnetFilterRule(rule, IpFilterRuleType.REJECT));
       return this;
    }
@@ -46,7 +46,7 @@ public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration,
    }
 
    @Override
-   public IpFilterConfigurationBuilder<T, S> read(IpFilterConfiguration template) {
+   public IpFilterConfigurationBuilder<T, S, A> read(IpFilterConfiguration template) {
       rules.clear();
       rules.addAll(template.rules());
       return this;

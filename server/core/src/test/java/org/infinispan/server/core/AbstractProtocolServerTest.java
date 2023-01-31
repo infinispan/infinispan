@@ -97,6 +97,10 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       public ChannelInitializer<Channel> getInitializer() {
          return null;
       }
+
+      @Override
+      public void installDetector(Channel ch) {
+      }
    }
 
 }

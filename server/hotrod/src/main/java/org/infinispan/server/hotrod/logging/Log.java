@@ -4,7 +4,6 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.net.SocketAddress;
-import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
@@ -13,6 +12,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.server.hotrod.MissingFactoryException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -28,6 +28,8 @@ import org.jboss.logging.annotations.Once;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   Log CONFIG = Logger.getMessageLogger(Log.class, "org.infinispan.CONFIG");
+
    @LogMessage(level = ERROR)
    @Message(value = "Exception reported", id = 5003)
    void exceptionReported(@Cause Throwable t);
@@ -43,17 +45,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error detecting crashed member", id = 6002)
    void errorDetectingCrashedMember(@Cause Throwable t);
 
-   @Message(value = "Cannot enable authentication without specifying a ServerAuthenticationProvider", id = 6005)
-   CacheConfigurationException serverAuthenticationProvider();
-
-   @Message(value = "The specified allowedMechs [%s] contains mechs which are unsupported by the underlying factories [%s]", id = 6006)
-   CacheConfigurationException invalidAllowedMechs(Set<String> allowedMechs, Set<String> allMechs);
-
    @Message(value = "The requested operation is invalid", id = 6007)
    UnsupportedOperationException invalidOperation();
-
-   @Message(value = "A serverName must be specified when enabling authentication", id = 6008)
-   CacheConfigurationException missingServerName();
 
    @Message(value = "Event not handled by current Hot Rod event implementation: '%s'", id = 6009)
    IllegalStateException unexpectedEvent(Event e);
@@ -79,9 +72,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Operation '%s' requires authentication", id = 6017)
    SecurityException unauthorizedOperation(String op);
-
-   @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 6018)
-   SecurityException externalMechNotAllowedWithoutSSLClientCert();
 
    @Message(value = "A host or proxyHost address has not been specified", id = 6019)
    CacheConfigurationException missingHostAddress();

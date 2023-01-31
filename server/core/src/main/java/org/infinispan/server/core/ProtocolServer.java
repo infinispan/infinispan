@@ -82,4 +82,10 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> {
     * Returns a {@link ChannelMatcher} which matches channels which belong to this protocol server
     */
    ChannelMatcher getChannelMatcher();
+
+   /**
+    * Installs a protocol detector on the channel
+    * @param ch
+    */
+   void installDetector(Channel ch);
 }

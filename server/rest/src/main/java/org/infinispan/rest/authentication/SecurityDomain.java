@@ -3,7 +3,7 @@ package org.infinispan.rest.authentication;
 import javax.security.auth.Subject;
 
 /**
- * Pluggable security domain which could be used as a bridge between {@link Authenticator} and
+ * Pluggable security domain which could be used as a bridge between {@link RestAuthenticator} and
  * WildFly Security Realms.
  */
 public interface SecurityDomain {

@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod.configuration;
 
+import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
+
 /**
  * AbstractHotRodServerChildConfigurationBuilder.
  *
@@ -14,7 +16,7 @@ public abstract class AbstractHotRodServerChildConfigurationBuilder implements H
    }
 
    @Override
-   public AuthenticationConfigurationBuilder authentication() {
+   public SaslAuthenticationConfigurationBuilder authentication() {
       return builder.authentication();
    }
 

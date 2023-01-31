@@ -15,7 +15,7 @@ import io.netty.channel.ChannelHandlerContext;
  *
  * @author Sebastian Łaskawiec
  */
-public interface Authenticator extends Closeable {
+public interface RestAuthenticator extends Closeable {
 
    /**
     * Challenges specific {@link RestRequest} for authentication.

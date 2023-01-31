@@ -1,19 +1,22 @@
 package org.infinispan.server.resp;
 
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.security.auth.Subject;
-import java.lang.reflect.Method;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 /**
  * Test single node with authentication enabled.
@@ -68,7 +71,7 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
       return connection;
    }
 
-   public static class FakeRespAuthenticator implements Authenticator {
+   public static class FakeRespAuthenticator implements UsernamePasswordAuthenticator {
       @Override
       public CompletionStage<Subject> authenticate(String username, char[] password) {
          if (username.equals(USERNAME) && new String(password).equals(PASSWORD)) {

@@ -1552,7 +1552,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       builder.authentication().metricsAuth(endpoint.metricsAuth());
    }
 
-   public static void parseCommonConnectorAttributes(ConfigurationReader reader, int i, ServerConfigurationBuilder serverBuilder, ProtocolServerConfigurationBuilder<?, ?> builder) {
+   public static void parseCommonConnectorAttributes(ConfigurationReader reader, int i, ServerConfigurationBuilder serverBuilder, ProtocolServerConfigurationBuilder<?, ?, ?> builder) {
       if (ParseUtils.isNoNamespaceAttribute(reader, i)) {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          String value = reader.getAttributeValue(i);
@@ -1602,7 +1602,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   public static void parseCommonConnectorElements(ConfigurationReader reader, ProtocolServerConfigurationBuilder<?, ?> builder) {
+   public static void parseCommonConnectorElements(ConfigurationReader reader, ProtocolServerConfigurationBuilder<?, ?, ?> builder) {
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
          case IP_FILTER: {

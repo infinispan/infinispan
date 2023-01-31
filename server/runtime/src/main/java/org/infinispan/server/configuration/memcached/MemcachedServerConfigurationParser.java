@@ -10,6 +10,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
+import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.kohsuke.MetaInfServices;
 
@@ -87,6 +88,10 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
             }
             case NAME: {
                builder.name(value);
+               break;
+            }
+            case PROTOCOL: {
+               builder.protocol(ParseUtils.parseEnum(reader, i, MemcachedProtocol.class, value));
                break;
             }
             case SOCKET_BINDING:

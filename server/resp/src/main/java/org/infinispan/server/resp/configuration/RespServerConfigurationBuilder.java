@@ -5,8 +5,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.resp.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * RespServerConfigurationBuilder.
@@ -14,11 +12,10 @@ import org.infinispan.util.logging.LogFactory;
  * @author William Burns
  * @since 14.0
  */
-public class RespServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RespServerConfiguration, RespServerConfigurationBuilder> implements
+public class RespServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RespServerConfiguration, RespServerConfigurationBuilder, RespAuthenticationConfiguration> implements
       Builder<RespServerConfiguration> {
-   final static Log logger = LogFactory.getLog(RespServerConfigurationBuilder.class, Log.class);
 
-   private final AuthenticationConfigurationBuilder authentication =  new AuthenticationConfigurationBuilder(this);
+   private final RespAuthenticationConfigurationBuilder authentication =  new RespAuthenticationConfigurationBuilder(this);
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
    public RespServerConfigurationBuilder() {
@@ -51,7 +48,8 @@ public class RespServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
-   public AuthenticationConfigurationBuilder authentication() {
+   @Override
+   public RespAuthenticationConfigurationBuilder authentication() {
       return authentication;
    }
 

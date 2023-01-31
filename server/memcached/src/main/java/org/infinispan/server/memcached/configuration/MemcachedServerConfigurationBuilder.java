@@ -4,7 +4,10 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
+import org.infinispan.server.core.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
+import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
 
 /**
  * MemcachedServerConfigurationBuilder.
@@ -12,8 +15,9 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MemcachedServerConfiguration, MemcachedServerConfigurationBuilder> implements
+public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MemcachedServerConfiguration, MemcachedServerConfigurationBuilder, SaslAuthenticationConfiguration> implements
       Builder<MemcachedServerConfiguration> {
+   private final SaslAuthenticationConfigurationBuilder authentication = new SaslAuthenticationConfigurationBuilder(this);
 
    public MemcachedServerConfigurationBuilder() {
       super(MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT, MemcachedServerConfiguration.attributeDefinitionSet());
@@ -40,6 +44,11 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    }
 
    @Override
+   public AuthenticationConfigurationBuilder<SaslAuthenticationConfiguration> authentication() {
+      return authentication;
+   }
+
+   @Override
    public MemcachedServerConfigurationBuilder adminOperationsHandler(AdminOperationsHandler handler) {
       // Ignore
       return this;
@@ -57,7 +66,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
 
    @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(attributes.protect(), ssl.create(), ipFilter.create());
+      return new MemcachedServerConfiguration(attributes.protect(), authentication().create(), ssl.create(), ipFilter.create());
    }
 
    public MemcachedServerConfiguration build(boolean validate) {

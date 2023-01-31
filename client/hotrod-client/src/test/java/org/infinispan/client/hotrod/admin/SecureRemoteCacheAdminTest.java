@@ -10,7 +10,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
-import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
+import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -37,7 +37,6 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
       template.read(builder.build());
       template.security().authorization().role("admin");
 
-
       EmbeddedCacheManager cm = Security.doPrivileged(() -> {
          EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(gcb, builder);
          cacheManager.defineConfiguration("template", builder.build());
@@ -47,11 +46,12 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
 
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
-      sap.addUser("admin", "realm", "password".toCharArray(), "admin");
+      SimpleSaslAuthenticator ssa = new SimpleSaslAuthenticator();
+      ssa.addUser("admin", "realm", "password".toCharArray(), "admin");
       serverBuilder.authentication()
             .enable()
-            .serverAuthenticationProvider(sap)
+            .sasl()
+            .authenticator(ssa)
             .serverName("localhost")
             .addAllowedMech("CRAM-MD5");
       HotRodServer server = Security.doPrivileged(() -> HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder));

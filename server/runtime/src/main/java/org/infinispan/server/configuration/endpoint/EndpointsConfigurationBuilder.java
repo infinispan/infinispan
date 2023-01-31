@@ -78,7 +78,7 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
       boolean withAuthn = false;
       if (builder.security().authorization().isEnabled()) {
          for (EndpointConfiguration endpoint : list) {
-            for (ProtocolServerConfiguration<?> connector : endpoint.connectors()) {
+            for (ProtocolServerConfiguration<?, ?> connector : endpoint.connectors()) {
                if (connector instanceof HotRodServerConfiguration) {
                   if (((HotRodServerConfiguration) connector).authentication().enabled()) {
                      withAuthn = true;

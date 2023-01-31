@@ -1,6 +1,6 @@
 package org.infinispan.server.core.security.external;
 
-import static org.infinispan.server.core.security.SubjectSaslServer.SUBJECT;
+import static org.infinispan.server.core.security.sasl.SubjectSaslServer.SUBJECT;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

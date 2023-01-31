@@ -7,8 +7,8 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslServer;
 
-import org.infinispan.server.core.security.AuthorizingCallbackHandler;
-import org.infinispan.server.core.security.SubjectSaslServer;
+import org.infinispan.server.core.security.sasl.AuthorizingCallbackHandler;
+import org.infinispan.server.core.security.sasl.SubjectSaslServer;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.sasl.WildFlySasl;
 

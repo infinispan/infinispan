@@ -8,7 +8,7 @@ import javax.net.ssl.SSLSession;
 import javax.security.auth.Subject;
 
 import org.infinispan.rest.NettyRestResponse;
-import org.infinispan.rest.authentication.Authenticator;
+import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 
@@ -22,7 +22,7 @@ import io.netty.handler.ssl.SslHandler;
  * @author Tristan Tarrant
  * @author Sebastian Łaskawiec
  */
-public class ClientCertAuthenticator implements Authenticator {
+public class ClientCertAuthenticator implements RestAuthenticator {
 
    public ClientCertAuthenticator() {
    }
