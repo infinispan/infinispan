@@ -315,7 +315,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertEquals(20, commands.size());
+      assertEquals(21, commands.size());
    }
 
    public void testAuth() {
