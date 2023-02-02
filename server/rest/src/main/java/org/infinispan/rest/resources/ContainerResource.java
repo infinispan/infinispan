@@ -222,7 +222,8 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      return asJsonResponseFuture(cacheManager.getStats().toJson(), responseBuilder, isPretty(request));
+      return CompletableFuture.supplyAsync(() -> cacheManager.getStats().toJson(), invocationHelper.getExecutor())
+            .thenCompose(json -> asJsonResponseFuture(json, responseBuilder, isPretty(request)));
    }
 
 
