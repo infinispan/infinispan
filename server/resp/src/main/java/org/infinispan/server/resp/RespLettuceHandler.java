@@ -22,6 +22,7 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
 
    private final RedisStateMachine stateMachine = new RedisStateMachine(ByteBufAllocator.DEFAULT);
    private RespRequestHandler requestHandler;
+   private PushOutput<byte[], byte[]> currentOutput;
    private boolean disabledRead = false;
 
    public RespLettuceHandler(RespRequestHandler initialHandler) {
@@ -40,10 +41,14 @@ public class RespLettuceHandler extends ByteToMessageDecoder {
       if (disabledRead) {
          return;
       }
-      PushOutput<byte[], byte[]> pushOutput = new PushOutput<>(ByteArrayCodec.INSTANCE);
-      if (stateMachine.decode(in, pushOutput)) {
-         String type = pushOutput.getType().toUpperCase();
-         List content = pushOutput.getContent();
+      if (currentOutput == null) {
+         currentOutput = new PushOutput<>(ByteArrayCodec.INSTANCE);
+      }
+      if (stateMachine.decode(in, currentOutput)) {
+         String type = currentOutput.getType().toUpperCase();
+         List content = currentOutput.getContent();
+         // Read a complete command, use a new one for next round
+         currentOutput = null;
          List<byte[]> contentToUse = content.subList(1, content.size());
          log.tracef("Received command: %s with arguments %s", type, Util.toStr(contentToUse));
          CompletionStage<RespRequestHandler> stage = requestHandler.handleRequest(ctx, type, contentToUse);
