@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import java.lang.invoke.MethodHandles;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +93,24 @@ public class Resp3Handler extends Resp3AuthHandler {
                   handleLongResult(ctx, longValue);
                }
             });
+         case "CONFIG":
+            String getOrSet = new String(arguments.get(0), StandardCharsets.UTF_8);
+            String name = new String(arguments.get(1), StandardCharsets.UTF_8);
+
+            if ("GET".equalsIgnoreCase(getOrSet)) {
+               if ("appendonly".equalsIgnoreCase(name)) {
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", ctx.alloc()));
+               } else if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", ctx.alloc()));
+               } else {
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", ctx.alloc()));
+               }
+            } else if ("SET".equalsIgnoreCase(getOrSet)) {
+               ctx.writeAndFlush(statusOK());
+            } else {
+               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", ctx.alloc()));
+            }
+            break;
          case "INFO":
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()));
             break;
@@ -124,7 +143,7 @@ public class Resp3Handler extends Resp3AuthHandler {
                break;
             }
             StringBuilder commandBuilder = new StringBuilder();
-            commandBuilder.append("*20\r\n");
+            commandBuilder.append("*21\r\n");
             addCommand(commandBuilder, "HELLO", -1, 0, 0, 0);
             addCommand(commandBuilder, "AUTH", -2, 0, 0, 0);
             addCommand(commandBuilder, "PING", -2, 0, 0, 0);
@@ -132,6 +151,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             addCommand(commandBuilder, "GET", 2, 1, 1, 1);
             addCommand(commandBuilder, "SET", -3, 1, 1, 1);
             addCommand(commandBuilder, "DEL", -2, 1, -1, 1);
+            addCommand(commandBuilder, "CONFIG", -2, 0, 0, 0);
             addCommand(commandBuilder, "MGET", -2, 1, -1, 1);
             addCommand(commandBuilder, "MSET", -3, 1, 1, 2);
             addCommand(commandBuilder, "INCR", 2, 1, 1, 1);
