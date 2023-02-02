@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.test.Exceptions;
@@ -126,6 +127,20 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
       assertNull(redis.get("k1"));
       assertNull(redis.get("something"));
+   }
+
+   public void testSetGetBigValue() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      StringBuilder sb = new StringBuilder();
+      String charsToChoose = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+      for(int i = 0; i < 10_000; ++i) {
+         sb.append(charsToChoose.charAt(ThreadLocalRandom.current().nextInt(charsToChoose.length())));
+      }
+      String actualString = sb.toString();
+      redis.set("k1", actualString);
+      String v = redis.get("k1");
+      assertEquals(actualString, v);
    }
 
    public void testPingNoArg() {
