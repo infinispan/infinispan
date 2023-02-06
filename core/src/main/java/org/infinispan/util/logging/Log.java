@@ -2353,4 +2353,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Expiration (Max idle or Lifespan) is not allowed while using a store '%s' that does not support expiration, unless it is configured as read only", id = 680)
    CacheConfigurationException expirationNotAllowedWhenStoreDoesNotSupport(String storeImpl);
+
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cannot register metrics for component '%s'", id = 689)
+   void warnNoMetricsForComponent(String name);
 }
