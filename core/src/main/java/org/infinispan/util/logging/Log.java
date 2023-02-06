@@ -2367,4 +2367,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Attribute '%s' of element '%s' has been deprecated since schema version %d.%d. Refer to the upgrade guide", id = 688)
    void attributeDeprecated(String name, String element, int major, int minor);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cannot register metrics for component '%s'", id = 689)
+   void warnNoMetricsForComponent(String name);
 }

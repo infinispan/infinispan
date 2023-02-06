@@ -3,6 +3,7 @@ package org.infinispan.metrics.impl;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -133,6 +134,10 @@ public class MetricsCollector implements Constants {
    }
 
    private Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, Tag ...initialTags) {
+      if (attributes == null) {
+         log.warnNoMetricsForComponent(instance.getClass().getName());
+         return Collections.emptySet();
+      }
       Set<Object> metricIds = new HashSet<>(attributes.size());
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
