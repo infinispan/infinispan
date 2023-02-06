@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -21,6 +22,7 @@ import org.infinispan.external.JGroupsProtocolComponent;
 import org.jgroups.annotations.ManagedAttribute;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.RED;
+import org.jgroups.protocols.SSL_KEY_EXCHANGE;
 import org.jgroups.stack.Protocol;
 import org.kohsuke.MetaInfServices;
 
@@ -75,11 +77,13 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
          addProtocol(protocol, w);
       }
 
-      // RED protocol does not have an ID
-      // Reason: protocol that does not send headers around does not need an ID.
+      // Some protocols do not have an ID
+      // Reason: protocols that do not send headers around do not need an ID.
       // Add it manually if an ID is not found.
-      if (ClassConfigurator.getProtocolId(RED.class) == 0) {
-         addProtocol(RED.class, w);
+      for (Class<?> klass : Arrays.asList(RED.class, SSL_KEY_EXCHANGE.class)) {
+         if (ClassConfigurator.getProtocolId(klass) == 0) {
+            addProtocol(klass, w);
+         }
       }
 
       w.println("   }");

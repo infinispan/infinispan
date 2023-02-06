@@ -2230,4 +2230,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Failed to transfer cross-site tombstones to %s for segments %s.", id = 662)
    void failedToTransferTombstones(Address requestor, IntSet segments,  @Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cannot register metrics for component '%s'", id = 689)
+   void warnNoMetricsForComponent(String name);
 }
