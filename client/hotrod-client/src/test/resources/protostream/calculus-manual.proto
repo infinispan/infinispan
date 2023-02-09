@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+import public "common-java-types.proto";
+
+package lab.manual;
+
+message Calculus {
+
+  optional org.infinispan.protostream.commons.BigInteger purchases = 1;
+
+}
