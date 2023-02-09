@@ -1,26 +1,29 @@
-package org.infinispan.rest;
+package org.infinispan.rest.stream;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
-import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.reactivestreams.Publisher;
 
 /**
- * An {@link InputStream} that reads from a {@link CacheStream} of byte[] and produces a JSON output.
+ * A {@link CacheChunkedStream} that reads {@link Map.Entry} and produces a JSON output.
  * For example:
  * <p>
- * [{"key":1,"value":"value","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1},
- * {"key":2,"value":"value2","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1}]
+ * <pre>{@code
+ * [
+ *   {"key":1,"value":"value","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1},
+ *   {"key":2,"value":"value2","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1}
+ * ]
+ * }</pre>
+ *
  *
  * @since 12.0
  */
-public class CacheEntryInputStream extends InputStream {
+public class CacheEntryStreamProcessor extends CacheChunkedStream<CacheEntry<?, ?>> {
    private final boolean keysAreJson;
    private final boolean valuesAreJson;
 
@@ -29,30 +32,24 @@ public class CacheEntryInputStream extends InputStream {
    private static final byte[] KEY_LABEL = "\"key\":".getBytes();
    private static final byte[] VALUE_LABEL = "\"value\":".getBytes();
 
-   private static final char OPEN_CHAR = '[';
-   private static final char OPEN_ITEM_CHAR = '{';
-   private static final char SEPARATOR = ',';
-   private static final char CLOSE_ITEM_CHAR = '}';
-   private static final char CLOSE_CHAR = ']';
-
-   private final Iterator<? extends Map.Entry<?, ?>> iterator;
-   private final Stream<? extends Map.Entry<?, ?>> stream;
-   private final int batchSize;
+   private static final byte OPEN_CHAR = '[';
+   private static final byte OPEN_ITEM_CHAR = '{';
+   private static final byte SEPARATOR = ',';
+   private static final byte CLOSE_ITEM_CHAR = '}';
+   private static final byte CLOSE_CHAR = ']';
    private final boolean includeMetadata;
 
    private Map.Entry<?, ?> currentEntry;
    private byte[] currentKey;
    private byte[] currentValue;
    private byte[] currentMetadata;
-   private int cursor = 0;
    private int keyCursor = 0;
    private int valueCursor = 0;
    private int mdCursor = 0;
    private int keyLabelCursor = 0;
    private int valueLabelCursor = 0;
-   private Boolean hasNext;
-
    private State state = State.BEGIN;
+   private volatile boolean elementConsumed = true;
 
    static class Metadata {
       public static final byte[] EMPTY = new Metadata().bytes();
@@ -79,42 +76,25 @@ public class CacheEntryInputStream extends InputStream {
       }
 
       public byte[] bytes() {
-         return ("\"timeToLiveSeconds\": " + timeToLiveSeconds + ", "
-               + "\"maxIdleTimeSeconds\": " + maxIdleTimeSeconds + ", "
-               + "\"created\": " + created + ", "
-               + "\"lastUsed\": " + lastUsed + ", "
-               + "\"expireTime\": " + expireTime)
+         return ("\"timeToLiveSeconds\":" + timeToLiveSeconds + ","
+               + "\"maxIdleTimeSeconds\":" + maxIdleTimeSeconds + ","
+               + "\"created\":" + created + ","
+               + "\"lastUsed\":" + lastUsed + ","
+               + "\"expireTime\":" + expireTime)
                .getBytes();
       }
    }
 
-   public CacheEntryInputStream(boolean keysAreJson, boolean valuesAreJson, CacheStream<? extends Map.Entry<?, ?>> stream,
-                                int batchSize,
-                                boolean includeMetadata) {
+   public CacheEntryStreamProcessor(Publisher<CacheEntry<?, ?>> publisher, boolean keysAreJson, boolean valuesAreJson,
+                                    boolean includeMetadata) {
+      super(publisher);
       this.keysAreJson = keysAreJson;
       this.valuesAreJson = valuesAreJson;
-      this.stream = stream.distributedBatchSize(batchSize);
-      this.iterator = stream.iterator();
-      this.hasNext = iterator.hasNext();
       this.includeMetadata = includeMetadata;
-      this.batchSize = batchSize;
    }
-
-   @Override
-   public int available() {
-      if (currentEntry == null) {
-         return 0;
-      }
-
-      int keySize = currentKey.length;
-      int valueSize = currentValue.length;
-      int metadataSize = includeMetadata ? currentMetadata.length : 0;
-      return keySize + valueSize + metadataSize - cursor * batchSize;
-   }
-
 
    private byte[] escape(Object content, boolean json) {
-      byte[] asUTF = content instanceof byte[] ? (byte[]) content : content.toString().getBytes(StandardCharsets.UTF_8);
+      byte[] asUTF = readContentAsBytes(content);
 
       if (json) return asUTF;
 
@@ -123,11 +103,39 @@ public class CacheEntryInputStream extends InputStream {
    }
 
    @Override
-   public synchronized int read() {
+   public boolean isEndOfInput() {
+      return state == State.EOF;
+   }
+
+   @Override
+   public void setCurrent(CacheEntry<?, ?> value) {
+      currentEntry = value;
+      if (currentEntry == null) {
+         currentKey = null;
+         currentValue = null;
+      } else {
+         currentKey = escape(currentEntry.getKey(), keysAreJson);
+         currentValue = escape(currentEntry.getValue(), valuesAreJson);
+      }
+
+      if (includeMetadata) {
+         loadMetadata();
+      }
+      elementConsumed = false;
+   }
+
+   @Override
+   public boolean hasElement() {
+      return !elementConsumed;
+   }
+
+   @Override
+   public byte read() {
+      if (state == null) state = State.BEGIN;
       for (; ; ) {
          switch (state) {
             case BEGIN:
-               state = hasNext ? State.BEGIN_ITEM : State.END;
+               state = currentEntry != null ? State.BEGIN_ITEM : State.END;
                return OPEN_CHAR;
             case BEGIN_ITEM:
                state = State.ITEM_KEY;
@@ -136,7 +144,7 @@ public class CacheEntryInputStream extends InputStream {
                state = State.BEGIN_ITEM;
                return SEPARATOR;
             case END_ITEM:
-               state = hasNext ? State.NEXT_ITEM : State.END;
+               state = currentEntry != null ? State.NEXT_ITEM : State.END;
                return CLOSE_ITEM_CHAR;
             case SEPARATOR_KEY:
                state = State.ITEM_VALUE;
@@ -145,7 +153,7 @@ public class CacheEntryInputStream extends InputStream {
                state = State.ITEM_METADATA;
                return SEPARATOR;
             case SEPARATOR:
-               if (hasNext) {
+               if (currentEntry != null) {
                   state = State.ITEM_KEY;
                   return SEPARATOR;
                }
@@ -153,61 +161,52 @@ public class CacheEntryInputStream extends InputStream {
                continue;
             case END:
                state = State.EOF;
-               stream.close();
+               elementConsumed = true;
                return CLOSE_CHAR;
             case ITEM_KEY:
-               if (currentEntry == null) {
-                  if (hasNext) {
-                     currentEntry = iterator.next();
-                     currentKey = escape(currentEntry.getKey(), keysAreJson);
-                     currentValue = escape(currentEntry.getValue(), valuesAreJson);
-                     if (includeMetadata) {
-                        loadMetadata();
-                     }
-                  }
-               }
-
                if (keyLabelCursor < KEY_LABEL.length) {
-                  return KEY_LABEL[keyLabelCursor++] & 0xff;
+                  int c = KEY_LABEL[keyLabelCursor++] & 0xff;
+                  return (byte) c;
                }
 
                byte[] key = currentKey;
 
                int ck = currentEntry == null || keyCursor == key.length ? -1 : key[keyCursor++] & 0xff;
-               cursor++;
-               if (ck != -1)
-                  return ck;
+               if (ck != -1) {
+                  return (byte) ck;
+               }
                keyCursor = 0;
                keyLabelCursor = 0;
                state = State.SEPARATOR_KEY;
                continue;
             case ITEM_VALUE:
                if (valueLabelCursor < VALUE_LABEL.length) {
-                  return VALUE_LABEL[valueLabelCursor++] & 0xff;
+                  int c = VALUE_LABEL[valueLabelCursor++] & 0xff;
+                  return (byte) c;
                }
 
                int cv = valueCursor == currentValue.length ? -1 : currentValue[valueCursor++] & 0xff;
-               cursor++;
-               if (cv != -1)
-                  return cv;
+               if (cv != -1) {
+                  return (byte) cv;
+               }
                valueCursor = 0;
                valueLabelCursor = 0;
                if (includeMetadata) {
                   state = State.SEPARATOR_VALUE;
                } else {
                   endItem();
+                  return -1;
                }
                continue;
             case ITEM_METADATA:
                int cm = mdCursor == currentMetadata.length ? -1 : currentMetadata[mdCursor++] & 0xff;
-               cursor++;
-               if (cm != -1)
-                  return cm;
+               if (cm != -1) {
+                  return (byte) cm;
+               }
 
                endItem();
                mdCursor = 0;
                currentMetadata = null;
-               continue;
             default:
                return -1;
          }
@@ -219,8 +218,7 @@ public class CacheEntryInputStream extends InputStream {
       currentKey = null;
       currentValue = null;
       state = State.END_ITEM;
-      hasNext = iterator.hasNext();
-      cursor = 0;
+      elementConsumed = true;
    }
 
    private void loadMetadata() {

@@ -8,11 +8,11 @@ import static io.netty.handler.codec.http.HttpHeaderValues.NO_CACHE;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
+import org.infinispan.rest.stream.ExtendedChunkedInput;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -26,7 +26,6 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.stream.ChunkedFile;
-import io.netty.handler.stream.ChunkedStream;
 
 /**
  * @since 10.0
@@ -83,10 +82,11 @@ public enum ResponseWriter {
          HttpResponse res = response.getResponse();
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
          res.headers().set(CONNECTION, KEEP_ALIVE);
-         InputStream inputStream = (InputStream) response.getEntity();
          log(ctx, request, res);
          ctx.write(res);
-         ctx.writeAndFlush(new HttpChunkedInput(new ChunkedStream(inputStream)), ctx.newProgressivePromise());
+         ExtendedChunkedInput<ByteBuf> chunked = (ExtendedChunkedInput<ByteBuf>) response.getEntity();
+         chunked.setContext(ctx);
+         ctx.writeAndFlush(new HttpChunkedInput(chunked), ctx.newProgressivePromise());
       }
    },
    EVENT_STREAM {
@@ -119,7 +119,7 @@ public enum ResponseWriter {
    static ResponseWriter forContent(Object content) {
       if (content == null) return EMPTY;
       if (content instanceof File) return CHUNKED_FILE;
-      if (content instanceof InputStream) return CHUNKED_STREAM;
+      if (content instanceof ExtendedChunkedInput) return CHUNKED_STREAM;
       if (content instanceof EventStream) return EVENT_STREAM;
       return FULL;
    }

@@ -14,6 +14,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.MATCH_ALL;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_EVENT_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+import static org.infinispan.commons.util.EnumUtil.EMPTY_BIT_SET;
 import static org.infinispan.commons.util.Util.unwrapExceptionMessage;
 import static org.infinispan.rest.RestRequestHandler.filterCause;
 import static org.infinispan.rest.framework.Method.DELETE;
@@ -43,9 +44,11 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheStream;
+import org.infinispan.cache.impl.EncoderEntryMapper;
+import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -61,7 +64,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -79,8 +85,9 @@ import org.infinispan.persistence.remote.upgrade.SerializationUtils;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
-import org.infinispan.rest.CacheEntryInputStream;
-import org.infinispan.rest.CacheKeyInputStream;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestRequest;
@@ -96,6 +103,9 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.rest.stream.CacheChunkedStream;
+import org.infinispan.rest.stream.CacheEntryStreamProcessor;
+import org.infinispan.rest.stream.CacheKeyStreamProcessor;
 import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
@@ -399,23 +409,26 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       int batch = batchParam == null || batchParam.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
       int limit = limitParam == null || limitParam.isEmpty() ? -1 : Integer.parseInt(limitParam);
 
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, MATCH_ALL, request);
+      AdvancedCache<Object, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, MATCH_ALL, request);
       if (cache == null)
          return notFoundResponseFuture();
 
-      // Streaming over the cache is blocking
-      return CompletableFuture.supplyAsync(() -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         CacheStream<?> stream = cache.keySet().stream();
-         if (limit > -1) {
-            stream = stream.limit(limit);
-         }
-         responseBuilder.entity(new CacheKeyInputStream(stream, batch));
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-         responseBuilder.contentType(APPLICATION_JSON_TYPE);
+      ComponentRegistry registry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
+      ClusterPublisherManager<?, ?> cpm = registry.getClusterPublisherManager().wired();
+      EncoderKeyMapper<Object> mapper = new EncoderKeyMapper<>(cache.getKeyDataConversion());
+      mapper.injectDependencies(registry);
+      SegmentPublisherSupplier<byte[]> sps = cpm.keyPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
+            batch, p -> Flowable.fromPublisher(p).map(e -> CacheChunkedStream.readContentAsBytes(mapper.apply(e))));
+      Flowable<byte[]> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments());
+      if (limit > -1) {
+         flowable = flowable.take(limit);
+      }
+      responseBuilder.entity(new CacheKeyStreamProcessor(flowable));
 
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      responseBuilder.contentType(APPLICATION_JSON_TYPE);
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> streamEntries(RestRequest request) {
@@ -436,23 +449,27 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       final MediaType keyMediaType = getMediaType(negotiate, cache, true);
       final MediaType valueMediaType = getMediaType(negotiate, cache, false);
 
-      Cache<?, ?> streamCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
+      AdvancedCache<?, ?> typedCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
+      ComponentRegistry registry = SecurityActions.getComponentRegistry(typedCache);
+      ClusterPublisherManager<Object, Object> cpm = registry.getClusterPublisherManager().wired();
+      InternalEntryFactory ief = registry.getInternalEntryFactory().running();
+      EncoderEntryMapper<?, ?, CacheEntry<Object, Object>> mapper = EncoderEntryMapper.newCacheEntryMapper(typedCache.getKeyDataConversion(), typedCache.getValueDataConversion(), ief);
+      mapper.injectDependencies(registry);
+      SegmentPublisherSupplier<CacheEntry<?, ?>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
+            batch, p -> Flowable.fromPublisher(p).map(mapper::apply));
+      Flowable<CacheEntry<?, ?>> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments());
+      if (limit > -1) {
+         flowable = flowable.take(limit);
+      }
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      responseBuilder.entity(new CacheEntryStreamProcessor(flowable, keyMediaType.match(APPLICATION_JSON),
+            valueMediaType.match(APPLICATION_JSON), metadata));
 
-      // Streaming over the cache is blocking
-      return CompletableFuture.supplyAsync(() -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-         CacheStream<? extends Map.Entry<?, ?>> stream = streamCache.entrySet().stream();
-         if (limit > -1) {
-            stream = stream.limit(limit);
-         }
-         responseBuilder.entity(new CacheEntryInputStream(keyMediaType.match(APPLICATION_JSON), valueMediaType.match(APPLICATION_JSON), stream, batch, metadata));
+      responseBuilder.contentType(APPLICATION_JSON_TYPE);
+      responseBuilder.header(ResponseHeader.KEY_CONTENT_TYPE_HEADER.getValue(), keyMediaType.toString());
+      responseBuilder.header(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue(), valueMediaType.toString());
 
-         responseBuilder.contentType(APPLICATION_JSON_TYPE);
-         responseBuilder.header(ResponseHeader.KEY_CONTENT_TYPE_HEADER.getValue(), keyMediaType.toString());
-         responseBuilder.header(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue(), valueMediaType.toString());
-
-         return responseBuilder.build();
-      }, invocationHelper.getExecutor());
+      return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
    private CompletionStage<RestResponse> cacheListen(RestRequest request) {
