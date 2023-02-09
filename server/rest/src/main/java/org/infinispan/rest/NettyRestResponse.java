@@ -20,7 +20,6 @@ import static org.infinispan.rest.ResponseHeader.TIME_TO_LIVE_HEADER;
 import static org.infinispan.rest.ResponseHeader.WWW_AUTHENTICATE_HEADER;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,6 +36,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.stream.ChunkedInput;
 
 /**
  * A {@link RestResponse} backed by Netty.
@@ -74,7 +74,7 @@ public class NettyRestResponse implements RestResponse {
       @Override
       public NettyRestResponse build() {
          HttpResponse response;
-         if (entity instanceof File || entity instanceof InputStream || entity instanceof EventStream) {
+         if (entity instanceof File || entity instanceof ChunkedInput || entity instanceof EventStream) {
             response = new DefaultHttpResponse(HTTP_1_1, OK);
          } else {
             response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.buffer());

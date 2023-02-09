@@ -722,6 +722,26 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testMultiByte() {
+      putTextEntryInCache("default", "José", "Uberlândia");
+      RestResponse response = join(client.cache("default").keys());
+      String body = response.getBody();
+      Collection<Json> singleSet = Json.read(body).asJsonList();
+      assertEquals(1, singleSet.size());
+      assertTrue(singleSet.contains(Json.factory().string("José")));
+
+      response = join(client.cache("default").entries());
+      body = response.getBody();
+      singleSet = Json.read(body).asJsonList();
+      assertEquals(1, singleSet.size());
+      Json entity = singleSet.stream().findFirst().orElseThrow();
+      assertTrue(entity.has("key"));
+      assertTrue(entity.has("value"));
+      assertEquals(entity.at("key").asString(), "José");
+      assertEquals(entity.at("value").asString(), "Uberlândia");
+   }
+
+   @Test
    public void testGetAllKeys() {
       RestResponse response = join(client.cache("default").keys());
       Collection<?> emptyKeys = Json.read(response.getBody()).asJsonList();
@@ -836,6 +856,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       }
       List<Json> jsons = Json.read(response.getBody()).asJsonList();
       assertThat(jsons).hasSize(1);
+
+      response = join(client.cache("indexedCache").keys());
+      if (response.getStatus() != 200) {
+         Assertions.fail(response.getBody());
+      }
+      jsons = Json.read(response.getBody()).asJsonList();
+      assertThat(jsons).hasSize(1);
+      assertThat(jsons).contains(Json.factory().string("3"));
    }
 
    private String asString(Json json) {
@@ -985,11 +1013,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String cache = PROTOBUF_METADATA_CACHE_NAME;
       putStringValueInCache(cache, "file1.proto", "message A{}");
       putStringValueInCache(cache, "file2.proto", "message B{}");
+      putStringValueInCache(cache, "sample.proto", PROTO_SCHEMA);
 
       RestResponse response = join(client.cache(PROTOBUF_METADATA_CACHE_NAME).keys());
       String contentAsString = response.getBody();
       Collection<?> keys = Json.read(contentAsString).asJsonList();
-      assertEquals(2, keys.size());
+      assertEquals(3, keys.size());
    }
 
    @Test
