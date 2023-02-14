@@ -194,7 +194,7 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
          try {
             connection = connectionFactory.getConnection();
             tableOperations.batchUpdates(connection, publisherCount, Flowable.fromPublisher(removePublisher)
-                  .flatMap(Functions.identity()), writePublisher);
+                  .concatMapEager(Functions.identity(), publisherCount, publisherCount), writePublisher);
          } catch (SQLException e) {
             throw PERSISTENCE.sqlFailureWritingBatch(e);
          } finally {
@@ -212,7 +212,7 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
             Connection connection = getTxConnection(tx);
             connection.setAutoCommit(false);
             tableOperations.batchUpdates(connection, publisherCount, Flowable.fromPublisher(removePublisher)
-                  .flatMap(Functions.identity()), writePublisher);
+                  .concatMapEager(Functions.identity(), publisherCount, publisherCount), writePublisher);
             // We do not call connection.close() in the event of an exception, as close() on active Tx behaviour is implementation
             // dependent. See https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html#close--
          } catch (SQLException e) {
