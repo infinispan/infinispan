@@ -70,8 +70,8 @@ import io.reactivex.rxjava3.core.Flowable;
 @Test(groups = "unit", testName = "persistence.BaseNonBlockingStoreTest")
 public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
-   protected static final int WRITE_DELETE_BATCH_MIN_ENTRIES = 80;
-   protected static final int WRITE_DELETE_BATCH_MAX_ENTRIES = 120;
+   protected static final int WRITE_DELETE_BATCH_MIN_ENTRIES = Flowable.bufferSize() * 2;
+   protected static final int WRITE_DELETE_BATCH_MAX_ENTRIES = WRITE_DELETE_BATCH_MIN_ENTRIES + 40;
    protected TestObjectStreamMarshaller marshaller;
 
    protected EnsureNonBlockingStore<Object, Object> store;
@@ -121,8 +121,8 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       // Reuse the same configuration between restarts
       if (configuration == null) {
          ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-         // Set a lower number of segments to make testing the approximate size easier
-         builder.clustering().hash().numSegments(4);
+         // Do one more than the buffer size to find issues with groupBy not being subscribed to properly
+         builder.clustering().hash().numSegments(Flowable.bufferSize() + 20);
          setConfiguration(buildConfig(builder));
       }
       store.startAndWait(createContext(configuration));
@@ -490,9 +490,11 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
 
       assertEquals(numKeys, store.approximateSizeWait(segments));
       if (configuration.persistence().stores().get(0).segmented()) {
+         int totalSize = 0;
          for (int s = 0; s < segmentCount; s++) {
-            assertEquals(numKeysPerSegment, store.approximateSizeWait(IntSets.immutableSet(s)));
+            totalSize += store.approximateSizeWait(IntSets.immutableSet(s));
          }
+         assertEquals(numKeys, totalSize);
       }
    }
 

@@ -192,12 +192,12 @@ public abstract class BaseTableOperations<K, V> implements TableOperations<K, V>
          ByRef<Throwable> throwableRef = new ByRef<>(null);
          ByRef<Object> hadValue = new ByRef<>(null);
          Flowable.fromPublisher(writePublisher)
-               .flatMap(sp ->
+               .concatMapEager(sp ->
                      Flowable.fromPublisher(sp)
                            .doOnNext(me -> {
                               prepareValueStatement(upsertBatch, sp.getSegment(), me);
                               upsertBatch.addBatch();
-                           })
+                           }), writePublisherCount, writePublisherCount
                ).lastElement()
                .blockingSubscribe(hadValue::set, throwableRef::set);
          if (hadValue.get() != null) {
