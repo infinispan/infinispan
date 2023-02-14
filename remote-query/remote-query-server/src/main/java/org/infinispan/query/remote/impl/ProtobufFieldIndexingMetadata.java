@@ -10,6 +10,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.mapping.reference.MessageReferenceProvider;
 
 /**
  * Tests if a field is indexed by examining the Protobuf metadata.
@@ -83,7 +84,8 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
             return false;
          }
 
-         if (field.getJavaType() == JavaType.MESSAGE) {
+         if (field.getJavaType() == JavaType.MESSAGE &&
+               !MessageReferenceProvider.COMMON_MESSAGE_TYPES.contains(field.getTypeName())) {
             FieldMapping embeddedMapping = indexingMetadata.getFieldMapping(p);
             if (embeddedMapping == null || !embeddedMapping.searchable()) {
                return false;
