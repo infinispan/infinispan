@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +23,9 @@ import org.jboss.logging.Logger;
 public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, ProtobufPropertyHelper.class.getName());
+
+   public static final String BIG_INTEGER_COMMON_TYPE = "org.infinispan.protostream.commons.BigInteger";
+   public static final String BIG_DECIMAL_COMMON_TYPE = "org.infinispan.protostream.commons.BigDecimal";
 
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
@@ -84,6 +89,14 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             return byte[].class;
          case ENUM:
             return Integer.class;
+         case MESSAGE:
+            switch (field.getTypeName()) {
+               case BIG_INTEGER_COMMON_TYPE:
+                  return BigInteger.class;
+               case BIG_DECIMAL_COMMON_TYPE:
+                  return BigDecimal.class;
+            }
+            return null;
       }
       return null;
    }
@@ -191,6 +204,15 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             throw log.getInvalidEnumLiteralException(value, enumType.getFullName());
          }
          return enumValue.getNumber();
+      }
+
+      if (field.getJavaType() == JavaType.MESSAGE) {
+         if (field.getTypeName().equals(BIG_INTEGER_COMMON_TYPE)) {
+            return new BigInteger(value);
+         }
+         if (field.getTypeName().equals(BIG_DECIMAL_COMMON_TYPE)) {
+            return new BigDecimal(value);
+         }
       }
 
       return super.convertToPropertyType(entityType, propertyPath, value);
