@@ -3,8 +3,11 @@ package org.infinispan.query.remote.impl.mapping.reference;
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findProcessedAnnotation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaElement;
@@ -22,6 +25,9 @@ import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
  * @since 12.0
  */
 public class MessageReferenceProvider {
+
+   public static final Set<String> COMMON_MESSAGE_TYPES =
+         new HashSet<>(Arrays.asList(FieldReferenceProvider.COMMON_MESSAGE_TYPES));
 
    private final List<FieldReferenceProvider> fields;
    private final List<Embedded> embedded;
@@ -44,7 +50,8 @@ public class MessageReferenceProvider {
             continue;
          }
 
-         if (Type.MESSAGE.equals(fieldDescriptor.getType())) {
+         if (Type.MESSAGE.equals(fieldDescriptor.getType()) &&
+               !COMMON_MESSAGE_TYPES.contains(fieldDescriptor.getTypeName())) {
             // If a protobuf field is a Message reference, only take it into account
             // if the Message is @Indexed and has at least one @Field annotation
             if (fieldMapping.searchable() && isIndexable(fieldDescriptor.getMessageType())) {
