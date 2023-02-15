@@ -6,7 +6,7 @@
     <version>14.0.7-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <name>Infinispan Spring Boot Starter Embedded</name>
+  <name>Infinispan Spring Boot 3 Starter Embedded</name>
   <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
 
   <properties>
@@ -37,7 +37,6 @@
     <dependency>
       <groupId>jakarta.transaction</groupId>
       <artifactId>jakarta.transaction-api</artifactId>
-      <version>${version.jakarta.transaction}</version>
     </dependency>
     <dependency>
       <groupId>jakarta.annotation</groupId>

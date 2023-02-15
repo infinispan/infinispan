@@ -6,7 +6,7 @@
     <version>14.0.7-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <name>Infinispan Spring Boot Starter Remote</name>
+  <name>Infinispan Spring Boot 3 Starter Remote</name>
   <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
 
   <properties>

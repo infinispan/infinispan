@@ -19,11 +19,11 @@
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
         <version.spring.boot>${version.spring.boot3}</version.spring.boot>
         <version.spring.session>${version.spring6.session}</version.spring.session>
         <version.spring>${version.spring6}</version.spring>
-        <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
         <version.micrometer>1.10.3</version.micrometer>
     </properties>
     <dependencyManagement>

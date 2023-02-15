@@ -8,7 +8,7 @@
         <version>14.0.7-SNAPSHOT</version>
     </parent>
 
-    <name>Infinispan Spring Boot Starter Integration Test</name>
+    <name>Infinispan Spring Boot 3 Starter Integration Test</name>
     <artifactId>infinispan-spring-boot3-starter-tests</artifactId>
 
     <dependencyManagement>
