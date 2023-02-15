@@ -1,5 +1,8 @@
 package org.infinispan.query.remote.impl.mapping.reference;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import org.hibernate.search.backend.lucene.analysis.model.impl.LuceneAnalysisDefinitionRegistry;
 import org.hibernate.search.backend.lucene.types.dsl.impl.LuceneIndexFieldTypeFactoryImpl;
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
@@ -13,6 +16,7 @@ import org.hibernate.search.engine.backend.types.Sortable;
 import org.hibernate.search.engine.backend.types.TermVector;
 import org.hibernate.search.engine.backend.types.dsl.IndexFieldTypeFactory;
 import org.hibernate.search.engine.backend.types.dsl.IndexFieldTypeFinalStep;
+import org.hibernate.search.engine.backend.types.dsl.ScaledNumberIndexFieldTypeOptionsStep;
 import org.hibernate.search.engine.backend.types.dsl.StandardIndexFieldTypeOptionsStep;
 import org.hibernate.search.engine.backend.types.dsl.StringIndexFieldTypeOptionsStep;
 import org.infinispan.commons.logging.LogFactory;
@@ -25,8 +29,16 @@ public class FieldReferenceProvider {
 
    private static final Log log = LogFactory.getLog(FieldReferenceProvider.class, Log.class);
 
+   public static final String INFINISPAN_COMMON_TYPES_GROUP = "org.infinispan.protostream.commons.";
+
+   public static final String BIG_INTEGER_COMMON_TYPE = INFINISPAN_COMMON_TYPES_GROUP + "BigInteger";
+   public static final String BIG_DECIMAL_COMMON_TYPE = INFINISPAN_COMMON_TYPES_GROUP + "BigDecimal";
+
+   static final String[] COMMON_MESSAGE_TYPES = {BIG_INTEGER_COMMON_TYPE, BIG_DECIMAL_COMMON_TYPE};
+
    private final String name;
    private final Type type;
+   private final String typeName;
    private final boolean repeated;
 
    private final Searchable searchable;
@@ -40,13 +52,13 @@ public class FieldReferenceProvider {
    private final Norms norms;
    private final String searchAnalyzer;
    private final TermVector termVector;
-   // TODO ISPN-13890 Use this value to BigDecimal mapped (annotated) fields
    private final Integer decimalScale;
 
    public FieldReferenceProvider(FieldDescriptor fieldDescriptor, FieldMapping fieldMapping) {
       // the property name and type are taken from the model
       name = fieldDescriptor.getName();
       type = fieldDescriptor.getType();
+      typeName = fieldDescriptor.getTypeName();
       repeated = fieldDescriptor.isRepeated();
 
       searchable = (fieldMapping.searchable()) ? Searchable.YES : Searchable.NO;
@@ -137,8 +149,32 @@ public class FieldReferenceProvider {
          }
          case BYTE_STRING:
             return typeFactory.asString();
+         case MESSAGE:
+            return bindCommonMessageType(typeFactory);
          default:
             throw log.fieldTypeNotIndexable(type.toString(), name);
+      }
+   }
+
+   private StandardIndexFieldTypeOptionsStep<?, ?> bindCommonMessageType(IndexFieldTypeFactory typeFactory) {
+      if (BIG_INTEGER_COMMON_TYPE.equals(typeName)) {
+         ScaledNumberIndexFieldTypeOptionsStep<?, BigInteger> step = typeFactory.asBigInteger();
+         bindScaledNumberTypeOptions(step);
+         return step;
+      }
+      if (BIG_DECIMAL_COMMON_TYPE.equals(typeName)) {
+         ScaledNumberIndexFieldTypeOptionsStep<?, BigDecimal> step = typeFactory.asBigDecimal();
+         bindScaledNumberTypeOptions(step);
+         return step;
+      }
+      throw log.fieldTypeNotIndexable(typeName, name);
+   }
+
+   private void bindScaledNumberTypeOptions(ScaledNumberIndexFieldTypeOptionsStep<?, ?> step) {
+      if (decimalScale != null) {
+         step.decimalScale(decimalScale);
+      } else {
+         step.decimalScale(0); // if a basic is used
       }
    }
 
