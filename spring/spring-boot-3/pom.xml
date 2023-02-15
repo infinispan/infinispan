@@ -25,7 +25,6 @@
         <version.spring.session>${version.spring6.session}</version.spring.session>
         <version.spring>${version.spring6}</version.spring>
         <version.micrometer>1.10.3</version.micrometer>
-        <version.jakarta.transaction>${version.jakarta.transaction.2.x.x}</version.jakarta.transaction>
     </properties>
     <dependencyManagement>
         <dependencies>

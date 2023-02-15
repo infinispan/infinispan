@@ -19,7 +19,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
         <version.spring>${version.spring6}</version.spring>
-        <version.jakarta.transaction>${version.jakarta.transaction.2.x.x}</version.jakarta.transaction>
     </properties>
     <description>
         The Infinispan Spring Integration project provides Spring 6
