@@ -120,7 +120,7 @@ public class RestOperations {
 
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig("test-counter", configuration);
       String configJson = AbstractRestResourceTest.counterConfigToJson(config);
-      RestCounterClient counter = client.counter("test");
+      RestCounterClient counter = client.counter(SERVER_TEST.getMethodName(protocol.name()));
       assertStatus(OK, counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
 
       assertEquals("5", assertStatus(OK, counter.get()));
