@@ -112,6 +112,11 @@ public class InfinispanServerExtension implements
    }
 
    @Override
+   public String getMethodName(String qualifier) {
+      return methodName + '_' + qualifier;
+   }
+
+   @Override
    public CounterManager getCounterManager() {
       return testClient.getCounterManager();
    }

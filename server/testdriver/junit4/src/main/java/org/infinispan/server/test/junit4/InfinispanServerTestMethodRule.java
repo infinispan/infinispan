@@ -1,26 +1,27 @@
 package org.infinispan.server.test.junit4;
 
-import net.spy.memcached.MemcachedClient;
+import java.util.Objects;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
-import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.TestClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.util.Objects;
+import net.spy.memcached.MemcachedClient;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public class InfinispanServerTestMethodRule implements TestRule, TestClientDriver {
-   private TestClient testClient;
+   private final TestClient testClient;
 
    public InfinispanServerTestMethodRule(InfinispanServerRule infinispanServerRule) {
       Objects.requireNonNull(infinispanServerRule, "InfinispanServerRule class Rule is null");
@@ -30,6 +31,11 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
    @Override
    public String getMethodName() {
       return testClient.getMethodName();
+   }
+
+   @Override
+   public String getMethodName(String qualifier) {
+      return testClient.getMethodName(qualifier);
    }
 
    @Override
