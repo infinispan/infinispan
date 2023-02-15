@@ -6,6 +6,10 @@ import org.hibernate.search.engine.backend.document.IndexObjectFieldReference;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.query.remote.impl.indexing.aggregator.BigDecimalAggregator;
+import org.infinispan.query.remote.impl.indexing.aggregator.BigIntegerAggregator;
+import org.infinispan.query.remote.impl.indexing.aggregator.TypeAggregator;
+import org.infinispan.query.remote.impl.mapping.reference.FieldReferenceProvider;
 import org.infinispan.query.remote.impl.mapping.reference.IndexReferenceHolder;
 
 /**
@@ -22,17 +26,25 @@ public final class IndexingTagHandler implements TagHandler {
 
    public IndexingTagHandler(Descriptor messageDescriptor, DocumentElement document, IndexReferenceHolder indexReferenceHolder) {
       this.indexReferenceHolder = indexReferenceHolder;
-      this.messageContext = new IndexingMessageContext(null, null, messageDescriptor, document);
+      this.messageContext = new IndexingMessageContext(null, null, messageDescriptor, document, null);
    }
 
    @Override
    public void onTag(int fieldNumber, FieldDescriptor fieldDescriptor, Object tagValue) {
       messageContext.markField(fieldNumber);
 
-      // Unknown fields are not indexed.
-      if (fieldDescriptor != null) {
-         addFieldToDocument(fieldDescriptor, tagValue);
+      if (fieldDescriptor == null) {
+         // Unknown fields are not indexed.
+         return;
       }
+
+      TypeAggregator typeAggregator = messageContext.getTypeAggregator();
+      if (typeAggregator != null) {
+         typeAggregator.add(fieldDescriptor, tagValue);
+         return;
+      }
+
+      addFieldToDocument(fieldDescriptor, tagValue);
    }
 
    private void addFieldToDocument(FieldDescriptor fieldDescriptor, Object value) {
@@ -66,6 +78,13 @@ public final class IndexingTagHandler implements TagHandler {
       String fieldPath = messageContext.getFieldPath();
       fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
 
+      IndexFieldReference<?> messageField = indexReferenceHolder.getFieldReference(fieldPath);
+      if (messageField != null) {
+         if (pushMessageFieldContext(fieldDescriptor, messageDescriptor, messageField)) {
+            return;
+         }
+      }
+
       DocumentElement documentElement = null;
       if (messageContext.getDocument() != null) {
          IndexObjectFieldReference objectReference = indexReferenceHolder.getObjectReference(fieldPath);
@@ -74,11 +93,33 @@ public final class IndexingTagHandler implements TagHandler {
          }
       }
 
-      messageContext = new IndexingMessageContext(messageContext, fieldDescriptor, messageDescriptor, documentElement);
+      messageContext = new IndexingMessageContext(messageContext, fieldDescriptor, messageDescriptor, documentElement, null);
+   }
+
+   private boolean pushMessageFieldContext(FieldDescriptor fieldDescriptor, Descriptor messageDescriptor,
+                                           IndexFieldReference<?> messageField) {
+      String fullName = messageDescriptor.getFullName();
+      if (FieldReferenceProvider.BIG_INTEGER_COMMON_TYPE.equals(fullName)) {
+         messageContext = new IndexingMessageContext(messageContext, fieldDescriptor, messageDescriptor,
+               messageContext.getDocument(), new BigIntegerAggregator(messageField));
+         return true;
+      }
+      if (FieldReferenceProvider.BIG_DECIMAL_COMMON_TYPE.equals(fullName)) {
+         messageContext = new IndexingMessageContext(messageContext, fieldDescriptor, messageDescriptor,
+               messageContext.getDocument(), new BigDecimalAggregator(messageField));
+         return true;
+      }
+      return false;
    }
 
    private void popContext() {
-      indexMissingFields();
+      TypeAggregator typeAggregator = messageContext.getTypeAggregator();
+      if (typeAggregator != null) {
+         typeAggregator.addValue(messageContext);
+      } else {
+         indexMissingFields();
+      }
+
       messageContext = messageContext.getParentContext();
    }
 
