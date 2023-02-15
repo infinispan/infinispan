@@ -73,6 +73,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ServerStateManager;
+import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
@@ -222,7 +223,8 @@ public class ContainerResource implements ResourceHandler {
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      return asJsonResponseFuture(cacheManager.getStats().toJson(), responseBuilder, isPretty(request));
+      return CompletableFuture.supplyAsync(() -> Security.doAs(request.getSubject(), (PrivilegedAction<CacheContainerStats>) () -> cacheManager.getStats()).toJson(), invocationHelper.getExecutor())
+            .thenCompose(json -> asJsonResponseFuture(json, responseBuilder, isPretty(request)));
    }
 
 
