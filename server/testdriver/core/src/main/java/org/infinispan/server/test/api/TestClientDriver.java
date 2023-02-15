@@ -24,11 +24,19 @@ public interface TestClientDriver {
    RestTestClientDriver rest();
 
    /**
-    * Provides the current method name
+    * Returns a unique identifier for the current test method
     *
-    * @return String, the method name
+    * @return String, the identifier
     */
    String getMethodName();
+
+   /**
+    * Returns a unique identifier for the current test method
+    *
+    * @param qualifier an additional qualifier
+    * @return String, the identifier
+    */
+   String getMethodName(String qualifier);
 
    /**
     * Access to the {@link CounterManager} to perform counters operations on tests
