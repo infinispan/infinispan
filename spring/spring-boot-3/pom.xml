@@ -25,7 +25,6 @@
         <version.spring>${version.spring6}</version.spring>
         <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
         <version.micrometer>1.10.3</version.micrometer>
-        <version.jakarta.transaction>${version.jakarta.transaction.2.x.x}</version.jakarta.transaction>
     </properties>
     <dependencyManagement>
         <dependencies>
