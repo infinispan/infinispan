@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -15,7 +16,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TestOperation;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -31,7 +31,8 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 11.0
  */
-@Test(groups = "functional", testName = "xsite.irac.Irac3SitesConflictTest")
+// TODO: unstable due to https://issues.redhat.com/browse/ISPN-13442
+@Test(groups = "unstable", testName = "xsite.irac.Irac3SitesConflictTest")
 public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
    private static final int N_SITES = 3;
    private static final int CLUSTER_SIZE = 3;
