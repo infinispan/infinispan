@@ -13,6 +13,12 @@
    <name>Infinispan Commons JDK 19</name>
    <description>Infinispan Commons JDK 19</description>
 
+   <properties>
+      <maven.compiler.source>19</maven.compiler.source>
+      <maven.compiler.target>19</maven.compiler.target>
+      <maven.compiler.release>19</maven.compiler.release>
+   </properties>
+
    <build>
       <plugins>
          <plugin>
@@ -21,7 +27,6 @@
             <configuration>
                <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork combine.children="append">true</fork>
-               <release>19</release>
                <compilerArgument>--enable-preview</compilerArgument>
             </configuration>
          </plugin>

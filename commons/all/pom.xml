@@ -121,7 +121,6 @@
                <compilerArgument combine.children="append">-XDignore.symbol.file</compilerArgument>
                <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork combine.children="append">true</fork>
-               <release>11</release>
             </configuration>
          </plugin>
          <plugin>

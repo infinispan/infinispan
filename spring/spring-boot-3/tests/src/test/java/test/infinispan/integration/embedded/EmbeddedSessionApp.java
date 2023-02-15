@@ -39,7 +39,7 @@ public class EmbeddedSessionApp {
       return () -> GlobalConfigurationBuilder
             .defaultClusteredBuilder()
             .metrics().gauges(false).histograms(false)
-            .globalState()
+            .globalState().disable()
             .build();
    }
 }

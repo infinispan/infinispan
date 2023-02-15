@@ -326,7 +326,6 @@
                         <additionalOption>--allow-script-in-comments</additionalOption>
                         <additionalOption>--excludeGeneratedBy org.jboss.logging.processor.generator.model.MessageLoggerImplementor</additionalOption>
                      </additionalOptions>
-                     <release>11</release>
                      <additionalJOptions>
                         <!-- Custom doclet needs access to javadoc module internals -->
                         <additionalJOption>-J--add-opens</additionalJOption>

@@ -8,7 +8,7 @@
         <version>15.0.0-SNAPSHOT</version>
     </parent>
 
-    <name>Infinispan Spring Boot Starter Integration Test</name>
+    <name>Infinispan Spring Boot 3 Starter Integration Test</name>
     <artifactId>infinispan-spring-boot3-starter-tests</artifactId>
 
     <dependencyManagement>
