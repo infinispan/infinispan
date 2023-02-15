@@ -357,7 +357,6 @@
       <versionx.org.jboss.marshalling.jboss-marshalling-river>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-river>
       <versionx.org.jboss.naming.jnp-client>${version.jboss.naming}</versionx.org.jboss.naming.jnp-client>
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
-      <versionx.org.jboss.narayana.jta.narayana-jta>${version.jboss.narayana}</versionx.org.jboss.narayana.jta.narayana-jta>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
       <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
       <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>${version.jboss.shrinkwrap.descriptors}</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>
@@ -1505,7 +1504,13 @@
          <dependency>
             <groupId>org.jboss.narayana.jta</groupId>
             <artifactId>narayana-jta</artifactId>
-            <version>${versionx.org.jboss.narayana.jta.narayana-jta}</version>
+            <version>${version.jboss.narayana}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.narayana.jta</groupId>
+            <artifactId>narayana-jta-jakarta</artifactId>
+            <version>${version.jboss.narayana}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

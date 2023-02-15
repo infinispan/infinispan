@@ -84,11 +84,6 @@
                 <version>${version.spring6}</version>
             </dependency>
             <dependency>
-                <groupId>org.jboss.narayana.jta</groupId>
-                <artifactId>narayana-jta-jakarta</artifactId>
-                <version>${version.narayana-jta-jakarta}</version>
-            </dependency>
-            <dependency>
                 <groupId>jakarta.transaction</groupId>
                 <artifactId>jakarta.transaction-api</artifactId>
                 <version>${version.jakarta.transaction}</version>
