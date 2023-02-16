@@ -41,6 +41,8 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
       cacheConfiguration.encoding().key().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
       cacheConfiguration.encoding().value().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
+      globalConfigurationBuilder.globalState().disable();
+      cacheConfiguration.statistics().disable();
       serverCache = new DefaultCacheManager(globalConfigurationBuilder.build());
       serverCache.defineConfiguration(EnableInfinispanRemoteHttpSession.DEFAULT_CACHE_NAME, cacheConfiguration.build());
 
