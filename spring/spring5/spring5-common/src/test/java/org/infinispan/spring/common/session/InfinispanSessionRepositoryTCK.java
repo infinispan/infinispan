@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -16,6 +17,8 @@ import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository.InfinispanSession;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.FlushMode;
+import org.springframework.session.SaveMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
@@ -61,13 +64,102 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
    }
 
    @Test
-   public void testSavingSession() throws Exception {
-      //when
+   public void testSavingNewSession() throws Exception {
+      //given
       InfinispanSession session = sessionRepository.createSession();
+      Instant lastAccessedTime = session.getLastAccessedTime();
+      Duration maxInactiveInterval = session.getMaxInactiveInterval();
+
+      //when
       sessionRepository.save(session);
 
       //then
-      assertNotNull(sessionRepository.findById(session.getId()));
+      InfinispanSession savedSession = sessionRepository.findById(session.getId());
+      assertNotNull(savedSession);
+      assertTrue(savedSession.getAttributeNames().isEmpty());
+      assertEquals(
+            lastAccessedTime.truncatedTo(ChronoUnit.MILLIS),
+            savedSession.getLastAccessedTime().truncatedTo(ChronoUnit.MILLIS));
+      assertEquals(maxInactiveInterval, savedSession.getMaxInactiveInterval());
+   }
+
+   @Test
+   public void testSavingUnchangedSession() throws Exception {
+      //given
+      InfinispanSession session = sessionRepository.createSession();
+      Instant lastAccessedTime = session.getLastAccessedTime();
+      Duration maxInactiveInterval = session.getMaxInactiveInterval();
+      sessionRepository.save(session);
+
+      //when
+      session = sessionRepository.findById(session.getId());
+      sessionRepository.save(session);
+
+      //then
+      InfinispanSession updatedSession = sessionRepository.findById(session.getId());
+      assertTrue(updatedSession.getAttributeNames().isEmpty());
+      assertEquals(
+            lastAccessedTime.truncatedTo(ChronoUnit.MILLIS),
+            updatedSession.getLastAccessedTime().truncatedTo(ChronoUnit.MILLIS));
+      assertEquals(maxInactiveInterval, updatedSession.getMaxInactiveInterval());
+   }
+
+   @Test
+   public void testSavingSessionWithUpdatedMaxInactiveInterval() throws Exception {
+      //given
+      InfinispanSession session = sessionRepository.createSession();
+      sessionRepository.save(session);
+
+      //when
+      session = sessionRepository.findById(session.getId());
+      Duration newMaxInactiveInterval = Duration.ofSeconds(123);
+      session.setMaxInactiveInterval(newMaxInactiveInterval);
+      sessionRepository.save(session);
+
+      //then
+      InfinispanSession savedSession = sessionRepository.findById(session.getId());
+      assertEquals(newMaxInactiveInterval, savedSession.getMaxInactiveInterval());
+   }
+
+   @Test
+   public void testSavingSessionWithUpdatedLastAccessedTime() throws Exception {
+      //given
+      InfinispanSession session = sessionRepository.createSession();
+      sessionRepository.save(session);
+
+      //when
+      session = sessionRepository.findById(session.getId());
+      Instant newLastAccessedTime = Instant.now().minusSeconds(300);
+      session.setLastAccessedTime(newLastAccessedTime);
+      sessionRepository.save(session);
+
+      //then
+      InfinispanSession savedSession = sessionRepository.findById(session.getId());
+      assertEquals(
+            newLastAccessedTime.truncatedTo(ChronoUnit.MILLIS),
+            savedSession.getLastAccessedTime().truncatedTo(ChronoUnit.MILLIS));
+   }
+
+   @Test
+   public void testSavingSessionWithUpdatedAttributes() throws Exception {
+      //given
+      InfinispanSession session = sessionRepository.createSession();
+      session.setAttribute("changed", "oldValue");
+      session.setAttribute("removed", "existingValue");
+      sessionRepository.save(session);
+
+      //when
+      session = sessionRepository.findById(session.getId());
+      session.setAttribute("added", "addedValue");
+      session.setAttribute("changed", "newValue");
+      session.removeAttribute("removed");
+      sessionRepository.save(session);
+
+      //then
+      InfinispanSession savedSession = sessionRepository.findById(session.getId());
+      assertEquals(savedSession.getAttribute("added"), "addedValue");
+      assertEquals(savedSession.getAttribute("changed"), "newValue");
+      assertNull(savedSession.getAttribute("removed"));
    }
 
    @Test
@@ -174,6 +266,59 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       InfinispanSession session = sessionRepository.createSession();
       // setLastAccessedTime will be called by Spring Session's SessionRepositoryRequestWrapper.getSession
       session.setLastAccessedTime(Instant.now());
+      session.setAttribute("testAttribute", "oldValue");
+      sessionRepository.save(session);
+
+      //when
+      InfinispanSession slowRequestSession = sessionRepository.findById(session.getId());
+      slowRequestSession.setLastAccessedTime(Instant.now());
+      slowRequestSession.getAttribute("testAttribute");
+      InfinispanSession fastRequestSession = sessionRepository.findById(session.getId());
+      fastRequestSession.setLastAccessedTime(Instant.now());
+      fastRequestSession.setAttribute("testAttribute", "fastValue");
+      sessionRepository.save(fastRequestSession);
+      sessionRepository.save(slowRequestSession);
+
+      //then
+      assertNotSame(slowRequestSession, fastRequestSession);
+      InfinispanSession updatedSession = sessionRepository.findById(session.getId());
+      assertEquals("fastValue", updatedSession.getAttribute("testAttribute"));
+   }
+
+   @Test
+   public void testConcurrentSessionAccessWithSaveModeOnGetAttribute() {
+      //given
+      sessionRepository.setSaveMode(SaveMode.ON_GET_ATTRIBUTE);
+      InfinispanSession session = sessionRepository.createSession();
+      // setLastAccessedTime will be called by Spring Session's SessionRepositoryRequestWrapper.getSession
+      session.setLastAccessedTime(Instant.now());
+      session.setAttribute("testAttribute", "oldValue");
+      sessionRepository.save(session);
+
+      //when
+      InfinispanSession slowRequestSession = sessionRepository.findById(session.getId());
+      slowRequestSession.setLastAccessedTime(Instant.now());
+      slowRequestSession.getAttribute("testAttribute");
+      InfinispanSession fastRequestSession = sessionRepository.findById(session.getId());
+      fastRequestSession.setLastAccessedTime(Instant.now());
+      fastRequestSession.setAttribute("testAttribute", "fastValue");
+      sessionRepository.save(fastRequestSession);
+      sessionRepository.save(slowRequestSession);
+
+      //then
+      assertNotSame(slowRequestSession, fastRequestSession);
+      InfinispanSession updatedSession = sessionRepository.findById(session.getId());
+      assertEquals("oldValue", updatedSession.getAttribute("testAttribute"));
+   }
+
+   @Test
+   public void testConcurrentSessionAccessWithSaveModeAlways() {
+      //given
+      sessionRepository.setSaveMode(SaveMode.ALWAYS);
+      InfinispanSession session = sessionRepository.createSession();
+      // setLastAccessedTime will be called by Spring Session's SessionRepositoryRequestWrapper.getSession
+      session.setLastAccessedTime(Instant.now());
+      session.setAttribute("testAttribute", "oldValue");
       sessionRepository.save(session);
 
       //when
@@ -181,14 +326,31 @@ public abstract class InfinispanSessionRepositoryTCK extends AbstractInfinispanT
       slowRequestSession.setLastAccessedTime(Instant.now());
       InfinispanSession fastRequestSession = sessionRepository.findById(session.getId());
       fastRequestSession.setLastAccessedTime(Instant.now());
-      fastRequestSession.setAttribute("testAttribute", "testValue");
+      fastRequestSession.setAttribute("testAttribute", "fastValue");
       sessionRepository.save(fastRequestSession);
       sessionRepository.save(slowRequestSession);
 
       //then
       assertNotSame(slowRequestSession, fastRequestSession);
       InfinispanSession updatedSession = sessionRepository.findById(session.getId());
-      assertEquals("testValue", updatedSession.getAttribute("testAttribute"));
+      assertEquals("oldValue", updatedSession.getAttribute("testAttribute"));
+   }
+
+   @Test
+   public void testFlushModeImmediate() throws Exception {
+      //given
+      sessionRepository.setFlushMode(FlushMode.IMMEDIATE);
+      InfinispanSession existingSession = sessionRepository.createSession();
+
+      //when
+      InfinispanSession newSession = sessionRepository.createSession();
+      existingSession.setAttribute("testAttribute", "testValue");
+
+      //then
+      InfinispanSession savedNewSession = sessionRepository.findById(newSession.getId());
+      assertNotNull(savedNewSession);
+      InfinispanSession savedExistingSession = sessionRepository.findById(existingSession.getId());
+      assertEquals("testValue", savedExistingSession.getAttribute("testAttribute"));
    }
 
    protected void addEmptySessionWithPrincipal(AbstractInfinispanSessionRepository sessionRepository, String principalName) {

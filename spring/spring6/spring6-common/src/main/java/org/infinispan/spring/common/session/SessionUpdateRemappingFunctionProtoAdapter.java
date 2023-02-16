@@ -11,6 +11,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,11 +35,15 @@ public class SessionUpdateRemappingFunctionProtoAdapter {
       if (maxInactiveSeconds != null) {
          function.setMaxInactiveInterval(Duration.ofSeconds(maxInactiveSeconds));
       }
-      function.setDelta(attributes.stream().collect(Collectors.toMap(SessionAttribute::getName, SessionAttribute::getValue)));
+      Map<String,Object> delta = new HashMap<>();
+      for (SessionAttribute attribute : attributes) {
+         delta.put(attribute.getName(), attribute.getValue());
+      }
+      function.setDelta(delta);
       return function;
    }
 
-   @ProtoField(number = 1, defaultValue = "0")
+   @ProtoField(number = 1)
    Instant getLastAccessedTime(SessionUpdateRemappingFunction function) {
       return function.getLastAccessedTime();
    }

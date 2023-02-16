@@ -100,8 +100,8 @@ public class InfinispanRemoteSessionRepositoryTest extends InfinispanSessionRepo
    }
 
    @Override
-   public void testSavingSession() throws Exception {
-      super.testSavingSession();
+   public void testSavingNewSession() throws Exception {
+      super.testSavingNewSession();
    }
 
    @Override
