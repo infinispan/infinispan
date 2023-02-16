@@ -85,8 +85,8 @@ public class InfinispanEmbeddedProtostreamSessionRepositoryTest extends Infinisp
    }
 
    @Override
-   public void testSavingSession() throws Exception {
-      super.testSavingSession();
+   public void testSavingNewSession() throws Exception {
+      super.testSavingNewSession();
    }
 
    @Override
