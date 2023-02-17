@@ -115,9 +115,26 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                "    optional string description=2;  \n" +
                " }";
 
+   protected CacheMode cacheMode;
+
+   @Override
+   protected String parameters() {
+      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", cacheMode=" + cacheMode + "]";
+   }
+
+   protected CacheResourceV2Test withCacheMode(CacheMode cacheMode) {
+      this.cacheMode = cacheMode;
+      return this;
+   }
+
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
-      cm.defineConfiguration("default", getDefaultCacheBuilder().build());
+      ConfigurationBuilder configurationBuilder = getDefaultCacheBuilder();
+      if (cacheMode != null) {
+         // We force num owners to 1 so that some operations have to go to a remote node
+         configurationBuilder.clustering().cacheMode(cacheMode).hash().numOwners(1);
+      }
+      cm.defineConfiguration("default", configurationBuilder.build());
       cm.defineConfiguration("proto", getProtoCacheBuilder().build());
 
       Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
@@ -141,6 +158,10 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(false),
             new CacheResourceV2Test().withSecurity(true).protocol(HTTP_11).ssl(true),
             new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(true),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true),
       };
    }
 

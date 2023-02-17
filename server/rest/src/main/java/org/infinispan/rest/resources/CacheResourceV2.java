@@ -44,7 +44,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.EncoderEntryMapper;
@@ -85,6 +84,7 @@ import org.infinispan.persistence.remote.upgrade.SerializationUtils;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
@@ -119,6 +119,7 @@ import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.codec.http.multipart.MemoryAttribute;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * REST resource to manage the caches.
@@ -415,12 +416,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
       ComponentRegistry registry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
-      ClusterPublisherManager<?, ?> cpm = registry.getClusterPublisherManager().wired();
+      ClusterPublisherManager<Object, ?> cpm = registry.getClusterPublisherManager().wired();
       EncoderKeyMapper<Object> mapper = new EncoderKeyMapper<>(cache.getKeyDataConversion());
       mapper.injectDependencies(registry);
-      SegmentPublisherSupplier<byte[]> sps = cpm.keyPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
-            batch, p -> Flowable.fromPublisher(p).map(e -> CacheChunkedStream.readContentAsBytes(mapper.apply(e))));
-      Flowable<byte[]> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments());
+      SegmentPublisherSupplier<Object> sps = cpm.keyPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
+            batch, PublisherTransformers.identity());
+      Flowable<byte[]> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments())
+            .map(e -> CacheChunkedStream.readContentAsBytes(mapper.apply(e)));
       if (limit > -1) {
          flowable = flowable.take(limit);
       }
@@ -452,11 +454,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       ComponentRegistry registry = SecurityActions.getComponentRegistry(typedCache);
       ClusterPublisherManager<Object, Object> cpm = registry.getClusterPublisherManager().wired();
       InternalEntryFactory ief = registry.getInternalEntryFactory().running();
-      EncoderEntryMapper<?, ?, CacheEntry<Object, Object>> mapper = EncoderEntryMapper.newCacheEntryMapper(typedCache.getKeyDataConversion(), typedCache.getValueDataConversion(), ief);
+      EncoderEntryMapper<Object, Object, CacheEntry<Object, Object>> mapper = EncoderEntryMapper.newCacheEntryMapper(typedCache.getKeyDataConversion(), typedCache.getValueDataConversion(), ief);
       mapper.injectDependencies(registry);
-      SegmentPublisherSupplier<CacheEntry<?, ?>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
-            batch, p -> Flowable.fromPublisher(p).map(mapper::apply));
-      Flowable<CacheEntry<?, ?>> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments());
+      SegmentPublisherSupplier<CacheEntry<Object, Object>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
+            batch, PublisherTransformers.identity());
+      Flowable<CacheEntry<?, ?>> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments())
+            .map(mapper::apply);
       if (limit > -1) {
          flowable = flowable.take(limit);
       }
