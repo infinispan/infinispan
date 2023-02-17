@@ -1,9 +1,5 @@
 package org.infinispan.rest;
 
-import static org.infinispan.rest.helper.RestServerHelper.CLIENT_KEY_STORE;
-import static org.infinispan.rest.helper.RestServerHelper.SERVER_KEY_STORE;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
@@ -14,6 +10,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -44,19 +41,19 @@ public class CertificateTest extends AbstractInfinispanTest {
    public void shouldAllowProperCertificate() throws Exception {
       restServer = RestServerHelper.defaultRestServer()
             .withAuthenticator(new ClientCertAuthenticator())
-            .withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
-            .withTrustStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
+            .withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
+            .withTrustStore(TestCertificates.certificate("trust"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
             .withClientAuth()
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder config = new RestClientConfigurationBuilder();
       config.security().ssl().enable()
-            .trustStoreFileName(CLIENT_KEY_STORE)
-            .trustStorePassword(STORE_PASSWORD)
-            .trustStoreType(STORE_TYPE)
-            .keyStoreFileName(CLIENT_KEY_STORE)
-            .keyStorePassword(STORE_PASSWORD)
-            .keyStoreType(STORE_TYPE)
+            .trustStoreFileName(TestCertificates.certificate("ca"))
+            .trustStorePassword(TestCertificates.KEY_PASSWORD)
+            .trustStoreType(TestCertificates.KEYSTORE_TYPE)
+            .keyStoreFileName(TestCertificates.certificate("client"))
+            .keyStorePassword(TestCertificates.KEY_PASSWORD)
+            .keyStoreType(TestCertificates.KEYSTORE_TYPE)
             .hostnameVerifier((hostname, session) -> true)
             .addServer().host("localhost").port(restServer.getPort());
       client = RestClient.forConfiguration(config.build());

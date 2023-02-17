@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.upgrade;
 
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -7,11 +8,6 @@ import org.testng.annotations.Test;
 @Test(testName = "upgrade.hotrod.HotRodUpgradeWithSSLTest", groups = "functional")
 public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
 
-   protected static final char[] PASSWORD = "secret".toCharArray();
-   protected final ClassLoader cl = HotRodUpgradeWithSSLTest.class.getClassLoader();
-   protected final String trustStorePath = cl.getResource("ca.jks").getPath();
-   protected final String keyStoreClientPath = cl.getResource("keystore_client.jks").getPath();
-   protected final String keyStoreServerPath = cl.getResource("keystore_server.jks").getPath();
 
    @BeforeMethod
    public void setup() throws Exception {
@@ -20,14 +16,14 @@ public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
             .ssl()
             .enable()
             .requireClientAuth(true)
-            .keyStoreFileName(keyStoreServerPath)
-            .keyStorePassword(PASSWORD)
-            .keyAlias("hotrod")
-            .trustStoreFileName(trustStorePath)
-            .trustStorePassword(PASSWORD);
+            .keyStoreFileName(TestCertificates.certificate("server"))
+            .keyStorePassword(TestCertificates.KEY_PASSWORD)
+            .keyAlias("server")
+            .trustStoreFileName(TestCertificates.certificate("ca"))
+            .trustStorePassword(TestCertificates.KEY_PASSWORD);
       sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .withSSLKeyStore(keyStoreClientPath, PASSWORD)
-            .withSSLTrustStore(trustStorePath, PASSWORD)
+            .withSSLKeyStore(TestCertificates.certificate("client"), TestCertificates.KEY_PASSWORD)
+            .withSSLTrustStore(TestCertificates.certificate("ca"), TestCertificates.KEY_PASSWORD)
             .withHotRodBuilder(sourceHotRodBuilder)
             .cache().name(OLD_CACHE)
             .cache().name(TEST_CACHE)
@@ -39,8 +35,8 @@ public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
    @Override
    protected TestCluster configureTargetCluster() {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .withSSLKeyStore(keyStoreClientPath, PASSWORD)
-            .withSSLTrustStore(trustStorePath, PASSWORD)
+            .withSSLKeyStore(TestCertificates.certificate("client"), TestCertificates.KEY_PASSWORD)
+            .withSSLTrustStore(TestCertificates.certificate("ca"), TestCertificates.KEY_PASSWORD)
             .withHotRodBuilder(getHotRodServerBuilder())
             .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
             .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
@@ -53,11 +49,11 @@ public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
             .ssl()
             .enable()
             .requireClientAuth(true)
-            .keyStoreFileName(keyStoreServerPath)
-            .keyStorePassword(PASSWORD)
-            .keyAlias("hotrod")
-            .trustStoreFileName(trustStorePath)
-            .trustStorePassword(PASSWORD);
+            .keyStoreFileName(TestCertificates.certificate("server"))
+            .keyStorePassword(TestCertificates.KEY_PASSWORD)
+            .keyAlias("server")
+            .trustStoreFileName(TestCertificates.certificate("ca"))
+            .trustStorePassword(TestCertificates.KEY_PASSWORD);
       return targetHotRodBuilder;
    }
 }

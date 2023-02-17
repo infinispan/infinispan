@@ -7,6 +7,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodSer
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.configuration.SslConfiguration;
@@ -23,20 +24,17 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodSslFunctionalTest")
 public class HotRodSslFunctionalTest extends HotRodFunctionalTest {
 
-   private final String keyStoreFileName = getClass().getClassLoader().getResource("default_server_keystore.p12").getPath();
-   private final String trustStoreFileName = getClass().getClassLoader().getResource("default_client_truststore.p12").getPath();
-
    @Override
    protected HotRodServer createStartHotRodServer(EmbeddedCacheManager cacheManager) {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.proxyHost(host()).proxyPort(serverPort()).idleTimeout(0);
       builder.ssl().enable()
-            .keyStoreFileName(keyStoreFileName)
-            .keyStorePassword("secret".toCharArray())
-            .keyStoreType("pkcs12")
-            .trustStoreFileName(trustStoreFileName)
-            .trustStorePassword("secret".toCharArray())
-            .trustStoreType("pkcs12");
+            .keyStoreFileName(TestCertificates.certificate("server"))
+            .keyStorePassword(TestCertificates.KEY_PASSWORD)
+            .keyStoreType(TestCertificates.KEYSTORE_TYPE)
+            .trustStoreFileName(TestCertificates.certificate("trust"))
+            .trustStorePassword(TestCertificates.KEY_PASSWORD)
+            .trustStoreType(TestCertificates.KEYSTORE_TYPE);
       return startHotRodServer(cacheManager, serverPort(), builder);
    }
 
@@ -46,10 +44,10 @@ public class HotRodSslFunctionalTest extends HotRodFunctionalTest {
       SSLContext sslContext = new SslContextFactory()
             .keyStoreFileName(ssl.keyStoreFileName())
             .keyStorePassword(ssl.keyStorePassword())
-            .keyStoreType("pkcs12")
+            .keyStoreType(TestCertificates.KEYSTORE_TYPE)
             .trustStoreFileName(ssl.trustStoreFileName())
             .trustStorePassword(ssl.trustStorePassword())
-            .trustStoreType("pkcs12")
+            .trustStoreType(TestCertificates.KEYSTORE_TYPE)
             .getContext();
       SSLEngine sslEngine = SslContextFactory.getEngine(sslContext, true, false);
       return new HotRodClient(hotRodServer.getHost(), hotRodServer.getPort(), cacheName,
