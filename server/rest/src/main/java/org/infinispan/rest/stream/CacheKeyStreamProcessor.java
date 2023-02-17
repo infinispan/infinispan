@@ -4,82 +4,40 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.reactivestreams.Publisher;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelHandlerContext;
+
 /**
  * A {@link CacheChunkedStream} that reads from a <code>byte[]</code> and produces a JSON output.
  *
  * @since 10.0
  */
 public class CacheKeyStreamProcessor extends CacheChunkedStream<byte[]> {
-   private enum State {BEGIN, ITEM, SEPARATOR, END, EOF}
-
-   private static final byte STREAM_OPEN_CHAR = '[';
-   private static final byte SEPARATOR = ',';
-   private static final byte STREAM_CLOSE_CHAR = ']';
-
-   private byte[] currentEntry;
-   private int cursor = 0;
-   private State state = State.BEGIN;
-   private volatile boolean elementConsumed = true;
-
    public CacheKeyStreamProcessor(Publisher<byte[]> publisher) {
       super(publisher);
    }
 
-   private byte[] escape(byte[] content) {
-      if (content == null) return null;
-      String stringified = new String(content, UTF_8);
-      String escaped = stringified.replaceAll("\"", "\\\\\"");
-      return ("\"" + escaped + "\"").getBytes(UTF_8);
+   @Override
+   public void subscribe(ChannelHandlerContext ctx) {
+      publisher.subscribe(new KeySubscriber(ctx, ctx.alloc()));
    }
 
-   @Override
-   public void setCurrent(byte[] value) {
-      currentEntry = escape(value);
-      elementConsumed = false;
-   }
+   static class KeySubscriber extends ByteBufSubscriber<byte[]> {
 
-   @Override
-   public boolean hasElement() {
-      return !elementConsumed;
-   }
+      protected KeySubscriber(ChannelHandlerContext ctx, ByteBufAllocator allocator) {
+         super(ctx, allocator);
+      }
 
-   @Override
-   public boolean isEndOfInput() {
-      return state == State.EOF;
-   }
-
-   @Override
-   public byte read() {
-      if (state == null) state = State.BEGIN;
-      for (; ; ) {
-         switch (state) {
-            case BEGIN:
-               state = currentEntry != null ? State.ITEM : State.END;
-               return STREAM_OPEN_CHAR;
-            case SEPARATOR:
-               if (currentEntry != null) {
-                  state = State.ITEM;
-                  return SEPARATOR;
-               }
-               state = State.END;
-               continue;
-            case END:
-               state = State.EOF;
-               elementConsumed = true;
-               return STREAM_CLOSE_CHAR;
-            case ITEM:
-               int c = currentEntry == null || cursor == currentEntry.length ? -1 : currentEntry[cursor++] & 0xff;
-               if (c != -1) {
-                  return (byte) c;
-               }
-
-               cursor = 0;
-               currentEntry = null;
-               state = State.SEPARATOR;
-               elementConsumed = true;
-            default:
-               return -1;
-         }
+      @Override
+      void writeItem(byte[] item, ByteBuf pending) {
+         String stringified = new String(item, UTF_8);
+         byte[] bytesToWrite = stringified.replaceAll("\"", "\\\\\"")
+               .getBytes(UTF_8);
+         pending.ensureWritable(bytesToWrite.length + 2);
+         pending.writeByte('"');
+         pending.writeBytes(bytesToWrite);
+         pending.writeByte('"');
       }
    }
 }

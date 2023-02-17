@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
+import org.infinispan.rest.stream.CacheChunkedStream;
 
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -74,7 +75,8 @@ public class NettyRestResponse implements RestResponse {
       @Override
       public NettyRestResponse build() {
          HttpResponse response;
-         if (entity instanceof File || entity instanceof ChunkedInput || entity instanceof EventStream) {
+         if (entity instanceof File || entity instanceof ChunkedInput || entity instanceof EventStream ||
+               entity instanceof CacheChunkedStream) {
             response = new DefaultHttpResponse(HTTP_1_1, OK);
          } else {
             response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.buffer());
