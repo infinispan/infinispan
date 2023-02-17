@@ -1,12 +1,10 @@
 package org.infinispan.rest.profiling;
 
-import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
-
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.Protocol;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Mode;
@@ -53,9 +51,6 @@ public class Http11VsHttp20Benchmark {
 
    @State(Scope.Benchmark)
    public static class BenchmarkState {
-
-      private static final String KEY_STORE_PATH = BenchmarkState.class.getClassLoader().getResource("./client.jks").getPath();
-      private static final String TRUST_STORE_PATH = BenchmarkState.class.getClassLoader().getResource("./client.jks").getPath();
       private final String EXISTING_KEY = "existing_key";
       private final String NON_EXISTING_KEY = "non_existing_key";
 
@@ -81,7 +76,7 @@ public class Http11VsHttp20Benchmark {
 
          restServer = RestServerHelper.defaultRestServer();
          if (useTLS) {
-            restServer.withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE);
+            restServer.withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE);
          }
          restServer.start(this.getClass().getSimpleName());
          restServer.getCacheManager().getCache().put(EXISTING_KEY, "test");
@@ -89,8 +84,8 @@ public class Http11VsHttp20Benchmark {
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
          builder.addServer().host(restServer.getHost()).port(restServer.getPort());
          if (useTLS) {
-            builder.security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword(STORE_PASSWORD)
-                  .keyStoreFileName(KEY_STORE_PATH).keyStorePassword(STORE_PASSWORD);
+            builder.security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD)
+                  .keyStoreFileName(TestCertificates.certificate("client")).keyStorePassword(TestCertificates.KEY_PASSWORD);
          }
          builder.protocol(useHttp2 ? Protocol.HTTP_20 : Protocol.HTTP_11);
 

@@ -2,8 +2,6 @@ package org.infinispan.rest;
 
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.util.concurrent.CompletionStage;
@@ -16,6 +14,7 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.Util;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
@@ -33,8 +32,6 @@ import io.netty.util.CharsetUtil;
  */
 @Test(groups = "functional", testName = "rest.Http2Test")
 public final class Http2Test extends AbstractInfinispanTest {
-
-   private static final String KEY_STORE_PATH = Http2Test.class.getClassLoader().getResource("./client.p12").getPath();
 
    private RestClient client;
    private RestServerHelper restServer;
@@ -70,8 +67,8 @@ public final class Http2Test extends AbstractInfinispanTest {
    @Test
    public void shouldReportErrorCorrectly() {
       restServer = RestServerHelper.defaultRestServer()
-            .withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
-            .withTrustStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
+            .withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
+            .withTrustStore(TestCertificates.certificate("trust"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder config = new RestClientConfigurationBuilder();
@@ -79,8 +76,8 @@ public final class Http2Test extends AbstractInfinispanTest {
       config.addServer().host(restServer.getHost()).port(restServer.getPort())
             .protocol(HTTP_20).priorKnowledge(true)
             .security().ssl().enable()
-            .trustStoreFileName(KEY_STORE_PATH).trustStorePassword(STORE_PASSWORD).trustStoreType(STORE_TYPE)
-            .keyStoreFileName(KEY_STORE_PATH).keyStorePassword(STORE_PASSWORD).keyStoreType(STORE_TYPE)
+            .trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).trustStoreType(TestCertificates.KEYSTORE_TYPE)
+            .keyStoreFileName(TestCertificates.certificate("client")).keyStorePassword(TestCertificates.KEY_PASSWORD).keyStoreType(TestCertificates.KEYSTORE_TYPE)
             .hostnameVerifier((hostname, session) -> true);
 
       client = RestClient.forConfiguration(config.build());
@@ -127,12 +124,12 @@ public final class Http2Test extends AbstractInfinispanTest {
    private void secureUpgradeTest(Protocol choice) {
       //given
       restServer = RestServerHelper.defaultRestServer()
-            .withKeyStore(KEY_STORE_PATH, STORE_PASSWORD, STORE_TYPE)
+            .withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
             .start(TestResourceTracker.getCurrentTestShortName());
 
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(choice)
-            .security().ssl().trustStoreFileName(KEY_STORE_PATH).trustStorePassword(STORE_PASSWORD)
+            .security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).trustStoreType(TestCertificates.KEYSTORE_TYPE)
             .hostnameVerifier((hostname, session) -> true);
 
       client = RestClient.forConfiguration(builder.build());

@@ -5,6 +5,7 @@ import static org.testng.Assert.assertNotNull;
 
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
 import org.testng.annotations.Test;
 
@@ -12,20 +13,18 @@ import org.testng.annotations.Test;
 public class SSLClassPathConfigurationTest {
 
    public void testLoadTrustStore() {
-      String keyStoreFileName = getClass().getResource("/keystore_client.p12").getPath();
-      String truststoreFileName = "classpath:ca.p12";
-      char[] password = "secret".toCharArray();
+      String keyStoreFileName = TestCertificates.certificate("client");
+      String truststoreFileName = "classpath:ca.pfx";
 
       SSLContext context =
-              new SslContextFactory()
-                    .keyStoreFileName(keyStoreFileName)
-                    .keyStoreType("pkcs12")
-                    .keyStorePassword(password)
-                    .trustStoreFileName(truststoreFileName)
-                    .trustStoreType("pkcs12")
-                    .trustStorePassword(password).getContext();
+            new SslContextFactory()
+                  .keyStoreFileName(keyStoreFileName)
+                  .keyStoreType(TestCertificates.KEYSTORE_TYPE)
+                  .keyStorePassword(TestCertificates.KEY_PASSWORD)
+                  .trustStoreFileName(truststoreFileName)
+                  .trustStoreType(TestCertificates.KEYSTORE_TYPE)
+                  .trustStorePassword(TestCertificates.KEY_PASSWORD).getContext();
 
       assertNotNull(context);
    }
-
 }

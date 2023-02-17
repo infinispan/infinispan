@@ -62,6 +62,7 @@ import io.netty.channel.ChannelInitializer;
  * @since 4.1
  */
 public class HotRodTestingUtil {
+
    private HotRodTestingUtil() {
    }
 

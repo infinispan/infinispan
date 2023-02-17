@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -59,11 +60,11 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
                .ssl()
                .enable()
                .requireClientAuth(true)
-               .keyStoreFileName(cl.getResource("keystore_server.jks").getPath())
-               .keyStorePassword("secret".toCharArray())
-               .keyAlias("hotrod")
-               .trustStoreFileName(cl.getResource("ca.jks").getPath())
-               .trustStorePassword("secret".toCharArray());
+               .keyStoreFileName(TestCertificates.certificate("server"))
+               .keyStorePassword(TestCertificates.KEY_PASSWORD)
+               .keyAlias("server")
+               .trustStoreFileName(TestCertificates.certificate("trust"))
+               .trustStorePassword(TestCertificates.KEY_PASSWORD);
          serverBuilder
                .authentication()
                .enable()
@@ -84,10 +85,10 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
             .remoteSecurity();
       remoteSecurity
             .ssl().enable()
-            .keyStoreFileName(cl.getResource("keystore_client.jks").getPath())
-            .keyStorePassword("secret".toCharArray())
-            .trustStoreFileName(cl.getResource("ca.jks").getPath())
-            .trustStorePassword("secret".toCharArray())
+            .keyStoreFileName(TestCertificates.certificate("client"))
+            .keyStorePassword(TestCertificates.KEY_PASSWORD)
+            .trustStoreFileName(TestCertificates.certificate("ca"))
+            .trustStorePassword(TestCertificates.KEY_PASSWORD)
             .addServer()
             .host(hrServer.getHost())
             .port(hrServer.getPort());
