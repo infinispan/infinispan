@@ -1,36 +1,33 @@
 package org.infinispan.rest.stream;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.Objects;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.stream.ChunkedWriteHandler;
-import io.reactivex.rxjava3.subscribers.DefaultSubscriber;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
-public abstract class CacheChunkedStream<T> implements ExtendedChunkedInput<ByteBuf>, CacheStreamProcessor<T> {
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.reactivex.rxjava3.subscribers.DefaultSubscriber;
+
+public abstract class CacheChunkedStream<T> {
    protected static final Log logger = LogFactory.getLog(CacheChunkedStream.class);
 
    // Netty default value with `ChunkedStream`.
    private static final int CHUNK_SIZE = 8192;
 
-   private final Publisher<T> publisher;
-   private final InternalStreamSubscriber subscriber;
-   private long offset;
-
-   private volatile boolean stuttered;
-   private volatile ChannelHandlerContext ctx;
+   protected final Publisher<T> publisher;
 
    public CacheChunkedStream(Publisher<T> publisher) {
       this.publisher = publisher;
-      this.subscriber = new InternalStreamSubscriber();
-      this.publisher.subscribe(subscriber);
    }
 
    public static byte[] readContentAsBytes(Object content) {
@@ -42,136 +39,99 @@ public abstract class CacheChunkedStream<T> implements ExtendedChunkedInput<Byte
       return content.toString().getBytes(StandardCharsets.UTF_8);
    }
 
-   @Override
-   public void close() { }
+   public abstract void subscribe(ChannelHandlerContext ctx);
 
-   @Override
-   public ByteBuf readChunk(ChannelHandlerContext ctx) throws Exception {
-      return readChunk(ctx.alloc());
-   }
+   abstract static class ByteBufSubscriber<T> extends DefaultSubscriber<T> {
+      protected final ChannelHandlerContext ctx;
+      protected final ByteBufAllocator allocator;
 
-   @Override
-   public ByteBuf readChunk(ByteBufAllocator allocator) throws Exception {
-      ByteBuf buf = readChunkOrStutter(allocator);
-      stuttered = buf == null;
-      return buf;
-   }
-
-   private ByteBuf readChunkOrStutter(ByteBufAllocator allocator) throws Exception {
-      boolean release = true;
-      ByteBuf buffer = allocator.buffer(CHUNK_SIZE);
-      try {
-         int i = 0;
-         while (i < CHUNK_SIZE) {
-            // Its possible the buffer was full before reading the element completely,
-            // in such case, we do not load another element, we continue from where we left.
-            if (!hasElement()) {
-               T item = subscriber.peek();
-               if (item == null) {
-                  // There is the possibility the stream is just empty and completed.
-                  // We need to process the `null` until is the end of the input.
-                  if (!subscriber.isCompleted() || isEndOfInput()) {
-                     break;
-                  }
-               }
-
-               setCurrent(item);
-            }
-
-            byte b;
-            while ((b = read()) != -1) {
-               buffer.writeByte(b);
-               i++;
-            }
-            subscriber.consume();
+      protected final GenericFutureListener<Future<Void>> ERROR_LISTENER = f -> {
+         try {
+            f.get();
+         } catch (Throwable t) {
+            onError(t);
          }
-         if (i == 0) {
-            stuttered = true;
-            return null;
-         }
-         offset += i;
-         release = false;
-         return buffer;
-      } finally {
-         if (release) {
-            buffer.release();
-         }
+      };
+
+      private boolean firstEntry = true;
+
+      private ByteBuf pendingBuffer;
+
+      protected ByteBufSubscriber(ChannelHandlerContext ctx, ByteBufAllocator allocator) {
+         this.ctx = Objects.requireNonNull(ctx);
+         this.allocator = Objects.requireNonNull(allocator);
       }
-   }
 
-   @Override
-   public final void setContext(ChannelHandlerContext ctx) {
-      this.ctx = ctx;
-   }
-
-   @Override
-   public long length() {
-      return -1;
-   }
-
-   @Override
-   public long progress() {
-      return offset;
-   }
-
-   private class InternalStreamSubscriber extends DefaultSubscriber<T> {
-      private static final int QUEUE_MAX_SIZE = 32;
-      private final Queue<T> queue = new ArrayDeque<>(QUEUE_MAX_SIZE);
-      private volatile boolean hasNext;
-
-      private InternalStreamSubscriber() {
-         this.hasNext = true;
+      protected ByteBuf newByteBuf() {
+         // Note this buffer will expand as necessary, but we allocate it with an extra 12.5% buffer to prevent resizes
+         // when we reach the chunk size
+         return allocator.buffer(CHUNK_SIZE + CHUNK_SIZE >> 3);
       }
 
       @Override
       protected void onStart() {
-         request(QUEUE_MAX_SIZE);
+         ByteBuf buf = newByteBuf();
+         buf.writeByte('[');
+         pendingBuffer = buf;
+         request(1);
       }
 
       @Override
       public void onNext(T item) {
-         try {
-            queue.add(item);
-         } finally {
-            // In case we stuttered retuning null, we must notify the ChunkedWriteHandler to resume reading the new value.
-            if (stuttered) {
-               if (ctx == null) {
-                  if (logger.isTraceEnabled()) logger.trace("Chunked request stuttered and can not be resumed");
-               } else {
-                  ChunkedWriteHandler handler = ctx.pipeline().get(ChunkedWriteHandler.class);
-                  if (handler != null) {
-                     handler.resumeTransfer();
-                  } else if (logger.isTraceEnabled()){
-                     logger.trace("Channel handler ChunkedWriteHandler not found to resume after stutter");
-                  }
+         ByteBuf pendingBuf = pendingBuffer;
+         if (!firstEntry) {
+            pendingBuf.writeByte(',');
+         } else {
+            firstEntry = false;
+         }
+         writeItem(item, pendingBuf);
+         // Buffer has surpassed our chunk size send it and reallocate
+         if (pendingBuf.writerIndex() > CHUNK_SIZE) {
+            writeToContext(pendingBuf, false).addListener(f -> {
+               try {
+                  f.get();
+                  request(1);
+               } catch (Throwable t) {
+                  onError(t);
                }
-            }
+            });
+            pendingBuffer = newByteBuf();
+         } else {
+            assert pendingBuf.writableBytes() > 0;
+            request(1);
          }
       }
 
+      // Implementation can writ the bytes for the given item into the provided ByteBuf. It is recommended to first
+      // call ByteBuf.ensureWritable(int) with the amount of bytes required to be written to avoid multiple resizes
+      abstract void writeItem(T item, ByteBuf pending);
+
       @Override
-      public void onError(Throwable throwable) {
-         logger.errorf(throwable, "Failed reading publisher");
-         this.hasNext = false;
-         // Cancelling might return an incomplete response for the user.
+      public void onError(Throwable t) {
+         logger.error("Error encountered while streaming cache chunk", t);
+         if (pendingBuffer != null) {
+            pendingBuffer.release();
+            pendingBuffer = null;
+         }
          cancel();
       }
 
       @Override
       public void onComplete() {
-         this.hasNext = false;
+         ByteBuf buf = pendingBuffer;
+         buf.writeByte(']');
+         writeToContext(buf, true)
+               .addListener(ERROR_LISTENER);
+         pendingBuffer = null;
       }
 
-      public boolean isCompleted() {
-         return !hasNext;
-      }
-
-      public T peek() {
-         return queue.peek();
-      }
-
-      public void consume() {
-         if (queue.poll() != null) request(1);
+      ChannelFuture writeToContext(ByteBuf buf, boolean isComplete) {
+         ChannelFuture completeFuture = ctx.write(new DefaultHttpContent(buf));
+         if (isComplete) {
+            completeFuture = ctx.write(LastHttpContent.EMPTY_LAST_CONTENT);
+         }
+         ctx.flush();
+         return completeFuture;
       }
    }
 }

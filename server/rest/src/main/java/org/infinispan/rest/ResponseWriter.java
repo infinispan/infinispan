@@ -12,7 +12,7 @@ import java.io.RandomAccessFile;
 
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
-import org.infinispan.rest.stream.ExtendedChunkedInput;
+import org.infinispan.rest.stream.CacheChunkedStream;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -84,9 +84,8 @@ public enum ResponseWriter {
          res.headers().set(CONNECTION, KEEP_ALIVE);
          log(ctx, request, res);
          ctx.write(res);
-         ExtendedChunkedInput<ByteBuf> chunked = (ExtendedChunkedInput<ByteBuf>) response.getEntity();
-         chunked.setContext(ctx);
-         ctx.writeAndFlush(new HttpChunkedInput(chunked), ctx.newProgressivePromise());
+         CacheChunkedStream<?> chunked = (CacheChunkedStream<?>) response.getEntity();
+         chunked.subscribe(ctx);
       }
    },
    EVENT_STREAM {
@@ -119,7 +118,7 @@ public enum ResponseWriter {
    static ResponseWriter forContent(Object content) {
       if (content == null) return EMPTY;
       if (content instanceof File) return CHUNKED_FILE;
-      if (content instanceof ExtendedChunkedInput) return CHUNKED_STREAM;
+      if (content instanceof CacheChunkedStream) return CHUNKED_STREAM;
       if (content instanceof EventStream) return EVENT_STREAM;
       return FULL;
    }
