@@ -19,16 +19,12 @@ import org.infinispan.commons.dataconversion.WrapperIds;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.registry.InternalCacheRegistry;
 
 /**
  * Handle conversions for Keys or values.
