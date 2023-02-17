@@ -44,6 +44,8 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.util.WriteableCacheCollectionMapper;
 import org.infinispan.util.WriteableCacheSetMapper;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * Cache decoration that makes use of the {@link Encoder} and {@link Wrapper} to convert between storage value and
@@ -647,6 +649,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Object ret = cache.compute(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
+      return valueFromStorage(ret);
+   }
+
+   @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction));
       return valueFromStorage(returned);
@@ -692,6 +700,28 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(ret);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      Object ret = cache.computeIfAbsent(keyToStorage(key), wrapFunction(mappingFunction), metadata);
+      return valueFromStorage(ret);
+   }
+
+   @Override
+   public V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Object ret = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata);
+      return valueFromStorage(ret);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeAsync(keyToStorage(key), wrapBiFunction(remappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return cache.computeIfAbsentAsync(keyToStorage(key), wrapFunction(mappingFunction), metadata).thenApply(decodedValueForRead);
    }
 
    @Override
@@ -751,6 +781,102 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       Object returned = cache.merge(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return valueFromStorage(returned);
+   }
+
+   @Override
+   public V computeIfPresent(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Object returned = cache.computeIfPresent(keyToStorage(key), wrapBiFunction(remappingFunction), metadata);
+      return valueFromStorage(returned);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeIfPresentAsync(keyToStorage(key), wrapBiFunction(remappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeIfPresentAsync(keyToStorage(key), wrapBiFunction(remappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeIfPresentAsync(keyToStorage(key), wrapBiFunction(remappingFunction)).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return cache.computeIfPresentAsync(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.computeIfPresentAsync(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.mergeAsync(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return cache.mergeAsync(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return cache.mergeAsync(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.mergeAsync(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> mergeAsync(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return cache.mergeAsync(keyToStorage(key), valueToStorage(value), wrapBiFunction(remappingFunction)).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeAsync(keyToStorage(key), wrapBiFunction(remappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return cache.computeIfAbsentAsync(keyToStorage(key), wrapFunction(mappingFunction), metadata).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return cache.computeAsync(keyToStorage(key), wrapBiFunction(remappingFunction)).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return cache.computeAsync(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.computeAsync(keyToStorage(key), wrapBiFunction(remappingFunction), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction) {
+      return cache.computeIfAbsentAsync(keyToStorage(key), wrapFunction(mappingFunction)).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
+      return cache.computeIfAbsentAsync(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit).thenApply(decodedValueForRead);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.computeIfAbsentAsync(keyToStorage(key), wrapFunction(mappingFunction), lifespan, lifespanUnit, maxIdle, maxIdleUnit).thenApply(decodedValueForRead);
    }
 
    @Override
