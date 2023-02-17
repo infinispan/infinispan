@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.router.Router;
@@ -22,12 +23,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ProtocolServerEndpointRouterTest {
-
-    private final String KEYSTORE_LOCATION_FOR_HOTROD_1 = getClass().getClassLoader().getResource("sni_server_keystore.jks").getPath();
-    private final String TRUSTSTORE_LOCATION_FOR_HOTROD_1 = getClass().getClassLoader().getResource("sni_client_truststore.jks").getPath();
-
-    private final String KEYSTORE_LOCATION_FOR_HOTROD_2 = getClass().getClassLoader().getResource("default_server_keystore.jks").getPath();
-    private final String TRUSTSTORE_LOCATION_FOR_HOTROD_2 = getClass().getClassLoader().getResource("default_client_truststore.jks").getPath();
     private HotRodServer hotrodServer1;
     private HotRodServer hotrodServer2;
     private Router router;
@@ -78,11 +73,11 @@ public class ProtocolServerEndpointRouterTest {
         hotrodServer2 = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
 
         HotRodServerRouteDestination hotrod1Destination = new HotRodServerRouteDestination("HotRod1", hotrodServer1);
-        SniNettyRouteSource hotrod1Source = new SniNettyRouteSource("hotrod1", KEYSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
+        SniNettyRouteSource hotrod1Source = new SniNettyRouteSource("server", TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD);
         Route<SniNettyRouteSource, HotRodServerRouteDestination> routeToHotrod1 = new Route<>(hotrod1Source, hotrod1Destination);
 
         HotRodServerRouteDestination hotrod2Destination = new HotRodServerRouteDestination("HotRod2", hotrodServer2);
-        SniNettyRouteSource hotrod2Source = new SniNettyRouteSource("hotrod2", KEYSTORE_LOCATION_FOR_HOTROD_2, "secret".toCharArray());
+        SniNettyRouteSource hotrod2Source = new SniNettyRouteSource("sni", TestCertificates.certificate("sni"), TestCertificates.KEY_PASSWORD);
         Route<SniNettyRouteSource, HotRodServerRouteDestination> routeToHotrod2 = new Route<>(hotrod2Source, hotrod2Destination);
 
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
@@ -102,8 +97,8 @@ public class ProtocolServerEndpointRouterTest {
         int routerPort = router.getRouter(EndpointRouter.Protocol.HOT_ROD).get().getPort();
 
         //when
-        hotrod1Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod1", TRUSTSTORE_LOCATION_FOR_HOTROD_1, "secret".toCharArray());
-        hotrod2Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "hotrod2", TRUSTSTORE_LOCATION_FOR_HOTROD_2, "secret".toCharArray());
+        hotrod1Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "server", TestCertificates.certificate("ca"), TestCertificates.KEY_PASSWORD);
+        hotrod2Client = HotRodClientTestingUtil.createWithSni(routerIp, routerPort, "sni", TestCertificates.certificate("ca"), TestCertificates.KEY_PASSWORD);
 
         hotrod1Client.getCache("default").put("test", "hotrod1");
         hotrod2Client.getCache("default").put("test", "hotrod2");

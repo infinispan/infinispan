@@ -20,6 +20,7 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.RestServer;
@@ -48,11 +49,6 @@ import org.wildfly.openssl.OpenSSLEngine;
 import io.netty.util.CharsetUtil;
 
 public class SinglePortTest {
-
-    public static final String KEY_STORE_PATH = SinglePortTest.class.getClassLoader().getResource("./default_server_keystore.jks").getPath();
-    public static final String KEY_STORE_PASSWORD = "secret";
-    public static final String TRUST_STORE_PATH = SinglePortTest.class.getClassLoader().getResource("./default_client_truststore.jks").getPath();
-    public static final String TRUST_STORE_PASSWORD = "secret";
     public static final RestEntity VALUE = RestEntity.create(TEXT_PLAIN, "test".getBytes(CharsetUtil.UTF_8));
 
     private Router router;
@@ -194,7 +190,7 @@ public class SinglePortTest {
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
         routerConfigurationBuilder
               .singlePort()
-              .sslContext(sslContextFactory.keyStoreFileName(KEY_STORE_PATH).keyStorePassword(KEY_STORE_PASSWORD.toCharArray()).getContext())
+              .sslContext(sslContextFactory.keyStoreFileName(TestCertificates.certificate("server")).keyStorePassword(TestCertificates.KEY_PASSWORD).getContext())
               .port(0)
               .ip(InetAddress.getLoopbackAddress())
               .routing()
@@ -208,7 +204,7 @@ public class SinglePortTest {
         //when
         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
         builder.addServer().host(singlePortRouter.getHost()).port(singlePortRouter.getPort()).protocol(Protocol.HTTP_20)
-              .security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword("secret".toCharArray())
+              .security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD)
               .hostnameVerifier((hostname, session) -> true);
         httpClient = RestClient.forConfiguration(builder.build());
 
@@ -238,7 +234,7 @@ public class SinglePortTest {
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
         routerConfigurationBuilder
               .singlePort()
-              .sslContext(sslContextFactory.keyStoreFileName(KEY_STORE_PATH).keyStorePassword(KEY_STORE_PASSWORD.toCharArray()).getContext())
+              .sslContext(sslContextFactory.keyStoreFileName(TestCertificates.certificate("server")).keyStorePassword(TestCertificates.KEY_PASSWORD).getContext())
               .port(0)
               .ip(InetAddress.getLoopbackAddress())
               .routing()
@@ -252,7 +248,7 @@ public class SinglePortTest {
         //when
         ConfigurationBuilder builder = new ConfigurationBuilder();
         builder.addServer().host(endpointRouter.getIp().getHostAddress()).port(endpointRouter.getPort());
-        builder.security().ssl().trustStoreFileName(TRUST_STORE_PATH).trustStorePassword(TRUST_STORE_PASSWORD.toCharArray());
+        builder.security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD);
         hotRodClient = new RemoteCacheManager(builder.build());
         hotRodClient.getCache("default").put("test", "test");
     }

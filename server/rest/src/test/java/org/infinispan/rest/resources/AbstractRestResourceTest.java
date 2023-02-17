@@ -5,10 +5,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
-import static org.infinispan.rest.helper.RestServerHelper.CLIENT_KEY_STORE;
-import static org.infinispan.rest.helper.RestServerHelper.SERVER_KEY_STORE;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_PASSWORD;
-import static org.infinispan.rest.helper.RestServerHelper.STORE_TYPE;
 
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -31,6 +27,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -153,8 +150,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
                restServerHelper.withAuthenticator(basicAuthenticator);
             }
             if (ssl) {
-               restServerHelper.withKeyStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE)
-                     .withTrustStore(SERVER_KEY_STORE, STORE_PASSWORD, STORE_TYPE);
+               restServerHelper.withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
+                     .withTrustStore(TestCertificates.certificate("trust"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE);
             }
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
             restServers.add(restServerHelper);
@@ -244,8 +241,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       if (ssl) {
          clientConfigurationBuilder.security().ssl().enable()
                .hostnameVerifier((hostname, session) -> true)
-               .trustStoreFileName(CLIENT_KEY_STORE).trustStorePassword(STORE_PASSWORD).trustStoreType(STORE_TYPE)
-               .keyStoreFileName(CLIENT_KEY_STORE).keyStorePassword(STORE_PASSWORD).keyStoreType(STORE_TYPE);
+               .trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).trustStoreType(TestCertificates.KEYSTORE_TYPE)
+               .keyStoreFileName(TestCertificates.certificate("client")).keyStorePassword(TestCertificates.KEY_PASSWORD).keyStoreType(TestCertificates.KEYSTORE_TYPE);
       }
       if (isSecurityEnabled()) {
          clientConfigurationBuilder.security().authentication().enable().username(username).password(password);
