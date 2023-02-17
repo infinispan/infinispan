@@ -38,6 +38,7 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
    @BeforeAll
    public static void beforeClass() {
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalConfigurationBuilder.globalState().disable();
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
       cacheConfiguration.encoding().key().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
       cacheConfiguration.encoding().value().mediaType(APPLICATION_SERIALIZED_OBJECT_TYPE);
