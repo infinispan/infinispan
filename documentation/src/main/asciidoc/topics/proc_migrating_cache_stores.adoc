@@ -1,22 +1,23 @@
 [id='migrating-cache-stores_{context}']
 = Migrating {brandname} cache stores
-Run `StoreMigrator` to migrate data from one cache store to another.
+You can use the `StoreMigrator` to migrate data between cache stores with different {brandname} versions or to migrate data from one type of cache store to another.
 
 .Prerequisites
 
-* Get `infinispan-tools.jar`.
-* Create a `migrator.properties` file that configures the source and target
-cache stores.
+* Have a  `infinispan-tools.jar`.
+* Have the source and target cache store configured in the `migrator.properties` file.
 
 .Procedure
 
-* If you build `infinispan-tools.jar` from source, do the following:
+* If you built the `infinispan-tools.jar` from the source code, do the following:
 +
-. Add `infinispan-tools.jar` and dependencies for your source and target
-databases, such as JDBC drivers, to your classpath.
+. Add `infinispan-tools.jar` to your classpath.
+. Add dependencies for your source and target databases, such as JDBC drivers to your classpath.
 . Specify `migrator.properties` file as an argument for `StoreMigrator`.
 
-* If you pull `infinispan-tools.jar` from the Maven
-repository, run the following command:
+* If you pulled `infinispan-tools.jar` from the Maven repository, run the following command:
 +
-`mvn exec:java`
+[source,xml,options="nowrap",subs=attributes+]
+----
+mvn exec:java
+----
