@@ -7,8 +7,7 @@
 When you run `StoreMigrator`, it creates the target cache with the cache store type that you define using the `EmbeddedCacheManager` interface.
 `StoreMigrator` then loads entries from the source store into memory and then puts them into the target cache.
 
-`StoreMigrator` also lets you migrate data from one type of cache store to another.
-For example, you can migrate from a JDBC string-based cache store to a RocksDB cache store.
+`StoreMigrator` also lets you migrate data from one type of cache store to another. For example, you can migrate from a JDBC string-based cache store to a RocksDB cache store.
 
 [IMPORTANT]
 ====

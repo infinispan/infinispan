@@ -8,7 +8,7 @@ Configure source and target cache stores in a `StoreMigrator` properties.
 |===
 |Property |Description |Required/Optional
 |`type`
-|Specifies the type of cache store type for a source or target.
+|Specifies the type of cache store for a source or target cache store.
 
 `.type=JDBC_STRING`
 
@@ -34,20 +34,16 @@ Configure source and target cache stores in a `StoreMigrator` properties.
 |===
 |Property |Description |Example Value |Required/Optional
 |`cache_name`
-|Names the cache that the store backs.
+|The name of the cache that you want to back up.
 |`.cache_name=myCache`
 |Required
 
 |`segment_count`
-|Specifies the number of segments for target cache stores that can use
+|The number of segments for target cache stores that can use
 segmentation.
 
 The number of segments must match `clustering.hash.numSegments` in the
-{brandname} configuration.
-
-In other words, the number of segments for a cache store must match the number
-of segments for the corresponding cache. If the number of segments is not the
-same, {brandname} cannot read data from the cache store.
+{brandname} configuration. If the number of segments for a cache store does not match the number of segments for the corresponding cache, {brandname} cannot read data from the cache store.
 |`.segment_count=256`
 |Optional
 |===
@@ -64,7 +60,7 @@ same, {brandname} cannot read data from the cache store.
 |`version`
 |Specifies the marshaller version for source cache stores. +
 ifdef::community[]
-Set the value that matches the {brandname} major version of the source cluster. For example; set a value of `13` for {brandname} 13.x.
+Set the value that matches the {brandname} major version of the source cluster. For example; set a value of `14` for {brandname} 14.x.
 endif::community[]
 ifdef::downstream[]
 Set one of the following values:
