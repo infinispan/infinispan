@@ -15,6 +15,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.impl.EntityLoader;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
@@ -40,6 +41,8 @@ public class LazySearchMapping implements SearchMapping {
    private final SearchMappingCommonBuilding commonBuilding;
    private final EntityLoader<?> entityLoader;
    private final SerializationContext serCtx;
+   private final QueryCache queryCache;
+
    private LazyRef<SearchMapping> searchMappingRef = new LazyRef<>(this::createMapping);
    private final StampedLock stampedLock = new StampedLock();
 
@@ -47,12 +50,13 @@ public class LazySearchMapping implements SearchMapping {
 
    public LazySearchMapping(SearchMappingCommonBuilding commonBuilding, EntityLoader<?> entityLoader,
                             SerializationContext serCtx, AdvancedCache<?, ?> cache,
-                            ProtobufMetadataManagerImpl protobufMetadataManager) {
+                            ProtobufMetadataManagerImpl protobufMetadataManager, QueryCache queryCache) {
       this.commonBuilding = commonBuilding;
       this.entityLoader = entityLoader;
       this.serCtx = serCtx;
       this.cache = cache;
       this.protobufMetadataManager = protobufMetadataManager;
+      this.queryCache = queryCache;
    }
 
    @Override
@@ -128,6 +132,7 @@ public class LazySearchMapping implements SearchMapping {
    @Override
    public void reload() {
       long stamp = stampedLock.writeLock();
+      queryCache.clear(cache.getName());
       try {
          searchMappingRef.get().close();
          searchMappingRef = new LazyRef<>(this::createMapping);
