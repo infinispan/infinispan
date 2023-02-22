@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.configuration.cache.Configuration.CONFIGURATION;
 import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -174,6 +175,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return template;
    }
 
+   public ConfigurationBuilder configuration(String baseConfigurationName) {
+      attributes.attribute(CONFIGURATION).set(baseConfigurationName);
+      return this;
+   }
+
    public void validate() {
       if (attributes.attribute(SIMPLE_CACHE).get()) {
          validateSimpleCacheConfiguration();
@@ -297,5 +303,4 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             ", sites=" + sites +
             '}';
    }
-
 }
