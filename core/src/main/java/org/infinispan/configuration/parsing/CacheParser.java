@@ -67,15 +67,24 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(ConfigurationParser.class)
 @Namespace(root = "local-cache")
+@Namespace(root = "local-cache-configuration")
 @Namespace(root = "distributed-cache")
+@Namespace(root = "distributed-cache-configuration")
 @Namespace(root = "replicated-cache")
+@Namespace(root = "replicated-cache-configuration")
 @Namespace(root = "scattered-cache")
+@Namespace(root = "scattered-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "local-cache")
+@Namespace(uri = NAMESPACE + "*", root = "local-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "distributed-cache")
+@Namespace(uri = NAMESPACE + "*", root = "distributed-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "replicated-cache")
+@Namespace(uri = NAMESPACE + "*", root = "replicated-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "scattered-cache")
+@Namespace(uri = NAMESPACE + "*", root = "scattered-cache-configuration")
 public class CacheParser implements ConfigurationParser {
    public static final String NAMESPACE = "urn:infinispan:config:";
+   public static final String IGNORE_MISSING_TEMPLATES = "org.infinispan.parser.ignoreMissingTemplates";
 
    public CacheParser() {
    }
@@ -147,7 +156,7 @@ public class CacheParser implements ConfigurationParser {
       if (!template && GlobUtils.isGlob(name))
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
       builder.clustering().cacheMode(CacheMode.LOCAL);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -874,7 +883,7 @@ public class CacheParser implements ConfigurationParser {
       if (!template && GlobUtils.isGlob(name))
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -972,7 +981,7 @@ public class CacheParser implements ConfigurationParser {
       if (!template && GlobUtils.isGlob(name))
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.REPL_SYNC : CacheMode.REPL_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1026,7 +1035,7 @@ public class CacheParser implements ConfigurationParser {
       if (!template && GlobUtils.isGlob(name))
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.DIST_SYNC : CacheMode.DIST_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1126,7 +1135,7 @@ public class CacheParser implements ConfigurationParser {
       if (!template && GlobUtils.isGlob(name))
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : CacheMode.SCATTERED_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
       ClusteringConfigurationBuilder clusteringBuilder = builder.clustering();
       clusteringBuilder.cacheMode(baseCacheMode);
@@ -1162,21 +1171,29 @@ public class CacheParser implements ConfigurationParser {
       }
    }
 
-   private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {
+   private ConfigurationBuilder getConfigurationBuilder(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {
       if (holder.getNamedConfigurationBuilders().containsKey(name)) {
          throw CONFIG.duplicateCacheName(name);
       }
+      boolean ignoreMissingTemplates = reader.getProperty(IGNORE_MISSING_TEMPLATES) != null;
       ConfigurationBuilder builder = holder.newConfigurationBuilder(name);
       if (baseConfigurationName != null) {
          ConfigurationBuilder baseConfigurationBuilder = holder.getNamedConfigurationBuilders().get(baseConfigurationName);
          if (baseConfigurationBuilder == null) {
-            throw CONFIG.undeclaredConfiguration(baseConfigurationName, name);
+            if (ignoreMissingTemplates) {
+               baseConfigurationBuilder = new ConfigurationBuilder().template(true);
+            } else {
+               throw CONFIG.undeclaredConfiguration(baseConfigurationName, name);
+            }
          }
          Configuration baseConfiguration = baseConfigurationBuilder.build();
          if (!baseConfiguration.isTemplate()) {
             throw CONFIG.noConfiguration(baseConfigurationName);
          }
          builder.read(baseConfiguration);
+         if (ignoreMissingTemplates) {
+            builder.configuration(baseConfigurationName);
+         }
       }
 
       return builder.template(template);

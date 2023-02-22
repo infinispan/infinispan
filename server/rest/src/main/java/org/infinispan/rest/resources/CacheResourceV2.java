@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -51,7 +52,10 @@ import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
@@ -61,6 +65,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.container.entries.CacheEntry;
@@ -342,8 +347,16 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
       return CompletableFuture.supplyAsync(() -> {
          ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
-         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(contents, request.contentType());
-         Map.Entry<String, ConfigurationBuilder> entry = builderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
+         Properties properties = new Properties();
+         properties.put(CacheParser.IGNORE_MISSING_TEMPLATES, "true");
+         ConfigurationReader reader = ConfigurationReader.from(contents)
+               .withResolver(ConfigurationResourceResolver.DEFAULT)
+               .withType(request.contentType())
+               .withProperties(properties)
+               .withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
+         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+         parserRegistry.parse(reader, holder);
+         Map.Entry<String, ConfigurationBuilder> entry = holder.getNamedConfigurationBuilders().entrySet().iterator().next();
          Configuration configuration = entry.getValue().build();
          StringBuilderWriter out = new StringBuilderWriter();
          try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(toType).clearTextSecrets(true).prettyPrint(pretty).build()) {

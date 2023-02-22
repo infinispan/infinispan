@@ -412,6 +412,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       } else {
          writer.writeMapItem(configuration.isTemplate() ? Element.REPLICATED_CACHE_CONFIGURATION : Element.REPLICATED_CACHE, Attribute.NAME, name);
       }
+      configuration.attributes().write(writer);
       AttributeSet hashAttributes = configuration.clustering().hash().attributes();
       hashAttributes.write(writer, HashConfiguration.NUM_SEGMENTS);
       hashAttributes.write(writer, HashConfiguration.CONSISTENT_HASH_FACTORY);
@@ -433,6 +434,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       } else {
          writer.writeMapItem(configuration.isTemplate() ? Element.DISTRIBUTED_CACHE_CONFIGURATION : Element.DISTRIBUTED_CACHE, Attribute.NAME, name);
       }
+      configuration.attributes().write(writer);
       configuration.clustering().hash().attributes().write(writer);
       configuration.clustering().l1().attributes().write(writer);
       writeCommonClusteredCacheAttributes(writer, configuration);
@@ -458,6 +460,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       } else {
          writer.writeMapItem(configuration.isTemplate() ? Element.INVALIDATION_CACHE_CONFIGURATION : Element.INVALIDATION_CACHE, Attribute.NAME, name);
       }
+      configuration.attributes().write(writer);
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
       writeExtraConfiguration(writer, configuration.modules());
@@ -474,6 +477,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       } else {
          writer.writeMapItem(configuration.isTemplate() ? Element.SCATTERED_CACHE_CONFIGURATION : Element.SCATTERED_CACHE, Attribute.NAME, name);
       }
+      configuration.attributes().write(writer);
       writer.writeAttribute(INVALIDATION_BATCH_SIZE, Integer.toString(configuration.clustering().invalidationBatchSize()));
       writer.writeAttribute(BIAS_ACQUISITION, configuration.clustering().biasAcquisition().toString());
       writer.writeAttribute(BIAS_LIFESPAN, Long.toString(configuration.clustering().biasLifespan()));
@@ -493,9 +497,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       } else {
          writer.writeMapItem(configuration.isTemplate() ? Element.LOCAL_CACHE_CONFIGURATION : Element.LOCAL_CACHE, Attribute.NAME, name);
       }
-      if (configuration.simpleCache()) {
-         configuration.attributes().write(writer, Configuration.SIMPLE_CACHE, Attribute.SIMPLE_CACHE);
-      }
+      configuration.attributes().write(writer);
       writeCommonCacheAttributesElements(writer, name, configuration);
       writeExtraConfiguration(writer, configuration.modules());
       if (unnamed) {
