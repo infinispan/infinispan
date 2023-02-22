@@ -28,6 +28,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.EntityLoader;
@@ -157,7 +158,9 @@ public final class LifecycleManager implements ModuleLifecycle {
 
             EntityLoader<?> entityLoader = new EntityLoader<>(cache, queryStatistics);
 
-            searchMapping = new LazySearchMapping(commonBuilding, entityLoader, serCtx, cache, protobufMetadataManager);
+            QueryCache queryCache = cr.getGlobalComponentRegistry().getComponent(QueryCache.class);
+            searchMapping = new LazySearchMapping(commonBuilding, entityLoader, serCtx, cache, protobufMetadataManager,
+                  queryCache);
 
             cr.registerComponent(searchMapping, SearchMapping.class);
             BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
