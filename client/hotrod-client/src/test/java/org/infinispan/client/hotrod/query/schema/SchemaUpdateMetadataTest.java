@@ -88,10 +88,6 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
 
       updateTheSchemaAndReindex();
 
-      // TODO ISPN-14527 We want to make this clear automatic in case of schema update + reindexing
-      //   So the following line should be removed:
-      getGlobalQueryCache().clear(cache.getName());
-
       verifySortable(true);
       queryIsOnTheCache(false);
 
