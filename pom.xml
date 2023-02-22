@@ -759,6 +759,16 @@
             <version>${version.io.lettuce}</version>
          </dependency>
          <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <version>${version.jakarta.json-api}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>${version.jakarta.json}</version>
+         </dependency>
+         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
             <version>${version.jakarta.persistence}</version>
