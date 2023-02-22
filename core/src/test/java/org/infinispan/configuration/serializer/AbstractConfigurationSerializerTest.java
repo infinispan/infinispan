@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -84,7 +84,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       URL url = FileLookupFactory.newInstance().lookupFileLocation(parameter.config.toString(), Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holderBefore = parameter.registry.parse(url);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      Map<String, Configuration> configurations = new HashMap<>();
+      Map<String, Configuration> configurations = new LinkedHashMap<>();
       for (Map.Entry<String, ConfigurationBuilder> configuration : holderBefore.getNamedConfigurationBuilders().entrySet()) {
          configurations.put(configuration.getKey(), configuration.getValue().build());
       }

@@ -6,7 +6,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +39,7 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
 
    public ConfigurationBuilderHolder(ClassLoader classLoader, GlobalConfigurationBuilder globalConfigurationBuilder) {
       this.globalConfigurationBuilder = globalConfigurationBuilder;
-      this.namedConfigurationBuilders = new HashMap<>();
+      this.namedConfigurationBuilders = new LinkedHashMap<>();
       this.jgroupsBuilder = this.globalConfigurationBuilder.transport().jgroups();
       this.classLoader = new WeakReference<>(classLoader);
       scope = new ArrayDeque<>();

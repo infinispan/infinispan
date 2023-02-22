@@ -1045,62 +1045,76 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testConversionFromXML() {
+      testConversionFromXML0("distributed-cache");
+      testConversionFromXML0("distributed-cache-configuration");
+   }
+
+   private void testConversionFromXML0(String root) {
       RestRawClient rawClient = client.raw();
 
-      String xml = "<infinispan>\n" +
-            "    <cache-container>\n" +
-            "        <distributed-cache name=\"cacheName\" mode=\"SYNC\">\n" +
-            "            <memory storage=\"OBJECT\" max-count=\"20\"/>\n" +
-            "        </distributed-cache>\n" +
-            "    </cache-container>\n" +
-            "</infinispan>";
+      String xml = String.format(
+            "<%s name=\"cacheName\" mode=\"SYNC\" configuration=\"parent\">\n" +
+                  "  <memory storage=\"OBJECT\" max-count=\"20\"/>\n" +
+                  "</%s>", root, root
+      );
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), xml, APPLICATION_XML_TYPE);
       assertThat(response).isOk();
-      checkJSON(response, "cacheName");
+      checkJSON(response, "cacheName", root);
 
       response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_YAML_TYPE), xml, APPLICATION_XML_TYPE);
       assertThat(response).isOk();
-      checkYaml(response, "cacheName");
+      checkYaml(response, "cacheName", root);
    }
 
    @Test
    public void testConversionFromJSON() throws Exception {
+      testConversionFromJSON0("distributed-cache");
+      testConversionFromJSON0("distributed-cache-configuration");
+   }
+
+   private void testConversionFromJSON0(String root) throws Exception {
       RestRawClient rawClient = client.raw();
 
-      String json = "{\"distributed-cache\":{\"mode\":\"SYNC\",\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}";
+      String json = String.format("{\"%s\":{\"configuration\":\"parent\",\"mode\":\"SYNC\",\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}", root);
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_XML_TYPE), json, APPLICATION_JSON_TYPE);
       assertThat(response).isOk();
-      checkXML(response);
+      checkXML(response, root);
 
       response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_YAML_TYPE), json, APPLICATION_JSON_TYPE);
       assertThat(response).isOk();
-      checkYaml(response, "");
+      checkYaml(response, "", root);
    }
 
    @Test
    public void testConversionFromYAML() throws Exception {
+      testConversionFromYAML0("distributedCache");
+      testConversionFromYAML0("distributedCacheConfiguration");
+   }
+
+   private void testConversionFromYAML0(String root) throws Exception {
       RestRawClient rawClient = client.raw();
 
-      String yaml = "distributedCache:\n" +
+      String yaml = String.format("%s:\n" +
             "  mode: 'SYNC'\n" +
+            "  configuration: 'parent'\n" +
             "  memory:\n" +
             "    storage: 'OBJECT'\n" +
-            "    maxCount: 20";
+            "    maxCount: 20", root);
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_XML_TYPE), yaml, APPLICATION_YAML_TYPE);
       assertThat(response).isOk();
-      checkXML(response);
+      checkXML(response, root);
 
       response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), yaml, APPLICATION_YAML_TYPE);
       assertThat(response).isOk();
-      checkJSON(response, "");
+      checkJSON(response, "", root);
    }
 
    @Test
    public void testBrokenConfiguration() throws IOException {
-      for(String name : Arrays.asList("broken.xml", "broken.yaml", "broken.json")) {
+      for (String name : Arrays.asList("broken.xml", "broken.yaml", "broken.json")) {
          CompletionStage<RestResponse> response = createCacheFromResource(name);
          String body = join(response).getBody();
          assertThat(body).contains("ISPN000327: Cannot find a parser for element 'error' in namespace '' at [");
@@ -1117,22 +1131,24 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       return cache.createWithConfiguration(entity);
    }
 
-   private void checkJSON(CompletionStage<RestResponse> response, String name) {
+   private void checkJSON(CompletionStage<RestResponse> response, String name, String rootElement) {
       Json jsonNode = Json.read(join(response).getBody());
       if (!name.isBlank()) {
          jsonNode = jsonNode.at(name);
       }
-      Json distCache = jsonNode.at("distributed-cache");
+      Json distCache = jsonNode.at(NamingStrategy.KEBAB_CASE.convert(rootElement));
       Json memory = distCache.at("memory");
       assertEquals("SYNC", distCache.at("mode").asString());
+      assertEquals("parent", distCache.at("configuration").asString());
       assertEquals(20, memory.at("max-count").asInteger());
    }
 
-   private void checkXML(CompletionStage<RestResponse> response) throws Exception {
+   private void checkXML(CompletionStage<RestResponse> response, String rootElement) throws Exception {
       String xml = join(response).getBody();
       Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
       Element root = doc.getDocumentElement();
-      assertEquals("distributed-cache", root.getTagName());
+      assertEquals(NamingStrategy.KEBAB_CASE.convert(rootElement), root.getTagName());
+      assertEquals("parent", root.getAttribute("configuration"));
       assertEquals("SYNC", root.getAttribute("mode"));
       NodeList children = root.getElementsByTagName("memory");
       assertEquals(1, children.getLength());
@@ -1141,12 +1157,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertEquals("20", memory.getAttribute("max-count"));
    }
 
-   private void checkYaml(CompletionStage<RestResponse> response, String name) {
+   private void checkYaml(CompletionStage<RestResponse> response, String name, String root) {
+      String rootElement = NamingStrategy.CAMEL_CASE.convert(root);
       try (YamlConfigurationReader yaml = new YamlConfigurationReader(new StringReader(join(response).getBody()), new URLConfigurationResourceResolver(null), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE)) {
          Map<String, Object> config = yaml.asMap();
-         assertEquals("SYNC", getYamlProperty(config, name, "distributedCache", "mode"));
-         assertEquals("OBJECT", getYamlProperty(config, name, "distributedCache", "memory", "storage"));
-         assertEquals("20", getYamlProperty(config, name, "distributedCache", "memory", "maxCount"));
+         assertEquals("parent", getYamlProperty(config, name, rootElement, "configuration"));
+         assertEquals("SYNC", getYamlProperty(config, name, rootElement, "mode"));
+         assertEquals("OBJECT", getYamlProperty(config, name, rootElement, "memory", "storage"));
+         assertEquals("20", getYamlProperty(config, name, rootElement, "memory", "maxCount"));
       }
    }
 
