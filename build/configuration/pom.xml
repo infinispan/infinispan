@@ -155,6 +155,8 @@
       <version.jackson.databind>2.14.1</version.jackson.databind>
       <version.jacoco>0.8.7</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
+      <version.jakarta.json-api>2.0.0</version.jakarta.json-api>
+      <version.jakarta.json>2.0.0</version.jakarta.json>
       <version.jakarta.transaction.legacy>1.3.3</version.jakarta.transaction.legacy>
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
       <version.jakarta.enterprise.cdi>2.0.2</version.jakarta.enterprise.cdi>
@@ -188,7 +190,7 @@
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
       <version.org.wildfly.arquillian>3.0.1.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.core>16.0.1.Final</version.org.wildfly.core>
-      <version.org.wildfly.elytron>1.20.1.Final</version.org.wildfly.elytron>
+      <version.org.wildfly.elytron>2.1.0.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.2.2.SP01</version.org.wildfly.openssl.natives>
       <version.org.wildfly.openssl.natives.linux_x86_64>2.2.2.SP01</version.org.wildfly.openssl.natives.linux_x86_64>
