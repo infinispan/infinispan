@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package io.pro;
+
+
+
+/**
+ * @Indexed
+ */
+message Programmer {
+
+   /**
+    * @Basic
+    */
+   optional string nick = 1;
+
+   /**
+    * @Basic(sortable=true)
+    */
+   optional int32 contributions = 2;
+}
