@@ -165,7 +165,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
             .build();
       await(cache.putAll(entries, options));
 
-      final CacheEntryVersion cve = new CacheEntryVersionImpl(0);
+      final CacheEntryVersion cve = new CacheEntryVersionImpl(1);
       for (Map.Entry<K, V> entry : entries.entrySet()) {
          assertEntry(entry.getKey(), entry.getValue(), kvGenerator, await(cache.getEntry(entry.getKey())), options, cve);
       }
@@ -232,7 +232,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
             .stream().collect(Collectors.toMap(CacheEntry::key, e -> e));
 
       assertEquals(entries.size(), retrieved.size());
-      final CacheEntryVersion cve = new CacheEntryVersionImpl(0);
+      final CacheEntryVersion cve = new CacheEntryVersionImpl(1);
       MapKVHelper<K, V> helper = new MapKVHelper<>(entries, kvGenerator);
       for (Map.Entry<K, CacheEntry<K, V>> entry : retrieved.entrySet()) {
          V expected = helper.get(entry.getKey());
