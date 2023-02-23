@@ -5,8 +5,10 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.io.ByteArrayOutputStream;
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -159,6 +162,59 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertEquals(entry2.getValue(), "aNewValue");
 
       assert !remoteCache.replaceWithVersion("aKey", "aNewValue", valueBinary.getVersion());
+   }
+
+   public void testPutAllAndReplaceWithVersion(Method m ) {
+      String key = k(m);
+
+      remoteCache.putAll(Map.of(key, "A"));
+      MetadataValue<String> existingMetaDataValue = remoteCache.getWithMetadata(key);
+      assertEquals(existingMetaDataValue.getValue(), "A");
+
+      assertTrue(remoteCache.replaceWithVersion(key, "B", existingMetaDataValue.getVersion()));
+      assertEquals("B", remoteCache.get(key));
+   }
+
+   public void testPutAllUpdatingVersions(Method m) {
+      String key = k(m);
+
+      remoteCache.putAll(Map.of(key, "A"));
+      MetadataValue<String> prevMetadata = remoteCache.getWithMetadata(key);
+      assertEquals("A", prevMetadata.getValue());
+
+      String anotherKey = key + k(m);
+      remoteCache.putAll(Map.of(key, "B", anotherKey, "C"));
+      MetadataValue<String> currMetadata = remoteCache.getWithMetadata(key);
+
+      assertTrue(currMetadata.getVersion() > prevMetadata.getVersion());
+      assertEquals("B", currMetadata.getValue());
+
+      // Created entries receive the same version, no way to set version per entry w/ put all.
+      MetadataValue<String> anotherMetadata = remoteCache.getWithMetadata(anotherKey);
+      assertEquals(currMetadata.getVersion(), anotherMetadata.getVersion());
+      assertEquals("C", anotherMetadata.getValue());
+   }
+
+   public void testPutAllAndRemoveWithVersion(Method m) {
+      String key = k(m);
+
+      remoteCache.putAll(Map.of(key, "A"));
+
+      MetadataValue<String> prevMetadata = remoteCache.getWithMetadata(key);
+
+      assertEquals("A", prevMetadata.getValue());
+
+      String anotherKey = key + k(m);
+      remoteCache.putAll(Map.of(key, "B", anotherKey, "C"));
+      MetadataValue<String> currMetadata = remoteCache.getWithMetadata(key);
+
+      assertTrue(currMetadata.getVersion() > prevMetadata.getVersion());
+      assertFalse(remoteCache.removeWithVersion(key, prevMetadata.getVersion()));
+      assertEquals("B", remoteCache.get(key));
+
+      MetadataValue<String> anotherMetadata = remoteCache.getWithMetadata(anotherKey);
+      assertEquals(currMetadata.getVersion(), anotherMetadata.getVersion());
+      assertTrue(remoteCache.removeWithVersion(anotherKey, anotherMetadata.getVersion()));
    }
 
    public void testReplaceIfUnmodifiedWithExpiry(Method m) throws InterruptedException {
