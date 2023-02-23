@@ -263,7 +263,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          telemetryService.requestEnd(span);
       } else if (entry != null) {
          NumericVersion streamVersion = new NumericVersion(version);
-         if (entry.getMetadata().version().equals(streamVersion)) {
+         if (streamVersion.equals(entry.getMetadata().version())) {
             cache.replaceAsync(entry.getKey(), entry.getValue(), value, metadata)
                   .whenComplete((replaced, throwable2) -> {
                      if (throwable2 != null) {
@@ -403,7 +403,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       } else if (entry != null) {
          byte[] prev = entry.getValue();
          NumericVersion streamVersion = new NumericVersion(version);
-         if (entry.getMetadata().version().equals(streamVersion)) {
+         if (streamVersion.equals(entry.getMetadata().version())) {
             cache.removeAsync(key, prev).whenComplete((removed, throwable2) -> {
                if (throwable2 != null) {
                   writeException(header, span, throwable2);
@@ -446,6 +446,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       Object span = telemetryService.requestStart(HotRodOperation.PUT_ALL.name(), header.otherParams);
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      metadata.version(cacheInfo.versionGenerator.generateNew());
       putAllInternal(header, cache, entries, metadata.build(), span);
    }
 
