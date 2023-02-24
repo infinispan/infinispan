@@ -195,17 +195,24 @@
       <testResources>
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>
-            <filtering>true</filtering>
+            <filtering>false</filtering>
             <excludes>
-               <exclude>sfs/**</exclude>
+               <exclude>**/*.xml</exclude>
+               <exclude>**/*.yaml</exclude>
+               <exclude>**/*.json</exclude>
+               <exclude>**/*.properties</exclude>
+               <exclude>**/*.MF</exclude>
             </excludes>
          </testResource>
-         <!-- Make sure the filtering is disabled for 10.1.x SFS data, otherwise the file gets "corrupted" -->
          <testResource>
             <directory>${project.basedir}/src/test/resources</directory>
-            <filtering>false</filtering>
+            <filtering>true</filtering>
             <includes>
-               <include>sfs/**</include>
+               <include>**/*.xml</include>
+               <include>**/*.yaml</include>
+               <include>**/*.json</include>
+               <include>**/*.properties</include>
+               <include>**/*.MF</include>
             </includes>
          </testResource>
       </testResources>
