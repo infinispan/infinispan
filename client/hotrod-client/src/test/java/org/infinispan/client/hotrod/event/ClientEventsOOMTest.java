@@ -50,6 +50,10 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    // There is only one Godzilla in heap, but we can use Netty's off-heap pools to multiply them and destroy the world
    private static final byte[] GODZILLA = makeGodzilla();
 
+   {
+      testReplay = false;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getConfigurationBuilder();
