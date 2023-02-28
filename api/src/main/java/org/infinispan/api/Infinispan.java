@@ -46,12 +46,16 @@ public interface Infinispan extends AutoCloseable {
 
    static Infinispan create(Configuration configuration) {
       for (Factory factory : ServiceLoader.load(Factory.class, Factory.class.getClassLoader())) {
-         Infinispan instance = factory.create(configuration);
+         Infinispan instance = create(configuration, factory);
          if (instance != null) {
             return instance;
          }
       }
       throw new InfinispanConfigurationException("No factory to handle configuration " + configuration);
+   }
+
+   static Infinispan create(Configuration configuration, Factory factory) {
+      return factory.create(configuration);
    }
 
    /**
