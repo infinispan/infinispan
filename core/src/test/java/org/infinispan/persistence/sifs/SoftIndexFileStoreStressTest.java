@@ -2,11 +2,11 @@ package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.lang.reflect.Method;
+import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "persistence.sifs.SoftIndexFileStoreStressTest")
 public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
+   private static final String CACHE_NAME = "stress-test-cache";
    protected String tmpDirectory;
 
    @BeforeClass(alwaysRun = true)
@@ -36,8 +37,12 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
    }
 
-   @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
+   @AfterClass(alwaysRun = true, dependsOnMethods = "destroyAfterClass")
+   protected void clearTempDir() throws IOException {
+      SoftIndexFileStoreTestUtils.StatsValue statsValue = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, CACHE_NAME, log);
+      long dataDirectorySize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, CACHE_NAME);
+
+      assertEquals(dataDirectorySize, statsValue.getStatsSize());
       Util.recursiveFileRemove(tmpDirectory);
    }
 
@@ -62,12 +67,12 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       return persistence;
    }
 
-   public void testConstantReadsWithCompaction(Method method) throws InterruptedException, ExecutionException, TimeoutException {
+   public void testConstantReadsWithCompaction() throws InterruptedException, ExecutionException, TimeoutException {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      createCacheStoreConfig(cb.persistence(), method.getName(), false);
-      TestingUtil.defineConfiguration(cacheManager, method.getName(), cb.build());
+      createCacheStoreConfig(cb.persistence(), CACHE_NAME, false);
+      TestingUtil.defineConfiguration(cacheManager, CACHE_NAME, cb.build());
 
-      Cache<String, Object> cache = cacheManager.getCache(method.getName());
+      Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
       cache.start();
 
       int numKeys = 22;
@@ -79,30 +84,28 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       WaitDelegatingNonBlockingStore<?, ?> store = TestingUtil.getFirstStoreWait(cache);
 
       Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
-      Set<Integer> files = compactor.getFiles();
-
-      assertEquals(2, files.size());
 
       AtomicBoolean continueRunning = new AtomicBoolean(true);
       Future<Void> retrievalFork = fork(() -> {
          while (continueRunning.get()) {
-            for (int i = 0; i < numKeys; ++i) {
-               assertEquals("value-" + i, cache.get("key-" + i));
-               if (!continueRunning.get()) {
-                  break;
-               }
-            }
+            int i = ThreadLocalRandom.current().nextInt(numKeys);
+            assertEquals("value-" + i, cache.get("key-" + i));
          }
       });
 
       Future<Void> writeFork = fork(() -> {
          while (continueRunning.get()) {
-            for (int i = 12; i < 22; ++i) {
-               cache.put("k" + i, "v" + 2);
-               if (!continueRunning.get()) {
-                  break;
-               }
-            }
+            int i = ThreadLocalRandom.current().nextInt(numKeys);
+            String sb = i +
+                  "vjaofijeawofiejafioeh23uh123eu213heu1he u1ni 1uh13iueh 1iuehn12ujhen12ujhn2112w!@KEO@J!E I!@JEIO! J@@@E1j ie1jvjaofijeawofiejafioeha".repeat(i);
+            cache.put("k" + i, sb);
+         }
+      });
+
+      Future<Void> removeFork = fork(() -> {
+         while (continueRunning.get()) {
+            int i = ThreadLocalRandom.current().nextInt(numKeys);
+            cache.remove("k" + i);
          }
       });
 
@@ -121,7 +124,7 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       long secondsToRun = TimeUnit.MINUTES.toSeconds(2);
 
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) < secondsToRun) {
-         if (retrievalFork.isDone() || compactionFork.isDone() || writeFork.isDone()) {
+         if (retrievalFork.isDone() || compactionFork.isDone() || writeFork.isDone() || removeFork.isDone()) {
             continueRunning.set(false);
             break;
          }
@@ -129,8 +132,14 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       }
       continueRunning.set(false);
 
-      TestBlocking.get(retrievalFork, 10, TimeUnit.SECONDS);
-      TestBlocking.get(compactionFork, 10, TimeUnit.SECONDS);
-      TestBlocking.get(writeFork, 10, TimeUnit.SECONDS);
+      try {
+         TestBlocking.get(retrievalFork, 10, TimeUnit.SECONDS);
+         TestBlocking.get(compactionFork, 10, TimeUnit.SECONDS);
+         TestBlocking.get(writeFork, 10, TimeUnit.SECONDS);
+         TestBlocking.get(removeFork, 10, TimeUnit.SECONDS);
+      } catch (Throwable t) {
+         log.tracef(Util.threadDump());
+         throw t;
+      }
    }
 }
