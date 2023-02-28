@@ -152,4 +152,15 @@ class LogRequest extends CompletableFuture<Void> {
    public IndexRequest getIndexRequest() {
       return indexRequest;
    }
+
+   @Override
+   public String toString() {
+      return "LogRequest{" +
+            "type=" + type +
+            ", segment=" + segment +
+            ", key=" + key +
+            ", file=" + file +
+            ", fileOffset=" + fileOffset +
+            '}';
+   }
 }
