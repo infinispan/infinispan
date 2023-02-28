@@ -50,6 +50,7 @@ public class GetKeyMultimapOperation<K, V> extends AbstractMultimapKeyOperation<
       } else if (result == null) {
          size = ByteBufUtil.readVInt(buf);
          result = supportsDuplicates ? new ArrayList<>(size) : new HashSet<>(size);
+         decoder.checkpoint();
       }
       while (result.size() < size) {
          V value = bytes2obj(operationContext.getChannelFactory().getMarshaller(), ByteBufUtil.readArray(buf), dataFormat().isObjectStorage(), operationContext.getConfiguration().getClassAllowList());

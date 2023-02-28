@@ -12,8 +12,12 @@ public class HotRod implements Infinispan {
    final HotRodTransport transport;
 
    HotRod(HotRodConfiguration configuration) {
+      this(configuration, new HotRodTransport(configuration));
+   }
+
+   HotRod(HotRodConfiguration configuration, HotRodTransport transport) {
       this.configuration = configuration;
-      this.transport = new HotRodTransport(configuration);
+      this.transport = transport;
       this.transport.start();
    }
 

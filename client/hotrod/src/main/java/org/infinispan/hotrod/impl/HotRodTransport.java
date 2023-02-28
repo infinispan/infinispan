@@ -90,7 +90,7 @@ public class HotRodTransport implements AutoCloseable {
       counterManager = new RemoteCounterManager();
       syncTransactionTable = new SyncModeTransactionTable(configuration.transactionTimeout());
       xaTransactionTable = new XaModeTransactionTable(configuration.transactionTimeout());
-      channelFactory = new ChannelFactory();
+      channelFactory = createChannelFactory();
       codec = Codec.forProtocol(configuration.version());
 
       marshallerRegistry = new MarshallerRegistry();
@@ -138,6 +138,10 @@ public class HotRodTransport implements AutoCloseable {
          marshallerRegistry.registerMarshaller(marshaller);
       }
       return marshaller;
+   }
+
+   protected ChannelFactory createChannelFactory() {
+      return new ChannelFactory();
    }
 
    public MBeanHelper getMBeanHelper() {
