@@ -296,8 +296,11 @@ public class FileProvider {
          }
          if (!recordQueue.isEmpty()) throw new IllegalStateException();
          if (!openFiles.isEmpty()) throw new IllegalStateException();
-         for (File file : dataDir.listFiles()) {
-            Files.delete(file.toPath());
+         File[] files = dataDir.listFiles();
+         if (files != null) {
+            for (File file : files) {
+               Files.delete(file.toPath());
+            }
          }
       } finally {
          lock.writeLock().unlock();

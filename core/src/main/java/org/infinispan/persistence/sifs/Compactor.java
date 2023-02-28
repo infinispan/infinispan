@@ -56,12 +56,17 @@ class Compactor implements Consumer<Object> {
    private final KeyPartitioner keyPartitioner;
    private final int maxFileSize;
    private final double compactionThreshold;
-   private final FlowableProcessor<Object> processor;
+   private final Executor blockingExecutor;
+
+   private FlowableProcessor<Object> processor;
 
    private Index index;
    // as processing single scheduled compaction takes a lot of time, we don't use the queue to signalize
    private final AtomicBoolean clearSignal = new AtomicBoolean();
    private volatile boolean terminateSignal = false;
+   // variable used to denote running (not null but not complete) and stopped (not null but complete)
+   // This variable is never to be null
+   private volatile CompletableFuture<?> stopped = CompletableFutures.completedNull();
 
    private CompletableFuture<Void> paused = CompletableFutures.completedNull();
 
@@ -88,18 +93,7 @@ class Compactor implements Consumer<Object> {
       this.keyPartitioner = keyPartitioner;
       this.maxFileSize = maxFileSize;
       this.compactionThreshold = compactionThreshold;
-
-      processor = UnicastProcessor.create().toSerialized();
-      Scheduler scheduler = Schedulers.from(blockingExecutor);
-      processor.observeOn(scheduler)
-            .delay(obj -> {
-               // These types are special and should allow processing always
-               if (obj == RESUME_PILL || obj instanceof CompletableFuture) {
-                  return Flowable.empty();
-               }
-               return RxJavaInterop.voidCompletionStageToFlowable(paused);
-            })
-            .subscribe(this, error -> log.compactorEncounteredException(error, -1));
+      this.blockingExecutor = blockingExecutor;
    }
 
    public void setIndex(Index index) {
@@ -117,11 +111,15 @@ class Compactor implements Consumer<Object> {
    }
 
    public void completeFile(int file, int currentSize, long nextExpirationTime) {
+      completeFile(file, currentSize, nextExpirationTime, true);
+   }
+
+   public void completeFile(int file, int currentSize, long nextExpirationTime, boolean canSchedule) {
       Stats stats = getStats(file, currentSize, nextExpirationTime);
       stats.setCompleted();
       // It is possible this was a logFile that was compacted
       stats.scheduled = false;
-      if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
+      if (canSchedule && stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
          schedule(file, stats);
       }
    }
@@ -131,6 +129,10 @@ class Compactor implements Consumer<Object> {
    }
 
    boolean addFreeFile(int file, int expectedSize, int freeSize, long expirationTime) {
+      return addFreeFile(file, expectedSize, freeSize, expirationTime, true);
+   }
+
+   boolean addFreeFile(int file, int expectedSize, int freeSize, long expirationTime, boolean canScheduleCompaction) {
       int fileSize = (int) fileProvider.getFileSize(file);
       if (fileSize != expectedSize) {
          log.tracef("Unable to add file %s as it its size %s does not match expected %s, index may be dirty", fileSize, expectedSize);
@@ -144,10 +146,35 @@ class Compactor implements Consumer<Object> {
       }
       log.tracef("Added new file %s to compactor manually with total size %s and free size %s", file, fileSize, freeSize);
       stats.setCompleted();
-      if (stats.readyToBeScheduled(compactionThreshold, freeSize)) {
+      if (canScheduleCompaction && stats.readyToBeScheduled(compactionThreshold, freeSize)) {
          schedule(file, stats);
       }
       return true;
+   }
+
+   public void start() {
+      stopped = new CompletableFuture<>();
+
+      processor = UnicastProcessor.create().toSerialized();
+      Scheduler scheduler = Schedulers.from(blockingExecutor);
+      processor.observeOn(scheduler)
+            .delay(obj -> {
+               // These types are special and should allow processing always
+               if (obj == RESUME_PILL || obj instanceof CompletableFuture) {
+                  return Flowable.empty();
+               }
+               return RxJavaInterop.voidCompletionStageToFlowable(paused);
+            })
+            .subscribe(this, error -> {
+               log.compactorEncounteredException(error, -1);
+               stopped.completeExceptionally(error);
+            }, () -> stopped.complete(null));
+
+      fileStats.forEach((file, stats) -> {
+         if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
+            schedule(file, stats);
+         }
+      });
    }
 
    public interface CompactionExpirationSubscriber {
@@ -221,7 +248,7 @@ class Compactor implements Consumer<Object> {
             shouldSchedule = true;
          }
       }
-      if (shouldSchedule) {
+      if (!terminateSignal && shouldSchedule) {
          CompactionRequest request = new CompactionRequest(file);
          processor.onNext(request);
          request.whenComplete((__, t) -> {
@@ -272,10 +299,18 @@ class Compactor implements Consumer<Object> {
    }
 
    public void stopOperations() {
+      // This will short circuit any compactor call, so it can only process the entry it may be on currently
       terminateSignal = true;
       processor.onComplete();
-      Util.close(logFile);
-      logFile = null;
+      // The stopped CompletableFuture is completed in onComplete or onError callback for the processor, so this will
+      // return after all compaction calls are completed
+      stopped.join();
+      if (logFile != null) {
+         Util.close(logFile);
+         // Complete the file, this file should not be compacted
+         completeFile(logFile.fileId, currentOffset, nextExpirationTime, false);
+         logFile = null;
+      }
    }
 
    private static class CompactionRequest extends CompletableFuture<Void> {
@@ -491,6 +526,7 @@ class Compactor implements Consumer<Object> {
                // we could remove the entry and delete would not find it
                drop = false;
             } else {
+               log.tracef("Loading from index for key %s", key);
                EntryInfo info = index.getInfo(key, segment, serializedKey);
                Objects.requireNonNull(info, "No index info found for key: " + key);
                if (info.numRecords <= 0) {
@@ -664,6 +700,8 @@ class Compactor implements Consumer<Object> {
             stats.markForDeletion();
          }
          index.deleteFileAsync(scheduledFile);
+      } else {
+         log.tracef("Not doing anything to compacted file %d as either the terminate clear signal were set", scheduledFile);
       }
    }
 

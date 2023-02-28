@@ -276,6 +276,7 @@ class IndexNode {
          protected EntryInfo apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
             if (entryKeyEqualsBuffer(hak, key)) {
+               log.tracef("Found matching leafNode %s", leafNode);
                return leafNode;
             } else {
                if (log.isTraceEnabled()) {
@@ -310,6 +311,7 @@ class IndexNode {
             currentLock = node.lock.readLock();
             currentLock.lock();
             if (node.leafNodes.length == 0) {
+               log.tracef("No leaf nodes found that maps to provided key");
                return null;
             }
             int insertionPoint = node.getInsertionPoint(indexKey);

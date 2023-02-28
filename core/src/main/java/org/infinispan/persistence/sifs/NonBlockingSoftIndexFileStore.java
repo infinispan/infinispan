@@ -252,15 +252,16 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             if (!migrateData) {
                logAppender.setSeqId(maxSeqId.get() + 1);
             }
-
+            // Compactor may have to write to the index, so it can't be started until after Index has been fully started
+            compactor.start();
          }, "soft-index-start");
-      } else {
-         try {
-            index.reset();
-         } catch (IOException e) {
-            throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
-         }
       }
+      try {
+         index.reset();
+      } catch (IOException e) {
+         throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+      }
+      compactor.start();
       log.debug("Not building the index - purge will be executed");
       return CompletableFutures.completedNull();
    }
@@ -406,7 +407,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      index.handleRequest(IndexRequest.update(segment, key, ByteBufferImpl.create(serializedKey), file, offset, size));
                   }
                   return null;
-               }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get()));
+               }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get(), false));
       }).ignoreElements().toCompletionStage(null);
       CompletionStages.join(stage);
    }
