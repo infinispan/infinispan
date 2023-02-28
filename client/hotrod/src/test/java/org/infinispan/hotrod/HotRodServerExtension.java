@@ -1,14 +1,19 @@
 package org.infinispan.hotrod;
 
 import java.lang.reflect.Method;
+import java.net.URI;
 
 import org.infinispan.api.Infinispan;
+import org.infinispan.api.configuration.Configuration;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.hotrod.configuration.HotRodConfiguration;
 import org.infinispan.hotrod.configuration.HotRodConfigurationBuilder;
+import org.infinispan.hotrod.impl.HotRodURI;
+import org.infinispan.hotrod.impl.transport.netty.HotRodTestTransport;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -16,6 +21,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -86,7 +92,24 @@ public class HotRodServerExtension implements BeforeAllCallback, AfterAllCallbac
    public Infinispan getClient() {
       HotRodConfigurationBuilder builder = new HotRodConfigurationBuilder();
       builder.addServer().host(hotRodServer.getHost()).port(hotRodServer.getPort());
-      return Infinispan.create(builder.build());
+      return Infinispan.create(builder.build(), new Infinispan.Factory() {
+         @Override
+         public Infinispan create(URI uri) {
+            try {
+               return create(HotRodURI.create(uri).toConfigurationBuilder().build());
+            } catch (Throwable t) {
+               // Not a Hot Rod URI
+               return null;
+            }
+         }
+
+         @Override
+         public Infinispan create(Configuration configuration) {
+            assert configuration instanceof HotRodConfiguration;
+            HotRodConfiguration hrc = (HotRodConfiguration) configuration;
+            return new HotRod(hrc, HotRodTestTransport.createTestTransport(hrc));
+         }
+      });
    }
 
    public static Builder builder() {

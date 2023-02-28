@@ -183,8 +183,7 @@ public class ChannelFactory {
       if (maxConnections < 0) {
          maxConnections = Integer.MAX_VALUE;
       }
-      ChannelInitializer channelInitializer =
-            new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this);
+      ChannelInitializer channelInitializer = createChannelInitializer(address, bootstrap);
       bootstrap.handler(channelInitializer);
       ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
                                          configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
@@ -192,6 +191,14 @@ public class ChannelFactory {
                                          configuration.connectionPool().maxPendingRequests());
       channelInitializer.setChannelPool(pool);
       return pool;
+   }
+
+   protected ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
+      return new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this);
+   }
+
+   protected CacheOperationsFactory getCacheOperationsFactory() {
+      return cacheOperationsFactory;
    }
 
    private void pingServersIgnoreException() {
