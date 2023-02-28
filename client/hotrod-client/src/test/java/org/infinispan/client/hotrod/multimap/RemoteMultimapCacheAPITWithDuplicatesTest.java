@@ -1,17 +1,16 @@
 package org.infinispan.client.hotrod.multimap;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.testng.annotations.Test;
 
 import java.util.Collection;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "client.hotrod.RemoteMultimapCacheAPITWithDuplicatesTest")
 public class RemoteMultimapCacheAPITWithDuplicatesTest extends SingleHotRodServerTest {

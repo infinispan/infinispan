@@ -34,6 +34,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
 
    protected final List<HotRodServer> servers = new ArrayList<>();
    protected final List<RemoteCacheManager> clients = new ArrayList<>();
+   protected boolean testReplay = true;
 
    protected void createHotRodServers(int num, ConfigurationBuilder defaultBuilder) {
       // Start Hot Rod servers
@@ -54,7 +55,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected RemoteCacheManager createClient(int i) {
-      return new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(i)).build());
+      return new InternalRemoteCacheManager(testReplay, createHotRodClientConfigurationBuilder(server(i)).build());
    }
 
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(HotRodServer server) {

@@ -15,16 +15,26 @@ import org.infinispan.client.hotrod.impl.transport.netty.TestChannelFactory;
  */
 public class InternalRemoteCacheManager extends RemoteCacheManager {
 
+   private final boolean testReplay;
+
+   public InternalRemoteCacheManager(boolean testReplay, Configuration configuration) {
+      super(configuration, true);
+      this.testReplay = testReplay;
+   }
+
    public InternalRemoteCacheManager(Configuration configuration) {
       super(configuration, true);
+      this.testReplay = true;
    }
 
    public InternalRemoteCacheManager(Configuration configuration, boolean start) {
       super(configuration, start);
+      this.testReplay = true;
    }
 
    public InternalRemoteCacheManager(boolean start) {
       super(start);
+      this.testReplay = true;
    }
 
    public InternalRemoteCacheManager() {
@@ -37,6 +47,7 @@ public class InternalRemoteCacheManager extends RemoteCacheManager {
 
    @Override
    public ChannelFactory createChannelFactory() {
-      return new TestChannelFactory(new CodecHolder(getConfiguration().version().getCodec()));
+      if (testReplay) return new TestChannelFactory(new CodecHolder(getConfiguration().version().getCodec()));
+      return super.createChannelFactory();
    }
 }
