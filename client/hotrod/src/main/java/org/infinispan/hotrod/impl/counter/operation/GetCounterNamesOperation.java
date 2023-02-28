@@ -43,6 +43,7 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
       if (names == null) {
          size = ByteBufUtil.readVInt(buf);
          names = new ArrayList<>(size);
+         decoder.checkpoint();
       }
       while (names.size() < size) {
          names.add(ByteBufUtil.readString(buf));
