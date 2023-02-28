@@ -74,9 +74,15 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
             return;
          }
          entries = new ArrayList<>(entriesSize);
+         projectionsSize = -1;
+         decoder.checkpoint();
+      }
+
+      if (projectionsSize < 0) {
          projectionsSize = codec.readProjectionSize(buf);
          decoder.checkpoint();
       }
+
       while (entries.size() + untrackedEntries < entriesSize) {
          short meta = codec.readMeta(buf);
          long creation = -1;
