@@ -165,7 +165,7 @@ class Index {
                int length = buffer.getInt();
                int free = buffer.getInt();
                long expirationTime = buffer.getLong();
-               if (!compactor.addFreeFile(id, length, free, expirationTime)) {
+               if (!compactor.addFreeFile(id, length, free, expirationTime, false)) {
                   log.tracef("Unable to add free file: %s ", id);
                   return false;
                }

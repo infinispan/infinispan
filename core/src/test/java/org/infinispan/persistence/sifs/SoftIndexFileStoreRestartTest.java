@@ -2,13 +2,11 @@ package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
-import java.io.File;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.lambda.NamedLambdas;
@@ -18,19 +16,19 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.distribution.BaseDistStoreTest;
+import org.infinispan.persistence.sifs.configuration.DataConfiguration;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.LOCAL})
 @Test(groups = "functional", testName = "persistence.sifs.SoftIndexFileStoreRestartTest")
 public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, String, SoftIndexFileStoreRestartTest> {
    protected String tmpDirectory;
+   protected int fileSize;
 
    {
       // We don't really need a cluster
@@ -38,6 +36,36 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       l1CacheEnabled = false;
       segmented = true;
    }
+
+   SoftIndexFileStoreRestartTest fileSize(int fileSize) {
+      this.fileSize = fileSize;
+      return this;
+   }
+
+   @Override
+   public Object[] factory() {
+      return Stream.of(CacheMode.DIST_SYNC, CacheMode.LOCAL)
+            .flatMap(type ->
+                  Stream.builder()
+                        .add(new SoftIndexFileStoreRestartTest().fileSize(1_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().fileSize(10_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().fileSize(320_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().fileSize(2_000_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().fileSize(DataConfiguration.MAX_FILE_SIZE.getDefaultValue()).cacheMode(type)
+                        ).build()
+            ).toArray();
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "fileSize");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), fileSize);
+   }
+
 
    @BeforeClass(alwaysRun = true)
    @Override
@@ -59,6 +87,8 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       // We don't support shared for SIFS
       assert !shared;
       return persistenceConfigurationBuilder.addSoftIndexFileStore()
+            // Force some extra files
+            .maxFileSize(fileSize)
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
             .indexLocation(Paths.get(tmpDirectory, "index").toString());
    }
@@ -70,6 +100,9 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       }
       assertEquals(size, cache(0, cacheName).size());
 
+      // Add in an extra remove to make things more interesting, originally this caused compcation to always error
+      cache(0, cacheName).remove(4);
+
       killMember(0, cacheName);
 
       // Delete the index which should force it to rebuild
@@ -77,9 +110,13 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
       createCacheManagers();
 
-      assertEquals(size, cache(0, cacheName).size());
+      assertEquals(size - 1, cache(0, cacheName).size());
       for (int i = 0; i < size; i++) {
-         assertEquals("value-" + i, cache(0, cacheName).get(i));
+         if (i == 4) {
+            assertNull(cache(0, cacheName).get(i));
+         } else {
+            assertEquals("value-" + i, cache(0, cacheName).get(i));
+         }
       }
    }
 
@@ -98,17 +135,6 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
             {NamedLambdas.of("NO-DELETE", () -> {
             })}
       };
-   }
-
-   long dataDirectorySize() {
-      Path dataPath = Path.of(tmpDirectory, "data", cacheName, "data");
-      File[] dataFiles = dataPath.toFile().listFiles();
-
-      long length = 0;
-      for (File file : dataFiles) {
-         length += file.length();
-      }
-      return length;
    }
 
    @Test(dataProvider = "restart")
@@ -141,39 +167,20 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
       killMember(0, cacheName);
 
-      long actualSize = dataDirectorySize();
+      long actualSize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, cacheName);
 
-      long statsSize = 0;
-      long freeSize = 0;
-      try (FileChannel statsChannel = new RandomAccessFile(
-            Path.of(tmpDirectory, "index", cacheName, "index", "index.stats").toFile(), "r").getChannel()) {
-         ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 4 + 8);
-         while (Index.read(statsChannel, buffer)) {
-            buffer.flip();
-            // Ignore id
-            int file = buffer.getInt();
-            int length = buffer.getInt();
-            int free = buffer.getInt();
-            // Ignore expiration
-            buffer.getLong();
-            buffer.flip();
+      SoftIndexFileStoreTestUtils.StatsValue stats = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, cacheName, log);
 
-            statsSize += length;
-            freeSize += free;
-            log.debugf("File: %s Length: %s free: %s", file, length, free);
-         }
-      }
-
-      assertEquals(actualSize, statsSize);
+      assertEquals(actualSize, stats.getStatsSize());
 
       // Make sure the previous size is the same
       if (previousUsedSize >= 0) {
-         assertEquals("Restart attempt: " + iterationCount, previousUsedSize, actualSize - freeSize);
+         assertEquals("Restart attempt: " + iterationCount, previousUsedSize, actualSize - stats.getFreeSize());
       }
       runnable.run();
       // Recreate the cache manager for next run(s)
       createCacheManagers();
-      return actualSize - freeSize;
+      return actualSize - stats.getFreeSize();
    }
 
    @DataProvider(name = "booleans")
@@ -197,8 +204,15 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       }
       assertEquals(extraInserts + 1, cache(0, cacheName).size());
 
+      cache(0, cacheName).remove(3);
+
       killMember(0, cacheName);
       // NOTE: we keep the index, so we ensure upon restart that it is correct
+      long actualSize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, cacheName);
+
+      SoftIndexFileStoreTestUtils.StatsValue stats = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, cacheName, log);
+
+      assertEquals(actualSize, stats.getStatsSize());
 
       createCacheManagers();
 
@@ -210,5 +224,16 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       CompletionStages.join(compactor.forceCompactionForAllNonLogFiles());
 
       assertEquals("value-" + (size - 1), cache(0, cacheName).get(key));
+
+      killMember(0, cacheName);
+
+      actualSize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, cacheName);
+
+      stats = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, cacheName, log);
+
+      assertEquals(actualSize, stats.getStatsSize());
+
+      // Other tests need a cache manager still
+      createCacheManagers();
    }
 }
