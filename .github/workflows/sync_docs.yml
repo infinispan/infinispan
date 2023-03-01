@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - 'main'
-      - '13.0.x'
+      - '14.0.x'
     paths:
       - 'documentation/**'
 
@@ -37,7 +37,7 @@ jobs:
       run: |
         cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
 
-    - if: github.ref == 'refs/heads/13.0.x'
+    - if: github.ref == 'refs/heads/14.0.x'
       name: Copy docs to stable
       run: |
         cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/stable/
