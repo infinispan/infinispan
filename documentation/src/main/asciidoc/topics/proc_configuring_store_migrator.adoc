@@ -1,14 +1,14 @@
 [id='configuring-store-migrator_{context}']
 = Configuring the cache store migrator
-Set properties for source and target cache stores in a `migrator.properties`
-file.
+Use the `migrator.properties` file to configure properties for source and target cache stores.
 
 .Procedure
 
 . Create a `migrator.properties` file.
-. Configure the source cache store in `migrator.properties`.
-.. Prepend all configuration properties with `source.` as in the following example:
+. Configure properties for source and target cache store using the `migrator.properties` file.
+.. Add the `source.` prefix to all configuration properties for the source cache store.
 +
+.Example source cache store
 [source,options="nowrap",subs=attributes+]
 ----
 source.type=SOFT_INDEX_FILE_STORE
@@ -17,9 +17,16 @@ source.location=/path/to/source/sifs
 source.version=<version>
 ----
 +
-. Configure the target cache store in `migrator.properties`.
-.. Prepend all configuration properties with `target.` as in the following example:
+[IMPORTANT]
+====
+For migrating data from segmented cache stores, you must also configure the number of segments using the `source.segment_count` property.
+The number of segments must match `clustering.hash.numSegments` in your {brandname} configuration.
+If the number of segments for a cache store does not match the number of segments for the corresponding cache, {brandname} cannot read data from the cache store.
+====
 +
+.. Add the `target.` prefix to all configuration properties for the target cache store.
++
+.Example target cache store
 [source,options="nowrap",subs=attributes+]
 ----
 target.type=SINGLE_FILE_STORE
