@@ -12,6 +12,12 @@ The following example shows a Protobuf message that describes a `Person` object:
 include::protobuf/personalshopper.proto[]
 ----
 
+[NOTE]
+====
+Protobuf does not support circular objects.
+Use Java serialization or JBoss Marshalling to marshall circular objects.
+====
+
 [discrete]
 == Interoperability
 
