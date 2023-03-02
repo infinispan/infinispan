@@ -119,7 +119,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    public CompletionStage<Void> start(InitializationContext ctx) {
       Configuration cacheConfiguration = ctx.getCache().getCacheConfiguration();
       persistenceConfiguration = cacheConfiguration.persistence();
-      scheduler = ctx.getCache().getCacheManager().getGlobalComponentRegistry().getComponent(
+      scheduler = SecurityActions.getGlobalComponentRegistry(ctx.getCache().getCacheManager()).getComponent(
             ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
       assert scheduler != null;
       StoreConfiguration storeConfiguration = ctx.getConfiguration();
