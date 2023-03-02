@@ -10,7 +10,7 @@ import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.cache.RemoteCache;
 import org.infinispan.hotrod.impl.protocol.Codec;
 import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.hotrod.impl.transport.netty.HotRodClientDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -46,7 +46,7 @@ public class AddClientListenerOperation extends ClientListenerOperation {
    protected void actualExecute(Channel channel) {
       ClientListener clientListener = null; // FIXME
 
-      channel.pipeline().get(HeaderDecoder.class).registerOperation(channel, this);
+      channel.pipeline().get(HotRodClientDecoder.class).registerOperation(channel, this);
 
       operationContext.getListenerNotifier().addDispatcher(ClientEventDispatcher.create(this,
             address, () -> cleanup(channel), remoteCache));

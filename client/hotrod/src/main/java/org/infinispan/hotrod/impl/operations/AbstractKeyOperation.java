@@ -51,7 +51,7 @@ public abstract class AbstractKeyOperation<K, T> extends StatsAffectingRetryingO
             operationContext.getConfiguration().getClassAllowList(), operationContext.getChannelFactory().getMarshaller());
    }
 
-   protected K operationKey() {
+   public K operationKey() {
       if (key == null) {
          return dataFormat().keyToObj(keyBytes, operationContext.getConfiguration().getClassAllowList());
       }

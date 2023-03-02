@@ -50,6 +50,10 @@ public class HeaderParams {
       return this;
    }
 
+   public int getTopologyAge() {
+      return topologyAge;
+   }
+
    public DataFormat dataFormat() {
       return dataFormat;
    }
@@ -75,5 +79,13 @@ public class HeaderParams {
 
    public AtomicReference<ClientTopology> getClientTopology() {
       return clientTopology;
+   }
+
+   public byte clientIntelligence() {
+      return clientIntelligence;
+   }
+
+   public short responseCode() {
+      return opRespCode;
    }
 }

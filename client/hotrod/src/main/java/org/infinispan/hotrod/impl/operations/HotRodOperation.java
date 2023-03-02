@@ -23,6 +23,7 @@ import org.infinispan.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.hotrod.impl.transport.netty.HotRodClientDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -90,7 +91,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    }
 
    protected void scheduleRead(Channel channel) {
-      channel.pipeline().get(HeaderDecoder.class).registerOperation(channel, this);
+      channel.pipeline().get(HotRodClientDecoder.class).registerOperation(channel, this);
    }
 
    public void releaseChannel(Channel channel) {

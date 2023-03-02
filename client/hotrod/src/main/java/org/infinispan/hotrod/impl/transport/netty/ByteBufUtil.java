@@ -23,9 +23,50 @@ public final class ByteBufUtil {
       return bytes;
    }
 
-   public static String readString(ByteBuf buf) {
-      byte[] strContent = readArray(buf);
-      return new String(strContent, HotRodConstants.HOTROD_STRING_CHARSET);
+   public static byte[] readMaybeArray(ByteBuf bf) {
+      int idx = bf.readerIndex();
+      int length = readMaybeVInt(bf);
+      if (idx == bf.readerIndex()) {
+         return null;
+      }
+      return readMaybeRangedArray(bf, length);
+   }
+
+   public static byte[] readMaybeRangedArray(ByteBuf bf, int length) {
+      if (length == 0) {
+         return Util.EMPTY_BYTE_ARRAY;
+      }
+
+      if (!bf.isReadable(length)) {
+         bf.resetReaderIndex();
+         return null;
+      }
+
+      byte[] bytes = new byte[length];
+      bf.readBytes(bytes, 0, length);
+      return bytes;
+   }
+
+   public static String readString(ByteBuf bf) {
+      bf.markReaderIndex();
+      int idx = bf.readerIndex();
+      int length = readMaybeVInt(bf);
+      if (idx == bf.readerIndex()) {
+         return null;
+      }
+
+      if (length == 0) {
+         return "";
+      }
+
+      if (!bf.isReadable(length)) {
+         bf.resetReaderIndex();
+         return null;
+      }
+
+      int startIndex = bf.readerIndex();
+      bf.skipBytes(length);
+      return bf.toString(startIndex, length, HotRodConstants.HOTROD_STRING_CHARSET);
    }
 
    public static void writeString(ByteBuf buf, String string) {
@@ -109,6 +150,19 @@ public final class ByteBufUtil {
          i |= (b & 0x7FL) << shift;
       }
       return i;
+   }
+
+   public static int readMaybeVInt(ByteBuf buf) {
+      buf.markReaderIndex();
+      int i = 0;
+      for (int shift = 0; buf.isReadable(); shift += 7) {
+         byte b = buf.readByte();
+         i |= (b & 0x7FL) << shift;
+         if ((b & 0x80) == 0)
+            return i;
+      }
+      buf.resetReaderIndex();
+      return Integer.MIN_VALUE;
    }
 
    public static String limitedHexDump(ByteBuf buf) {

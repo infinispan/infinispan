@@ -9,6 +9,7 @@ import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.hotrod.impl.operations.OperationContext;
 import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.hotrod.impl.transport.netty.HotRodClientDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -82,7 +83,7 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
                super.releaseChannel(channel);
             }
          }
-         HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+         HotRodClientDecoder decoder = channel.pipeline().get(HotRodClientDecoder.class);
          if (decoder != null) {
             decoder.removeListener(listenerId);
          }

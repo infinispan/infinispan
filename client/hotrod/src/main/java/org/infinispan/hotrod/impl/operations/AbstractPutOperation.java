@@ -1,9 +1,7 @@
 package org.infinispan.hotrod.impl.operations;
 
 import org.infinispan.api.common.CacheWriteOptions;
-import org.infinispan.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.hotrod.impl.DataFormat;
-import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
@@ -29,16 +27,6 @@ public abstract class AbstractPutOperation<K, T> extends AbstractKeyValueOperati
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (HotRodConstants.isSuccess(status)) {
-         statsDataStore();
-         if (HotRodConstants.hasPrevious(status)) {
-            statsDataRead(true);
-         }
-         completeResponse(buf, status);
-      } else {
-         throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
-      }
+      throw new IllegalStateException("Put operation not called manually.");
    }
-
-   abstract void completeResponse(ByteBuf buf, short status);
 }

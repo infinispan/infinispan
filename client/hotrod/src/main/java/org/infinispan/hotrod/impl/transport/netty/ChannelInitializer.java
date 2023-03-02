@@ -33,6 +33,7 @@ import org.infinispan.hotrod.configuration.SslConfiguration;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.hotrod.impl.transport.handler.CacheRequestProcessor;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -117,7 +118,8 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       } else {
          channel.pipeline().addLast(ActivationHandler.NAME, ActivationHandler.INSTANCE);
       }
-      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(cacheOperationsFactory.getDefaultContext()));
+      HeaderDecoder delegate = new HeaderDecoder(cacheOperationsFactory.getDefaultContext());
+      channel.pipeline().addLast(HeaderDecoder.NAME, new HotRodClientDecoder(delegate, new CacheRequestProcessor(channelFactory, configuration)));
       if (configuration.connectionPool().minEvictableIdleTime() > 0) {
          // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
          channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
