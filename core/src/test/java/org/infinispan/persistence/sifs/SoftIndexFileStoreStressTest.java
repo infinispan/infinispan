@@ -55,6 +55,7 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
             .indexLocation(Paths.get(tmpDirectory, "index").toString())
             .maxFileSize(1000)
+            .async().enabled(true)
             .purgeOnStartup(false).preload(preload)
             // Effectively disable reaper for tests
             .expiration().wakeUpInterval(Long.MAX_VALUE);
