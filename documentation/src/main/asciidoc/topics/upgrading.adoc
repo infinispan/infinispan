@@ -4,6 +4,10 @@
 
 * Default expiration may be applied to the cache configuration used by the RESP endpoint
 
+== RESP Endpoint
+
+* Default expiration may be applied to the cache configuration used by the RESP endpoint
+
 
 = Upgrading from 13.0 to 14.0
 
