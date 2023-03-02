@@ -5,6 +5,10 @@
 * The Kryo and Protostuff marshallers have been removed.
 * Extended Statistics module have been removed.
 
+== RESP Endpoint
+
+* Default expiration may be applied to the cache configuration used by the RESP endpoint
+
 
 = Upgrading from 13.0 to 14.0
 
