@@ -8,7 +8,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -54,9 +53,6 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
-      ExpirationConfiguration expConfig = cacheManager.getCacheConfiguration(configuration.defaultCacheName()).expiration();
-      if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)
-        throw log.invalidExpiration(configuration.defaultCacheName());
       super.startInternal();
    }
 
