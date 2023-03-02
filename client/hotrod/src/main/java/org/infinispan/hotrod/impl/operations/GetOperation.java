@@ -2,8 +2,6 @@ package org.infinispan.hotrod.impl.operations;
 
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.hotrod.impl.DataFormat;
-import org.infinispan.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
@@ -31,12 +29,6 @@ public class GetOperation<K, V> extends AbstractKeyOperation<K, V> {
 
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status)) {
-         statsDataRead(true);
-         complete(dataFormat().valueToObj(ByteBufUtil.readArray(buf), operationContext.getConfiguration().getClassAllowList()));
-      } else {
-         statsDataRead(false);
-         complete(null);
-      }
+      throw new IllegalStateException("Get operation not called manually.");
    }
 }

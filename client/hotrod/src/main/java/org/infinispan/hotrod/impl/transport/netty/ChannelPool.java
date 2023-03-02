@@ -80,7 +80,7 @@ class ChannelPool {
             // The channel was closed while idle but not removed - just forget it
             continue;
          }
-         if (!channel.isWritable() || channel.pipeline().get(HeaderDecoder.class).registeredOperations() >= maxPendingRequests) {
+         if (!channel.isWritable() || channel.pipeline().get(HotRodClientDecoder.class).registeredOperations() >= maxPendingRequests) {
             channels.addLast(channel);
             // prevent looping on non-writable channels
             if (++fullChannelsSeen < MAX_FULL_CHANNELS_SEEN) {

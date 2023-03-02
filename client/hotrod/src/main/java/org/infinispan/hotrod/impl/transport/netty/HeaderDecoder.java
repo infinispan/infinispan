@@ -43,7 +43,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private final List<byte[]> listeners = new ArrayList<>();
    private volatile boolean closing;
 
-   private HotRodOperation<?> operation;
+   HotRodOperation<?> operation;
    private short status;
    private short receivedOpCode;
 
@@ -68,6 +68,12 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       HotRodOperation<?> prev = incomplete.put(operation.header().messageId(), operation);
       assert prev == null : "Already registered: " + prev + ", new: " + operation;
       operation.scheduleTimeout(channel);
+   }
+
+   public void tryCompleteExceptionally(long messageId, Throwable t) {
+      HotRodOperation<?> op = getAndRemove(messageId);
+      if (op != null) op.completeExceptionally(t);
+      else log.errorf(t, "Not found operation %d to complete with exception", messageId);
    }
 
    @Override
@@ -117,10 +123,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                   throw new IllegalStateException("Should be never reached");
                }
                // we can remove the operation at this point since we'll read no more in this state
-               operation = incomplete.remove(messageId);
-               if (operation == null) {
-                  throw HOTROD.unknownMessageId(messageId);
-               }
+               loadCurrent(messageId);
                if (log.isTraceEnabled()) {
                   log.tracef("Received response for request %d, %s", messageId, operation);
                }
@@ -224,6 +227,49 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          }
       }
       failoverClientListeners();
+   }
+
+   protected void resumeOperation(ByteBuf buf, long messageId, short opCode, short status) {
+      // At this stage, the headers was consumed in the buffer,
+      // but since it is delegating from elsewhere, the state is (likely) at READ_MESSAGE_ID.
+      try {
+         switch (state()) {
+            case READ_MESSAGE_ID:
+               receivedOpCode = opCode;
+               loadCurrent(messageId);
+               this.status = status;
+               checkpoint(State.READ_PAYLOAD);
+               //fallthrough;
+            case READ_PAYLOAD:
+               if (log.isTraceEnabled()) {
+                  log.tracef("Decoding payload for message %s", HotRodConstants.Names.of(receivedOpCode));
+               }
+               operation.acceptResponse(buf, status, this);
+               checkpoint(State.READ_MESSAGE_ID);
+               break;
+            default:
+               throw new IllegalStateException("Delegate with state: " + state());
+         }
+      } catch (Exception e) {
+         state(State.READ_MESSAGE_ID);
+         throw e;
+      }
+   }
+
+   @Override
+   protected boolean isHandlingMessage() {
+      return state() != State.READ_MESSAGE_ID;
+   }
+
+   public void loadCurrent(long messageId) {
+      operation = getAndRemove(messageId);
+      if (operation == null) throw HOTROD.unknownMessageId(messageId);
+   }
+
+   private HotRodOperation<?> getAndRemove(long messageId) {
+      if (operation != null && operation.header().messageId() == messageId) return operation;
+
+      return incomplete.remove(messageId);
    }
 
    public void failoverClientListeners() {

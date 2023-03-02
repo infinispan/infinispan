@@ -24,7 +24,7 @@ import io.netty.util.internal.StringUtil;
  */
 public class HintingByteBuf extends ByteBuf {
    private final HintedReplayingDecoder<?> decoder;
-   private ByteBuf buffer;
+   ByteBuf buffer;
    private boolean terminated;
    private SwappedByteBuf swapped;
 

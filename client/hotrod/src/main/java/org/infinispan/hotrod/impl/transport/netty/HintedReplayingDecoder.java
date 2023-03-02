@@ -16,11 +16,11 @@ import io.netty.util.Signal;
  * The decoder does not expect pass different message up the pipeline, this is a terminal read operation.
  */
 public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
-   static final Signal REPLAY = Signal.valueOf(HintedReplayingDecoder.class.getName() + ".REPLAY");
+   public static final Signal REPLAY = Signal.valueOf(HintedReplayingDecoder.class.getName() + ".REPLAY");
    // We don't expect decode() to use the out param
    private static final List<Object> NO_WRITE_LIST = Collections.emptyList();
 
-   private final HintingByteBuf replayable = new HintingByteBuf(this);
+   final HintingByteBuf replayable = new HintingByteBuf(this);
    private S state;
    private int checkpoint = -1;
    private int requiredReadableBytes = 0;
@@ -43,7 +43,9 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
     * Stores the internal cumulative buffer's reader position.
     */
    protected void checkpoint() {
-      checkpoint = internalBuffer().readerIndex();
+      checkpoint = replayable.buffer != null
+            ? replayable.buffer.readerIndex()
+            : internalBuffer().readerIndex();
    }
 
    /**
@@ -63,6 +65,8 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
       return state;
    }
 
+   protected abstract boolean isHandlingMessage();
+
    /**
     * Sets the current state of this decoder.
     * @return the old state of this decoder
@@ -80,14 +84,14 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
    }
 
    @Override
-   protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> xxx) {
+   public void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> xxx) {
       if (in.readableBytes() < requiredReadableBytes) {
          // noop, wait for further reads
          return;
       }
       replayable.setCumulation(in);
       try {
-         while (in.isReadable() && !ctx.isRemoved() && ctx.channel().isActive()) {
+         while (isHandlingMessage() && in.isReadable() && !ctx.isRemoved() && ctx.channel().isActive()) {
             checkpoint = in.readerIndex();
 
             try {
@@ -123,6 +127,14 @@ public abstract class HintedReplayingDecoder<S> extends ByteToMessageDecoder {
          throw e;
       } catch (Throwable cause) {
          throw new DecoderException(cause);
+      } finally {
+         replayable.setCumulation(null);
+      }
+   }
+
+   void checkAndAdvance(ByteBuf buf) {
+      if (this.checkpoint >= 0) {
+         buf.readerIndex(checkpoint);
       }
    }
 

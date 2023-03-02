@@ -1,0 +1,223 @@
+// Hot Rod 4.x protocol
+namespace hr4x;
+
+// Target class
+class org.infinispan.hotrod.impl.transport.netty.HotRodClientDecoder extends ClientBaseDecoder;
+
+// methods vInt, vLong, array, byte...
+intrinsics org.infinispan.hotrod.impl.transport.netty.Intrinsics;
+
+import java.util.Map;
+import java.util.Set;
+
+import java.net.InetSocketAddress;
+
+import io.netty.util.Signal;
+
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.MediaTypeIds;
+
+import org.infinispan.hotrod.impl.transport.handler.CacheRequestProcessor;
+import org.infinispan.hotrod.impl.protocol.HotRodConstants;
+
+// Exceptions
+import io.netty.handler.codec.DecoderException;
+import org.infinispan.hotrod.exceptions.HotRodClientException;
+import org.infinispan.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.hotrod.exceptions.RemoteIllegalLifecycleStateException;
+import org.infinispan.hotrod.exceptions.RemoteNodeSuspectException;
+
+import org.infinispan.hotrod.impl.logging.Log;
+
+constants org.infinispan.hotrod.impl.protocol.HotRodConstants;
+
+init {
+    private boolean deadEnd = false;
+
+    public HotRodClientDecoder(HeaderDecoder delegate, CacheRequestProcessor processor) {
+        super(delegate, processor);
+    }
+}
+
+exceptionally {
+    state = 0;
+    if (!(t instanceof Signal)) {
+        if (t instanceof DecoderException) {
+            throw (DecoderException) t;
+        }
+        throw new DecoderException(t);
+    }
+}
+
+deadend {
+    if (!deadEnd) {
+        deadEnd = true;
+        delegate.tryCompleteExceptionally(messageId, new IllegalStateException("Failed parsing request"));
+        state = 0;
+    }
+}
+
+root request
+    : { deadEnd = false }
+      magic { if (magic != RESPONSE_MAGIC) throw new IllegalStateException("Invalid magic response: " + magic) }
+        messageId
+        resOpCode
+        parseOpIdentification
+    ;
+
+parseOpIdentification
+    : { ParserUtils.isEntryEventOp(resOpCode) || ParserUtils.isCounterEventOp(resOpCode) }?
+        { delegateParsing(buf, messageId, resOpCode, (short) -1); }
+    | { delegate.loadCurrent(messageId) } handleResponseHeader handleResponseBody
+    ;
+
+magic: uByte;
+messageId: vLong;
+resOpCode: uByte;
+headerStatus: byte;
+status: uByte;
+
+// +-----------+
+// |           |
+// |   Header  |
+// |           |
+// +-----------+
+handleResponseHeader
+    : status uByte checkNewTopology checkHeaderError
+    ;
+
+checkHeaderError
+    : { this.operationResponseHasError(messageId, resOpCode) }? extractHeaderError {}
+    | {}
+    ;
+
+serverMsg: string;
+extractHeaderError switch status
+    : { INVALID_MAGIC_OR_MESSAGE_ID_STATUS }? handleServerError { throw new HotRodClientException(serverMsg, messageId, status); }
+    | { REQUEST_PARSING_ERROR_STATUS }? handleServerError { throw new HotRodClientException(serverMsg, messageId, status); }
+    | { UNKNOWN_COMMAND_STATUS }? handleServerError { throw new HotRodClientException(serverMsg, messageId, status); }
+    | { SERVER_ERROR_STATUS }? handleServerError { throw new HotRodClientException(serverMsg, messageId, status); }
+    | { UNKNOWN_VERSION_STATUS }? handleServerError { throw new HotRodClientException(serverMsg, messageId, status); }
+    | { COMMAND_TIMEOUT_STATUS }? serverMsg
+        {if (log.isTraceEnabled()) log.tracef("Server-side timeout performing operation: %s", serverMsg); }
+        { throw new HotRodClientException(serverMsg, messageId, status); }
+    | { ILLEGAL_LIFECYCLE_STATE }? serverMsg
+        { throw new RemoteIllegalLifecycleStateException(serverMsg, messageId, status, null); }
+    | { NODE_SUSPECTED }? serverMsg
+        { throw new RemoteNodeSuspectException(serverMsg, messageId, status); }
+    | { if (log.isTraceEnabled()) log.tracef("Unknown status: %#04x", status); }
+      { throw new IllegalStateException(String.format("Unknown status: %#04x", status)) }
+    ;
+
+handleServerError
+    : serverMsg
+      { Log.HOTROD.errorFromServer(serverMsg); }
+    ;
+
+// +----------+
+// |          |
+// | Topology |
+// |          |
+// +----------+
+newTopologyId: vInt;
+checkNewTopology
+    : { uByte == 1 }? newTopologyId topologyMembers hashFunctionVersion segmentOwners
+        { responseHandler.topologyUpdate(current(), newTopologyId, topologyMembers.toArray(new InetSocketAddress[0]), segmentOwners, hashFunctionVersion) }
+    | {}
+    ;
+
+hashFunctionVersion returns short
+    : { isHashDistributionAware(messageId) }? uByte
+    | { -1 }
+    ;
+numSegments: vInt;
+segmentOwners returns List<List<Integer>>
+    : { isHashDistributionAware(messageId) }?
+        numSegments { segmentOwners = allocList(numSegments) }
+            #numSegments ( ownersInSegments { segmentOwners.add(ownersInSegments); } )
+    | { null }
+    ;
+ownersInSegments returns List<Integer>
+    : uByte { ownersInSegments = allocList(uByte) }
+        #uByte (vInt { ownersInSegments.add(vInt); } )
+    ;
+
+clusterSize: vInt;
+topologyMembers returns List<InetSocketAddress>
+    : clusterSize { topologyMembers = allocList(clusterSize) }
+        #clusterSize (string uShort { topologyMembers.add(InetSocketAddress.createUnresolved(string, uShort)); } )
+    ;
+
+// +----------+
+// |          |
+// | Response |
+// |          |
+// +----------+
+handleResponseBody switch resOpCode
+    : { PING_RESPONSE }? keyType valueType uByte serverOps { responseHandler.pingResponse(current(), status, uByte, keyType, valueType, serverOps); }
+    | { GET_RESPONSE }? getResponseBody { responseHandler.getResponse(current(), status, getResponseBody); }
+    | { PUT_RESPONSE }? assertOperationSuccess returnPossiblePrevValue { responseHandler.putResponse(current(), returnPossiblePrevValue, status); }
+    | { delegateParsing(buf, messageId, resOpCode, status); }
+    ;
+
+keyType: mediaType;
+valueType: mediaType;
+mediaType returns MediaType
+   :  mediaTypeDefinition mediaTypeDescription { mediaTypeDescription }
+   ;
+
+mediaTypeDefinition: byte;
+mediaTypeId: vInt;
+mediaTypeName: string;
+mediaTypeParams returns Map<String, String>
+   : mediaTypeParamsNum { mediaTypeParams = allocMap(mediaTypeParamsNum); }
+      #mediaTypeParamsNum ( mediaParamName mediaParamValue { mediaTypeParams.put(mediaParamName, mediaParamValue); } )
+   ;
+mediaTypeParamsNum: vInt;
+mediaParamName: string;
+mediaParamValue: string;
+mediaTypeDescription returns MediaType switch mediaTypeDefinition
+   : { 0 }? { null }
+   | { 1 }? mediaTypeId mediaTypeParams { MediaTypeIds.getMediaType((short) mediaTypeId).withParameters(mediaTypeParams) }
+   | { 2 }? mediaTypeName mediaTypeParams { MediaType.fromString(mediaTypeName).withParameters(mediaTypeParams) }
+   | { throw new IllegalStateException("Unknown MediaType definition: " + mediaTypeDefinition + " for message " + messageId); }
+   ;
+
+serverOpsCount: vInt;
+serverOps returns Set<Short>
+    : serverOpsCount { serverOps = allocSet(serverOpsCount); }
+                  #serverOpsCount (vShort { serverOps.add(vShort); } )
+    ;
+
+// Get response payload;
+getResponseBody returns byte[]
+    : { !HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status) }? array { array }
+    | { null }
+    ;
+
+assertOperationSuccess
+    : { !HotRodConstants.isSuccess(status) }?
+        { throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status)) }
+    | {}
+    ;
+
+returnPossiblePrevValue returns Object
+    : { !HotRodConstants.hasPrevious(status) }? { null }
+    | { HotRodConstants.isNotExist(status) || (!HotRodConstants.isSuccess(status) && !HotRodConstants.hasPrevious(status)) }? { null }
+    | uByte readMetadataLifespan readMetadataMaxIdle long array
+              { responseHandler.createCacheEntry(current(), creation, lifespan, lastUsed, maxIdle, long, array); }
+    ;
+
+creation: long;
+lifespan: vInt;
+readMetadataLifespan
+    : { (uByte & INFINITE_LIFESPAN) != INFINITE_LIFESPAN }? creation lifespan
+    | { creation = -1; lifespan = -1; }
+    ;
+
+lastUsed: long;
+maxIdle: vInt;
+readMetadataMaxIdle
+    : { (uByte & INFINITE_MAXIDLE) != INFINITE_MAXIDLE }? lastUsed maxIdle
+    | { lastUsed = -1; maxIdle = -1; }
+    ;

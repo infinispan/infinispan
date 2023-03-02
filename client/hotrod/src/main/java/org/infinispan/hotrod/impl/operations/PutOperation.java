@@ -4,8 +4,6 @@ import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheWriteOptions;
 import org.infinispan.hotrod.impl.DataFormat;
 
-import io.netty.buffer.ByteBuf;
-
 /**
  * Implements "put" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol
  * specification</a>.
@@ -21,10 +19,5 @@ public class PutOperation<K, V> extends AbstractPutOperation<K, CacheEntry<K, V>
    @Override
    protected int flags() {
       return super.flags() | PrivateHotRodFlag.FORCE_RETURN_VALUE.getFlagInt();
-   }
-
-   @Override
-   void completeResponse(ByteBuf buf, short status) {
-      complete(returnPossiblePrevValue(buf, status));
    }
 }

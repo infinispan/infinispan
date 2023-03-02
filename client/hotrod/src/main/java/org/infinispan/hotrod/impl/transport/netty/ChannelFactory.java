@@ -197,7 +197,7 @@ public class ChannelFactory {
       return new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this);
    }
 
-   protected CacheOperationsFactory getCacheOperationsFactory() {
+   public CacheOperationsFactory getCacheOperationsFactory() {
       return cacheOperationsFactory;
    }
 

@@ -12,6 +12,7 @@ import org.infinispan.hotrod.impl.DataFormat;
 import org.infinispan.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.hotrod.impl.transport.netty.HotRodClientDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -65,7 +66,7 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
                operationContext.getChannelFactory().releaseChannel(channel);
             }
          }
-         HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+         HotRodClientDecoder decoder = channel.pipeline().get(HotRodClientDecoder.class);
          if (decoder != null) {
             decoder.removeListener(listenerId);
          }

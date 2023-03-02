@@ -23,7 +23,7 @@ public abstract class StatsAffectingRetryingOperation<T> extends RetryOnFailureO
       super.scheduleRead(channel);
    }
 
-   protected void statsDataRead(boolean success) {
+   public void statsDataRead(boolean success) {
       if (operationContext.getClientStatistics().isEnabled()) {
          operationContext.getClientStatistics().dataRead(success, startTime, 1);
       }
@@ -35,7 +35,7 @@ public abstract class StatsAffectingRetryingOperation<T> extends RetryOnFailureO
       }
    }
 
-   protected void statsDataStore() {
+   public void statsDataStore() {
       if (operationContext.getClientStatistics().isEnabled()) {
          operationContext.getClientStatistics().dataStore(startTime, 1);
       }
