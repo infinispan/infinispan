@@ -121,16 +121,17 @@ curl localhost:11222/rest/v2/caches?action=convert \
 
 [id='rest_v2_cache_config_compare']
 = Comparing Cache Configurations
-Invoke a `POST` request with a `multipart/form-data` body containing two configurations and the `?action=compare`
-parameter. {brandname} responds with `204 (No Content)` in case the configurations are equal, and `409 (Conflict)` in case they are different.
+Invoke a `POST` request with a `multipart/form-data` body containing two cache configurations and the `?action=compare`
+parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
 POST /rest/v2/caches?action=compare
 ----
-
-Add the `ignoreMutable=true` parameter to ignore mutable attributes in the comparison.
-
++
+TIP: Add the `ignoreMutable=true` parameter to ignore mutable attributes in the comparison.
++
+{brandname} responds with `204 (No Content)` in case the configurations are equal, and `409 (Conflict)` in case they are different.
 
 [id='rest_v2_cache_detail']
 = Retrieving All Cache Details
@@ -418,8 +419,8 @@ DELETE /rest/v2/caches/{cacheName}/{cacheKey}
 |===
 
 [id='rest_v2_distribution_entries']
-= Checking entry distribution
-Invoking this endpoint returns the nodes the entry is present, identifying the primary owner and backup readers.
+= Checking distribution of cache entries
+Invoke this endpoint to retrieve details for data distribution of {brandname} cache entry.
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -433,17 +434,14 @@ GET /rest/v2/caches/{cacheName}/{cacheKey}?action=distribution
 include::json/rest_full_key_data_distribution.json[]
 ----
 
-The root element contains the properties:
+* `contains_key` returns `true` if the cache contains the key
+* `owners` provides a list of nodes that contain the key
 
-* `contains_key` identifies if the key exists in the cache.
-* `owners` is a list of nodes that have the key.
+List of owners includes the following properties:
 
-Each element in the `owners` list represents a node. The properties are:
-
-* `node_name` is the node name.
-* `primary` identifies if the node is the primary owner.
-* `node_addresses` is a list with all the node's physical addresses.
-
+* `node_name` shows the name of the node
+* `primary` identifies a node that is the primary owner
+* `node_addresses` shows the IP addresses and ports where the node can be accessed
 
 [id='rest_v2_remove_cache']
 = Deleting Caches
