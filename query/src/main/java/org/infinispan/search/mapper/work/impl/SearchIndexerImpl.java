@@ -3,10 +3,12 @@ package org.infinispan.search.mapper.work.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 
+import org.hibernate.search.engine.common.execution.spi.SimpleScheduledExecutor;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.query.concurrent.InfinispanIndexingExecutorProvider;
 import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
@@ -29,7 +31,6 @@ public class SearchIndexerImpl implements SearchIndexer {
    private final PojoIndexer delegate;
    private final EntityConverter entityConverter;
    private final InfinispanTypeContextProvider typeContextProvider;
-   private final NonBlockingManager nonBlockingManager;
 
    private final FlowableProcessor<IndexingOperation> indexProcessor;
 
@@ -39,13 +40,13 @@ public class SearchIndexerImpl implements SearchIndexer {
       this.delegate = delegate;
       this.entityConverter = entityConverter;
       this.typeContextProvider = typeContextProvider;
-      this.nonBlockingManager = nonBlockingManager;
 
       this.indexProcessor = UnicastProcessor.<IndexingOperation>create().toSerialized();
 
+      SimpleScheduledExecutor offloadExecutor = InfinispanIndexingExecutorProvider.writeExecutor(blockingManager);
       indexProcessor
             .observeOn(Schedulers.from(blockingManager.asExecutor("search-indexer")))
-            .subscribe(operation -> operation.invoke(delegate, nonBlockingManager),
+            .subscribe(operation -> operation.invoke(delegate, nonBlockingManager, offloadExecutor),
                   throwable -> log.errorProcessingIndexingOperation(throwable));
    }
 

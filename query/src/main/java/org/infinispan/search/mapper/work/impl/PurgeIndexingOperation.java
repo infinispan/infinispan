@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.engine.backend.work.execution.DocumentCommitStrategy;
 import org.hibernate.search.engine.backend.work.execution.DocumentRefreshStrategy;
+import org.hibernate.search.engine.backend.work.execution.OperationSubmitter;
 import org.hibernate.search.mapper.pojo.route.DocumentRoutesDescriptor;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.search.mapper.session.impl.InfinispanTypeContextProvider;
@@ -19,11 +20,11 @@ public class PurgeIndexingOperation extends IndexingOperation {
    }
 
    @Override
-   CompletableFuture<Void> invoke(PojoIndexer pojoIndexer) {
+   CompletableFuture<Void> invoke(PojoIndexer pojoIndexer, OperationSubmitter operationSubmitter) {
       return CompletableFuture.allOf(typeContextProvider.allTypeIdentifiers().stream()
             .map((typeIdentifier) -> delegate.delete(typeIdentifier, providedId,
                   DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey),
-                  DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE))
+                  DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE, operationSubmitter))
             .toArray(CompletableFuture[]::new));
    }
 }

@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.engine.backend.work.execution.DocumentCommitStrategy;
 import org.hibernate.search.engine.backend.work.execution.DocumentRefreshStrategy;
+import org.hibernate.search.engine.backend.work.execution.OperationSubmitter;
 import org.hibernate.search.mapper.pojo.route.DocumentRoutesDescriptor;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 
@@ -18,9 +19,9 @@ public class DeleteIndexingOperation extends IndexingOperation {
    }
 
    @Override
-   CompletableFuture<?> invoke(PojoIndexer pojoIndexer) {
+   CompletableFuture<?> invoke(PojoIndexer pojoIndexer, OperationSubmitter operationSubmitter) {
       return delegate.delete(convertedValue.typeIdentifier, providedId,
             DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
-            DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE);
+            DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE, operationSubmitter);
    }
 }

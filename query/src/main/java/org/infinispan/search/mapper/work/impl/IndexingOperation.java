@@ -2,6 +2,8 @@ package org.infinispan.search.mapper.work.impl;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.hibernate.search.engine.backend.work.execution.OperationSubmitter;
+import org.hibernate.search.engine.common.execution.spi.SimpleScheduledExecutor;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.util.concurrent.NonBlockingManager;
 
@@ -17,8 +19,11 @@ public abstract class IndexingOperation extends CompletableFuture<Void> {
       this.routingKey = routingKey;
    }
 
-   final void invoke(PojoIndexer pojoIndexer, NonBlockingManager nonBlockingManager) {
-      invoke(pojoIndexer)
+   final void invoke(PojoIndexer pojoIndexer, NonBlockingManager nonBlockingManager,
+                     SimpleScheduledExecutor offloadExecutor) {
+      OperationSubmitter operationSubmitter = OperationSubmitter.offloading(offloadExecutor::submit);
+
+      invoke(pojoIndexer, operationSubmitter)
             .whenComplete((v, t) -> {
                if (t != null) {
                   nonBlockingManager.completeExceptionally(this, t);
@@ -28,6 +33,6 @@ public abstract class IndexingOperation extends CompletableFuture<Void> {
             });
    }
 
-   abstract CompletableFuture<?> invoke(PojoIndexer pojoIndexer);
+   abstract CompletableFuture<?> invoke(PojoIndexer pojoIndexer, OperationSubmitter operationSubmitter);
 
 }
