@@ -22,7 +22,6 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 import org.testng.annotations.Test;
 
 /**
@@ -42,10 +41,9 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
 
       GlobalComponentRegistry componentRegistry = cacheManager.getGlobalComponentRegistry();
       BlockingManager blockingManager = componentRegistry.getComponent(BlockingManager.class);
-      NonBlockingManager nonBlockingManager = componentRegistry.getComponent(NonBlockingManager.class);
 
       // the cache manager is created only to provide manager instances to the search mapping
-      searchMapping = SearchMappingHelper.createSearchMappingForTests(blockingManager, nonBlockingManager, Employee.class);
+      searchMapping = SearchMappingHelper.createSearchMappingForTests(blockingManager, Employee.class);
       propertyHelper = new HibernateSearchPropertyHelper(searchMapping, new ReflectionEntityNamesResolver(null));
 
       return cacheManager;

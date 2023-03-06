@@ -78,7 +78,6 @@ import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
@@ -311,14 +310,13 @@ public class LifecycleManager implements ModuleLifecycle {
             ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader);
 
       BlockingManager blockingManager = cr.getGlobalComponentRegistry().getComponent(BlockingManager.class);
-      NonBlockingManager nonBlockingManager = cr.getGlobalComponentRegistry().getComponent(NonBlockingManager.class);
       LuceneWorkExecutorProvider luceneWorkExecutorProvider =
             cr.getGlobalComponentRegistry().getComponent(LuceneWorkExecutorProvider.class);
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
             extractProperties(globalConfiguration, indexingConfiguration, aggregatedClassLoader),
-            aggregatedClassLoader, mappingProviders, blockingManager, nonBlockingManager, luceneWorkExecutorProvider);
+            aggregatedClassLoader, mappingProviders, blockingManager, luceneWorkExecutorProvider);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {

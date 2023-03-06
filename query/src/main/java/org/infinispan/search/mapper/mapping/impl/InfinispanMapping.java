@@ -37,7 +37,6 @@ import org.infinispan.search.mapper.session.impl.InfinispanSearchSessionMappingC
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.search.mapper.work.impl.SearchIndexerImpl;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 
 public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapping>
       implements SearchMapping, InfinispanSearchSessionMappingContext, EntityReferenceFactory<EntityReference> {
@@ -58,14 +57,14 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    InfinispanMapping(PojoMappingDelegate mappingDelegate, InfinispanTypeContextContainer typeContextContainer,
                      PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
-                     BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
+                     BlockingManager blockingManager) {
       super(mappingDelegate);
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.mappingSession = new InfinispanSearchSession(this, entityLoader, typeContextContainer);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
-            blockingManager, nonBlockingManager);
+            blockingManager);
       this.allIndexedEntityNames = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::name).collect(Collectors.toSet());
       this.allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
