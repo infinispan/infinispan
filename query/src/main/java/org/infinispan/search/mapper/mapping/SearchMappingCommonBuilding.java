@@ -8,7 +8,6 @@ import org.hibernate.search.engine.environment.bean.BeanReference;
 import org.hibernate.search.mapper.pojo.bridge.IdentifierBridge;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 
 /**
  * Stores some fields that could be useful to build a {@link SearchMappingBuilder} also at a later time.
@@ -20,26 +19,24 @@ public class SearchMappingCommonBuilding {
    private final ClassLoader aggregatedClassLoader;
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
    private final BlockingManager blockingManager;
-   private final NonBlockingManager nonBlockingManager;
    private final LuceneWorkExecutorProvider luceneWorkExecutorProvider;
 
    public SearchMappingCommonBuilding(BeanReference<? extends IdentifierBridge<Object>> identifierBridge,
                                       Map<String, Object> properties, ClassLoader aggregatedClassLoader,
                                       Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                      BlockingManager blockingManager, NonBlockingManager nonBlockingManager,
+                                      BlockingManager blockingManager,
                                       LuceneWorkExecutorProvider luceneWorkExecutorProvider) {
       this.identifierBridge = identifierBridge;
       this.properties = properties;
       this.aggregatedClassLoader = aggregatedClassLoader;
       this.mappingProviders = mappingProviders;
       this.blockingManager = blockingManager;
-      this.nonBlockingManager = nonBlockingManager;
       this.luceneWorkExecutorProvider = luceneWorkExecutorProvider;
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
       return SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
-                  blockingManager, nonBlockingManager)
+                  blockingManager)
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties)
             .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider);

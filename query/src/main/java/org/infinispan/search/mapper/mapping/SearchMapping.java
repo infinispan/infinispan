@@ -12,7 +12,6 @@ import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 
 public interface SearchMapping extends AutoCloseable {
 
@@ -113,9 +112,9 @@ public interface SearchMapping extends AutoCloseable {
 
    static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                                        Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                       BlockingManager blockingManager, NonBlockingManager nonBlockingManager) {
+                                       BlockingManager blockingManager) {
       return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders,
-            blockingManager, nonBlockingManager);
+            blockingManager);
    }
 
    Map<String, IndexMetamodel> metamodel();

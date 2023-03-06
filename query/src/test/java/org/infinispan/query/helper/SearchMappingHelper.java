@@ -13,7 +13,6 @@ import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
 import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.NonBlockingManager;
 
 public class SearchMappingHelper {
 
@@ -22,8 +21,7 @@ public class SearchMappingHelper {
    private SearchMappingHelper() {
    }
 
-   public static SearchMapping createSearchMappingForTests(BlockingManager blockingManager,
-                                                           NonBlockingManager nonBlockingManager, Class<?>... types) {
+   public static SearchMapping createSearchMappingForTests(BlockingManager blockingManager, Class<?>... types) {
       Map<String, Object> properties = new LinkedHashMap<>();
       properties.put(BACKEND_PREFIX + ".analysis.configurer", new DefaultAnalysisConfigurer());
       properties.put("directory.type", "local-heap");
@@ -31,7 +29,7 @@ public class SearchMappingHelper {
       InfinispanBootstrapIntrospector introspector = SearchMappingBuilder.introspector(MethodHandles.lookup());
 
       // do not pass any entity loader nor identifier bridges
-      return SearchMapping.builder(introspector, null, Collections.emptyList(), blockingManager, nonBlockingManager)
+      return SearchMapping.builder(introspector, null, Collections.emptyList(), blockingManager)
                    .setProperties(properties)
                    .addEntityTypes(new HashSet<>(Arrays.asList(types)))
                    .build(Optional.empty());
