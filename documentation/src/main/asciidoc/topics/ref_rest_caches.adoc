@@ -121,16 +121,17 @@ curl localhost:11222/rest/v2/caches?action=convert \
 
 [id='rest_v2_cache_config_compare']
 = Comparing Cache Configurations
-Invoke a `POST` request with a `multipart/form-data` body containing two configurations and the `?action=compare`
-parameter. {brandname} responds with `204 (No Content)` in case the configurations are equal, and `409 (Conflict)` in case they are different.
+Invoke a `POST` request with a `multipart/form-data` body containing two cache configurations and the `?action=compare`
+parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
 POST /rest/v2/caches?action=compare
 ----
-
-Add the `ignoreMutable=true` parameter to ignore mutable attributes in the comparison.
-
++
+TIP: Add the `ignoreMutable=true` parameter to ignore mutable attributes in the comparison.
++
+{brandname} responds with `204 (No Content)` in case the configurations are equal, and `409 (Conflict)` in case they are different.
 
 [id='rest_v2_cache_detail']
 = Retrieving All Cache Details
