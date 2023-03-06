@@ -28,6 +28,10 @@ public class InfinispanIndexingExecutorProvider extends AbstractComponentFactory
 
    @Override
    public SimpleScheduledExecutor writeExecutor(Context context) {
+      return InfinispanIndexingExecutorProvider.writeExecutor(blockingManager);
+   }
+
+   public static SimpleScheduledExecutor writeExecutor(BlockingManager blockingManager) {
       return new InfinispanScheduledExecutor(blockingManager);
    }
 
