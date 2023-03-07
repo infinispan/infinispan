@@ -266,6 +266,13 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> stats();
 
    /**
+    * Resets cache statistics
+    *
+    * @return
+    */
+   CompletionStage<RestResponse> statsReset();
+
+   /**
     * Obtain metrics about the distribution of data of the cache.
     *
     * @return

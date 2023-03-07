@@ -168,6 +168,15 @@ include::json/rest_full_cache_detail.json[]
 `key_storage` and `value_storage` matches encoding configuration of the cache.
 For server caches with no encoding, {brandname} assumes `application/x-protostream` when a cache is indexed and `application/unknown` otherwise.
 
+[id='rest_v2_cache_reset_stats']
+= Resetting All Cache Statistics
+Invoke a `POST` request to reset all statistics for {brandname} caches.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{name}?action=stats-reset
+----
+
 [id='rest_v2_cache_distribution']
 = Retrieving Data Distribution of a Cache
 

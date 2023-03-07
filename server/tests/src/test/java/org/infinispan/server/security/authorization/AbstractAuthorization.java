@@ -193,6 +193,22 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
+   public void testStatsReset() {
+      restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN)) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(NO_CONTENT, cache.statsReset());
+      }
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
+         RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
+         assertStatus(FORBIDDEN, cache.statsReset());
+      }
+   }
+
+   @Test
    public void testHotRodNonAdminsMustNotCreateCache() {
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
          Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",

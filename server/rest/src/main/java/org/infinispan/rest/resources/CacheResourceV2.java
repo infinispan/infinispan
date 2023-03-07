@@ -157,6 +157,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Config and statistics
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("stats-reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetCacheStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("distribution").handleWith(this::getCacheDistribution)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attributes").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttributes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttribute)
@@ -624,6 +625,15 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return CompletableFuture.supplyAsync(() ->
             asJsonResponse(cache.getAdvancedCache().getStats().toJson(), isPretty(request)), invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> resetCacheStats(RestRequest request) {
+      String cacheName = request.variables().get("cacheName");
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      return CompletableFuture.supplyAsync(() -> {
+         cache.getAdvancedCache().getStats().reset();
+         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getCacheDistribution(RestRequest request) {

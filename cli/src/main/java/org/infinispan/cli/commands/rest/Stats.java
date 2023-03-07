@@ -33,6 +33,9 @@ public class Stats extends RestCliCommand {
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
+   @Option(hasValue = false)
+   protected boolean reset;
+
    @Override
    public boolean isHelp() {
       return help;
@@ -43,10 +46,13 @@ public class Stats extends RestCliCommand {
       try {
          Resource resource = activeResource.getResource(name);
          if (resource instanceof CacheResource) {
-            return client.cache(resource.getName()).stats();
+            return reset ? client.cache(resource.getName()).statsReset() : client.cache(resource.getName()).stats();
          } else if (resource instanceof ContainerResource) {
-            return client.cacheManager(resource.getName()).stats();
+            return reset ? client.cacheManager(resource.getName()).statsReset() : client.cacheManager(resource.getName()).stats();
          } else {
+            if (reset) {
+               throw MSG.cannotResetIndividualStat();
+            }
             String name = resource.getName();
             throw MSG.invalidResource(name.isEmpty() ? "/" : name);
          }
