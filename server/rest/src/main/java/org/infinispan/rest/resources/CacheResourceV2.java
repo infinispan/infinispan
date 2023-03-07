@@ -49,7 +49,9 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
+import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -804,7 +806,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       prefix = prefix == null ? "" : element.elementName();
       for (Attribute<?> attribute : element.attributes().attributes()) {
          if (!attribute.isImmutable()) {
-            attributes.put(prefix + "." + attribute.getAttributeDefinition().name(), attribute);
+            AttributeDefinition<?> definition = attribute.getAttributeDefinition();
+            // even if mutable, we don't want expose this attribute to the user
+            if (AbstractTypedPropertiesConfiguration.PROPERTIES.equals(definition)) {
+               continue;
+            }
+            attributes.put(prefix + "." + definition.name(), attribute);
          }
       }
       for (ConfigurationElement<?> child : element.children()) {
