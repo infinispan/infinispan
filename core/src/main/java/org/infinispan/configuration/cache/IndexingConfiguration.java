@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.attributes.CollectionAttributeCopier.collectionCopier;
+import static org.infinispan.commons.util.Immutables.immutableTypedProperties;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,16 +9,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configures indexing of entries in the cache for searching.
  */
-public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<IndexingConfiguration> {
+public class IndexingConfiguration extends ConfigurationElement<IndexingConfiguration> {
    /**
     * @deprecated since 11.0
     */
@@ -45,16 +47,21 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH);
    }
 
+   private final Attribute<TypedProperties> properties;
    private final Set<Class<?>> resolvedIndexedClasses;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
 
    IndexingConfiguration(AttributeSet attributes, Set<Class<?>> resolvedIndexedClasses,
                          IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration) {
-      super(attributes);
+      super(Element.INDEXING, attributes);
       this.readerConfiguration = readerConfiguration;
       this.writerConfiguration = writerConfiguration;
       this.resolvedIndexedClasses = resolvedIndexedClasses;
+      this.properties = this.attributes.attribute(AbstractTypedPropertiesConfiguration.PROPERTIES);
+      if (properties.isModified()) {
+         properties.set(immutableTypedProperties(properties.get()));
+      }
    }
 
    /**
@@ -69,11 +76,9 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     *      Search</a>
     * @deprecated Since 12.0, indexing behaviour is defined by {@link #writer()} and {@link #reader()}.
     */
-   @Override
    @Deprecated
    public TypedProperties properties() {
-      // Overridden to replace Javadoc
-      return super.properties();
+      return properties.get();
    }
 
    /**
@@ -142,10 +147,6 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    public Set<String> indexedEntityTypes() {
       return attributes.attribute(INDEXED_ENTITIES).get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**
