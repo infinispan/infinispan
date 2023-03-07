@@ -250,4 +250,7 @@ public interface Messages {
 
    @Message("The resource does not support the '%s' list format")
    IllegalArgumentException unsupportedListFormat(Resource.ListFormat format);
+
+   @Message("Cannot reset an individual statistic")
+   IllegalArgumentException cannotResetIndividualStat();
 }

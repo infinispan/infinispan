@@ -13,6 +13,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 
+import okhttp3.FormBody;
 import okhttp3.MultipartBody;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -72,6 +73,13 @@ public class RestCacheManagerClientOkHttp implements RestCacheManagerClient {
    @Override
    public CompletionStage<RestResponse> stats() {
       return client.execute(baseCacheManagerUrl, "stats");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> statsReset() {
+      Request.Builder builder = new Request.Builder();
+      builder.method("POST",new FormBody.Builder().build()).url(baseCacheManagerUrl + "/stats?action=reset");
+      return client.execute(builder);
    }
 
    @Override

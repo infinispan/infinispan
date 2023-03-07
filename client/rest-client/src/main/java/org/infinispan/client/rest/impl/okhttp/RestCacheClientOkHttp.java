@@ -15,6 +15,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
+import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -367,6 +368,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    public CompletionStage<RestResponse> stats() {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "?action=stats").get();
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> statsReset() {
+      Request.Builder builder = new Request.Builder();
+      builder.method("POST", new FormBody.Builder().build()).url(cacheUrl + "?action=stats-reset");
       return client.execute(builder);
    }
 

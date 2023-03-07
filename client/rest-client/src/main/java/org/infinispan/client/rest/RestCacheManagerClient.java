@@ -38,6 +38,8 @@ public interface RestCacheManagerClient {
 
    CompletionStage<RestResponse> stats();
 
+   CompletionStage<RestResponse> statsReset();
+
    CompletionStage<RestResponse> backupStatuses();
 
    CompletionStage<RestResponse> backupStatus(String site);

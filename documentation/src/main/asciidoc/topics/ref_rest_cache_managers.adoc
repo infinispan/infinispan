@@ -257,6 +257,15 @@ include::json/rest_cache_stats_response.json[]
 * `hit_ratio` provides the total percentage hit/(hit+miss) ratio for all caches.
 * `retrievals` shows the total number of `get()` operations.
 
+[id='rest_v2_cache_manager_stats_reset']
+= Resetting Cache Manager Statistics
+Reset the statistics for Cache Managers with `POST` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/cache-managers/{cacheManagerName}/stats?action=reset
+----
+
 [id='rest_v2_cache_manager_shutdown']
 = Shutdown all container caches
 Shut down the {brandname} container on the server with `POST` requests.

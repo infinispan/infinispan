@@ -150,6 +150,7 @@ public class ContainerResource implements ResourceHandler {
 
             // Stats
             .invocation().methods(GET).path("/v2/cache-managers/{name}/stats").handleWith(this::getStats)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/stats").withAction("reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetStats)
 
             // Caches
             .invocation().methods(GET).path("/v2/cache-managers/{name}/caches").handleWith(this::getCaches)
@@ -227,6 +228,16 @@ public class ContainerResource implements ResourceHandler {
             .thenCompose(json -> asJsonResponseFuture(json, responseBuilder, isPretty(request)));
    }
 
+   private CompletionStage<RestResponse> resetStats(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      return CompletableFuture.supplyAsync(() -> {
+         Security.doAs(request.getSubject(), () -> cacheManager.getStats().reset());
+         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+      }, invocationHelper.getExecutor());
+   }
 
    private CompletionStage<RestResponse> getHealth(RestRequest request) {
       return getHealth(request, false);
