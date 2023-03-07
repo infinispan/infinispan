@@ -3,12 +3,13 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configures query options and defaults
  */
-public class QueryConfiguration extends AbstractTypedPropertiesConfiguration implements Matchable<QueryConfiguration> {
+public class QueryConfiguration extends ConfigurationElement<QueryConfiguration> {
 
    public static final AttributeDefinition<Integer> DEFAULT_MAX_RESULTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.DEFAULT_MAX_RESULTS, 100).immutable().build();
 
@@ -17,7 +18,7 @@ public class QueryConfiguration extends AbstractTypedPropertiesConfiguration imp
    }
 
    protected QueryConfiguration(AttributeSet attributes) {
-      super(attributes);
+      super(Element.QUERY, attributes);
    }
 
    /**
@@ -26,9 +27,5 @@ public class QueryConfiguration extends AbstractTypedPropertiesConfiguration imp
     */
    public int defaultMaxResults() {
       return attributes.attribute(DEFAULT_MAX_RESULTS).get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 }
