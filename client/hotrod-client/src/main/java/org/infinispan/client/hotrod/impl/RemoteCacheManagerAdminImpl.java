@@ -26,6 +26,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    public static final String CACHE_NAME = "name";
    public static final String CACHE_TEMPLATE = "template";
    public static final String CACHE_CONFIGURATION = "configuration";
+   public static final String ATTRIBUTE = "attribute";
+   public static final String VALUE = "value";
    public static final String FLAGS = "flags";
    private final RemoteCacheManager cacheManager;
    private final OperationsFactory operationsFactory;
@@ -121,6 +123,20 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    @Override
    public void updateIndexSchema(String name) throws HotRodClientException {
       await(operationsFactory.newAdminOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))).execute());
+   }
+
+   @Override
+   public void updateConfigurationAttribute(String name, String attribute, String value) throws HotRodClientException {
+      Map<String, byte[]> params = new HashMap<>(4);
+      params.put(CACHE_NAME, string(name));
+      params.put(ATTRIBUTE, string(attribute));
+      params.put(VALUE, string(value));
+
+      if (flags != null && !flags.isEmpty()) {
+         params.put(FLAGS, flags(flags));
+      }
+
+      await(operationsFactory.newAdminOperation("@@cache@updateConfigurationAttribute", params).execute());
    }
 
    @Override
