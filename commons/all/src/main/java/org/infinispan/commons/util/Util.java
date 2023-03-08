@@ -1054,6 +1054,8 @@ public final class Util {
          return value;
       } else if (klass == String[].class) {
          return value != null ? value.split(" ") : null;
+      } else if (klass == Set.class) {
+         return value != null ? new HashSet<>(Arrays.asList(value.split(" "))) : null;
       } else if (klass == char[].class) {
          return value.toCharArray();
       } else if (klass == Float.class) {

@@ -368,6 +368,62 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(attributes.at("indexing.indexed-entities").at("value").asList()).isEmpty();
    }
 
+   public void testUpdateConfigurationAttribute() {
+      String protoSchema = "package org.infinispan;\n\n" +
+            "/**\n" +
+            " * @Indexed\n" +
+            " */\n" +
+            "message Developer {\n" +
+            "   /**\n" +
+            "    * @Basic\n" +
+            "    */\n" +
+            "   optional string nick = 1;\n" +
+            "   /**\n" +
+            "    * @Basic(sortable=true)\n" +
+            "    */\n" +
+            "   optional int32 contributions = 2;\n" +
+            "}\n" +
+            "/**\n" +
+            " * @Indexed\n" +
+            " */\n" +
+            "message Engineer {  \n" +
+            "   /**\n" +
+            "    * @Basic\n" +
+            "    */\n" +
+            "   optional string nick = 1;\n" +
+            "   /**\n" +
+            "    * @Basic(sortable=true)\n" +
+            "    */\n" +
+            "   optional int32 contributions = 2;\n" +
+            "}\n";
+
+      // Register schema
+      RestResponse restResponse = join(client.schemas().put("dev.proto", protoSchema));
+      assertThat(restResponse).isOk();
+
+      // Create the indexed cache
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.indexing().enable().storage(LOCAL_HEAP).addIndexedEntities("org.infinispan.Developer");
+      String cacheConfig = cacheConfigToJson("developers", builder.build());
+
+      RestCacheClient cacheClient = adminClient.cache("developers");
+
+      RestEntity config = RestEntity.create(APPLICATION_JSON, cacheConfig);
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(config);
+      assertThat(response).isOk();
+
+      response = cacheClient.updateConfigurationAttribute("indexing.indexed-entities",
+            "org.infinispan.Developer org.infinispan.Engineer");
+      assertThat(response).isOk();
+
+      response = cacheClient.configuration();
+      assertThat(response).isOk();
+      String configFromServer = join(response).getBody();
+
+      assertThat(configFromServer)
+            .contains("\"indexed-entities\":[\"org.infinispan.Engineer\",\"org.infinispan.Developer\"]");
+   }
+
    @Test
    public void testCacheV2LifeCycle() throws Exception {
       String xml = getResourceAsString("cache.xml", getClass().getClassLoader());
