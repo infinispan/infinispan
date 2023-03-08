@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.admin;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -32,6 +33,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
@@ -311,6 +313,44 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
                                .<User>create("from sample_bank_account.Transaction where longDescription:'RENT'")
                                .execute().list();
       assertEquals(count, users.size());
+   }
+
+   public void updateConfigurationAttribute(Method m) {
+      String yaml =
+            "distributed-cache:\n" +
+            "  memory:\n"+
+            "    max-count: 100\n"+
+            "    when-full: REMOVE\n";
+
+      String cacheName = m.getName();
+      // Create the cache
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+            .createCache(cacheName, new StringConfiguration(yaml));
+
+      Configuration config = manager(0).getCache(cacheName).getCacheConfiguration();
+      assertThat(config.memory().maxCount()).isEqualTo(100);
+      assertThat(config.memory().whenFull()).isEqualTo(EvictionStrategy.REMOVE);
+
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+            .updateConfigurationAttribute(cacheName, "memory.max-count", "5");
+
+      assertThat(config.memory().maxCount()).isEqualTo(5);
+
+      RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
+      for (int i = 0; i < 10; i++) {
+         Transaction tx = new TransactionPB();
+         tx.setId(i);
+         tx.setAccountId(777);
+         tx.setAmount(500);
+         tx.setDate(new Date(1));
+         tx.setDescription("February rent");
+         tx.setLongDescription("February rent");
+         tx.setNotes("card was not present");
+
+         cache.put("foo_" + i, tx);
+      }
+
+      assertThat(cache).hasSize(5);
    }
 
    public void testGetCacheNames(Method m) {
