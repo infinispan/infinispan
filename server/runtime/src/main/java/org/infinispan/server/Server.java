@@ -690,10 +690,19 @@ public class Server implements ServerManagement, AutoCloseable {
       return blockingManager.supplyBlocking(() -> {
          try {
             Process process = builder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            Path path = Paths.get(reader.readLine());
-            process.waitFor(1, TimeUnit.MINUTES);
-            return path;
+            BufferedReader reader;
+
+            if (!process.waitFor(1, TimeUnit.MINUTES))
+               throw new IllegalStateException("Timed out waiting report process finish");
+            if (process.exitValue() != 0) {
+               reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+               String error = String.format("Report process failed. Exit code: '%d' Message: %s",
+                     process.exitValue(), reader.lines().collect(Collectors.joining("\n")));
+               throw new IllegalStateException(error);
+            }
+
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            return Paths.get(reader.readLine());
          } catch (IOException e) {
             throw new RuntimeException(e);
          } catch (InterruptedException e) {
