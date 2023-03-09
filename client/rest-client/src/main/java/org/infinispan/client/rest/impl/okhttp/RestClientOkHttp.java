@@ -116,6 +116,8 @@ public class RestClientOkHttp implements RestClient {
             } else {
                builder.protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
             }
+            // OkHttp might retry infinitely on HTTP/2.
+            builder.retryOnConnectionFailure(false);
             break;
       }
 
