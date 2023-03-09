@@ -17,7 +17,8 @@ dependency-reduced-pom.xml
 *.iml
 *.ipr
 *.iws
-.idea
+.idea/*
+!.idea/icon.png
 *.attach_pid*
 atlassian-ide-plugin.xml
 maven-ant-tasks.jar
