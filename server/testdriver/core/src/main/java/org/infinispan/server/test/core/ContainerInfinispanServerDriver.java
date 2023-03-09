@@ -238,6 +238,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          builder
                .copy("lib", serverPathFrom("lib"))
                .user("root")
+               .run("microdnf update && microdnf install tar && microdnf clean all")
                .run("chown", "-R", IMAGE_USER, INFINISPAN_SERVER_HOME)
                .run("chmod", "-R", "g+rw", INFINISPAN_SERVER_HOME)
                .user(IMAGE_USER);
