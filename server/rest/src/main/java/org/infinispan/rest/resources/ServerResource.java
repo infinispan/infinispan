@@ -395,7 +395,7 @@ public class ServerResource implements ResourceHandler {
                try {
                   return Files.readAllBytes(reportPath);
                } catch (IOException e) {
-                  throw new CacheException(e);
+                  throw new CacheException(String.format("Failed reading '%s' at node '%s'", reportPath, targetName), e);
                }
             }, (ignore, info, t) -> {
                if (t != null) {
