@@ -2213,7 +2213,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-cleanup-delay" type="xs:positiveInteger" default="${Sites.max-cleanup-interval}">
+    <xs:attribute name="max-cleanup-delay" type="xs:positiveInteger" default="${Sites.max-cleanup-delay}">
       <xs:annotation>
         <xs:documentation>
           Specifies the maximum delay, in milliseconds, between which tombstone cleanup tasks run.
@@ -2313,13 +2313,6 @@
       <xs:annotation>
         <xs:documentation>
           Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="enabled" type="xs:boolean" default="${Backup.enabled}">
-      <xs:annotation>
-        <xs:documentation>
-          DEPRECATED: Enables backup locations. Set the value to "false" to disable backups.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
