@@ -284,11 +284,9 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   }
                   break;
                case '-':
-                  if (i == 0) {
-                     if ("---".equals(s)) {
-                        // It's a separator
-                        return parsed;
-                     }
+                  if (i == 0 && "---".equals(s)) {
+                     // It's a separator
+                     return parsed;
                   } else if (state == 0) {
                      // It's a list delimiter
                      parsed.list = true;
