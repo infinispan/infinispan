@@ -371,7 +371,7 @@
                </execution>
             </executions>
          </plugin>
-         <plugin>
+         <!--plugin>
             <groupId>org.apache.karaf.tooling</groupId>
             <artifactId>karaf-maven-plugin</artifactId>
             <configuration>
@@ -379,7 +379,7 @@
                   <feature>infinispan-remote</feature>
                </features>
             </configuration>
-         </plugin>
+         </plugin-->
       </plugins>
    </build>
 

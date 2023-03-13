@@ -226,6 +226,13 @@
                </features>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+               <excludePackageNames>org.infinispan.commons.*</excludePackageNames>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
 
