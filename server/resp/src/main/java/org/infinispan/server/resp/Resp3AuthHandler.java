@@ -78,18 +78,18 @@ public class Resp3AuthHandler extends RespRequestHandler {
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", ctx.alloc()));
+         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", ctx.alloc()), ctx.voidPromise());
          return false;
       }
 
       setCache(cache.withSubject(subject));
-      ctx.writeAndFlush(statusOK());
+      ctx.writeAndFlush(statusOK(), ctx.voidPromise());
       return true;
    }
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
       assert ctx.channel().eventLoop().inEventLoop();
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", ctx.alloc()));
+      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", ctx.alloc()), ctx.voidPromise());
    }
 
    private boolean isAuthorized() {
@@ -105,6 +105,6 @@ public class Resp3AuthHandler extends RespRequestHandler {
             "$2\r\nid\r\n:184\r\n" +
             "$4\r\nmode\r\n$7\r\ncluster\r\n" +
             "$4\r\nrole\r\n$6\r\nmaster\r\n" +
-            "$7\r\nmodules\r\n*0\r\n", ctx.alloc()));
+            "$7\r\nmodules\r\n*0\r\n", ctx.alloc()), ctx.voidPromise());
    }
 }
