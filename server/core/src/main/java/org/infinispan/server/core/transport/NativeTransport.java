@@ -13,7 +13,7 @@ import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 // This is a separate class for easier replacement within Quarkus
-final class NativeTransport {
+public final class NativeTransport {
    private static final boolean IS_LINUX = System.getProperty("os.name").toLowerCase().startsWith("linux");
    private static final String USE_EPOLL_PROPERTY = "infinispan.server.channel.epoll";
    private static final String USE_IOURING_PROPERTY = "infinispan.server.channel.iouring";
@@ -22,8 +22,8 @@ final class NativeTransport {
    private static final boolean IOURING_DISABLED = System.getProperty(USE_IOURING_PROPERTY, "true").equalsIgnoreCase("false");
 
    // Has to be after other static variables to ensure they are initialized
-   static final boolean USE_NATIVE_EPOLL = useNativeEpoll();
-   static final boolean USE_NATIVE_IOURING = useNativeIOUring();
+   public static final boolean USE_NATIVE_EPOLL = useNativeEpoll();
+   public static final boolean USE_NATIVE_IOURING = useNativeIOUring();
 
    private static boolean useNativeEpoll() {
       try {

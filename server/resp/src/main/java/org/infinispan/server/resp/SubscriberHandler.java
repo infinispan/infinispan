@@ -71,14 +71,18 @@ public class SubscriberHandler extends RespRequestHandler {
          byte[] key = channelToKey((byte[]) keyConversion.fromStorage(entryEvent.getKey()));
          byte[] value = (byte[]) valueConversion.fromStorage(entryEvent.getValue());
          if (key.length > 0 && value != null && value.length > 0) {
-            ByteBuf byteBuf = channel.alloc().buffer(2 + 2
-                  + 2 + 7 + 1 + (int) Math.log10(key.length) + 1 + 2
-                  + key.length + 2 + 1 + (int) Math.log10(value.length) + 1 + 2 + value.length + 2);
-            byteBuf.writeCharSequence("*3\r\n$7\r\nmessage\r\n$" + key.length + "\r\n", CharsetUtil.UTF_8);
+            // *3 + \r\n + $7 + \r\n + message + \r\n + $ + keylength (log10 + 1) + \r\n + key + \r\n +
+            // $ + valuelength (log 10 + 1) + \r\n + value + \r\n
+            int byteSize = 2 + 2 + 2 + 2 + 7 + 2 + 1 + (int) Math.log10(key.length) + 1
+                  + 2 + key.length + 2 + 1 + (int) Math.log10(value.length) + 1 + 2 + value.length + 2;
+            ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
+            byteBuf.writeCharSequence("*3\r\n$7\r\nmessage\r\n$" + key.length + "\r\n", CharsetUtil.US_ASCII);
             byteBuf.writeBytes(key);
-            byteBuf.writeCharSequence("\r\n$" + value.length + "\r\n", CharsetUtil.UTF_8);
+            byteBuf.writeCharSequence("\r\n$" + value.length + "\r\n", CharsetUtil.US_ASCII);
             byteBuf.writeBytes(value);
-            byteBuf.writeCharSequence("\r\n", CharsetUtil.UTF_8);
+            byteBuf.writeByte('\r');
+            byteBuf.writeByte('\n');
+            assert byteBuf.writerIndex() == byteSize;
             // TODO: add some back pressure? - something like ClientListenerRegistry?
             channel.writeAndFlush(byteBuf);
          }
@@ -210,13 +214,16 @@ public class SubscriberHandler extends RespRequestHandler {
             return;
          }
          for (byte[] keyChannel : keyChannels) {
-            int bufferCap = subscribeOrUnsubscribe ? 20 : 22;
             String initialCharSeq = subscribeOrUnsubscribe ? "*2\r\n$9\r\nsubscribe\r\n$" : "*2\r\n$11\r\nunsubscribe\r\n$";
 
-            ByteBuf subscribeBuffer = ctx.alloc().buffer(bufferCap + (int) Math.log10(keyChannel.length) + 1 + keyChannel.length + 2);
-            subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + "\r\n", CharsetUtil.UTF_8);
+            // Length of string (all ascii so 1 byte per) + (log10 + 1 = sizes of number as char in bytes) + \r\n + bytes themselves + \r\n
+            int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2;
+            ByteBuf subscribeBuffer = ctx.alloc().buffer(sizeRequired, sizeRequired);
+            subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + "\r\n", CharsetUtil.US_ASCII);
             subscribeBuffer.writeBytes(keyChannel);
-            subscribeBuffer.writeCharSequence("\r\n", CharsetUtil.UTF_8);
+            subscribeBuffer.writeByte('\r');
+            subscribeBuffer.writeByte('\n');
+            assert subscribeBuffer.writerIndex() == sizeRequired;
             ctx.writeAndFlush(subscribeBuffer);
          }
       });
