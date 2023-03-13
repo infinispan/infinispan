@@ -138,6 +138,7 @@
       <module>cdi/remote-jakarta</module>
       <module>lock</module>
       <module>jcache</module>
+      <module>quarkus</module>
       <module>wildfly/feature-pack</module>
       <module>integrationtests</module>
       <module>integrationtests/endpoints-interop-it</module>

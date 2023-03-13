@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-build-configuration-parent</artifactId>
+        <version>15.0.0-SNAPSHOT</version>
+        <relativePath>../build/configuration/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-quarkus-parent</artifactId>
+    <name>Infinispan Quarkus :: Parent pom</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
+        <quarkus.version>2.13.7.Final</quarkus.version>
+        <!-- GraalVM "quick build mode for development". Disable on release. Must end with a comma -->
+        <native-build-args>-Ob,</native-build-args>
+        <quarkus.native.additional-build-args>${native-build-args}</quarkus.native.additional-build-args>
+        <exe.suffix/>
+    </properties>
+
+    <modules>
+        <module>poms</module>
+        <module>embedded</module>
+        <module>cli</module>
+        <module>server</module>
+        <module>integration-tests</module>
+        <module>server-runner</module>
+    </modules>
+
+    <repositories>
+        <repository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Maven Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <profiles>
+        <profile>
+            <id>distribution</id>
+            <properties>
+                <native-build-args/>
+            </properties>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <exe.suffix>.exe</exe.suffix>
+            </properties>
+        </profile>
+        <profile>
+            <id>community-release</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <stagingDescription>Infinispan Quarkus ${project.version} release</stagingDescription>
+                            <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
+                            <serverId>${maven.releases.repo.id}</serverId>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration combine.self="override">
+                                    <passphraseServerId>gpg.passphrase</passphraseServerId>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
