@@ -133,10 +133,15 @@ public abstract class RespRequestHandler {
 
    static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufAllocator allocator, int extraBytes) {
       boolean release = true;
-      ByteBuf buffer = allocator.buffer(ByteBufUtil.utf8Bytes(string) + extraBytes);
+      int stringBytes = ByteBufUtil.utf8Bytes(string);
+      int allocatedSize = stringBytes + extraBytes;
+      ByteBuf buffer = allocator.buffer(allocatedSize, allocatedSize);
 
       try {
-         ByteBufUtil.writeUtf8(buffer, string);
+         int beforeWriteIndex = buffer.writerIndex();
+         ByteBufUtil.reserveAndWriteUtf8(buffer, string, allocatedSize);
+         assert buffer.capacity() - buffer.writerIndex() == extraBytes;
+         assert buffer.writerIndex() - beforeWriteIndex == stringBytes;
          release = false;
       } finally {
          if (release) {
