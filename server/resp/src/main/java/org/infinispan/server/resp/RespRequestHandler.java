@@ -43,7 +43,7 @@ public abstract class RespRequestHandler {
          ctx.close();
          return myStage;
       }
-      ctx.writeAndFlush(stringToByteBuf("-ERR unknown command\r\n", ctx.alloc()));
+      ctx.writeAndFlush(stringToByteBuf("-ERR unknown command\r\n", ctx.alloc()), ctx.voidPromise());
       return myStage;
    }
 
