@@ -51,7 +51,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       switch (type) {
          case "PING":
             if (arguments.size() == 0) {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$4\r\nPONG\r\n", ctx.alloc()));
+               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$4\r\nPONG\r\n", ctx.alloc()), ctx.voidPromise());
                break;
             }
             // falls-through
@@ -60,7 +60,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             ByteBuf bufferToWrite = RespRequestHandler.stringToByteBufWithExtra("$" + argument.length + "\r\n", ctx.alloc(), argument.length + 2);
             bufferToWrite.writeBytes(argument);
             bufferToWrite.writeByte('\r').writeByte('\n');
-            ctx.writeAndFlush(bufferToWrite);
+            ctx.writeAndFlush(bufferToWrite, ctx.voidPromise());
             break;
          case "SET":
             return performSet(ctx, cache, arguments.get(0), arguments.get(1), -1, type, statusOK());
@@ -76,9 +76,9 @@ public class Resp3Handler extends Resp3AuthHandler {
                   ByteBuf buf = RespRequestHandler.stringToByteBufWithExtra("$" + length + "\r\n", ctx.alloc(), length + 2);
                   buf.writeBytes(innerValueBytes);
                   buf.writeByte('\r').writeByte('\n');
-                  ctx.writeAndFlush(buf);
+                  ctx.writeAndFlush(buf, ctx.voidPromise());
                } else {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$-1\r\n", ctx.alloc()));
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$-1\r\n", ctx.alloc()), ctx.voidPromise());
                }
             });
          case "DEL":
@@ -109,20 +109,20 @@ public class Resp3Handler extends Resp3AuthHandler {
 
             if ("GET".equalsIgnoreCase(getOrSet)) {
                if ("appendonly".equalsIgnoreCase(name)) {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", ctx.alloc()));
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", ctx.alloc()), ctx.voidPromise());
                } else if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", ctx.alloc()));
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", ctx.alloc()), ctx.voidPromise());
                } else {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", ctx.alloc()));
+                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", ctx.alloc()), ctx.voidPromise());
                }
             } else if ("SET".equalsIgnoreCase(getOrSet)) {
-               ctx.writeAndFlush(statusOK());
+               ctx.writeAndFlush(statusOK(), ctx.voidPromise());
             } else {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", ctx.alloc()));
+               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", ctx.alloc()), ctx.voidPromise());
             }
             break;
          case "INFO":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()), ctx.voidPromise());
             break;
          case "PUBLISH":
             // TODO: should we return the # of subscribers on this node?
@@ -134,22 +134,22 @@ public class Resp3Handler extends Resp3AuthHandler {
             SubscriberHandler subscriberHandler = new SubscriberHandler(respServer, this);
             return subscriberHandler.handleRequest(ctx, type, arguments);
          case "SELECT":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Select not supported in cluster mode\r\n", ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Select not supported in cluster mode\r\n", ctx.alloc()), ctx.voidPromise());
             break;
          case "READWRITE":
          case "READONLY":
             // We are always in read write allowing read from backups
-            ctx.writeAndFlush(statusOK());
+            ctx.writeAndFlush(statusOK(), ctx.voidPromise());
             break;
          case "RESET":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("+RESET\r\n", ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("+RESET\r\n", ctx.alloc()), ctx.voidPromise());
             if (respServer.getConfiguration().authentication().enabled()) {
                return CompletableFuture.completedFuture(new Resp3AuthHandler(respServer));
             }
             break;
          case "COMMAND":
             if (!arguments.isEmpty()) {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", ctx.alloc()));
+               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", ctx.alloc()), ctx.voidPromise());
                break;
             }
             StringBuilder commandBuilder = new StringBuilder();
@@ -175,7 +175,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             addCommand(commandBuilder, "RESET", 1, 0, 0, 0);
             addCommand(commandBuilder, "QUIT", 1, 0, 0, 0);
             addCommand(commandBuilder, "COMMAND", -1, 0, 0, 0);
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(commandBuilder.toString(), ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(commandBuilder.toString(), ctx.alloc()), ctx.voidPromise());
             break;
          default:
             return super.handleRequest(ctx, type, arguments);
@@ -201,11 +201,11 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    private static void handleLongResult(ChannelHandlerContext ctx, Long result) {
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + result + "\r\n", ctx.alloc()));
+      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + result + "\r\n", ctx.alloc()), ctx.voidPromise());
    }
 
    static void handleThrowable(ChannelHandlerContext ctx, Throwable t) {
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR" + t.getMessage() + "\r\n", ctx.alloc()));
+      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR" + t.getMessage() + "\r\n", ctx.alloc()), ctx.voidPromise());
    }
 
    private static CompletionStage<Long> counterIncOrDec(Cache<byte[], byte[]> cache, byte[] key, boolean increment) {
@@ -249,7 +249,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             log.trace("Exception encountered while performing " + type, t);
             handleThrowable(ctx, t);
          } else {
-            ctx.writeAndFlush(messageOnSuccess);
+            ctx.writeAndFlush(messageOnSuccess, ctx.voidPromise());
          }
       });
    }
@@ -265,11 +265,11 @@ public class Resp3Handler extends Resp3AuthHandler {
                return;
             }
             ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + (prev == null ? "0" : "1") +
-                  "\r\n", ctx.alloc()));
+                  "\r\n", ctx.alloc()), ctx.voidPromise());
          });
       } else if (keysToRemove == 0) {
          // TODO: is this an error?
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":0\r\n", ctx.alloc()));
+         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":0\r\n", ctx.alloc()), ctx.voidPromise());
          return myStage;
       } else {
          AtomicInteger removes = new AtomicInteger();
@@ -288,7 +288,7 @@ public class Resp3Handler extends Resp3AuthHandler {
                handleThrowable(ctx, t);
                return;
             }
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + removals.get() + "\r\n", ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + removals.get() + "\r\n", ctx.alloc()), ctx.voidPromise());
          });
       }
    }
@@ -296,7 +296,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    private CompletionStage<RespRequestHandler> performMget(ChannelHandlerContext ctx, Cache<byte[], byte[]> cache, List<byte[]> arguments) {
       int keysToRetrieve = arguments.size();
       if (keysToRetrieve == 0) {
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*0\r\n", ctx.alloc()));
+         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*0\r\n", ctx.alloc()), ctx.voidPromise());
          return myStage;
       }
       List<byte[]> results = Collections.synchronizedList(Arrays.asList(
@@ -352,7 +352,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             byteBuf.writeByte('\n');
          }
          assert byteBuf.writerIndex() == byteAmount;
-         ctx.writeAndFlush(byteBuf);
+         ctx.writeAndFlush(byteBuf, ctx.voidPromise());
       });
    }
 
@@ -360,7 +360,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       int keyValuePairCount = arguments.size();
       if ((keyValuePairCount & 1) == 1) {
          log.tracef("Received: %s count for keys and values combined, should be even for MSET", keyValuePairCount);
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Missing a value for a key" + "\r\n", ctx.alloc()));
+         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Missing a value for a key" + "\r\n", ctx.alloc()), ctx.voidPromise());
          return myStage;
       }
       AggregateCompletionStage<Void> setStage = CompletionStages.aggregateCompletionStage();
@@ -374,7 +374,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             log.trace("Exception encountered while performing MSET", t);
             handleThrowable(ctx, t);
          } else {
-            ctx.writeAndFlush(statusOK());
+            ctx.writeAndFlush(statusOK(), ctx.voidPromise());
          }
       });
    }
