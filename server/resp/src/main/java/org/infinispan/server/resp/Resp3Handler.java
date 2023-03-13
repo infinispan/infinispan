@@ -16,18 +16,28 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.core.transport.NativeTransport;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
 public class Resp3Handler extends Resp3AuthHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private static final ByteBuf OK = RespRequestHandler.stringToByteBuf("+OK\r\n", ByteBufAllocator.DEFAULT);
+   private static final ByteBuf OK;
+
+   static {
+      if (NativeTransport.USE_NATIVE_EPOLL || NativeTransport.USE_NATIVE_IOURING) {
+         OK = Unpooled.unreleasableBuffer(Unpooled.directBuffer(5, 5));
+      } else {
+         OK = Unpooled.unreleasableBuffer(Unpooled.buffer(5, 5));
+      }
+      OK.writeCharSequence("+OK\r\n", CharsetUtil.US_ASCII);
+   }
 
    protected AdvancedCache<byte[], byte[]> ignoreLoaderCache;
 
@@ -43,7 +53,7 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    // Returns a cached OK status that is retained for multiple uses
    static ByteBuf statusOK() {
-      return OK.retain();
+      return OK.duplicate();
    }
 
    @Override
@@ -212,7 +222,8 @@ public class Resp3Handler extends Resp3AuthHandler {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
-                  String prevValue = new String(currentValueBytes, CharsetUtil.UTF_8);
+                  // Numbers are always ASCII
+                  String prevValue = new String(currentValueBytes, CharsetUtil.US_ASCII);
                   long prevIntValue;
                   try {
                      prevIntValue = Long.parseLong(prevValue) + (increment ? 1 : -1);
@@ -220,7 +231,7 @@ public class Resp3Handler extends Resp3AuthHandler {
                      throw new CacheException("value is not an integer or out of range");
                   }
                   String newValueString = String.valueOf(prevIntValue);
-                  byte[] newValueBytes = newValueString.getBytes(CharsetUtil.UTF_8);
+                  byte[] newValueBytes = newValueString.getBytes(CharsetUtil.US_ASCII);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)
                         .thenCompose(replaced -> {
                            if (replaced) {
@@ -230,7 +241,7 @@ public class Resp3Handler extends Resp3AuthHandler {
                         });
                }
                long longValue = increment ? 1 : -1;
-               byte[] valueToPut = String.valueOf(longValue).getBytes(CharsetUtil.UTF_8);
+               byte[] valueToPut = String.valueOf(longValue).getBytes(CharsetUtil.US_ASCII);
                return cache.putIfAbsentAsync(key, valueToPut)
                      .thenCompose(prev -> {
                         if (prev != null) {
@@ -311,8 +322,8 @@ public class Resp3Handler extends Resp3AuthHandler {
                      results.set(innerCount, returnValue);
                      int length = returnValue.length;
                      if (length > 0) {
-                        // byte length + digit length (log10 + 1) + $
-                        resultBytesSize.addAndGet(returnValue.length + (int) Math.log10(length) + 1 + 1);
+                        // $ + digit length (log10 + 1) + /r/n + byte length
+                        resultBytesSize.addAndGet(1 + (int) Math.log10(length) + 1 + 2 + returnValue.length);
                      } else {
                         // $0
                         resultBytesSize.addAndGet(2);
@@ -332,17 +343,17 @@ public class Resp3Handler extends Resp3AuthHandler {
             return;
          }
          int elements = results.size();
-         // * + digit length (log10 + 1) + \r\n
-         ByteBuf byteBuf = ctx.alloc().buffer(resultBytesSize.addAndGet(1 + (int) Math.log10(elements)
-               + 1 + 2));
-         byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.UTF_8);
+         // * + digit length (log10 + 1) + \r\n + accumulated bytes
+         int byteAmount = 1 + (int) Math.log10(elements) + 1 + 2 + resultBytesSize.get();
+         ByteBuf byteBuf = ctx.alloc().buffer(byteAmount, byteAmount);
+         byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.US_ASCII);
          byteBuf.writeByte('\r');
          byteBuf.writeByte('\n');
          for (byte[] value : results) {
             if (value == null) {
-               byteBuf.writeCharSequence("$-1", CharsetUtil.UTF_8);
+               byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
             } else {
-               byteBuf.writeCharSequence("$" + value.length, CharsetUtil.UTF_8);
+               byteBuf.writeCharSequence("$" + value.length, CharsetUtil.US_ASCII);
                byteBuf.writeByte('\r');
                byteBuf.writeByte('\n');
                byteBuf.writeBytes(value);
@@ -350,6 +361,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             byteBuf.writeByte('\r');
             byteBuf.writeByte('\n');
          }
+         assert byteBuf.writerIndex() == byteAmount;
          ctx.writeAndFlush(byteBuf);
       });
    }
