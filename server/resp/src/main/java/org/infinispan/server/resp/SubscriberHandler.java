@@ -84,7 +84,7 @@ public class SubscriberHandler extends RespRequestHandler {
             byteBuf.writeByte('\n');
             assert byteBuf.writerIndex() == byteSize;
             // TODO: add some back pressure? - something like ClientListenerRegistry?
-            channel.writeAndFlush(byteBuf);
+            channel.writeAndFlush(byteBuf, channel.voidPromise());
          }
          return CompletableFutures.completedNull();
       }
@@ -158,7 +158,7 @@ public class SubscriberHandler extends RespRequestHandler {
             return handler.handleRequest(ctx, type, arguments);
          case "PSUBSCRIBE":
          case "PUNSUBSCRIBE":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()));
+            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()), ctx.voidPromise());
             break;
          default:
             return super.handleRequest(ctx, type, arguments);
@@ -207,9 +207,9 @@ public class SubscriberHandler extends RespRequestHandler {
       return stageToReturn(stageToWaitFor, ctx, (__, t) -> {
          if (t != null) {
             if (subscribeOrUnsubscribe) {
-               ctx.writeAndFlush("-ERR Failure adding client listener");
+               ctx.writeAndFlush(stringToByteBuf("-ERR Failure adding client listener", ctx.alloc()), ctx.voidPromise());
             } else {
-               ctx.writeAndFlush("-ERR Failure unsubscribing client listener");
+               ctx.writeAndFlush(stringToByteBuf("-ERR Failure unsubscribing client listener", ctx.alloc()), ctx.voidPromise());
             }
             return;
          }
@@ -224,7 +224,7 @@ public class SubscriberHandler extends RespRequestHandler {
             subscribeBuffer.writeByte('\r');
             subscribeBuffer.writeByte('\n');
             assert subscribeBuffer.writerIndex() == sizeRequired;
-            ctx.writeAndFlush(subscribeBuffer);
+            ctx.writeAndFlush(subscribeBuffer, ctx.voidPromise());
          }
       });
    }
