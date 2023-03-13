@@ -121,17 +121,23 @@
             <property name="argumentCount" value="2"/>
         </module>
         <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
-            <property name="methodPattern" value="(handle|thenAccept|thenApply|thenCompose|thenRun|whenComplete|run|supply)Async"/>
+            <property name="methodPattern"
+                      value="(handle|thenAccept|thenApply|thenCompose|thenRun|whenComplete|run|supply)Async"/>
             <property name="argumentCount" value="1"/>
         </module>
 
         <!-- Prevent invoking Flowable#blocking methods (We allow (Single|Maybe)#blockingGet for now) -->
         <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
-            <property name="methodPattern" value="blocking(First|ForEach|Get|Iterable|Last|Latest|MostRecent|Next|Single|Subscribe)"/>
+            <property name="methodPattern"
+                      value="blocking(First|ForEach|Get|Iterable|Last|Latest|MostRecent|Next|Single|Subscribe)"/>
+        </module>
+        <!-- Prevent invoking completedStage method, should use completedFuture -->
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern" value="completedStage"/>
         </module>
 
         <!-- Allow annotated code to disable checkstyle check -->
-        <module name="SuppressWarningsHolder" />
+        <module name="SuppressWarningsHolder"/>
     </module>
 
     <!-- We are not using NewLineAtEndOfFile because the new line chars change

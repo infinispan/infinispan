@@ -223,7 +223,7 @@ public class RestCacheManager<V> {
       DistributionManager dm = SecurityActions.getDistributionManager(ac);
       if (dm == null) {
          CacheDistributionInfo local = CacheDistributionInfo.resolve(instance.getCache(cacheName).getAdvancedCache());
-         return CompletableFuture.completedStage(Collections.singletonList(local));
+         return CompletableFuture.completedFuture(Collections.singletonList(local));
       }
 
       Map<Address, CacheDistributionInfo> distributions = new ConcurrentHashMap<>();
