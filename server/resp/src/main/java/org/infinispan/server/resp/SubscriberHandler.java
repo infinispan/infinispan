@@ -204,12 +204,12 @@ public class SubscriberHandler extends RespRequestHandler {
 
    private CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
          Collection<byte[]> keyChannels, boolean subscribeOrUnsubscribe) {
-      return stageToReturn(stageToWaitFor, ctx, (__, t) -> {
+      return stageToReturn(stageToWaitFor, ctx, (__, innerCtx, t) -> {
          if (t != null) {
             if (subscribeOrUnsubscribe) {
-               ctx.writeAndFlush(stringToByteBuf("-ERR Failure adding client listener", ctx.alloc()), ctx.voidPromise());
+               innerCtx.writeAndFlush(stringToByteBuf("-ERR Failure adding client listener", innerCtx.alloc()), innerCtx.voidPromise());
             } else {
-               ctx.writeAndFlush(stringToByteBuf("-ERR Failure unsubscribing client listener", ctx.alloc()), ctx.voidPromise());
+               innerCtx.writeAndFlush(stringToByteBuf("-ERR Failure unsubscribing client listener", innerCtx.alloc()), innerCtx.voidPromise());
             }
             return;
          }
@@ -218,13 +218,13 @@ public class SubscriberHandler extends RespRequestHandler {
 
             // Length of string (all ascii so 1 byte per) + (log10 + 1 = sizes of number as char in bytes) + \r\n + bytes themselves + \r\n
             int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2;
-            ByteBuf subscribeBuffer = ctx.alloc().buffer(sizeRequired, sizeRequired);
+            ByteBuf subscribeBuffer = innerCtx.alloc().buffer(sizeRequired, sizeRequired);
             subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + "\r\n", CharsetUtil.US_ASCII);
             subscribeBuffer.writeBytes(keyChannel);
             subscribeBuffer.writeByte('\r');
             subscribeBuffer.writeByte('\n');
             assert subscribeBuffer.writerIndex() == sizeRequired;
-            ctx.writeAndFlush(subscribeBuffer, ctx.voidPromise());
+            innerCtx.writeAndFlush(subscribeBuffer, innerCtx.voidPromise());
          }
       });
    }
