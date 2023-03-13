@@ -1,0 +1,44 @@
+[
+  {
+    "name": "org.infinispan.commons.logging.Log_$logger",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.infinispan.cli.logging.Messages_$bundle",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "fields" : [
+      { "name" : "INSTANCE" }
+    ]
+  },
+  {
+    "name": "org.infinispan.cli.impl.ExitCodeResultHandler",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.logging.log4j.message.DefaultFlowMessageFactory",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.apache.logging.log4j.core.impl.Log4jContextFactory",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.apache.logging.log4j.core.util.ExecutorServices",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.apache.logging.log4j.message.ParameterizedMessageFactory",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.wildfly.security.password.impl.PasswordFactorySpiImpl",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  }
+]

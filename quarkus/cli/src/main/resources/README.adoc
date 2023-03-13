@@ -1,0 +1,63 @@
+[id='native-cli']
+= ${product.name} native CLI
+The native ${product.name} Command Line Interface (CLI) lets you access remote caches and perform administrative operations on ${product.name} clusters.
+
+[discrete]
+== Starting the native CLI
+
+.Linux and macOS
+
+Start the CLI and connect to a running ${product.name} Server as follows:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+./${cli.name} -c http://<host>:11222
+----
+
+.Microsoft Windows
+
+Start the CLI with PowerShell and connect to a running ${product.name} Server as follows:
+
+[source,bash,options="nowrap",subs=attributes+]
+----
+& ".\${cli.name}.exe" -c http://<host>:11222
+----
+
+[discrete]
+== Installing the native CLI as a ${k8.cmd} plugin
+
+You can use the ${product.name} CLI as `${k8.cmd}` client plugin to control the ${product.name} Operator.
+
+Integrating with `${k8.cmd}` lets you install and remove ${product.name} Operator, create and delete ${product.name} clusters, and obtain information about `Infinispan` resources.
+
+To install the CLI as a `${k8.cmd}` plugin, do the following:
+
+. Copy the `${cli.name}`, or create a hard link, to a file named "kubectl-infinispan".
+. Add `kubectl-infinispan` to your `PATH`.
+. Run `${k8.cmd} plugin list` to verify the CLI is added as a plugin.
+. Run `${k8.cmd} infinispan --help` to start using the CLI plugin.
+
+[discrete]
+== Working with ${product.name} clusters
+
+Use the native CLI to interact with ${product.name} Operator to work with ${product.name} clusters.
+
+.Creating ${product.name} clusters
+[source,sh,options="nowrap",subs=attributes+]
+----
+${k8.cmd} infinispan create cluster --replicas=3 -Pservice.type=DataGrid infinispan
+${k8.cmd} infinispan get clusters
+----
+
+.Removing ${product.name} clusters
+[source,sh,options="nowrap",subs=attributes+]
+----
+${k8.cmd} infinispan delete cluster infinispan
+${k8.cmd} infinispan get clusters
+----
+
+[discrete]
+== License
+
+The ${product.name} CLI is licensed under the Apache Public License 2.0.
+The source code for this program is [located on github](https://github.com/infinispan/infinispan).

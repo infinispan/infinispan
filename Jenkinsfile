@@ -24,6 +24,7 @@ pipeline {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 17')
+                    env.GRAALVM_HOME = tool('GraalVM 20')
                     if (params.TEST_JDK != 'Default') {
                         env.JAVA_ALT_HOME = tool(params.TEST_JDK)
                         env.ALT_TEST_BUILD = "-Pjava-alt-test"
@@ -49,7 +50,7 @@ pipeline {
         stage('Build') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -V -e -s $MAVEN_SETTINGS -DskipTests $DISTRIBUTION_BUILD"
+                    sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -V -e -s $MAVEN_SETTINGS -DskipTests -Pnative $DISTRIBUTION_BUILD"
                 }
             }
         }
@@ -93,10 +94,49 @@ pipeline {
             }
         }
 
+        stage('Native Image') {
+            when {
+                expression {
+                    return !env.BRANCH_NAME.startsWith("PR-") || pullRequest.labels.contains('Native Image Required')
+                }
+            }
+            steps {
+                script {
+                    def mvnCmd = '-q -Dexec.executable=echo -Dexec.args=\'${project.version}\' --non-recursive exec:exec'
+                    def SERVER_VERSION = sh(
+                            script: "${MAVEN_HOME}/bin/mvn ${mvnCmd}",
+                            returnStdout: true
+                    ).trim()
+                    def REPO = 'quay.io/infinispan-test/server-native'
+                    def TAG = env.BRANCH_NAME
+                    def IMAGE_BRANCH = env.CHANGE_ID ? pullRequest.base : env.BRANCH_NAME
+
+                    sh "rm -rf infinispan-images"
+                    sh "git clone --single-branch --branch ${IMAGE_BRANCH} --depth 1 https://github.com/infinispan/infinispan-images.git"
+
+
+                    dir('infinispan-images') {
+                        sh "cekit -v --descriptor server-dev-native.yaml build --overrides '{\"name\":\"${REPO}\", \"version\":\"${TAG}\"}' --overrides '{\"artifacts\":[{\"name\":\"server\",\"path\":\"../quarkus/server-runner/target/infinispan-quarkus-server-runner-${SERVER_VERSION}-runner\"},{\"name\":\"cli\",\"path\":\"../quarkus/cli/target/infinispan-cli\"}]}' docker\n"
+
+                        withDockerRegistry(credentialsId: 'Quay-InfinispanTest', url: 'https://quay.io') {
+                            sh "docker push ${REPO}:${TAG}"
+                        }
+                        sh "docker rmi ${REPO}:${TAG}"
+                        deleteDir()
+                    }
+
+                    // CHANGE_ID is set only for pull requests, so it is safe to access the pullRequest global variable
+                    if (env.CHANGE_ID) {
+                        pullRequest.comment("Image pushed for Jenkins build [#${env.BUILD_NUMBER}](${env.BUILD_URL}):\n```\n${REPO}:${TAG}\n```")
+                    }
+                }
+            }
+        }
+
         stage('Tests') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true $ALT_TEST_BUILD"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
                 }
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,

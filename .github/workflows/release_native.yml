@@ -1,0 +1,82 @@
+name: Release Native Binaries
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    outputs:
+      upload_url: ${{ steps.release.outputs.upload_url }}
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v2
+
+      - id: release
+        name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{github.ref_name}}
+          release_name: ${{github.ref_name}}
+
+  build:
+    needs: release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2022]
+        include:
+          - os: ubuntu-latest
+            asset_name: linux-amd64
+            gu_binary: gu
+          - os: macos-latest
+            asset_name: darwin-amd64
+            gu_binary: gu
+          - os: windows-2022
+            asset_name: windows-amd64
+            gu_binary: gu.cmd
+    steps:
+      - uses: actions/checkout@v2
+
+      - if: ${{ matrix.os == 'windows-2022' }}
+        name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.0'
+          java-version: '17'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Release Tag
+        uses: actions/checkout@v2
+
+      - if: ${{ matrix.os == 'windows-2022' }}
+        name: Build native executable
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+          mvnw.cmd package -s maven-settings.xml -Pdistribution -Pwindows -Pnative -am -pl cli
+        shell: cmd
+
+      - if: ${{ matrix.os != 'windows-2022' }}
+        name: Build native executable
+        run: ./mvnw package -s maven-settings.xml -Pdistribution -Pnative -am -pl cli
+
+      - name: Upload CLI native executable
+        id: upload-cli-native-executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url:  ${{ needs.release.outputs.upload_url }}
+          asset_path: ./cli/target/infinispan-cli-${{github.ref_name}}.zip
+          asset_name: infinispan-cli-${{github.ref_name}}-${{ matrix.asset_name }}.zip
+          asset_content_type: application/zip
