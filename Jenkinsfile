@@ -5,6 +5,10 @@ pipeline {
         label 'slave-group-normal'
     }
 
+    parameters {
+        choice(name: 'TEST_JDK', choices: ['Default', 'JDK 11', 'JDK 17', 'JDK 20'], description: 'The JDK used to run tests')
+    }
+
     options {
         timeout(time: 4, unit: 'HOURS')
         timestamps()
@@ -14,26 +18,21 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
-                // Show the agent name in the build list
                 script {
-                    // The manager variable requires the Groovy Postbuild plugin
+                    // Show the agent name in the build list
                     manager.addShortText(env.NODE_NAME, "grey", "", "0px", "")
-                }
-
-                // Workaround for JENKINS-47230
-                script {
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 17')
-                }
-
-                // ISPN-9703 Ensure distribution build works on non-prs
-                script {
+                    if (params.TEST_JDK != 'Default') {
+                        env.JAVA_ALT_HOME = tool(params.TEST_JDK)
+                        env.ALT_TEST_BUILD = "-Pjava-alt-test"
+                    } else {
+                        env.ALT_TEST_BUILD = ""
+                    }
+                    // ISPN-9703 Ensure distribution build works on non-prs
                     env.DISTRIBUTION_BUILD = !env.BRANCH_NAME.startsWith('PR-') || pullRequest.labels.contains('Documentation') || pullRequest.labels.contains('Image Required') ? "-Pdistribution" : ""
-                }
-
-                // Collect reports on non-prs
-                script {
+                    // Collect reports on non-prs
                     env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs dependency-check:check"
                 }
 
@@ -97,7 +96,7 @@ pipeline {
         stage('Tests') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true $ALT_TEST_BUILD"
                 }
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,

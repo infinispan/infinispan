@@ -311,5 +311,17 @@
             <skipTests>true</skipTests>
          </properties>
       </profile>
+
+      <profile>
+         <id>java-alt-test</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <server.jvm>${env.JAVA_ALT_HOME}</server.jvm>
+            <server.jvm.args>${testjvm.extraArgs} ${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+         </properties>
+      </profile>
+
    </profiles>
 </project>

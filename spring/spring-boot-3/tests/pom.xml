@@ -1,58 +1,78 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-spring-boot3-starter-parent</artifactId>
+      <version>14.0.8-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
 
-    <parent>
-        <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-spring-boot3-starter-parent</artifactId>
-        <version>14.0.8-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+   <name>Infinispan Spring Boot 3 Starter Integration Test</name>
+   <artifactId>infinispan-spring-boot3-starter-tests</artifactId>
 
-    <name>Infinispan Spring Boot 3 Starter Integration Test</name>
-    <artifactId>infinispan-spring-boot3-starter-tests</artifactId>
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
+      </dependency>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
-        </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring-boot3-starter-remote</artifactId>
-        </dependency>
+      <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-web</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
+      <dependency>
+         <groupId>org.springframework.session</groupId>
+         <artifactId>spring-session-core</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session-core</artifactId>
-        </dependency>
+      <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-security</artifactId>
+      </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
+      <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-test</artifactId>
+         <scope>test</scope>
+      </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-hotrod-jakarta</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
 
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-commons-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-hotrod-jakarta</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+   <profiles>
+      <profile>
+         <id>java-alt-test</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <skipTests>true</skipTests>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
