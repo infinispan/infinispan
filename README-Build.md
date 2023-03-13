@@ -14,4 +14,4 @@ Available profiles
 ==================
 
 * *distribution* Builds the full distribution
-
+* *java-alt-test* Runs tests using an older JDK compared to the one required to build. Requires setting the `JAVA_ALT_HOME` environment variable. 
