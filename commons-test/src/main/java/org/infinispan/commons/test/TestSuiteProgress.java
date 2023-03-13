@@ -90,6 +90,12 @@ public class TestSuiteProgress {
       log.error(message, exception);
    }
 
+   public static void printTestJDKInformation() {
+      String message = "Running tests with JDK " + System.getProperty("java.version");
+      System.out.println(message);
+      log.info(message);
+   }
+
    private void progress(CharSequence message) {
       progress(null, message, null);
    }

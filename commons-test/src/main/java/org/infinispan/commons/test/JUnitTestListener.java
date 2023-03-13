@@ -67,13 +67,13 @@ public class JUnitTestListener extends RunListener {
    }
 
    @Override
-   public void testFailure(Failure failure) throws Exception {
+   public void testFailure(Failure failure) {
       currentTestIsSuccessful.set(false);
       progressLogger.testFailed(testName(failure.getDescription()), failure.getException());
    }
 
    @Override
-   public void testIgnored(Description description) throws Exception {
+   public void testIgnored(Description description) {
       currentTestIsSuccessful.set(false);
       progressLogger.testIgnored(testName(description));
    }
@@ -90,8 +90,8 @@ public class JUnitTestListener extends RunListener {
    }
 
    @Override
-   public void testRunStarted(Description description) throws Exception {
-      EnvironmentCheck.checkJVMVersion();
+   public void testRunStarted(Description description) {
+      TestSuiteProgress.printTestJDKInformation();
       ThreadLeakChecker.saveInitialThreads();
       currentTestRunName = description.getDisplayName();
    }
