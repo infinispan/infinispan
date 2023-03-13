@@ -19,7 +19,7 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 
 public abstract class RespRequestHandler {
-   protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedStage(this);
+   protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedFuture(this);
    protected final RespServer respServer;
    protected AdvancedCache<byte[], byte[]> cache;
 
