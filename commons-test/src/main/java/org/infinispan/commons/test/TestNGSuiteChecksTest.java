@@ -31,7 +31,7 @@ public class TestNGSuiteChecksTest {
 
    @BeforeSuite(alwaysRun = true)
    public void beforeSuite(ITestContext context) {
-      EnvironmentCheck.checkJVMVersion();
+      TestSuiteProgress.printTestJDKInformation();
       List<String> errors = new ArrayList<>();
       Set<Class> classes = new HashSet<>();
       checkAnnotations(errors, classes, context.getSuite().getExcludedMethods());
