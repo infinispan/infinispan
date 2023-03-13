@@ -1,6 +1,5 @@
 package org.infinispan.server.resp;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -159,19 +158,97 @@ public abstract class RespRequestHandler {
 
    static ByteBuf bytesToResult(byte[] result, ByteBufAllocator allocator) {
       int length = result.length;
-      String lengthString = String.valueOf(length);
+      int stringLength = stringSize(length);
 
-      int bytesSize = lengthString.length() + length + 5;
       // Need 5 extra for $ and 2 sets of /r/n
-      ByteBuf buffer = allocator.buffer(bytesSize, bytesSize);
+      int exactSize = stringLength + length + 5;
+      ByteBuf buffer = allocator.buffer(exactSize, exactSize);
       buffer.writeByte('$');
-      // Numbers are always in ascii range for UTF-8, so no need to write in UTF-8 as it adds extra checks
-      buffer.writeCharSequence(lengthString, StandardCharsets.US_ASCII);
+      // This method is anywhere from 10-100% faster than ByteBufUtil.writeAscii and avoids allocations
+      setIntChars(length, stringLength, buffer);
       buffer.writeByte('\r').writeByte('\n');
       buffer.writeBytes(result);
       buffer.writeByte('\r').writeByte('\n');
 
-      assert buffer.writerIndex() == bytesSize;
       return buffer;
    }
+
+   static int stringSize(int x) {
+      int d = 1;
+      if (x >= 0) {
+         d = 0;
+         x = -x;
+      }
+      int p = -10;
+      for (int i = 1; i < 10; i++) {
+         if (x > p)
+            return i + d;
+         p = 10 * p;
+      }
+      return 10 + d;
+   }
+
+   // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
+   // instead of creating a String around a byte[]
+   static int setIntChars(int i, int index, ByteBuf buf) {
+      int writeIndex = buf.writerIndex();
+      int q, r;
+      int charPos = index;
+
+      boolean negative = i < 0;
+      if (!negative) {
+         i = -i;
+      }
+
+      // Generate two digits per iteration
+      while (i <= -100) {
+         q = i / 100;
+         r = (q * 100) - i;
+         i = q;
+         buf.setByte(writeIndex + --charPos, DigitOnes[r]);
+         buf.setByte(writeIndex + --charPos, DigitTens[r]);
+      }
+
+      // We know there are at most two digits left at this point.
+      q = i / 10;
+      r = (q * 10) - i;
+      buf.setByte(writeIndex + --charPos, (byte) ('0' + r));
+
+      // Whatever left is the remaining digit.
+      if (q < 0) {
+         buf.setByte(writeIndex + --charPos, (byte) ('0' - q));
+      }
+
+      if (negative) {
+         buf.setByte(writeIndex + --charPos, (byte) '-');
+      }
+      buf.writerIndex(writeIndex + index);
+      return charPos;
+   }
+
+   static final byte[] DigitTens = {
+         '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+         '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
+         '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
+         '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
+         '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
+         '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
+         '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
+         '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
+         '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
+         '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
+   };
+
+   static final byte[] DigitOnes = {
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+   };
 }
