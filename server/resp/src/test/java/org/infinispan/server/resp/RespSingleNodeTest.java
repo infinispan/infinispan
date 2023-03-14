@@ -99,6 +99,22 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       assertEquals(expected, results);
    }
 
+   public void testSetEmptyStringMGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("k1", "");
+      redis.set("k3", "value2");
+
+      assertEquals("", redis.get("k1"));
+
+      List<KeyValue<String, String>> expected = new ArrayList<>(3);
+      expected.add(KeyValue.just("k1", ""));
+      expected.add(KeyValue.empty("k2"));
+      expected.add(KeyValue.just("k3", "value2"));
+
+      List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3");
+      assertEquals(expected, results);
+   }
+
    public void testMSetMGet() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Map<String, String> values = new HashMap<>();
