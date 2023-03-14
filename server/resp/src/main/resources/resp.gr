@@ -1,0 +1,76 @@
+// RESP 3.x protocol
+namespace resp3x;
+
+// Target class
+class org.infinispan.server.resp.RespDecoder extends BaseRespDecoder;
+
+// static final field values are literals
+constants org.infinispan.server.resp.RespConstants;
+
+// methods simpleString, bulkString, byteArray, byte...
+intrinsics org.infinispan.server.resp.Intrinsics;
+
+import java.nio.charset.StandardCharsets;
+import java.lang.UnsupportedOperationException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+
+import io.netty.handler.codec.ByteToMessageDecoder;
+
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
+import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.Intrinsics.Resp2LongProcessor;
+import org.infinispan.util.concurrent.CompletionStages;
+
+init {
+   public RespDecoder(RespRequestHandler initialHandler) {
+      this.requestHandler = initialHandler;
+   }
+}
+
+beforedecode {
+   // We cannot read more than one command at a time
+   if (!ctx.channel().config().isAutoRead()) {
+      log.tracef("Auto read was disabled, not reading next bytes");
+      return;
+   } else {
+      log.tracef("Auto read was enabled, reading next bytes");
+   }
+}
+
+// this is the root
+root request
+   : singleByte { if (singleByte != ARRAY) throw new UnsupportedOperationException("Only array types are supported, received: " + singleByte); }
+     number
+     singleByte
+     command
+     arguments
+     execute
+   ;
+
+command returns String switch singleByte
+   : { BULK_STRING }? bulkString[longProcessor] { bulkString }
+   | { SIMPLE_STRING }? simpleString { simpleString }
+   | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
+   ;
+number: readNumber[longProcessor] { readNumber -= 1; };
+array returns byte[] switch singleByte
+   : { BULK_STRING }? bulkArray[longProcessor] { bulkArray }
+   | { SIMPLE_STRING }? readTerminatedBytes
+   | { NUMERIC } ? readTerminatedBytes
+   | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
+   ;
+arguments returns List<byte[]>
+   : { readNumber > 1 }? { arguments = new ArrayList<>((int) readNumber); } #readNumber ( singleByte array { arguments.add(array); } )
+   | { readNumber == 1 }? singleByte array { Collections.singletonList(array) }
+   | { Collections.emptyList(); }
+   ;
+execute
+   : { if (!handleCommandAndArguments(ctx, command, arguments)) { state = 0; return false; } }
+   ;

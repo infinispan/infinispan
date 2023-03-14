@@ -74,7 +74,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    @Override
    public ChannelMatcher getChannelMatcher() {
-      return channel -> channel.pipeline().get(RespLettuceHandler.class) != null;
+      return channel -> channel.pipeline().get(RespDecoder.class) != null;
    }
 
    @Override
