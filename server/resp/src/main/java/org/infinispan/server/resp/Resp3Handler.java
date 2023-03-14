@@ -315,8 +315,8 @@ public class Resp3Handler extends Resp3AuthHandler {
                         // $ + digit length (log10 + 1) + /r/n + byte length
                         resultBytesSize.addAndGet(1 + (int) Math.log10(length) + 1 + 2 + returnValue.length);
                      } else {
-                        // $0
-                        resultBytesSize.addAndGet(2);
+                        // $0 + /r/n
+                        resultBytesSize.addAndGet(2 + 2);
                      }
                   } else {
                      // $-1
