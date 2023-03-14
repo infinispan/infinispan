@@ -1,9 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -33,14 +31,13 @@ public class RespServerTest extends AbstractInfinispanTest {
             }));
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testValidateInvalidExpiration() {
+   public void testExpiration() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.expiration().lifespan(10);
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(config), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
                ms.start(new RespServerConfigurationBuilder().defaultCacheName(cm.getCacheManagerConfiguration().defaultCacheName().get()).build(), cm);
-               fail("Server should not start when expiration is enabled");
+               assertEquals(10, ms.getCache().getCacheConfiguration().expiration().lifespan());
             }));
    }
 
