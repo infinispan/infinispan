@@ -29,6 +29,8 @@ import org.infinispan.server.resp.Intrinsics.Resp2LongProcessor;
 import org.infinispan.util.concurrent.CompletionStages;
 
 init {
+   private final List<byte[]> reusedList = new ArrayList<>(16);
+
    public RespDecoder(RespRequestHandler initialHandler) {
       this.requestHandler = initialHandler;
    }
@@ -46,11 +48,11 @@ beforedecode {
 
 // this is the root
 root request
-   : singleByte { if (singleByte != ARRAY) throw new UnsupportedOperationException("Only array types are supported, received: " + singleByte); }
+   : singleByte { if (singleByte != ARRAY) throw new UnsupportedOperationException("Only array types are supported, received: " + singleByte); reusedList.clear(); }
      number
      singleByte
      command
-     arguments
+     arguments #readNumber ( singleByte array { arguments.add(array); } )
      execute
    ;
 
@@ -67,8 +69,8 @@ array returns byte[] switch singleByte
    | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
    ;
 arguments returns List<byte[]>
-   : { readNumber > 1 }? { arguments = new ArrayList<>((int) readNumber); } #readNumber ( singleByte array { arguments.add(array); } )
-   | { readNumber == 1 }? singleByte array { Collections.singletonList(array) }
+   : { readNumber > 16 }? { new ArrayList<>((int) readNumber); }
+   | { readNumber >= 1 }? { reusedList; }
    | { Collections.emptyList(); }
    ;
 execute
