@@ -69,14 +69,6 @@ public final class ThreadNameFilter extends AbstractFilter {
    public String toString() {
        return level.toString();
    }
-
-   /**
-    * Create a ThresholdFilter.
-    * @param level The log Level.
-    * @param match The action to take on a match.
-    * @param mismatch The action to take on a mismatch.
-    * @return The created ThresholdFilter.
-    */
    @PluginFactory
    public static ThreadNameFilter createFilter(
            @PluginAttribute("level") final Level level,
