@@ -112,6 +112,7 @@ tokens {
   SUM;
   WHERE;
   WITH;
+  VERSION;
 }
 
 @header {

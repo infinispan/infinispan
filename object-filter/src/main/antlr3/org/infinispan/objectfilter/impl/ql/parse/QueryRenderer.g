@@ -225,6 +225,7 @@ propertyReferenceExpression
 
 function
 	: setFunction
+	| versionFunction
 	| standardFunction
 	;
 
@@ -236,6 +237,10 @@ setFunction
 	|	^(MIN { delegate.activateAggregation(AggregationFunction.MIN); } numericValueExpression)
 	|	^(COUNT (ASTERISK { delegate.activateAggregation(AggregationFunction.COUNT); } | (DISTINCT { delegate.activateAggregation(AggregationFunction.COUNT_DISTINCT); } | ALL { delegate.activateAggregation(AggregationFunction.COUNT); }) countFunctionArguments))
 	;
+
+versionFunction
+   : 	^(VERSION { delegate.projectVersion(); } ALIAS_REF)
+   ;
 
 standardFunction
 	:	sizeFunction

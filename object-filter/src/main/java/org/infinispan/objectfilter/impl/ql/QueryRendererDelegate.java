@@ -117,6 +117,8 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void deactivateAggregation();
 
+   void projectVersion();
+
    /**
     * @param collateName optional collation name
     */
