@@ -48,7 +48,7 @@ public class JdbcConfigurationUtil {
         return this;
     }
 
-    public JdbcConfigurationUtil setEvition() {
+    public JdbcConfigurationUtil setEviction() {
         configurationBuilder.memory().maxCount(2);
         return this;
     }

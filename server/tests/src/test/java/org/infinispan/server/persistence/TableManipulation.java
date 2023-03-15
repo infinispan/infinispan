@@ -10,7 +10,6 @@ import java.util.Enumeration;
 
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
@@ -25,7 +24,7 @@ public class TableManipulation implements AutoCloseable {
 
    private ConnectionFactory connectionFactory;
    private Connection connection;
-   public PooledConnectionFactoryConfigurationBuilder persistenceConfiguration;
+   public PooledConnectionFactoryConfiguration poolConfiguration;
    private final String countRowsSql;
    private final String selectIdRowSqlWithLike;
    private static final String ID_COLUMN_NAME = "id";
@@ -33,8 +32,8 @@ public class TableManipulation implements AutoCloseable {
    private static final String TABLE_NAME_PREFIX = "tbl";
    private String tableName;
 
-   public TableManipulation(String cacheName, PooledConnectionFactoryConfigurationBuilder persistenceConfiguration, ConfigurationBuilder configurationBuilder) {
-      this.persistenceConfiguration = persistenceConfiguration;
+   public TableManipulation(String cacheName, PooledConnectionFactoryConfigurationBuilder builder) {
+      this.poolConfiguration = builder.create();
       this.tableName = String.format("%s%s_%s%s", DEFAULT_IDENTIFIER_QUOTE_STRING, TABLE_NAME_PREFIX, cacheName, DEFAULT_IDENTIFIER_QUOTE_STRING);
       if (isMysql()) {
          this.tableName = this.tableName.replaceAll("\"", "");
@@ -44,14 +43,13 @@ public class TableManipulation implements AutoCloseable {
    }
 
    private ConnectionFactory getConnectionFactory() {
-      PooledConnectionFactoryConfiguration pooledConnectionFactoryConfiguration = persistenceConfiguration.create();
       connectionFactory = ConnectionFactory.getConnectionFactory(PooledConnectionFactory.class);
-      connectionFactory.start(pooledConnectionFactoryConfiguration, connectionFactory.getClass().getClassLoader());
+      connectionFactory.start(poolConfiguration, connectionFactory.getClass().getClassLoader());
       return connectionFactory;
    }
 
    private Connection getConnection() {
-      if(connection == null) {
+      if (connection == null) {
          connection = getConnectionFactory().getConnection();
       }
       return connection;
@@ -65,7 +63,7 @@ public class TableManipulation implements AutoCloseable {
          ps = connection.prepareStatement(selectIdRowSqlWithLike);
          ps.setString(1, "%" + getEncodedKey(key) + "%");
          rs = ps.executeQuery();
-         if(rs.next()) {
+         if (rs.next()) {
             return rs.getString("ID");
          }
          return null;
@@ -75,14 +73,17 @@ public class TableManipulation implements AutoCloseable {
       }
    }
 
-   public int countAllRows() throws Exception {
+   public int countAllRows() {
       connection = getConnection();
-      try(PreparedStatement ps = connection.prepareStatement(countRowsSql);
-          ResultSet rs = ps.executeQuery()) {
-      if (rs.next()) {
+      try (PreparedStatement ps = connection.prepareStatement(countRowsSql);
+           ResultSet rs = ps.executeQuery()) {
+         if (rs.next()) {
             return rs.getInt(1);
+         } else {
+            throw new IllegalStateException(countRowsSql + " returned no rows");
          }
-         return 0;
+      } catch (SQLException e) {
+         throw new RuntimeException(e);
       }
    }
 
@@ -99,7 +100,7 @@ public class TableManipulation implements AutoCloseable {
       while (drivers.hasMoreElements()) {
          try {
             driver = drivers.nextElement();
-            if(driver instanceof com.mysql.cj.jdbc.Driver) {
+            if (driver instanceof com.mysql.cj.jdbc.Driver) {
                AbandonedConnectionCleanupThread.checkedShutdown();
             }
             DriverManager.deregisterDriver(driver);
@@ -124,8 +125,8 @@ public class TableManipulation implements AutoCloseable {
    }
 
    @Override
-   public void close() throws Exception {
-      if(connection != null) {
+   public void close() {
+      if (connection != null) {
          JdbcUtil.safeClose(connection);
          connectionFactory.stop();
          connectionFactory.releaseConnection(connection);
