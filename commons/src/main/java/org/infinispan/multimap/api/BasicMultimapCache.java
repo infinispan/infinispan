@@ -10,33 +10,30 @@ import org.infinispan.commons.util.Experimental;
  * provides: embedded and remote. <p> Please see the <a href="http://infinispan.org/documentation/">Infinispan
  * documentation</a> and/or the <a href="http://infinispan.org/docs/dev/getting_started/getting_started.html">5 Minute
  * Usage Tutorial</a> for more details on Infinispan.
- * <p/>
- * <p> MutimapCache is a type of Infinispan Cache that maps keys to values, similar to {@link
+ *
+ * MutimapCache is a type of Infinispan Cache that maps keys to values, similar to {@link
  * org.infinispan.commons.api.AsyncCache} in which each key can contain multiple values.
  * <pre>
  *    foo &rarr; 1
  *    bar &rarr; 3, 4, 5
  * </pre>
- * <p> <h2>Example</h2>
+ * <h2>Example</h2>
  * <pre>
  *
  *    multimapCache.put("k", "v1").join();
  *    multimapCache.put("k", "v2").join();
  *    multimapCache.put("k", "v3").join();
  *
- *    Collection<String> results = multimapCache.get("k").join();
+ *    Collection&lt;String&gt; results = multimapCache.get("k").join();
  *
  * </pre>
- * <p> <h2>Eviction</h2> <p> Eviction works per key. This means all the values associated on a key will be evicted.
- * </p>
- * <p>
+ * <h2>Eviction</h2> <p> Eviction works per key. This means all the values associated on a key will be evicted.
+ *
  * <h2>Views</h2>
- * <p>
  * The returned collections when calling "get" are views of the values on the key. Any change on these collections won't
  * affect the cache values on the key.
  * <p>
  * <h2>Null values</h2> Null values are not supported. The multimap cache won't have a null key or any null value.
- * <p>
  * Example
  * <pre>
  *     multimapCache.put(null, "v1").join() &rarr; fails
@@ -46,8 +43,7 @@ import org.infinispan.commons.util.Experimental;
  *     multimapCache.remove("k", "v1").join() &rarr; works, removes v1 and as the remaining collection is empty, the key is
  * removed
  *     multimapCache.containsKey("k").join() &rarr; false
- *  </pre>
- * <p>
+ * </pre>
  *
  * @author Katia Aresti, karesti@redhat.com
  * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>
