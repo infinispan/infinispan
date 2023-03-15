@@ -24,7 +24,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
-import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.distribution.NodeDistributionInfo;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -73,44 +72,44 @@ public class ClusterResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> stop(RestRequest restRequest) {
+   private CompletionStage<RestResponse> stop(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
-         List<String> servers = restRequest.parameters().get("server");
+         List<String> servers = request.parameters().get("server");
 
          if (servers != null && !servers.isEmpty()) {
-            Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
+            Security.doAs(request.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
          } else {
-            Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().clusterStop());
+            Security.doAs(request.getSubject(), () -> invocationHelper.getServer().clusterStop());
          }
-         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+         return invocationHelper.newResponse(request).status(NO_CONTENT).build();
       }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = Security.doAs(request.getSubject(), backupManager::getBackupNames);
-      return asJsonResponseFuture(Json.make(names), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> backup(RestRequest request) {
-      return BackupManagerResource.handleBackupRequest(request, backupManager,
+      return BackupManagerResource.handleBackupRequest(invocationHelper, request, backupManager,
             (name, workingDir, json) -> backupManager.create(name, workingDir));
    }
 
    private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = Security.doAs(request.getSubject(), backupManager::getRestoreNames);
-      return asJsonResponseFuture(Json.make(names), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> restore(RestRequest request) {
-      return BackupManagerResource.handleRestoreRequest(request, backupManager, (name, path, json) -> backupManager.restore(name, path));
+      return BackupManagerResource.handleRestoreRequest(invocationHelper, request, backupManager, (name, path, json) -> backupManager.restore(name, path));
    }
 
    private CompletionStage<RestResponse> distribution(RestRequest request) {
       boolean pretty = isPretty(request);
       return clusterDistribution()
-            .thenApply(distributions -> asJsonResponse(Json.array(distributions.stream()
+            .thenApply(distributions -> asJsonResponse(invocationHelper.newResponse(request), Json.array(distributions.stream()
                   .map(NodeDistributionInfo::toJson).toArray()), pretty));
    }
 

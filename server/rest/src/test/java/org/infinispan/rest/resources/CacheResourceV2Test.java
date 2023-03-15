@@ -24,7 +24,6 @@ import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstant
 import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
@@ -136,7 +135,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Override
    protected String parameters() {
-      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", cacheMode=" + cacheMode + "]";
+      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", cacheMode=" + cacheMode + ", browser=" + browser +"]";
    }
 
    protected CacheResourceV2Test withCacheMode(CacheMode cacheMode) {
@@ -178,14 +177,22 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CacheResourceV2Test().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(true),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true),
-            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true),
+            new CacheResourceV2Test().withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            new CacheResourceV2Test().withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            new CacheResourceV2Test().withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            new CacheResourceV2Test().withCacheMode(CacheMode.DIST_SYNC).withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
       };
    }
 

@@ -6,8 +6,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE;
-import static org.infinispan.rest.resources.ResourceUtil.response;
-import static org.infinispan.rest.resources.ResourceUtil.responseFuture;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +21,7 @@ import org.hibernate.search.util.common.function.TriFunction;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
+import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestRequest;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.Method;
@@ -55,28 +54,28 @@ class BackupManagerResource {
    private static final String LOCATION_KEY = "location";
    private static final String RESOURCES_KEY = "resources";
 
-   static CompletionStage<RestResponse> handleBackupRequest(RestRequest request, BackupManager backupManager,
+   static CompletionStage<RestResponse> handleBackupRequest(InvocationHelper invocationHelper, RestRequest request, BackupManager backupManager,
                                                             TriConsumer<String, Path, Json> creationConsumer) {
       String name = request.variables().get("backupName");
       Method method = request.method();
       switch (method) {
          case DELETE:
-            return handleDeleteBackup(name, request, backupManager);
+            return handleDeleteBackup(invocationHelper, name, request, backupManager);
          case GET:
          case HEAD:
-            return handleGetBackup(name, request, backupManager, method);
+            return handleGetBackup(invocationHelper, name, request, backupManager, method);
          case POST:
-            return handleCreateBackup(name, request, backupManager, creationConsumer);
+            return handleCreateBackup(invocationHelper, name, request, backupManager, creationConsumer);
          default:
             throw Log.REST.wrongMethod(method.toString());
       }
    }
 
-   private static CompletionStage<RestResponse> handleCreateBackup(String name, RestRequest request, BackupManager backupManager,
+   private static CompletionStage<RestResponse> handleCreateBackup(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager,
                                                                    TriConsumer<String, Path, Json> creationConsumer) {
       BackupManager.Status existingStatus = backupManager.getBackupStatus(name);
       if (existingStatus != BackupManager.Status.NOT_FOUND)
-         return responseFuture(CONFLICT);
+         return invocationHelper.newResponse(request, CONFLICT).toFuture();
 
       String body = request.contents().asString();
       Json json = body.length() > 0 ? Json.read(body) : Json.object();
@@ -88,26 +87,25 @@ class BackupManagerResource {
 
       Json requestsJson = json.at(RESOURCES_KEY);
       creationConsumer.accept(name, workingDir, requestsJson);
-      return responseFuture(ACCEPTED);
+      return invocationHelper.newResponse(request, ACCEPTED).toFuture();
    }
 
-   private static CompletionStage<RestResponse> handleDeleteBackup(String name, RestRequest request, BackupManager backupManager) {
-      return backupManager.removeBackup(name).handle(BackupManagerResource::handleDelete);
+   private static CompletionStage<RestResponse> handleDeleteBackup(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager) {
+      return backupManager.removeBackup(name).handle((BackupManager.Status s, Throwable t) -> handleDelete(invocationHelper, request, s, t));
    }
 
-   private static CompletionStage<RestResponse> handleGetBackup(String name, RestRequest request, BackupManager backupManager, Method method) {
+   private static CompletionStage<RestResponse> handleGetBackup(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager, Method method) {
       BackupManager.Status status = backupManager.getBackupStatus(name);
       switch (status) {
          case FAILED:
             throw Log.REST.backupFailed();
          case NOT_FOUND:
-            return responseFuture(NOT_FOUND);
+            return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
          case IN_PROGRESS:
-            return responseFuture(ACCEPTED);
+            return invocationHelper.newResponse(request, ACCEPTED).toFuture();
          default:
             File zip = backupManager.getBackupLocation(name).toFile();
-            NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
-            responseBuilder
+            NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request)
                   .contentType(MediaType.APPLICATION_ZIP)
                   .header("Content-Disposition", String.format("attachment; filename=%s", zip.getName()))
                   .contentLength(zip.length());
@@ -118,45 +116,45 @@ class BackupManagerResource {
       }
    }
 
-   static CompletionStage<RestResponse> handleRestoreRequest(RestRequest request, BackupManager backupManager,
+   static CompletionStage<RestResponse> handleRestoreRequest(InvocationHelper invocationHelper, RestRequest request, BackupManager backupManager,
                                                              TriFunction<String, Path, Json, CompletionStage<Void>> function) {
       String name = request.variables().get("restoreName");
       Method method = request.method();
       switch (method) {
          case DELETE:
-            return handleDeleteRestore(name, request, backupManager);
+            return handleDeleteRestore(invocationHelper, name, request, backupManager);
          case HEAD:
-            return handleRestoreStatus(name, request, backupManager);
+            return handleRestoreStatus(invocationHelper, name, request, backupManager);
          case POST:
-            return handleRestore(name, request, backupManager, function);
+            return handleRestore(invocationHelper, name, request, backupManager, function);
          default:
             throw Log.REST.wrongMethod(method.toString());
       }
    }
 
-   static CompletionStage<RestResponse> handleDeleteRestore(String name, RestRequest request, BackupManager backupManager) {
-      return backupManager.removeRestore(name).handle(BackupManagerResource::handleDelete);
+   static CompletionStage<RestResponse> handleDeleteRestore(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager) {
+      return backupManager.removeRestore(name).handle((BackupManager.Status s, Throwable t) -> handleDelete(invocationHelper, request, s, t));
    }
 
-   static CompletionStage<RestResponse> handleRestoreStatus(String name, RestRequest request, BackupManager backupManager) {
+   static CompletionStage<RestResponse> handleRestoreStatus(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager) {
       BackupManager.Status status = backupManager.getRestoreStatus(name);
       switch (status) {
          case NOT_FOUND:
-            return responseFuture(NOT_FOUND);
+            return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
          case IN_PROGRESS:
-            return responseFuture(ACCEPTED);
+            return invocationHelper.newResponse(request, ACCEPTED).toFuture();
          case COMPLETE:
-            return responseFuture(CREATED);
+            return invocationHelper.newResponse(request, CREATED).toFuture();
          default:
             throw Log.REST.restoreFailed();
       }
    }
 
-   static CompletionStage<RestResponse> handleRestore(String name, RestRequest request, BackupManager backupManager,
+   static CompletionStage<RestResponse> handleRestore(InvocationHelper invocationHelper, String name, RestRequest request, BackupManager backupManager,
                                                       TriFunction<String, Path, Json, CompletionStage<Void>> function) {
       BackupManager.Status existingStatus = backupManager.getRestoreStatus(name);
       if (existingStatus != BackupManager.Status.NOT_FOUND)
-         return responseFuture(CONFLICT);
+         return invocationHelper.newResponse(request, CONFLICT).toFuture();
 
       Path path;
       Json resourcesJson = Json.object();
@@ -187,7 +185,7 @@ class BackupManagerResource {
 
             path = Paths.get(backupPath.asString());
          } else {
-            return responseFuture(UNSUPPORTED_MEDIA_TYPE);
+            return invocationHelper.newResponse(request, UNSUPPORTED_MEDIA_TYPE).toFuture();
          }
 
          function.apply(name, path, resourcesJson).whenComplete((Void, t) -> {
@@ -203,7 +201,7 @@ class BackupManagerResource {
                   }
                }
          );
-         return responseFuture(ACCEPTED);
+         return invocationHelper.newResponse(request, ACCEPTED).toFuture();
       } catch (IOException e) {
          throw Util.unchecked(e);
       }
@@ -231,17 +229,17 @@ class BackupManagerResource {
       return builder.build();
    }
 
-   private static RestResponse handleDelete(BackupManager.Status s, Throwable t) {
+   private static RestResponse handleDelete(InvocationHelper invocationHelper, RestRequest request, BackupManager.Status s, Throwable t) {
       if (t != null) {
          throw Util.unchecked(t);
       }
       switch (s) {
          case NOT_FOUND:
-            return response(NOT_FOUND);
+            return invocationHelper.newResponse(request, NOT_FOUND);
          case IN_PROGRESS:
-            return response(ACCEPTED);
+            return invocationHelper.newResponse(request, ACCEPTED);
          case COMPLETE:
-            return response(NO_CONTENT);
+            return invocationHelper.newResponse(request, NO_CONTENT);
          default:
             throw Log.REST.backupDeleteFailed();
       }

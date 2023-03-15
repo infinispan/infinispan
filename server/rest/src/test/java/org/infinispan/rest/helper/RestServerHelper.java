@@ -39,9 +39,8 @@ public class RestServerHelper {
       return defaultRestServer(new ConfigurationBuilder(), cachesDefined);
    }
 
-   public RestServerHelper withConfiguration(RestServerConfiguration configuration) {
-      restServerConfigurationBuilder.read(configuration);
-      return this;
+   public RestServerConfigurationBuilder serverConfigurationBuilder() {
+      return restServerConfigurationBuilder;
    }
 
    public static RestServerHelper defaultRestServer(ConfigurationBuilder configuration, String... cachesDefined) {
@@ -133,9 +132,12 @@ public class RestServerHelper {
       restServer.getServerStateManager().unignoreCache(cacheName).join();
    }
 
-   public RestClient createClient() {
+   public RestClient createClient(boolean browser) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort());
+      if (browser) {
+         builder.header("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0");
+      }
       return RestClient.forConfiguration(builder.build());
    }
 

@@ -3,7 +3,6 @@ package org.infinispan.rest.resources;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -21,10 +20,14 @@ public class ClusterResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-            new ClusterResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new ClusterResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new ClusterResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new ClusterResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
+            new ClusterResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            new ClusterResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            new ClusterResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            new ClusterResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            new ClusterResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            new ClusterResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            new ClusterResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            new ClusterResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
       };
    }
 

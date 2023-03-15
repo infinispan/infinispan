@@ -70,7 +70,7 @@ public class BaseCacheResource {
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request);
 
       CompletionStage<RestResponse> response = restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+         NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {
@@ -111,7 +111,7 @@ public class BaseCacheResource {
 
       Object key = getKey(request);
 
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(HttpResponseStatus.NO_CONTENT);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request).status(HttpResponseStatus.NO_CONTENT);
 
       ContentSource contents = request.contents();
       if (contents == null) throw new NoDataFoundException();
@@ -155,7 +155,7 @@ public class BaseCacheResource {
 
       String cacheName = request.variables().get("cacheName");
 
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       responseBuilder.status(HttpResponseStatus.NO_CONTENT);
 
       Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
@@ -188,7 +188,7 @@ public class BaseCacheResource {
       boolean returnBody = request.method() == GET;
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       return restCacheManager.getInternalEntry(cacheName, key, keyContentType, requestedMediaType, request).thenApply(entry -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+         NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {

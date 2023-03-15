@@ -55,7 +55,7 @@ public class TasksResource implements ResourceHandler {
       String taskName = request.variables().get("taskName");
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
       ScriptingManager scriptingManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       if (!scriptingManager.getScriptNames().contains(taskName)) {
          throw Log.REST.noSuchScript(taskName);
       }
@@ -74,14 +74,14 @@ public class TasksResource implements ResourceHandler {
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
 
       return (userOnly ? taskManager.getUserTasksAsync() : taskManager.getTasksAsync())
-            .thenApply(tasks -> asJsonResponse(Json.make(tasks), pretty));
+            .thenApply(tasks -> asJsonResponse(invocationHelper.newResponse(request), Json.make(tasks), pretty));
    }
 
    private CompletionStage<RestResponse> createScriptTask(RestRequest request) {
       String taskName = request.variables().get("taskName");
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
       ScriptingManager scriptingManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       ContentSource contents = request.contents();
       byte[] bytes = contents.rawContent();
       MediaType sourceType = request.contentType() == null ? APPLICATION_JAVASCRIPT : request.contentType();
@@ -111,7 +111,7 @@ public class TasksResource implements ResourceHandler {
       CompletionStage<Object> runResult = Security.doAs(request.getSubject(), () -> taskManager.runTask(taskName, taskContext));
 
       return runResult.thenApply(result -> {
-         NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+         NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
          if (result instanceof byte[]) {
             builder.contentType(TEXT_PLAIN_TYPE).entity(result);
          } else {

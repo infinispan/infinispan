@@ -72,6 +72,8 @@ public class NettyRestResponse implements RestResponse {
       private Object entity;
       private HttpResponseStatus httpStatus = OK;
 
+      public Builder() {}
+
       @Override
       public NettyRestResponse build() {
          HttpResponse response;
