@@ -9,10 +9,12 @@ import org.hibernate.search.engine.backend.metamodel.IndexDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -21,6 +23,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
    public static final String KEY = "__ISPN_Key";
    public static final String VALUE = "__HSearch_This";
+   public static final String VERSION = VersionPropertyPath.VERSION_PROPERTY_NAME;
 
    private final SearchMapping searchMapping;
 
@@ -50,6 +53,10 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
    @Override
    public Class<?> getPrimitivePropertyType(Class<?> entityType, String[] propertyPath) {
+      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION)) {
+         return EntryVersion.class;
+      }
+
       IndexValueFieldDescriptor fieldDescriptor = getValueFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
          return super.getPrimitivePropertyType(entityType, propertyPath);
@@ -88,11 +95,9 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
          return true;
       }
 
-      if (propertyPath.length == 1 && propertyPath[0].equals(KEY)) {
-         return true;
-      }
-      if (propertyPath.length == 1 && propertyPath[0].equals(VALUE)) {
-         return true;
+      if (propertyPath.length == 1 && (propertyPath[0].equals(KEY) || propertyPath[0].equals(VALUE) ||
+            propertyPath[0].equals(VERSION)) ) {
+            return true;
       }
 
       return super.hasProperty(entityType, propertyPath);

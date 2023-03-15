@@ -226,6 +226,7 @@ propertyReferenceExpression
 
 function
 	: setFunction
+	| versionFunction
 	| standardFunction
 	;
 
@@ -236,6 +237,10 @@ setFunction
 	|	^(MIN numericValueExpression)
 	|	^(COUNT (ASTERISK | (DISTINCT | ALL) countFunctionArguments))
 	;
+
+versionFunction
+   : 	^(VERSION ALIAS_REF)
+   ;
 
 standardFunction
 	:	sizeFunction

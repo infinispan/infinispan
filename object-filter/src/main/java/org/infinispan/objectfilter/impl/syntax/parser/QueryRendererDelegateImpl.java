@@ -17,6 +17,7 @@ import org.infinispan.objectfilter.impl.ql.QueryRendererDelegate;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.jboss.logging.Logger;
 
 /**
@@ -528,6 +529,23 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    @Override
    public void deactivateAggregation() {
       aggregationFunction = null;
+   }
+
+   @Override
+   public void projectVersion() {
+      if (phase != Phase.SELECT) {
+         return; // do nothing
+      }
+
+      if (projections == null) {
+         projections = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+         projectedTypes = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+         projectedNullMarkers = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+      }
+
+      projections.add(new VersionPropertyPath<>());
+      projectedTypes.add(Object.class); // Usually a core module EntryVersion
+      projectedNullMarkers.add(null);
    }
 
    /**
