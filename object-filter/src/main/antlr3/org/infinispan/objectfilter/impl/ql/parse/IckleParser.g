@@ -306,6 +306,7 @@ additiveExpression
    :  quantifiedExpression
    |  standardFunction
    |  setFunction
+   |  versionFunction
    |  collectionExpression
    |  atom
    ;
@@ -327,6 +328,10 @@ sizeFunction
 
 indexFunction
    :   index_key^ LPAREN! aliasReference RPAREN!
+   ;
+
+versionFunction
+   :   version_key^ LPAREN! aliasReference RPAREN!
    ;
 
 setFunction
@@ -470,6 +475,10 @@ min_key
 
 count_key
    :   {validateSoftKeyword("count")}?=> IDENTIFIER -> COUNT[$IDENTIFIER]
+	;
+
+version_key
+   :   {validateSoftKeyword("version")}?=> IDENTIFIER -> VERSION[$IDENTIFIER]
 	;
 
 size_key
