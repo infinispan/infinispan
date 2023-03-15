@@ -18,9 +18,9 @@ import org.infinispan.rest.framework.ResourceManager;
 import org.infinispan.rest.framework.RestDispatcher;
 import org.infinispan.rest.framework.impl.ResourceManagerImpl;
 import org.infinispan.rest.framework.impl.RestDispatcherImpl;
-import org.infinispan.rest.resources.ContainerResource;
 import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.ClusterResource;
+import org.infinispan.rest.resources.ContainerResource;
 import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.LoggingResource;
 import org.infinispan.rest.resources.MetricsResource;
@@ -34,6 +34,7 @@ import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
 import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.telemetry.TelemetryService;
 import org.infinispan.server.core.transport.NettyInitializers;
@@ -98,6 +99,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       return restDispatcher;
    }
 
+   public InvocationHelper getInvocationHelper() {
+      return invocationHelper;
+   }
+
    @Override
    public void stop() {
       if (log.isDebugEnabled())
@@ -136,7 +141,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
       invocationHelper = new InvocationHelper(this, restCacheManager,
             (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),
-            configuration, server, getExecutor());
+            server, getExecutor());
 
       String restContext = configuration.contextPath();
       String rootContext = "/";
@@ -152,14 +157,14 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
          Path console = configuration.staticResources().resolve("console");
-         resourceManager.registerResource(rootContext, new StaticContentResource(staticResources, "static"));
-         resourceManager.registerResource(rootContext, new StaticContentResource(console, "console", (path, resource) -> {
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, staticResources, "static"));
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, console, "console", (path, resource) -> {
             if (!path.contains(".")) return StaticContentResource.DEFAULT_RESOURCE;
             return path;
          }));
          // if the cache name contains '.' we need to retrieve the console and access to the cache detail. See ISPN-14376
-         resourceManager.registerResource(rootContext, new StaticContentResource(console, "console/cache/", (path, resource) -> StaticContentResource.DEFAULT_RESOURCE));
-         resourceManager.registerResource(rootContext, new RedirectResource(rootContext, rootContext + "console/welcome", true));
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, console, "console/cache/", (path, resource) -> StaticContentResource.DEFAULT_RESOURCE));
+         resourceManager.registerResource(rootContext, new RedirectResource(invocationHelper, rootContext, rootContext + "console/welcome", true));
       }
       if (adminEndpoint) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
@@ -196,5 +201,11 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          }
       }
       return corsRules;
+   }
+
+   @Override
+   public void setEnclosingProtocolServer(ProtocolServer<?> enclosingProtocolServer) {
+      super.setEnclosingProtocolServer(enclosingProtocolServer);
+      invocationHelper.setSsl(enclosingProtocolServer.getConfiguration().ssl().enabled());
    }
 }

@@ -39,29 +39,29 @@ class CacheResourceQueryAction {
       this.invocationHelper = invocationHelper;
    }
 
-   public CompletionStage<RestResponse> search(RestRequest restRequest) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+   public CompletionStage<RestResponse> search(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       JsonQueryRequest query = null;
-      if (restRequest.method() == Method.GET) {
-         query = getQueryFromString(restRequest);
+      if (request.method() == Method.GET) {
+         query = getQueryFromString(request);
       }
-      if (restRequest.method() == Method.POST || restRequest.method() == Method.PUT) {
+      if (request.method() == Method.POST || request.method() == Method.PUT) {
          try {
-            query = getQueryFromJSON(restRequest);
+            query = getQueryFromJSON(request);
          } catch (IOException e) {
-            return CompletableFuture.completedFuture(queryError("Invalid search request", e.getMessage()));
+            return CompletableFuture.completedFuture(queryError(request, "Invalid search request", e.getMessage()));
          }
       }
 
       if (query == null || query.getQuery() == null || query.getQuery().isEmpty()) {
-         return CompletableFuture.completedFuture(queryError("Invalid search request, missing 'query' parameter", null));
+         return CompletableFuture.completedFuture(queryError(request, "Invalid search request, missing 'query' parameter", null));
       }
 
-      String cacheName = restRequest.variables().get("cacheName");
-      boolean isLocal = Boolean.parseBoolean(restRequest.getParameter("local"));
-      MediaType keyContentType = restRequest.keyContentType();
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, restRequest);
+      String cacheName = request.variables().get("cacheName");
+      boolean isLocal = Boolean.parseBoolean(request.getParameter("local"));
+      MediaType keyContentType = request.keyContentType();
+      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, request);
       String queryString = query.getQuery();
 
       RemoteQueryManager remoteQueryManager = SecurityActions.getComponentRegistry(cache).getComponent(RemoteQueryManager.class);
@@ -73,34 +73,34 @@ class CacheResourceQueryAction {
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
          } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
-            return queryError("Error executing search", e.getMessage());
+            return queryError(request, "Error executing search", e.getMessage());
          }
       }, invocationHelper.getExecutor());
    }
 
-   private JsonQueryRequest getQueryFromString(RestRequest restRequest) {
-      String queryString = getParameterValue(restRequest, QUERY_STRING);
-      String strOffset = getParameterValue(restRequest, OFFSET);
-      String strMaxResults = getParameterValue(restRequest, MAX_RESULTS);
+   private JsonQueryRequest getQueryFromString(RestRequest request) {
+      String queryString = getParameterValue(request, QUERY_STRING);
+      String strOffset = getParameterValue(request, OFFSET);
+      String strMaxResults = getParameterValue(request, MAX_RESULTS);
       Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       Integer maxResults = strMaxResults != null ? Integer.valueOf(strMaxResults) : null;
       return new JsonQueryRequest(queryString, offset, maxResults);
    }
 
-   private JsonQueryRequest getQueryFromJSON(RestRequest restRequest) throws IOException {
-      ContentSource contents = restRequest.contents();
+   private JsonQueryRequest getQueryFromJSON(RestRequest request) throws IOException {
+      ContentSource contents = request.contents();
       byte[] byteContent = contents.rawContent();
       if (byteContent == null || byteContent.length == 0) throw new IOException();
       return JsonQueryRequest.fromJson(new String(byteContent, StandardCharsets.UTF_8));
    }
 
-   private String getParameterValue(RestRequest restRequest, String name) {
-      List<String> values = restRequest.parameters().get(name);
+   private String getParameterValue(RestRequest request, String name) {
+      List<String> values = request.parameters().get(name);
       return values == null ? null : values.iterator().next();
    }
 
-   private RestResponse queryError(String message, String cause) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(BAD_REQUEST);
+   private RestResponse queryError(RestRequest request, String message, String cause) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(BAD_REQUEST);
       builder.entity(new JsonQueryErrorResult(message, cause).asBytes());
       return builder.build();
    }

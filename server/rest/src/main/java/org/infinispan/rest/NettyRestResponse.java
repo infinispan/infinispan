@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
 import org.infinispan.rest.stream.CacheChunkedStream;
@@ -35,6 +36,7 @@ import org.infinispan.rest.stream.CacheChunkedStream;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.stream.ChunkedInput;
@@ -68,9 +70,29 @@ public class NettyRestResponse implements RestResponse {
    }
 
    public static class Builder implements RestResponseBuilder<Builder> {
-      private Map<String, List<String>> headers = new HashMap<>();
+      private final Map<String, List<String>> headers = new HashMap<>();
       private Object entity;
       private HttpResponseStatus httpStatus = OK;
+
+      public Builder(RestRequest request, boolean ssl) {
+         this(request.header(RequestHeader.USER_AGENT.getValue()), ssl);
+      }
+
+      public Builder(FullHttpRequest request, boolean ssl) {
+         this(request.headers().get(RequestHeader.USER_AGENT.getValue()), ssl);
+      }
+
+      private Builder(String ua, boolean ssl) {
+         if (ua != null && ua.startsWith("Mozilla")) {
+            header("X-Frame-Options", "sameorigin").header("X-XSS-Protection", "1; mode=block");
+            header("X-Content-Type-Options", "nosniff");
+            header("Content-Security-Policy", "script-src 'self'");
+         }
+         // Only if we are using HTTPS
+         if (ssl) {
+            header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+         }
+      }
 
       @Override
       public NettyRestResponse build() {

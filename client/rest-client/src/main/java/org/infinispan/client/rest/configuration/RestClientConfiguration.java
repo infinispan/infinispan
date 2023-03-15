@@ -2,6 +2,7 @@ package org.infinispan.client.rest.configuration;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.BuiltBy;
@@ -26,8 +27,9 @@ public class RestClientConfiguration {
    private final String contextPath;
    private final boolean priorKnowledge;
    private final boolean followRedirects;
+   private final Map<String, String> headers;
 
-   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects) {
+   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects, Map<String, String> headers) {
       this.servers = Collections.unmodifiableList(servers);
       this.protocol = protocol;
       this.connectionTimeout = connectionTimeout;
@@ -38,6 +40,7 @@ public class RestClientConfiguration {
       this.contextPath = contextPath;
       this.priorKnowledge = priorKnowledge;
       this.followRedirects = followRedirects;
+      this.headers = headers;
    }
 
    public Protocol protocol() {
@@ -78,6 +81,10 @@ public class RestClientConfiguration {
 
    public String contextPath() {
       return contextPath;
+   }
+
+   public Map<String, String> headers() {
+      return headers;
    }
 
    public Properties properties() {

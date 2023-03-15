@@ -20,7 +20,8 @@ public enum RequestHeader {
    KEY_CONTENT_TYPE_HEADER("key-content-type"),
    LAST_USED_HEADER("lastUsed"),
    MAX_TIME_IDLE_HEADER("maxIdleTimeSeconds"),
-   TTL_SECONDS_HEADER("timeToLiveSeconds");
+   TTL_SECONDS_HEADER("timeToLiveSeconds"),
+   USER_AGENT("User-Agent");
 
    private static final CharSequence[] ALL_VALUES = Arrays.stream(values()).map(RequestHeader::getValue).toArray(String[]::new);
 

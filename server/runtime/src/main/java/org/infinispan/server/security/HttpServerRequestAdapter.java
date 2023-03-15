@@ -37,13 +37,13 @@ import io.netty.util.AttributeKey;
 public class HttpServerRequestAdapter implements HttpServerRequest {
    private final RestRequest request;
    private final ChannelHandlerContext ctx;
-   private static final AttributeKey HTTP_SCOPE_ATTACHMENT_KEY = AttributeKey.newInstance(HttpScope.class.getSimpleName());
+   private static final AttributeKey<HttpScope> HTTP_SCOPE_ATTACHMENT_KEY = AttributeKey.newInstance(HttpScope.class.getSimpleName());
    NettyRestResponse.Builder responseBuilder;
 
    public HttpServerRequestAdapter(RestRequest request, ChannelHandlerContext ctx) {
       this.request = request;
       this.ctx = ctx;
-      this.responseBuilder = new NettyRestResponse.Builder();
+      this.responseBuilder = new NettyRestResponse.Builder(request, getSSLSession() != null);
    }
 
    @Override
@@ -195,10 +195,10 @@ public class HttpServerRequestAdapter implements HttpServerRequest {
    }
 
    private HttpScope getScope(Channel channel) {
-      HttpScope httpScope = (HttpScope) channel.attr(HTTP_SCOPE_ATTACHMENT_KEY).get();
+      HttpScope httpScope = channel.attr(HTTP_SCOPE_ATTACHMENT_KEY).get();
       if (httpScope == null) {
          synchronized (channel) {
-            httpScope = (HttpScope) channel.attr(HTTP_SCOPE_ATTACHMENT_KEY).get();
+            httpScope = channel.attr(HTTP_SCOPE_ATTACHMENT_KEY).get();
             if (httpScope == null) {
                final Map<String, Object> storageMap = new HashMap<>();
                httpScope = new HttpScope() {

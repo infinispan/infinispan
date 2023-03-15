@@ -158,7 +158,7 @@ public class XSiteResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> globalStatus(RestRequest request) {
       GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       if (globalXSiteAdmin == null) return completedFuture(responseBuilder.status(NOT_FOUND).build());
 
@@ -209,7 +209,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> updateTakeOffline(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder().status(NO_CONTENT);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request).status(NO_CONTENT);
       String site = request.variables().get("site");
 
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
@@ -248,7 +248,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getXSiteTakeOffline(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String site = request.variables().get("site");
 
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
@@ -261,7 +261,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> siteStatus(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String site = request.variables().get("site");
 
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);
@@ -273,7 +273,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private <T> CompletionStage<RestResponse> statusOperation(RestRequest request, Function<XSiteAdminOperations, T> op) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       Optional<XSiteAdminOperations> xsiteAdmin = getXSiteAdmin(request, responseBuilder);
       return xsiteAdmin.<CompletionStage<RestResponse>>map(ops -> supplyAsync(
             () -> {
@@ -285,7 +285,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getStateTransferMode(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       //check if site exists
       final String site = request.variables().get("site");
@@ -297,7 +297,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> setStateTransferMode(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       //parse content
       String mode = request.getParameter("mode");
       if (mode == null) {
@@ -352,7 +352,7 @@ public class XSiteResource implements ResourceHandler {
    private CompletionStage<RestResponse> executeCacheManagerXSiteOp(RestRequest request,
                                                                     BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> operation) {
       GlobalXSiteAdminOperations globalXSiteAdmin = getGlobalXSiteAdmin(request);
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       String site = request.variables().get("site");
 
@@ -368,7 +368,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> executeXSiteCacheOp(RestRequest request, BiFunction<XSiteAdminOperations, String, String> xsiteOp) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String site = request.variables().get("site");
 
       Optional<XSiteAdminOperations> xsiteAdminOpt = getXSiteAdminAndCheckSite(request, responseBuilder);

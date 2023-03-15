@@ -14,6 +14,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.ssl.SslHandler;
 
 /**
  * BASIC authentication mechanism.
@@ -43,11 +44,15 @@ public class BasicAuthenticator implements Authenticator {
             String[] split = cookie.split(":");
             return blockingManager.supplyBlocking(() -> {
                request.setSubject(domain.authenticate(split[0], split[1]));
-               return new NettyRestResponse.Builder().build();
+               return new NettyRestResponse.Builder(request, isSSL(ctx)).build();
             }, "auth");
          }
       }
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(HttpResponseStatus.UNAUTHORIZED).authenticate(authenticateHeader).build());
+      return CompletableFuture.completedFuture(new NettyRestResponse.Builder(request, isSSL(ctx)).status(HttpResponseStatus.UNAUTHORIZED).authenticate(authenticateHeader).build());
+   }
+
+   private boolean isSSL(ChannelHandlerContext ctx) {
+      return ctx.pipeline().get(SslHandler.class) != null;
    }
 
    @Override

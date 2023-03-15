@@ -174,7 +174,7 @@ public class ContainerResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       Json cacheManagerInfo = cacheManager.getCacheManagerInfo().toJson();
-      return asJsonResponseFuture(cacheManagerInfo, responseBuilder, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), cacheManagerInfo, isPretty(request));
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
@@ -224,9 +224,8 @@ public class ContainerResource implements ResourceHandler {
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       return CompletableFuture.supplyAsync(() -> Security.doAs(request.getSubject(), (PrivilegedAction<CacheContainerStats>) () -> cacheManager.getStats()).toJson(), invocationHelper.getExecutor())
-            .thenCompose(json -> asJsonResponseFuture(json, responseBuilder, isPretty(request)));
+            .thenCompose(json -> asJsonResponseFuture(invocationHelper.newResponse(request), json, isPretty(request)));
    }
-
 
    private CompletionStage<RestResponse> getHealth(RestRequest request) {
       return getHealth(request, false);
@@ -244,7 +243,7 @@ public class ContainerResource implements ResourceHandler {
       // before the StatefulSet has been scaled down
       boolean isStopping = anon && invocationHelper.getServer().getStatus().isStopping();
       if (request.method() == HEAD || isStopping)
-         return completedFuture(new NettyRestResponse.Builder().status(OK).build());
+         return completedFuture(invocationHelper.newResponse(request).status(OK).build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       Health health = cacheManager.withSubject(request.getSubject()).getHealth();
@@ -380,7 +379,7 @@ public class ContainerResource implements ResourceHandler {
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
-      return asJsonResponseFuture(Json.make(configurations), responseBuilder, pretty);
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(configurations), pretty);
    }
 
    private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
@@ -402,7 +401,7 @@ public class ContainerResource implements ResourceHandler {
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
-      return asJsonResponseFuture(Json.make(configurations), responseBuilder, pretty);
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(configurations), pretty);
    }
 
    private NamedCacheConfiguration getNamedCacheConfiguration(EmbeddedCacheManager subjectCacheManager, String n, boolean pretty) {
@@ -417,12 +416,12 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllBackupNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = backupManager.getBackupNames();
-      return asJsonResponseFuture(Json.make(names), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> backup(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-      return BackupManagerResource.handleBackupRequest(request, backupManager, (name, workingDir, json) -> {
+      return BackupManagerResource.handleBackupRequest(invocationHelper, request, backupManager, (name, workingDir, json) -> {
          BackupManager.Resources resources = BackupManagerResource.getResources(json);
          Map<String, BackupManager.Resources> backupParams = Collections.singletonMap(cacheManagerName, resources);
          backupManager.create(name, workingDir, backupParams);
@@ -432,12 +431,12 @@ public class ContainerResource implements ResourceHandler {
    private CompletionStage<RestResponse> getAllRestoreNames(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
       Set<String> names = backupManager.getRestoreNames();
-      return asJsonResponseFuture(Json.make(names), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(names), isPretty(request));
    }
 
    private CompletionStage<RestResponse> restore(RestRequest request) {
       BackupManager backupManager = invocationHelper.getServer().getBackupManager();
-      return BackupManagerResource.handleRestoreRequest(request, backupManager, (name, path, json) -> {
+      return BackupManagerResource.handleRestoreRequest(invocationHelper, request, backupManager, (name, path, json) -> {
          BackupManager.Resources resources = BackupManagerResource.getResources(json);
          Map<String, BackupManager.Resources> restoreParams = Collections.singletonMap(cacheManagerName, resources);
          return backupManager.restore(name, path, restoreParams);
@@ -460,7 +459,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private NettyRestResponse.Builder checkCacheManager(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       String name = request.variables().get("name");
       if (!name.equals(cacheManagerName)) {
@@ -541,10 +540,10 @@ public class ContainerResource implements ResourceHandler {
       }
    }
 
-   private CompletionStage<RestResponse> shutdown(RestRequest restRequest) {
+   private CompletionStage<RestResponse> shutdown(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
-         Security.doAs(restRequest.getSubject(), invocationHelper.getServer()::containerStop);
-         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+         Security.doAs(request.getSubject(), invocationHelper.getServer()::containerStop);
+         return invocationHelper.newResponse(request).status(NO_CONTENT).build();
       }, invocationHelper.getExecutor());
    }
 
@@ -561,7 +560,7 @@ public class ContainerResource implements ResourceHandler {
       boolean includeCurrentState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
       boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       ConfigurationListener listener = new ConfigurationListener(cacheManager, mediaType, includeCurrentState, pretty);
       responseBuilder.contentType(TEXT_EVENT_STREAM).entity(listener.getEventStream());
 
