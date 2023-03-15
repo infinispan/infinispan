@@ -76,7 +76,7 @@
       <dependency>
          <groupId>org.jboss</groupId>
          <artifactId>jdk-misc</artifactId>
-         <version>2.Final</version>
+         <version>3.Final</version>
          <scope>provided</scope>
       </dependency>
    </dependencies>
@@ -226,13 +226,6 @@
                </features>
             </configuration>
          </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-               <excludePackageNames>org.infinispan.commons.*</excludePackageNames>
-            </configuration>
-         </plugin>
       </plugins>
    </build>
 
@@ -250,6 +243,20 @@
                         <phase>none</phase>
                      </execution>
                   </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>community-release</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <configuration>
+                     <excludePackageNames>org.infinispan.commons.*</excludePackageNames>
+                  </configuration>
                </plugin>
             </plugins>
          </build>

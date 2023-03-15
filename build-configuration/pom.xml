@@ -284,6 +284,9 @@
                      <goals>
                         <goal>jar</goal>
                      </goals>
+                     <configuration>
+                        <detectOfflineLinks>false</detectOfflineLinks>
+                     </configuration>
                   </execution>
                </executions>
             </plugin>

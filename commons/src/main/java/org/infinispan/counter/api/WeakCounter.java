@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
  * A weak consistent counter interface.
  * <p>
  * This interface represents a weak counter in the way that the write operations does not return a consistent results.
- * In this way, all the writes return a {@link CompletableFuture<Void>}.
+ * In this way, all the writes return a {@link CompletableFuture}.
  * <p>
  * Note: the reset operation is not atomic.
  *
