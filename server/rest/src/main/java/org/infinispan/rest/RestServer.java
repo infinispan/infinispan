@@ -99,6 +99,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       return restDispatcher;
    }
 
+   public InvocationHelper getInvocationHelper() {
+      return invocationHelper;
+   }
+
    @Override
    public void stop() {
       if (log.isDebugEnabled())
@@ -153,14 +157,14 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
          Path console = configuration.staticResources().resolve("console");
-         resourceManager.registerResource(rootContext, new StaticContentResource(staticResources, "static"));
-         resourceManager.registerResource(rootContext, new StaticContentResource(console, "console", (path, resource) -> {
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, staticResources, "static"));
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, console, "console", (path, resource) -> {
             if (!path.contains(".")) return StaticContentResource.DEFAULT_RESOURCE;
             return path;
          }));
          // if the cache name contains '.' we need to retrieve the console and access to the cache detail. See ISPN-14376
-         resourceManager.registerResource(rootContext, new StaticContentResource(console, "console/cache/", (path, resource) -> StaticContentResource.DEFAULT_RESOURCE));
-         resourceManager.registerResource(rootContext, new RedirectResource(rootContext, rootContext + "console/welcome", true));
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, console, "console/cache/", (path, resource) -> StaticContentResource.DEFAULT_RESOURCE));
+         resourceManager.registerResource(rootContext, new RedirectResource(invocationHelper, rootContext, rootContext + "console/welcome", true));
       }
       if (adminEndpoint) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));

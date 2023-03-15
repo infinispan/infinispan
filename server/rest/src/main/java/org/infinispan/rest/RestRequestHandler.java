@@ -73,25 +73,25 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
    void handleError(ChannelHandlerContext ctx, FullHttpRequest request, Throwable throwable) {
       Throwable cause = filterCause(throwable);
-      NettyRestResponse errorResponse;
+      NettyRestResponse.Builder errorResponse = restServer.getInvocationHelper().newResponse(request);
       if (cause instanceof RestResponseException) {
          RestResponseException responseException = (RestResponseException) throwable;
          if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", responseException);
-         errorResponse = new NettyRestResponse.Builder().status(responseException.getStatus()).entity(responseException.getText()).build();
+         errorResponse.status(responseException.getStatus()).entity(responseException.getText());
       } else if (cause instanceof SecurityException) {
          if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
-         errorResponse = new NettyRestResponse.Builder().status(FORBIDDEN).entity(unwrapExceptionMessage(cause)).build();
+         errorResponse.status(FORBIDDEN).entity(unwrapExceptionMessage(cause));
       } else if (cause instanceof NoSuchElementException) {
          if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
-         errorResponse = new NettyRestResponse.Builder().status(NOT_FOUND).entity(unwrapExceptionMessage(cause)).build();
+         errorResponse.status(NOT_FOUND).entity(unwrapExceptionMessage(cause));
       } else if (cause instanceof CacheConfigurationException || cause instanceof IllegalArgumentException || cause instanceof EncodingException || cause instanceof Json.MalformedJsonException || cause instanceof MissingMembersException) {
          if (getLogger().isTraceEnabled()) getLogger().tracef("Request failed: %s", cause);
-         errorResponse = new NettyRestResponse.Builder().status(BAD_REQUEST).entity(unwrapExceptionMessage(cause)).build();
+         errorResponse.status(BAD_REQUEST).entity(unwrapExceptionMessage(cause));
       } else {
          getLogger().errorWhileResponding(throwable);
-         errorResponse = new NettyRestResponse.Builder().status(INTERNAL_SERVER_ERROR).entity(unwrapExceptionMessage(cause)).build();
+         errorResponse.status(INTERNAL_SERVER_ERROR).entity(unwrapExceptionMessage(cause));
       }
-      sendResponse(ctx, request, errorResponse);
+      sendResponse(ctx, request, errorResponse.build());
    }
 
    public static Throwable filterCause(Throwable re) {

@@ -107,9 +107,9 @@ public class SecurityResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> createRole(RestRequest request) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       if (rolePermissionMapper == null) {
-         return completedFuture(new NettyRestResponse.Builder().status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
       }
       String name = request.variables().get("role");
       List<String> perms = request.parameters().get("permission");
@@ -123,7 +123,7 @@ public class SecurityResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> deleteRole(RestRequest request) {
       if (rolePermissionMapper == null) {
-         return completedFuture(new NettyRestResponse.Builder().status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
       }
       String role = request.variables().get("role");
 
@@ -133,13 +133,13 @@ public class SecurityResource implements ResourceHandler {
    private CompletionStage<RestResponse> aclCacheFlush(RestRequest request) {
       EmbeddedCacheManager cm = invocationHelper.getRestCacheManager().getInstance();
       return SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalSecurityManager.class).flushGlobalACLCache()
-            .thenApply(v -> new NettyRestResponse.Builder().status(NO_CONTENT).build());
+            .thenApply(v -> invocationHelper.newResponse(request).status(NO_CONTENT).build());
    }
 
    private CompletionStage<RestResponse> deny(RestRequest request) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       if (principalRoleMapper == null) {
-         return completedFuture(new NettyRestResponse.Builder().status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
       }
       String principal = request.variables().get("principal");
       List<String> roles = request.parameters().get("role");
@@ -151,9 +151,9 @@ public class SecurityResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> grant(RestRequest request) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       if (principalRoleMapper == null) {
-         return completedFuture(new NettyRestResponse.Builder().status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
       }
       String principal = request.variables().get("principal");
       List<String> roles = request.parameters().get("role");
@@ -171,17 +171,17 @@ public class SecurityResource implements ResourceHandler {
       }
       Json roles = Json.array();
       authorization.roles().entrySet().stream().filter(e -> e.getValue().isInheritable()).forEach(e -> roles.add(e.getKey()));
-      return asJsonResponseFuture(roles, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), roles, isPretty(request));
    }
 
    private CompletionStage<RestResponse> listPrincipalRoles(RestRequest request) {
       String principal = request.variables().get("principal");
       if (principalRoleMapper == null) {
-         return completedFuture(new NettyRestResponse.Builder().status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
       }
       Json roles = Json.array();
       principalRoleMapper.list(principal).forEach(r -> roles.add(r));
-      return asJsonResponseFuture(roles, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), roles, isPretty(request));
    }
 
    private CompletionStage<RestResponse> acl(RestRequest request) {
@@ -208,7 +208,7 @@ public class SecurityResource implements ResourceHandler {
             caches.set(cacheName, aclToJson(cacheACL));
          }
       }
-      return asJsonResponseFuture(acl, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), acl, isPretty(request));
    }
 
    private Json aclToJson(SubjectACL acl) {
@@ -221,11 +221,11 @@ public class SecurityResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> loginConfiguration(RestRequest request) {
       Map<String, String> loginConfiguration = invocationHelper.getServer().getLoginConfiguration(invocationHelper.getProtocolServer());
-      return asJsonResponseFuture(Json.make(loginConfiguration), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(loginConfiguration), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> login(RestRequest restRequest) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+   private CompletionStage<RestResponse> login(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       responseBuilder.status(HttpResponseStatus.TEMPORARY_REDIRECT).header("Location", accessGrantedPath);
       return CompletableFuture.completedFuture(responseBuilder.build());
    }

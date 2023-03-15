@@ -11,8 +11,12 @@ import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.server.core.ServerManagement;
+
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @since 10.0
@@ -97,5 +101,49 @@ public class InvocationHelper {
          case TERMINATED:
             throw new ServiceUnavailableException("Unable to process REST request when Server is " + status);
       }
+   }
+
+   public NettyRestResponse.Builder newResponse(FullHttpRequest request) {
+      return newResponse(request.headers().get(RequestHeader.USER_AGENT.getValue()), request.uri());
+   }
+
+   public NettyRestResponse.Builder newResponse(RestRequest request) {
+      return newResponse(request.header(RequestHeader.USER_AGENT.getValue()), request.uri());
+   }
+
+   private NettyRestResponse.Builder newResponse(String userAgent, String uri) {
+      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      // All browser's user agents start with "Mozilla"
+      if (userAgent != null && userAgent.startsWith("Mozilla")) {
+         builder.header("X-Frame-Options", "sameorigin").header("X-XSS-Protection", "1; mode=block").
+               header("X-Content-Type-Options", "nosniff").
+               header("Content-Security-Policy", "script-src 'self'");
+         // Only if we are using HTTPS
+         if (configuration.ssl().enabled() || uri.startsWith("https")) {
+            builder.header("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains");
+         }
+      }
+      return builder;
+   }
+
+
+
+   public NettyRestResponse newResponse(RestRequest request, HttpResponseStatus status) {
+      return newResponse(request, status, null);
+   }
+
+   public NettyRestResponse newResponse(RestRequest request, HttpResponseStatus status, Object entity) {
+      return newResponse(request)
+            .status(status)
+            .entity(entity)
+            .build();
+   }
+
+   public NettyRestResponse noContentResponse(RestRequest request) {
+      return newResponse(request, HttpResponseStatus.NO_CONTENT);
+   }
+
+   public NettyRestResponse notFoundResponse(RestRequest request) {
+      return newResponse(request, HttpResponseStatus.NOT_FOUND);
    }
 }

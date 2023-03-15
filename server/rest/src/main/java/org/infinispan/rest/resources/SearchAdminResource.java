@@ -71,7 +71,7 @@ public class SearchAdminResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> searchStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       String cacheName = request.variables().get("cacheName");
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
@@ -88,17 +88,17 @@ public class SearchAdminResource implements ResourceHandler {
       boolean pretty = isPretty(request);
       if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
          CompletionStage<SearchStatisticsSnapshot> stats = Search.getClusteredSearchStatistics(cache);
-         return stats.thenApply(s -> asJsonResponse(s.toJson(), pretty));
+         return stats.thenApply(s -> asJsonResponse(invocationHelper.newResponse(request), s.toJson(), pretty));
       } else {
-         return Search.getSearchStatistics(cache).computeSnapshot().thenApply(s -> asJsonResponse(s.toJson(), pretty));
+         return Search.getSearchStatistics(cache).computeSnapshot().thenApply(s -> asJsonResponse(invocationHelper.newResponse(request), s.toJson(), pretty));
       }
    }
 
-   private CompletionStage<RestResponse> clearSearchStats(RestRequest restRequest) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+   private CompletionStage<RestResponse> clearSearchStats(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
-      String cacheName = restRequest.variables().get("cacheName");
-      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, restRequest);
+      String cacheName = request.variables().get("cacheName");
+      AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null) {
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          return null;
@@ -108,14 +108,14 @@ public class SearchAdminResource implements ResourceHandler {
          return completedFuture(responseBuilder.status(NOT_FOUND.code()).build());
       }
 
-      String scopeParam = restRequest.getParameter("scope");
+      String scopeParam = request.getParameter("scope");
 
       //TODO: cluster clear
       if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
          throw new CacheException("NotImplemented");
       } else {
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
-         Security.doAs(restRequest.getSubject(), () -> searchStatistics.getQueryStatistics().clear());
+         Security.doAs(request.getSubject(), () -> searchStatistics.getQueryStatistics().clear());
          return completedFuture(responseBuilder.build());
       }
    }
@@ -130,7 +130,7 @@ public class SearchAdminResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> updateSchema(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
       int status = responseBuilder.getStatus();
@@ -158,32 +158,31 @@ public class SearchAdminResource implements ResourceHandler {
       }
 
       SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
-      Json metamodel = Json.make(searchMapping.metamodel().values());
 
-      return asJsonResponseFuture(metamodel, responseBuilder, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(searchMapping.metamodel().values()), isPretty(request));
    }
 
    private CompletionStage<RestResponse> indexStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       boolean pretty = isPretty(request);
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      return searchStats.computeLegacyIndexStatistics().thenApply(json -> asJsonResponse(json, responseBuilder, pretty));
+      return searchStats.computeLegacyIndexStatistics().thenApply(json -> asJsonResponse(responseBuilder, json, pretty));
    }
 
    private CompletionStage<RestResponse> queryStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       InfinispanQueryStatisticsInfo searchStats = lookupQueryStatistics(request, responseBuilder);
       if (searchStats == null) return completedFuture(responseBuilder.build());
 
-      return asJsonResponseFuture(searchStats.getLegacyQueryStatistics(), responseBuilder, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), searchStats.getLegacyQueryStatistics(), isPretty(request));
    }
 
    private CompletionStage<RestResponse> clearStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       InfinispanQueryStatisticsInfo queryStatistics = lookupQueryStatistics(request, responseBuilder);
 
       if (queryStatistics == null) return completedFuture(responseBuilder.build());
@@ -197,7 +196,7 @@ public class SearchAdminResource implements ResourceHandler {
    private CompletionStage<RestResponse> runIndexer(RestRequest request,
                                                     Function<Indexer, CompletionStage<Void>> op,
                                                     boolean supportAsync) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
       List<String> mode = request.parameters().get("mode");
 

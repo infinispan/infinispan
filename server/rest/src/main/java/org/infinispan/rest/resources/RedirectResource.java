@@ -5,6 +5,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -23,8 +24,10 @@ public class RedirectResource implements ResourceHandler {
    private final String path;
    private final String redirectPath;
    private final boolean anonymous;
+   private final InvocationHelper invocationHelper;
 
-   public RedirectResource(String path, String redirectPath, boolean anonymous) {
+   public RedirectResource(InvocationHelper invocationHelper, String path, String redirectPath, boolean anonymous) {
+      this.invocationHelper = invocationHelper;
       this.path = path;
       this.redirectPath = redirectPath;
       this.anonymous = anonymous;
@@ -37,8 +40,8 @@ public class RedirectResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> redirect(RestRequest restRequest) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+   private CompletionStage<RestResponse> redirect(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       responseBuilder.status(HttpResponseStatus.TEMPORARY_REDIRECT).header("Location", redirectPath);
       return CompletableFuture.completedFuture(responseBuilder.build());
    }

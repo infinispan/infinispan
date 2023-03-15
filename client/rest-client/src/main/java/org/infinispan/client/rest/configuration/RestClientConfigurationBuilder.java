@@ -2,7 +2,9 @@ package org.infinispan.client.rest.configuration;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
@@ -38,6 +40,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private String contextPath = "/rest";
    private boolean priorKnowledge;
    private boolean followRedirects = true;
+   private Map<String, String> headers = new HashMap<>();
 
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
@@ -152,6 +155,11 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       return this;
    }
 
+   public RestClientConfigurationBuilder header(String name, String value) {
+      headers.put(name, value);
+      return this;
+   }
+
    @Override
    public RestClientConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
@@ -188,7 +196,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
          servers.add(new ServerConfiguration("127.0.0.1", RestClientConfigurationProperties.DEFAULT_REST_PORT));
       }
 
-      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects);
+      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects, headers);
    }
 
 
@@ -216,6 +224,8 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();
       this.security.read(template.security());
+      this.headers.clear();
+      this.headers.putAll(template.headers());
 
       return this;
    }

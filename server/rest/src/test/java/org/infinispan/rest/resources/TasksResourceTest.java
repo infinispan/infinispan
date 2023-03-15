@@ -4,7 +4,6 @@ import static java.util.Collections.singletonMap;
 import static org.infinispan.client.rest.RestTaskClient.ResultType.ALL;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JAVASCRIPT;
 import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
@@ -42,8 +41,10 @@ public class TasksResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new TasksResourceTest().withSecurity(true),
-            new TasksResourceTest().withSecurity(false),
+            new TasksResourceTest().withSecurity(true).browser(false),
+            new TasksResourceTest().withSecurity(true).browser(true),
+            new TasksResourceTest().withSecurity(false).browser(false),
+            new TasksResourceTest().withSecurity(false).browser(true),
       };
    }
 
