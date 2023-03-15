@@ -1,5 +1,9 @@
 package org.infinispan.server.persistence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -17,10 +21,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -115,7 +115,7 @@ public class PooledConnectionOperations {
    @Test
    public void testSoftRestartWithPassivation() throws Exception {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
-              .setEvition()
+              .setEviction()
               .setLockingConfigurations();
       RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
       cache.put("k1", "v1");

@@ -11,7 +11,6 @@ import java.util.List;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.test.Eventually;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
@@ -65,7 +64,7 @@ public class JdbcStringBasedCacheStorePassivation {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
             // test passivation==false, database should contain all entries which are in the cache
@@ -93,7 +92,7 @@ public class JdbcStringBasedCacheStorePassivation {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.clear();
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -120,7 +119,7 @@ public class JdbcStringBasedCacheStorePassivation {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<Object, Object> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             Double doubleKey = 10.0;
             Double doubleValue = 20.0;
             assertEquals(0, cache.size());
@@ -135,10 +134,10 @@ public class JdbcStringBasedCacheStorePassivation {
     @Test
     public void testSoftRestartWithPassivation() throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
-              .setEvition()
+              .setEviction()
               .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
             //not yet in store (eviction.max-entries=2, LRU)
@@ -148,7 +147,7 @@ public class JdbcStringBasedCacheStorePassivation {
             //now some key is evicted and stored in store
             assertEquals(2, getNumberOfEntriesInMemory(cache));
             //the passivation is asynchronous
-            Eventually.eventuallyEquals(1, () -> Exceptions.unchecked(table::countAllRows));
+            Eventually.eventuallyEquals(1, table::countAllRows);
 
             SERVERS.getServerDriver().stop(0);
             SERVERS.getServerDriver().restart(0); //soft stop should store all entries from cache to store
@@ -169,17 +168,17 @@ public class JdbcStringBasedCacheStorePassivation {
     @Test
     public void testFailoverWithPassivation() throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
-              .setEvition()
+              .setEviction()
               .setLockingConfigurations();
         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration(), jdbcUtil.getConfigurationBuilder())) {
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
             assertNull(table.getValueByKey("k1"));
             assertNull(table.getValueByKey("k2"));
             cache.put("k3", "v3");
             assertEquals(2, getNumberOfEntriesInMemory(cache));
-            assertEquals(1, table.countAllRows());
+            Eventually.eventuallyEquals(1, table::countAllRows);
 
             SERVERS.getServerDriver().kill(0);
             SERVERS.getServerDriver().restart(0);
