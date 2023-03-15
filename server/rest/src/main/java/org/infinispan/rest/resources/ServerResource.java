@@ -18,7 +18,6 @@ import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
-import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -138,23 +137,23 @@ public class ServerResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> doIgnoreOp(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
-      boolean add = restRequest.method().equals(POST);
+   private CompletionStage<RestResponse> doIgnoreOp(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
+      boolean add = request.method().equals(POST);
 
-      String cacheManagerName = restRequest.variables().get("cache-manager");
+      String cacheManagerName = request.variables().get("cache-manager");
       DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
 
       if (cacheManager == null) return completedFuture(builder.status(NOT_FOUND).build());
 
-      String cacheName = restRequest.variables().get("cache");
+      String cacheName = request.variables().get("cache");
 
       if (!cacheManager.getCacheNames().contains(cacheName)) {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
       ServerManagement server = invocationHelper.getServer();
       ServerStateManager ignoreManager = server.getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<Void>>) () ->
+      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<Void>>) () ->
                            add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
                      .thenApply(r -> builder.build());
    }
@@ -163,42 +162,42 @@ public class ServerResource implements ResourceHandler {
       String cacheManagerName = request.variables().get("cache-manager");
       DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
 
-      if (cacheManager == null) return notFoundResponseFuture();
+      if (cacheManager == null) return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
       Set<String> ignored = serverStateManager.getIgnoredCaches();
-      return asJsonResponseFuture(Json.make(ignored), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(ignored), isPretty(request));
    }
 
    private CompletionStage<RestResponse> cacheManagers(RestRequest request) {
-      return asJsonResponseFuture(Json.make(invocationHelper.getServer().cacheManagerNames()), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().cacheManagerNames()), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> connectorStartStop(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
-      String connectorName = restRequest.variables().get("connector");
+   private CompletionStage<RestResponse> connectorStartStop(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
+      String connectorName = request.variables().get("connector");
       ProtocolServer<?> connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-      switch (restRequest.getAction()) {
+      switch (request.getAction()) {
          case "start":
-            return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+            return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
                   serverStateManager.connectorStart(connectorName).thenApply(r -> builder.build()));
          case "stop":
             if (connector.equals(invocationHelper.getProtocolServer()) || connector.equals(invocationHelper.getProtocolServer().getEnclosingProtocolServer())) {
                return completedFuture(builder.status(CONFLICT).entity(Messages.MSG.connectorMatchesRequest(connectorName)).build());
             } else {
-               return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+               return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
                      serverStateManager.connectorStop(connectorName).thenApply(r -> builder.build()));
             }
       }
-      throw Log.REST.unknownAction(restRequest.getAction());
+      throw Log.REST.unknownAction(request.getAction());
    }
 
-   private CompletionStage<RestResponse> connectorStatus(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
-      String connectorName = restRequest.variables().get("connector");
+   private CompletionStage<RestResponse> connectorStatus(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+      String connectorName = request.variables().get("connector");
 
-      ProtocolServer connector = getProtocolServer(restRequest);
+      ProtocolServer connector = getProtocolServer(request);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
@@ -219,12 +218,12 @@ public class ServerResource implements ResourceHandler {
                .set("send-buffer-size", transport.getSendBufferSize())
                .set("receive-buffer-size", transport.getReceiveBufferSize());
       }
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
             serverStateManager.connectorStatus(connectorName).thenApply(b -> builder.contentType(APPLICATION_JSON).entity(info.set("enabled", b)).build()));
    }
 
    private CompletionStage<RestResponse> connectorIpFilterList(RestRequest request) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
       ProtocolServer connector = getProtocolServer(request);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
@@ -246,30 +245,30 @@ public class ServerResource implements ResourceHandler {
       return invocationHelper.getServer().getProtocolServers().get(connectorName);
    }
 
-   private CompletionStage<RestResponse> connectorIpFilterClear(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
+   private CompletionStage<RestResponse> connectorIpFilterClear(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
 
-      String connectorName = restRequest.variables().get("connector");
+      String connectorName = request.variables().get("connector");
       ProtocolServer connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
             serverStateManager.clearConnectorIpFilterRules(connectorName).thenApply(r -> builder.build()));
    }
 
    private CompletionStage<RestResponse> listConnectors(RestRequest request) {
-      return asJsonResponseFuture(Json.make(invocationHelper.getServer().getProtocolServers().keySet()), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().getProtocolServers().keySet()), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> connectorIpFilterSet(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder().status(NO_CONTENT);
+   private CompletionStage<RestResponse> connectorIpFilterSet(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
 
-      String connectorName = restRequest.variables().get("connector");
+      String connectorName = request.variables().get("connector");
       ProtocolServer<?> connector = invocationHelper.getServer().getProtocolServers().get(connectorName);
       if (connector == null) return completedFuture(builder.status(NOT_FOUND).build());
 
-      Json json = Json.read(restRequest.contents().asString());
+      Json json = Json.read(request.contents().asString());
       if (!json.isArray()) {
          throw Log.REST.invalidContent();
       }
@@ -284,7 +283,7 @@ public class ServerResource implements ResourceHandler {
       }
       // Verify that none of the REJECT rules match the address from which the request was made
       if (connector.equals(invocationHelper.getProtocolServer()) || connector.equals(invocationHelper.getProtocolServer().getEnclosingProtocolServer())) {
-         InetSocketAddress remoteAddress = restRequest.getRemoteAddress();
+         InetSocketAddress remoteAddress = request.getRemoteAddress();
          for (IpSubnetFilterRule rule : rules) {
             if (rule.ruleType() == IpFilterRuleType.REJECT && rule.matches(remoteAddress)) {
                return completedFuture(builder.status(CONFLICT).entity(Messages.MSG.rejectRuleMatchesRequestAddress(rule, remoteAddress)).build());
@@ -293,12 +292,12 @@ public class ServerResource implements ResourceHandler {
       }
 
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
-      return Security.doAs(restRequest.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
+      return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
             serverStateManager.setConnectorIpFilterRule(connectorName, rules).thenApply(r -> builder.build()));
    }
 
    private CompletionStage<RestResponse> memory(RestRequest request) {
-      return asJsonResponseFuture(new JVMMemoryInfoInfo().toJson(), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), new JVMMemoryInfoInfo().toJson(), isPretty(request));
    }
 
    private CompletionStage<RestResponse> heapDump(RestRequest request) {
@@ -310,7 +309,7 @@ public class ServerResource implements ResourceHandler {
             Path dumpFile = Files.createTempFile(server.getServerDataPath(), "dump", ".hprof");
             Files.delete(dumpFile);
             new JVMMemoryInfoInfo().heapDump(dumpFile, live);
-            return asJsonResponse(Json.object().set("filename", dumpFile.getFileName().toString()), pretty);
+            return asJsonResponse(invocationHelper.newResponse(request), Json.object().set("filename", dumpFile.getFileName().toString()), pretty);
          } catch (IOException e) {
             throw Log.REST.heapDumpFailed(e);
          }
@@ -318,22 +317,22 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> env(RestRequest request) {
-      return asJsonResponseFuture(Json.make(System.getProperties()), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(System.getProperties()), isPretty(request));
    }
 
    private CompletionStage<RestResponse> info(RestRequest request) {
-      return asJsonResponseFuture(SERVER_INFO.toJson(), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), SERVER_INFO.toJson(), isPretty(request));
    }
 
    private CompletionStage<RestResponse> threads(RestRequest request) {
-      return completedFuture(new NettyRestResponse.Builder()
+      return completedFuture(invocationHelper.newResponse(request)
             .contentType(TEXT_PLAIN).entity(Util.threadDump())
             .build());
    }
 
    private CompletionStage<RestResponse> report(RestRequest request) {
       ServerManagement server = invocationHelper.getServer();
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       return Security.doAs(request.getSubject(), (PrivilegedAction<CompletionStage<RestResponse>>) () ->
             server.getServerReport().handle((path, t) -> {
                if (t != null) {
@@ -353,20 +352,20 @@ public class ServerResource implements ResourceHandler {
       );
    }
 
-   private CompletionStage<RestResponse> stop(RestRequest restRequest) {
+   private CompletionStage<RestResponse> stop(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
-         Security.doAs(restRequest.getSubject(), (PrivilegedAction<?>) () -> {
+         Security.doAs(request.getSubject(), (PrivilegedAction<?>) () -> {
             invocationHelper.getServer().serverStop(Collections.emptyList());
             return null;
          });
 
-         return new NettyRestResponse.Builder()
+         return invocationHelper.newResponse(request)
                .status(NO_CONTENT).build();
       }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> config(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       MediaType accept = negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML);
       responseBuilder.contentType(accept);
       boolean pretty = Boolean.parseBoolean(request.getParameter("pretty"));
@@ -379,13 +378,13 @@ public class ServerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> dataSourceList(RestRequest request) {
-      return asJsonResponseFuture(Json.make(invocationHelper.getServer().getDataSources().keySet()), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getServer().getDataSources().keySet()), isPretty(request));
    }
 
-   private CompletionStage<RestResponse> dataSourceTest(RestRequest restRequest) {
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+   private CompletionStage<RestResponse> dataSourceTest(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
-      String name = restRequest.variables().get("datasource");
+      String name = request.variables().get("datasource");
       DataSource dataSource = invocationHelper.getServer().getDataSources().get(name);
       if (dataSource == null) return completedFuture(builder.status(NOT_FOUND).build());
 

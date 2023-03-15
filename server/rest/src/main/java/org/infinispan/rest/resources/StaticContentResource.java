@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.rest.DateUtils;
+import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -38,6 +39,7 @@ public class StaticContentResource implements ResourceHandler {
    private final String noFileUri;
    private final ResourceResolver customResourceResolver;
    private final String rootUri;
+   private final InvocationHelper invocationHelper;
 
    public interface ResourceResolver {
       /**
@@ -55,7 +57,8 @@ public class StaticContentResource implements ResourceHandler {
     * @param urlPath The url path to serve the file.
     * @param resourceResolver a {@link ResourceResolver} to resolve requests into resources
     */
-   public StaticContentResource(Path dir, String urlPath, ResourceResolver resourceResolver) {
+   public StaticContentResource(InvocationHelper invocationHelper, Path dir, String urlPath, ResourceResolver resourceResolver) {
+      this.invocationHelper = invocationHelper;
       this.dir = dir.toAbsolutePath();
       this.urlPath = urlPath;
       this.noFileUri = "/" + urlPath;
@@ -63,8 +66,8 @@ public class StaticContentResource implements ResourceHandler {
       this.rootUri = noFileUri + "/";
    }
 
-   public StaticContentResource(Path dir, String urlPath) {
-      this(dir, urlPath, null);
+   public StaticContentResource(InvocationHelper invocationHelper, Path dir, String urlPath) {
+      this(invocationHelper, dir, urlPath, null);
    }
 
    @Override
@@ -91,7 +94,7 @@ public class StaticContentResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> serveFile(RestRequest restRequest) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(restRequest);
 
       String uri = restRequest.uri();
 
@@ -123,9 +126,6 @@ public class StaticContentResource implements ResourceHandler {
 
       responseBuilder.lastModified(file.lastModified());
       responseBuilder.header("Cache-control", "private, max-age=" + CACHE_MAX_AGE_SECONDS);
-      responseBuilder.header("X-Frame-Options", "sameorigin");
-      responseBuilder.header("X-XSS-Protection", "1; mode=block");
-      responseBuilder.header("X-Content-Type-Options", "nosniff");
 
       Date now = new Date();
       responseBuilder.addProcessedDate(now);

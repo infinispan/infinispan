@@ -10,7 +10,6 @@ import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -78,10 +77,14 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ContainerResourceTest().withSecurity(true).protocol(HTTP_11),
-            new ContainerResourceTest().withSecurity(false).protocol(HTTP_11),
-            new ContainerResourceTest().withSecurity(true).protocol(HTTP_20),
-            new ContainerResourceTest().withSecurity(false).protocol(HTTP_20)
+            new ContainerResourceTest().withSecurity(true).protocol(HTTP_11).browser(false),
+            new ContainerResourceTest().withSecurity(true).protocol(HTTP_11).browser(true),
+            new ContainerResourceTest().withSecurity(false).protocol(HTTP_11).browser(false),
+            new ContainerResourceTest().withSecurity(false).protocol(HTTP_11).browser(true),
+            new ContainerResourceTest().withSecurity(true).protocol(HTTP_20).browser(false),
+            new ContainerResourceTest().withSecurity(true).protocol(HTTP_20).browser(true),
+            new ContainerResourceTest().withSecurity(false).protocol(HTTP_20).browser(false),
+            new ContainerResourceTest().withSecurity(false).protocol(HTTP_20).browser(true),
       };
    }
 

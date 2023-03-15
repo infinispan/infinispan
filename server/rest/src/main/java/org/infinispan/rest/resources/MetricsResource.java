@@ -34,11 +34,13 @@ public final class MetricsResource implements ResourceHandler {
    private final boolean auth;
    private final Executor blockingExecutor;
    private final MetricsCollector metricsCollector;
+   private final InvocationHelper invocationHelper;
 
    public MetricsResource(boolean auth, InvocationHelper invocationHelper) {
       this.auth = auth;
       this.blockingExecutor = invocationHelper.getExecutor();
       this.metricsCollector = invocationHelper.getMetricsCollector();
+      this.invocationHelper = invocationHelper;
    }
 
    @Override
@@ -49,16 +51,16 @@ public final class MetricsResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> metrics(RestRequest restRequest) {
+   private CompletionStage<RestResponse> metrics(RestRequest request) {
       return CompletableFuture.supplyAsync(() -> {
-         RestResponseBuilder<NettyRestResponse.Builder> builder = new NettyRestResponse.Builder();
+         RestResponseBuilder<NettyRestResponse.Builder> builder = invocationHelper.newResponse(request);
 
          try {
             PrometheusMeterRegistry registry = metricsCollector.registry();
             if (registry == null) {
                return builder.status(NOT_FOUND.code()).build();
             }
-            String contentType = TextFormat.chooseContentType(restRequest.getAcceptHeader());
+            String contentType = TextFormat.chooseContentType(request.getAcceptHeader());
             builder.header("Content-Type", contentType);
             builder.entity(registry.scrape(contentType));
 

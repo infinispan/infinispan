@@ -3,7 +3,6 @@ package org.infinispan.rest.resources;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -37,8 +36,10 @@ public class CounterResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CounterResourceTest().withSecurity(false),
-            new CounterResourceTest().withSecurity(true),
+            new CounterResourceTest().withSecurity(false).browser(false),
+            new CounterResourceTest().withSecurity(false).browser(true),
+            new CounterResourceTest().withSecurity(true).browser(false),
+            new CounterResourceTest().withSecurity(true).browser(true),
       };
    }
 

@@ -93,7 +93,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
                         })
                         .sorted(Comparator.comparing(s -> s.name))
                         .collect(Collectors.toList())
-                        .map(protoSchemas -> asJsonResponse(Json.make(protoSchemas), pretty))
+                        .map(protoSchemas -> asJsonResponse(invocationHelper.newResponse(request), Json.make(protoSchemas), pretty))
                         .toCompletionStage()
             , invocationHelper.getExecutor())
             .thenCompose(Function.identity());
@@ -109,7 +109,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
             .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
 
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
 
       CompletableFuture<Object> putSchema;
       if (create) {
@@ -156,7 +156,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       return restCacheManager.getPrivilegedInternalEntry(cache, schemaName, true).thenApply(entry -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+         NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
          if (entry == null) {
             responseBuilder.status(HttpResponseStatus.NOT_FOUND);
          } else {
@@ -175,7 +175,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       for (String type: knownTypes) {
          protobufTypes.add(type);
       }
-      return asJsonResponseFuture(protobufTypes, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), protobufTypes, isPretty(request));
    }
 
    private CompletionStage<RestResponse> deleteSchema(RestRequest request) {
@@ -185,7 +185,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       AdvancedCache<Object, Object> protobufCache = restCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);
 
       return restCacheManager.getPrivilegedInternalEntry(protobufCache, schemaName, true).thenCompose(entry -> {
-         NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+         NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {

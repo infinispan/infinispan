@@ -35,10 +35,10 @@ public class ClientCertAuthenticator implements Authenticator {
          Subject subject = new Subject();
          subject.getPrincipals().add(session.getPeerPrincipal());
          request.setSubject(subject);
-         return CompletableFuture.completedFuture(new NettyRestResponse.Builder().build());
+         return CompletableFuture.completedFuture(new NettyRestResponse.Builder(request, true).build());
       } catch (SSLPeerUnverifiedException e) {
          // Ignore any SSLPeerUnverifiedExceptions
       }
-      return CompletableFuture.completedFuture(new NettyRestResponse.Builder().status(HttpResponseStatus.UNAUTHORIZED).build());
+      return CompletableFuture.completedFuture(new NettyRestResponse.Builder(request, true).status(HttpResponseStatus.UNAUTHORIZED).build());
    }
 }

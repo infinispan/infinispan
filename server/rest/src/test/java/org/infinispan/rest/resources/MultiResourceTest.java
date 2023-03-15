@@ -3,7 +3,6 @@ package org.infinispan.rest.resources;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -21,12 +20,12 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -48,10 +47,14 @@ public class MultiResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new MultiResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new MultiResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
+            new MultiResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            new MultiResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            new MultiResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            new MultiResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            new MultiResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
       };
    }
 

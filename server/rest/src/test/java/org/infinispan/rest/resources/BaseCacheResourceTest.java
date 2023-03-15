@@ -16,7 +16,6 @@ import static org.infinispan.rest.RequestHeader.IF_NONE_MATCH;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.ResponseHeader.MAX_IDLE_TIME_HEADER;
 import static org.infinispan.rest.ResponseHeader.TIME_TO_LIVE_HEADER;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

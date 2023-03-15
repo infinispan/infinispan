@@ -25,7 +25,6 @@ import static org.infinispan.dataconversion.Gzip.decompress;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
@@ -44,6 +43,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -90,10 +90,14 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new CacheResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false),
-            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false),
-            new CacheResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true),
-            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true),
+            new CacheResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false).browser(false),
+            new CacheResourceTest().withSecurity(false).protocol(HTTP_11).ssl(false).browser(true),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(false),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(false).browser(true),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true).browser(false),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_11).ssl(true).browser(true),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true).browser(false),
+            new CacheResourceTest().withSecurity(true).protocol(HTTP_20).ssl(true).browser(true),
       };
    }
 
@@ -379,12 +383,13 @@ public class CacheResourceTest extends BaseCacheResourceTest {
          restBuilder.cors().addNewRule().allowOrigins(new String[]{"*"});
          restBuilder.host("localhost").port(0);
          restServerHelper = RestServerHelper.defaultRestServer();
-
          RestServerConfiguration build = restBuilder.build();
-
-         restServerHelper.withConfiguration(build).start("test");
-         client = restServerHelper.createClient();
-
+         restServerHelper.serverConfigurationBuilder().read(build);
+         configureServer(restServerHelper);
+         restServerHelper.start("test");
+         RestClientConfigurationBuilder clientConfig = getClientConfig("admin", "admin");
+         clientConfig.clearServers().addServer().host("localhost").port(restServerHelper.getPort());
+         client = RestClient.forConfiguration(clientConfig.build());
          RestResponse response = join(client.cache("default")
                .get("test", singletonMap(ORIGIN.toString(), "http://host.example.com:5576")));
          assertThat(response).containsAllHeaders("access-control-allow-origin");

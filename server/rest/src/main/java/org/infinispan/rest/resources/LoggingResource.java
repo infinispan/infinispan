@@ -67,7 +67,7 @@ public final class LoggingResource implements ResourceHandler {
                   .addOptionalParameter("level", level)
                   .addOptionalParameter("appenders", appenders)
                   .subject(request.getSubject())
-      ).handle((o, t) -> handle(t));
+      ).handle((o, t) -> handle(request, t));
    }
 
    private CompletionStage<RestResponse> deleteLogger(RestRequest request) {
@@ -77,14 +77,14 @@ public final class LoggingResource implements ResourceHandler {
             new TaskContext()
                   .addParameter("loggerName", loggerName)
                   .subject(request.getSubject())
-      ).handle((o, t) -> handle(t));
+      ).handle((o, t) -> handle(request, t));
    }
 
    private CompletionStage<RestResponse> listLoggers(RestRequest request) {
       // We only return loggers declared in the configuration
       LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
       Json loggerConfigs = jsonLoggerConfigs(logContext.getConfiguration().getLoggers().values());
-      return asJsonResponseFuture(loggerConfigs, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), loggerConfigs, isPretty(request));
    }
 
    private Json jsonLoggerConfigs(Collection<LoggerConfig> loggerConfigs) {
@@ -104,11 +104,11 @@ public final class LoggingResource implements ResourceHandler {
       Map<String, Appender> appendersMap = logContext.getConfiguration().getAppenders();
       Json jsonMap = Json.object();
       appendersMap.forEach((key, value) -> jsonMap.set(key, Json.object().set("name", value.getName())));
-      return asJsonResponseFuture(jsonMap, isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), jsonMap, isPretty(request));
    }
 
-   private NettyRestResponse handle(Throwable t) {
-      NettyRestResponse.Builder response = new NettyRestResponse.Builder();
+   private NettyRestResponse handle(RestRequest request, Throwable t) {
+      NettyRestResponse.Builder response = invocationHelper.newResponse(request);
       if (t == null) {
          response.status(HttpResponseStatus.NO_CONTENT);
       } else {

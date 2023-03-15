@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -75,12 +77,13 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    protected boolean security;
    protected Protocol protocol = HTTP_11;
    protected boolean ssl;
+   protected boolean browser;
 
    protected ServerStateManager serverStateManager;
 
    @Override
    protected String parameters() {
-      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + "]";
+      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", browser=" + browser + "]";
    }
 
    protected AbstractRestResourceTest withSecurity(boolean security) {
@@ -95,6 +98,11 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    protected AbstractRestResourceTest ssl(boolean ssl) {
       this.ssl = ssl;
+      return this;
+   }
+
+   protected AbstractRestResourceTest browser(boolean browser) {
+      this.browser = browser;
       return this;
    }
 
@@ -145,14 +153,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
                }
             }).toArray(String[]::new));
             RestServerHelper restServerHelper = new RestServerHelper(cm);
-            if (isSecurityEnabled()) {
-               BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(ADMIN, USER), REALM);
-               restServerHelper.withAuthenticator(basicAuthenticator);
-            }
-            if (ssl) {
-               restServerHelper.withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
-                     .withTrustStore(TestCertificates.certificate("trust"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE);
-            }
+            configureServer(restServerHelper);
             restServerHelper.start(TestResourceTracker.getCurrentTestShortName());
             restServers.add(restServerHelper);
          }
@@ -160,6 +161,18 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
       adminClient = RestClient.forConfiguration(getClientConfig("admin", "admin").build());
       client = RestClient.forConfiguration(getClientConfig("user", "user").build());
+   }
+
+   protected RestServerHelper configureServer(RestServerHelper helper) {
+      if (isSecurityEnabled()) {
+         BasicAuthenticator basicAuthenticator = new BasicAuthenticator(new SimpleSecurityDomain(ADMIN, USER), REALM);
+         helper.withAuthenticator(basicAuthenticator);
+      }
+      if (ssl) {
+         helper.withKeyStore(TestCertificates.certificate("server"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE)
+               .withTrustStore(TestCertificates.certificate("trust"), TestCertificates.KEY_PASSWORD, TestCertificates.KEYSTORE_TYPE);
+      }
+      return helper;
    }
 
    protected RestServerHelper restServer() {
@@ -247,6 +260,9 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       if (isSecurityEnabled()) {
          clientConfigurationBuilder.security().authentication().enable().username(username).password(password);
       }
+      if (browser) {
+         clientConfigurationBuilder.header("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0");
+      }
       restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
       return clientConfigurationBuilder;
    }
@@ -265,5 +281,23 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
          new CounterConfigurationSerializer().serializeConfiguration(w, config);
       }
       return sw.toString();
+   }
+
+
+   protected RestResponse join(CompletionStage<RestResponse> responseStage) {
+      RestResponse response = CompletionStages.join(responseStage);
+      checkBrowserHeaders(response);
+      return response;
+   }
+
+   protected void checkBrowserHeaders(RestResponse response) {
+      if (browser) {
+         assertEquals("sameorigin", response.getHeader("X-Frame-Options"));
+         assertEquals("1; mode=block", response.getHeader("X-XSS-Protection"));
+         assertEquals("nosniff", response.getHeader("X-Content-Type-Options"));
+         if (ssl) {
+            assertEquals("max-age=31536000; includeSubDomains", response.getHeader("Strict-Transport-Security"));
+         }
+      }
    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.rest.resources;
 
 import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -23,8 +22,10 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ProtobufResourceTest().withSecurity(false),
-            new ProtobufResourceTest().withSecurity(true),
+            new ProtobufResourceTest().withSecurity(false).browser(false),
+            new ProtobufResourceTest().withSecurity(false).browser(true),
+            new ProtobufResourceTest().withSecurity(true).browser(false),
+            new ProtobufResourceTest().withSecurity(true).browser(true),
       };
    }
 

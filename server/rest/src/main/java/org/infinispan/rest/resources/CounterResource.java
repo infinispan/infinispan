@@ -13,9 +13,6 @@ import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
-import static org.infinispan.rest.resources.ResourceUtil.noContent;
-import static org.infinispan.rest.resources.ResourceUtil.noContentResponseFuture;
-import static org.infinispan.rest.resources.ResourceUtil.notFoundResponseFuture;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -89,7 +86,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> createCounter(RestRequest request) throws RestResponseException {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String counterName = request.variables().get("counterName");
 
       String contents = request.contents().asString();
@@ -113,14 +110,14 @@ public class CounterResource implements ResourceHandler {
       EmbeddedCounterManager counterManager = invocationHelper.getCounterManager();
 
       return counterManager.getConfigurationAsync(counterName).thenCompose(configuration -> {
-         if (configuration == null) return notFoundResponseFuture();
+         if (configuration == null) return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
          return counterManager.removeAsync(counterName, false)
-               .thenApply(ignore -> new NettyRestResponse.Builder().status(NO_CONTENT).build());
+               .thenApply(ignore -> invocationHelper.newResponse(request).status(NO_CONTENT).build());
       });
    }
 
    private CompletionStage<RestResponse> getConfig(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String counterName = request.variables().get("counterName");
       boolean pretty = Boolean.parseBoolean(request.getParameter("pretty"));
       return invocationHelper.getCounterManager().getConfigurationAsync(counterName).thenApply(cfg -> {
@@ -145,9 +142,9 @@ public class CounterResource implements ResourceHandler {
       CompletionStage<InternalCounterAdmin> stage = counterManager.getOrCreateAsync(counterName);
       return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
          if (throwable != null) {
-            return handleThrowable(throwable);
+            return handleThrowable(request, throwable);
          }
-         return counter.value().thenApply(v -> new NettyRestResponse.Builder()
+         return counter.value().thenApply(v -> invocationHelper.newResponse(request)
                .contentType(contentType)
                .header(CACHE_CONTROL.toString(), CacheControl.noCache())
                .entity(Long.toString(v)).build());
@@ -161,15 +158,15 @@ public class CounterResource implements ResourceHandler {
       CompletionStage<InternalCounterAdmin> stage = counterManager.getOrCreateAsync(counterName);
       return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
          if (throwable != null) {
-            return handleThrowable(throwable);
+            return handleThrowable(request, throwable);
          } else {
-            return counter.reset().thenCompose(unused -> noContentResponseFuture());
+            return counter.reset().thenCompose(unused -> invocationHelper.newResponse(request, NO_CONTENT).toFuture());
          }
       });
    }
 
    private CompletionStage<RestResponse> getCounterNames(RestRequest request) throws RestResponseException {
-      return asJsonResponseFuture(Json.make(invocationHelper.getCounterManager().getCounterNames()), isPretty(request));
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(invocationHelper.getCounterManager().getCounterNames()), isPretty(request));
    }
 
    private CompletionStage<RestResponse> incrementCounter(RestRequest request) {
@@ -181,7 +178,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> addValue(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       Long delta = checkForNumericParam("delta", request, responseBuilder);
       if (delta == null) return completedFuture(responseBuilder.build());
 
@@ -213,7 +210,7 @@ public class CounterResource implements ResourceHandler {
       CompletionStage<InternalCounterAdmin> stage = invocationHelper.getCounterManager().getOrCreateAsync(counterName);
       return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
          if (throwable != null) {
-            return handleThrowable(throwable);
+            return handleThrowable(request, throwable);
          }
          CompletableFuture<RestResponse> rsp = new CompletableFuture<>();
          if (counter.isWeakCounter()) {
@@ -221,7 +218,7 @@ public class CounterResource implements ResourceHandler {
                if (t != null) {
                   rsp.completeExceptionally(t);
                } else {
-                  rsp.complete(noContent());
+                  rsp.complete(invocationHelper.newResponse(request, NO_CONTENT));
                }
             });
          } else {
@@ -229,7 +226,7 @@ public class CounterResource implements ResourceHandler {
                if (t != null) {
                   rsp.completeExceptionally(t);
                } else {
-                  rsp.complete(asJsonResponse(Json.make(rv), pretty));
+                  rsp.complete(asJsonResponse(invocationHelper.newResponse(request), Json.make(rv), pretty));
                }
             });
          }
@@ -238,7 +235,7 @@ public class CounterResource implements ResourceHandler {
    }
 
    private <T> CompletionStage<RestResponse> executeCounterCAS(RestRequest request, CASInvocation<StrongCounter, Long, Long, CompletableFuture<T>> invocation) {
-      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String counterName = request.variables().get("counterName");
       boolean pretty = isPretty(request);
 
@@ -251,9 +248,9 @@ public class CounterResource implements ResourceHandler {
       CompletionStage<StrongCounter> stage = invocationHelper.getCounterManager().getStrongCounterAsync(counterName);
       return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
          if (throwable != null) {
-            return handleThrowable(throwable);
+            return handleThrowable(request, throwable);
          }
-         return invocation.apply(counter, expect, update).thenCompose(value -> asJsonResponseFuture(Json.make(value), pretty));
+         return invocation.apply(counter, expect, update).thenCompose(value -> asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(value), pretty));
       });
    }
 
@@ -282,10 +279,10 @@ public class CounterResource implements ResourceHandler {
       ).findFirst().orElseThrow(() -> Log.REST.unsupportedDataFormat(accept));
    }
 
-   private CompletionStage<RestResponse> handleThrowable(Throwable throwable) {
+   private CompletionStage<RestResponse> handleThrowable(RestRequest request, Throwable throwable) {
       Throwable cause = extractException(throwable);
       if (cause instanceof CounterNotFoundException) {
-         return notFoundResponseFuture();
+         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
       }
       return completedExceptionFuture(cause);
    }
