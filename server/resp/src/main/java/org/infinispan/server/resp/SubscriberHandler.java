@@ -31,7 +31,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
-public class SubscriberHandler extends RespRequestHandler {
+public class SubscriberHandler extends CacheRespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    // Random bytes to keep listener keys separate from others. Means `resp|`.
    public static final byte[] PREFIX_CHANNEL_BYTES = new byte[]{114, 101, 115, 112, 124};

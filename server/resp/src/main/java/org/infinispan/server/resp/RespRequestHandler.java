@@ -7,8 +7,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
@@ -20,18 +18,6 @@ import io.netty.channel.ChannelHandlerContext;
 
 public abstract class RespRequestHandler {
    protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedFuture(this);
-   protected final RespServer respServer;
-   protected AdvancedCache<byte[], byte[]> cache;
-
-   protected RespRequestHandler(RespServer respServer) {
-      this.respServer = respServer;
-      setCache(respServer.getCache()
-            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
-   }
-
-   protected void setCache(AdvancedCache<byte[], byte[]> cache) {
-      this.cache = cache;
-   }
 
    /**
     * Handles the RESP request returning a stage that when complete notifies the command has completed as well as
@@ -131,7 +117,7 @@ public abstract class RespRequestHandler {
       });
    }
 
-   static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufAllocator allocator, int extraBytes) {
+   protected static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufAllocator allocator, int extraBytes) {
       boolean release = true;
       int stringBytes = ByteBufUtil.utf8Bytes(string);
       int allocatedSize = stringBytes + extraBytes;
@@ -152,11 +138,11 @@ public abstract class RespRequestHandler {
       return buffer;
    }
 
-   static ByteBuf stringToByteBuf(CharSequence string, ByteBufAllocator allocator) {
+   protected static ByteBuf stringToByteBuf(CharSequence string, ByteBufAllocator allocator) {
       return stringToByteBufWithExtra(string, allocator, 0);
    }
 
-   static ByteBuf bytesToResult(byte[] result, ByteBufAllocator allocator) {
+   protected static ByteBuf bytesToResult(byte[] result, ByteBufAllocator allocator) {
       int length = result.length;
       int stringLength = stringSize(length);
 
@@ -173,7 +159,7 @@ public abstract class RespRequestHandler {
       return buffer;
    }
 
-   static int stringSize(int x) {
+   protected static int stringSize(int x) {
       int d = 1;
       if (x >= 0) {
          d = 0;
@@ -190,7 +176,7 @@ public abstract class RespRequestHandler {
 
    // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
    // instead of creating a String around a byte[]
-   static int setIntChars(int i, int index, ByteBuf buf) {
+   protected static int setIntChars(int i, int index, ByteBuf buf) {
       int writeIndex = buf.writerIndex();
       int q, r;
       int charPos = index;

@@ -14,7 +14,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
-public class Resp3AuthHandler extends RespRequestHandler {
+public class Resp3AuthHandler extends CacheRespRequestHandler {
 
    public Resp3AuthHandler(RespServer server) {
       super(server);
