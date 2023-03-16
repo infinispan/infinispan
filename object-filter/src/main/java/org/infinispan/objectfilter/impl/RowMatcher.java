@@ -25,7 +25,7 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    protected RowMatcherEvalContext startMultiTypeContext(boolean isDeltaFilter, Object userContext, Object eventType, Object instance) {
       FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> filterRegistry = getFilterRegistryForType(isDeltaFilter, rowMetadata);
       if (filterRegistry != null) {
-         RowMatcherEvalContext context = new RowMatcherEvalContext(userContext, eventType, instance, rowMetadata);
+         RowMatcherEvalContext context = new RowMatcherEvalContext(userContext, eventType, null, instance, rowMetadata);
          context.initMultiFilterContext(filterRegistry);
          return context;
       }
@@ -33,9 +33,10 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    }
 
    @Override
-   protected RowMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object instance, MetadataAdapter<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> metadataAdapter) {
+   protected RowMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object key,
+                                                          Object instance, MetadataAdapter<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> metadataAdapter) {
       if (Object[].class == instance.getClass()) {
-         return new RowMatcherEvalContext(userContext, eventType, instance, rowMetadata);
+         return new RowMatcherEvalContext(userContext, eventType, key, instance, rowMetadata);
       } else {
          return null;
       }

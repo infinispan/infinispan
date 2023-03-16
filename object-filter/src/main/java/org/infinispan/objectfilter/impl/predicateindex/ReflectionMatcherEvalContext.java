@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import java.util.Iterator;
 
+import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 /**
@@ -12,8 +13,8 @@ public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class
 
    private final Class<?> entityType;
 
-   public ReflectionMatcherEvalContext(Object userContext, Object eventType, Object instance) {
-      super(userContext, eventType, instance);
+   public ReflectionMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance) {
+      super(userContext, eventType, key, instance);
       entityType = instance.getClass();
    }
 

@@ -39,7 +39,7 @@ final class AcceptObjectFilter<TypeMetadata, AttributeMetadata, AttributeId exte
       if (instance == null) {
          throw new IllegalArgumentException("instance cannot be null");
       }
-      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, null, instance, metadataAdapter);
+      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, null, key, instance, metadataAdapter);
       if (matcherEvalContext != null) {
          // once we have a successfully created context we already have a match as there are no filter conditions except for entity type
          return new FilterResultImpl(key, matcher.convert(instance), null, null);
