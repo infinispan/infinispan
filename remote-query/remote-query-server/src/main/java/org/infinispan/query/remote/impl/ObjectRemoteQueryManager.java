@@ -41,7 +41,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
       this.serCtx = SecurityActions.getSerializationContext(cache.getCacheManager());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
-      ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(
+      ObjectReflectionMatcher objectReflectionMatcher = ObjectReflectionMatcher.create(cache,
             createEntityNamesResolver(APPLICATION_OBJECT), searchMapping);
       bcr.replaceComponent(ObjectReflectionMatcher.class.getName(), objectReflectionMatcher, true);
       bcr.rewire();
