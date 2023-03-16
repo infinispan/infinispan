@@ -197,4 +197,11 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
    public String toString() {
       return "AttributeNode(" + attribute + ')';
    }
+
+   public Object cacheMetadataProjection(Object key, AttributeId attribute) {
+      if (!(this instanceof RootNode) || !(metadataAdapter instanceof MetadataProjectable)) {
+         return null;
+      }
+      return ((MetadataProjectable) metadataAdapter).projection(key, attribute.toString());
+   }
 }
