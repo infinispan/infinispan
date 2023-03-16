@@ -2,7 +2,6 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import java.util.Iterator;
 
-import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 /**
@@ -30,6 +29,14 @@ public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class
             processAttribute(childAttribute, null);
          } else {
             ReflectionHelper.PropertyAccessor accessor = childAttribute.getMetadata();
+            if (accessor == null) {
+               Object attributeValue = node.cacheMetadataProjection(key, childAttribute.getAttribute());
+               if (attributeValue != null) {
+                  processAttribute(childAttribute, attributeValue);
+               }
+               continue;
+            }
+
             if (accessor.isMultiple()) {
                Iterator valuesIt = accessor.getValueIterator(instance);
                if (valuesIt == null) {

@@ -29,7 +29,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private final Object userContext;
 
-   private final Object key;
+   protected final Object key;
 
    private final Object instance;
 
