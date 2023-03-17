@@ -15,7 +15,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, Integer> {
+public class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, Integer> {
 
    private final SerializationContext serializationContext;
 

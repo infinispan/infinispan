@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
 import java.io.IOException;
 
 import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
@@ -158,6 +159,12 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
    protected void processAttributes(AttributeNode<FieldDescriptor, Integer> node, Object instance) {
       try {
          ProtobufParser.INSTANCE.parse(this, payloadMessageDescriptor, payload);
+         for (AttributeNode<FieldDescriptor, Integer> childAttribute : node.getChildren()) {
+            if (childAttribute.getAttribute() >= ProtobufPropertyHelper.MIN_METADATA_FIELD_ATTRIBUTE_ID) {
+               Object attributeValue = node.cacheMetadataProjection(key, childAttribute.getAttribute());
+               childAttribute.processValue(attributeValue, this);
+            }
+         }
       } catch (IOException e) {
          throw new RuntimeException(e);  // TODO [anistor] proper exception handling needed
       }

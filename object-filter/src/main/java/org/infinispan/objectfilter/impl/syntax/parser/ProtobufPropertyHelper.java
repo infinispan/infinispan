@@ -3,10 +3,12 @@ package org.infinispan.objectfilter.impl.syntax.parser;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -26,6 +28,10 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    public static final String BIG_INTEGER_COMMON_TYPE = "org.infinispan.protostream.commons.BigInteger";
    public static final String BIG_DECIMAL_COMMON_TYPE = "org.infinispan.protostream.commons.BigDecimal";
+
+   public static final String VERSION = VersionPropertyPath.VERSION_PROPERTY_NAME;
+   public static final int VERSION_FIELD_ATTRIBUTE_ID = 150_000;
+   public static final int MIN_METADATA_FIELD_ATTRIBUTE_ID = VERSION_FIELD_ATTRIBUTE_ID;
 
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
@@ -52,6 +58,10 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public List<?> mapPropertyNamePathToFieldIdPath(Descriptor messageDescriptor, String[] propertyPath) {
+      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION)) {
+         return Arrays.asList(VERSION_FIELD_ATTRIBUTE_ID);
+      }
+
       List<Integer> translatedPath = new ArrayList<>(propertyPath.length);
       Descriptor md = messageDescriptor;
       for (String prop : propertyPath) {
@@ -68,6 +78,10 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public Class<?> getPrimitivePropertyType(Descriptor entityType, String[] propertyPath) {
+      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION)) {
+         return Long.class;
+      }
+
       FieldDescriptor field = getField(entityType, propertyPath);
       if (field == null) {
          throw log.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
@@ -125,6 +139,10 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public boolean hasProperty(Descriptor entityType, String[] propertyPath) {
+      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION) ) {
+         return true;
+      }
+
       Descriptor messageDescriptor = entityType;
       int i = 0;
       for (String p : propertyPath) {
