@@ -14,7 +14,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.model.Developer;
-import org.infinispan.query.model.ModelSchemaImpl;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -173,7 +172,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
                .preload(true);
       }
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(new ModelSchemaImpl(), cfg);
+      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cacheManager.getCache();
       queryFactory = Search.getQueryFactory(cache);
    }
