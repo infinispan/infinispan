@@ -35,6 +35,6 @@ public final class ObjectReflectionMatcher extends ReflectionMatcher {
 
    @Override
    protected MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> createMetadataAdapter(Class<?> clazz) {
-      return new ObjectMetadataAdapter(super.createMetadataAdapter(clazz), cache);
+      return new ReflectionMetadataProjectableAdapter(super.createMetadataAdapter(clazz), cache);
    }
 }
