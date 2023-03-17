@@ -202,6 +202,6 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
       if (!(this instanceof RootNode) || !(metadataAdapter instanceof MetadataProjectable)) {
          return null;
       }
-      return ((MetadataProjectable) metadataAdapter).projection(key, attribute.toString());
+      return ((MetadataProjectable) metadataAdapter).projection(key, attribute);
    }
 }
