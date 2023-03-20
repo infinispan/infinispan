@@ -22,7 +22,7 @@ import org.kohsuke.MetaInfServices;
  * @since 14.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.UpdateIndex.class, Index.ClearStats.class})
+@GroupCommandDefinition(name = "index", description = "Performs operations on indexes", activator = ConnectionActivator.class, groupCommands = {Index.Reindex.class, Index.Clear.class, Index.Stats.class, Index.Metamodel.class, Index.UpdateIndex.class, Index.ClearStats.class})
 public class Index extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -96,6 +96,26 @@ public class Index extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.cache(cache).updateIndexSchema();
+      }
+   }
+
+   @CommandDefinition(name = "metamodel", description = "Displays the index metamodel for a cache.", activator = ConnectionActivator.class)
+   public static class Metamodel extends RestCliCommand {
+
+      @Argument(description = "Specifies which cache statistics to display.", completer = CacheCompleter.class, required = true)
+      String cache;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      public boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.cache(cache).indexMetamodel();
       }
    }
 
