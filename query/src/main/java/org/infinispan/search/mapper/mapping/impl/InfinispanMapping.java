@@ -4,7 +4,9 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.engine.backend.common.spi.EntityReferenceFactory;
@@ -28,6 +30,7 @@ import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.impl.SearchScopeImpl;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -142,6 +145,13 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       } else {
          return c;
       }
+   }
+
+   @Override
+   public Map<String, IndexMetamodel> metamodel() {
+      return allIndexedEntities().stream()
+            .map(indexedEntity -> new IndexMetamodel(indexedEntity))
+            .collect(Collectors.toMap(IndexMetamodel::getEntityName, Function.identity()));
    }
 
    @Override

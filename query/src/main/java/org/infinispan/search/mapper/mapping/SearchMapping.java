@@ -2,10 +2,12 @@ package org.infinispan.search.mapper.mapping;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
+import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
@@ -115,4 +117,7 @@ public interface SearchMapping extends AutoCloseable {
       return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders,
             blockingManager, nonBlockingManager);
    }
+
+   Map<String, IndexMetamodel> metamodel();
+
 }
