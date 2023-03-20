@@ -543,6 +543,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> indexMetamodel() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(cacheUrl + "/search/indexes/metamodel");
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> searchStats() {
       Request.Builder builder = new Request.Builder();
       builder.url(cacheUrl + "/search/stats");

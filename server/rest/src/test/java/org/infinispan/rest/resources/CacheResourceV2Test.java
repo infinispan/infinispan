@@ -1279,6 +1279,43 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void indexMetamodel() {
+      RestCacheClient cacheClient = adminClient.cache("indexedCache");
+      join(cacheClient.clear());
+
+      RestResponse response = join(cacheClient.indexMetamodel());
+      Json indexMetamodel = Json.read(response.getBody());
+
+      List<Json> indexes = indexMetamodel.asJsonList();
+      assertThat(indexes).hasSize(2);
+
+      Json entity = indexes.get(0);
+      assertThat(entity.at("entity-name").asString()).isEqualTo("Entity");
+      assertThat(entity.at("java-class").asString()).isEqualTo("[B");
+      assertThat(entity.at("index-name").asString()).isEqualTo("Entity");
+
+      Map<String, Json> valueFields = entity.at("value-fields").asJsonMap();
+      assertThat(valueFields).containsKey("value");
+      Json valueField = valueFields.get("value");
+      assertThat(valueField.at("multi-valued").asBoolean()).isFalse();
+      assertThat(valueField.at("multi-valued-in-root").asBoolean()).isFalse();
+      assertThat(valueField.at("type").asString()).isEqualTo(Integer.class.getName());
+      assertThat(valueField.at("projection-type").asString()).isEqualTo(Integer.class.getName());
+      assertThat(valueField.at("argument-type").asString()).isEqualTo(Integer.class.getName());
+      assertThat(valueField.at("searchable").asBoolean()).isTrue();
+      assertThat(valueField.at("sortable").asBoolean()).isFalse();
+      assertThat(valueField.at("projectable").asBoolean()).isFalse();
+      assertThat(valueField.at("aggregable").asBoolean()).isFalse();
+      assertThat(valueField.at("analyzer")).isNull();
+      assertThat(valueField.at("normalizer")).isNull();
+
+      Json another = indexes.get(1);
+      assertThat(another.at("entity-name").asString()).isEqualTo("Another");
+      assertThat(another.at("java-class").asString()).isEqualTo("[B");
+      assertThat(another.at("index-name").asString()).isEqualTo("Another");
+   }
+
+   @Test
    public void testSearchStatistics() {
       RestCacheClient cacheClient = adminClient.cache("indexedCache");
       join(cacheClient.clear());
