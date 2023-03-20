@@ -494,6 +494,13 @@ public interface RestCacheClient {
     */
    CompletionStage<RestResponse> details();
 
+   /**
+    * Obtains the index metamodel for the current cache.
+    * The query has to be indexed.
+    *
+    * @return the stage of the response containing the metamodel of the index
+    */
+   CompletionStage<RestResponse> indexMetamodel();
 
    /**
     * Obtain query and indexing statistics for the cache.

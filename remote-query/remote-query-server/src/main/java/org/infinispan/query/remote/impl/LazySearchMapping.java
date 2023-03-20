@@ -3,6 +3,7 @@ package org.infinispan.query.remote.impl;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.StampedLock;
@@ -24,6 +25,7 @@ import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.mapping.impl.InfinispanMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -127,6 +129,11 @@ public class LazySearchMapping implements SearchMapping {
    @Override
    public Class<?> toConvertedEntityJavaClass(Object value) {
       return mapping().toConvertedEntityJavaClass(value);
+   }
+
+   @Override
+   public Map<String, IndexMetamodel> metamodel() {
+      return mapping().metamodel();
    }
 
    @Override

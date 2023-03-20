@@ -1,18 +1,26 @@
 package org.infinispan.query.queries.phrases;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.test.Author;
 import org.infinispan.query.test.Book;
+import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
+import org.infinispan.search.mapper.mapping.metamodel.ObjectFieldMetamodel;
+import org.infinispan.search.mapper.mapping.metamodel.ValueFieldMetamodel;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -71,6 +79,35 @@ public class EmbeddedQueryTest extends SingleCacheManagerTest {
       query = createCacheQuery(Book.class, "b", "b.description:'interesting'");
       result = query.execute().list();
       assertEquals(2, result.size());
+   }
+
+   public void testEmbeddedMetamodel() {
+      SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
+      Map<String, IndexMetamodel> metamodel = searchMapping.metamodel();
+
+      Json make = Json.make(metamodel);
+      assertThat(make).isNotNull(); // try to parse as JSON
+
+      // 2 root entities
+      assertThat(metamodel).hasSize(2);
+
+      IndexMetamodel indexMetamodel = metamodel.get(Book.class.getName());
+      assertThat(indexMetamodel.getIndexName()).isEqualTo(Book.class.getName());
+      assertThat(indexMetamodel.getValueFields()).hasSize(4);
+      assertThat(indexMetamodel.getObjectFields()).hasSize(1);
+
+      ObjectFieldMetamodel embedded = indexMetamodel.getObjectFields().get("authors");
+      assertThat(embedded.isMultiValued()).isTrue();
+      assertThat(embedded.isMultiValuedInRoot()).isTrue();
+      assertThat(embedded.isNested()).isTrue();
+      assertThat(embedded.getValueFields()).hasSize(2);
+
+      ValueFieldMetamodel surname = embedded.getValueFields().get("surname");
+      assertThat(surname.isSearchable()).isTrue();
+      assertThat(surname.isProjectable()).isFalse();
+      ValueFieldMetamodel name = embedded.getValueFields().get("name");
+      assertThat(name.getType()).isEqualTo(String.class);
+      assertThat(name.getAnalyzer()).hasValue("standard");
    }
 
    @Override
