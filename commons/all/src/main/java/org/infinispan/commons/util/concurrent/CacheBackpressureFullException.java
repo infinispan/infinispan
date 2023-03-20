@@ -1,6 +1,7 @@
 package org.infinispan.commons.util.concurrent;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.TimedThreadDump;
 
 /**
  * A {@link CacheException} that is thrown when the backpressure has been filled an unable to process the request. This
@@ -8,4 +9,8 @@ import org.infinispan.commons.CacheException;
  * high. This can be remedied by reducing the load or increasing the backpressure handling (usually buffering of some sort).
  */
 public class CacheBackpressureFullException extends CacheException {
+
+   public CacheBackpressureFullException() {
+      TimedThreadDump.generateThreadDump();
+   }
 }
