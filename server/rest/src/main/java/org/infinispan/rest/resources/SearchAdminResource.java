@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.query.Indexer;
@@ -59,6 +60,7 @@ public class SearchAdminResource implements ResourceHandler {
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("reindex").handleWith(this::reindex)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("updateSchema").handleWith(this::updateSchema)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/indexes").withAction("clear").handleWith(this::clearIndexes)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/metamodel").handleWith(this::indexMetamodel)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/indexes/stats").deprecated().handleWith(this::indexStats)
             .invocation().methods(GET).path("/v2/caches/{cacheName}/search/query/stats").deprecated().handleWith(this::queryStats)
             .invocation().methods(POST).path("/v2/caches/{cacheName}/search/query/stats").deprecated().withAction("clear").handleWith(this::clearStats)
@@ -143,6 +145,21 @@ public class SearchAdminResource implements ResourceHandler {
          throw Util.unchecked(e);
       }
       return CompletableFuture.completedFuture(responseBuilder.build());
+   }
+
+   private CompletionStage<RestResponse> indexMetamodel(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+
+      AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
+      int status = responseBuilder.getStatus();
+      if (status < OK.code() || status >= MULTIPLE_CHOICES.code()) {
+         return completedFuture(responseBuilder.build());
+      }
+
+      SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
+      Json metamodel = Json.make(searchMapping.metamodel().values());
+
+      return asJsonResponseFuture(metamodel, responseBuilder, isPretty(request));
    }
 
    private CompletionStage<RestResponse> indexStats(RestRequest request) {
