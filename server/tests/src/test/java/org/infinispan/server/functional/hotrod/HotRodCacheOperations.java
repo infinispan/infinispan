@@ -21,7 +21,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.ProtocolVersion;
@@ -129,16 +128,21 @@ public class HotRodCacheOperations<K, V> {
 
       final K targetKey = generator.key(0);
 
-      Function<? super K, ? extends V> remappingFunction = key ->
-            generator.value(1);
+      V value = generator.value(1);
+      assertNull(cache.computeIfAbsent(targetKey, ignore -> null));
 
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsent(targetKey, remappingFunction));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsent(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsent(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+      // Exception are only thrown when value not exists.
+      expectException(TransportException.class, RuntimeException.class, "expected exception", () ->
+            cache.computeIfAbsent(targetKey, ignore -> { throw new RuntimeException("expected exception"); }));
 
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsentAsync(targetKey, remappingFunction));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfAbsentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+      generator.assertEquals(value, cache.computeIfAbsent(targetKey, ignore -> value));
+      generator.assertEquals(value, cache.get(targetKey));
+      generator.assertEquals(value, cache.computeIfAbsent(targetKey, ignore -> generator.value(2)));
+      generator.assertEquals(value, cache.get(targetKey));
+
+      K anotherKey = generator.key(1);
+      V anotherValue = generator.value(3);
+      generator.assertEquals(anotherValue, cache.computeIfAbsent(anotherKey, ignore -> anotherValue, 1, TimeUnit.MINUTES, 3, TimeUnit.MINUTES));
    }
 
    @Test
@@ -146,17 +150,24 @@ public class HotRodCacheOperations<K, V> {
       RemoteCache<K, V> cache = remoteCache();
 
       final K targetKey = generator.key(0);
+      V value = generator.value(0);
+      assertNull(cache.computeIfPresent(targetKey, (k, v) -> value));
+      assertNull(cache.get(targetKey));
+      assertNull(cache.put(targetKey, value));
+      generator.assertEquals(value, cache.get(targetKey));
 
-      BiFunction<? super K, ? super V, ? extends V> remappingFunction = (key, value) ->
-            generator.value(1);
+      V anotherValue = generator.value(1);
+      generator.assertEquals(anotherValue, cache.computeIfPresent(targetKey, (k, v) -> anotherValue));
+      generator.assertEquals(anotherValue, cache.get(targetKey));
 
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresent(targetKey, remappingFunction));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresent(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresent(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+      // Exception are only thrown if a value exists.
+      expectException(TransportException.class, RuntimeException.class, "expected exception", () ->
+            cache.computeIfPresent(targetKey, (k, v) -> { throw new RuntimeException("expected exception"); }));
 
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresentAsync(targetKey, remappingFunction));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS));
-      Exceptions.expectException(UnsupportedOperationException.class, () -> cache.computeIfPresentAsync(targetKey, remappingFunction, 1, TimeUnit.SECONDS, 10, TimeUnit.SECONDS));
+      int beforeSize = cache.size();
+      assertNull(cache.computeIfPresent(targetKey, (k, v) -> null));
+      assertNull(cache.get(targetKey));
+      assertEquals(beforeSize - 1, cache.size());
    }
 
    @Test
