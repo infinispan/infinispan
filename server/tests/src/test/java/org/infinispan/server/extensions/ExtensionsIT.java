@@ -26,8 +26,20 @@ public class ExtensionsIT {
          InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .numServers(2)
+               .mavenArtifacts(mavenArtifacts())
                .artifacts(artifacts())
                .build();
+
+   public static String[] mavenArtifacts() {
+      return new String[]{
+            "org.openjdk.nashorn:nashorn-core:15.4",
+            "org.ow2.asm:asm:9.4",
+            "org.ow2.asm:asm-analysis:9.4",
+            "org.ow2.asm:asm-commons:9.4",
+            "org.ow2.asm:asm-tree:9.4",
+            "org.ow2.asm:asm-util:9.4"
+      };
+   }
 
    public static JavaArchive[] artifacts() {
       JavaArchive hello = ShrinkWrap.create(JavaArchive.class, "hello-server-task.jar")
