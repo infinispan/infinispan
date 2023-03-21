@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.resp.test.CommonRespTests;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -102,5 +103,9 @@ public class RespTwoNodeTest extends MultipleCacheManagersTest {
 
       RedisFuture<String> getFuture = redis.get(blockedKey);
       assertEquals("bar", getFuture.get(10, TimeUnit.SECONDS));
+   }
+
+   public void testPipeline() throws ExecutionException, InterruptedException, TimeoutException {
+      CommonRespTests.testPipeline(redisConnection1);
    }
 }

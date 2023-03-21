@@ -75,6 +75,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             // $ + valuelength (log 10 + 1) + \r\n + value + \r\n
             int byteSize = 2 + 2 + 2 + 2 + 7 + 2 + 1 + (int) Math.log10(key.length) + 1
                   + 2 + key.length + 2 + 1 + (int) Math.log10(value.length) + 1 + 2 + value.length + 2;
+            // TODO: this is technically an issue with concurrent events before/after register/unregister message
             ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
             byteBuf.writeCharSequence("*3\r\n$7\r\nmessage\r\n$" + key.length + "\r\n", CharsetUtil.US_ASCII);
             byteBuf.writeBytes(key);
@@ -114,8 +115,8 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    @Override
-   public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type,
-         List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+      initializeIfNecessary(ctx);
 
       switch (type) {
          case "SUBSCRIBE":
@@ -158,10 +159,10 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             return handler.handleRequest(ctx, type, arguments);
          case "PSUBSCRIBE":
          case "PUNSUBSCRIBE":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()), ctx.voidPromise());
+            RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", allocatorToUse);
             break;
          default:
-            return super.handleRequest(ctx, type, arguments);
+            return super.actualHandleRequest(ctx, type, arguments);
       }
       return myStage;
    }
@@ -204,27 +205,19 @@ public class SubscriberHandler extends CacheRespRequestHandler {
 
    private CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
          Collection<byte[]> keyChannels, boolean subscribeOrUnsubscribe) {
-      return stageToReturn(stageToWaitFor, ctx, (__, innerCtx, t) -> {
-         if (t != null) {
-            if (subscribeOrUnsubscribe) {
-               innerCtx.writeAndFlush(stringToByteBuf("-ERR Failure adding client listener", innerCtx.alloc()), innerCtx.voidPromise());
-            } else {
-               innerCtx.writeAndFlush(stringToByteBuf("-ERR Failure unsubscribing client listener", innerCtx.alloc()), innerCtx.voidPromise());
-            }
-            return;
-         }
+      return stageToReturn(stageToWaitFor, ctx, (__, alloc) -> {
          for (byte[] keyChannel : keyChannels) {
             String initialCharSeq = subscribeOrUnsubscribe ? "*2\r\n$9\r\nsubscribe\r\n$" : "*2\r\n$11\r\nunsubscribe\r\n$";
 
             // Length of string (all ascii so 1 byte per) + (log10 + 1 = sizes of number as char in bytes) + \r\n + bytes themselves + \r\n
             int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2;
-            ByteBuf subscribeBuffer = innerCtx.alloc().buffer(sizeRequired, sizeRequired);
+            ByteBuf subscribeBuffer = alloc.apply(sizeRequired);
+            int initialPos = subscribeBuffer.writerIndex();
             subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + "\r\n", CharsetUtil.US_ASCII);
             subscribeBuffer.writeBytes(keyChannel);
             subscribeBuffer.writeByte('\r');
             subscribeBuffer.writeByte('\n');
-            assert subscribeBuffer.writerIndex() == sizeRequired;
-            innerCtx.writeAndFlush(subscribeBuffer, innerCtx.voidPromise());
+            assert subscribeBuffer.writerIndex() - initialPos == sizeRequired;
          }
       });
    }

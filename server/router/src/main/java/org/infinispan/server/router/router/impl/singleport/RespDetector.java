@@ -54,7 +54,8 @@ public class RespDetector extends ByteToMessageDecoder {
 
    private void installRespHandler(ChannelHandlerContext ctx) {
       // We found the RESP handshake, let's do some pipeline surgery
-      ChannelHandlerAdapter dummyHandler = new ChannelHandlerAdapter() {};
+      ChannelHandlerAdapter dummyHandler = new ChannelHandlerAdapter() {
+      };
       ctx.pipeline().addAfter(NAME, "dummy", dummyHandler);
       ChannelHandler channelHandler = ctx.pipeline().removeLast();
       // Remove everything else
@@ -63,6 +64,8 @@ public class RespDetector extends ByteToMessageDecoder {
       }
       // Add the RESP server handler
       ctx.pipeline().addLast(respServer.getInitializer());
+      // Make sure to fire registered on the newly installed handlers
+      ctx.fireChannelRegistered();
       RouterLogger.SERVER.tracef("Detected RESP connection %s", ctx);
    }
 }
