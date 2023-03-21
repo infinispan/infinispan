@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     // Show the agent name in the build list
-                    manager.addShortText(env.NODE_NAME, "grey", "", "0px", "")
+                    echo env.NODE_NAME
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 17')

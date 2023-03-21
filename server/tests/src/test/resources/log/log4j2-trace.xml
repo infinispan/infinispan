@@ -3,10 +3,10 @@
   <Appenders>
     <!-- Colored output on the console -->
     <Console name="STDOUT">
-      <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
+      <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{1.}] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
     </Console>
     <Console name="CONTAINER">
-      <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
+      <PatternLayout pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{1.}] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
     </Console>
   </Appenders>
 

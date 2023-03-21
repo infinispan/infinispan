@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.security.auth.x500.X500Principal;
@@ -67,6 +66,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public static final String DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME = "infinispan.xml";
 
    public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
+   public static final String JOIN_TIMEOUT = "jgroups.join_timeout";
    public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
    public static final String KEY_ALGORITHM = "RSA";
@@ -207,14 +207,10 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    protected static File createServerHierarchy(File baseDir) {
-      return createServerHierarchy(baseDir, null, null);
+      return createServerHierarchy(baseDir, null);
    }
 
    protected static File createServerHierarchy(File baseDir, String name) {
-      return createServerHierarchy(baseDir, name, null);
-   }
-
-   protected static File createServerHierarchy(File baseDir, String name, BiConsumer<File, String> consumer) {
       File rootDir = serverRoot(baseDir, name);
       for (String dir : Arrays.asList(
             Server.DEFAULT_SERVER_DATA,
@@ -226,9 +222,6 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             if (!d.mkdirs()) {
                throw new IllegalStateException("Unable to create directory " + d);
             }
-         }
-         if (consumer != null) {
-            consumer.accept(d, dir);
          }
       }
       return rootDir;

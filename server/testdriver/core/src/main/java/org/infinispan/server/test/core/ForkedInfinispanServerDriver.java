@@ -99,6 +99,9 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
                .setServerConfiguration(configurationFile.getPath())
                .setPortsOffset(i);
          server.addSystemProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
+         if (i == 0) {
+            server.addSystemProperty(JOIN_TIMEOUT, "0");
+         }
          try {
             File sourceServerConfiguration = new File(server.getServerConfiguration());
             FileUtils.copyFile(sourceServerConfiguration, destConfDir.resolve(sourceServerConfiguration.getName()).toFile());
