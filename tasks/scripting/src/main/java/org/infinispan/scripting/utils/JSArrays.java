@@ -9,13 +9,17 @@ public class JSArrays {
 
    static {
       Class<?> SCRIPTUTILS;
+      ClassLoader loader = Thread.currentThread().getContextClassLoader();
       try {
-         SCRIPTUTILS = Class.forName("org.openjdk.nashorn.api.scripting.ScriptUtils");
-      } catch (ClassNotFoundException e) {
+         SCRIPTUTILS = Class.forName("org.openjdk.nashorn.api.scripting.ScriptUtils", true, loader);
+      } catch (ClassNotFoundException e1) {
          try {
-            SCRIPTUTILS = Class.forName("jdk.nashorn.api.scripting.ScriptUtils");
-         } catch (ClassNotFoundException classNotFoundException) {
-            throw new RuntimeException(classNotFoundException);
+            SCRIPTUTILS = Class.forName("jdk.nashorn.api.scripting.ScriptUtils", true, loader);
+         } catch (ClassNotFoundException e2) {
+            RuntimeException rte = new RuntimeException("Cannot find Nashorn ScriptUtils");
+            rte.addSuppressed(e1);
+            rte.addSuppressed(e2);
+            throw rte;
          }
       }
       try {

@@ -16,8 +16,9 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
-      <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
       <org.infinispan.test.server.dir>${project.basedir}/../../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+      <!-- The default configuration does not support test-tcp -->
+      <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
    </properties>
    <dependencies>
       <dependency>
@@ -30,6 +31,12 @@
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-engine</artifactId>
          <version>${versionx.junit.junit5}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.platform</groupId>
+         <artifactId>junit-platform-launcher</artifactId>
+         <version>${versionx.junit.platform}</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
@@ -50,18 +57,11 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               <parallel>none</parallel>
-               <groups combine.self="override">${defaultJUnitGroups}</groups>
-               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
-               <disableXmlReport>false</disableXmlReport>
-               <systemPropertyVariables>
-                  <org.infinispan.test.server.dir>${org.infinispan.test.server.dir}</org.infinispan.test.server.dir>
-               </systemPropertyVariables>
                <properties>
-                  <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
                   <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
+                  <listener>org.infinispan.server.test.junit5.InfinispanServerTestListener</listener>
                </properties>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
             <dependencies>
                <dependency>

@@ -16,6 +16,7 @@
 
    <properties>
       <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <org.infinispan.test.server.dir>${project.basedir}/../../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <!-- The default configuration does not support test-tcp -->
       <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
    </properties>
@@ -41,5 +42,20 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <properties>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
+               </properties>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true</argLine>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>
 

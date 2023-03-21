@@ -38,15 +38,6 @@ public class InfinispanServerRule implements TestRule {
       this.testServer = new TestServer(configuration);
    }
 
-   /**
-    * Registers a {@link Consumer} function which populates a server filesystem with additional files.
-    * <p>
-    * The consumer will be invoked with the server's configuration directory
-    */
-   public void registerConfigurationEnhancer(Consumer<File> enhancer) {
-      configurationEnhancers.add(enhancer);
-   }
-
    public InfinispanServerDriver getServerDriver() {
       return testServer.getDriver();
    }
@@ -70,13 +61,10 @@ public class InfinispanServerRule implements TestRule {
                   testServer.initServerDriver();
                   testServer.getDriver().prepare(testName);
                   testServer.beforeListeners();
-
                   configurationEnhancers.forEach(c -> c.accept(testServer.getDriver().getConfDir()));
-
                   testServer.getDriver().start(testName);
                }
                InfinispanServerRule.this.before(testName);
-
                base.evaluate();
             } catch (Throwable e) {
                log.error("Problem during the server initialization", e);

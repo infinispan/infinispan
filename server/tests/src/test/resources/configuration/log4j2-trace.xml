@@ -19,7 +19,7 @@
         <SizeBasedTriggeringPolicy size="100 MB" />
         <TimeBasedTriggeringPolicy />
       </Policies>
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c{1.}] %m%throwable%n"/>
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{1.}] %m%throwable%n"/>
     </RollingFile>
 
     <!-- Rolling JSON file, disabled by default -->
