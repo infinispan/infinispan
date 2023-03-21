@@ -1,0 +1,7 @@
+groups:
+- name: Cross Site Rules
+  rules:
+  - alert: Cache Work and Site NYC
+    expr: vendor_cache_manager_default_cache_work_x_site_admin_nyc_status == 0
+  - alert: Cache Sessions and Site NYC
+    expr: vendor_cache_manager_default_cache_sessions_x_site_admin_nyc_status == 0
