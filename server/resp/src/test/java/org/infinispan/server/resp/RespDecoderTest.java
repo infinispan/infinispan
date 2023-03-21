@@ -48,7 +48,7 @@ public class RespDecoderTest {
       queuedCommands = new ArrayDeque<>();
       RespRequestHandler myRespRequestHandler = new RespRequestHandler() {
          @Override
-         public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+         protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
             queuedCommands.add(new Request(type, arguments));
             return myStage;
          }

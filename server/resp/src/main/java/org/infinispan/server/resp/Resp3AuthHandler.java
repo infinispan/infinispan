@@ -1,7 +1,5 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.Resp3Handler.statusOK;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -21,21 +19,21 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    }
 
    @Override
-   public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
       CompletionStage<Boolean> successStage = null;
       switch (type) {
          case "HELLO":
             byte[] respProtocolBytes = arguments.get(0);
             String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
             if (!version.equals("3")) {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-NOPROTO sorry this protocol version is not supported\r\n", ctx.alloc()));
+               stringToByteBuf("-NOPROTO sorry this protocol version is not supported\r\n", allocatorToUse);
                break;
             }
 
             if (arguments.size() == 4) {
                successStage = performAuth(ctx, arguments.get(2), arguments.get(3));
             } else {
-               helloResponse(ctx);
+               helloResponse(ctx, allocatorToUse);
             }
             break;
          case "AUTH":
@@ -45,7 +43,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
             ctx.close();
             break;
          default:
-            if (isAuthorized()) super.handleRequest(ctx, type, arguments);
+            if (isAuthorized()) super.actualHandleRequest(ctx, type, arguments);
             else handleUnauthorized(ctx);
       }
 
@@ -78,33 +76,33 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", ctx.alloc()), ctx.voidPromise());
+         stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", allocatorToUse);
          return false;
       }
 
       setCache(cache.withSubject(subject));
-      ctx.writeAndFlush(statusOK(), ctx.voidPromise());
+      Resp3Handler.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;
    }
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
       assert ctx.channel().eventLoop().inEventLoop();
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", ctx.alloc()), ctx.voidPromise());
+      stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
    }
 
    private boolean isAuthorized() {
       return this.getClass() != Resp3AuthHandler.class;
    }
 
-   private static void helloResponse(ChannelHandlerContext ctx) {
+   private static void helloResponse(ChannelHandlerContext ctx, ByteBufPool alloc) {
       String versionString = Version.getBrandVersion();
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("%7\r\n" +
+      RespRequestHandler.stringToByteBuf("%7\r\n" +
             "$6\r\nserver\r\n$15\r\nInfinispan RESP\r\n" +
             "$7\r\nversion\r\n$" + versionString.length() + "\r\n" + versionString + "\r\n" +
             "$5\r\nproto\r\n:3\r\n" +
             "$2\r\nid\r\n:184\r\n" +
             "$4\r\nmode\r\n$7\r\ncluster\r\n" +
             "$4\r\nrole\r\n$6\r\nmaster\r\n" +
-            "$7\r\nmodules\r\n*0\r\n", ctx.alloc()), ctx.voidPromise());
+            "$7\r\nmodules\r\n*0\r\n", alloc);
    }
 }

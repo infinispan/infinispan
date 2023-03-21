@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -16,29 +17,17 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.server.core.transport.NativeTransport;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.function.TriConsumer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
 public class Resp3Handler extends Resp3AuthHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private static final ByteBuf OK;
-
-   static {
-      if (NativeTransport.USE_NATIVE_EPOLL || NativeTransport.USE_NATIVE_IOURING) {
-         OK = Unpooled.unreleasableBuffer(Unpooled.directBuffer(5, 5));
-      } else {
-         OK = Unpooled.unreleasableBuffer(Unpooled.buffer(5, 5));
-      }
-      OK.writeCharSequence("+OK\r\n", CharsetUtil.US_ASCII);
-   }
+   static final byte[] OK = "+OK\r\n".getBytes(StandardCharsets.US_ASCII);
 
    protected AdvancedCache<byte[], byte[]> ignoreLoaderCache;
 
@@ -52,68 +41,39 @@ public class Resp3Handler extends Resp3AuthHandler {
       ignoreLoaderCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
    }
 
-   // Returns a cached OK status that is retained for multiple uses
-   static ByteBuf statusOK() {
-      return OK.duplicate();
-   }
-
-   private static final TriConsumer<byte[], ChannelHandlerContext, Throwable> GET_TRICONSUMER = (innerValueBytes, innerCtx, t) -> {
-      if (t != null) {
-         log.trace("Exception encountered while performing GET", t);
-         handleThrowable(innerCtx, t);
-      } else if (innerValueBytes != null) {
-         ByteBuf buf = bytesToResult(innerValueBytes, innerCtx.alloc());
-         innerCtx.writeAndFlush(buf, innerCtx.voidPromise());
+   protected static final BiConsumer<byte[], ByteBufPool> GET_TRICONSUMER = (innerValueBytes, alloc) -> {
+      if (innerValueBytes != null) {
+         bytesToResult(innerValueBytes, alloc);
       } else {
-         innerCtx.writeAndFlush(RespRequestHandler.stringToByteBuf("$-1\r\n", innerCtx.alloc()), innerCtx.voidPromise());
+         stringToByteBuf("$-1\r\n", alloc);
       }
    };
 
-   private static final TriConsumer<byte[], ChannelHandlerContext, Throwable> SET_TRICONSUMER = (ignore, innerCtx, t) -> {
-      if (t != null) {
-         log.trace("Exception encountered while performing SET", t);
-         handleThrowable(innerCtx, t);
-      } else {
-         innerCtx.writeAndFlush(statusOK(), innerCtx.voidPromise());
-      }
-   };
+   protected static final BiConsumer<Object, ByteBufPool> OK_BICONSUMER = (ignore, alloc) ->
+         alloc.acquire(OK.length).writeBytes(OK);
 
-   private static final TriConsumer<Long, ChannelHandlerContext, Throwable> INCDEC_TRICONSUMER = (longValue, innerCtx, t) -> {
-      if (t != null) {
-         handleThrowable(innerCtx, t);
-      } else {
-         handleLongResult(innerCtx, longValue);
-      }
-   };
+   protected static final BiConsumer<Long, ByteBufPool> LONG_BICONSUMER = Resp3Handler::handleLongResult;
 
-   private static final TriConsumer<byte[], ChannelHandlerContext, Throwable> DELETE_TRICONSUMER = (prev, innerCtx, t) -> {
-      if (t != null) {
-         log.trace("Exception encountered while performing DEL", t);
-         handleThrowable(innerCtx, t);
-         return;
-      }
-      innerCtx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + (prev == null ? "0" : "1") +
-            "\r\n", innerCtx.alloc()), innerCtx.voidPromise());
-   };
+   protected static final BiConsumer<byte[], ByteBufPool> DELETE_BICONSUMER = (prev, alloc) ->
+         stringToByteBuf(":" + (prev == null ? "0" : "1") + "\r\n", alloc);
 
    @Override
-   public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
       switch (type) {
          case "PING":
             if (arguments.size() == 0) {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("$4\r\nPONG\r\n", ctx.alloc()), ctx.voidPromise());
+               stringToByteBuf("$4\r\nPONG\r\n", allocatorToUse);
                break;
             }
             // falls-through
          case "ECHO":
             byte[] argument = arguments.get(0);
-            ByteBuf bufferToWrite = RespRequestHandler.stringToByteBufWithExtra("$" + argument.length + "\r\n", ctx.alloc(), argument.length + 2);
+            ByteBuf bufferToWrite = stringToByteBufWithExtra("$" + argument.length + "\r\n", allocatorToUse, argument.length + 2);
             bufferToWrite.writeBytes(argument);
             bufferToWrite.writeByte('\r').writeByte('\n');
-            ctx.writeAndFlush(bufferToWrite, ctx.voidPromise());
             break;
          case "SET":
-            return stageToReturn(ignoreLoaderCache.putAsync(arguments.get(0), arguments.get(1)), ctx, SET_TRICONSUMER);
+            return stageToReturn(ignoreLoaderCache.putAsync(arguments.get(0), arguments.get(1)), ctx, OK_BICONSUMER);
          case "GET":
             byte[] keyBytes = arguments.get(0);
 
@@ -125,62 +85,57 @@ public class Resp3Handler extends Resp3AuthHandler {
          case "MSET":
             return performMset(ctx, cache, arguments);
          case "INCR":
-            return stageToReturn(counterIncOrDec(cache, arguments.get(0), true), ctx, INCDEC_TRICONSUMER);
+            return stageToReturn(counterIncOrDec(cache, arguments.get(0), true), ctx, LONG_BICONSUMER);
          case "DECR":
-            return stageToReturn(counterIncOrDec(cache, arguments.get(0), false), ctx, INCDEC_TRICONSUMER);
+            return stageToReturn(counterIncOrDec(cache, arguments.get(0), false), ctx, LONG_BICONSUMER);
          case "CONFIG":
             String getOrSet = new String(arguments.get(0), StandardCharsets.UTF_8);
             String name = new String(arguments.get(1), StandardCharsets.UTF_8);
 
             if ("GET".equalsIgnoreCase(getOrSet)) {
                if ("appendonly".equalsIgnoreCase(name)) {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", ctx.alloc()), ctx.voidPromise());
+                  stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", allocatorToUse);
                } else if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", ctx.alloc()), ctx.voidPromise());
+                  stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", allocatorToUse);
                } else {
-                  ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", ctx.alloc()), ctx.voidPromise());
+                  stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", allocatorToUse);
                }
             } else if ("SET".equalsIgnoreCase(getOrSet)) {
-               ctx.writeAndFlush(statusOK(), ctx.voidPromise());
+               OK_BICONSUMER.accept(null, allocatorToUse);
             } else {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", ctx.alloc()), ctx.voidPromise());
+               stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", allocatorToUse);
             }
             break;
          case "INFO":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", ctx.alloc()), ctx.voidPromise());
+            stringToByteBuf("-ERR not implemented yet\r\n", allocatorToUse);
             break;
          case "PUBLISH":
             // TODO: should we return the # of subscribers on this node?
             // We use expiration to remove the event values eventually while preventing them during high periods of
             // updates
-            return stageToReturn(ignoreLoaderCache.putAsync(SubscriberHandler.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx, (ignore, innerCtx, t) -> {
-               if (t != null) {
-                  log.trace("Exception encountered while performing PUBLISH", t);
-                  handleThrowable(innerCtx, t);
-               } else {
-                  innerCtx.writeAndFlush(RespRequestHandler.stringToByteBuf(":0\r\n", ctx.alloc()), innerCtx.voidPromise());
-               }
+            return stageToReturn(ignoreLoaderCache.putAsync(SubscriberHandler.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx, (ignore, alloc) -> {
+               stringToByteBuf(":0\r\n", alloc);
             });
          case "SUBSCRIBE":
             SubscriberHandler subscriberHandler = new SubscriberHandler(respServer, this);
             return subscriberHandler.handleRequest(ctx, type, arguments);
          case "SELECT":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Select not supported in cluster mode\r\n", ctx.alloc()), ctx.voidPromise());
+            stringToByteBuf("-ERR Select not supported in cluster mode\r\n", allocatorToUse);
             break;
          case "READWRITE":
          case "READONLY":
             // We are always in read write allowing read from backups
-            ctx.writeAndFlush(statusOK(), ctx.voidPromise());
+            OK_BICONSUMER.accept(null, allocatorToUse);
             break;
          case "RESET":
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("+RESET\r\n", ctx.alloc()), ctx.voidPromise());
+            stringToByteBuf("+RESET\r\n", allocatorToUse);
             if (respServer.getConfiguration().authentication().enabled()) {
                return CompletableFuture.completedFuture(new Resp3AuthHandler(respServer));
             }
             break;
          case "COMMAND":
             if (!arguments.isEmpty()) {
-               ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", ctx.alloc()), ctx.voidPromise());
+               stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", allocatorToUse);
                break;
             }
             StringBuilder commandBuilder = new StringBuilder();
@@ -206,10 +161,10 @@ public class Resp3Handler extends Resp3AuthHandler {
             addCommand(commandBuilder, "RESET", 1, 0, 0, 0);
             addCommand(commandBuilder, "QUIT", 1, 0, 0, 0);
             addCommand(commandBuilder, "COMMAND", -1, 0, 0, 0);
-            ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(commandBuilder.toString(), ctx.alloc()), ctx.voidPromise());
+            stringToByteBuf(commandBuilder.toString(), allocatorToUse);
             break;
          default:
-            return super.handleRequest(ctx, type, arguments);
+            return super.actualHandleRequest(ctx, type, arguments);
       }
       return myStage;
    }
@@ -231,12 +186,13 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    }
 
-   private static void handleLongResult(ChannelHandlerContext ctx, Long result) {
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + result + "\r\n", ctx.alloc()), ctx.voidPromise());
+   protected static void handleLongResult(Long result, ByteBufPool alloc) {
+      // TODO: this can be optimized to avoid the String allocation
+      stringToByteBuf(":" + result + "\r\n", alloc);
    }
 
-   static void handleThrowable(ChannelHandlerContext ctx, Throwable t) {
-      ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR" + t.getMessage() + "\r\n", ctx.alloc()), ctx.voidPromise());
+   protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
+      stringToByteBuf("-ERR " + t.getMessage() + "\r\n", alloc);
    }
 
    private static CompletionStage<Long> counterIncOrDec(Cache<byte[], byte[]> cache, byte[] key, boolean increment) {
@@ -278,10 +234,10 @@ public class Resp3Handler extends Resp3AuthHandler {
       int keysToRemove = arguments.size();
       if (keysToRemove == 1) {
          byte[] keyBytes = arguments.get(0);
-         return stageToReturn(cache.removeAsync(keyBytes), ctx, DELETE_TRICONSUMER);
+         return stageToReturn(cache.removeAsync(keyBytes), ctx, DELETE_BICONSUMER);
       } else if (keysToRemove == 0) {
          // TODO: is this an error?
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf(":0\r\n", ctx.alloc()), ctx.voidPromise());
+         stringToByteBuf(":0\r\n", allocatorToUse);
          return myStage;
       } else {
          AtomicInteger removes = new AtomicInteger();
@@ -294,13 +250,8 @@ public class Resp3Handler extends Resp3AuthHandler {
                      }
                   }));
          }
-         return stageToReturn(deleteStages.freeze(), ctx, (removals, innerCtx, t) -> {
-            if (t != null) {
-               log.trace("Exception encountered while performing multiple DEL", t);
-               handleThrowable(innerCtx, t);
-               return;
-            }
-            innerCtx.writeAndFlush(RespRequestHandler.stringToByteBuf(":" + removals.get() + "\r\n", innerCtx.alloc()), innerCtx.voidPromise());
+         return stageToReturn(deleteStages.freeze(), ctx, (removals, alloc) -> {
+            stringToByteBuf(":" + removals.get() + "\r\n", alloc);
          });
       }
    }
@@ -308,7 +259,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    private CompletionStage<RespRequestHandler> performMget(ChannelHandlerContext ctx, Cache<byte[], byte[]> cache, List<byte[]> arguments) {
       int keysToRetrieve = arguments.size();
       if (keysToRetrieve == 0) {
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("*0\r\n", ctx.alloc()), ctx.voidPromise());
+         stringToByteBuf("*0\r\n", allocatorToUse);
          return myStage;
       }
       List<byte[]> results = Collections.synchronizedList(Arrays.asList(
@@ -338,16 +289,11 @@ public class Resp3Handler extends Resp3AuthHandler {
                   resultBytesSize.addAndGet(2);
                }));
       }
-      return stageToReturn(getStage.freeze(), ctx, (ignore, innerCtx, t) -> {
-         if (t != null) {
-            log.trace("Exception encountered while performing multiple GET", t);
-            handleThrowable(innerCtx, t);
-            return;
-         }
+      return stageToReturn(getStage.freeze(), ctx, (ignore, alloc) -> {
          int elements = results.size();
          // * + digit length (log10 + 1) + \r\n + accumulated bytes
          int byteAmount = 1 + (int) Math.log10(elements) + 1 + 2 + resultBytesSize.get();
-         ByteBuf byteBuf = innerCtx.alloc().buffer(byteAmount, byteAmount);
+         ByteBuf byteBuf = alloc.apply(byteAmount);
          byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.US_ASCII);
          byteBuf.writeByte('\r');
          byteBuf.writeByte('\n');
@@ -364,7 +310,6 @@ public class Resp3Handler extends Resp3AuthHandler {
             byteBuf.writeByte('\n');
          }
          assert byteBuf.writerIndex() == byteAmount;
-         innerCtx.writeAndFlush(byteBuf, innerCtx.voidPromise());
       });
    }
 
@@ -372,7 +317,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       int keyValuePairCount = arguments.size();
       if ((keyValuePairCount & 1) == 1) {
          log.tracef("Received: %s count for keys and values combined, should be even for MSET", keyValuePairCount);
-         ctx.writeAndFlush(RespRequestHandler.stringToByteBuf("-ERR Missing a value for a key" + "\r\n", ctx.alloc()), ctx.voidPromise());
+         stringToByteBuf("-ERR Missing a value for a key" + "\r\n", allocatorToUse);
          return myStage;
       }
       AggregateCompletionStage<Void> setStage = CompletionStages.aggregateCompletionStage();
@@ -381,13 +326,6 @@ public class Resp3Handler extends Resp3AuthHandler {
          byte[] valueBytes = arguments.get(i + 1);
          setStage.dependsOn(cache.putAsync(keyBytes, valueBytes));
       }
-      return stageToReturn(setStage.freeze(), ctx, (ignore, innerCtx, t) -> {
-         if (t != null) {
-            log.trace("Exception encountered while performing MSET", t);
-            handleThrowable(innerCtx, t);
-         } else {
-            innerCtx.writeAndFlush(statusOK(), innerCtx.voidPromise());
-         }
-      });
+      return stageToReturn(setStage.freeze(), ctx, OK_BICONSUMER);
    }
 }

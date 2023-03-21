@@ -15,15 +15,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.resp.test.CommonRespTests;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -346,5 +349,9 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
    protected RedisPubSubCommands<String, String> createPubSubConnection() {
       return client.connectPubSub().sync();
+   }
+
+   public void testPipeline() throws ExecutionException, InterruptedException, TimeoutException {
+      CommonRespTests.testPipeline(redisConnection);
    }
 }

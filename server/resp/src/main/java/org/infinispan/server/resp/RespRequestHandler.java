@@ -5,35 +5,60 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.function.TriConsumer;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
 
 public abstract class RespRequestHandler {
    protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedFuture(this);
 
+   public static final AttributeKey<ByteBufPool> BYTE_BUF_POOL_ATTRIBUTE_KEY = AttributeKey.newInstance("buffer-pool");
+
+   ByteBufPool allocatorToUse;
+
+   protected void initializeIfNecessary(ChannelHandlerContext ctx) {
+      if (allocatorToUse == null) {
+         if (!ctx.channel().hasAttr(BYTE_BUF_POOL_ATTRIBUTE_KEY)) {
+            throw new IllegalStateException("BufferPool was not initialized in the context " + ctx);
+         }
+         allocatorToUse = ctx.channel().attr(BYTE_BUF_POOL_ATTRIBUTE_KEY).get();
+      }
+   }
+
+   public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+      initializeIfNecessary(ctx);
+      return actualHandleRequest(ctx, type, arguments);
+   }
+
    /**
     * Handles the RESP request returning a stage that when complete notifies the command has completed as well as
     * providing the request handler for subsequent commands.
+    * <p>
+    * Implementations should never use the ByteBufAllocator in the context.
+    * Instead, they should use {@link #allocatorToUse} to retrieve a ByteBuffer.
+    * This ByteBuffer should only have bytes written to it adding up to the size requested.
+    * The ByteBuffer itself should never be written to the context or channel and flush should also never be invoked.
+    * Failure to do so may cause mis-ordering or responses as requests support pipelining and a ByteBuf may not be
+    * send down stream until later in the pipeline.
     *
     * @param ctx Netty context pipeline for this request
     * @param type The command type
     * @param arguments The remaining arguments to the command
     * @return stage that when complete returns the new handler to instate. This stage <b>must</b> be completed on the event loop
     */
-   public CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
       if ("QUIT".equals(type)) {
          ctx.close();
          return myStage;
       }
-      ctx.writeAndFlush(stringToByteBuf("-ERR unknown command\r\n", ctx.alloc()), ctx.voidPromise());
+      stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
       return myStage;
    }
 
@@ -42,8 +67,8 @@ public abstract class RespRequestHandler {
    }
 
    protected <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
-         TriConsumer<? super E, ChannelHandlerContext, Throwable> triConsumer) {
-      return stageToReturn(stage, ctx, Objects.requireNonNull(triConsumer), null);
+         BiConsumer<? super E, ByteBufPool> biConsumer) {
+      return stageToReturn(stage, ctx, Objects.requireNonNull(biConsumer), null);
    }
 
    protected <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
@@ -71,41 +96,42 @@ public abstract class RespRequestHandler {
     * @param <E> The stage return value
     * @param stage The stage that will complete. Note that if biConsumer is null this stage may only be completed on the event loop
     * @param ctx The context used for this request, normally the event loop is the thing used
-    * @param triConsumer The consumer to be ran on
+    * @param biConsumer The consumer to be ran on
     * @param handlerWhenComplete A function to map the result to which handler will be used for future requests. Only ever invoked on the event loop. May be null, if so the current handler is returned
     * @return A stage that is only ever completed on the event loop that provides the new handler to use
     */
    private <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
-         TriConsumer<? super E, ChannelHandlerContext, Throwable> triConsumer, Function<E, RespRequestHandler> handlerWhenComplete) {
+         BiConsumer<? super E, ByteBufPool> biConsumer, Function<E, RespRequestHandler> handlerWhenComplete) {
       assert ctx.channel().eventLoop().inEventLoop();
       // Only one or the other can be null
-      assert (triConsumer != null && handlerWhenComplete == null) || (triConsumer == null && handlerWhenComplete != null) :
-            "triConsumer was: " + triConsumer + " and handlerWhenComplete was: " + handlerWhenComplete;
+      assert (biConsumer != null && handlerWhenComplete == null) || (biConsumer == null && handlerWhenComplete != null) :
+            "triConsumer was: " + biConsumer + " and handlerWhenComplete was: " + handlerWhenComplete;
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          E result = CompletionStages.join(stage);
          try {
             if (handlerWhenComplete != null) {
                return CompletableFuture.completedFuture(handlerWhenComplete.apply(result));
             }
-            triConsumer.accept(result, ctx, null);
+            biConsumer.accept(result, allocatorToUse);
          } catch (Throwable t) {
             return CompletableFutures.completedExceptionFuture(t);
          }
          return myStage;
       }
-      if (triConsumer != null) {
+      if (biConsumer != null) {
          // Note that this method is only ever invoked in the event loop, so this whenCompleteAsync can never complete
          // until this request completes, meaning the thenApply will always be invoked in the event loop as well
          return CompletionStages.handleAndComposeAsync(stage, (e, t) -> {
-            try {
-               triConsumer.accept(e, ctx, t);
-               return myStage;
-            } catch (Throwable innerT) {
-               if (t != null) {
-                  innerT.addSuppressed(t);
+            if (t != null) {
+               Resp3Handler.handleThrowable(allocatorToUse, t);
+            } else {
+               try {
+                  biConsumer.accept(e, allocatorToUse);
+               } catch (Throwable innerT) {
+                  return CompletableFutures.completedExceptionFuture(innerT);
                }
-               return CompletableFutures.completedExceptionFuture(innerT);
             }
+            return myStage;
          }, ctx.channel().eventLoop());
       }
       return stage.handle((value, t) -> {
@@ -117,16 +143,16 @@ public abstract class RespRequestHandler {
       });
    }
 
-   protected static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufAllocator allocator, int extraBytes) {
+   protected static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufPool alloc, int extraBytes) {
       boolean release = true;
       int stringBytes = ByteBufUtil.utf8Bytes(string);
       int allocatedSize = stringBytes + extraBytes;
-      ByteBuf buffer = allocator.buffer(allocatedSize, allocatedSize);
+      ByteBuf buffer = alloc.apply(allocatedSize);
 
       try {
          int beforeWriteIndex = buffer.writerIndex();
          ByteBufUtil.reserveAndWriteUtf8(buffer, string, allocatedSize);
-         assert buffer.capacity() - buffer.writerIndex() == extraBytes;
+         assert buffer.capacity() - buffer.writerIndex() > extraBytes;
          assert buffer.writerIndex() - beforeWriteIndex == stringBytes;
          release = false;
       } finally {
@@ -138,17 +164,17 @@ public abstract class RespRequestHandler {
       return buffer;
    }
 
-   protected static ByteBuf stringToByteBuf(CharSequence string, ByteBufAllocator allocator) {
-      return stringToByteBufWithExtra(string, allocator, 0);
+   protected static ByteBuf stringToByteBuf(CharSequence string, ByteBufPool alloc) {
+      return stringToByteBufWithExtra(string, alloc, 0);
    }
 
-   protected static ByteBuf bytesToResult(byte[] result, ByteBufAllocator allocator) {
+   protected static ByteBuf bytesToResult(byte[] result, ByteBufPool alloc) {
       int length = result.length;
       int stringLength = stringSize(length);
 
       // Need 5 extra for $ and 2 sets of /r/n
       int exactSize = stringLength + length + 5;
-      ByteBuf buffer = allocator.buffer(exactSize, exactSize);
+      ByteBuf buffer = alloc.acquire(exactSize);
       buffer.writeByte('$');
       // This method is anywhere from 10-100% faster than ByteBufUtil.writeAscii and avoids allocations
       setIntChars(length, stringLength, buffer);
