@@ -7,7 +7,7 @@
   <Appenders>
     <!-- Colored output on the console -->
     <Console name="STDOUT">
-      <PatternLayout pattern="%highlight{%d{HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
+      <PatternLayout pattern="%highlight{%d{HH:mm:ss,SSS} %-5p [%c{1.}] %m%throwable}{INFO=normal, DEBUG=normal, TRACE=normal}%n"/>
     </Console>
 
     <!-- Rolling file -->
@@ -19,7 +19,7 @@
         <SizeBasedTriggeringPolicy size="100 MB" />
         <TimeBasedTriggeringPolicy />
       </Policies>
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p (%t) [%c] %m%throwable%n"/>
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{1.}] %m%throwable%n"/>
     </RollingFile>
 
     <!-- Rolling JSON file, disabled by default -->
@@ -70,6 +70,8 @@
     <Logger name="com.arjuna" level="WARN"/>
 
     <Logger name="org.jgroups" level="INFO"/>
+
+    <Logger name="tc" level="DEBUG"/>
 
     <!-- Set to TRACE to enable access logging for Hot Rod requests -->
     <Logger name="org.infinispan.HOTROD_ACCESS_LOG" additivity="false" level="INFO">

@@ -2,6 +2,9 @@ package org.infinispan.server.test.core;
 
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
+import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
+import static org.infinispan.server.test.core.Containers.getDockerBridgeAddress;
+import static org.infinispan.server.test.core.Containers.imageArchitecture;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 
 import java.io.ByteArrayInputStream;
@@ -49,17 +52,16 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.Server;
 import org.infinispan.util.logging.LogFactory;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.utility.Base58;
+import org.testcontainers.images.builder.dockerfile.statement.RawStatement;
 
-import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
-import com.github.dockerjava.api.model.Network;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -75,8 +77,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final int JMX_PORT = 9999;
-   public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi8/openjdk-11-runtime";
-   public static final String IMAGE_USER = "200";
+   public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi8/openjdk-17-runtime";
+   public static final String IMAGE_USER = "185";
    public static final Integer[] EXPOSED_PORTS = {
          11222, // Protocol endpoint
          11221, // Memcached endpoint
@@ -87,10 +89,16 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          46655, // JGroups UDP
          9999
    };
+   public static final String SNAPSHOT_IMAGE = "localhost/infinispan/server-snapshot";
    private final InfinispanGenericContainer[] containers;
    private final String[] volumes;
    private String name;
    ImageFromDockerfile image;
+
+   static {
+      // Ensure there are no left-overs from previous runs
+      cleanup();
+   }
 
    protected ContainerInfinispanServerDriver(InfinispanServerTestConfiguration configuration) {
       super(
@@ -101,16 +109,19 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       this.volumes = new String[configuration.numServers()];
    }
 
-   static InetAddress getDockerBridgeAddress() {
-      DockerClient dockerClient = DockerClientFactory.instance().client();
-      Network bridge = dockerClient.inspectNetworkCmd().withNetworkId("bridge").exec();
-      String gateway = bridge.getIpam().getConfig().get(0).getGateway();
-      return Exceptions.unchecked(() -> InetAddress.getByName(gateway));
+   public static void cleanup() {
+      try {
+         log.infof("Removing temporary image %s", SNAPSHOT_IMAGE);
+         DOCKER_CLIENT.removeImageCmd(SNAPSHOT_IMAGE).exec();
+         log.infof("Removed temporary image %s", SNAPSHOT_IMAGE);
+      } catch (Exception e) {
+         // Ignore
+      }
    }
 
    @Override
-   protected void start(String name, File rootDir, File configurationFile) {
-      this.name = name;
+   protected void start(String fqcn, File rootDir, File configurationFile) {
+      this.name = abbreviate(fqcn);
       String jGroupsStack = System.getProperty(Server.INFINISPAN_CLUSTER_STACK);
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
@@ -162,12 +173,27 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       File libDir = new File(rootDir, "lib");
       libDir.mkdirs();
       copyArtifactsToUserLibDir(libDir);
-
-      image = new ImageFromDockerfile("localhost/testcontainers/" + Base58.randomString(16).toLowerCase(), !preserveImageAfterTest)
-            .withFileFromPath("test", rootDir.toPath())
-            .withFileFromPath("tmp", tmp)
-            .withFileFromPath("lib", libDir.toPath());
-      final boolean prebuiltImage;
+      // Copy the resources to a location from where they can be added to the image
+      try {
+         URL resource = ContainerInfinispanServerDriver.class.getResource("/overlay");
+         if (resource != null) {
+            URI overlayUri = resource.toURI();
+            if ("jar".equals(overlayUri.getScheme())) {
+               try (FileSystem fileSystem = FileSystems.newFileSystem(overlayUri, Collections.emptyMap())) {
+                  Files.walkFileTree(fileSystem.getPath("/overlay"), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
+                     f.setExecutable(true, false);
+                  }));
+               }
+            } else {
+               Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
+                  f.setExecutable(true, false);
+               }));
+            }
+         }
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+      log.infof("Creating image %s", name);
       final String imageName;
       String baseImageName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
       if (baseImageName == null) {
@@ -175,74 +201,43 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          if (serverOutputDir == null) {
             // We try to use the latest public image for this major.minor version
             imageName = "quay.io/infinispan/server:" + Version.getMajorMinor();
-            prebuiltImage = true;
             log.infof("Using prebuilt image '%s'", imageName);
          } else {
-            // We build our local image based on the supplied server
-            Path serverOutputPath = Paths.get(serverOutputDir).normalize();
-            imageName = JDK_BASE_IMAGE_NAME;
-            image
-                  .withFileFromPath("target", serverOutputPath.getParent())
-                  .withFileFromPath("src", serverOutputPath.getParent().getParent().resolve("src"))
-                  .withFileFromPath("build", cleanServerDirectory(serverOutputPath));
-            prebuiltImage = false;
-            log.infof("Using local image from server built at '%s'", serverOutputPath);
+            imageName = createServerImage(serverOutputDir);
          }
       } else {
          imageName = baseImageName;
-         prebuiltImage = true;
          log.infof("Using prebuilt image '%s'", imageName);
       }
-      image.withDockerfileFromBuilder(builder -> {
-         builder
-               .from(imageName)
-               .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
-               .env("INFINISPAN_VERSION", Version.getVersion())
-               .label("name", "Infinispan Server")
-               .label("version", Version.getVersion())
-               .label("release", Version.getVersion())
-               .label("architecture", "x86_64");
+      image = new ImageFromDockerfile("localhost/infinispan/server-" + name.toLowerCase(), !preserveImageAfterTest)
+            .withFileFromPath("test", rootDir.toPath())
+            .withFileFromPath("tmp", tmp)
+            .withFileFromPath("lib", libDir.toPath())
+            .withDockerfileFromBuilder(builder -> {
+               builder
+                     .from(imageName)
+                     .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
+                     .env("INFINISPAN_VERSION", Version.getVersion())
+                     .label("name", "Infinispan Server")
+                     .label("version", Version.getVersion())
+                     .label("release", Version.getVersion())
+                     .label("architecture", imageArchitecture());
 
-         if (!prebuiltImage) {
-            builder.copy("build", INFINISPAN_SERVER_HOME);
-         }
-         // Copy the resources to a location from where they can be added to the image
-         try {
-            URL resource = ContainerInfinispanServerDriver.class.getResource("/overlay");
-            if (resource != null) {
-               URI overlayUri = resource.toURI();
-               if ("jar".equals(overlayUri.getScheme())) {
-                  try (FileSystem fileSystem = FileSystems.newFileSystem(overlayUri, Collections.emptyMap())) {
-                     Files.walkFileTree(fileSystem.getPath("/overlay"), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
-                        f.setExecutable(true, false);
-                     }));
-                  }
-               } else {
-                  Files.walkFileTree(Paths.get(overlayUri), new CommonsTestingUtil.CopyFileVisitor(tmp, true, f -> {
-                     f.setExecutable(true, false);
-                  }));
-               }
-            }
-         } catch (Exception e) {
-            throw new RuntimeException(e);
-         }
+               builder
+                     .user(IMAGE_USER)
+                     .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " test " + INFINISPAN_SERVER_HOME + "/server"))
+                     .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " tmp " + INFINISPAN_SERVER_HOME))
+                     .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " lib " + serverPathFrom("lib")))
+                     .workDir(INFINISPAN_SERVER_HOME)
+                     .entryPoint(args.toArray(new String[]{}))
+                     .expose(
+                           EXPOSED_PORTS   // JMX Remoting
+                     )
 
-         builder.copy("test", INFINISPAN_SERVER_HOME + "/server")
-               .copy("tmp", INFINISPAN_SERVER_HOME)
-               .workDir(INFINISPAN_SERVER_HOME)
-               .entryPoint(args.toArray(new String[]{}))
-               .expose(
-                     EXPOSED_PORTS   // JMX Remoting
-               );
-
-         builder
-               .copy("lib", serverPathFrom("lib"))
-               .user("root")
-               .run("microdnf update && microdnf install tar && microdnf clean all")
-               .run("chown", "-R", IMAGE_USER, INFINISPAN_SERVER_HOME)
-               .run("chmod", "-R", "g+rw", INFINISPAN_SERVER_HOME)
-               .user(IMAGE_USER);
-      });
+               ;
+            });
+      image.get();
+      log.infof("Created image %s", name);
 
       int numServers = configuration.numServers();
       CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(numServers, String.format(CLUSTER_VIEW_REGEX, numServers));
@@ -261,11 +256,15 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
-   public InfinispanGenericContainer getContainer(int i) {
-      if (containers.length <= i) {
-         throw new IllegalStateException("Container " + i + " has not been initialized");
+   private String abbreviate(String name) {
+      String[] split = name.split("\\.");
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < split.length - 1; i++) {
+         sb.append(split[i].charAt(0));
+         sb.append('.');
       }
-      return containers[i];
+      sb.append(split[split.length - 1]);
+      return sb.toString();
    }
 
    private void configureSite(List<String> args) {
@@ -280,7 +279,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
     * Removing the `server/data` and `server/log` directories from the local server directory to prevent issues with
     * the tests
     */
-   private Path cleanServerDirectory(Path serverOutputPath) {
+   private static Path cleanServerDirectory(Path serverOutputPath) {
       Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("data").toString());
       Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("log").toString());
       return serverOutputPath;
@@ -290,12 +289,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
       if (this.volumes[i] == null) {
          String volumeName = Util.threadLocalRandomUUID().toString();
-         DockerClientFactory.instance().client().createVolumeCmd().withName(volumeName).exec();
+         DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
          this.volumes[i] = volumeName;
       }
 
       GenericContainer<?> container = new GenericContainer<>(image)
-            //.withExposedPorts(EXPOSED_PORTS)
             .withCreateContainerCmdModifier(cmd -> {
                cmd.getHostConfig().withMounts(
                      Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
@@ -308,10 +306,17 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                }
             });
       String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
+      String javaOpts = null;
+      if (i == 0) {
+         javaOpts = "-D" + JOIN_TIMEOUT + "=0";
+      }
       if (debug != null && Integer.parseInt(debug) == i) {
-         String option = debugJvmOption();
-         container.withEnv("JAVA_OPTS", option);
-         log.infof("Container debug enabled with options '%s'%n", option);
+         javaOpts = javaOpts == null ? debugJvmOption() : javaOpts + " " + debugJvmOption();
+         log.infof("Container debug enabled with options '%s'%n", javaOpts);
+      }
+
+      if (javaOpts != null) {
+         container.withEnv("JAVA_OPTS", javaOpts);
       }
 
       // Process any enhancers
@@ -441,7 +446,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    public String syncFilesFromServer(int server, String path) {
       String serverPath = Paths.get(path).isAbsolute() ? path : INFINISPAN_SERVER_HOME + "/server/" + path;
-      try (InputStream is = DockerClientFactory.instance().client().copyArchiveFromContainerCmd(containers[server].getContainerId(), serverPath).exec()) {
+      try (InputStream is = DOCKER_CLIENT.copyArchiveFromContainerCmd(containers[server].getContainerId(), serverPath).exec()) {
          TarArchiveInputStream tar = new TarArchiveInputStream(is);
          Path basePath = getRootDir().toPath().resolve(Integer.toString(server));
          Util.recursiveFileRemove(basePath.resolve(path));
@@ -506,12 +511,43 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             }
          });
          tar.close();
-         DockerClientFactory.instance().client().copyArchiveToContainerCmd(containers[server].getContainerId())
+         DOCKER_CLIENT.copyArchiveToContainerCmd(containers[server].getContainerId())
                .withTarInputStream(new ByteArrayInputStream(bos.toByteArray()))
                .withRemotePath("/tmp").exec();
          return Paths.get("/tmp").resolve(local.getFileName()).toString();
       } catch (IOException e) {
          throw new RuntimeException(e);
+      }
+   }
+
+   static String createServerImage(String serverOutputDir) {
+      try {
+         InspectImageResponse response = DOCKER_CLIENT.inspectImageCmd(SNAPSHOT_IMAGE).exec();
+         log.infof("Reusing existing image");
+         return response.getConfig().getImage();
+      } catch (NotFoundException e) {
+         // We build our local image based on the supplied server directory
+         Path serverOutputPath = Paths.get(serverOutputDir).normalize();
+         if (Files.notExists(serverOutputPath)) {
+            throw new RuntimeException("Cannot create server image: no server at " + serverOutputPath);
+         }
+         ImageFromDockerfile image = new ImageFromDockerfile(SNAPSHOT_IMAGE, false)
+               .withFileFromPath("build", cleanServerDirectory(serverOutputPath))
+               .withDockerfileFromBuilder(builder -> builder
+                     .from(JDK_BASE_IMAGE_NAME)
+                     .env("INFINISPAN_SERVER_HOME", INFINISPAN_SERVER_HOME)
+                     .env("INFINISPAN_VERSION", Version.getVersion())
+                     .label("name", "Infinispan Server")
+                     .label("version", Version.getVersion())
+                     .label("release", Version.getVersion())
+                     .label("architecture", imageArchitecture())
+                     .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " build " + INFINISPAN_SERVER_HOME))
+                     .user("root")
+                     .run("microdnf install tar")
+                     .user(IMAGE_USER));
+         log.infof("Building server snapshot image from %s", serverOutputPath);
+         image.get();
+         return image.getDockerImageName();
       }
    }
 }

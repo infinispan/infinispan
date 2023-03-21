@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.commons.test.Eventually;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -45,7 +46,7 @@ public class InfinispanXSiteServerTest {
       nycCache.put("k2", "v2");
 
       assertEquals("v1", lonCache.get("k1"));
-      assertEquals("v1", nycCache.get("k1"));
+      Eventually.eventuallyEquals("v1", () -> nycCache.get("k1"));
       assertEquals(null, lonCache.get("k2"));
       assertEquals ("v2", nycCache.get("k2"));
    }
