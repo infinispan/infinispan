@@ -64,6 +64,7 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 
@@ -362,12 +363,40 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      throw new UnsupportedOperationException();
+      CompletableFuture<V> cf = getAsync(key);
+      return cf.thenCompose(oldValue -> {
+         if (oldValue != null) return CompletableFuture.completedFuture(oldValue);
+
+         V newValue = mappingFunction.apply(key);
+         if (newValue == null) return CompletableFutures.completedNull();
+
+         return putIfAbsentAsync(key, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+               .thenApply(v -> v == null ? newValue : v);
+      });
    }
 
    @Override
    public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      throw new UnsupportedOperationException();
+      CompletableFuture<MetadataValue<V>> cf = getWithMetadataAsync(key);
+      return cf.thenCompose(metadata -> {
+         if (metadata == null || metadata.getValue() == null) return CompletableFutures.completedNull();
+
+         V newValue = remappingFunction.apply(key, metadata.getValue());
+         CompletableFuture<Boolean> done;
+         if (newValue == null) {
+            done = removeWithVersionAsync(key, metadata.getVersion());
+         } else {
+            done = replaceWithVersionAsync(key, newValue, metadata.getVersion(), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+         }
+
+         return done.thenCompose(success -> {
+            if (success) {
+               return CompletableFuture.completedFuture(newValue);
+            }
+
+            return computeIfPresentAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+         });
+      });
    }
 
    @Override

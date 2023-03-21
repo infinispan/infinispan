@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import jakarta.transaction.SystemException;
@@ -206,6 +207,16 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
       return txContext == null ?
             super.removeAsync(key, value) :
             txContext.compute((K) key, entry -> removeEntryIfEquals(entry, value), remoteGet);
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfAbsentAsync(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<V> computeIfPresentAsync(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      throw new UnsupportedOperationException();
    }
 
    @Override
