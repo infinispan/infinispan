@@ -341,11 +341,17 @@ public class ContainerResource implements ResourceHandler {
       if (ignoredCaches.contains(cacheName)) {
          cacheInfo.status = "IGNORED";
       } else {
-         if(cacheHealth != HealthStatus.FAILED) {
-            Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
-            cacheInfo.status = cache.getStatus().toString();
-         } else {
-            cacheInfo.status = ComponentStatus.FAILED.toString();
+         switch (cacheHealth) {
+            case FAILED:
+               cacheInfo.status = ComponentStatus.FAILED.toString();
+               break;
+            case INITIALIZING:
+               cacheInfo.status = ComponentStatus.INITIALIZING.toString();
+               break;
+            default:
+               Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
+               cacheInfo.status = cache.getStatus().toString();
+               break;
          }
       }
 
