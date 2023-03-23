@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
@@ -250,4 +251,7 @@ public interface Messages {
 
    @Message("The resource does not support the '%s' list format")
    IllegalArgumentException unsupportedListFormat(Resource.ListFormat format);
+
+   @Message("File '%s' does not exist")
+   NoSuchFileException nonExistentFile(org.aesh.io.Resource file);
 }

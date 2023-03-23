@@ -166,6 +166,12 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       assertTrue(jsonNode.asList().contains("org.infinispan.rest.search.entity.Person"));
    }
 
+   @Test
+   public void uploadEmptySchema() {
+      CompletionStage<RestResponse> response = client.schemas().put("empty", "");
+      ResponseAssertion.assertThat(response).isBadRequest();
+   }
+
    private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
       RestSchemaClient schemaClient = client.schemas();
 
