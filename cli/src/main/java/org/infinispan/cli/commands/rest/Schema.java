@@ -1,6 +1,7 @@
 package org.infinispan.cli.commands.rest;
 
 import java.io.File;
+import java.nio.file.NoSuchFileException;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
@@ -15,6 +16,7 @@ import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.SchemaCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
+import org.infinispan.cli.logging.Messages;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
@@ -60,8 +62,12 @@ public class Schema extends CliCommand {
       }
 
       @Override
-      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
-         return client.schemas().put(name, RestEntity.create(MediaType.TEXT_PLAIN, new File(file.getAbsolutePath())));
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) throws NoSuchFileException {
+         if (file.exists()) {
+            return client.schemas().put(name, RestEntity.create(MediaType.TEXT_PLAIN, new File(file.getAbsolutePath())));
+         } else {
+            throw Messages.MSG.nonExistentFile(file);
+         }
       }
    }
 

@@ -41,4 +41,8 @@ public class ByteBufContentSource implements ContentSource {
       return null;
    }
 
+   @Override
+   public int size() {
+      return byteBuf.readableBytes();
+   }
 }
