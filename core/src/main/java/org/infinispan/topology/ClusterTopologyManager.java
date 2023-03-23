@@ -86,6 +86,8 @@ public interface ClusterTopologyManager {
 
    CompletionStage<Void> handleShutdownRequest(String cacheName) throws Exception;
 
+   boolean useCurrentTopologyAsStable(String cacheName, boolean force);
+
    /**
     * Sets the id of the initial topology in given cache. This is necessary when using entry versions
     * that contain topology id; had we started with topology id 1, newer versions would not be recognized properly.

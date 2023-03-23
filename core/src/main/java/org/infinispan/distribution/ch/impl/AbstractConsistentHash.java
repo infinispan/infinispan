@@ -165,22 +165,28 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       }
    }
 
-   protected Map<Address, Float> remapCapacityFactors(UnaryOperator<Address> remapper) {
+   protected Map<Address, Float> remapCapacityFactors(UnaryOperator<Address> remapper, boolean allowMissing) {
       Map<Address, Float> remappedCapacityFactors = null;
       if (capacityFactors != null) {
          remappedCapacityFactors = new HashMap<>(members.size());
          for(int i=0; i < members.size(); i++) {
-            remappedCapacityFactors.put(remapper.apply(members.get(i)), capacityFactors[i]);
+            Address a = remapper.apply(members.get(i));
+            if (a == null) {
+               if (allowMissing) continue;
+               return null;
+            }
+            remappedCapacityFactors.put(a, capacityFactors[i]);
          }
       }
       return remappedCapacityFactors;
    }
 
-   protected List<Address> remapMembers(UnaryOperator<Address> remapper) {
+   protected List<Address> remapMembers(UnaryOperator<Address> remapper, boolean allowMissing) {
       List<Address> remappedMembers = new ArrayList<>(members.size());
       for(Iterator<Address> i = members.iterator(); i.hasNext(); ) {
          Address a = remapper.apply(i.next());
          if (a == null) {
+            if (allowMissing) continue;
             return null;
          }
          remappedMembers.add(a);

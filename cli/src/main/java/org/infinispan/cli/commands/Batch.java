@@ -26,6 +26,7 @@ import org.infinispan.cli.commands.rest.Shutdown;
 import org.infinispan.cli.commands.rest.Site;
 import org.infinispan.cli.commands.rest.Stats;
 import org.infinispan.cli.commands.rest.Task;
+import org.infinispan.cli.commands.rest.Topology;
 import org.infinispan.cli.impl.ExitCodeResultHandler;
 
 /**
@@ -73,6 +74,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             Stats.class,
             Site.class,
             Task.class,
+            Topology.class,
             User.class,
             Version.class
       }, resultHandler = ExitCodeResultHandler.class)

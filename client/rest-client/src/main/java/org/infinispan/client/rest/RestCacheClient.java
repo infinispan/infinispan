@@ -542,4 +542,9 @@ public interface RestCacheClient {
     * Sets the Cache's Avaialability
     */
    CompletionStage<RestResponse> setAvailability(String availability);
+
+   /**
+    * Force the current cache topology as the stable if not running.
+    */
+   CompletionStage<RestResponse> markTopologyStable(boolean force);
 }

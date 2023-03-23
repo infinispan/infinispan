@@ -790,6 +790,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       return lostMembers.size() > 1;
    }
 
+   @Override
+   public boolean useCurrentTopologyAsStable(String cacheName, boolean force) {
+      ClusterCacheStatus status = cacheStatusMap.get(cacheName);
+      if (status == null) return false;
+      if (!status.setCurrentTopologyAsStable(force)) return false;
+
+      // We are sure this one is completed.
+      status.forceRebalance();
+      return true;
+   }
+
    public static boolean distLostDataCheck(ConsistentHash stableCH, List<Address> newMembers) {
       for (int i = 0; i < stableCH.getNumSegments(); i++) {
          if (!InfinispanCollections.containsAny(newMembers, stableCH.locateOwnersForSegment(i)))

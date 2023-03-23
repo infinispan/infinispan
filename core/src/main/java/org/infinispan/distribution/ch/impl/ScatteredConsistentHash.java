@@ -228,9 +228,9 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
 
    @Override
    public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
-      List<Address> remappedMembers = remapMembers(remapper);
+      List<Address> remappedMembers = remapMembers(remapper, false);
       if (remappedMembers == null) return null;
-      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper);
+      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper, false);
       Address[] remappedSegmentOwners = Stream.of(segmentOwners).map(remapper).toArray(Address[]::new);
       return new ScatteredConsistentHash(segmentOwners.length, remappedMembers,
             remappedCapacityFactors, remappedSegmentOwners, isRebalanced);
