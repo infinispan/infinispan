@@ -274,20 +274,40 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
    @Override
    public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
-      List<Address> remappedMembers = remapMembers(remapper);
+      List<Address> remappedMembers = remapMembers(remapper, false);
       if (remappedMembers == null) return null;
-      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper);
+      // At this point, all members are present in the remapper.
+      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper, false);
+      List<Address>[] remappedSegmentOwners = remapSegmentOwners(remapper, false);
+      return new DefaultConsistentHash(this.numOwners, this.segmentOwners.length, remappedMembers,
+            remappedCapacityFactors, remappedSegmentOwners);
+   }
+
+   @Override
+   public ConsistentHash remapAddressRemoveMissing(UnaryOperator<Address> remapper) {
+      List<Address> remappedMembers = remapMembers(remapper, true);
+      if (remappedMembers == null) return null;
+      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper, true);
+      List<Address>[] remappedSegmentOwners = remapSegmentOwners(remapper, true);
+      return new DefaultConsistentHash(this.numOwners, this.segmentOwners.length, remappedMembers,
+            remappedCapacityFactors, remappedSegmentOwners);
+   }
+
+   private List<Address>[] remapSegmentOwners(UnaryOperator<Address> remapper, boolean allowMissing) {
       List<Address>[] remappedSegmentOwners = new List[segmentOwners.length];
       for(int i=0; i < segmentOwners.length; i++) {
          List<Address> remappedOwners = new ArrayList<>(segmentOwners[i].size());
          for (Address address : segmentOwners[i]) {
-            remappedOwners.add(remapper.apply(address));
+            Address a = remapper.apply(address);
+            if (a == null) {
+               if (allowMissing) continue;
+               return null;
+            }
+            remappedOwners.add(a);
          }
          remappedSegmentOwners[i] = remappedOwners;
       }
-
-      return new DefaultConsistentHash(this.numOwners, this.segmentOwners.length, remappedMembers,
-            remappedCapacityFactors, remappedSegmentOwners);
+      return remappedSegmentOwners;
    }
 
    public static class Externalizer extends InstanceReusingAdvancedExternalizer<DefaultConsistentHash> {

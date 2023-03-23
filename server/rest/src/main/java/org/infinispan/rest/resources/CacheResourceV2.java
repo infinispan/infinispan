@@ -119,6 +119,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
@@ -214,6 +215,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("disable-rebalancing")
             .permission(AuthorizationPermission.ADMIN).name("DISABLE REBALANCE").auditContext(AuditContext.CACHE)
             .handleWith(r -> setRebalancing(false, r))
+
+            // Restore after a shutdown
+            .invocation().method(POST).path("/v2/caches/{cacheName}").withAction("initialize")
+            .permission(AuthorizationPermission.ADMIN).name("Initialize cache").auditContext(AuditContext.CACHE)
+            .handleWith(this::reinitializeCache)
 
             .create();
    }
@@ -945,6 +951,42 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          }
          return builder.build();
       }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> reinitializeCache(RestRequest request) {
+      boolean force = Boolean.parseBoolean(request.getParameter("force"));
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+      EmbeddedCacheManager ecm = invocationHelper.getProtocolServer().getCacheManager();
+      if (!ecm.isCoordinator()) {
+         builder.status(BAD_REQUEST);
+         builder.entity(Json.make("Node not coordinator, request at " + ecm.getCoordinator()));
+         return CompletableFuture.completedFuture(builder.build());
+      }
+
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(ecm);
+      ClusterTopologyManager ctm = gcr.getClusterTopologyManager();
+      LocalTopologyManager ltm = gcr.getLocalTopologyManager();
+      if (ctm == null || ltm == null) {
+         builder.status(BAD_REQUEST);
+         return CompletableFuture.completedFuture(builder.build());
+      }
+
+      builder.status(NO_CONTENT);
+      String cache = request.variables().get("cacheName");
+      InternalCacheRegistry internalRegistry = gcr.getComponent(InternalCacheRegistry.class);
+      if (ecm.isRunning(cache)) return CompletableFuture.completedFuture(builder.build());
+      if (internalRegistry.isInternalCache(cache)) return CompletableFuture.completedFuture(builder.build());
+
+      return CompletableFuture.supplyAsync(() -> {
+         if (!ctm.useCurrentTopologyAsStable(cache, force))
+            return CompletableFuture.completedFuture(builder.build());
+
+         // We wait for the topology to be installed.
+         return ltm.stableTopologyCompletion(cache)
+             .thenApply(ignore -> builder.build());
+      }, invocationHelper.getExecutor())
+          .thenCompose(Function.identity())
+          .thenApply(Function.identity());
    }
 
    private static class CacheFullDetail implements JsonSerialization {

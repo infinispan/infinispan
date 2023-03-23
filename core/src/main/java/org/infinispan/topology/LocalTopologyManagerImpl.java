@@ -1,9 +1,9 @@
 package org.infinispan.topology;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
@@ -35,6 +36,7 @@ import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -65,16 +67,15 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * The {@code LocalTopologyManager} implementation.
@@ -444,6 +445,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
       List<PersistentUUID> persistentUUIDs = persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers());
       CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
+                                                      cacheTopology.wasTopologyRestoredFromState(),
                                                       currentCH, pendingCH, unionCH, cacheTopology.getPhase(),
                                                       cacheTopology.getActualMembers(), persistentUUIDs);
       boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
@@ -546,6 +548,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             registerPersistentUUID(newCacheTopology);
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
                                                             newCacheTopology.getRebalanceId() - 1,
+                                                            newCacheTopology.wasTopologyRestoredFromState(),
                                                             newCacheTopology.getCurrentCH(), null,
                                                             CacheTopology.Phase.NO_REBALANCE,
                                                             newCacheTopology.getActualMembers(), persistentUUIDManager
@@ -654,7 +657,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       CacheTopologyHandler handler = cacheStatus.getHandler();
       ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
             cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
-      CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
+      CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), cacheTopology.wasTopologyRestoredFromState(),
                                                     cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH,
                                                     cacheTopology.getPhase(),
                                                     cacheTopology.getActualMembers(),
@@ -742,7 +745,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             return;
          }
 
-         if (!lcs.isStableTopologyRestored()) {
+         if (!lcs.isTopologyRestored()) {
             log.debugf("Not changing rebalance for cache '%s' without stable topology", cacheName);
             return;
          }
@@ -808,8 +811,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (!recovered) {
             ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
             PersistenceManager pm;
+
             if (cr != null && (pm = cr.getComponent(PersistenceManager.class)) != null) {
-               return pm.clearAllStores(PersistenceManager.AccessMode.PRIVATE.and(StoreConfiguration::purgeOnStartup));
+               Predicate<StoreConfiguration> predicate = PersistenceManager.AccessMode.PRIVATE;
+
+               // If the cache did not recover completely from state, we force a cleanup.
+               // Otherwise, it only cleans if it was configured.
+               if (!cacheStatus.needRecovery()) {
+                  predicate = predicate.and(StoreConfiguration::purgeOnStartup);
+               }
+               return pm.clearAllStores(predicate);
             }
          }
 
@@ -820,7 +831,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public void assertTopologyStable(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      if (cacheStatus != null && !cacheStatus.isStableTopologyRestored()) {
+      if (cacheStatus != null && !cacheStatus.isTopologyRestored()) {
          List<Address> members;
          if ((members = clusterTopologyManager.currentJoiners(cacheName)) == null) {
             members = cacheStatus.knownMembers();
@@ -935,7 +946,9 @@ class LocalCacheStatus {
    void setStableTopology(CacheTopology stableTopology) {
       this.stableTopology = stableTopology;
       partitionHandlingManager.onTopologyUpdate(currentTopology);
-      if (stableTopology != null) stable.complete(true);
+      if (stableTopology != null) {
+         stable.complete(stableTopology.wasTopologyRestoredFromState());
+      }
    }
 
    List<Address> knownMembers() {
@@ -950,7 +963,7 @@ class LocalCacheStatus {
       return stable;
    }
 
-   boolean isStableTopologyRestored() {
+   boolean isTopologyRestored() {
       return stableMembersSize < 0 || (stable.isDone() && stableTopology != null);
    }
 

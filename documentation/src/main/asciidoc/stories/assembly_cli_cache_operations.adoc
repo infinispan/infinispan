@@ -10,6 +10,7 @@ include::{topics}/proc_cli_adding_entries.adoc[leveloffset=+1]
 include::{topics}/proc_cli_deleting_entries.adoc[leveloffset=+1]
 include::{topics}/proc_cli_dropping_caches.adoc[leveloffset=+1]
 include::{topics}/proc_cli_rebalancing_caches.adoc[leveloffset=+1]
+include::{topics}/proc_cli_set_topology_caches.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

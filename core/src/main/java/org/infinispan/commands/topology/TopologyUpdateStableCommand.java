@@ -32,6 +32,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    private int rebalanceId;
    private int topologyId;
    private int viewId;
+   private boolean topologyRestored;
 
    // For CommandIdUniquenessTest only
    public TopologyUpdateStableCommand() {
@@ -48,11 +49,12 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
       this.viewId = viewId;
+      this.topologyRestored = cacheTopology.wasTopologyRestoredFromState();
    }
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH,
+      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, topologyRestored, currentCH, pendingCH,
             CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
             .handleStableTopologyUpdate(cacheName, topology, origin, viewId);
@@ -80,6 +82,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
       output.writeInt(topologyId);
       output.writeInt(rebalanceId);
       output.writeInt(viewId);
+      output.writeBoolean(topologyRestored);
    }
 
    @Override
@@ -92,6 +95,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
       topologyId = input.readInt();
       rebalanceId = input.readInt();
       viewId = input.readInt();
+      topologyRestored = input.readBoolean();
    }
 
    @Override

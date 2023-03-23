@@ -12,8 +12,15 @@ To prevent inconsistencies or data loss, {brandname} restricts access to the dat
 Additionally, {brandname} disables cluster rebalancing and prevents local cache stores purging on startup.
 
 During the cluster recovery process, the coordinator node logs messages for each new node joining, indicating which nodes are available and which are still missing.
-Other nodes in the {brandname} cluster have the view from the time they join. +
-You can monitor availability of caches using the {brandname} Console or REST API.
+Other nodes in the {brandname} cluster have the view from the time they join. You can monitor availability of caches using the {brandname} Console or REST API.
+
+However, in cases where waiting for all nodes is not necessary nor desired, it is possible to set a cache available with the current topology.
+This approach is possible through the CLI, see below, or the REST API.
+
+[IMPORTANT]
+====
+Manually installing a topology can lead to data loss, only perform this operation if the initial topology cannot be recreated.
+====
 
 [discrete]
 == Server shutdown
