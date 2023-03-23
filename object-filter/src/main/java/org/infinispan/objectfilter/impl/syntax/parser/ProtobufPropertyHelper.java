@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.protostream.SerializationContext;
@@ -32,6 +33,9 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    public static final String VERSION = VersionPropertyPath.VERSION_PROPERTY_NAME;
    public static final int VERSION_FIELD_ATTRIBUTE_ID = 150_000;
    public static final int MIN_METADATA_FIELD_ATTRIBUTE_ID = VERSION_FIELD_ATTRIBUTE_ID;
+
+   public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
+   public static final int VALUE_FIELD_ATTRIBUTE_ID = 150_001;
 
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
@@ -58,8 +62,13 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public List<?> mapPropertyNamePathToFieldIdPath(Descriptor messageDescriptor, String[] propertyPath) {
-      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION)) {
-         return Arrays.asList(VERSION_FIELD_ATTRIBUTE_ID);
+      if (propertyPath.length == 1) {
+         if (propertyPath[0].equals(VERSION)) {
+            return Arrays.asList(VERSION_FIELD_ATTRIBUTE_ID);
+         }
+         if (propertyPath[0].equals(VALUE)) {
+            return Arrays.asList(VALUE_FIELD_ATTRIBUTE_ID);
+         }
       }
 
       List<Integer> translatedPath = new ArrayList<>(propertyPath.length);
@@ -78,8 +87,13 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public Class<?> getPrimitivePropertyType(Descriptor entityType, String[] propertyPath) {
-      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION)) {
-         return Long.class;
+      if (propertyPath.length == 1) {
+         if (propertyPath[0].equals(VERSION)) {
+            return Long.class;
+         }
+         if (propertyPath[0].equals(VALUE)) {
+            return Object.class;
+         }
       }
 
       FieldDescriptor field = getField(entityType, propertyPath);
@@ -139,7 +153,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public boolean hasProperty(Descriptor entityType, String[] propertyPath) {
-      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION) ) {
+      if (propertyPath.length == 1 && (propertyPath[0].equals(VERSION) || propertyPath[0].equals(VALUE))) {
          return true;
       }
 
