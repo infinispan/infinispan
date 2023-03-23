@@ -74,5 +74,15 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
 
       assertThat(list).hasSize(1);
       assertThat(list.get(0)).containsExactly(new NumericVersion(1));
+
+      ickle = String.format(
+            "select d, version(d) from %s d where d.biography : 'Infinispan' order by d.email",
+            Developer.class.getName());
+      query = queryFactory.create(ickle);
+      list = query.execute().list();
+
+      assertThat(list).hasSize(2);
+      assertThat(list.get(0)[0]).isNotNull().isInstanceOf(Developer.class);
+      assertThat(list.get(0)[1]).isEqualTo(new NumericVersion(1));
    }
 }

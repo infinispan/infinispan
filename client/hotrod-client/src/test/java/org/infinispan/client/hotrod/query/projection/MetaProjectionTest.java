@@ -61,6 +61,16 @@ public class MetaProjectionTest extends SingleHotRodServerTest {
             "Infinispan developer", 2000);
       assertThat(list.get(1)).containsExactly("mycodeisopen", 3L, "mycodeisopen@redmail.io",
             "Infinispan engineer", 799);
+
+      query = queryFactory.create(
+            "select d, version(d) from io.dev.Developer d where d.biography : 'Infinispan' order by d.email");
+      list = query.execute().list();
+
+      assertThat(list).hasSize(2);
+      assertThat(list.get(0)[0]).isNotNull().isInstanceOf(Developer.class);
+      assertThat(list.get(0)[1]).isEqualTo(2L);
+      assertThat(list.get(1)[0]).isNotNull().isInstanceOf(Developer.class);
+      assertThat(list.get(1)[1]).isEqualTo(3L);
    }
 
 }
