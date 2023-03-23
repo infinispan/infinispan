@@ -652,4 +652,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
                   .url(cacheUrl + "?action=set-availability&availability=" + availability)
       );
    }
+
+   @Override
+   public CompletionStage<RestResponse> markTopologyStable(boolean force) {
+      return client.execute(
+            new Request.Builder()
+                  .post(EMPTY_BODY)
+                  .url(cacheUrl + "?action=initialize&force=" + force)
+      );
+   }
 }
