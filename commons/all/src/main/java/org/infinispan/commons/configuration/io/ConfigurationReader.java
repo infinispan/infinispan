@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.io.json.JsonConfigurationReader;
@@ -48,17 +49,17 @@ public interface ConfigurationReader extends AutoCloseable {
       }
 
       public Builder withReplacer(PropertyReplacer replacer) {
-         this.replacer = replacer;
+         this.replacer = Objects.requireNonNull(replacer);
          return this;
       }
 
       public Builder withResolver(ConfigurationResourceResolver resolver) {
-         this.resolver = resolver;
+         this.resolver = Objects.requireNonNull(resolver);
          return this;
       }
 
       public Builder withNamingStrategy(NamingStrategy namingStrategy) {
-         this.namingStrategy = namingStrategy;
+         this.namingStrategy = Objects.requireNonNull(namingStrategy);
          return this;
       }
 
@@ -70,13 +71,11 @@ public interface ConfigurationReader extends AutoCloseable {
             return first;
          } catch (IOException e) {
             String name = null;
-            if (resolver != null) {
-               URL context = resolver.getContext();
-               if (context != null) {
-                  name = context.getPath();
-               }
+            URL context = resolver.getContext();
+            if (context != null) {
+               name = context.getPath();
             }
-            throw new ConfigurationReaderException(e, new Location(name, 1,1));
+            throw new ConfigurationReaderException(e, new Location(name, 1, 1));
          }
       }
 
