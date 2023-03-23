@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
@@ -253,4 +254,7 @@ public interface Messages {
 
    @Message("Cannot reset an individual statistic")
    IllegalArgumentException cannotResetIndividualStat();
+
+   @Message("File '%s' does not exist")
+   NoSuchFileException nonExistentFile(org.aesh.io.Resource file);
 }

@@ -104,7 +104,7 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
       String schemaName = checkMandatorySchemaName(request);
 
       ContentSource contents = request.contents();
-      if (contents == null) throw new NoDataFoundException("Schema data not sent in the request");
+      if (contents == null || contents.size() == 0) throw new NoDataFoundException("Schema data not sent in the request");
 
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager()
             .getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME, request);

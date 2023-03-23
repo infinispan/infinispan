@@ -9,4 +9,5 @@ public interface ContentSource {
 
    byte[] rawContent();
 
+   int size();
 }
