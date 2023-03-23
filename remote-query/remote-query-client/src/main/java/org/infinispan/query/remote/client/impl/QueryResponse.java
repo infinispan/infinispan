@@ -59,7 +59,14 @@ public final class QueryResponse implements BaseQueryResponse {
          while (it.hasNext()) {
             Object[] row = new Object[projectionSize];
             for (int i = 0; i < row.length; i++) {
-               row[i] = it.next().getValue();
+               Object value = it.next().getValue();
+               if (value instanceof WrappedMessage) {
+                  Object content = ((WrappedMessage) value).getValue();
+                  if (content instanceof byte[]) {
+                     value = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) content);
+                  }
+               }
+               row[i] = value;
             }
             unwrappedResults.add(row);
          }
