@@ -129,6 +129,16 @@ public interface ConsistentHash {
    }
 
    /**
+    * Same as {@link #remapAddresses(UnaryOperator)} but skip missing members.
+    *
+    * @param remapper: the remapper which given an address replaces it with another one
+    * @return the remapped ConsistentHash
+    */
+   default ConsistentHash remapAddressRemoveMissing(UnaryOperator<Address> remapper) {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
     * The capacity factor of each member. Determines the relative capacity of each node compared to the others.
     * If {@code null}, all the members are assumed to have a capacity factor of 1.
     */

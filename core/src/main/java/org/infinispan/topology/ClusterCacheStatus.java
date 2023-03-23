@@ -83,7 +83,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    // Cache members that have not yet received state. Always included in the members list.
    private volatile List<Address> joiners;
    // Persistent state (if it exists)
-   private Optional<ScopedPersistentState> persistentState;
+   private final Optional<ScopedPersistentState> persistentState;
    // Cache topology. Its consistent hashes contain only members that did receive/are receiving state
    // The members of both consistent hashes must be included in the members list.
    private volatile CacheTopology currentTopology;
@@ -711,16 +711,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (status == ComponentStatus.INSTANTIATED) {
          if (persistentState.isPresent()) {
             if (log.isTraceEnabled()) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
-            // We can only allow this to proceed if we have a complete cluster
-            CacheTopology topology = restoreCacheTopology(persistentState.get());
-            if (topology != null) {
-               // Change our status
-               status = ComponentStatus.RUNNING;
-               CLUSTER.updatingTopology(cacheName, topology, availabilityMode);
-               eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
-                  topology.getMembers(), topology.getTopologyId()));
-               clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode);
-               clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology);
+            if (restoreTopologyFromState()) {
                return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current);
             }
          } else {
@@ -776,14 +767,79 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          extraneousMembers.removeAll(persistedCH.getMembers());
          throw CLUSTER.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
       }
-      CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, persistedCH, null,
+      int topologyId = currentTopology == null ? initialTopologyId : currentTopology.getTopologyId() + 1;
+      CacheTopology initialTopology = new CacheTopology(topologyId, INITIAL_REBALANCE_ID, true, persistedCH, null,
             CacheTopology.Phase.NO_REBALANCE, persistedCH.getMembers(), persistentUUIDManager.mapAddresses(persistedCH.getMembers()));
-      setCurrentTopology(initialTopology);
-      setStableTopology(initialTopology);
+      return cacheTopologyCreated(initialTopology);
+   }
+
+   @GuardedBy("this")
+   private CacheTopology cacheTopologyCreated(CacheTopology topology) {
+      setCurrentTopology(topology);
+      setStableTopology(topology);
       rebalancingEnabled = true;
       availabilityMode = AvailabilityMode.AVAILABLE;
-      return initialTopology;
+      return topology;
    }
+
+   @GuardedBy("this")
+   private boolean restoreTopologyFromState() {
+      assert persistentState.isPresent() : "Persistent state not available";
+      CacheTopology topology = restoreCacheTopology(persistentState.get());
+      if (topology != null) {
+         restoreTopologyFromState(topology);
+         return true;
+      }
+      return false;
+   }
+
+   @GuardedBy("this")
+   private void restoreTopologyFromState(CacheTopology topology) {
+      // Change our status
+      status = ComponentStatus.RUNNING;
+      CLUSTER.updatingTopology(cacheName, topology, availabilityMode);
+      eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheMembersUpdated(
+          topology.getMembers(), topology.getTopologyId()));
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName, topology, availabilityMode);
+      clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, topology);
+   }
+
+   public synchronized boolean setCurrentTopologyAsStable(boolean force) {
+      if (currentTopology != null) return false;
+
+      if (persistentState.isPresent()) {
+         List<Address> members = getExpectedMembers();
+         ConsistentHash pastConsistentHash = joinInfo.getConsistentHashFactory()
+               .fromPersistentState(persistentState.get());
+         int missing = pastConsistentHash.getMembers().size() - members.size();
+         int owners = joinInfo.getNumOwners();
+         if (!force && missing >= owners) {
+            throw log.missingTooManyMembers(cacheName, owners, missing, pastConsistentHash.getMembers().size());
+         }
+
+         boolean safelyRecovered = missing < owners;
+         boolean isReplicated = gcr.getCacheManager().getCacheConfiguration(cacheName).clustering().cacheMode().isReplicated();
+         ConsistentHash ch;
+         if (safelyRecovered && !isReplicated) {
+            // We reuse the previous topology, only changing it to reflect the current members.
+            // This is necessary to keep the same segments mapping as before.
+            // If another node joins, it will trigger rebalance, properly redistributing the segments.
+            ch = pastConsistentHash.remapAddressRemoveMissing(persistentUUIDManager.persistentUUIDToAddress());
+         } else {
+            // We don't have enough members to safely recover the previous topology, so we create a new one, as the
+            // node will clear the storage, so we don't need the same segments mapping.
+            ConsistentHashFactory<ConsistentHash> chf = joinInfo.getConsistentHashFactory();
+            ch = chf.create(joinInfo.getNumOwners(), joinInfo.getNumSegments(), members, getCapacityFactors());
+         }
+         CacheTopology topology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, true, ch, null,
+               CacheTopology.Phase.NO_REBALANCE, members, persistentUUIDManager.mapAddresses(members));
+         restoreTopologyFromState(cacheTopologyCreated(topology));
+         return true;
+      }
+
+      return false;
+   }
+
 
    @GuardedBy("this")
    protected CacheTopology createInitialCacheTopology() {

@@ -30,24 +30,35 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class CacheTopology {
 
-   private static Log log = LogFactory.getLog(CacheTopology.class);
+   private static final Log log = LogFactory.getLog(CacheTopology.class);
 
    private final int topologyId;
    private final int rebalanceId;
+   private final boolean restoredFromState;
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
    private final ConsistentHash unionCH;
    private final Phase phase;
-   private List<Address> actualMembers;
+   private final List<Address> actualMembers;
    // The persistent UUID of each actual member
-   private List<PersistentUUID> persistentUUIDs;
+   private final List<PersistentUUID> persistentUUIDs;
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
                         Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
       this(topologyId, rebalanceId, currentCH, pendingCH, null, phase, actualMembers, persistentUUIDs);
    }
 
+   public CacheTopology(int topologyId, int rebalanceId, boolean restoredTopology, ConsistentHash currentCH, ConsistentHash pendingCH,
+                        Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
+      this(topologyId, rebalanceId, restoredTopology, currentCH, pendingCH, null, phase, actualMembers, persistentUUIDs);
+   }
+
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
+                        ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
+      this(topologyId, rebalanceId, false, currentCH, pendingCH, unionCH, phase, actualMembers, persistentUUIDs);
+   }
+
+   public CacheTopology(int topologyId, int rebalanceId, boolean restoredTopology, ConsistentHash currentCH, ConsistentHash pendingCH,
                         ConsistentHash unionCH, Phase phase, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
@@ -64,6 +75,7 @@ public class CacheTopology {
       this.phase = phase;
       this.actualMembers = actualMembers;
       this.persistentUUIDs = persistentUUIDs;
+      this.restoredFromState = restoredTopology;
    }
 
    public int getTopologyId() {
@@ -123,6 +135,10 @@ public class CacheTopology {
 
    public List<PersistentUUID> getMembersPersistentUUIDs() {
       return persistentUUIDs;
+   }
+
+   public boolean wasTopologyRestoredFromState() {
+      return restoredFromState;
    }
 
    /**
@@ -232,6 +248,7 @@ public class CacheTopology {
       public void doWriteObject(ObjectOutput output, CacheTopology cacheTopology) throws IOException {
          output.writeInt(cacheTopology.topologyId);
          output.writeInt(cacheTopology.rebalanceId);
+         output.writeBoolean(cacheTopology.restoredFromState);
          output.writeObject(cacheTopology.currentCH);
          output.writeObject(cacheTopology.pendingCH);
          output.writeObject(cacheTopology.unionCH);
@@ -244,13 +261,14 @@ public class CacheTopology {
       public CacheTopology doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          int topologyId = unmarshaller.readInt();
          int rebalanceId = unmarshaller.readInt();
+         boolean possibleDataLoss = unmarshaller.readBoolean();
          ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
          List<Address> actualMembers = (List<Address>) unmarshaller.readObject();
          List<PersistentUUID> persistentUUIDs = (List<PersistentUUID>) unmarshaller.readObject();
          Phase phase = MarshallUtil.unmarshallEnum(unmarshaller, Phase::valueOf);
-         return new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, unionCH, phase, actualMembers, persistentUUIDs);
+         return new CacheTopology(topologyId, rebalanceId, possibleDataLoss, currentCH, pendingCH, unionCH, phase, actualMembers, persistentUUIDs);
       }
 
       @Override
