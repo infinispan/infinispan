@@ -108,6 +108,26 @@ a projected attribute.
 SELECT title, publicationYear FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' OR description like '%Data Grid%'
 ----
 
+=== Project cache entry version
+It is possible to project the cache entry version, using the `version` projection function.
+
+[source,sql]
+----
+# return the title, publication year and the cache entry version
+SELECT b.title, b.publicationYear, version(b) FROM org.infinispan.sample.Book b WHERE b.title like '%Data Grid%'
+----
+
+=== Project cache entry value
+It is possible to project the cache entry value together with other projections.
+It can be used for instance to project the cache entry value together with the cache entry version
+in the same `Object[]` returned hit.
+
+[source,sql]
+----
+# return the cache entry value and the cache entry version
+SELECT b, version(b) FROM org.infinispan.sample.Book b WHERE b.title like '%Data Grid%'
+----
+
 [discrete]
 == Sorting
 Ordering the results based on one or more attributes or attribute paths is done with the `ORDER BY` clause. If multiple sorting criteria
