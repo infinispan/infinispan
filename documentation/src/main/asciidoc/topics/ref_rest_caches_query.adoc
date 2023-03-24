@@ -99,6 +99,21 @@ POST  /rest/v2/caches/{cacheName}/search/indexes?action=clear
 
 If the operation successfully completes, the service returns `204 (No Content)`.
 
+[id='rest_v2_query_get_index_schema']
+== Get Indexes Metamodel
+Present the full index schema metamodel of all indexes defined on this cache.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET  /rest/v2/caches/{cacheName}/search/indexes/metamodel
+----
+
+.{brandname} response
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_indexes_metamodel.json[]
+----
+
 [id='rest_v2_search_stats']
 == Retrieving Query and Index Statistics
 
