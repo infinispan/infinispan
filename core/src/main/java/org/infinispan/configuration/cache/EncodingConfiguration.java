@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -32,5 +34,11 @@ public final class EncodingConfiguration extends ConfigurationElement<EncodingCo
 
    public ContentTypeConfiguration valueDataType() {
       return valueDataType;
+   }
+
+   @Override
+   public boolean matches(EncodingConfiguration other) {
+      return Objects.equals(this.keyDataType.mediaType(), other.keyDataType.mediaType()) &&
+            Objects.equals(this.valueDataType.mediaType(), other.valueDataType.mediaType());
    }
 }
