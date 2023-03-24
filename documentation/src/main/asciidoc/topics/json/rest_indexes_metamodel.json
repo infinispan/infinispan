@@ -1,0 +1,114 @@
+[{
+    "entity-name": "org.infinispan.query.test.Book",
+    "java-class": "org.infinispan.query.test.Book",
+    "index-name": "org.infinispan.query.test.Book",
+    "value-fields": {
+        "description": {
+            "multi-valued": false,
+            "multi-valued-in-root": false,
+            "type": "java.lang.String",
+            "projection-type": "java.lang.String",
+            "argument-type": "java.lang.String",
+            "searchable": true,
+            "sortable": false,
+            "projectable": false,
+            "aggregable": false,
+            "analyzer": "standard"
+        },
+        "name": {
+            "multi-valued": false,
+            "multi-valued-in-root": true,
+            "type": "java.lang.String",
+            "projection-type": "java.lang.String",
+            "argument-type": "java.lang.String",
+            "searchable": true,
+            "sortable": false,
+            "projectable": false,
+            "aggregable": false,
+            "analyzer": "standard"
+        },
+        "surname": {
+            "multi-valued": false,
+            "multi-valued-in-root": true,
+            "type": "java.lang.String",
+            "projection-type": "java.lang.String",
+            "argument-type": "java.lang.String",
+            "searchable": true,
+            "sortable": false,
+            "projectable": false,
+            "aggregable": false
+        },
+        "title": {
+            "multi-valued": false,
+            "multi-valued-in-root": false,
+            "type": "java.lang.String",
+            "projection-type": "java.lang.String",
+            "argument-type": "java.lang.String",
+            "searchable": true,
+            "sortable": false,
+            "projectable": false,
+            "aggregable": false
+        }
+    },
+    "object-fields": {
+        "authors": {
+            "multi-valued": true,
+            "multi-valued-in-root": true,
+            "nested": true,
+            "value-fields": {
+                "name": {
+                    "multi-valued": false,
+                    "multi-valued-in-root": true,
+                    "type": "java.lang.String",
+                    "projection-type": "java.lang.String",
+                    "argument-type": "java.lang.String",
+                    "searchable": true,
+                    "sortable": false,
+                    "projectable": false,
+                    "aggregable": false,
+                    "analyzer": "standard"
+                },
+                "surname": {
+                    "multi-valued": false,
+                    "multi-valued-in-root": true,
+                    "type": "java.lang.String",
+                    "projection-type": "java.lang.String",
+                    "argument-type": "java.lang.String",
+                    "searchable": true,
+                    "sortable": false,
+                    "projectable": false,
+                    "aggregable": false
+                }
+            }
+        }
+    }
+}, {
+    "entity-name": "org.infinispan.query.test.Author",
+    "java-class": "org.infinispan.query.test.Author",
+    "index-name": "org.infinispan.query.test.Author",
+    "value-fields": {
+        "surname": {
+            "multi-valued": false,
+            "multi-valued-in-root": false,
+            "type": "java.lang.String",
+            "projection-type": "java.lang.String",
+            "argument-type": "java.lang.String",
+            "searchable": true,
+            "sortable": false,
+            "projectable": false,
+            "aggregable": false
+        },
+        "name": {
+            "multi-valued": false,
+            "multi-valued-in-root": false,
+            "type": "java.lang.String",
+            "projection-type": "java.lang.String",
+            "argument-type": "java.lang.String",
+            "searchable": true,
+            "sortable": false,
+            "projectable": false,
+            "aggregable": false,
+            "analyzer": "standard"
+        }
+    }
+}]
