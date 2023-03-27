@@ -17,6 +17,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.resp.operation.SetOperation;
+import org.infinispan.server.resp.response.SetResponse;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -41,7 +43,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       ignoreLoaderCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
    }
 
-   protected static final BiConsumer<byte[], ByteBufPool> GET_TRICONSUMER = (innerValueBytes, alloc) -> {
+   protected static final BiConsumer<byte[], ByteBufPool> GET_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {
          bytesToResult(innerValueBytes, alloc);
       } else {
@@ -51,6 +53,25 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    protected static final BiConsumer<Object, ByteBufPool> OK_BICONSUMER = (ignore, alloc) ->
          alloc.acquire(OK.length).writeBytes(OK);
+
+   protected static final BiConsumer<SetResponse, ByteBufPool> SET_BICONSUMER = (res, alloc) -> {
+      // The set operation has three return options, with a precedence:
+      //
+      // 1. Previous value or `nil`: when `GET` flag present;
+      // 2. `OK`: when set operation succeeded
+      // 3. `nil`: when set operation failed, e.g., tried using XX or NX.
+      if (res.isReturnValue()) {
+         GET_BICONSUMER.accept(res.value(), alloc);
+         return;
+      }
+
+      if (res.isSuccess()) {
+         OK_BICONSUMER.accept(res, alloc);
+         return;
+      }
+
+      GET_BICONSUMER.accept(null, alloc);
+   };
 
    protected static final BiConsumer<Long, ByteBufPool> LONG_BICONSUMER = Resp3Handler::handleLongResult;
 
@@ -73,11 +94,14 @@ public class Resp3Handler extends Resp3AuthHandler {
             bufferToWrite.writeByte('\r').writeByte('\n');
             break;
          case "SET":
+            if (arguments.size() != 2) {
+               return stageToReturn(SetOperation.performOperation(cache, arguments), ctx, SET_BICONSUMER);
+            }
             return stageToReturn(ignoreLoaderCache.putAsync(arguments.get(0), arguments.get(1)), ctx, OK_BICONSUMER);
          case "GET":
             byte[] keyBytes = arguments.get(0);
 
-            return stageToReturn(cache.getAsync(keyBytes), ctx, GET_TRICONSUMER);
+            return stageToReturn(cache.getAsync(keyBytes), ctx, GET_BICONSUMER);
          case "DEL":
             return performDelete(ctx, cache, arguments);
          case "MGET":
