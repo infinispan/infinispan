@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.test;
 
 import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -88,7 +89,7 @@ public class RespTestingUtil {
 
       static UniquePortThreadLocal INSTANCE = new UniquePortThreadLocal();
 
-      private static final AtomicInteger uniqueAddr = new AtomicInteger(16211);
+      private static final AtomicInteger uniqueAddr = new AtomicInteger(1600 + ThreadLocalRandom.current().nextInt(1024));
 
       @Override
       protected Integer initialValue() {
