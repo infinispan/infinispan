@@ -140,6 +140,18 @@
                   </configuration>
                </execution>
             </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.ow2.asm</groupId>
+                  <artifactId>asm</artifactId>
+                  <version>${version.ow2.asm}</version>
+               </dependency>
+               <dependency>
+                  <groupId>org.ow2.asm</groupId>
+                  <artifactId>asm-commons</artifactId>
+                  <version>${version.ow2.asm}</version>
+               </dependency>
+            </dependencies>
          </plugin>
       </plugins>
    </build>
