@@ -10,10 +10,12 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,8 +23,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
@@ -30,6 +34,8 @@ import org.infinispan.server.resp.test.CommonRespTests;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import io.lettuce.core.SetArgs;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -84,6 +90,99 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       log.debug("Test finished, close resp server");
       killClient(client);
       killServer(server);
+   }
+
+   public void testSetMultipleOptions() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Should return (nil), failed since value does not exist
+      SetArgs args = SetArgs.Builder.xx();
+      assertNull(redis.set("key", "value", args));
+
+      // Should return OK, because value does not exist.
+      args = SetArgs.Builder.nx();
+      assertEquals("OK", redis.set("key", "value", args));
+      assertEquals("value", redis.get("key"));
+
+      // Should return (nil), because value exists.
+      assertNull(redis.set("key", "value3", args));
+      assertEquals("value", redis.get("key"));
+
+      // Should return OK, value exists
+      args = SetArgs.Builder.xx();
+      assertEquals("OK", redis.set("key", "value2", args));
+      assertEquals("value2", redis.get("key"));
+
+      // Should insert with TTL. This one returns the value.
+      args = SetArgs.Builder.ex(60);
+      assertEquals("value2", redis.setGet("key", "value3", args));
+
+      CacheEntry<Object, Object> entry = cache.getAdvancedCache()
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
+            .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
+      assertEquals("value3", new String((byte[]) entry.getValue()));
+      assertEquals(60_000, entry.getLifespan());
+
+      // Making sure we won't go that fast.
+      Thread.sleep(50);
+
+      // We insert while keeping the TTL.
+      args = SetArgs.Builder.keepttl();
+      assertEquals("OK", redis.set("key", "value4", args));
+      entry = cache.getAdvancedCache()
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
+            .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
+      assertEquals("value4", new String((byte[]) entry.getValue()));
+      assertTrue(entry.getLifespan() < 60_000);
+
+      // Conditional operation keeping TTL.
+      args = SetArgs.Builder.keepttl().xx();
+      assertEquals("OK", redis.set("key", "value5", args));
+      entry = cache.getAdvancedCache()
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
+            .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
+      assertEquals("value5", new String((byte[]) entry.getValue()));
+      assertTrue(entry.getLifespan() < 60_000);
+
+      // Key exist and keeping TTL, but conditional failing. Should return nil.
+      args = SetArgs.Builder.keepttl().nx();
+      String res = redis.set("key", "value5", args);
+      assertNull("Should be null: " + res, res);
+
+      // No NPE when keeping TTL, key not exists, and conditional succeed.
+      args = SetArgs.Builder.keepttl().nx();
+      assertEquals("OK", redis.set("randomKey", "value", args));
+
+      // No NPE when keeping TTL and key doesn't exist.
+      args = SetArgs.Builder.keepttl();
+      assertEquals("OK", redis.set("otherKey", "value", args));
+
+      redis.del("key", "randomKey", "otherKey");
+   }
+
+   public void testConditionalSetOperationWithReturn() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = UUID.randomUUID().toString();
+
+      // Should return (nil), failed since value does not exist.
+      SetArgs args = SetArgs.Builder.xx();
+      assertNull(redis.setGet(key, "something", args));
+      assertNull(redis.get(key));
+
+      // Should return (nil), because value does not exist, but operation succeeded.
+      args = SetArgs.Builder.nx();
+      String res = redis.setGet(key, "value", args);
+      assertNull("Should be null: " + res, res);
+      assertEquals("value", redis.get(key));
+
+      // Should return the previous because value exists but operation failed.
+      assertEquals("value", redis.setGet(key, "value2", args));
+      assertEquals("value", redis.get(key));
+
+      // Should return previous value but succeeded.
+      args = SetArgs.Builder.xx();
+      assertEquals("value", redis.setGet(key, "value2", args));
+      assertEquals("value2", redis.get(key));
    }
 
    public void testSetMGet() {
