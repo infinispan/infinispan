@@ -11,21 +11,23 @@
 
    <artifactId>infinispan-commons-parent</artifactId>
    <name>Infinispan Commons parent</name>
+  
    <packaging>pom</packaging>
 
    <modules>
+      <module>spi</module>
       <module>all</module>
       <module>all-jakarta</module>
    </modules>
 
    <profiles>
       <profile>
-         <id>jdk19</id>
+         <id>jdk21</id>
          <activation>
-            <jdk>[19,)</jdk>
+            <jdk>21</jdk>
          </activation>
          <modules>
-            <module>jdk19</module>
+            <module>jdk21</module>
          </modules>
       </profile>
    </profiles>
