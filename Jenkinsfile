@@ -6,7 +6,7 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'TEST_JDK', choices: ['Default', 'JDK 11', 'JDK 17', 'JDK 20'], description: 'The JDK used to run tests')
+        choice(name: 'TEST_JDK', choices: ['Default', 'JDK 17', 'JDK 20', 'JDK 21'], description: 'The JDK used to run tests')
     }
 
     options {
@@ -23,7 +23,8 @@ pipeline {
                     echo env.NODE_NAME
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
-                    env.JAVA_HOME = tool('JDK 17')
+                    env.JAVA_HOME = tool('JDK 21')
+                    env.GRAALVM_HOME = tool('GraalVM 20')
                     if (params.TEST_JDK != 'Default') {
                         env.JAVA_ALT_HOME = tool(params.TEST_JDK)
                         env.ALT_TEST_BUILD = "-Pjava-alt-test"

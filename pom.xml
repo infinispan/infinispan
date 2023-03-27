@@ -216,7 +216,7 @@
          --add-modules=java.se
       </testjvm.jigsawArgs>
       <testjvm.blockHoundRedefinitionArgs/>
-      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} ${testjvm.blockHoundRedefinitionArgs}</testjvm.jdkSpecificArgs>
+      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>

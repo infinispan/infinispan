@@ -8,28 +8,28 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-commons-jdk19</artifactId>
+   <artifactId>infinispan-commons-jdk21</artifactId>
    <packaging>jar</packaging>
-   <name>Infinispan Commons JDK 19</name>
-   <description>Infinispan Commons JDK 19</description>
+   <name>Infinispan Commons JDK 21</name>
+   <description>Infinispan Commons JDK 21</description>
 
    <properties>
-      <maven.compiler.source>19</maven.compiler.source>
-      <maven.compiler.target>19</maven.compiler.target>
-      <maven.compiler.release>19</maven.compiler.release>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
+      <maven.compiler.release>21</maven.compiler.release>
    </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-spi</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+   </dependencies>
 
    <build>
       <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-               <!-- Forking is necessary to allow for the compiler args to be picked up. -->
-               <fork combine.children="append">true</fork>
-               <compilerArgument>--enable-preview</compilerArgument>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
