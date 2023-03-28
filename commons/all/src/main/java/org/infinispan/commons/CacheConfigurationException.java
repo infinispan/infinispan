@@ -22,7 +22,7 @@ public class CacheConfigurationException extends CacheException {
    private static final Log log = LogFactory.getLog(CacheConfigurationException.class);
 
    public CacheConfigurationException(Exception e) {
-      super(e);
+      super(e.getMessage(), e);
    }
 
    public CacheConfigurationException(String string) {

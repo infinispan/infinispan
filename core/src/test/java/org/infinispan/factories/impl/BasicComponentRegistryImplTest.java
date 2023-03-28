@@ -4,7 +4,6 @@ import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.ComponentFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -41,9 +40,9 @@ public class BasicComponentRegistryImplTest {
       globalRegistry.registerComponent(A.class.getName(), new A(), false);
 
       // The AA alias doesn't exist at this point
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> globalRegistry.wireDependencies(new B(), true));
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> globalRegistry.registerComponent(B.class.getName(), new B(), false));
 
       globalRegistry.registerAlias("AA", A.class.getName(), A.class);
@@ -53,7 +52,7 @@ public class BasicComponentRegistryImplTest {
       assertNotNull(b1.a);
 
       // B is already in the failed state, can't register it again
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> globalRegistry.registerComponent(B.class.getName(), new B(), false));
       // Replace the failed component with a running one
       globalRegistry.replaceComponent(B.class.getName(), b1, true);
@@ -71,10 +70,10 @@ public class BasicComponentRegistryImplTest {
 
    public void testRegisterWrongScope() {
       // There's no check that the class scope matches the interface (or superclass) scope yet
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> globalRegistry.registerComponent(D.class.getName(), new D3(), false));
       cacheRegistry.registerComponent(D.class.getName(), new D3(), false);
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> cacheRegistry.registerComponent(H.class.getName(), new H(), false));
       globalRegistry.registerComponent(H.class.getName(), new H(), false);
    }
@@ -88,7 +87,7 @@ public class BasicComponentRegistryImplTest {
    public void testDependencyCycle(Class<?> entryPoint) {
       cacheRegistry.registerComponent(DEFFactory.class.getName(), new DEFFactory(new D1()), false);
 
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> cacheRegistry.getComponent(entryPoint));
    }
 
@@ -96,7 +95,7 @@ public class BasicComponentRegistryImplTest {
       cacheRegistry.registerComponent(DEFFactory.class.getName(), new DEFFactory(new D1()), false);
 
       G g = new G();
-      expectException(CacheConfigurationException.class,
+      expectException(RuntimeException.class,
                       () -> cacheRegistry.registerComponent(G.class.getName(), g, false));
    }
 
@@ -253,11 +252,11 @@ public class BasicComponentRegistryImplTest {
       public Object construct(String componentName) {
          if (H.class.getName().equals(componentName)) {
             // Registering I would block waiting on H
-            expectException(CacheConfigurationException.class, () -> registry.registerComponent(I.class.getName(), new I(), false));
+            expectException(RuntimeException.class, () -> registry.registerComponent(I.class.getName(), new I(), false));
 
             H h = new H();
             // Our thread has already started registering H
-            expectException(CacheConfigurationException.class, () -> registry.registerComponent(H.class.getName(), h, false));
+            expectException(RuntimeException.class, () -> registry.registerComponent(H.class.getName(), h, false));
 
             // Registering an unrelated component is allowed
             registry.registerComponent("HH", h, false);

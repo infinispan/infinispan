@@ -66,8 +66,8 @@ public class ExtendedParserTest extends AbstractInfinispanTest {
       return parserRegistry.parse(config);
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: WRONG SCOPE")
-   public void testExtendedParserWrongScope() throws IOException {
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "WRONG SCOPE")
+   public void testExtendedParserWrongScope() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
             "   <local-cache name=\"extra-module\">\n" +

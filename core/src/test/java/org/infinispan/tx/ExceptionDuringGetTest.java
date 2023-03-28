@@ -28,7 +28,7 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
       assert cache(1).get("k").equals("v");
    }
 
-   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "java.lang.RuntimeException: Induced!")
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "Induced!")
    public void testExceptionDuringGet() {
       advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(new ExceptionInterceptor(), PessimisticLockingInterceptor.class);
       cache(0).get("k");

@@ -136,7 +136,7 @@ public final class Util {
       try {
          return loadClassStrict(classname, cl);
       } catch (ClassNotFoundException e) {
-         throw new CacheConfigurationException("Unable to instantiate '" + classname + "'", e);
+         throw Log.CONTAINER.cannotInstantiateClass(classname, e);
       }
    }
 
@@ -1121,13 +1121,14 @@ public final class Util {
    public static String unwrapExceptionMessage(Throwable t) {
       // Avoid duplicate messages
       LinkedHashSet<String> messages = new LinkedHashSet<>();
-      if (t.getMessage() != null) {
-         messages.add(t.getMessage());
+      String rootMessage = t.getMessage();
+      if (rootMessage != null) {
+         messages.add(rootMessage);
       }
       for(Throwable suppressed : t.getSuppressed()) {
          messages.add(suppressed.getMessage());
       }
-      return String.join("\n", messages);
+      return String.join("\n    ", messages);
    }
 
    /**

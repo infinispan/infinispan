@@ -13,7 +13,7 @@ public class ConfigurationReaderException extends RuntimeException {
    }
 
    public ConfigurationReaderException(Throwable t, Location location) {
-      super(t);
+      super(t.getMessage(), t);
       this.location = location;
    }
 
