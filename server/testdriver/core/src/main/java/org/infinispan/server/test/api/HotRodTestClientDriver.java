@@ -2,6 +2,7 @@ package org.infinispan.server.test.api;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -38,6 +39,17 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     */
    public HotRodTestClientDriver withClientConfiguration(ConfigurationBuilder clientConfiguration) {
       this.clientConfiguration = applyDefaultConfiguration(clientConfiguration);
+      return this;
+   }
+
+   /**
+    * Provide the Client Intelligence override
+    *
+    * @param clientIntelligence
+    * @return the current {@link HotRodTestClientDriver} instance with the client intelligence override
+    */
+   public HotRodTestClientDriver withClientConfiguration(ClientIntelligence clientIntelligence) {
+      clientConfiguration.clientIntelligence(clientIntelligence);
       return this;
    }
 
