@@ -12,6 +12,7 @@ import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +56,9 @@ public class ClusterResource implements ResourceHandler {
             .invocation().methods(POST).path("/v2/cluster").withAction("stop")
                .permission(AuthorizationPermission.LIFECYCLE).name("CLUSTER STOP").auditContext(AuditContext.SERVER)
                .handleWith(this::stop)
+            .invocation().method(POST).path("/v2/cluster").withAction("start")
+               .permission(AuthorizationPermission.LIFECYCLE).name("CLUSTER START").auditContext(AuditContext.SERVER)
+               .handleWith(this::start)
             .invocation().method(GET).path("/v2/cluster").withAction("distribution")
                .permission(AuthorizationPermission.MONITOR).name("CLUSTER DISTRIBUTION").auditContext(AuditContext.SERVER)
                .handleWith(this::distribution)
@@ -81,6 +85,28 @@ public class ClusterResource implements ResourceHandler {
             Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStop(servers));
          } else {
             Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().clusterStop());
+         }
+         return new NettyRestResponse.Builder().status(NO_CONTENT).build();
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> start(RestRequest restRequest) {
+      return CompletableFuture.supplyAsync(() -> {
+         List<String> servers = restRequest.parameters().get("server");
+         String username = restRequest.getParameter("user");
+
+         if (servers != null && !servers.isEmpty()) {
+            Map<String, String> serverAndArguments = new HashMap<>();
+            for (String server : servers) {
+               serverAndArguments.put(server, "");
+            }
+            restRequest.parameters().forEach((k, v) -> {
+               if (k.startsWith("param.")) {
+                  String server = k.substring(6);
+                  serverAndArguments.put(server, String.join(" ", v));
+               }
+            });
+            Security.doAs(restRequest.getSubject(), () -> invocationHelper.getServer().serverStart(username, serverAndArguments));
          }
          return new NettyRestResponse.Builder().status(NO_CONTENT).build();
       }, invocationHelper.getExecutor());

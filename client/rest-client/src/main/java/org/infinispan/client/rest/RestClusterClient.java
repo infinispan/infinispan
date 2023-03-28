@@ -2,6 +2,7 @@ package org.infinispan.client.rest;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -18,6 +19,8 @@ public interface RestClusterClient {
     * Shuts down the specified servers
     */
    CompletionStage<RestResponse> stop(List<String> server);
+
+   CompletionStage<RestResponse> start(String username, Map<String, String> serverAndArguments);
 
    /**
     * Creates a backup file containing the content of all containers in the cluster.

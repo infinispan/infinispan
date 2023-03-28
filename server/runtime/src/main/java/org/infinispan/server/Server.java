@@ -9,11 +9,13 @@ import java.io.ObjectOutput;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +26,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
 import javax.naming.InitialContext;
 import javax.naming.spi.NamingManager;
 import javax.net.ssl.SSLContext;
@@ -546,6 +547,45 @@ public class Server implements ServerManagement, AutoCloseable {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
       cacheManager.getCacheNames().forEach(name -> SecurityActions.shutdownAllCaches(cacheManager));
       sendExitStatusToServers(SecurityActions.getClusterExecutor(cacheManager), ExitStatus.CLUSTER_SHUTDOWN);
+   }
+
+   @Override
+   public void serverStart(String username, Map<String, String> serverAndArguments) {
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
+      SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.LIFECYCLE);
+      String user = username;
+      if (user == null)
+         user = Optional.ofNullable(Security.getSubjectUserPrincipal(Security.getSubject()))
+             .map(Principal::getName).orElse(null);
+      String startScript = "bin/start.sh";
+
+      StringBuilder command = new StringBuilder();
+      serverAndArguments.forEach((server, args) -> {
+         command.append(" --server=").append(server);
+         if (!args.isEmpty()) command.append(" ").append(args);
+      });
+
+      if (user != null) command.append(" --user=").append(user);
+
+      ProcessBuilder builder = new ProcessBuilder();
+      builder.command("sh", "-c", String.format("%s %s", startScript, command));
+      try {
+         Process process = builder.start();
+         if (!process.waitFor(1, TimeUnit.MINUTES))
+            throw new IllegalStateException("Timed out waiting for server start");
+
+         if (process.exitValue() != 0) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String error = String.format("Start servers failed. Exit code: '%d' Message: %s",
+                process.exitValue(), reader.lines().collect(Collectors.joining("\n")));
+            throw new IllegalStateException(error);
+         }
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new RuntimeException(e);
+      }
    }
 
    @Override

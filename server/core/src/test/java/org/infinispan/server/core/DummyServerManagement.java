@@ -38,6 +38,9 @@ public class DummyServerManagement implements ServerManagement {
    }
 
    @Override
+   public void serverStart(String username, Map<String, String> serverAndArguments) { }
+
+   @Override
    public void containerStop() {
    }
 

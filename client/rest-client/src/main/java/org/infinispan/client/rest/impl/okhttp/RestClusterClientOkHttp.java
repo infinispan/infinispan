@@ -1,20 +1,22 @@
 package org.infinispan.client.rest.impl.okhttp;
 
-import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
-
 import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import okhttp3.MultipartBody;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 
-import okhttp3.MultipartBody;
-import okhttp3.Request;
-import okhttp3.RequestBody;
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -43,6 +45,29 @@ public class RestClusterClientOkHttp implements RestClusterClient {
          sb.append("&server=");
          sb.append(server);
       }
+      builder.post(EMPTY_BODY).url(sb.toString());
+      return client.execute(builder);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> start(String username, Map<String, String> serverAndArguments) {
+      Request.Builder builder = new Request.Builder();
+      StringBuilder sb = new StringBuilder(baseClusterURL);
+      sb.append("?action=start");
+      if (username != null) {
+         sb.append("&user=");
+         sb.append(username);
+      }
+      serverAndArguments.forEach((server, arguments) -> {
+         sb.append("&server=");
+         sb.append(server);
+         if (!arguments.isEmpty()) {
+            sb.append("&param.");
+            sb.append(server);
+            sb.append("=");
+            sb.append(URLEncoder.encode(arguments, StandardCharsets.UTF_8));
+         }
+      });
       builder.post(EMPTY_BODY).url(sb.toString());
       return client.execute(builder);
    }

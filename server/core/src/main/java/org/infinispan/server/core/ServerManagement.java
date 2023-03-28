@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
-
 import javax.sql.DataSource;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
@@ -26,6 +25,8 @@ public interface ServerManagement {
    void serverStop(List<String> servers);
 
    void clusterStop();
+
+   void serverStart(String username, Map<String, String> serverAndArguments);
 
    void containerStop();
 
