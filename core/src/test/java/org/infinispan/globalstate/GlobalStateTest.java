@@ -85,7 +85,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
       try {
          cm1.start();
-         expectException(EmbeddedCacheManagerStartupException.class, "org.infinispan.commons.CacheConfigurationException: ISPN000512: Cannot acquire lock.*", () -> cm2.start());
+         expectException(EmbeddedCacheManagerStartupException.class, "ISPN000512: Cannot acquire lock.*", cm2::start);
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
@@ -109,7 +109,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          w.close();
          global1 = statefulGlobalBuilder(state1, false);
          EmbeddedCacheManager newCm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
-         expectException(EmbeddedCacheManagerStartupException.class, "org.infinispan.commons.CacheConfigurationException: ISPN000516: The state file for '___global' is invalid.*", () -> newCm1.start());
+         expectException(EmbeddedCacheManagerStartupException.class, "ISPN000516: The state file for '___global' is invalid.*", newCm1::start);
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
@@ -144,8 +144,8 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          global2 = statefulGlobalBuilder(state2, false);
          EmbeddedCacheManager newCm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
          expectException(EmbeddedCacheManagerStartupException.class,
-                         "(?s)org.infinispan.commons.CacheConfigurationException: ISPN000500: Cannot create clustered configuration for cache.*",
-                         () -> newCm2.start());
+                         "(?s)ISPN000500: Cannot create clustered configuration for cache.*",
+               newCm2::start);
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
