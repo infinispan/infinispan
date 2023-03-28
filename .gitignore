@@ -43,3 +43,4 @@ classes
 # Tests Spring Boot Starter
 spring/spring-boot-3/tests/___global.state
 spring/spring-boot-3/tests/org.infinispan.COUNTER.dat
+.idea

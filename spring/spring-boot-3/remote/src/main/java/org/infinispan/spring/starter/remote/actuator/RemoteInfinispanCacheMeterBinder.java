@@ -1,11 +1,11 @@
 package org.infinispan.spring.starter.remote.actuator;
 
-import org.infinispan.client.hotrod.RemoteCache;
-
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import org.infinispan.client.hotrod.RemoteCache;
+
 
 /**
  * Implements {@link CacheMeterBinder} to expose Infinispan remote metrics
@@ -24,13 +24,7 @@ public class RemoteInfinispanCacheMeterBinder extends CacheMeterBinder {
 
    @Override
    protected Long size() {
-      if (cache == null) return 0L;
-
-      /**
-       * TODO implement this. Which is the equivalent to
-       * {@code cache.getAdvancedCache().getStats().getTotalNumberOfEntries();}
-       */
-      return Long.valueOf(cache.size());
+      return null;
    }
 
    @Override
