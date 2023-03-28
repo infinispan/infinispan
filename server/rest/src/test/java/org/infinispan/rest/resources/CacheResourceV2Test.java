@@ -654,7 +654,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             "</infinispan>";
 
       CompletionStage<RestResponse> response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
-      assertThat(response).isBadRequest().hasReturnedText("Unable to instantiate 'Dummy'");
+      assertThat(response).isBadRequest().containsReturnedText("Cannot instantiate class 'Dummy'");
 
       response = client.cache("CACHE").exists();
       assertThat(response).isOk();
@@ -668,6 +668,30 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       response = client.cache("CACHE").exists();
       assertThat(response).isNotFound();
+
+      invalidConfig = "<distributed-cache>\n" +
+            "   <encoding>\n" +
+            "      <key media-type=\"application/x-protostream\"/>\n" +
+            "      <value media-type=\"application/x-protostream\"/>\n" +
+            "   </encoding\n" +
+            "</distributed-cache>\n";
+      response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
+      assertThat(response).isBadRequest().hasReturnedText("expected > to finish end tag not < from line 2 (position: TEXT seen ...<value media-type=\"application/x-protostream\"/>\\n   </encoding\\n<... @6:2) ");
+
+      response = client.cache("CACHE").exists();
+      assertThat(response).isNotFound();
+
+      invalidConfig = "<distributed-cache>\n" +
+            "   <encoding>\n" +
+            "      <key media-type=\"application/x-protostream\"/>\n" +
+            "      <value media-type=\"application/x-protostrea\"/>\n" +
+            "   </encoding>\n" +
+            "</distributed-cache>";
+      response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
+      assertThat(response).isBadRequest().hasReturnedText("ISPN000492: Cannot find transcoder between 'application/x-java-object' to 'application/x-protostrea'");
+
+      response = client.cache("CACHE").delete();
+      assertThat(response).isOk();
    }
 
    private RestCacheClient createCache(ConfigurationBuilder builder, String name) {
@@ -1577,8 +1601,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
       assertThat(response).isConflicted();
       assertEquals("ISPN000963: Invalid configuration in 'local-cache'\n" +
-                  "ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
-                  "ISPN000961: Incompatible attribute 'local-cache.encoding.value.media-type' existing value='text/plain', new value='application/x-protostream'",
+                  "    ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
+                  "    ISPN000961: Incompatible attribute 'local-cache.encoding.value.media-type' existing value='text/plain', new value='application/x-protostream'",
             join(response).getBody());
    }
 

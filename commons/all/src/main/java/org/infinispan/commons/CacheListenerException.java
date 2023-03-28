@@ -12,7 +12,7 @@ public class CacheListenerException extends CacheException {
    }
 
    public CacheListenerException(Throwable cause) {
-      super(cause);
+      super(cause.getMessage(), cause);
    }
 
    public CacheListenerException(String msg) {

@@ -24,7 +24,7 @@ public class CacheException extends RuntimeException {
    }
 
    public CacheException(Throwable cause) {
-      super(cause);
+      super(cause.getMessage(), cause);
    }
 
    public CacheException(String msg) {

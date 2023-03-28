@@ -21,6 +21,6 @@ public class IllegalLifecycleStateException extends CacheException {
    }
 
    public IllegalLifecycleStateException(Throwable cause) {
-      super(cause);
+      super(cause.getMessage(), cause);
    }
 }

@@ -12,7 +12,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.ComponentFactory;
@@ -188,7 +187,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       try {
          instance = factory.construct(name);
       } catch (Throwable t) {
-         throw new CacheConfigurationException(
+         throw new RuntimeException(
                "Failed to construct component " + name + ", path " + peekMutatorPath(), t);
       }
 
@@ -225,7 +224,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          String aliasTargetName = alias.getComponentName();
          ComponentRef<Object> targetRef = getComponent(aliasTargetName, Object.class);
          if (targetRef == null) {
-            throw new CacheConfigurationException(
+            throw new RuntimeException(
                "Alias " + wrapper.name + " target component is missing: " + aliasTargetName);
          }
          targetRef.wired();
@@ -339,22 +338,22 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          if (superComponentClassName != null) {
             ComponentAccessor<Object> superAccessor = moduleRepository.getComponentAccessor(superComponentClassName);
             if (superAccessor == null) {
-               throw new CacheConfigurationException("Component metadata not found for super class " +
+               throw new RuntimeException("Component metadata not found for super class " +
                                                      superComponentClassName);
             }
             invokeInjection(target, superAccessor, startDependencies);
          }
-      } catch (IllegalLifecycleStateException | CacheConfigurationException e) {
+      } catch (RuntimeException e) {
          throw e;
       } catch (Exception e) {
-         throw new CacheConfigurationException(
+         throw new RuntimeException(
             "Unable to inject dependencies for component class " + target.getClass().getName() + ", path " +
             peekMutatorPath(), e);
       }
    }
 
    <T> T throwDependencyNotFound(String componentName) {
-      throw new CacheConfigurationException(
+      throw new RuntimeException(
          "Unable to construct dependency " + componentName + " in scope " + scope + " for " +
          peekMutatorPath());
    }
@@ -366,7 +365,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       // Try to register the wrapper, but it may have been created as a lazy dependency of another component already
       ComponentWrapper wrapper = registerWrapper(componentName, manageLifecycle);
       if (!prepareWrapperChange(wrapper, WrapperState.EMPTY, WrapperState.INSTANTIATING)) {
-         throw new CacheConfigurationException("Component " + componentName + " is already registered");
+         throw new RuntimeException("Component " + componentName + " is already registered");
       }
 
       commitWrapperInstanceChange(wrapper, instance, accessor, WrapperState.INSTANTIATING, WrapperState.INSTANTIATED);
@@ -380,7 +379,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       String className = componentClass.getName();
       if (accessor != null && !accessor.getScopeOrdinal().equals(Scopes.NONE.ordinal()) &&
           !accessor.getScopeOrdinal().equals(scope.ordinal())) {
-         throw new CacheConfigurationException(
+         throw new RuntimeException(
             "Wrong registration scope " + scope + " for component class " + className);
       }
 
@@ -457,7 +456,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
          if (newWrapper != null) {
             commitWrapperStateChange(newWrapper, WrapperState.INSTANTIATING, WrapperState.FAILED);
          }
-         throw new CacheConfigurationException("Unable to start replacement component " + newInstance, t);
+         throw new RuntimeException("Unable to start replacement component " + newInstance, t);
       } finally {
          lock.unlock();
       }
@@ -478,7 +477,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
                String aliasTargetName = alias.getComponentName();
                ComponentRef<Object> targetRef = getComponent(aliasTargetName, Object.class);
                if (targetRef == null) {
-                  throw new CacheConfigurationException(
+                  throw new RuntimeException(
                         "Alias " + wrapper.name + " target component is missing: " + aliasTargetName);
                }
                targetRef.wired();
@@ -712,7 +711,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       try {
          String name = wrapper.name;
          if (wrapper.state == WrapperState.EMPTY) {
-            throw new CacheConfigurationException(
+            throw new RuntimeException(
                   "Component " + name + " is missing a strong (non-ComponentRef) reference: waiting to become " +
                   expectedState + " but it has not been instantiated yet");
          }
@@ -720,7 +719,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
             ComponentPath currentComponentPath = peekMutatorPath();
             if (currentComponentPath != null && currentComponentPath.contains(name)) {
                String className = wrapper.instance != null ? wrapper.instance.getClass().getName() : null;
-               throw new CacheConfigurationException(
+               throw new RuntimeException(
                   "Dependency cycle detected, please use ComponentRef<T> to break the cycle in path " +
                   new ComponentPath(name, className, peekMutatorPath()));
             }
