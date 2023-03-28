@@ -128,9 +128,9 @@ parameter.
 ----
 POST /rest/v2/caches?action=compare
 ----
-+
+
 TIP: Add the `ignoreMutable=true` parameter to ignore mutable attributes in the comparison.
-+
+
 {brandname} responds with `204 (No Content)` in case the configurations are equal, and `409 (Conflict)` in case they are different.
 
 [id='rest_v2_cache_detail']
