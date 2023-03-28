@@ -19,6 +19,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Suppressed;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
@@ -288,6 +289,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
    CounterException invalidCounterTypeEncoded();
+
+   @Message(value = "Cannot instantiate class '%s'")
+   CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 
    //----- counters exceptions // don't use the same id range  ------
 }
