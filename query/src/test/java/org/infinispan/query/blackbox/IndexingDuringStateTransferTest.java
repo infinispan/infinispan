@@ -26,7 +26,6 @@ import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -61,8 +60,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(AnotherGrassEater.class);
       builder.clustering().hash().numSegments(1).numOwners(2).consistentHashFactory(chf);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
    }

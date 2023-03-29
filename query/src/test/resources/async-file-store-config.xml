@@ -22,8 +22,6 @@
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
                <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
             </indexed-entities>
-            <!-- Enable error safety net -->
-            <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
          </indexing>
       </local-cache>
    </cache-container>

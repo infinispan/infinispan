@@ -21,8 +21,6 @@
             <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
-            <!-- Enable error safety net -->
-            <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
          <state-transfer timeout="480000" enabled="true" />

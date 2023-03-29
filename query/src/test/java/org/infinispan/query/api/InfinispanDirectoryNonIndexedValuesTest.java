@@ -4,8 +4,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -24,8 +22,7 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class)
-            .addIndexedEntity(AnotherTestEntity.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(AnotherTestEntity.class);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, c);
    }
 

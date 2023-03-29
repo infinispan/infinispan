@@ -4,8 +4,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
@@ -29,8 +27,7 @@ public class ClusteredPessimisticLockingCacheTest extends ClusteredCacheTest {
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
       enhanceConfig(cacheCfg);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cache1 = cache(0);

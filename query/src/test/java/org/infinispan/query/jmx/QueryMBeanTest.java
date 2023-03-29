@@ -23,8 +23,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -59,8 +57,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       builder.statistics().enable();
       builder.indexing().storage(IndexStorage.LOCAL_HEAP)
             .enable()
-            .addIndexedEntities(Person.class, AnotherGrassEater.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntities(Person.class, AnotherGrassEater.class);
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, builder);
       cm.defineConfiguration(CACHE_NAME, builder.build());

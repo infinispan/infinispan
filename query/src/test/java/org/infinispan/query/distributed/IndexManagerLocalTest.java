@@ -10,7 +10,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -35,8 +34,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .indexing()
             .enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(Person.class);
 
       if (transactionsEnabled()) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);

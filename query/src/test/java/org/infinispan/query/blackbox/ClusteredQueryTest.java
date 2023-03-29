@@ -27,7 +27,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.IndexAccessor;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -74,8 +73,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .clustering().hash().numOwners(numOwners())
             .indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(Person.class);
       if (storageType != null) {
          cacheCfg.memory()
                .storageType(storageType);
