@@ -24,6 +24,7 @@ import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
 import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
 import org.hibernate.search.util.common.logging.impl.LoggerFactory;
+import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.log.impl.Log;
@@ -51,6 +52,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    private final EntityConverter entityConverter;
    private final SearchSession mappingSession;
    private final SearchIndexer searchIndexer;
+   private final FailureCounter failureCounter;
 
    private final Set<String> allIndexedEntityNames;
    private final Set<Class<?>> allIndexedEntityJavaClasses;
@@ -60,7 +62,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    InfinispanMapping(PojoMappingDelegate mappingDelegate, InfinispanTypeContextContainer typeContextContainer,
                      PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
-                     BlockingManager blockingManager) {
+                     BlockingManager blockingManager, FailureCounter failureCounter) {
       super(mappingDelegate);
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
@@ -68,6 +70,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.mappingSession = new InfinispanSearchSession(this, entityLoader, typeContextContainer);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
             blockingManager);
+      this.failureCounter = failureCounter;
       this.allIndexedEntityNames = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::name).collect(Collectors.toSet());
       this.allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
@@ -151,6 +154,16 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       return allIndexedEntities().stream()
             .map(indexedEntity -> new IndexMetamodel(indexedEntity))
             .collect(Collectors.toMap(IndexMetamodel::getEntityName, Function.identity()));
+   }
+
+   @Override
+   public int genericIndexingFailures() {
+      return failureCounter.genericFailures();
+   }
+
+   @Override
+   public int entityIndexingFailures() {
+      return failureCounter.entityFailures();
    }
 
    @Override

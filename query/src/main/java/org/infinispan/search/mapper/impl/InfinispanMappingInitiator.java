@@ -9,6 +9,7 @@ import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoMapperDelegate;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoTypeMetadataContributor;
 import org.hibernate.search.mapper.pojo.mapping.spi.AbstractPojoMappingInitiator;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
+import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.MappingConfigurationContext;
 import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
@@ -21,19 +22,21 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
 
    private final InfinispanTypeConfigurationContributor typeConfigurationContributor;
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
+   private final BlockingManager blockingManager;
+   private final FailureCounter failureCounter;
 
    private PojoSelectionEntityLoader<?> entityLoader;
    private EntityConverter entityConverter;
-   private BlockingManager blockingManager;
 
    public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector,
                                      Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                     BlockingManager blockingManager) {
+                                     BlockingManager blockingManager, FailureCounter failureCounter) {
       super(introspector);
       typeConfigurationContributor = new InfinispanTypeConfigurationContributor(introspector);
       addConfigurationContributor(typeConfigurationContributor);
       this.mappingProviders = mappingProviders;
       this.blockingManager = blockingManager;
+      this.failureCounter = failureCounter;
    }
 
    public void addEntityType(Class<?> type, String entityName) {
@@ -60,6 +63,6 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
 
    @Override
    protected PojoMapperDelegate<InfinispanMappingPartialBuildState> createMapperDelegate() {
-      return new InfinispanMapperDelegate(entityLoader, entityConverter, blockingManager);
+      return new InfinispanMapperDelegate(entityLoader, entityConverter, blockingManager, failureCounter);
    }
 }
