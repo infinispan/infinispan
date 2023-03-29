@@ -456,6 +456,11 @@
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-quarkus-embedded</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.infinispan.protostream</groupId>
                 <artifactId>protostream</artifactId>
                 <version>${version.protostream}</version>
