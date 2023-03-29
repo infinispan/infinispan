@@ -26,21 +26,24 @@ public class IndexStatisticsSnapshotImpl implements IndexStatisticsSnapshot {
 
    private final Map<String, IndexInfo> indexInfos;
    private final boolean reindexing;
+   private int genericIndexingFailures;
+   private int entityIndexingFailures;
 
    public IndexStatisticsSnapshotImpl() {
       // Don't use Collections.emptyMap() here, the map needs to be mutable to support merge().
-      this(new HashMap<>(), false);
-   }
-
-   public IndexStatisticsSnapshotImpl(Map<String, IndexInfo> indexInfos, boolean reindexing) {
-      this.indexInfos = indexInfos;
-      this.reindexing = reindexing;
+      this(new HashMap<>(), false, 0, 0);
    }
 
    @ProtoFactory
-   public IndexStatisticsSnapshotImpl(List<IndexEntry> entries, boolean reindexing) {
-      this.indexInfos = toMap(entries);
+   public IndexStatisticsSnapshotImpl(List<IndexEntry> entries, boolean reindexing, int genericIndexingFailures, int entityIndexingFailures) {
+      this(toMap(entries), reindexing, genericIndexingFailures, entityIndexingFailures);
+   }
+
+   public IndexStatisticsSnapshotImpl(Map<String, IndexInfo> indexInfos, boolean reindexing, int genericIndexingFailures, int entityIndexingFailures) {
+      this.indexInfos = indexInfos;
       this.reindexing = reindexing;
+      this.genericIndexingFailures = genericIndexingFailures;
+      this.entityIndexingFailures = entityIndexingFailures;
    }
 
    @Override
@@ -69,16 +72,31 @@ public class IndexStatisticsSnapshotImpl implements IndexStatisticsSnapshot {
    }
 
    @Override
+   @ProtoField(number = 3, defaultValue = "0")
+   public int genericIndexingFailures() {
+      return genericIndexingFailures;
+   }
+
+   @Override
+   @ProtoField(number = 4, defaultValue = "0")
+   public int entityIndexingFailures() {
+      return entityIndexingFailures;
+   }
+
+   @Override
    public Json toJson() {
       return Json.object()
             .set("types", Json.make(indexInfos))
-            .set("reindexing", Json.make(reindexing));
+            .set("reindexing", Json.make(reindexing))
+            .set("genericIndexingFailures", Json.make(genericIndexingFailures))
+            .set("entityIndexingFailures", Json.make(entityIndexingFailures));
    }
 
    @Override
    public IndexStatisticsSnapshot merge(IndexStatisticsSnapshot other) {
       other.indexInfos().forEach((k, v) -> indexInfos.merge(k, v, IndexInfo::merge));
+      genericIndexingFailures += other.genericIndexingFailures();
+      entityIndexingFailures += other.entityIndexingFailures();
       return this;
    }
-
 }

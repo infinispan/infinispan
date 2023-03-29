@@ -1,5 +1,10 @@
 package org.infinispan.query.stats.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+
 import org.hibernate.search.backend.lucene.index.LuceneIndexManager;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.infinispan.factories.annotations.Inject;
@@ -18,24 +23,21 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-
 /**
  * A {@link IndexStatistics} for an indexed Cache.
+ *
  * @since 12.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public class LocalIndexStatistics implements IndexStatistics {
+
    @Inject
    SearchMapping searchMapping;
 
    @Inject
    BlockingManager blockingManager;
 
-    @Inject
+   @Inject
    Indexer indexer;
 
    @Override
@@ -76,8 +78,18 @@ public class LocalIndexStatistics implements IndexStatistics {
       return indexer.isRunning();
    }
 
-    @Override
-    public CompletionStage<IndexStatisticsSnapshot> computeSnapshot() {
-        return computeIndexInfos().thenApply(infos -> new IndexStatisticsSnapshotImpl(infos, reindexing()));
-    }
+   @Override
+   public int genericIndexingFailures() {
+      return searchMapping.genericIndexingFailures();
+   }
+
+   @Override
+   public int entityIndexingFailures() {
+      return searchMapping.entityIndexingFailures();
+   }
+
+   @Override
+   public CompletionStage<IndexStatisticsSnapshot> computeSnapshot() {
+      return computeIndexInfos().thenApply(infos -> new IndexStatisticsSnapshotImpl(infos, reindexing(), genericIndexingFailures(), entityIndexingFailures()));
+   }
 }
