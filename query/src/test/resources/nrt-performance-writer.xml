@@ -36,8 +36,6 @@
             <property name="thread_pool.size">6</property>
             <property name="indexing.queue_count">6</property>
             <property name="indexing.queue_size">4096</property>
-            <!-- Enable error safety net -->
-            <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
          </indexing>
          <!--  For our test we don't want to keep all data in memory: throw some away -->
       </local-cache>

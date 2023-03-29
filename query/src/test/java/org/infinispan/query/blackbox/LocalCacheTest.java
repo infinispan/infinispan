@@ -20,7 +20,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
@@ -461,8 +460,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
             .storage(LOCAL_HEAP)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(AnotherGrassEater.class);
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }

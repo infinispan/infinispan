@@ -67,7 +67,7 @@ public class TestQueryHelperFactory {
 
       builder.indexing().enable().addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 
-      builder.indexing().storage(LOCAL_HEAP).addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+      builder.indexing().storage(LOCAL_HEAP);
 
       if (cacheMode.isClustered()) {
          builder.clustering().stateTransfer().fetchInMemoryState(true);

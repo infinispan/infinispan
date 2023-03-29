@@ -8,8 +8,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
@@ -37,8 +35,7 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
             .indexing()
             .enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity(Car.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(Car.class);
 
       createClusteredCaches(NUM_NODES, QueryTestSCI.INSTANCE, cacheCfg);
       waitForClusterToForm(getDefaultCacheName());

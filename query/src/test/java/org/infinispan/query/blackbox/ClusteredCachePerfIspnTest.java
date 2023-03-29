@@ -5,8 +5,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
@@ -30,7 +28,6 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
             .writer().ramBufferSize(54).commitInterval(10000).queueCount(6).queueSize(4096).threadPoolSize(6)
             .merge().factor(30).maxSize(1024);
 

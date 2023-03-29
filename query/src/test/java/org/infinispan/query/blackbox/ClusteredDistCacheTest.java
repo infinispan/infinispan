@@ -5,8 +5,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
@@ -28,8 +26,7 @@ public class ClusteredDistCacheTest extends ClusteredCacheTest {
             .enable()
             .storage(LOCAL_HEAP)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(Person.class);
 
       enhanceConfig(cacheCfg);
       createClusteredCaches(3, QueryTestSCI.INSTANCE, cacheCfg);

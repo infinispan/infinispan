@@ -10,8 +10,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -29,7 +27,6 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Car.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
             .clustering()
             .hash().numSegments(10 * NUM_NODES);
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);

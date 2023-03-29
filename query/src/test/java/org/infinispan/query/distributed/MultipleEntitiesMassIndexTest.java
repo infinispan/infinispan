@@ -11,7 +11,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -35,8 +34,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Car.class)
-            .addIndexedEntity(Person.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(Person.class);
 
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
 

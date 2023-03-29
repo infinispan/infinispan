@@ -15,7 +15,6 @@
                 <indexed-entities>
                     <indexed-entity>org.infinispan.query.test.Transaction</indexed-entity>
                 </indexed-entities>
-                <property name="hibernate.search.background_failure_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             </indexing>
         </distributed-cache>
 

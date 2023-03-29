@@ -5,8 +5,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -52,8 +50,7 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
             .storage(LOCAL_HEAP)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
             .addIndexedEntity(Person.class)
-            .addIndexedEntity(AnotherGrassEater.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(AnotherGrassEater.class);
       cfg.memory()
             .storageType(storageType);
       enhanceConfig(cfg);

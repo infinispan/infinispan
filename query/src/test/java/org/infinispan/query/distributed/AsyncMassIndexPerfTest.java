@@ -21,8 +21,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.test.QueryTestSCI;
@@ -77,7 +75,6 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
       cacheCfg.indexing().enable()
             .storage(INDEX_STORAGE)
             .addIndexedEntity(Transaction.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName())
             .writer().merge().factor(Integer.parseInt(MERGE_FACTOR));
 
       if (!local) {

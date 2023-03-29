@@ -33,7 +33,6 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.helper.SearchConfig;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -93,8 +92,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             .enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
-            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
       cacheCfg.memory()
             .storageType(storageType);
       enhanceConfig(cacheCfg);

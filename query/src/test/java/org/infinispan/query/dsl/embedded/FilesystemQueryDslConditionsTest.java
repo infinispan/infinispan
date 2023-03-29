@@ -8,8 +8,6 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -37,8 +35,7 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
             .storage(IndexStorage.FILESYSTEM).path(indexDirectory)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass())
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addIndexedEntity(getModelFactory().getTransactionImplClass());
       createClusteredCaches(1, cfg);
    }
 

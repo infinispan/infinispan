@@ -10,8 +10,6 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.helper.SearchConfig;
-import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
@@ -49,8 +47,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
             .enable() //index also changes originated on other nodes, the index is not shared
             .storage(FILESYSTEM).path(Paths.get(TMP_DIR, indexName).toString())
             .addIndexedEntity(Person.class)
-            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class)
-            .addProperty(SearchConfig.ERROR_HANDLER, StaticTestingErrorHandler.class.getName());
+            .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
       return cb;
    }
 
