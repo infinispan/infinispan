@@ -1,4 +1,4 @@
 <dependency>
   <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-spring-boot-starter-embedded</artifactId>
+  <artifactId>infinispan-spring-boot3-starter-embedded</artifactId>
 </dependency>
