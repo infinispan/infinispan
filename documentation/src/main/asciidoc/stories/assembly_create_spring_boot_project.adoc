@@ -4,6 +4,18 @@
 
 Add dependencies for the {brandname} Spring Boot Starter to your project.
 
+[IMPORTANT]
+====
+{brandname} supports Spring Boot version 2.x and version 3.
+Be aware that Spring Boot version 3 requires Java 17.
+
+The examples in this document include artifacts for the latest version of Spring Boot.
+If you want to use Spring Boot 2.x use:
+
+* `infinispan-spring-boot-starter-embedded`
+* `infinispan-spring-boot-starter-remote`
+====
+
 include::{topics}/proc_enforcing_sb_versions.adoc[leveloffset=+1]
 include::{topics}/proc_adding_sb_dependencies.adoc[leveloffset=+1]
 

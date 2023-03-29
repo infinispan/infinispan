@@ -20,7 +20,7 @@
        </dependency>
        <dependency>
            <groupId>org.infinispan</groupId>
-           <artifactId>infinispan-spring-boot-starter</artifactId>
+           <artifactId>infinispan-spring-boot3-starter</artifactId>
        </dependency>
     </dependencies>
  </dependencyManagement>
