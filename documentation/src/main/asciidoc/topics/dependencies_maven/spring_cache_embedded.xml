@@ -1,7 +1,7 @@
 <dependencies>
     <dependency>
         <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-spring5-embedded</artifactId>
+        <artifactId>infinispan-spring6-embedded</artifactId>
     </dependency>
     <dependency>
         <groupId>org.springframework</groupId>
