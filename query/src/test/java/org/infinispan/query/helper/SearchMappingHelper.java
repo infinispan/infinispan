@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
@@ -29,7 +30,7 @@ public class SearchMappingHelper {
       InfinispanBootstrapIntrospector introspector = SearchMappingBuilder.introspector(MethodHandles.lookup());
 
       // do not pass any entity loader nor identifier bridges
-      return SearchMapping.builder(introspector, null, Collections.emptyList(), blockingManager)
+      return SearchMapping.builder(introspector, null, Collections.emptyList(), blockingManager, new FailureCounter())
                    .setProperties(properties)
                    .addEntityTypes(new HashSet<>(Arrays.asList(types)))
                    .build(Optional.empty());

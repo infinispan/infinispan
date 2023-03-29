@@ -7,6 +7,7 @@ import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.hibernate.search.engine.environment.bean.BeanReference;
 import org.hibernate.search.mapper.pojo.bridge.IdentifierBridge;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
+import org.infinispan.query.concurrent.InfinispanIndexingFailureHandler;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**
@@ -35,10 +36,17 @@ public class SearchMappingCommonBuilding {
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
-      return SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
-                  blockingManager)
+      InfinispanIndexingFailureHandler indexingFailureHandler = new InfinispanIndexingFailureHandler();
+
+      SearchMappingBuilder builder = SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
+                  blockingManager, indexingFailureHandler.failureCounter())
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties)
             .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider);
+
+      if (!properties.containsKey("hibernate.search.background_failure_handler")) {
+         builder.setProperty("hibernate.search.background_failure_handler", indexingFailureHandler);
+      }
+      return builder;
    }
 }

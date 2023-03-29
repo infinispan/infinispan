@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
+import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -110,13 +111,17 @@ public interface SearchMapping extends AutoCloseable {
    // and deserializing is costly so we don't want to deserialize it until we know we need to index it...
    Class<?> toConvertedEntityJavaClass(Object value);
 
+   Map<String, IndexMetamodel> metamodel();
+
+   int genericIndexingFailures();
+
+   int entityIndexingFailures();
+
    static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                                        Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                       BlockingManager blockingManager) {
+                                       BlockingManager blockingManager, FailureCounter failureCounter) {
       return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders,
-            blockingManager);
+            blockingManager, failureCounter);
    }
-
-   Map<String, IndexMetamodel> metamodel();
 
 }

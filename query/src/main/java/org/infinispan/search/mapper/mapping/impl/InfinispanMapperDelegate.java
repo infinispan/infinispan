@@ -6,6 +6,7 @@ import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoIndexedTypeExte
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoMapperDelegate;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
+import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -16,12 +17,14 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
    private final PojoSelectionEntityLoader<?> entityLoader;
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
+   private final FailureCounter failureCounter;
 
    public InfinispanMapperDelegate(PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
-                                   BlockingManager blockingManager) {
+                                   BlockingManager blockingManager, FailureCounter failureCounter) {
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.blockingManager = blockingManager;
+      this.failureCounter = failureCounter;
    }
 
    @Override
@@ -45,6 +48,6 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
    @Override
    public InfinispanMappingPartialBuildState prepareBuild(PojoMappingDelegate mappingDelegate) {
       return new InfinispanMappingPartialBuildState(mappingDelegate, typeContextContainerBuilder.build(),
-            entityLoader, entityConverter, blockingManager);
+            entityLoader, entityConverter, blockingManager, failureCounter);
    }
 }

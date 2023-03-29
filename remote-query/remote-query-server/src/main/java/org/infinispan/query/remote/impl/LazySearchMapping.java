@@ -137,6 +137,16 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    @Override
+   public int genericIndexingFailures() {
+      return mapping().genericIndexingFailures();
+   }
+
+   @Override
+   public int entityIndexingFailures() {
+      return mapping().entityIndexingFailures();
+   }
+
+   @Override
    public void reload() {
       long stamp = stampedLock.writeLock();
       queryCache.clear(cache.getName());
