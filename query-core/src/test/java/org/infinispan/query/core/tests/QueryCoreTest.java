@@ -1,5 +1,6 @@
 package org.infinispan.query.core.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -122,5 +123,8 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       assertTrue(queryStatistics.getNonIndexedQueryMaxTime() > 0);
       assertTrue(queryStatistics.getNonIndexedQueryTotalTime() > 0);
       assertEquals(q, queryStatistics.getSlowestNonIndexedQuery());
+
+      assertThat(indexStatistics.genericIndexingFailures()).isZero();
+      assertThat(indexStatistics.entityIndexingFailures()).isZero();
    }
 }

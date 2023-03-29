@@ -26,6 +26,10 @@ public interface IndexStatistics {
 
    boolean reindexing();
 
+   int genericIndexingFailures();
+
+   int entityIndexingFailures();
+
    CompletionStage<IndexStatisticsSnapshot> computeSnapshot();
 
 }

@@ -1,7 +1,8 @@
 [id='getting-query-statistics_{context}']
 = Getting query statistics
 
-Collect statistics to gather information about performance of your indexes and queries, including information such as the types of indexes and average time for queries to complete.
+Collect statistics to gather information about performance of your indexes and queries, including information such as the types of indexes, average time for queries to complete
+and the number of possible failures on indexing operations.
 
 .Procedure
 
