@@ -1,0 +1,4 @@
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-quarkus-embedded</artifactId>
+</dependency>

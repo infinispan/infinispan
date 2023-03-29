@@ -1,0 +1,9 @@
+[id='quarkus_embedded_dependencies']
+= Quarkus Dependencies
+Update your `pom.xml` with one of the following dependencies to include the
+{brandname} Quarkus extension in your project:
+
+.Embedded (Library) Mode
+----
+include::dependencies_maven/cdi_embedded_quarkus.xml[]
+----
