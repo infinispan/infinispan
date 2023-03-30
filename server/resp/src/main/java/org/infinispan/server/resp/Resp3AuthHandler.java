@@ -19,10 +19,10 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    }
 
    @Override
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       CompletionStage<Boolean> successStage = null;
       switch (type) {
-         case "HELLO":
+         case HELLO:
             byte[] respProtocolBytes = arguments.get(0);
             String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
             if (!version.equals("3")) {
@@ -36,10 +36,10 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
                helloResponse(ctx, allocatorToUse);
             }
             break;
-         case "AUTH":
+         case AUTH:
             successStage = performAuth(ctx, arguments.get(0), arguments.get(1));
             break;
-         case "QUIT":
+         case QUIT:
             ctx.close();
             break;
          default:
