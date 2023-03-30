@@ -22,7 +22,6 @@
 
     <modules>
         <module>embedded</module>
-        <module>server</module>
     </modules>
 
     <build>
@@ -71,4 +70,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <modules>
+               <module>server</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
