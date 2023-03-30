@@ -1,0 +1,5 @@
+<distributed-cache>
+  <indexing indexing-mode="manual">
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>

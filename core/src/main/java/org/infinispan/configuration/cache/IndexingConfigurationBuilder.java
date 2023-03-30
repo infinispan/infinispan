@@ -6,6 +6,7 @@ import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONF
 import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
+import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXING_MODE;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
 import static org.infinispan.configuration.cache.IndexingConfiguration.PATH;
 import static org.infinispan.configuration.cache.IndexingConfiguration.STARTUP_MODE;
@@ -106,6 +107,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes.attribute(KEY_TRANSFORMERS).reset();
       attributes.attribute(STORAGE).reset();
       attributes.attribute(STARTUP_MODE).reset();
+      attributes.attribute(INDEXING_MODE).reset();
       attributes.attribute(PATH).reset();
    }
 
@@ -133,6 +135,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public IndexingConfigurationBuilder startupMode(IndexStartupMode startupMode) {
       attributes.attribute(STARTUP_MODE).set(startupMode);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder indexingMode(IndexingMode indexingMode) {
+      attributes.attribute(INDEXING_MODE).set(indexingMode);
       return this;
    }
 

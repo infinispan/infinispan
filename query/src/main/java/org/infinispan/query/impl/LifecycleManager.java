@@ -29,6 +29,7 @@ import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
+import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -188,8 +189,7 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues = new ConcurrentHashMap<>();
-      boolean manualIndexing = HS5_CONF_STRATEGY_MANUAL.equals(
-            cfg.indexing().properties().get(HS5_CONF_STRATEGY_PROPERTY));
+      boolean manualIndexing = cfg.indexing().indexingMode().equals(IndexingMode.MANUAL);
 
       QueryInterceptor queryInterceptor = new QueryInterceptor(manualIndexing, txOldValues, cache, indexedClasses);
 

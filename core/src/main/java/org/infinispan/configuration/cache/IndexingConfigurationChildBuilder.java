@@ -29,4 +29,6 @@ public interface IndexingConfigurationChildBuilder extends ConfigurationChildBui
 
    IndexingConfigurationBuilder startupMode(IndexStartupMode startupMode);
 
+   IndexingConfigurationBuilder indexingMode(IndexingMode indexingMode);
+
 }

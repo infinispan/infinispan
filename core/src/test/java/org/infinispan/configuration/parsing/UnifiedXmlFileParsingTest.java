@@ -39,6 +39,7 @@ import org.infinispan.configuration.cache.EncodingConfiguration;
 import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingConfiguration;
+import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -121,6 +122,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_150(15, 0) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            IndexingConfiguration indexed = getConfiguration(holder, "indexed-manual-indexing").indexing();
+            assertThat(indexed.enabled()).isTrue();
+            assertThat(indexed.indexingMode()).isEqualTo(IndexingMode.MANUAL);
+         }
+      },
       INFINISPAN_140(14, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {

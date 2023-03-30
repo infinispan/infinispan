@@ -1072,6 +1072,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="indexing-mode" type="tns:indexing-mode" default="auto">
+            <xs:annotation>
+              <xs:documentation>
+                Affects how cache operations will be propagated to the indexes.
+                By default, all the changes to the cache will be immediately applied to the indexes.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.auto-config}">
             <xs:annotation>
               <xs:documentation>Deprecated since 11.0, with no replacement. Whether or not to apply automatic index configuration based on cache type</xs:documentation>
@@ -2499,6 +2507,25 @@
         <xs:annotation>
           <xs:documentation>
             Cache startup does not trigger an indexing operation. This is the default value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="indexing-mode">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="auto">
+        <xs:annotation>
+          <xs:documentation>
+            All the changes to the cache will be immediately applied to the indexes.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="manual">
+        <xs:annotation>
+          <xs:documentation>
+            Indexes will be only updated when a reindex is explicitly invoked.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

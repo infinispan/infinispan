@@ -54,6 +54,20 @@ The reindex operation is performed asynchronously, since it may take a longer ti
 To check if the reindexing operation is still in progress, check the `reindexing` attribute of the index statistics.
 ====
 
+== Indexing Mode
+
+Affects how cache operations will be propagated to the indexes.
+By default, all the changes to the cache will be immediately applied to the indexes.
+
+This feature can be disabled, allowing the indexes only to be updated when a reindex is explicitly invoked,
+to support for instance batched index updates.
+It can be done setting the `indexing-mode` to `manual`:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_manual.xml[]
+----
+
 == Index reader
 
 The index reader is an internal component that provides access to the indexes to perform queries. As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.

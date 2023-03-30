@@ -42,9 +42,11 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    public static final AttributeDefinition<IndexStartupMode> STARTUP_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STARTUP_MODE, IndexStartupMode.NONE)
          .immutable().build();
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().build();
+   public static final AttributeDefinition<IndexingMode> INDEXING_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEXING_MODE, IndexingMode.AUTO)
+         .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
    }
 
    private final Attribute<TypedProperties> properties;
@@ -118,6 +120,18 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
 
    public String path() {
       return attributes.attribute(PATH).get();
+   }
+
+   /**
+    * Affects how cache operations will be propagated to the indexes.
+    * By default, {@link IndexingMode#AUTO}.
+    *
+    * @see IndexingMode
+    *
+    * @return If the auto-indexing is enabled
+    */
+   public IndexingMode indexingMode() {
+      return attributes.attribute(INDEXING_MODE).get();
    }
 
    /**
