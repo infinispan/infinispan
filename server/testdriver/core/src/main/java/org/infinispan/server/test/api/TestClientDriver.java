@@ -18,10 +18,16 @@ public interface TestClientDriver {
    HotRodTestClientDriver hotrod();
 
    /**
-    * Get the REST instance for hotrod api operations
+    * Get the REST instance
     * @return {@link RestTestClientDriver} instance}
     */
    RestTestClientDriver rest();
+
+   /**
+    * Get the Memcached instance
+    * @return {@link MemcachedTestClientDriver} instance}
+    */
+   MemcachedTestClientDriver memcached();
 
    /**
     * Returns a unique identifier for the current test method

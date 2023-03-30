@@ -14,12 +14,12 @@ public class MockAuthenticationConfigurationBuilder implements AuthenticationCon
 
    @Override
    public Builder<?> read(MockAuthenticationConfiguration template) {
-      return null;
+      return this;
    }
 
    @Override
    public AttributeSet attributes() {
-      return null;
+      return AttributeSet.EMPTY;
    }
 
    @Override

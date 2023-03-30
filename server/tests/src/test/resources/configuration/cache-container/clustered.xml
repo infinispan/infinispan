@@ -10,5 +10,5 @@
       </allow-list>
    </serialization>
    <metrics gauges="true" histograms="true" accurate-size="true"/>
-   <locks:clustered-locks num-owners="-1"/>
+   <locks:clustered-locks/>
 </cache-container>

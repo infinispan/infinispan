@@ -54,7 +54,7 @@ public interface SaslAuthenticator {
    }
 
    static SaslServer createSaslServer(SaslConfiguration configuration, Channel channel, String mech, String protocol) throws Throwable {
-      SaslAuthenticator sap = configuration.saslAuthenticationProvider();
+      SaslAuthenticator sap = configuration.authenticator();
       List<Principal> principals = new ArrayList<>(2);
       SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
       if (sslHandler != null) {

@@ -154,6 +154,13 @@ public final class Security {
       return null;
    }
 
+   public static String getSubjectUserPrincipalName(Subject s) {
+      if (s != null && !s.getPrincipals().isEmpty()) {
+         return s.getPrincipals().iterator().next().getName();
+      }
+      return null;
+   }
+
    /**
     * A simplified version of Subject.toString() with the following advantages:
     * <ul>

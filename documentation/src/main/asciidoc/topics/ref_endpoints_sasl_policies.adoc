@@ -1,7 +1,7 @@
 [id='sasl-policies-hot-rod-authentication_{context}']
 = SASL policies
 
-SASL policies provide fine-grain control over Hot Rod authentication mechanisms.
+SASL policies provide fine-grain control over Hot Rod and Memcached authentication mechanisms.
 
 [TIP]
 ====

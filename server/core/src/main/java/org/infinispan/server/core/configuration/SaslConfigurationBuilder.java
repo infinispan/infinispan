@@ -161,7 +161,7 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
    public SaslConfigurationBuilder read(SaslConfiguration template) {
       attributes.read(template.attributes());
       mechProperties = template.mechProperties();
-      saslAuthenticator = template.saslAuthenticationProvider();
+      saslAuthenticator = template.authenticator();
       return this;
    }
 

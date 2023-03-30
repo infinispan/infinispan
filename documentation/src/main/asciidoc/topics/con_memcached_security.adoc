@@ -1,0 +1,14 @@
+[[memcached_client_security]]
+= Security
+
+The {brandname} Memcached connector supports authentication for both the text and binary protocols. Because the two
+variants implement authentication in a different way, the supported mechanisms depend on the protocol in use.
+
+== Text protocol
+
+Authentication in the Memcached text protocol is performed by an initial `set` command where the key is ignored and the value is a concatenation of the username and the password separated by a space. This authentication scheme requires a security realm which supports plain-text.
+
+== Binary protocol
+
+Authentication in the Memcached binary protocol is performed via dedicated operations which wrap the SASL challenge/response scheme. This authentication scheme works with all the {brandname} security realm implementations.
+

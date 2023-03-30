@@ -19,17 +19,17 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 5.3
  */
 @ProtoTypeId(ProtoStreamTypeIds.MEMCACHED_METADATA)
-class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetadata {
+public class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetadata {
 
    @ProtoField(number = 5, defaultValue = "0")
-   final long flags;
+   public final int flags;
 
    @ProtoFactory
-   MemcachedMetadata(long flags, long lifespan, NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion) {
+   public MemcachedMetadata(int flags, long lifespan, NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion) {
       this(flags, lifespan, numericVersion != null ? numericVersion : clusteredVersion);
    }
 
-   private MemcachedMetadata(long flags, long lifespan, EntryVersion version) {
+   private MemcachedMetadata(int flags, long lifespan, EntryVersion version) {
       super(lifespan, version);
       this.flags = flags;
    }
@@ -65,11 +65,11 @@ class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirableMetada
             '}';
    }
 
-   static class Builder extends EmbeddedMetadata.Builder {
+   public static class Builder extends EmbeddedMetadata.Builder {
 
-      private long flags;
+      private int flags;
 
-      Builder flags(long flags) {
+      public Builder flags(int flags) {
          this.flags = flags;
          return this;
       }

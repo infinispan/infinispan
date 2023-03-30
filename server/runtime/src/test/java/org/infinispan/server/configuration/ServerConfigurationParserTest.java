@@ -96,7 +96,7 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
       assertEquals("test", new String(dataSource.password()));
 
       // Connectors
-      List<ProtocolServerConfiguration> connectors = configuration.endpoints().endpoints().get(0).connectors();
+      List<ProtocolServerConfiguration<?, ?>> connectors = configuration.endpoints().endpoints().get(0).connectors();
       assertEquals(3, connectors.size());
       assertTrue(connectors.get(0) instanceof HotRodServerConfiguration);
       assertTrue(connectors.get(1) instanceof RestServerConfiguration);

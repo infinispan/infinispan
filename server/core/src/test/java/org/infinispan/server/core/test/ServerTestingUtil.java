@@ -20,7 +20,7 @@ import io.netty.channel.unix.Errors;
  */
 public class ServerTestingUtil {
 
-   private static final AtomicInteger defaultUniquePort = new AtomicInteger(15232);
+   private static final AtomicInteger DEFAULT_UNIQUE_PORT = new AtomicInteger(15232);
 
    private static Log LOG = LogFactory.getLog(ServerTestingUtil.class);
 
@@ -51,7 +51,7 @@ public class ServerTestingUtil {
          LOG.debugf("Error finding free port, falling back to auto-generated port. Error message: ",
              e.getMessage());
       }
-      return defaultUniquePort.incrementAndGet();
+      return DEFAULT_UNIQUE_PORT.incrementAndGet();
    }
 
    public static <S extends AbstractProtocolServer<?>> S startProtocolServer(int initialPort, Function<Integer, S> serverStarter) {

@@ -6,20 +6,16 @@ import java.util.Objects;
 
 import javax.management.MBeanServerConnection;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
-import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientXSiteDriver;
 import org.infinispan.server.test.core.TestClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import net.spy.memcached.MemcachedClient;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -49,6 +45,11 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
    }
 
    @Override
+   public MemcachedTestClientDriver memcached(String siteName) {
+      return testClients.get(siteName).memcached();
+   }
+
+   @Override
    public CounterManager getCounterManager(String siteName) {
       return testClients.get(siteName).getCounterManager();
    }
@@ -56,11 +57,6 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
    @Override
    public <K, V> MultimapCacheManager<K, V> getMultimapCacheManager(String siteName) {
       return testClients.get(siteName).getRemoteMultimapCacheManager();
-   }
-
-   // Used for internal test
-   public MemcachedClient getMemcachedClient(String siteName) {
-      return testClients.get(siteName).getMemcachedClient();
    }
 
    public MBeanServerConnection getJmxConnection(String siteName, int server) {
@@ -83,13 +79,5 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
             }
          }
       };
-   }
-
-   public String addScript(String siteName, RemoteCacheManager remoteCacheManager, String script) {
-      return testClients.get(siteName).addScript(remoteCacheManager, script);
-   }
-
-   public RestClient newRestClient(String siteName, RestClientConfigurationBuilder restClientConfigurationBuilder) {
-      return testClients.get(siteName).newRestClient(restClientConfigurationBuilder);
    }
 }

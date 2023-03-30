@@ -85,6 +85,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.logging.Log;
 import org.infinispan.server.memcached.MemcachedServer;
+import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.router.RoutingTable;
@@ -100,8 +101,8 @@ import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
 import org.infinispan.server.router.routes.singleport.SinglePortRouteSource;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
 import org.infinispan.server.security.ElytronJMXAuthenticator;
-import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticator;
+import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
@@ -440,7 +441,10 @@ public class Server implements ServerManagement, AutoCloseable {
                   } else if (configuration instanceof RestServerConfiguration) {
                      ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
                   } else if (configuration instanceof RespServerConfiguration) {
-                     ElytronRESPAuthenticator.init((RespServerConfiguration)configuration, serverConfiguration, blockingManager);
+                     ElytronUsernamePasswordAuthenticator.init(((RespServerConfiguration)configuration).authentication().authenticator(), serverConfiguration, blockingManager);
+                  } else if (configuration instanceof MemcachedServerConfiguration) {
+                     ElytronSASLAuthenticator.init((MemcachedServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
+                     ElytronUsernamePasswordAuthenticator.init(((MemcachedServerConfiguration)configuration).authentication().text().authenticator(), serverConfiguration, blockingManager);
                   }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cacheManager);

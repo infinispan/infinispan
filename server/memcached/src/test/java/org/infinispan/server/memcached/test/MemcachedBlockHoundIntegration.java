@@ -13,6 +13,5 @@ public class MemcachedBlockHoundIntegration implements BlockHoundIntegration {
 
    @Override
    public void applyTo(BlockHound.Builder builder) {
-      builder.allowBlockingCallsInside(MemcachedTestingUtil.class.getName() + "$2", "getDecoder");
    }
 }

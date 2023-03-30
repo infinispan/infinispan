@@ -22,15 +22,13 @@ include::xml/server_endpoints_default.xml[]
 |Includes the Hot Rod endpoint in the `endpoint` configuration.
 
 |`rest-connector`
-|Includes the Hot Rod endpoint in the `endpoint` configuration.
+|Includes the REST endpoint in the `endpoint` configuration.
 
-ifdef::community[]
 |`resp-connector`
 |Includes the RESP endpoint in the `endpoint` configuration.
-endif::community[]
 
 |`memcached-connector`
-|Configures the Memcached endpoint and is disabled by default.
+|Includes the Memcached endpoint in the `endpoint` configuration.
 |===
 
 [role="_additional-resources"]

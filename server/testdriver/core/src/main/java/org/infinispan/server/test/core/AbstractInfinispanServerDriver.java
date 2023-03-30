@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import javax.net.ssl.SSLContext;
 import javax.security.auth.x500.X500Principal;
 
 import org.infinispan.cli.user.UserTool;
@@ -57,6 +58,8 @@ import org.junit.Assume;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
+
+import net.spy.memcached.ConnectionFactoryBuilder;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -476,6 +479,21 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             .trustStorePassword(KEY_PASSWORD.toCharArray())
             .trustStoreType(type)
             .provider(provider);
+   }
+
+   @Override
+   public void applyTrustStore(ConnectionFactoryBuilder builder, String certificateName) {
+      applyTrustStore(builder, certificateName, "pkcs12", null);
+   }
+
+   @Override
+   public void applyTrustStore(ConnectionFactoryBuilder builder, String certificateName, String type, String provider) {
+      SslContextFactory factory = new SslContextFactory();
+      SSLContext context = factory.trustStoreFileName(getCertificateFile(certificateName).getAbsolutePath())
+            .trustStorePassword(KEY_PASSWORD.toCharArray())
+            .trustStoreType(type)
+            .provider(provider).getContext();
+      builder.setSSLContext(context).setSkipTlsHostnameVerification(true);
    }
 
    /**

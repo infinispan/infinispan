@@ -27,10 +27,10 @@ Logging properties use the `%X{name}` notation and let you modify the format of 
 | Principal name, if using authentication.
 
 | `method`
-| Method used. `PUT`, `GET`, and so on.
+| The protocol-specific method used. `PUT`, `GET`, and so on.
 
 | `protocol`
-| Protocol used. `HTTP/1.1`, `HTTP/2`, `HOTROD/2.9`, and so on.
+| Protocol used. `HTTP/1.1`, `HTTP/2`, `HOTROD/2.9`, `MCTXT`, `MCBIN` and so on.
 
 | `status`
 | An HTTP status code for the REST endpoint. `OK` or an exception for the Hot Rod endpoint.

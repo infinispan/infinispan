@@ -9,8 +9,6 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
 
 import io.netty.channel.Channel;
@@ -36,14 +34,9 @@ class SinglePortChannelInitializer extends NettyChannelInitializer<SinglePortRou
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       super.initializeChannel(ch);
-      upgradeServers.values().stream()
-            .filter(ps -> ps instanceof HotRodServer).findFirst()
-            .ifPresent(hotRodServer -> ch.pipeline().addLast(HotRodPingDetector.NAME, new HotRodPingDetector((HotRodServer) hotRodServer))
-            );
-      upgradeServers.values().stream()
-            .filter(ps -> ps instanceof RespServer).findFirst()
-            .ifPresent(respServer -> ch.pipeline().addLast(RespDetector.NAME, new RespDetector((RespServer) respServer))
-            );
+      for(ProtocolServer<?> ps : upgradeServers.values()) {
+         ps.installDetector(ch);
+      }
       if (server.getConfiguration().ssl().enabled()) {
          ch.pipeline().addLast(new ALPNHandler(restServer));
       } else {

@@ -1,12 +1,17 @@
 package org.infinispan.server.security;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Security;
@@ -19,6 +24,11 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.auth.AuthDescriptor;
+import net.spy.memcached.internal.OperationFuture;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -49,7 +59,7 @@ public class AuthenticationTLSIT {
    }
 
    @Test
-   public void testReadWrite() {
+   public void testHotRodReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       if (!mechanism.isEmpty()) {
@@ -70,5 +80,17 @@ public class AuthenticationTLSIT {
          // Rethrow if unexpected
          if (!mechanism.isEmpty()) throw e;
       }
+   }
+
+   @Test
+   public void testMemcachedReadWrite() throws ExecutionException, InterruptedException, TimeoutException {
+      ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
+      builder.setProtocol(mechanism.isEmpty() ? ConnectionFactoryBuilder.Protocol.TEXT : ConnectionFactoryBuilder.Protocol.BINARY);
+      builder.setAuthDescriptor(new AuthDescriptor(new String[]{mechanism}, new BasicCallbackHandler("all_user", "default", "all".toCharArray())));
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      MemcachedClient client = SERVER_TEST.memcached().withClientConfiguration(builder).get();
+      OperationFuture<Boolean> f = client.set("k" + mechanism, 0, "v");
+      assertTrue(f.get(10, TimeUnit.SECONDS));
+      assertEquals(client.get("k" + mechanism), "v");
    }
 }

@@ -96,8 +96,8 @@
          <type>test-jar</type>
       </dependency>
       <dependency>
-         <groupId>net.spy</groupId>
-         <artifactId>spymemcached</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>memcached-client</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

@@ -1,5 +1,7 @@
 package org.infinispan.server.core.transport;
 
+import java.util.function.Supplier;
+
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
@@ -27,48 +29,41 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
    protected final ProtocolServer<A> server;
    protected final NettyTransport transport;
    protected final ChannelOutboundHandler encoder;
-   protected final ChannelInboundHandler decoder;
-   private final AccessControlFilter ipRulesHandler;
-   private final StatsChannelHandler statsHandler;
+   protected final Supplier<ChannelInboundHandler> decoderSupplier;
 
-   public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, ChannelInboundHandler decoder) {
+   public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, Supplier<ChannelInboundHandler> decoderSupplier) {
       this.server = server;
       this.transport = transport;
       this.encoder = encoder;
-      this.decoder = decoder;
-      this.statsHandler = transport != null ? new StatsChannelHandler(transport) : null;
-      this.ipRulesHandler = new AccessControlFilter(server.getConfiguration());
+      this.decoderSupplier = decoderSupplier;
    }
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       ChannelPipeline pipeline = ch.pipeline();
-      pipeline.addLast("iprules", ipRulesHandler);
-      if (statsHandler != null) {
-         pipeline.addLast("stats", statsHandler);
+      pipeline.addLast("iprules", new AccessControlFilter<>(server.getConfiguration()));
+      if (transport != null) {
+         pipeline.addLast("stats", new StatsChannelHandler(transport));
+         SslConfiguration ssl = server.getConfiguration().ssl();
+         if (ssl.enabled()) {
+            ApplicationProtocolConfig alpnConfig = getAlpnConfiguration();
+
+            //add default domain mapping
+            JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfig);
+            DomainNameMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainNameMappingBuilder<>(defaultNettySslContext);
+
+            //and the rest
+            ssl.sniDomainsConfiguration().forEach((k, v) -> {
+               if (!SslConfiguration.DEFAULT_SNI_DOMAIN.equals(k)) {
+                  domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v, alpnConfig));
+               }
+            });
+            pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
+         }
       }
-      SslConfiguration ssl = server.getConfiguration().ssl();
-      if (ssl.enabled()) {
-         ApplicationProtocolConfig alpnConfig = getAlpnConfiguration();
-
-         //add default domain mapping
-         JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfig);
-         DomainNameMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainNameMappingBuilder<>(defaultNettySslContext);
-
-         //and the rest
-         ssl.sniDomainsConfiguration().forEach((k, v) -> {
-            if (!SslConfiguration.DEFAULT_SNI_DOMAIN.equals(k)) {
-               domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v, alpnConfig));
-            }
-         });
-
-         pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
-      }
+      ChannelInboundHandler decoder = decoderSupplier != null ? decoderSupplier.get() : null;
       if (decoder != null) {
-         //We can not use `decoder` here. Each invocation creates a new instance of decoder and it seems
-         //it can not be shared between pipelines.
-         //See https://issues.jboss.org/browse/ISPN-7765 for more details.
-         pipeline.addLast("decoder", server.getDecoder());
+         pipeline.addLast("decoder", decoder);
       }
       if (encoder != null) {
          pipeline.addLast("encoder", encoder);

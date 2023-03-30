@@ -25,7 +25,7 @@ public class MockServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public AuthenticationConfigurationBuilder<MockAuthenticationConfiguration> authentication() {
-      return null;
+      return new MockAuthenticationConfigurationBuilder();
    }
 
    @Override

@@ -8,7 +8,7 @@ import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.server.core.test.ServerTestingUtil.startProtocolServer;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedClient;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.killMemcachedServer;
-import static org.infinispan.server.memcached.test.MemcachedTestingUtil.startMemcachedTextServer;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 import java.io.IOException;
@@ -38,11 +38,12 @@ import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.memcached.MemcachedServer;
+import org.infinispan.server.memcached.configuration.MemcachedProtocol;
+import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
-import net.spy.memcached.ConnectionFactory;
+import net.spy.memcached.ClientMode;
 import net.spy.memcached.ConnectionFactoryBuilder;
-import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.transcoders.Transcoder;
 
@@ -184,26 +185,24 @@ public class EndpointsCacheFactory<K, V> {
    private void createMemcachedCache() throws IOException {
       MediaType clientEncoding = marshaller == null ? MediaType.APPLICATION_OCTET_STREAM : marshaller.mediaType();
       memcached = startProtocolServer(findFreePort(), p -> {
+         MemcachedServerConfigurationBuilder builder = serverBuilder().port(p);
+         builder.clientEncoding(clientEncoding).protocol(MemcachedProtocol.TEXT);
          if (memcachedWithDecoder) {
-            return startMemcachedTextServer(cacheManager, p, cacheName, clientEncoding);
+            builder.defaultCacheName(cacheName);
          }
-         return startMemcachedTextServer(cacheManager, p, clientEncoding);
+         MemcachedServer server = new MemcachedServer();
+         server.start(builder.build(), cacheManager);
+         return server;
       });
       memcachedClient = createMemcachedClient(60000, memcached.getPort());
    }
 
    private MemcachedClient createMemcachedClient(long timeout, int port) throws IOException {
-      ConnectionFactory cf = new DefaultConnectionFactory() {
-         @Override
-         public long getOperationTimeout() {
-            return timeout;
-         }
-      };
-
+      ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder().setOpTimeout(timeout).setClientMode(ClientMode.Static);
       if (transcoder != null) {
-         cf = new ConnectionFactoryBuilder(cf).setTranscoder(transcoder).build();
+         builder.setTranscoder(transcoder);
       }
-      return new MemcachedClient(cf, Collections.singletonList(new InetSocketAddress("127.0.0.1", port)));
+      return new MemcachedClient(builder.build(), Collections.singletonList(new InetSocketAddress("127.0.0.1", port)));
    }
 
    public static void killCacheFactories(EndpointsCacheFactory... cacheFactories) {

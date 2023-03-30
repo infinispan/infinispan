@@ -13,6 +13,8 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 
+import net.spy.memcached.ClientMode;
+import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
 
 /**
@@ -97,13 +99,19 @@ public class TestServer {
       return RestClient.forConfiguration(builder.build());
    }
 
-   CloseableMemcachedClient newMemcachedClient() {
+   public CloseableMemcachedClient newMemcachedClient(ConnectionFactoryBuilder builder) {
+      return newMemcachedClient(builder, getDefaultPortNumber());
+   }
+
+   public CloseableMemcachedClient newMemcachedClient(ConnectionFactoryBuilder builder, int port) {
       List<InetSocketAddress> addresses = new ArrayList<>();
       for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
-         InetSocketAddress unresolved = getDriver().getServerSocket(i, 11221);
+         InetSocketAddress unresolved = getDriver().getServerSocket(i, port);
          addresses.add(new InetSocketAddress(unresolved.getHostString(), unresolved.getPort()));
       }
-      MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(addresses));
+      builder.setClientMode(ClientMode.Static); // Legacy memcached mode
+
+      MemcachedClient memcachedClient = Exceptions.unchecked(() -> new MemcachedClient(builder.build(), addresses));
       return new CloseableMemcachedClient(memcachedClient);
    }
 

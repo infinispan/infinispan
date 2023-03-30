@@ -169,9 +169,7 @@ public final class DataConversion {
    }
 
    @Inject
-   void injectDependencies(@ComponentName(KnownComponentNames.CACHE_NAME) String cacheName,
-                           InternalCacheRegistry icr, GlobalConfiguration gcr,
-                           StorageConfigurationManager storageConfigurationManager, EncoderRegistry encoderRegistry) {
+   void injectDependencies(StorageConfigurationManager storageConfigurationManager, EncoderRegistry encoderRegistry) {
       if (this.encoder != null && this.customWrapper != null) {
          // This must be one of the static encoders, we can't inject any component in it
          return;

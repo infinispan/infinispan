@@ -16,9 +16,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: memcached
 
 //Title
-= Using the Memcached protocol endpoint with Infinispan
+= Using the Memcached protocol endpoint with {brandname}
 
-Infinispan Server provides a Memcached endpoint that you can enable alongside the Hot Rod and REST endpoints.
+{brandname} Server provides a Memcached endpoint that you can enable alongside the Hot Rod and REST endpoints.
 This guide provides details about interacting with remote caches with Memcached clients.
 
 //User stories

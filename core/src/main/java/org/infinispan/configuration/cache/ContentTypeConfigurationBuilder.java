@@ -39,6 +39,11 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   public ContentTypeConfigurationBuilder mediaType(MediaType mediaType) {
+      attributes.attribute(MEDIA_TYPE).set(mediaType);
+      return this;
+   }
+
    public MediaType mediaType() {
       return attributes.attribute(MEDIA_TYPE).get();
    }

@@ -49,8 +49,8 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>net.spy</groupId>
-         <artifactId>spymemcached</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>memcached-client</artifactId>
       </dependency>
       <dependency>
          <groupId>junit</groupId>

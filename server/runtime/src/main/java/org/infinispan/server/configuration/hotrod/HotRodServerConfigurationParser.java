@@ -1,6 +1,6 @@
 package org.infinispan.server.configuration.hotrod;
 
-import java.util.EnumSet;
+import static org.infinispan.server.configuration.ServerConfigurationParser.parseSasl;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -14,7 +14,6 @@ import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
-import org.infinispan.server.core.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.core.configuration.SniConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.Attribute;
 import org.infinispan.server.hotrod.configuration.Element;
@@ -222,7 +221,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case SASL: {
-               serverPrincipal = parseSasl(reader, builder);
+               serverPrincipal = parseSasl(reader, builder.sasl());
                break;
             }
             default: {
@@ -232,117 +231,6 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
       }
       builder.securityRealm(securityRealm);
       builder.sasl().authenticator(new ElytronSASLAuthenticator(securityRealm, serverPrincipal, builder.sasl().mechanisms()));
-   }
-
-   private String parseSasl(ConfigurationReader reader, SaslAuthenticationConfigurationBuilder builder) {
-      SaslConfigurationBuilder sasl = builder.sasl();
-      String serverPrincipal = null;
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case SERVER_PRINCIPAL: {
-               serverPrincipal = value;
-               break;
-            }
-            case SERVER_NAME: {
-               sasl.serverName(value);
-               break;
-            }
-            case MECHANISMS: {
-               for (String mech : reader.getListAttributeValue(i)) {
-                  sasl.addAllowedMech(mech);
-               }
-               break;
-            }
-            case QOP: {
-               for (String qop : reader.getListAttributeValue(i)) {
-                  sasl.addQOP(qop);
-               }
-               break;
-            }
-            case STRENGTH: {
-               for (String s : reader.getListAttributeValue(i)) {
-                  sasl.addStrength(s);
-               }
-               break;
-            }
-            case POLICY: {
-               for (String p : reader.getListAttributeValue(i)) {
-                  sasl.addPolicy(p);
-               }
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
-      while (reader.inTag()) {
-         final Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case POLICY: {
-               if (reader.getSchema().since(13, 0) || visited.contains(element)) {
-                  throw ParseUtils.unexpectedElement(reader);
-               } else {
-                  visited.add(element);
-               }
-               parsePolicy(reader, builder);
-               break;
-            }
-            case PROPERTIES: {
-               // JSON/YAML map properties to attributes
-               for (int i = 0; i < reader.getAttributeCount(); i++) {
-                  sasl.addProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
-               }
-               ParseUtils.requireNoContent(reader);
-               break;
-            }
-            case PROPERTY: {
-               sasl.addProperty(ParseUtils.requireSingleAttribute(reader, Attribute.NAME), reader.getElementText());
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
-      return serverPrincipal;
-   }
-
-   void parsePolicy(ConfigurationReader reader, SaslAuthenticationConfigurationBuilder builder) {
-      if (reader.getAttributeCount() > 0) {
-         throw ParseUtils.unexpectedAttribute(reader, 0);
-      }
-      SaslConfigurationBuilder sasl = builder.sasl();
-      // Handle nested elements.
-      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
-      while (reader.inTag()) {
-         final Element element = Element.forName(reader.getLocalName());
-         if (visited.contains(element)) {
-            throw ParseUtils.unexpectedElement(reader);
-         }
-         visited.add(element);
-         String value = ParseUtils.readStringAttributeElement(reader, Attribute.VALUE.toString());
-         switch (element) {
-            case FORWARD_SECRECY:
-            case NO_ACTIVE:
-            case NO_ANONYMOUS:
-            case NO_DICTIONARY:
-            case NO_PLAIN_TEXT:
-            case PASS_CREDENTIALS: {
-               if ("true".equals(value)) {
-                  sasl.addPolicy(element.toString());
-               }
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
    }
 
    private void parseTopologyStateTransfer(ConfigurationReader reader, HotRodServerConfigurationBuilder builder) {

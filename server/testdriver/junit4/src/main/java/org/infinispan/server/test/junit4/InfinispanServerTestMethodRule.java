@@ -1,12 +1,14 @@
 package org.infinispan.server.test.junit4;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.TestClient;
@@ -14,14 +16,13 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import net.spy.memcached.MemcachedClient;
-
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
 public class InfinispanServerTestMethodRule implements TestRule, TestClientDriver {
    private final TestClient testClient;
+   private static final AtomicInteger KCOUNTER = new AtomicInteger(0);
 
    public InfinispanServerTestMethodRule(InfinispanServerRule infinispanServerRule) {
       Objects.requireNonNull(infinispanServerRule, "InfinispanServerRule class Rule is null");
@@ -49,13 +50,13 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
    }
 
    @Override
-   public CounterManager getCounterManager() {
-      return testClient.getCounterManager();
+   public MemcachedTestClientDriver memcached() {
+      return testClient.memcached();
    }
 
-   // Used for internal test
-   public MemcachedClient getMemcachedClient() {
-      return testClient.getMemcachedClient();
+   @Override
+   public CounterManager getCounterManager() {
+      return testClient.getCounterManager();
    }
 
    @Override
@@ -80,5 +81,9 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
 
    public RestClient newRestClient(RestClientConfigurationBuilder restClientConfigurationBuilder) {
       return testClient.newRestClient(restClientConfigurationBuilder);
+   }
+
+   public static final String k() {
+      return "k-" + KCOUNTER.incrementAndGet();
    }
 }
