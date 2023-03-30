@@ -114,7 +114,7 @@ public abstract class BaseRespDecoder extends ByteToMessageDecoder {
     * @param arguments the arguments provided to the command. The list should not be retained as it is reused
     * @return boolean whether the decoder can read more bytes or must wait
     */
-   protected boolean handleCommandAndArguments(ChannelHandlerContext ctx, String command, List<byte[]> arguments) {
+   protected boolean handleCommandAndArguments(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       if (log.isTraceEnabled()) {
          log.tracef("Received command: %s with arguments %s for %s", command, Util.toStr(arguments), ctx.channel());
       }

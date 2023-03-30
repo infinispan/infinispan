@@ -115,11 +115,11 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    @Override
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
 
       switch (type) {
-         case "SUBSCRIBE":
+         case SUBSCRIBE:
             AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
             for (byte[] keyChannel : arguments) {
                if (log.isTraceEnabled()) {
@@ -135,7 +135,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
                }
             }
             return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), arguments, true);
-         case "UNSUBSCRIBE":
+         case UNSUBSCRIBE:
             aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
             if (arguments.size() == 0) {
                return unsubscribeAll(ctx);
@@ -149,16 +149,16 @@ public class SubscriberHandler extends CacheRespRequestHandler {
                }
             }
             return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), arguments, false);
-         case "PING":
+         case PING:
             // Note we don't return the handler and just use it to handle the ping - we assume stage is always complete
             handler.handleRequest(ctx, type, arguments);
             break;
-         case "RESET":
-         case "QUIT":
+         case RESET:
+         case QUIT:
             removeAllListeners();
             return handler.handleRequest(ctx, type, arguments);
-         case "PSUBSCRIBE":
-         case "PUNSUBSCRIBE":
+         case PSUBSCRIBE:
+         case PUNSUBSCRIBE:
             RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", allocatorToUse);
             break;
          default:
