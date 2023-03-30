@@ -33,10 +33,10 @@ public class RespDecoderTest {
    Queue<Request> queuedCommands;
 
    static class Request {
-      private final String command;
+      private final RespCommand command;
       private final List<byte[]> arguments;
 
-      Request(String command, List<byte[]> arguments) {
+      Request(RespCommand command, List<byte[]> arguments) {
          this.command = command;
          // Make a copy, because the decoder may reuse the list
          this.arguments = new ArrayList<>(arguments);
@@ -48,7 +48,7 @@ public class RespDecoderTest {
       queuedCommands = new ArrayDeque<>();
       RespRequestHandler myRespRequestHandler = new RespRequestHandler() {
          @Override
-         protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+         protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
             queuedCommands.add(new Request(type, arguments));
             return myStage;
          }
@@ -63,7 +63,7 @@ public class RespDecoderTest {
 
    @Test
    public void testMixtureOfTypes() {
-      String commandName = "ALLTYPES";
+      String commandName = RespCommand.PSUBSCRIBE.toString();
       String minValueStr = String.valueOf(Long.MIN_VALUE);
       ByteBuf buffer = Unpooled.copiedBuffer("*6\r\n+" + commandName + "\r\n$3\r\nkey\r\n+value\r\n:23\r\n$5\r\nworks\r\n:" + minValueStr + "\r\n", StandardCharsets.US_ASCII);
       channel.writeInbound(buffer);
@@ -72,7 +72,7 @@ public class RespDecoderTest {
 
       Request req = queuedCommands.poll();
       assertNotNull(req);
-      assertEquals(commandName, req.command);
+      assertEquals(RespCommand.PSUBSCRIBE, req.command);
       List<byte[]> arguments = req.arguments;
       assertEquals(5, arguments.size());
 

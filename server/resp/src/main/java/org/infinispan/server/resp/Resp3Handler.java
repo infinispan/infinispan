@@ -69,40 +69,40 @@ public class Resp3Handler extends Resp3AuthHandler {
          stringToByteBuf(":" + (prev == null ? "0" : "1") + "\r\n", alloc);
 
    @Override
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       switch (type) {
-         case "PING":
+         case PING:
             if (arguments.size() == 0) {
                stringToByteBuf("$4\r\nPONG\r\n", allocatorToUse);
                break;
             }
             // falls-through
-         case "ECHO":
+         case ECHO:
             byte[] argument = arguments.get(0);
             ByteBuf bufferToWrite = stringToByteBufWithExtra("$" + argument.length + "\r\n", allocatorToUse, argument.length + 2);
             bufferToWrite.writeBytes(argument);
             bufferToWrite.writeByte('\r').writeByte('\n');
             break;
-         case "SET":
+         case SET:
             if (arguments.size() != 2) {
                return stageToReturn(SetOperation.performOperation(cache, arguments), ctx, SET_BICONSUMER);
             }
             return stageToReturn(cache.putAsync(arguments.get(0), arguments.get(1)), ctx, OK_BICONSUMER);
-         case "GET":
+         case GET:
             byte[] keyBytes = arguments.get(0);
 
             return stageToReturn(cache.getAsync(keyBytes), ctx, GET_BICONSUMER);
-         case "DEL":
+         case DEL:
             return performDelete(ctx, cache, arguments);
-         case "MGET":
+         case MGET:
             return performMget(ctx, cache, arguments);
-         case "MSET":
+         case MSET:
             return performMset(ctx, cache, arguments);
-         case "INCR":
+         case INCR:
             return stageToReturn(counterIncOrDec(cache, arguments.get(0), true), ctx, LONG_BICONSUMER);
-         case "DECR":
+         case DECR:
             return stageToReturn(counterIncOrDec(cache, arguments.get(0), false), ctx, LONG_BICONSUMER);
-         case "CONFIG":
+         case CONFIG:
             String getOrSet = new String(arguments.get(0), StandardCharsets.UTF_8);
             String name = new String(arguments.get(1), StandardCharsets.UTF_8);
 
@@ -120,34 +120,34 @@ public class Resp3Handler extends Resp3AuthHandler {
                stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", allocatorToUse);
             }
             break;
-         case "INFO":
+         case INFO:
             stringToByteBuf("-ERR not implemented yet\r\n", allocatorToUse);
             break;
-         case "PUBLISH":
+         case PUBLISH:
             // TODO: should we return the # of subscribers on this node?
             // We use expiration to remove the event values eventually while preventing them during high periods of
             // updates
             return stageToReturn(cache.putAsync(SubscriberHandler.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx, (ignore, alloc) -> {
                stringToByteBuf(":0\r\n", alloc);
             });
-         case "SUBSCRIBE":
+         case SUBSCRIBE:
             SubscriberHandler subscriberHandler = new SubscriberHandler(respServer, this);
             return subscriberHandler.handleRequest(ctx, type, arguments);
-         case "SELECT":
+         case SELECT:
             stringToByteBuf("-ERR Select not supported in cluster mode\r\n", allocatorToUse);
             break;
-         case "READWRITE":
-         case "READONLY":
+         case READWRITE:
+         case READONLY:
             // We are always in read write allowing read from backups
             OK_BICONSUMER.accept(null, allocatorToUse);
             break;
-         case "RESET":
+         case RESET:
             stringToByteBuf("+RESET\r\n", allocatorToUse);
             if (respServer.getConfiguration().authentication().enabled()) {
                return CompletableFuture.completedFuture(new Resp3AuthHandler(respServer));
             }
             break;
-         case "COMMAND":
+         case COMMAND:
             if (!arguments.isEmpty()) {
                stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", allocatorToUse);
                break;

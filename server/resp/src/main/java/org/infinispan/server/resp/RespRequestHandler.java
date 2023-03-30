@@ -32,8 +32,12 @@ public abstract class RespRequestHandler {
       }
    }
 
-   public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
+   public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
+      if (type == null) {
+         stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
+         return myStage;
+      }
       return actualHandleRequest(ctx, type, arguments);
    }
 
@@ -53,8 +57,8 @@ public abstract class RespRequestHandler {
     * @param arguments The remaining arguments to the command
     * @return stage that when complete returns the new handler to instate. This stage <b>must</b> be completed on the event loop
     */
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, String type, List<byte[]> arguments) {
-      if ("QUIT".equals(type)) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
+      if (type == RespCommand.QUIT) {
          ctx.close();
          return myStage;
       }
