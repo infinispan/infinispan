@@ -3,6 +3,8 @@ package org.infinispan.configuration.parsing;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jgroups.protocols.SIZE;
+
 /**
  * Enumerates the attributes used in Infinispan
  *
@@ -84,6 +86,7 @@ public enum Attribute {
     INDEX,
     INDEX_QUEUE_LENGTH("max-queue-length"),
     INDEXED_ENTITIES,
+    INDEXING_MODE,
     INITIAL_CLUSTER_SIZE,
     INITIAL_CLUSTER_TIMEOUT,
     INTERVAL,

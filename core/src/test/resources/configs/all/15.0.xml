@@ -217,6 +217,13 @@
             </indexed-entities>
          </indexing>
       </distributed-cache>
+      <distributed-cache name="indexed-manual-indexing">
+         <indexing enabled="true" indexing-mode="manual">
+            <indexed-entities>
+               <indexed-entity>TheEntity</indexed-entity>
+            </indexed-entities>
+         </indexing>
+      </distributed-cache>
       <local-cache name="custom-default-max-results">
          <query default-max-results="10" />
       </local-cache>

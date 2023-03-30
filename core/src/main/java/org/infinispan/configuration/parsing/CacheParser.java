@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.IndexMergeConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexWriterConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
@@ -1754,6 +1755,9 @@ public class CacheParser implements ConfigurationParser {
                break;
             case PATH:
                builder.indexing().path(value);
+               break;
+            case INDEXING_MODE:
+               builder.indexing().indexingMode(IndexingMode.requireValid(value));
                break;
             case INDEXED_ENTITIES:
                builder.indexing().addIndexedEntities(reader.getListAttributeValue(i));

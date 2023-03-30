@@ -54,6 +54,11 @@ abstract class AbstractIndexingConfigurationChildBuilder
    }
 
    @Override
+   public IndexingConfigurationBuilder indexingMode(IndexingMode indexingMode) {
+      return indexingBuilder.indexingMode(indexingMode);
+   }
+
+   @Override
    public IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass) {
       return indexingBuilder.addKeyTransformer(keyClass, keyTransformerClass);
    }
