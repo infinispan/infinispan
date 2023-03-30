@@ -1,25 +1,18 @@
 package org.infinispan.quarkus.server.runtime.graal;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
-
-import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.core.logging.Log;
-import org.infinispan.server.core.transport.NettyTransport;
-
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.ServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.DefaultThreadFactory;
+import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.core.transport.NettyTransport;
+
+import java.util.concurrent.ThreadFactory;
 
 public class SubstituteNettyClasses {
 }

@@ -36,7 +36,7 @@ public class TestAdvancedExternalizer {
 
             @Override
             public Set<Class<? extends IdViaConfigObj>> getTypeClasses() {
-                return Util.<Class<? extends IdViaConfigObj>> asSet(IdViaConfigObj.class);
+                return Util.asSet(IdViaConfigObj.class);
             }
 
             @Override
@@ -72,40 +72,8 @@ public class TestAdvancedExternalizer {
 
             @Override
             public Set<Class<? extends IdViaAnnotationObj>> getTypeClasses() {
-                return Util.<Class<? extends IdViaAnnotationObj>> asSet(IdViaAnnotationObj.class);
+                return Util.asSet(IdViaAnnotationObj.class);
             }
         }
     }
-
-    public static class IdViaBothObj {
-        int age;
-
-        public IdViaBothObj setAge(int age) {
-            this.age = age;
-            return this;
-        }
-
-        public static class Externalizer extends AbstractExternalizer<IdViaBothObj> {
-            @Override
-            public void writeObject(ObjectOutput output, IdViaBothObj object) throws IOException {
-                output.writeInt(object.age);
-            }
-
-            @Override
-            public IdViaBothObj readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-                return new IdViaBothObj().setAge(input.readInt());
-            }
-
-            @Override
-            public Integer getId() {
-                return 9012;
-            }
-
-            @Override
-            public Set<Class<? extends IdViaBothObj>> getTypeClasses() {
-                return Util.<Class<? extends IdViaBothObj>> asSet(IdViaBothObj.class);
-            }
-        }
-    }
-
 }

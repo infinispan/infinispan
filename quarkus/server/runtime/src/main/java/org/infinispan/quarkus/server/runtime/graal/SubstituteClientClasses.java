@@ -80,4 +80,3 @@ final class SubstituteRemoteCacheImpl {
 // TODO sort out duplication with quarkus infinispan-client extension
 public class SubstituteClientClasses {
 }
-

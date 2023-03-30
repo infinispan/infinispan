@@ -45,4 +45,3 @@ final class Target_org_wildfly_security_x500_util_X500PrincipalUtil {
       return null;
    }
 }
-
