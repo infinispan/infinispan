@@ -56,9 +56,9 @@ root request
      execute
    ;
 
-command returns String switch singleByte
-   : { BULK_STRING }? bulkString[longProcessor] { bulkString }
-   | { SIMPLE_STRING }? simpleString { simpleString }
+command returns RespCommand switch singleByte
+   : { BULK_STRING }? bulkCommand[longProcessor]
+   | { SIMPLE_STRING }? simpleCommand
    | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
    ;
 number: readNumber[longProcessor] { readNumber -= 1; };

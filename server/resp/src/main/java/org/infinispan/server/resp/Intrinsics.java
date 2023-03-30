@@ -29,6 +29,18 @@ public class Intrinsics {
       return simpleString;
    }
 
+   public static RespCommand simpleCommand(ByteBuf buf) {
+      // Find the end LF (would be nice to do this without iterating twice)
+      int offset = buf.forEachByte(ByteProcessor.FIND_LF);
+      if (offset <= 0) {
+         return null;
+      }
+      if (buf.getByte(offset - 1) != '\r') {
+         throw new IllegalStateException("No matching \r character found before \n");
+      }
+      return RespCommand.fromByteBuf(buf, offset - 1 - buf.readerIndex());
+   }
+
    public static long readNumber(ByteBuf buf, Resp2LongProcessor longProcessor) {
       long value = longProcessor.getValue(buf);
       // The longProcessor can technically read up to only /r, we need to ensure there is /r and /n
@@ -53,7 +65,11 @@ public class Intrinsics {
       return data;
    }
 
-   public static String bulkString(ByteBuf buf, Resp2LongProcessor longProcessor) {
+   /**
+    * This method is only used for numerics that when parsed must be 0 or positive
+    * If a valid number is returned, then the ByteBuf will have its read index moved to the next element
+    */
+   private static int readSizeAndCheckRemainder(ByteBuf buf, Resp2LongProcessor longProcessor) {
       buf.markReaderIndex();
       int pos = buf.readerIndex();
       long longSize = readNumber(buf, longProcessor);
@@ -62,11 +78,22 @@ public class Intrinsics {
       }
       // If we didn't read any bytes then the number wasn't parsed properly
       if (pos == buf.readerIndex()) {
-         return null;
+         return -1;
       }
       int size = (int) longSize;
+      if (size < 0) {
+         throw new IllegalArgumentException("Number cannot be negative");
+      }
       if (buf.readableBytes() < size + TERMINATOR_LENGTH) {
          buf.resetReaderIndex();
+         return -1;
+      }
+      return size;
+   }
+
+   public static String bulkString(ByteBuf buf, Resp2LongProcessor longProcessor) {
+      int size = readSizeAndCheckRemainder(buf, longProcessor);
+      if (size == -1) {
          return null;
       }
       String stringValue = buf.toString(buf.readerIndex(), size, StandardCharsets.US_ASCII);
@@ -74,20 +101,17 @@ public class Intrinsics {
       return stringValue;
    }
 
-   public static byte[] bulkArray(ByteBuf buf, Resp2LongProcessor longProcessor) {
-      buf.markReaderIndex();
-      int pos = buf.readerIndex();
-      long longSize = readNumber(buf, longProcessor);
-      if (longSize > Integer.MAX_VALUE) {
-         throw new IllegalArgumentException("Bytes cannot be longer than " + Integer.MAX_VALUE);
-      }
-      // If we didn't read any bytes then the number wasn't parsed properly
-      if (pos == buf.readerIndex()) {
+   public static RespCommand bulkCommand(ByteBuf buf, Resp2LongProcessor longProcessor) {
+      int size = readSizeAndCheckRemainder(buf, longProcessor);
+      if (size == -1) {
          return null;
       }
-      int size = (int) longSize;
-      if (buf.readableBytes() < size + TERMINATOR_LENGTH) {
-         buf.resetReaderIndex();
+      return RespCommand.fromByteBuf(buf, size);
+   }
+
+   public static byte[] bulkArray(ByteBuf buf, Resp2LongProcessor longProcessor) {
+      int size = readSizeAndCheckRemainder(buf, longProcessor);
+      if (size == -1) {
          return null;
       }
       byte[] array = new byte[size];
