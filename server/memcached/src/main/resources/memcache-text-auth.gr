@@ -1,0 +1,58 @@
+// Memcached text protocol
+namespace mc;
+
+// Target class
+class org.infinispan.server.memcached.text.TextAuthDecoderImpl extends TextAuthDecoder;
+
+// static final field values are literals
+constants org.infinispan.server.memcached.text.TextConstants;
+
+// methods vInt, vLong, array, byte...
+intrinsics org.infinispan.server.memcached.text.TextIntrinsics;
+
+import java.time.Instant;
+import java.time.temporal.Temporal;
+import org.infinispan.server.memcached.MemcachedServer;
+
+init {
+   private boolean deadEnd = false;
+
+   public TextAuthDecoderImpl(MemcachedServer server) {
+      super(server);
+   }
+}
+
+exceptionally {
+   log.trace("Parsing error", t);
+   state = 0;
+}
+
+deadend {
+   if (!deadEnd) {
+      log.tracef("Invalid state of parsing");
+      deadEnd = true;
+   }
+   state = 0;
+}
+
+root request
+   : command_name { requestStart = Instant.now(); } parameters
+   ;
+
+key: text_key;
+command_name: command;
+exptime: long_number;
+flags: int_number;
+vsize: int_number;
+value returns byte[]
+   : { vsize > 0 }? fixedArray[vsize]
+   | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
+   ;
+eol: short;
+
+parameters switch command_name
+// Operations
+   : { set }? key flags exptime vsize eol value eol { auth(value) }
+// Unknown
+   | { throw new IllegalArgumentException("Unknown command " + command_name); }
+   ;

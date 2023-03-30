@@ -19,7 +19,7 @@
       <xi:include href="security/none.xml"/>
 
       <endpoints>
-         <xi:include href="endpoints/default.xml"/>
+         <xi:include href="endpoints/noauth.xml"/>
       </endpoints>
    </server>
 </infinispan>

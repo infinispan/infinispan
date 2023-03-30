@@ -13,6 +13,8 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import net.spy.memcached.ConnectionFactoryBuilder;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
@@ -88,6 +90,10 @@ public interface InfinispanServerDriver {
    void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName);
 
    void applyTrustStore(RestClientConfigurationBuilder builder, String certificateName, String type, String provider);
+
+   void applyTrustStore(ConnectionFactoryBuilder builder, String certificateName);
+
+   void applyTrustStore(ConnectionFactoryBuilder builder, String certificateName, String type, String provider);
 
    /**
     * Pauses a server. Equivalent to kill -SIGSTOP

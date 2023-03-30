@@ -277,10 +277,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public ChannelInitializer<Channel> getInitializer() {
       if (configuration.idleTimeout() > 0)
-         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), getDecoder()),
+         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), this::getDecoder),
                                       new TimeoutEnabledChannelInitializer<>(this));
       else // Idle timeout logic is disabled with -1 or 0 values
-         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), getDecoder()));
+         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), this::getDecoder));
    }
 
    private <T> void loadFilterConverterFactories(Class<T> c, BiConsumer<String, T> biConsumer) {

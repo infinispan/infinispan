@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetAddress;
 
+import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.router.configuration.builder.RouterConfigurationBuilder;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.RouteSource;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class ConfigurationTest {
 
@@ -19,7 +21,7 @@ public class ConfigurationTest {
 
         RouteSource s1 = new RouteSource() {
         };
-        RouteDestination d1 = () -> null;
+        RouteDestination d1 = new RouteDestination("test", Mockito.mock(ProtocolServer.class)) {};
 
         //when
         multiTenantConfigurationBuilder

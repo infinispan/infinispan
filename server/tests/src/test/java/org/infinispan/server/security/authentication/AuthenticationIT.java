@@ -1,5 +1,6 @@
 package org.infinispan.server.security.authentication;
 
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -13,13 +14,14 @@ import org.junit.runners.Suite;
  * @since 10.0
  **/
 @RunWith(Suite.class)
-@Suite.SuiteClasses({HotRodAuthentication.class, RestAuthentication.class, RespAuthentication.class})
+@Suite.SuiteClasses({HotRodAuthentication.class, RestAuthentication.class, MemcachedAuthentication.class, RespAuthentication.class})
 @Category(Security.class)
 public class AuthenticationIT {
 
    @ClassRule
    public static final InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTest.xml")
-                                    .numServers(2)
-                                    .build();
+               .runMode(ServerRunMode.CONTAINER)
+               .numServers(2)
+               .build();
 }

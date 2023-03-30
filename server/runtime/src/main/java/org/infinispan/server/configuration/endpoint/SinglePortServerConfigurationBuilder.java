@@ -19,10 +19,10 @@ import org.infinispan.server.router.configuration.builder.SinglePortRouterBuilde
  **/
 public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<SinglePortRouterConfiguration, SinglePortServerConfigurationBuilder, NoAuthenticationConfiguration> implements ConfigurationBuilderParent {
 
-   private RoutingBuilder routing = new RoutingBuilder(this);
-   private HotRodRouterBuilder hotRodRouter = new HotRodRouterBuilder(this);
-   private RestRouterBuilder restRouter = new RestRouterBuilder(this);
-   private SinglePortRouterBuilder singlePortRouter = new SinglePortRouterBuilder(this);
+   private final RoutingBuilder routing = new RoutingBuilder(this);
+   private final HotRodRouterBuilder hotRodRouter = new HotRodRouterBuilder(this);
+   private final RestRouterBuilder restRouter = new RestRouterBuilder(this);
+   private final SinglePortRouterBuilder singlePortRouter = new SinglePortRouterBuilder(this);
 
    public SinglePortServerConfigurationBuilder() {
       super(HotRodServer.DEFAULT_HOTROD_PORT, SinglePortRouterConfiguration.attributeDefinitionSet());
@@ -87,7 +87,7 @@ public class SinglePortServerConfigurationBuilder extends ProtocolServerConfigur
       return singlePortRouter;
    }
 
-   public void applyConfigurationToProtocol(ProtocolServerConfigurationBuilder builder) {
+   public void applyConfigurationToProtocol(ProtocolServerConfigurationBuilder<?, ?, ?> builder) {
       if (attributes.attribute(ProtocolServerConfiguration.HOST).isModified()) {
          builder.host(attributes.attribute(ProtocolServerConfiguration.HOST).get());
       }

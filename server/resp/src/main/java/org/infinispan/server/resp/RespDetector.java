@@ -9,8 +9,6 @@ import org.infinispan.server.core.transport.AccessControlFilter;
 import org.infinispan.server.resp.logging.Log;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
@@ -49,23 +47,19 @@ public class RespDetector extends ProtocolDetector {
       } else if (in.getCharSequence(i, 5, StandardCharsets.US_ASCII).equals("HELLO")) {
          installRespHandler(ctx);
       }
-      // Trigger any protocol-specific rules
-      ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
       // Remove this
       ctx.pipeline().remove(this);
    }
 
    private void installRespHandler(ChannelHandlerContext ctx) {
       // We found the RESP handshake, let's do some pipeline surgery
-      ChannelHandlerAdapter dummyHandler = new ChannelHandlerAdapter() {};
-      ctx.pipeline().addAfter(NAME, "dummy", dummyHandler);
-      ChannelHandler channelHandler = ctx.pipeline().removeLast();
-      // Remove everything else
-      while (channelHandler != dummyHandler) {
-         channelHandler = ctx.pipeline().removeLast();
-      }
+      trimPipeline(ctx);
       // Add the RESP server handler
       ctx.pipeline().addLast(server.getInitializer());
+      // Make sure to fire registered on the newly installed handlers
+      ctx.fireChannelRegistered();
       Log.SERVER.tracef("Detected RESP connection %s", ctx);
+      // Trigger any protocol-specific rules
+      ctx.pipeline().fireUserEventTriggered(AccessControlFilter.EVENT);
    }
 }

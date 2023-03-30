@@ -154,11 +154,11 @@ public class HotRodTestingUtil {
          public ChannelInitializer<Channel> getInitializer() {
             if (configuration.idleTimeout() > 0)
                return new NettyInitializers(
-                     new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
+                     new NettyChannelInitializer<>(this, transport, getEncoder(), this::getDecoder),
                      new TimeoutEnabledChannelInitializer<>(this), new TestHandlersChannelInitializer());
             else // Idle timeout logic is disabled with -1 or 0 values
                return new NettyInitializers(
-                     new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
+                     new NettyChannelInitializer<>(this, transport, getEncoder(), this::getDecoder),
                      new TestHandlersChannelInitializer());
          }
       };

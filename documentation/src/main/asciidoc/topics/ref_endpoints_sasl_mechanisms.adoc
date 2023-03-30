@@ -1,7 +1,7 @@
 [id='sasl-authentication-mechanisms_{context}']
 = SASL authentication mechanisms
 
-{brandname} Server supports the following SASL authentications mechanisms with Hot Rod endpoints:
+{brandname} Server supports the following SASL authentications mechanisms with Hot Rod and Memcached binary protocol endpoints:
 
 [%autowidth,cols="1,1,1,1",stripes=even]
 |===

@@ -50,7 +50,9 @@ import org.infinispan.server.configuration.security.TrustStoreRealmConfiguration
 import org.infinispan.server.configuration.security.UserPropertiesConfigurationBuilder;
 import org.infinispan.server.core.configuration.IpFilterConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.kohsuke.MetaInfServices;
@@ -1539,6 +1541,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (endpoint.connectors().isEmpty()) {
          endpoint.addConnector(HotRodServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          endpoint.addConnector(RespServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
+         endpoint.addConnector(MemcachedServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          configureEndpoint(reader.getProperties(), endpoint, rest);
       }
@@ -1649,6 +1652,115 @@ public class ServerConfigurationParser implements ConfigurationParser {
          }
       } else {
          throw ParseUtils.unexpectedElement(reader, elementName);
+      }
+   }
+
+   public static String parseSasl(ConfigurationReader reader, SaslConfigurationBuilder sasl) {
+      String serverPrincipal = null;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         org.infinispan.server.hotrod.configuration.Attribute attribute = org.infinispan.server.hotrod.configuration.Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case SERVER_PRINCIPAL: {
+               serverPrincipal = value;
+               break;
+            }
+            case SERVER_NAME: {
+               sasl.serverName(value);
+               break;
+            }
+            case MECHANISMS: {
+               for (String mech : reader.getListAttributeValue(i)) {
+                  sasl.addAllowedMech(mech);
+               }
+               break;
+            }
+            case QOP: {
+               for (String qop : reader.getListAttributeValue(i)) {
+                  sasl.addQOP(qop);
+               }
+               break;
+            }
+            case STRENGTH: {
+               for (String s : reader.getListAttributeValue(i)) {
+                  sasl.addStrength(s);
+               }
+               break;
+            }
+            case POLICY: {
+               for (String p : reader.getListAttributeValue(i)) {
+                  sasl.addPolicy(p);
+               }
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      final EnumSet<org.infinispan.server.hotrod.configuration.Element> visited = EnumSet.noneOf(org.infinispan.server.hotrod.configuration.Element.class);
+      while (reader.inTag()) {
+         final org.infinispan.server.hotrod.configuration.Element element = org.infinispan.server.hotrod.configuration.Element.forName(reader.getLocalName());
+         switch (element) {
+            case POLICY: {
+               if (reader.getSchema().since(13, 0) || visited.contains(element)) {
+                  throw ParseUtils.unexpectedElement(reader);
+               } else {
+                  visited.add(element);
+               }
+               parsePolicy(reader, sasl);
+               break;
+            }
+            case PROPERTIES: {
+               // JSON/YAML map properties to attributes
+               for (int i = 0; i < reader.getAttributeCount(); i++) {
+                  sasl.addProperty(reader.getAttributeName(i), reader.getAttributeValue(i));
+               }
+               ParseUtils.requireNoContent(reader);
+               break;
+            }
+            case PROPERTY: {
+               sasl.addProperty(ParseUtils.requireSingleAttribute(reader, org.infinispan.server.hotrod.configuration.Attribute.NAME), reader.getElementText());
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+      return serverPrincipal;
+   }
+
+   private static void parsePolicy(ConfigurationReader reader, SaslConfigurationBuilder sasl) {
+      if (reader.getAttributeCount() > 0) {
+         throw ParseUtils.unexpectedAttribute(reader, 0);
+      }
+      // Handle nested elements.
+      final EnumSet<org.infinispan.server.hotrod.configuration.Element> visited = EnumSet.noneOf(org.infinispan.server.hotrod.configuration.Element.class);
+      while (reader.inTag()) {
+         final org.infinispan.server.hotrod.configuration.Element element = org.infinispan.server.hotrod.configuration.Element.forName(reader.getLocalName());
+         if (visited.contains(element)) {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         visited.add(element);
+         String value = ParseUtils.readStringAttributeElement(reader, org.infinispan.server.hotrod.configuration.Attribute.VALUE.toString());
+         switch (element) {
+            case FORWARD_SECRECY:
+            case NO_ACTIVE:
+            case NO_ANONYMOUS:
+            case NO_DICTIONARY:
+            case NO_PLAIN_TEXT:
+            case PASS_CREDENTIALS: {
+               if ("true".equals(value)) {
+                  sasl.addPolicy(element.toString());
+               }
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
       }
    }
 }

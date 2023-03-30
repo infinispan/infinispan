@@ -84,7 +84,7 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       assertEquals("v1", cacheFactory.getHotRodCache().get(key));
    }
 
-   public void testRestPutEmbeddedMemcachedHotRodGetTest() throws Exception {
+   public void testRestPutEmbeddedMemcachedHotRodGetTest() {
       final String key = "3";
 
       // 1. Put with REST

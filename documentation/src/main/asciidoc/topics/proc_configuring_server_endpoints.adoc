@@ -1,7 +1,7 @@
 [id='configuring-server-endpoints_{context}']
 = Configuring {brandname} Server endpoints
 
-Control how Hot Rod and REST endpoints bind to sockets and use security realm configuration.
+Control how the different protocol endpoints bind to sockets and use security realm configuration.
 You can also configure multiple endpoints and disable administrative capabilities.
 
 [NOTE]

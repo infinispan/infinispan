@@ -17,6 +17,7 @@ public enum Attribute {
    IO_THREADS,
    NAME,
    PROTOCOL,
+   SECURITY_REALM,
    SOCKET_BINDING;
 
    private static final Map<String, Attribute> ATTRIBUTES;

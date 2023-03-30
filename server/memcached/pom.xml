@@ -36,8 +36,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>net.spy</groupId>
-         <artifactId>spymemcached</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>memcached-client</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -54,6 +54,26 @@
 
    <build>
       <plugins>
+         <plugin>
+            <groupId>org.infinispan.maven-plugins</groupId>
+            <artifactId>protocol-parser-generator</artifactId>
+            <configuration>
+               <files>
+                  <file>${basedir}/src/main/resources/memcache-binary-auth.gr</file>
+                  <file>${basedir}/src/main/resources/memcache-binary-op.gr</file>
+                  <file>${basedir}/src/main/resources/memcache-text-auth.gr</file>
+                  <file>${basedir}/src/main/resources/memcache-text-op.gr</file>
+               </files>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>generate</goal>
+                  </goals>
+                  <phase>generate-sources</phase>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

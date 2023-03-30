@@ -1,0 +1,85 @@
+// Memcached binary protocol
+namespace mc;
+
+// Target class
+class org.infinispan.server.memcached.binary.BinaryAuthDecoderImpl extends BinaryAuthDecoder;
+
+// static final field values are literals
+constants org.infinispan.server.memcached.binary.BinaryConstants;
+
+// methods vInt, vLong, array, byte...
+intrinsics org.infinispan.server.memcached.binary.BinaryIntrinsics;
+
+import java.time.Instant;
+import java.time.temporal.Temporal;
+import org.infinispan.server.memcached.MemcachedServer;
+
+init {
+   private boolean deadEnd = false;
+
+   public BinaryAuthDecoderImpl(MemcachedServer server) {
+      super(server);
+   }
+}
+
+exceptionally {
+   log.trace("Parsing error", t);
+   state = 0;
+}
+
+deadend {
+   if (!deadEnd) {
+      log.tracef("Invalid state of parsing");
+      deadEnd = true;
+   }
+   state = 0;
+}
+
+// this is the root
+root request
+   : magic { requestStart = Instant.now(); }
+     header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
+     parameters
+   ;
+
+header returns BinaryHeader
+   : { magic != MAGIC_REQ }? { throw new IllegalStateException("Error reading magic byte or message id: " + magic); }
+   | { deadEnd = false } op keyLength extrasLength dataType vbucketId totalBodyLength opaque cas valueLength
+     { new BinaryHeader(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
+   ;
+
+magic: byte;
+op: opCode;
+keyLength: short;
+extrasLength: byte;
+dataType: byte;
+vbucketId: short;
+totalBodyLength: int;
+opaque: int;
+cas: long;
+delta: long;
+initial: long;
+verbosity: int;
+
+valueLength returns int
+   : { totalBodyLength - keyLength - extrasLength };
+
+key returns byte[]
+   :  { keyLength > 0 }? fixedArray[keyLength]
+   |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
+   ;
+
+value returns byte[]
+   : { valueLength > 0 }? fixedArray[valueLength]
+   |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
+   ;
+
+parameters switch op
+// Operations
+   : { SASL_LIST_MECHS }? { saslListMechs(header) }
+   | { SASL_AUTH }? key value { saslAuth(header, key, value) }
+   | { SASL_STEP }? key value { saslStep(header, key, value) }
+   | { CONFIG_GET }? key { config(header, key) }
+// Unknown
+   | { throw new IllegalArgumentException("Unknown operation " + op); }
+   ;

@@ -1,0 +1,4 @@
+[[memcached_client_protocol_detection]]
+= Protocol detection
+
+The {brandname} Memcached connector supports both manual and automatic protocol configuration by setting the `protocol` attribute in the `memcached-connector` element to one of `TEXT`, `BINARY` and `AUTO`. Automatic detection depends on whether the Memcached connector is on a dedicated socket binding or is part of a single port endpoint. Detection of text protocol clients in a single port endpoint requires authentication, in order to disambiguate the request from other protocols.

@@ -1,9 +1,10 @@
 [[memcached_client_encoding]]
 = Client Encoding
 
-The Memcached text protocol assumes data values read and written by clients are raw bytes. The support for type negotiation will come
-with link:https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped#data-types[the Memcached binary protocol] implementation.
+The Memcached text protocol assumes data values read and written by clients are raw bytes. Type negotiation was
+implemented in link:https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped#data-types[the Memcached binary protocol],
+but no alternative data types have been introduced since.
 
 It's not possible for a Memcached client to negotiate the data type to obtain data from the server or send data in different formats. The server can optionally be configured to handle values encoded with a certain Media Type. By setting the `client-encoding` attribute in the `memcached-connector` element, the server will return content in this configured format, and clients can also send data in this format.
 
-The `client-encoding` is useful when a single cache is accessed from multiple remote endpoints (Rest, HotRod, Memcached) and it allows users to tailor the responses/requests to Memcached text clients. For more infomarmation on interoperability between endpoints, consult the endpoint interoperability documentation.
+The `client-encoding` is useful when a single cache is accessed from multiple remote endpoints (Rest, HotRod, Memcached) and it allows users to tailor the responses/requests to Memcached text clients. For more information on interoperability between endpoints, consult the endpoint interoperability documentation.

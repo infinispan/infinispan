@@ -16,7 +16,7 @@ import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespAuthenticationConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
-import org.infinispan.server.security.ElytronRESPAuthenticator;
+import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
@@ -144,7 +144,7 @@ public class RespServerConfigurationParser implements ConfigurationParser {
       if (securityRealmName == null) {
          throw Server.log.authenticationWithoutSecurityRealm();
       }
-      builder.authenticator(new ElytronRESPAuthenticator(securityRealmName));
+      builder.authenticator(new ElytronUsernamePasswordAuthenticator(securityRealmName));
    }
 
    private void parseEncryption(ConfigurationReader reader, ServerConfigurationBuilder serverBuilder, EncryptionConfigurationBuilder encryption, String securityRealmName) {

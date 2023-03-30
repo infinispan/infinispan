@@ -5,14 +5,14 @@ import org.junit.Test;
 
 public class HotRodServerRouteDestinationTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = NullPointerException.class)
     public void shouldValidateName() {
-        new HotRodServerRouteDestination(null, new HotRodServer()).validate();
+        new HotRodServerRouteDestination(null, new HotRodServer());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = NullPointerException.class)
     public void shouldValidateChannelInitializer() {
-        new HotRodServerRouteDestination("test", null).validate();
+        new HotRodServerRouteDestination("test", null);
     }
 
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientXSiteDriver;
 import org.infinispan.server.test.core.TestClient;
@@ -100,6 +101,11 @@ public class InfinispanXSiteServerExtension implements
    @Override
    public RestTestClientDriver rest(String siteName) {
       return testClients.get(siteName).rest();
+   }
+
+   @Override
+   public MemcachedTestClientDriver memcached(String siteName) {
+      return testClients.get(siteName).memcached();
    }
 
    @Override

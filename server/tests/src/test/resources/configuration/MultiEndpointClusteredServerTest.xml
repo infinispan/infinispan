@@ -20,7 +20,7 @@
 
       <endpoints>
 
-         <xi:include href="endpoints/default.xml"/>
+         <xi:include href="endpoints/noauth.xml"/>
 
          <xi:include href="endpoints/alternate.xml"/>
 

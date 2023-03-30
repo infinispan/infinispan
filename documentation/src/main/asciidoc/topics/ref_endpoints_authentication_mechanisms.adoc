@@ -18,19 +18,19 @@ Currently, you cannot use the Lightweight Directory Access Protocol (LDAP) proto
 |Security realm |SASL authentication mechanism
 
 |Property realms and LDAP realms
-|SCRAM-+*+, DIGEST-+*+, `+SCRAM-*+`
+|`SCRAM`, `DIGEST`
 
 |Token realms
-|OAUTHBEARER
+|`OAUTHBEARER`
 
 |Trust realms
-|EXTERNAL
+|`EXTERNAL`
 
 |Kerberos identities
-|GSSAPI, GS2-KRB5
+|`GSSAPI`, `GS2-KRB5`
 
 |SSL/TLS identities
-|PLAIN
+|`PLAIN`
 |===
 
 .REST endpoints
@@ -42,17 +42,88 @@ Currently, you cannot use the Lightweight Directory Access Protocol (LDAP) proto
 |Security realm |HTTP authentication mechanism
 
 |Property realms and LDAP realms
-|DIGEST
+|`DIGEST`
 
 |Token realms
-|BEARER_TOKEN
+|`BEARER_TOKEN`
 
 |Trust realms
-|CLIENT_CERT
+|`CLIENT_CERT`
 
 |Kerberos identities
-|SPNEGO
+|`SPNEGO`
 
 |SSL/TLS identities
-|BASIC
+|`BASIC`
 |===
+
+.Memcached endpoints
+
+{brandname} Server enables the following SASL authentication mechanisms for Memcached binary protocol endpoints when your configuration includes the corresponding security realm:
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Security realm |SASL authentication mechanism
+
+|Property realms and LDAP realms
+|`SCRAM`, `DIGEST`
+
+|Token realms
+|`OAUTHBEARER`
+
+|Trust realms
+|`EXTERNAL`
+
+|Kerberos identities
+|`GSSAPI, GS2-KRB5`
+
+|SSL/TLS identities
+|`PLAIN`
+|===
+
+{brandname} Server enables authentication on Memcached text protocol endpoints only with security realms which support password-based authentication:
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Security realm |Memcached text authentication
+
+|Property realms and LDAP realms
+|Yes
+
+|Token realms
+|No
+
+|Trust realms
+|No
+
+|Kerberos identities
+|No
+
+|SSL/TLS identities
+|No
+|===
+
+.RESP endpoints
+
+{brandname} Server enables authentication on RESP endpoints only with security realms which support password-based authentication:
+
+[%autowidth,cols="1,1",stripes=even]
+|===
+|Security realm |RESP authentication
+
+|Property realms and LDAP realms
+|Yes
+
+|Token realms
+|No
+
+|Trust realms
+|No
+
+|Kerberos identities
+|No
+
+|SSL/TLS identities
+|No
+|===
+

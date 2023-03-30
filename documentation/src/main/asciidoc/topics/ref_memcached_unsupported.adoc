@@ -8,7 +8,6 @@ There are differences in the nature of the original memcached implementation, wh
 
 .Unsupported statistics
 
-*  pid
 *  pointer_size
 *  rusage_user
 *  rusage_system
@@ -36,4 +35,9 @@ Since the arguments that can be sent to the Memcached server are not documented,
 Memcached no longer honors the optional hold time parameter for the delete command. The {brandname} based Memcached server does not implement the feature.
 
 == Verbosity Command
+
 The verbosity command is not supported since {brandname} logging cannot be simplified to defining the logging level alone.
+
+== Meta protocol
+
+The Memcached meta protocol was introduced in 1.6. {brandname}'s connector doesn't support it yet.

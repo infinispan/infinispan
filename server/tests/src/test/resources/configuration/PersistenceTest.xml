@@ -21,7 +21,7 @@
       <xi:include href="datasources/default.xml"/>
 
       <endpoints>
-         <xi:include href="endpoints/default.xml"/>
+         <xi:include href="endpoints/noauth.xml"/>
       </endpoints>
    </server>
 </infinispan>

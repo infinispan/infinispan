@@ -12,7 +12,9 @@ public enum Element {
    UNKNOWN(null),
 
    MEMCACHED_CONNECTOR,
-   ;
+   AUTHENTICATION,
+   ENCRYPTION,
+   SASL;
 
    private static final Map<String, Element> ELEMENTS;
 

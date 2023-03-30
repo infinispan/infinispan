@@ -15,15 +15,20 @@ import org.infinispan.server.configuration.SocketBindingsConfiguration;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration;
 import org.infinispan.server.configuration.security.RealmConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
+import org.infinispan.server.core.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
+import org.infinispan.server.core.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.memcached.configuration.MemcachedAuthenticationConfigurationBuilder;
+import org.infinispan.server.memcached.configuration.MemcachedProtocol;
+import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespAuthenticationConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
-import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticator;
+import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -117,7 +122,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
    public EndpointConfiguration create(SocketBindingsConfiguration bindingsConfiguration, SecurityConfiguration securityConfiguration) {
       boolean implicitSecurity = implicitConnectorSecurity && securityRealm() != null;
       bindingsConfiguration.applySocketBinding(attributes.attribute(EndpointConfiguration.SOCKET_BINDING).get(), singlePortBuilder, singlePortBuilder);
-      List<ProtocolServerConfiguration> connectors = new ArrayList<>(connectorBuilders.size());
+      List<ProtocolServerConfiguration<?, ?>> connectors = new ArrayList<>(connectorBuilders.size());
       for (ProtocolServerConfigurationBuilder<?, ?, ?> builder : connectorBuilders) {
          bindingsConfiguration.applySocketBinding(builder.socketBinding(), builder, singlePortBuilder);
          if (implicitSecurity) {
@@ -127,6 +132,8 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                enableImplicitAuthentication(securityConfiguration, securityRealm(), (RestServerConfigurationBuilder) builder);
             } else if (builder instanceof RespServerConfigurationBuilder) {
                builder = enableImplicitAuthentication(securityConfiguration, securityRealm(), (RespServerConfigurationBuilder) builder);
+            } else if (builder instanceof MemcachedServerConfigurationBuilder) {
+               builder = enableImplicitAuthentication(securityConfiguration, securityRealm(), (MemcachedServerConfigurationBuilder) builder);
             }
          }
          if (builder != null) {
@@ -157,56 +164,55 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       }
       ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
       // Only add implicit mechanisms if the user has not set any explicitly
-      if (!authentication.sasl().hasMechanisms()) {
+      enableSaslAuthentication(authentication, authentication.sasl(), securityRealm, "hotrod/", "Hot Rod");
+   }
+
+   private static void enableSaslAuthentication(AuthenticationConfigurationBuilder<?> authentication, SaslConfigurationBuilder sasl, ServerSecurityRealm securityRealm, String identityPrefix, String name) {
+      if (!sasl.hasMechanisms()) {
          String serverPrincipal = null;
          for (KerberosSecurityFactoryConfiguration identity : securityRealm.getServerIdentities().kerberosConfigurations()) {
-            if (identity.getPrincipal().startsWith("hotrod/")) {
-               authentication
-                     .enable()
-                     .sasl().addMechanisms(SaslMechanismInformation.Names.GS2_KRB5, SaslMechanismInformation.Names.GSSAPI);
+            if (identity.getPrincipal().startsWith(identityPrefix)) {
+               authentication.enable();
+               sasl.addMechanisms(SaslMechanismInformation.Names.GS2_KRB5, SaslMechanismInformation.Names.GSSAPI);
                serverPrincipal = identity.getPrincipal();
                break;
             }
-            Server.log.debugf("Enabled Kerberos mechanisms for Hot Rod using principal '%s'", identity.getPrincipal());
+            Server.log.debugf("Enabled Kerberos mechanisms for %s using principal '%s'", name, identity.getPrincipal());
          }
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.TOKEN)) {
-            authentication
-                  .enable()
-                  .sasl().addMechanisms(SaslMechanismInformation.Names.OAUTHBEARER);
-            Server.log.debug("Enabled OAUTHBEARER mechanism for Hot Rod");
+            authentication.enable();
+            sasl.addMechanisms(SaslMechanismInformation.Names.OAUTHBEARER);
+            Server.log.debugf("Enabled OAUTHBEARER mechanism for %s", name);
          }
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.TRUST)) {
-            authentication
-                  .enable()
-                  .sasl().addMechanisms(SaslMechanismInformation.Names.EXTERNAL);
-            Server.log.debug("Enabled EXTERNAL mechanism for Hot Rod");
+            authentication.enable();
+            sasl.addMechanisms(SaslMechanismInformation.Names.EXTERNAL);
+            Server.log.debugf("Enabled EXTERNAL mechanism for %s", name);
          }
          if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED)) {
-            authentication
-                  .enable()
-                  .sasl().addMechanisms(
-                        SaslMechanismInformation.Names.SCRAM_SHA_512,
-                        SaslMechanismInformation.Names.SCRAM_SHA_384,
-                        SaslMechanismInformation.Names.SCRAM_SHA_256,
-                        SaslMechanismInformation.Names.SCRAM_SHA_1,
-                        SaslMechanismInformation.Names.DIGEST_SHA_512,
-                        SaslMechanismInformation.Names.DIGEST_SHA_384,
-                        SaslMechanismInformation.Names.DIGEST_SHA_256,
-                        SaslMechanismInformation.Names.DIGEST_SHA,
-                        SaslMechanismInformation.Names.CRAM_MD5,
-                        SaslMechanismInformation.Names.DIGEST_MD5
-                  );
-            Server.log.debug("Enabled SCRAM, DIGEST and CRAM mechanisms for Hot Rod");
+            authentication.enable();
+            sasl.addMechanisms(
+                  SaslMechanismInformation.Names.SCRAM_SHA_512,
+                  SaslMechanismInformation.Names.SCRAM_SHA_384,
+                  SaslMechanismInformation.Names.SCRAM_SHA_256,
+                  SaslMechanismInformation.Names.SCRAM_SHA_1,
+                  SaslMechanismInformation.Names.DIGEST_SHA_512,
+                  SaslMechanismInformation.Names.DIGEST_SHA_384,
+                  SaslMechanismInformation.Names.DIGEST_SHA_256,
+                  SaslMechanismInformation.Names.DIGEST_SHA,
+                  SaslMechanismInformation.Names.CRAM_MD5,
+                  SaslMechanismInformation.Names.DIGEST_MD5
+            );
+            Server.log.debugf("Enabled SCRAM, DIGEST and CRAM mechanisms for %s", name);
 
             // Only enable PLAIN if encryption is on
             if (securityRealm.hasFeature(ServerSecurityRealm.Feature.ENCRYPT)) {
-               authentication
-                     .enable()
-                     .sasl().addMechanisms(SaslMechanismInformation.Names.PLAIN);
-               Server.log.debug("Enabled PLAIN mechanism for Hot Rod");
+               authentication.enable();
+               sasl.addMechanisms(SaslMechanismInformation.Names.PLAIN);
+               Server.log.debugf("Enabled PLAIN mechanism for %s", name);
             }
          }
-         authentication.sasl().authenticator(new ElytronSASLAuthenticator(authentication.securityRealm(), serverPrincipal, authentication.sasl().mechanisms()));
+         sasl.authenticator(new ElytronSASLAuthenticator(authentication.securityRealm(), serverPrincipal, sasl.mechanisms()));
       }
    }
 
@@ -268,13 +274,40 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       }
       ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
       if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN)) {
-         authentication.authenticator(new ElytronRESPAuthenticator(authentication.securityRealm()));
+         authentication.authenticator(new ElytronUsernamePasswordAuthenticator(authentication.securityRealm()));
       } else {
          if (builder.implicitConnector()) {
             // The connector was added implicitly, but the security realm cannot support it. Remove it.
             return null;
          } else {
             throw Server.log.respEndpointRequiresRealmWithPassword();
+         }
+      }
+      return builder;
+   }
+
+   private ProtocolServerConfigurationBuilder<?, ?, ?> enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, MemcachedServerConfigurationBuilder builder) {
+      // Set the security realm only if it has not been set already
+      MemcachedAuthenticationConfigurationBuilder authentication = builder.authentication();
+      if (!authentication.hasSecurityRealm()) {
+         authentication.securityRealm(securityRealmName);
+      }
+      ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
+      MemcachedProtocol protocol = builder.protocol();
+      // Only add implicit mechanisms if the user has not set any explicitly
+      if (protocol.isBinary()) {
+         enableSaslAuthentication(authentication, authentication.sasl(), securityRealm, "memcached/", "Memcached");
+      }
+      if (protocol.isText()) {
+         if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN)) {
+            authentication.text().authenticator(new ElytronUsernamePasswordAuthenticator(authentication.securityRealm()));
+         } else {
+            if (builder.implicitConnector()) {
+               // The connector was added implicitly, but the security realm cannot support it. Remove it.
+               return null;
+            } else {
+               throw Server.log.memcachedTextEndpointRequiresRealmWithPassword();
+            }
          }
       }
       return builder;

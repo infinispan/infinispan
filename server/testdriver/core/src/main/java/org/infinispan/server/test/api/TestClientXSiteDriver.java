@@ -25,6 +25,8 @@ public interface TestClientXSiteDriver {
     */
    RestTestClientDriver rest(String siteName);
 
+   MemcachedTestClientDriver memcached(String siteName);
+
    /**
     * Provides the current method name
     *

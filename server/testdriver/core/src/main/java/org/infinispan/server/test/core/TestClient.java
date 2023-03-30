@@ -21,8 +21,10 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 
+import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
 
 /**
@@ -59,6 +61,10 @@ public class TestClient {
 
    public RestTestClientDriver rest() {
       return new RestTestClientDriver(testServer, this);
+   }
+
+   public MemcachedTestClientDriver memcached() {
+      return new MemcachedTestClientDriver(testServer, this);
    }
 
    public CounterManager getCounterManager() {
@@ -98,14 +104,19 @@ public class TestClient {
       return getMethodName();
    }
 
-   public String getMethodName() {
-      return getMethodName(null);
-   }
-
    public RestClient newRestClient(RestClientConfigurationBuilder restClientConfigurationBuilder) {
       RestClient restClient = testServer.newRestClient(restClientConfigurationBuilder);
       registerResource(restClient);
       return restClient;
+   }
+
+   public MemcachedClient getMemcachedClient(ConnectionFactoryBuilder builder) {
+      TestServer.CloseableMemcachedClient memcachedClient = testServer.newMemcachedClient(builder);
+      return registerResource(memcachedClient).getClient();
+   }
+
+   public String getMethodName() {
+      return getMethodName(null);
    }
 
    public String getMethodName(String qualifier) {
@@ -118,9 +129,5 @@ public class TestClient {
          // Won't happen
          return null;
       }
-   }
-
-   public MemcachedClient getMemcachedClient() {
-      return registerResource(testServer.newMemcachedClient()).getClient();
    }
 }

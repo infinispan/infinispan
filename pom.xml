@@ -225,6 +225,7 @@
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
       <versionx.com.amazonaws>1.12.261</versionx.com.amazonaws>
+      <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.org.bouncycastle>${version.bouncycastle}</versionx.org.bouncycastle>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.fasterxml.jackson.core.jackson-annotations>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-annotations>
@@ -822,9 +823,9 @@
             <version>${version.jcip-annotations}</version>
          </dependency>
          <dependency>
-            <groupId>net.spy</groupId>
-            <artifactId>spymemcached</artifactId>
-            <version>${versionx.net.spy.spymemcached}</version>
+            <groupId>org.infinispan</groupId>
+            <artifactId>memcached-client</artifactId>
+            <version>${versionx.org.infinispan.memcached-client}</version>
          </dependency>
          <dependency>
             <groupId>org.aesh</groupId>

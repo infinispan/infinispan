@@ -1,0 +1,96 @@
+// Memcached text protocol
+namespace mc;
+
+// Target class
+class org.infinispan.server.memcached.text.TextOpDecoderImpl extends TextOpDecoder;
+
+// static final field values are literals
+constants org.infinispan.server.memcached.text.TextConstants;
+
+// methods vInt, vLong, array, byte...
+intrinsics org.infinispan.server.memcached.text.TextIntrinsics;
+
+import java.time.Instant;
+import java.time.temporal.Temporal;
+import java.util.concurrent.CompletableFuture;
+import javax.security.auth.Subject;
+import org.infinispan.server.memcached.MemcachedServer;
+
+init {
+   private boolean deadEnd = false;
+
+   public TextOpDecoderImpl(MemcachedServer server, Subject subject) {
+      super(server, subject);
+   }
+
+   public TextOpDecoderImpl(MemcachedServer server) {
+      this(server, ANONYMOUS);
+   }
+
+   private TextHeader getHeader() {
+      return new TextHeader(requestBytes, requestStart, principalName, key, command_name);
+   }
+}
+
+exceptionally {
+   state = 0;
+   send(getHeader(), CompletableFuture.failedFuture(t));
+}
+
+deadend {
+   if (!deadEnd) {
+      send(getHeader(), CompletableFuture.failedFuture(new IllegalStateException()));
+      deadEnd = true;
+   }
+   state = 0;
+}
+
+root request
+   : command_name { requestStart = Instant.now(); } parameters
+   ;
+
+key: text_key;
+keys: text_key_list;
+command_name: command;
+exptime: int_number;
+flags: int_number;
+vsize: int_number;
+value returns byte[]
+   : { vsize > 0 }? fixedArray[vsize]
+   | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
+   ;
+cas_unique: long_number;
+eol: short;
+delta: text;
+noreply: eowc;
+varargs: text_list;
+
+parameters switch command_name
+// Operations
+   : { set }? key flags exptime vsize noreply value eol { set(getHeader(), key, value, flags, exptime, noreply) }
+   | { add }? key flags exptime vsize noreply value eol { add(getHeader(), key, value, flags, exptime, noreply) }
+   | { replace }? key flags exptime vsize noreply value eol { replace(getHeader(), key, value, flags, exptime, noreply) }
+   | { delete }? key noreply { delete(getHeader(), key, noreply) }
+   | { append }? key flags exptime vsize noreply value eol { concat(getHeader(), key, value, flags, exptime, noreply, true) }
+   | { prepend }? key flags exptime vsize noreply value eol { concat(getHeader(), key, value, flags, exptime, noreply, false) }
+   | { cas }? key flags exptime vsize cas_unique noreply value eol { cas(getHeader(), key, value, flags, exptime, cas_unique, noreply) }
+   | { get }? keys { get(getHeader(), keys, false) }
+   | { gets }? keys { get(getHeader(), keys, true) }
+   | { incr }? key delta noreply { incr(getHeader(), key, delta, noreply, true) }
+   | { decr }? key delta noreply { incr(getHeader(), key, delta, noreply, false) }
+   | { touch }? key exptime noreply { touch(getHeader(), key, exptime, noreply) }
+   | { gat }? exptime keys { gat(getHeader(), exptime, keys, false) }
+   | { gats }? exptime keys { gat(getHeader(), exptime, keys, true) }
+   | { flush_all }? varargs { flush_all(getHeader(), varargs) }
+   | { version }? eol { version(getHeader()) }
+   | { quit }? eol { quit(getHeader()) }
+   | { stats }? keys { stats(getHeader(), keys) }
+   | { mg }? key varargs { mg(getHeader(), key, varargs) }
+   | { ms }? key vsize varargs value eol { ms(getHeader(), key, value, varargs) }
+   | { md }? key varargs { md(getHeader(), key, varargs) }
+   | { ma }? key varargs { ma(getHeader(), key, varargs) }
+   | { mn }? eol { mn(getHeader()) }
+   | { me }? key varargs { me(getHeader(), key, varargs) }
+// Unknown
+   | { throw new IllegalArgumentException("Unknown command " + command_name); }
+   ;

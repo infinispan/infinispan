@@ -1,13 +1,16 @@
 package org.infinispan.server.memcached.configuration;
 
+import static org.infinispan.server.memcached.configuration.MemcachedServerConfiguration.CLIENT_ENCODING;
+import static org.infinispan.server.memcached.configuration.MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE;
+import static org.infinispan.server.memcached.configuration.MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT;
+import static org.infinispan.server.memcached.configuration.MemcachedServerConfiguration.PROTOCOL;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
-import org.infinispan.server.core.configuration.AuthenticationConfigurationBuilder;
+import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
-import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationBuilder;
 
 /**
  * MemcachedServerConfigurationBuilder.
@@ -15,13 +18,14 @@ import org.infinispan.server.core.configuration.SaslAuthenticationConfigurationB
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MemcachedServerConfiguration, MemcachedServerConfigurationBuilder, SaslAuthenticationConfiguration> implements
+public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<MemcachedServerConfiguration, MemcachedServerConfigurationBuilder, MemcachedAuthenticationConfiguration> implements
       Builder<MemcachedServerConfiguration> {
-   private final SaslAuthenticationConfigurationBuilder authentication = new SaslAuthenticationConfigurationBuilder(this);
+   private final MemcachedAuthenticationConfigurationBuilder authentication = new MemcachedAuthenticationConfigurationBuilder(this);
+   private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
 
    public MemcachedServerConfigurationBuilder() {
-      super(MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT, MemcachedServerConfiguration.attributeDefinitionSet());
-      this.defaultCacheName(MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE);
+      super(DEFAULT_MEMCACHED_PORT, MemcachedServerConfiguration.attributeDefinitionSet());
+      this.defaultCacheName(DEFAULT_MEMCACHED_CACHE);
    }
 
    @Override
@@ -44,8 +48,12 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    }
 
    @Override
-   public AuthenticationConfigurationBuilder<SaslAuthenticationConfiguration> authentication() {
+   public MemcachedAuthenticationConfigurationBuilder authentication() {
       return authentication;
+   }
+
+   public EncryptionConfigurationBuilder encryption() {
+      return encryption;
    }
 
    @Override
@@ -60,13 +68,29 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
     * will perform the necessary conversions between this encoding and the storage format.
     */
    public MemcachedServerConfigurationBuilder clientEncoding(MediaType payloadType) {
-      attributes.attribute(MemcachedServerConfiguration.CLIENT_ENCODING).set(payloadType);
+      attributes.attribute(CLIENT_ENCODING).set(payloadType);
       return this;
+   }
+
+   public MemcachedServerConfigurationBuilder protocol(MemcachedProtocol protocol) {
+      attributes.attribute(PROTOCOL).set(protocol);
+      return this;
+   }
+
+   public MemcachedProtocol protocol() {
+      return attributes.attribute(PROTOCOL).get();
    }
 
    @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(attributes.protect(), authentication().create(), ssl.create(), ipFilter.create());
+      return new MemcachedServerConfiguration(attributes.protect(), authentication().create(), ssl.create(), encryption.create(), ipFilter.create());
+   }
+
+   @Override
+   public void validate() {
+      super.validate();
+      authentication.validate();
+      encryption.validate();
    }
 
    public MemcachedServerConfiguration build(boolean validate) {
@@ -83,7 +107,8 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
 
    @Override
    public Builder<?> read(MemcachedServerConfiguration template) {
-      super.read(template);
+      this.authentication.read(template.authentication());
+      this.encryption.read(template.encryption());
       return this;
    }
 }

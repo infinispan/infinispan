@@ -9,12 +9,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Basic reflection utilities to enhance what the JDK provides.
@@ -23,7 +20,6 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 4.0
  */
 public class ReflectionUtil {
-   private static final Log log = LogFactory.getLog(ReflectionUtil.class);
 
    private static final String[] EMPTY_STRING_ARRAY = {};
 
@@ -48,30 +44,6 @@ public class ReflectionUtil {
       return annotated;
    }
 
-   /**
-    * Returns a set of Methods that contain the given method annotation.  This includes all public, protected, package
-    * and private methods, but not those of superclasses and interfaces.
-    *
-    * @param c              class to inspect
-    * @param annotationType the type of annotation to look for
-    * @return List of Method objects that require injection.
-    */
-   public static List<Method> getAllMethodsShallow(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Method> annotated = new ArrayList<>();
-      for (Method m : c.getDeclaredMethods()) {
-         if (m.isAnnotationPresent(annotationType))
-            annotated.add(m);
-      }
-
-      return annotated;
-   }
-
-   public static List<Field> getAllFields(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Field> annotated = new LinkedList<>();
-      inspectFieldsRecursively(c, annotated, annotationType);
-      return annotated;
-   }
-
    private static void getAnnotatedFieldHelper(List<Field> list, Class<?> c, Class<? extends Annotation> annotationType) {
       Field[] declaredFields = c.getDeclaredFields();
       for (Field field : declaredFields) {
@@ -79,15 +51,6 @@ public class ReflectionUtil {
             list.add(field);
          }
       }
-   }
-
-   public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType) {
-      List<Field> fields = new ArrayList<>(4);
-      // Class could be null in the case of an interface
-      for (;c != null && !c.equals(Object.class); c = c.getSuperclass()) {
-         getAnnotatedFieldHelper(fields, c, annotationType);
-      }
-      return fields;
    }
 
    public static Method findMethod(Class<?> type, String methodName) {

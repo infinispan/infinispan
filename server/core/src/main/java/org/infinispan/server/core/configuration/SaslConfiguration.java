@@ -21,7 +21,7 @@ import org.infinispan.server.core.security.sasl.SaslAuthenticator;
  */
 @SuppressWarnings("unchecked")
 public class SaslConfiguration extends ConfigurationElement<SaslConfiguration> {
-   public static final AttributeDefinition<String> SERVER_NAME = AttributeDefinition.builder(Attribute.SERVER_NAME, "infinispan", String.class).immutable().build();
+   public static final AttributeDefinition<String> SERVER_NAME = AttributeDefinition.builder(Attribute.SERVER_NAME, null, String.class).immutable().build();
    public static final AttributeDefinition<Set<String>> MECHANISMS = AttributeDefinition.builder(Attribute.MECHANISMS, null, (Class<Set<String>>) (Class<?>) Set.class)
          .initializer(LinkedHashSet::new).serializer(AttributeSerializer.STRING_COLLECTION).immutable().build();
    public static final AttributeDefinition<List<org.infinispan.server.core.configuration.QOP>> QOP = AttributeDefinition.builder(Attribute.QOP, new ArrayList<>(), (Class<List<QOP>>) (Class<?>) List.class)
@@ -35,15 +35,15 @@ public class SaslConfiguration extends ConfigurationElement<SaslConfiguration> {
    static final AttributeDefinition<Subject> SERVER_SUBJECT = AttributeDefinition.builder(Element.SERVER_SUBJECT, null, Subject.class).autoPersist(false).immutable().build();
 
    private final Map<String, String> mechProperties;
-   private final SaslAuthenticator saslAuthenticator;
+   private final SaslAuthenticator authenticator;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SaslConfiguration.class, SERVER_NAME, MECHANISMS, QOP, STRENGTH, POLICY, SASL_PROPERTIES, SERVER_SUBJECT);
    }
 
-   SaslConfiguration(AttributeSet attributes, SaslAuthenticator saslAuthenticator, Map<String, String> mechProperties) {
+   SaslConfiguration(AttributeSet attributes, SaslAuthenticator authenticator, Map<String, String> mechProperties) {
       super(Element.SASL, attributes);
-      this.saslAuthenticator = saslAuthenticator;
+      this.authenticator = authenticator;
       this.mechProperties = mechProperties;
    }
 
@@ -67,8 +67,8 @@ public class SaslConfiguration extends ConfigurationElement<SaslConfiguration> {
       return attributes.attribute(STRENGTH).get();
    }
 
-   public SaslAuthenticator saslAuthenticationProvider() {
-      return saslAuthenticator;
+   public SaslAuthenticator authenticator() {
+      return authenticator;
    }
 
    public Subject serverSubject() {

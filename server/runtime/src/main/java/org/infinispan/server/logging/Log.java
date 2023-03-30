@@ -272,4 +272,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.ERROR)
    @Message(value = "JMX authentication error", id = 80073)
    void jmxAuthenticationError(@Cause Throwable e);
+
+   @Message(value = "The Memcached endpoint text protocol requires a security realm which supports passwords.", id = 80074)
+   CacheConfigurationException memcachedTextEndpointRequiresRealmWithPassword();
 }

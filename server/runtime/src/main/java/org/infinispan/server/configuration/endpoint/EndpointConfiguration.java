@@ -18,7 +18,7 @@ public class EndpointConfiguration extends ConfigurationElement<EndpointConfigur
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder(Attribute.SECURITY_REALM, null, String.class).build();
    static final AttributeDefinition<Boolean> ADMIN = AttributeDefinition.builder(Attribute.ADMIN, true, Boolean.class).build();
    static final AttributeDefinition<Boolean> METRICS_AUTH = AttributeDefinition.builder(Attribute.METRICS_AUTH, true, Boolean.class).build();
-   private final List<ProtocolServerConfiguration> connectors;
+   private final List<ProtocolServerConfiguration<?, ?>> connectors;
    private final SinglePortRouterConfiguration singlePort;
 
    static AttributeSet attributeDefinitionSet() {
@@ -26,7 +26,7 @@ public class EndpointConfiguration extends ConfigurationElement<EndpointConfigur
    }
 
    EndpointConfiguration(AttributeSet attributes,
-                         List<ProtocolServerConfiguration> connectors,
+                         List<ProtocolServerConfiguration<?, ?>> connectors,
                          SinglePortRouterConfiguration singlePort) {
       super(Element.ENDPOINTS, attributes);
       this.connectors = connectors;
@@ -37,7 +37,7 @@ public class EndpointConfiguration extends ConfigurationElement<EndpointConfigur
       return singlePort;
    }
 
-   public List<ProtocolServerConfiguration> connectors() {
+   public List<ProtocolServerConfiguration<?, ?>> connectors() {
       return connectors;
    }
 

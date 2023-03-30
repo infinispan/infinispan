@@ -12,7 +12,7 @@
    <xs:element name="socket-bindings" type="tns:socket-bindings"/>
    <xs:element name="endpoints" type="tns:endpoints">
       <xs:unique name="connector-unique">
-         <xs:selector xpath="./tns:hotrod-connector|./tns:rest-connector|./tns:memcached-connector"/>
+         <xs:selector xpath="./tns:hotrod-connector|./tns:rest-connector|./tns:memcached-connector|./tns:resp-connector"/>
          <xs:field xpath="@name"/>
       </xs:unique>
    </xs:element>
@@ -325,13 +325,13 @@
    <xs:complexType name="endpoint">
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
-            <xs:sequence>
+            <xs:all>
                <xs:element name="ip-filter" type="tns:ip-filter" minOccurs="0"/>
                <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element type="tns:resp-connector" name="resp-connector" minOccurs="0" maxOccurs="unbounded"/>
-            </xs:sequence>
+            </xs:all>
             <xs:attribute name="socket-binding" type="xs:string" use="required">
                <xs:annotation>
                   <xs:documentation>Specifies the socket the endpoint connector binds to.</xs:documentation>
@@ -421,6 +421,10 @@
    <xs:complexType name="memcached-connector">
       <xs:complexContent>
          <xs:extension base="tns:named-protocol-connector">
+            <xs:all>
+               <xs:element name="authentication" type="tns:memcached-authentication" minOccurs="0"/>
+               <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
+            </xs:all>
             <xs:attribute name="cache" type="xs:string">
                <xs:annotation>
                   <xs:documentation>Names the cache that the Memcached connector exposes. Defaults to memcachedCache.
@@ -755,12 +759,17 @@
       </xs:attribute>
    </xs:complexType>
 
+   <xs:complexType name="memcached-authentication">
+      <xs:all>
+         <xs:element name="sasl" type="tns:sasl" minOccurs="0"/>
+      </xs:all>
+   </xs:complexType>
+
    <xs:complexType name="encryption">
       <xs:sequence>
          <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional"
-                    default="${Encryption.requireSslClientAuth}">
+      <xs:attribute name="require-ssl-client-auth" type="xs:boolean" default="${Encryption.requireSslClientAuth}">
          <xs:annotation>
             <xs:documentation>
               Requires clients to use certificates for authentication.
