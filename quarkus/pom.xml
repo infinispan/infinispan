@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-build-configuration-parent</artifactId>
+        <artifactId>infinispan-parent</artifactId>
         <version>15.0.0-SNAPSHOT</version>
-        <relativePath>../build/configuration/pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>infinispan-quarkus-parent</artifactId>
@@ -23,6 +23,10 @@
         <native-build-args>-Ob,</native-build-args>
         <quarkus.native.additional-build-args>${native-build-args}</quarkus.native.additional-build-args>
         <exe.suffix/>
+        <version.caffeine>2.9.3</version.caffeine>
+        <version.org.wildfly.elytron>1.20.1.Final</version.org.wildfly.elytron>
+        <version.smallrye-mutiny>1.7.0</version.smallrye-mutiny>
+        <versionx.org.jboss.threads.jboss-threads>3.4.3.Final</versionx.org.jboss.threads.jboss-threads>
     </properties>
 
     <modules>

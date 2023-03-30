@@ -1,17 +1,14 @@
 package org.infinispan.quarkus.embedded.runtime.graal;
 
-import java.security.SecureRandom;
-import java.util.Random;
-
-import org.jgroups.JChannel;
-import org.jgroups.protocols.DELAY;
-import org.jgroups.util.UUID;
-import org.jgroups.util.Util;
-
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.RecomputeFieldValue;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
+import org.jgroups.JChannel;
+import org.jgroups.protocols.DELAY;
+import org.jgroups.util.Util;
+
+import java.util.Random;
 
 public class SubstituteJGroups {
 }
