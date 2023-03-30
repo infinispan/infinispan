@@ -54,6 +54,11 @@
       <artifactId>infinispan-spring6-embedded</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-api</artifactId>
+    </dependency>
+
     <!-- test dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
