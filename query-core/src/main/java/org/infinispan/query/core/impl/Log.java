@@ -56,4 +56,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Projections are not supported with entryIterator()", id = 14058)
    CacheException entryIteratorDoesNotAllowProjections();
+
+   @Message(value = "Cache '%s' must be indexed in order to use full-text queries.", id = 14060)
+   IllegalStateException nonIndexedCache(String name);
 }

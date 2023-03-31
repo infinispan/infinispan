@@ -38,7 +38,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       doWrongConfigurationTest(cacheName, builder,
-            "java.lang.IllegalStateException: ISPN006020: Cache 'non_tx_cache' is not transactional to execute a client transaction");
+            "ISPN006020: Cache 'non_tx_cache' is not transactional to execute a client transaction");
    }
 
    public void testWrongIsolationLevel() {
@@ -48,7 +48,7 @@ public class ServerConfigurationTest extends HotRodMultiNodeTest {
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       doWrongConfigurationTest(cacheName, builder,
-            "java.lang.IllegalStateException: ISPN006021: Cache 'wrong_isolation_cache' must have REPEATABLE_READ isolation level");
+            "ISPN006021: Cache 'wrong_isolation_cache' must have REPEATABLE_READ isolation level");
    }
 
    public void testSynchronizationMode() {

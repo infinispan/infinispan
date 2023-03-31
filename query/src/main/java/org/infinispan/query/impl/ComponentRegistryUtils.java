@@ -1,5 +1,7 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.logging.Log.CONTAINER;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
@@ -38,7 +40,7 @@ public final class ComponentRegistryUtils {
    private static void ensureIndexed(Cache<?, ?> cache) {
       Configuration cfg = SecurityActions.getCacheConfiguration(cache);
       if (!cfg.indexing().enabled()) {
-         throw new IllegalStateException("Indexing was not enabled on cache " + cache.getName());
+         throw CONTAINER.nonIndexedCache(cache.getName());
       }
    }
 

@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.aggregation;
 
+import static org.infinispan.objectfilter.impl.logging.Log.CONTAINER;
+
 /**
  * An accumulator that returns the smallest of the values it encounters. Values must be {@link Comparable}. The return
  * has the same type as the field to which it is applied. {@code Null} values are ignored. If there are no remaining
@@ -13,7 +15,7 @@ final class MinAccumulator extends FieldAccumulator {
    MinAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
       if (!Comparable.class.isAssignableFrom(fieldType)) {
-         throw new IllegalStateException("Aggregation MIN cannot be applied to property of type " + fieldType.getName());
+         throw CONTAINER.aggregationError("MIN", fieldType.getName());
       }
    }
 

@@ -20,19 +20,19 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
       return hotRodCacheConfiguration();
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014060: Cache 'defaultcache' must be indexed in order to use full-text queries.")
    @Override
    public void testIndexPresence() {
       org.infinispan.query.Search.getIndexer(getEmbeddedCache());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "ISPN014060: Cache 'defaultcache' must be indexed in order to use full-text queries.")
    @Override
    public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "ISPN014060: Cache 'defaultcache' must be indexed in order to use full-text queries.")
    @Override
    public void testFullTextPhrase() {
       super.testFullTextPhrase();

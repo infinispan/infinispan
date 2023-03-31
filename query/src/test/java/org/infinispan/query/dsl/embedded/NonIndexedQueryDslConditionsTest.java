@@ -55,7 +55,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(3, results.size());
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014060: Cache 'defaultcache' must be indexed in order to use full-text queries.")
    @Override
    public void testIndexPresence() {
       // this is expected to throw an exception

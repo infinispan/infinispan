@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.infinispan.objectfilter.ParsingException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
@@ -17,6 +18,7 @@ import org.jboss.logging.annotations.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
+   Log CONTAINER = Logger.getMessageLogger(Log.class, "org.infinispan.CONTAINER");
 
    @Message(id = 28501, value = "The type %s does not have an accessible property named '%s'.")
    ParsingException getNoSuchPropertyException(String typeName, String propertyName);
@@ -101,4 +103,7 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28528, value = "Error parsing content. Data not stored as protobuf?")
    ParsingException errorParsingProtobuf(@Cause Exception e);
+
+   @Message(id = 28529, value = "Aggregation %s cannot be applied to property of type %s")
+   IllegalStateException aggregationError(String aggregation, String name);
 }

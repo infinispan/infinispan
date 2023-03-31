@@ -1,5 +1,7 @@
 package org.infinispan.query.core.impl;
 
+import static org.infinispan.query.core.impl.Log.CONTAINER;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -450,7 +452,7 @@ public class QueryEngine<TypeMetadata> {
       if (parsingResult.getWhereClause() != null) {
          boolean isFullTextQuery = parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE);
          if (isFullTextQuery) {
-            throw new IllegalStateException("The cache must be indexed in order to use full-text queries.");
+            throw CONTAINER.nonIndexedCache(cache.getName());
          }
       }
 

@@ -443,7 +443,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
       assertEquals("ZZ", list.get(1)[0]);
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Aggregation SUM cannot be applied to property of type java.lang.String")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN028529: Aggregation SUM cannot be applied to property of type java.lang.String")
    public void testIncompatibleAggregator() {
       buildQuery("select sum(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
    }

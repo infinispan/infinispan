@@ -8,7 +8,6 @@ import static org.jboss.logging.Logger.Level.WARN;
 import javax.transaction.Transaction;
 
 import org.hibernate.search.util.common.SearchException;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;

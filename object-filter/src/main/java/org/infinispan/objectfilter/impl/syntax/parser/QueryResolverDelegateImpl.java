@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import static org.infinispan.objectfilter.impl.logging.Log.CONTAINER;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -7,19 +9,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.runtime.tree.Tree;
-import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.ql.JoinType;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.ql.QueryResolverDelegate;
-import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDelegate<TypeDescriptor<TypeMetadata>> {
-
-   private static final Log log = Logger.getMessageLogger(Log.class, QueryResolverDelegateImpl.class.getName());
 
    private final Map<String, String> aliasToEntityType = new HashMap<>();
 
@@ -57,7 +55,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
       targetType = entityName;
       entityMetadata = propertyHelper.getEntityMetadata(entityName);
       if (entityMetadata == null) {
-         throw log.getUnknownEntity(entityName);
+         throw CONTAINER.getUnknownEntity(entityName);
       }
    }
 
@@ -98,7 +96,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
 
       PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath = aliasToPropertyPath.get(alias);
       if (propertyPath == null) {
-         throw log.getUnknownAliasException(alias);
+         throw CONTAINER.getUnknownAliasException(alias);
       }
 
       List<String> resolvedAlias = resolveAlias(propertyPath);
@@ -116,14 +114,14 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
       if (entityNameForAlias == null) {
          PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath = aliasToPropertyPath.get(alias);
          if (propertyPath == null) {
-            throw log.getUnknownAliasException(alias);
+            throw CONTAINER.getUnknownAliasException(alias);
          }
          return new PropertyPath.PropertyReference<>(propertyPath.asStringPathWithoutAlias(), null, false);
       }
 
       TypeMetadata entityMetadata = propertyHelper.getEntityMetadata(entityNameForAlias);
       if (entityMetadata == null) {
-         throw log.getUnknownEntity(entityNameForAlias);
+         throw CONTAINER.getUnknownEntity(entityNameForAlias);
       }
 
       return new PropertyPath.PropertyReference<>(alias, new EntityTypeDescriptor<>(entityNameForAlias, entityMetadata), true);
@@ -134,7 +132,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
       String propertyName = propertyNameTree.getText();
       TypeDescriptor<TypeMetadata> sourceType = path.getLast().getTypeDescriptor();
       if (!propertyHelper.hasProperty(sourceType.getTypeMetadata(), sourceType.makePath(propertyName))) {
-         throw log.getNoSuchPropertyException(sourceType.getTypeName(), propertyName);
+         throw CONTAINER.getNoSuchPropertyException(sourceType.getTypeName(), propertyName);
       }
 
       List<String> newPath = resolveAlias(path);
@@ -157,7 +155,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
             return resolvedAlias;
          } else {
             // Alias not found
-            throw log.getUnknownAliasException(alias);
+            throw CONTAINER.getUnknownAliasException(alias);
          }
       }
       // It does not start with an alias
@@ -188,7 +186,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
    private PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>> normalizeProperty(TypeDescriptor<TypeMetadata> type, List<String> path, String propertyName) {
       String[] propertyPath = type.makePath(propertyName);
       if (!propertyHelper.hasProperty(type.getTypeMetadata(), propertyPath)) {
-         throw log.getNoSuchPropertyException(type.getTypeName(), propertyName);
+         throw CONTAINER.getNoSuchPropertyException(type.getTypeName(), propertyName);
       }
 
       TypeDescriptor<TypeMetadata> propType = null;
@@ -226,7 +224,7 @@ final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDele
       if (phase == Phase.SELECT) {
          TypeDescriptor<TypeMetadata> type = path.getLast().getTypeDescriptor();
          if (type instanceof EmbeddedEntityTypeDescriptor<?>) {
-            throw log.getProjectionOfCompleteEmbeddedEntitiesNotSupportedException(type.getTypeName(), path.asStringPathWithoutAlias());
+            throw CONTAINER.getProjectionOfCompleteEmbeddedEntitiesNotSupportedException(type.getTypeName(), path.asStringPathWithoutAlias());
          }
       }
    }

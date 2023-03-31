@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.aggregation;
 
+import static org.infinispan.objectfilter.impl.logging.Log.CONTAINER;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -20,7 +22,7 @@ final class SumAccumulator extends FieldAccumulator {
    SumAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
       if (!Number.class.isAssignableFrom(fieldType)) {
-         throw new IllegalStateException("Aggregation SUM cannot be applied to property of type " + fieldType.getName());
+         throw CONTAINER.aggregationError("SUM", fieldType.getName());
       }
       this.fieldType = (Class<? extends Number>) fieldType;
    }
@@ -80,7 +82,7 @@ final class SumAccumulator extends FieldAccumulator {
     */
    static Class<?> getOutputType(Class<?> fieldType) {
       if (!Number.class.isAssignableFrom(fieldType)) {
-         throw new IllegalStateException("Aggregation SUM cannot be applied to property of type " + fieldType.getName());
+         throw CONTAINER.aggregationError("SUM", fieldType.getName());
       }
       if (fieldType == Double.class || fieldType == Float.class) {
          return Double.class;

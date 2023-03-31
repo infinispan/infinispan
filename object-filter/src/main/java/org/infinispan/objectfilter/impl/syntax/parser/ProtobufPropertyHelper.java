@@ -1,12 +1,13 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import static org.infinispan.objectfilter.impl.logging.Log.CONTAINER;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
@@ -17,15 +18,12 @@ import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
-import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
-
-   private static final Log log = Logger.getMessageLogger(Log.class, ProtobufPropertyHelper.class.getName());
 
    public static final String BIG_INTEGER_COMMON_TYPE = "org.infinispan.protostream.commons.BigInteger";
    public static final String BIG_DECIMAL_COMMON_TYPE = "org.infinispan.protostream.commons.BigDecimal";
@@ -98,7 +96,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
       FieldDescriptor field = getField(entityType, propertyPath);
       if (field == null) {
-         throw log.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
+         throw CONTAINER.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
       }
       switch (field.getJavaType()) {
          case INT:
@@ -214,7 +212,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    public Object convertToPropertyType(Descriptor entityType, String[] propertyPath, String value) {
       FieldDescriptor field = getField(entityType, propertyPath);
       if (field == null) {
-         throw log.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
+         throw CONTAINER.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
       }
 
       //todo [anistor] this is just for remote query because enums are handled as integers for historical reasons.
@@ -233,7 +231,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             enumValue = enumType.findValueByName(value);
          }
          if (enumValue == null) {
-            throw log.getInvalidEnumLiteralException(value, enumType.getFullName());
+            throw CONTAINER.getInvalidEnumLiteralException(value, enumType.getFullName());
          }
          return enumValue.getNumber();
       }

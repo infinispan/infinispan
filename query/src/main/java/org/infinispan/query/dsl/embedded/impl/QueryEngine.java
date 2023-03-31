@@ -465,7 +465,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (!isIndexed && parsingResult.getWhereClause() != null) {
          boolean isFullTextQuery = parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE);
          if (isFullTextQuery) {
-            throw new IllegalStateException("The cache must be indexed in order to use full-text queries.");
+            throw CONTAINER.nonIndexedCache(cache.getName());
          }
       }
 

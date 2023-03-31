@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import static java.lang.String.format;
+import static org.infinispan.commons.util.Util.unwrapExceptionMessage;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
@@ -44,7 +45,7 @@ public class BaseRequestProcessor {
       if (cause instanceof CompletionException && cause.getCause() != null) {
          cause = cause.getCause();
       }
-      String msg = cause.toString();
+      String msg = unwrapExceptionMessage(cause);
       OperationStatus status;
       if (cause instanceof InvalidMagicIdException) {
          log.exceptionReported(cause);
@@ -82,7 +83,6 @@ public class BaseRequestProcessor {
          }
          if (header != null) {
             status = header.encoder().errorStatus(cause);
-            msg = createErrorMsg(cause);
          } else {
             status = OperationStatus.ServerError;
          }
@@ -90,7 +90,6 @@ public class BaseRequestProcessor {
          if (cause instanceof MissingMembersException) log.warn(cause.getMessage());
          else log.exceptionReported(cause);
          status = header.encoder().errorStatus(cause);
-         msg = createErrorMsg(cause);
       } else {
          log.exceptionReported(cause);
          status = OperationStatus.ServerError;

@@ -1911,7 +1911,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Aggregation SUM cannot be applied to property of type java.lang.String")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN028529: Aggregation SUM cannot be applied to property of type java.lang.String")
    public void testGroupBy6() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
