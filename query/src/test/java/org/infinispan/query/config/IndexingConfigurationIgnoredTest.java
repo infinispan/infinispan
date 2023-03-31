@@ -1,6 +1,5 @@
 package org.infinispan.query.config;
 
-import static org.testng.Assert.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,8 +19,6 @@ public class IndexingConfigurationIgnoredTest extends AbstractInfinispanTest {
    public void testIndexingParametersForNamedCache() {
       Cache<Object, Object> inMemory = manager.getCache("memory-searchable");
       inMemory.start();
-      assertTrue(inMemory.getCacheConfiguration().indexing().properties().isEmpty(),
-            "no property is defined explicitly");
    }
 
    @BeforeMethod

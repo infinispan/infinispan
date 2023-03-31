@@ -1044,18 +1044,12 @@
                 </xs:sequence>
               </xs:complexType>
             </xs:element>
-            <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
-              <xs:annotation>
-                <xs:documentation>Property to pass on to the indexing system</xs:documentation>
-              </xs:annotation>
-            </xs:element>
           </xs:sequence>
           <xs:attribute name="enabled" type="xs:boolean" default="${Indexing.enabled}">
             <xs:annotation>
               <xs:documentation>
                 Enables and disables cache indexing.
                 Including the indexing element in cache configuration automatically enables indexing without the need to set the value of this attribute to "true".
-                Indexing is also automatically enabled when the "auto-config" attribute is set to a value of "true".
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -1087,11 +1081,6 @@
                 Affects how cache operations will be propagated to the indexes.
                 By default, all the changes to the cache will be immediately applied to the indexes.
               </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="auto-config" type="xs:boolean" default="${Indexing.auto-config}">
-            <xs:annotation>
-              <xs:documentation>Deprecated since 11.0, with no replacement. Whether or not to apply automatic index configuration based on cache type</xs:documentation>
             </xs:annotation>
           </xs:attribute>
         </xs:complexType>

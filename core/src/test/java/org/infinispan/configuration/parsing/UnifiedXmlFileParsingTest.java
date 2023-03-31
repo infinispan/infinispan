@@ -203,7 +203,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(9859, blockingPool.keepAlive());
 
             IndexingConfiguration indexed = getConfiguration(holder, "indexed").indexing();
-            assertFalse(indexed.autoConfig());
             assertTrue(indexed.enabled());
             Set<String> entityTypes = indexed.indexedEntityTypes();
             assertEquals(2, entityTypes.size());

@@ -28,8 +28,6 @@ public enum Attribute {
     ASYNC_MARSHALLING,
     AUDIT_LOGGER,
     AUTO_COMMIT,
-    @Deprecated
-    AUTO_CONFIG,
     AVAILABILITY_INTERVAL,
     AWAIT_INITIAL_TRANSFER,
     BACKUP_FAILURE_POLICY("failure-policy"),

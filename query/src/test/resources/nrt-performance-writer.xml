@@ -32,9 +32,7 @@
 
             <!-- Enable sharding on writers -->
             <index-sharding shards="6" />
-            <property name="thread_pool.size">6</property>
-            <property name="indexing.queue_count">6</property>
-            <property name="indexing.queue_size">4096</property>
+            <index-writer thread-pool-size="6" queue-count="6" queue-size="4096" />
          </indexing>
          <!--  For our test we don't want to keep all data in memory: throw some away -->
       </local-cache>

@@ -91,9 +91,6 @@ import org.infinispan.util.concurrent.BlockingManager;
 @InfinispanModule(name = "query", requiredModules = {"core", "query-core", "clustered-lock"}, optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
 
-   private static final String HS5_CONF_STRATEGY_PROPERTY = "hibernate.search.indexing_strategy";
-   private static final String HS5_CONF_STRATEGY_MANUAL = "manual";
-
    /**
     * Optional integer system property that sets value of {@link BooleanQuery#setMaxClauseCount}.
     */

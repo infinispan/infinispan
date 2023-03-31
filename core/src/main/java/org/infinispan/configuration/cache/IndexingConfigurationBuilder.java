@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONFIG;
 import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
@@ -18,7 +17,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -32,29 +30,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements IndexingConfigurationChildBuilder, Builder<IndexingConfiguration> {
-
-   private static final String BACKEND_PREFIX = "hibernate.search.backend.";
-
-   private static final String DIRECTORY_PROVIDER_KEY = BACKEND_PREFIX + "directory.type";
-
-   private static final String EXCLUSIVE_INDEX_USE = "hibernate.search.default.exclusive_index_use";
-
-   private static final String INDEX_MANAGER = "hibernate.search.default.indexmanager";
-
-   private static final String READER_STRATEGY = "hibernate.search.default.reader.strategy";
-
-   private static final String FS_PROVIDER = "local-filesystem";
-
-   /**
-    * Legacy name "ram" was replaced by "local-heap" many years ago.
-    *
-    * @deprecated To be removed after migration to hibernate search 6, if the version no longer supports this legacy
-    * name.
-    */
-   @Deprecated
-   private static final String RAM_DIRECTORY_PROVIDER = "ram";
-
-   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
 
    private final AttributeSet attributes;
 
@@ -106,7 +81,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    public void reset() {
       attributes.attribute(INDEX).reset();
-      attributes.attribute(AUTO_CONFIG).reset();
       attributes.attribute(ENABLED).reset();
       attributes.attribute(INDEXED_ENTITIES).reset();
       attributes.attribute(PROPERTIES).reset();
@@ -173,65 +147,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    /**
-    * Defines a single property. Can be used multiple times to define all needed properties, but the
-    * full set is overridden by {@link #withProperties(Properties)}.
-    * <p>
-    * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the the Hibernate Search
-    * reference of the version used by Infinispan Query.
-    *
-    * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
-    * @param key Property key
-    * @param value Property value
-    * @return <code>this</code>, for method chaining
-    * @deprecated Since 12.0, please use {@link #writer()} and {@link #reader()} to define indexing behavior.
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder addProperty(String key, String value) {
-      return setProperty(key, value);
-   }
-
-   /**
-    * Defines a single value. Can be used multiple times to define all needed property values, but the
-    * full set is overridden by {@link #withProperties(Properties)}.
-    * <p>
-    * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the the Hibernate Search
-    * reference of the version used by Infinispan Query.
-    *
-    * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
-    * @param key Property key
-    * @param value Property value
-    * @return <code>this</code>, for method chaining
-    * @deprecated Since 12.0, please {@link #writer()} and {@link #reader()} to define indexing behavior.
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder setProperty(String key, Object value) {
-      TypedProperties properties = attributes.attribute(PROPERTIES).get();
-      properties.put(key, value);
-      attributes.attribute(PROPERTIES).set(properties);
-      return this;
-   }
-
-   /**
-    * The Query engine relies on properties for configuration.
-    * <p>
-    * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the Hibernate Search
-    * reference of the version you're using with Infinispan Query.
-    *
-    * @see <a href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate Search</a>
-    * @param props the properties
-    * @return <code>this</code>, for method chaining
-    * @deprecated Since 12.0, please {@link #writer()} and {@link #reader()} to define indexing behavior.
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder withProperties(Properties props) {
-      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
-      return this;
-   }
-
-   /**
     * Indicates indexing mode
     *
     * @deprecated Since 11.0. This configuration will be removed in next major version as the index mode is calculated
@@ -245,31 +160,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       enabled(index != null && index != Index.NONE);
       attributes.attribute(INDEX).set(index);
       return this;
-   }
-
-   /**
-    * When enabled, applies to properties default configurations based on
-    * the cache type
-    *
-    * @param autoConfig boolean
-    * @return <code>this</code>, for method chaining
-    * @deprecated Since 11.0 with no replacement.
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
-      if (autoConfig && !attributes.attribute(ENABLED).isModified()) {
-         enable();
-      }
-      attributes.attribute(AUTO_CONFIG).set(autoConfig);
-      return this;
-   }
-
-   /**
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated
-   public boolean autoConfig() {
-      return attributes.attribute(AUTO_CONFIG).get();
    }
 
    public IndexingConfigurationBuilder addIndexedEntity(String indexedEntity) {
@@ -354,7 +244,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       if (enabled()) {
-         applyLegacyProperties(attributes.attribute(PROPERTIES).get());
          // Check that the query module is on the classpath.
          try {
             String clazz = "org.infinispan.query.Search";
@@ -376,55 +265,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       }
    }
 
-   private void applyAutoConfig(TypedProperties properties) {
-      properties.putIfAbsent(DIRECTORY_PROVIDER_KEY, FS_PROVIDER);
-      properties.putIfAbsent(EXCLUSIVE_INDEX_USE, "true");
-      properties.putIfAbsent(INDEX_MANAGER, "near-real-time");
-      properties.putIfAbsent(READER_STRATEGY, "shared");
-   }
-
    @Override
    public IndexingConfiguration create() {
-      TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
-      if (typedProperties.size() > 0) {
-         CONFIG.indexingPropertiesDeprecated(typedProperties);
-         applyLegacyProperties(typedProperties);
-      }
-      if (autoConfig()) {
-         applyAutoConfig(typedProperties);
-         attributes.attribute(PROPERTIES).set(typedProperties);
-
-         // check that after autoConfig we still do not have multiple configured providers
-         ensureSingleIndexingConfig();
-      }
-
-      // todo [anistor] if storage media type is not configured then log a warning because this is not supported with indexing
-
       return new IndexingConfiguration(attributes.protect(), resolvedIndexedClasses, readerConfigurationBuilder.create(),
             writerConfigurationBuilder.create(), shardingConfigurationBuilder.create());
-   }
-
-   /**
-    * Apply ISPN 11 index properties
-    */
-   private void applyLegacyProperties(TypedProperties properties) {
-      properties.forEach((k, v) -> {
-         String prop = k.toString();
-         String propValue = v.toString();
-         if (prop.endsWith(".directory_provider")) {
-            if (LOCAL_HEAP_DIRECTORY_PROVIDER.equals(propValue)) {
-               storage(IndexStorage.LOCAL_HEAP);
-            } else {
-               storage(IndexStorage.FILESYSTEM);
-            }
-         }
-         if (prop.endsWith(".indexBase")) path(replaceProperties(propValue));
-         if (prop.endsWith(".merge_factor")) writer().merge().factor(Integer.parseInt(propValue));
-         if (prop.endsWith(".merge_max_size")) writer().merge().maxSize(Integer.parseInt(propValue));
-         if (prop.endsWith(".ram_buffer_size")) writer().ramBufferSize(Integer.parseInt(propValue));
-         if (prop.endsWith(".index_flush_interval")) writer().commitInterval(Integer.parseInt(propValue));
-         if (prop.endsWith(".reader.async_refresh_period_ms")) reader().refreshInterval(Long.parseLong(propValue));
-      });
    }
 
    @Override
@@ -432,13 +276,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       attributes.read(template.attributes());
 
       // ensures inheritance works properly even when inheriting from an old config
-      // that uses INDEX or AUTO_CONFIG instead of ENABLED
+      // that uses INDEX instead of ENABLED
       Index index = attributes.attribute(INDEX).get();
       if (index != null) {
          enabled(index != Index.NONE);
-      }
-      if (autoConfig() && !attributes.attribute(ENABLED).isModified()) {
-         enable();
       }
       this.resolvedIndexedClasses.clear();
       this.resolvedIndexedClasses.addAll(template.indexedEntities());
