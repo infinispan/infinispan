@@ -71,7 +71,7 @@
 
     <Logger name="org.jgroups" level="INFO"/>
 
-    <Logger name="org.wildfly.security.auth.realm.ldap" level="DEBUG"/>
+    <Logger name="org.wildfly.security" level="TRACE"/>
 
     <!-- Set to TRACE to enable access logging for Hot Rod requests -->
     <Logger name="org.infinispan.HOTROD_ACCESS_LOG" additivity="false" level="INFO">
