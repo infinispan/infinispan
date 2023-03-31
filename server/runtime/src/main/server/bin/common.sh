@@ -298,10 +298,9 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         # Enable virtual threads in Java 19+
         PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --enable-preview"
     fi
-    if [ "$JAVA_VERSION" -ge 17 ]; then
-        # Enable export for LDAP (needed for JDK 17+)
-        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
-    fi
+
+    # Enable export for LDAP (needed for JDK 17+, silences a warning on JDK 11)
+    PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
 
     if [ "$GC_LOG" = "true" ]; then
         # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled
