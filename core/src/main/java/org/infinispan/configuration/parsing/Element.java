@@ -64,6 +64,7 @@ public enum Element {
     INDEXED_ENTITY,
     INDEXING,
     INDEX_READER,
+    INDEX_SHARDING,
     INDEX_WRITER,
     INDEX_MERGE,
     INTERCEPTOR,

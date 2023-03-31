@@ -170,6 +170,7 @@ public enum Attribute {
     ROLES,
     SEGMENTED,
     SEGMENTS,
+    SHARDS,
     SHARED,
     SHUTDOWN_HOOK,
     @Deprecated

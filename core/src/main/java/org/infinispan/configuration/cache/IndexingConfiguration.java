@@ -53,12 +53,15 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    private final Set<Class<?>> resolvedIndexedClasses;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
+   private final IndexShardingConfiguration shardingConfiguration;
 
    IndexingConfiguration(AttributeSet attributes, Set<Class<?>> resolvedIndexedClasses,
-                         IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration) {
+                         IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration,
+                         IndexShardingConfiguration shardingConfiguration) {
       super(Element.INDEXING, attributes);
       this.readerConfiguration = readerConfiguration;
       this.writerConfiguration = writerConfiguration;
+      this.shardingConfiguration = shardingConfiguration;
       this.resolvedIndexedClasses = resolvedIndexedClasses;
       this.properties = this.attributes.attribute(AbstractTypedPropertiesConfiguration.PROPERTIES);
       if (properties.isModified()) {
@@ -182,6 +185,10 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
       return writerConfiguration;
    }
 
+   public IndexShardingConfiguration sharding() {
+      return shardingConfiguration;
+   }
+
    /**
     * Does the index use a provider that does not persist upon restart?
     */
@@ -193,6 +200,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    public String toString() {
       return attributes.toString(null) +
             ", reader=" + readerConfiguration +
-            ", writer=" + writerConfiguration;
+            ", writer=" + writerConfiguration +
+            ", sharding=" + shardingConfiguration;
    }
 }

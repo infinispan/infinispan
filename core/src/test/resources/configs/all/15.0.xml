@@ -219,6 +219,7 @@
       </distributed-cache>
       <distributed-cache name="indexed-manual-indexing">
          <indexing enabled="true" indexing-mode="manual">
+            <index-sharding shards="7" />
             <indexed-entities>
                <indexed-entity>TheEntity</indexed-entity>
             </indexed-entities>

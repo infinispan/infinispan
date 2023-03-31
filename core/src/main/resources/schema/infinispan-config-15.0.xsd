@@ -1003,6 +1003,15 @@
                 <xs:documentation>Controls index writing parameters</xs:documentation>
               </xs:annotation>
             </xs:element>
+            <xs:element name="index-sharding" type="tns:index-sharding" maxOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Sharding consists in splitting index data into multiple "smaller indexes", called shards,
+                  in order to improve performance when dealing with large amounts of data.
+                  By default, sharding is disabled.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
             <xs:element name="key-transformers" minOccurs="0" maxOccurs="1">
               <xs:annotation>
                 <xs:documentation>Defines the Transformers used to stringify keys for indexing with Lucene</xs:documentation>
@@ -2538,6 +2547,17 @@
         <xs:documentation>
           Interval, in milliseconds, to reopen the index reader.
           By default, the index reader is refreshed on-demand during searches, if new entries were indexed since the last refresh. Configuring with a value larger than zero will make some queries results stale, but query throughput will increase substantially, specially in write heavy scenarios.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="index-sharding">
+    <xs:attribute name="shards" type="xs:int" default="1">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the number of shards with which slip the index data.
+          To enable sharding, set this attribute to a value that is strictly major of 1.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

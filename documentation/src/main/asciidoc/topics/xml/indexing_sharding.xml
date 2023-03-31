@@ -1,0 +1,5 @@
+<distributed-cache>
+  <indexing>
+    <index-sharding shards="6" />
+  </indexing>
+</distributed-cache>

@@ -21,18 +21,20 @@ public class SearchMappingCommonBuilding {
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
    private final BlockingManager blockingManager;
    private final LuceneWorkExecutorProvider luceneWorkExecutorProvider;
+   private final Integer numberOfShards;
 
    public SearchMappingCommonBuilding(BeanReference<? extends IdentifierBridge<Object>> identifierBridge,
                                       Map<String, Object> properties, ClassLoader aggregatedClassLoader,
                                       Collection<ProgrammaticSearchMappingProvider> mappingProviders,
                                       BlockingManager blockingManager,
-                                      LuceneWorkExecutorProvider luceneWorkExecutorProvider) {
+                                      LuceneWorkExecutorProvider luceneWorkExecutorProvider, Integer numberOfShards) {
       this.identifierBridge = identifierBridge;
       this.properties = properties;
       this.aggregatedClassLoader = aggregatedClassLoader;
       this.mappingProviders = mappingProviders;
       this.blockingManager = blockingManager;
       this.luceneWorkExecutorProvider = luceneWorkExecutorProvider;
+      this.numberOfShards = numberOfShards;
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
@@ -46,6 +48,11 @@ public class SearchMappingCommonBuilding {
 
       if (!properties.containsKey("hibernate.search.background_failure_handler")) {
          builder.setProperty("hibernate.search.background_failure_handler", indexingFailureHandler);
+      }
+      if (!properties.containsKey("sharding.number_of_shards") && !properties.containsKey("sharding.strategy")
+         && numberOfShards > 1) {
+         builder.setProperty("sharding.strategy", "hash"); // the only strategy supported at the moment
+         builder.setProperty("sharding.number_of_shards", numberOfShards);
       }
       return builder;
    }
