@@ -1743,10 +1743,6 @@ public class CacheParser implements ConfigurationParser {
                builder.indexing().index(index);
                selfEnable = false;
                break;
-            case AUTO_CONFIG:
-               CONFIG.autoConfigDeprecated();
-               builder.indexing().autoConfig(ParseUtils.parseBoolean(reader, i, value));
-               break;
             case STORAGE:
                builder.indexing().storage(IndexStorage.requireValid(value, CONFIG));
                break;
@@ -1807,9 +1803,6 @@ public class CacheParser implements ConfigurationParser {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
-      }
-      if(!indexingProperties.isEmpty()) {
-         builder.indexing().withProperties(indexingProperties);
       }
    }
 

@@ -2047,9 +2047,9 @@ public interface Log extends BasicLogger {
    @Message(value = "ClusterLoader has been deprecated and will be removed in a future version with no direct replacement", id = 595)
    void warnUsingDeprecatedClusterLoader();
 
-   @LogMessage(level = WARN)
-   @Message(value = "Indexing auto-config attribute is deprecated. Please check the upgrade guide.", id = 596)
-   void autoConfigDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "Indexing auto-config attribute is deprecated. Please check the upgrade guide.", id = 596)
+//   void autoConfigDeprecated();
 
    @Message(value = "Store %s cannot be configured to be transactional as it does not contain the TRANSACTIONAL characteristic", id = 597)
    CacheConfigurationException storeConfiguredTransactionalButCharacteristicNotPresent(String storeClassName);

@@ -1,5 +1,5 @@
 <replicated-cache name="test">
-  <indexing auto-config="true">
+  <indexing>
     <key-transformers>
       <key-transformer key="com.mycompany.CustomKey"
                        transformer="com.mycompany.CustomTransformer"/>

@@ -715,7 +715,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       AttributeSet attributes = indexing.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.INDEXING);
-         attributes.write(writer, IndexingConfiguration.AUTO_CONFIG, Attribute.AUTO_CONFIG);
          attributes.write(writer, IndexingConfiguration.ENABLED, Attribute.ENABLED);
          attributes.write(writer, IndexingConfiguration.STORAGE, Attribute.STORAGE);
          attributes.write(writer, IndexingConfiguration.STARTUP_MODE, Attribute.STARTUP_MODE);

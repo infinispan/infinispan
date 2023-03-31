@@ -32,14 +32,14 @@
          </indexing>
       </local-cache>
       <replicated-cache name="repl-with-default">
-         <indexing auto-config="true">
+         <indexing>
          <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
          </indexing>
       </replicated-cache>
       <distributed-cache name="dist-with-default">
-         <indexing auto-config="true">
+         <indexing>
          <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>

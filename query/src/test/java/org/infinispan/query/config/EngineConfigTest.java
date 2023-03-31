@@ -108,15 +108,6 @@ public class EngineConfigTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testLegacyIndexPathWithoutGlobalState() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable().addIndexedEntity(Person.class).addProperty("default.indexBase", tempDir.getPath());
-
-      Map<String, Object> properties = resolveIndexingProperties(new GlobalConfigurationBuilder(), builder);
-      assertEquals(tempDir.getPath(), properties.get("hibernate.search.backend.directory.root"));
-   }
-
-   @Test
    public void testRelativeIndexLocation() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.globalState().enabled(true).persistentLocation(tempDir.getPath());

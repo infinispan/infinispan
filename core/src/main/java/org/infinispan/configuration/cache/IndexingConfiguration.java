@@ -1,7 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.attributes.CollectionAttributeCopier.collectionCopier;
-import static org.infinispan.commons.util.Immutables.immutableTypedProperties;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,11 +8,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -26,11 +23,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    @Deprecated
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEX, null, Index.class).immutable().build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
-   /**
-    * @deprecated since 11.0
-    */
-   @Deprecated
-   public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_CONFIG, false).immutable().build();
+
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder(Element.KEY_TRANSFORMERS, null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(collectionCopier())
          .initializer(HashMap::new).immutable().build();
@@ -46,10 +39,9 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
          .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
    }
 
-   private final Attribute<TypedProperties> properties;
    private final Set<Class<?>> resolvedIndexedClasses;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
@@ -63,27 +55,6 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
       this.writerConfiguration = writerConfiguration;
       this.shardingConfiguration = shardingConfiguration;
       this.resolvedIndexedClasses = resolvedIndexedClasses;
-      this.properties = this.attributes.attribute(AbstractTypedPropertiesConfiguration.PROPERTIES);
-      if (properties.isModified()) {
-         properties.set(immutableTypedProperties(properties.get()));
-      }
-   }
-
-   /**
-    * <p>
-    * These properties are passed directly to the embedded Hibernate Search engine, so for the
-    * complete and up to date documentation about available properties refer to the Hibernate Search
-    * reference of the version you're using with Infinispan Query.
-    * </p>
-    *
-    * @see <a
-    *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
-    *      Search</a>
-    * @deprecated Since 12.0, indexing behaviour is defined by {@link #writer()} and {@link #reader()}.
-    */
-   @Deprecated
-   public TypedProperties properties() {
-      return properties.get();
    }
 
    /**
@@ -102,15 +73,6 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     */
    public boolean enabled() {
       return attributes.attribute(ENABLED).get();
-   }
-
-   /**
-    * Determines if autoconfig is enabled for this IndexingConfiguration.
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated
-   public boolean autoConfig() {
-      return attributes.attribute(AUTO_CONFIG).get();
    }
 
    public IndexStorage storage() {

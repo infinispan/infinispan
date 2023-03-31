@@ -20,8 +20,6 @@
             <indexed-entities>
                <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
             </indexed-entities>
-            <!-- Use latest Lucene version -->
-            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
          <state-transfer timeout="480000" enabled="true" />
       </distributed-cache>

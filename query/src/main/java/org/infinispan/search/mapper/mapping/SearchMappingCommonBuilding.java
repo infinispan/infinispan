@@ -44,16 +44,8 @@ public class SearchMappingCommonBuilding {
                   blockingManager, indexingFailureHandler.failureCounter())
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties)
-            .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider);
-
-      if (!properties.containsKey("hibernate.search.background_failure_handler")) {
-         builder.setProperty("hibernate.search.background_failure_handler", indexingFailureHandler);
-      }
-      if (!properties.containsKey("sharding.number_of_shards") && !properties.containsKey("sharding.strategy")
-         && numberOfShards > 1) {
-         builder.setProperty("sharding.strategy", "hash"); // the only strategy supported at the moment
-         builder.setProperty("sharding.number_of_shards", numberOfShards);
-      }
+            .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider)
+            .setProperty("hibernate.search.background_failure_handler", indexingFailureHandler);
       return builder;
    }
 }
