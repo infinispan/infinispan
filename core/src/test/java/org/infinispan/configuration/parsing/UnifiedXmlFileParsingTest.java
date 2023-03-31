@@ -128,6 +128,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             IndexingConfiguration indexed = getConfiguration(holder, "indexed-manual-indexing").indexing();
             assertThat(indexed.enabled()).isTrue();
             assertThat(indexed.indexingMode()).isEqualTo(IndexingMode.MANUAL);
+            assertThat(indexed.sharding()).isNotNull();
+            assertThat(indexed.sharding().getShards()).isEqualTo(7);
          }
       },
       INFINISPAN_140(14, 0) {

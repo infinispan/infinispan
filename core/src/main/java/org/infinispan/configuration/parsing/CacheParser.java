@@ -1799,6 +1799,10 @@ public class CacheParser implements ConfigurationParser {
                parseIndexWriter(reader, builder);
                break;
             }
+            case INDEX_SHARDING: {
+               parseIndexSharding(reader, builder);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -1861,6 +1865,11 @@ public class CacheParser implements ConfigurationParser {
             throw ParseUtils.unexpectedElement(reader);
          }
       }
+   }
+
+   private void parseIndexSharding(ConfigurationReader reader, ConfigurationBuilder builder) {
+      ParseUtils.parseAttributes(reader, builder.indexing().sharding());
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseIndexWriterMerge(ConfigurationReader reader, ConfigurationBuilder builder) {

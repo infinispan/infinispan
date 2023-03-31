@@ -24,6 +24,11 @@ abstract class AbstractIndexingConfigurationChildBuilder
    }
 
    @Override
+   public IndexShardingConfigurationBuilder sharding() {
+      return indexingBuilder.sharding();
+   }
+
+   @Override
    public IndexingConfigurationBuilder addIndexedEntity(String entity) {
       return indexingBuilder.addIndexedEntities(entity);
    }

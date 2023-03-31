@@ -9,6 +9,8 @@ public interface IndexingConfigurationChildBuilder extends ConfigurationChildBui
 
    IndexWriterConfigurationBuilder writer();
 
+   IndexShardingConfigurationBuilder sharding();
+
    IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass);
 
    IndexingConfigurationBuilder addIndexedEntity(String indexedEntity);

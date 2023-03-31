@@ -28,6 +28,7 @@ import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.IndexShardingConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -314,10 +315,17 @@ public class LifecycleManager implements ModuleLifecycle {
       LuceneWorkExecutorProvider luceneWorkExecutorProvider =
             cr.getGlobalComponentRegistry().getComponent(LuceneWorkExecutorProvider.class);
 
+      Integer numberOfShards = 1;
+      IndexShardingConfiguration sharding = indexingConfiguration.sharding();
+      if (sharding != null) {
+         numberOfShards = sharding.getShards();
+      }
+
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
             extractProperties(globalConfiguration, indexingConfiguration, aggregatedClassLoader),
-            aggregatedClassLoader, mappingProviders, blockingManager, luceneWorkExecutorProvider);
+            aggregatedClassLoader, mappingProviders, blockingManager, luceneWorkExecutorProvider,
+            numberOfShards);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {

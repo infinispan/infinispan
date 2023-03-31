@@ -727,6 +727,12 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             writer.writeAttribute(Attribute.REFRESH_INTERVAL, Long.toString(refreshInterval));
             writer.writeEndElement();
          }
+         Integer shards = indexing.sharding().getShards();
+         if (shards > 1) {
+            writer.writeStartElement(Element.INDEX_SHARDING);
+            writer.writeAttribute(Attribute.SHARDS, Integer.toString(shards));
+            writer.writeEndElement();
+         }
          IndexWriterConfiguration indexWriter = indexing.writer();
          IndexMergeConfiguration indexMerge = indexWriter.merge();
          AttributeSet writerAttributes = indexWriter.attributes();

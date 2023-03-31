@@ -62,12 +62,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private final IndexReaderConfigurationBuilder readerConfigurationBuilder;
    private final IndexWriterConfigurationBuilder writerConfigurationBuilder;
+   private final IndexShardingConfigurationBuilder shardingConfigurationBuilder;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = IndexingConfiguration.attributeDefinitionSet();
       readerConfigurationBuilder = new IndexReaderConfigurationBuilder(this);
       writerConfigurationBuilder = new IndexWriterConfigurationBuilder(this);
+      shardingConfigurationBuilder = new IndexShardingConfigurationBuilder(this);
    }
 
    @Override
@@ -93,6 +95,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public IndexWriterConfigurationBuilder writer() {
       return writerConfigurationBuilder;
+   }
+
+   public IndexShardingConfigurationBuilder sharding() {
+      return shardingConfigurationBuilder;
    }
 
    /**
@@ -394,7 +400,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
       // todo [anistor] if storage media type is not configured then log a warning because this is not supported with indexing
 
-      return new IndexingConfiguration(attributes.protect(), resolvedIndexedClasses, readerConfigurationBuilder.create(), writerConfigurationBuilder.create());
+      return new IndexingConfiguration(attributes.protect(), resolvedIndexedClasses, readerConfigurationBuilder.create(),
+            writerConfigurationBuilder.create(), shardingConfigurationBuilder.create());
    }
 
    /**
@@ -437,6 +444,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       this.resolvedIndexedClasses.addAll(template.indexedEntities());
       this.readerConfigurationBuilder.read(template.reader());
       this.writerConfigurationBuilder.read(template.writer());
+      this.shardingConfigurationBuilder.read(template.sharding());
       return this;
    }
 
@@ -446,6 +454,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             "attributes=" + attributes +
             ", readerConfigurationBuilder=" + readerConfigurationBuilder +
             ", writerConfigurationBuilder=" + writerConfigurationBuilder +
+            ", shardingConfigurationBuilder=" + shardingConfigurationBuilder +
             '}';
    }
 

@@ -159,3 +159,16 @@ To configure how {brandname} merges index segments, you use the `index-merge` su
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}[{brandname} configuration schema reference]
+
+== Index Sharding
+
+Sharding consists in splitting index data into multiple "smaller indexes", called shards,
+in order to improve performance when dealing with **large amounts of data**.
+By default, sharding is disabled.
+To enable sharding, set the `shards` attribute to a value that is strictly major of 1.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_sharding.xml[]
+----
+

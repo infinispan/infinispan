@@ -31,8 +31,7 @@
             -->
 
             <!-- Enable sharding on writers -->
-            <property name="sharding.strategy">hash</property>
-            <property name="sharding.number_of_shards">6</property>
+            <index-sharding shards="6" />
             <property name="thread_pool.size">6</property>
             <property name="indexing.queue_count">6</property>
             <property name="indexing.queue_size">4096</property>
