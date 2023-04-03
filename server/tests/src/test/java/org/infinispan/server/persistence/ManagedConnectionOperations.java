@@ -69,8 +69,8 @@ public class ManagedConnectionOperations {
 
    @Test
    public void testTwoCachesSameCacheStore() {
-      RemoteCache<String, String> cache1 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).withQualifier("2").create();
+      RemoteCache<String, String> cache1 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder().build()).withQualifier("1").create();
+      RemoteCache<String, String> cache2 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder().build()).withQualifier("2").create();
       cache1.put("k1", "v1");
       String firstK1 = cache1.get("k1");
       assertEquals("v1", firstK1);
@@ -85,7 +85,7 @@ public class ManagedConnectionOperations {
 
    @Test
    public void testPutGetRemove() {
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder().build()).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 

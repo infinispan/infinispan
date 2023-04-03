@@ -49,7 +49,7 @@ public class CustomStoreOperationsIT {
             .addStore(CustomStoreConfigurationBuilder.class)
             .segmented(false)
             .customStoreClass(CustomNonBlockingStore.class);
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(configurationBuilder).create();
+      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(configurationBuilder.build()).create();
 
       assertEquals("Hello World", cache.get("World"));
    }

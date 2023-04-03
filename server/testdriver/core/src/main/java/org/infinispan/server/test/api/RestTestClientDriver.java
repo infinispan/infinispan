@@ -10,7 +10,6 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 
@@ -81,9 +80,9 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
          RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
          future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       } else if (mode != null) {
-         future = restClient.cache(name).createWithTemplate("org.infinispan." + mode.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         future = restClient.cache(name).createWithTemplate("org.infinispan." + mode, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       } else {
-         future = restClient.cache(name).createWithTemplate("org.infinispan." + CacheMode.DIST_SYNC.name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         future = restClient.cache(name).createWithTemplate("org.infinispan.DIST_SYNC", flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       }
       RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
       response.close();

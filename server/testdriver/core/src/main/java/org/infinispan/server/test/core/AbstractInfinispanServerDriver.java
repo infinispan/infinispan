@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystem;
@@ -28,10 +30,12 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -46,8 +50,6 @@ import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.server.Server;
-import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.api.TestUser;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -64,13 +66,20 @@ import org.wildfly.security.x500.cert.X509CertificateBuilder;
  **/
 public abstract class AbstractInfinispanServerDriver implements InfinispanServerDriver {
    public static final String DEFAULT_CLUSTERED_INFINISPAN_CONFIG_FILE_NAME = "infinispan.xml";
-
+   public static final String INFINISPAN_SERVER_ROOT_PATH = "infinispan.server.root.path";
+   public static final String INFINISPAN_CLUSTER_NAME = "infinispan.cluster.name";
+   public static final String INFINISPAN_CLUSTER_STACK = "infinispan.cluster.stack";
+   public static final String INFINISPAN_SERVER_CONFIG_PATH = "infinispan.server.config.path";
    public static final String TEST_HOST_ADDRESS = "org.infinispan.test.host.address";
    public static final String JOIN_TIMEOUT = "jgroups.join_timeout";
    public static final String BASE_DN = "CN=%s,OU=Infinispan,O=JBoss,L=Red Hat";
    public static final String KEY_PASSWORD = "secret";
    public static final String KEY_ALGORITHM = "RSA";
    public static final String KEY_SIGNATURE_ALGORITHM = "SHA256withRSA";
+   public static final String DEFAULT_SERVER_CONFIG = "conf";
+   public static final String DEFAULT_SERVER_DATA = "data";
+   public static final String DEFAULT_SERVER_LIB = "lib";
+   public static final String DEFAULT_SERVER_LOG = "log";
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;
@@ -105,7 +114,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    protected String debugJvmOption() {
       String nonLoopbackAddress;
       try {
-         nonLoopbackAddress = NetworkAddress.nonLoopback("").getAddress().getHostAddress();
+         nonLoopbackAddress = findAddress(InetAddress::isLoopbackAddress).getAddress().getHostAddress();
       } catch (IOException e) {
          throw new IllegalStateException("Could not find a non-loopback address");
       }
@@ -132,7 +141,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       String testDir = CommonsTestingUtil.tmpDirectory(siteName + name);
       Util.recursiveFileRemove(testDir);
       rootDir = new File(testDir);
-      confDir = new File(rootDir, Server.DEFAULT_SERVER_CONFIG);
+      confDir = new File(rootDir, DEFAULT_SERVER_CONFIG);
       if (!confDir.mkdirs()) {
          throw new RuntimeException("Failed to create server configuration directory " + confDir);
       }
@@ -213,9 +222,9 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    protected static File createServerHierarchy(File baseDir, String name) {
       File rootDir = serverRoot(baseDir, name);
       for (String dir : Arrays.asList(
-            Server.DEFAULT_SERVER_DATA,
-            Server.DEFAULT_SERVER_LOG,
-            Server.DEFAULT_SERVER_LIB)
+            DEFAULT_SERVER_DATA,
+            DEFAULT_SERVER_LOG,
+            DEFAULT_SERVER_LIB)
       ) {
          File d = new File(rootDir, dir);
          if (!d.exists()) {
@@ -488,5 +497,26 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    @Override
    public RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder) {
       return new RemoteCacheManager(builder.build());
+   }
+
+   private static InterfaceAddress findAddress(Predicate<InetAddress> matcher) throws IOException {
+      for (Enumeration<NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+         NetworkInterface networkInterface = interfaces.nextElement();
+         if (networkInterface.isUp()) {
+            InterfaceAddress ifAddress = findAddress(networkInterface, matcher);
+            if (ifAddress != null) return ifAddress;
+         }
+      }
+      throw new IOException("No matching addresses found");
+   }
+
+   private static InterfaceAddress findAddress(NetworkInterface networkInterface, Predicate<InetAddress> matcher) {
+      for (InterfaceAddress ifAddress : networkInterface.getInterfaceAddresses()) {
+         InetAddress address = ifAddress.getAddress();
+         if (matcher.test(address)) {
+            return ifAddress;
+         }
+      }
+      return null;
    }
 }

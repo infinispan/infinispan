@@ -14,7 +14,10 @@
 
    <modules>
       <module>core</module>
+      <module>core-jakarta</module>
       <module>junit4</module>
+      <module>junit4-jakarta</module>
       <module>junit5</module>
+      <module>junit5-jakarta</module>
    </modules>
 </project>

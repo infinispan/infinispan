@@ -34,7 +34,7 @@ public class PojoMarshalling {
       cacheBuilder.encoding().key().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
       cacheBuilder.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
       cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      RemoteCache<String, Person> cache = SERVER_TEST.hotrod().withServerConfiguration(cacheBuilder).withClientConfiguration(builder).withMarshaller(JavaSerializationMarshaller.class).create();
+      RemoteCache<String, Person> cache = SERVER_TEST.hotrod().withServerConfiguration(cacheBuilder.build()).withClientConfiguration(builder).withMarshaller(JavaSerializationMarshaller.class).create();
       cache.put("123", new Person("Enrique", 29));
       Person person = cache.get("123");
       assertEquals("Enrique", person.getName());
