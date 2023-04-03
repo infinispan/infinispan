@@ -14,7 +14,7 @@ public class ConnectionPoolConfiguration extends ConfigurationElement<Connection
    static final AttributeDefinition<Integer> MAX_ACTIVE = AttributeDefinition.builder("max_active", -1, Integer.class).build();
    static final AttributeDefinition<Long> MAX_WAIT = AttributeDefinition.builder("max_wait", -1l, Long.class).build();
    static final AttributeDefinition<Integer> MIN_IDLE = AttributeDefinition.builder("min_idle", -1, Integer.class).build();
-   static final AttributeDefinition<Long> MIN_EVICTABLE_IDLE_TIME = AttributeDefinition.builder("min_evictable_idle_time", 1800000L, Long.class).build();
+      static final AttributeDefinition<Long> MIN_EVICTABLE_IDLE_TIME = AttributeDefinition.builder("min_evictable_idle_time", 180000L, Long.class).build();
    static final AttributeDefinition<Integer> MAX_PENDING_REQUESTS = AttributeDefinition.builder("max_pending_requests", 5, Integer.class).build();
 
    static AttributeSet attributeDefinitionSet() {

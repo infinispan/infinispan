@@ -24,6 +24,11 @@ public class HugeProtobufMessageTest extends SingleHotRodServerTest {
    }
 
    @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort).socketTimeout(20_000);
+   }
+
+   @Override
    protected SerializationContextInitializer contextInitializer() {
       return Essay.EssaySchema.INSTANCE;
    }

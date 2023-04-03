@@ -85,7 +85,7 @@ public interface ConfigurationChildBuilder {
 
    /**
     * This property defines the maximum socket connect timeout in milliseconds before giving up connecting to the
-    * server.
+    * server. Defaults to {@link org.infinispan.client.hotrod.impl.ConfigurationProperties#DEFAULT_CONNECT_TIMEOUT}
     */
    ConfigurationBuilder connectionTimeout(int connectionTimeout);
 
@@ -172,7 +172,7 @@ public interface ConfigurationChildBuilder {
 
    /**
     * This property defines the maximum socket read timeout in milliseconds before giving up waiting
-    * for bytes from the server. Defaults to 60000 (1 minute)
+    * for bytes from the server. Defaults to {@link org.infinispan.client.hotrod.impl.ConfigurationProperties#DEFAULT_SO_TIMEOUT}
     */
    ConfigurationBuilder socketTimeout(int socketTimeout);
 

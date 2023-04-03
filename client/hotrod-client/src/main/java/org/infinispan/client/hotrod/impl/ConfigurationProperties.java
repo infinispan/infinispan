@@ -145,12 +145,12 @@ public class ConfigurationProperties {
    @Deprecated
    public static final int DEFAULT_VALUE_SIZE = 512;
    public static final int DEFAULT_HOTROD_PORT = 11222;
-   public static final int DEFAULT_SO_TIMEOUT = 60_000;
-   public static final int DEFAULT_CONNECT_TIMEOUT = 60_000;
-   public static final int DEFAULT_MAX_RETRIES = 10;
+   public static final int DEFAULT_SO_TIMEOUT = 2_000;
+   public static final int DEFAULT_CONNECT_TIMEOUT = 2_000;
+   public static final int DEFAULT_MAX_RETRIES = 3;
    public static final int DEFAULT_BATCH_SIZE = 10_000;
    public static final int DEFAULT_MAX_PENDING_REQUESTS = 5;
-   public static final long DEFAULT_MIN_EVICTABLE_IDLE_TIME = 1800000L;
+   public static final long DEFAULT_MIN_EVICTABLE_IDLE_TIME = 180000L;
    public static final int DEFAULT_MAX_ACTIVE = -1;
    public static final int DEFAULT_MAX_WAIT = -1;
    public static final int DEFAULT_MIN_IDLE = -1;

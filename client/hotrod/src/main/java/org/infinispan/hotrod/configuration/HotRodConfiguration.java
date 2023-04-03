@@ -31,7 +31,7 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
    static final AttributeDefinition<String[]> ALLOW_LIST = AttributeDefinition.builder("allow_list", new String[0], String[].class).immutable().build();
    static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batch_size", 10_000, Integer.class).build();
    static final AttributeDefinition<ClientIntelligence> CLIENT_INTELLIGENCE = AttributeDefinition.builder("client_intelligence", ClientIntelligence.getDefault(), ClientIntelligence.class).immutable().build();
-   static final AttributeDefinition<Integer> CONNECT_TIMEOUT = AttributeDefinition.builder("connect_timeout", 10_000, Integer.class).build();
+   static final AttributeDefinition<Integer> CONNECT_TIMEOUT = AttributeDefinition.builder("connect_timeout", 2_000, Integer.class).build();
    static final AttributeDefinition<Class[]> CONSISTENT_HASH_IMPL = AttributeDefinition.builder("hash_function_impl", ConsistentHash.DEFAULT, Class[].class).immutable().build();
    static final AttributeDefinition<Integer> DNS_RESOLVER_MIN_TTL = AttributeDefinition.builder("dns_resolver_min_ttl", 0).build();
    static final AttributeDefinition<Integer> DNS_RESOLVER_MAX_TTL = AttributeDefinition.builder("dns_resolver_max_ttl", Integer.MAX_VALUE).build();
@@ -39,10 +39,10 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
    static final AttributeDefinition<Boolean> FORCE_RETURN_VALUES = AttributeDefinition.builder("force_return_values", false, Boolean.class).build();
    static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).immutable().initializer(ProtoStreamMarshaller::new).build();
    static final AttributeDefinition<Class> MARSHALLER_CLASS = AttributeDefinition.builder("marshaller_class", ProtoStreamMarshaller.class, Class.class).immutable().build();
-   static final AttributeDefinition<Integer> MAX_RETRIES = AttributeDefinition.builder("max_retries", 60_000, Integer.class).validator(v -> {
+   static final AttributeDefinition<Integer> MAX_RETRIES = AttributeDefinition.builder("max_retries", 3, Integer.class).validator(v -> {
       if (v < 0) throw HOTROD.invalidMaxRetries(v);
    }).build();
-   static final AttributeDefinition<Integer> SOCKET_TIMEOUT = AttributeDefinition.builder("socket_timeout", 60_000, Integer.class).build();
+   static final AttributeDefinition<Integer> SOCKET_TIMEOUT = AttributeDefinition.builder("socket_timeout", 2_000, Integer.class).build();
    static final AttributeDefinition<Boolean> TCP_KEEPALIVE = AttributeDefinition.builder("tcp_keepalive", true, Boolean.class).build();
    static final AttributeDefinition<Boolean> TCP_NODELAY = AttributeDefinition.builder("tcp_no_delay", true, Boolean.class).build();
    static final AttributeDefinition<Long> TRANSACTION_TIMEOUT = AttributeDefinition.builder("transaction_timeout", 60_000l, Long.class).build();
