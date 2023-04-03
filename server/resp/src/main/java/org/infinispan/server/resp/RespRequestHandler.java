@@ -25,8 +25,12 @@ public abstract class RespRequestHandler {
 
    protected RespRequestHandler(RespServer respServer) {
       this.respServer = respServer;
-      this.cache = respServer.getCache()
-            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM);
+      setCache(respServer.getCache()
+            .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
+   }
+
+   protected void setCache(AdvancedCache<byte[], byte[]> cache) {
+      this.cache = cache;
    }
 
    /**
