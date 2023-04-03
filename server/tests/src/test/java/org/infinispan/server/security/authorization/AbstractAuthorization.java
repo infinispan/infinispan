@@ -305,7 +305,7 @@ public abstract class AbstractAuthorization {
       InfinispanServerTestMethodRule serverTest = getServerTest();
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.memory().maxCount(100);
-      serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
+      serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder.build()).create();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
          RemoteCache<String, String> cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          cache.getRemoteCacheManager().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "1000");
@@ -460,7 +460,7 @@ public abstract class AbstractAuthorization {
    public void testBulkReadUsersCanQuery() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.OBSERVER)) {
-         RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
+         RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder.build()).get();
          User fromCache = userCache.get(1);
          HotRodCacheQueries.assertUser1(fromCache);
          QueryFactory qf = Search.getQueryFactory(userCache);
@@ -486,7 +486,7 @@ public abstract class AbstractAuthorization {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
       // Hot Rod
       for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER)) {
-         RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
+         RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder.build()).get();
          QueryFactory qf = Search.getQueryFactory(userCache);
          Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
          Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> query.execute().list());
@@ -513,7 +513,7 @@ public abstract class AbstractAuthorization {
             .security().authorization().enable()
             .indexing().enable().storage(LOCAL_HEAP).addIndexedEntity("sample_bank_account.User");
 
-      RemoteCache<Integer, User> adminCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(TestUser.ADMIN)).withServerConfiguration(builder).create();
+      RemoteCache<Integer, User> adminCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(TestUser.ADMIN)).withServerConfiguration(builder.build()).create();
       adminCache.put(1, HotRodCacheQueries.createUser1());
       adminCache.put(2, HotRodCacheQueries.createUser2());
       return builder;
@@ -644,7 +644,7 @@ public abstract class AbstractAuthorization {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.indexing().enable().addIndexedEntity("sample_bank_account.User").statistics().enable();
       RestClient restClient = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
-            .withServerConfiguration(builder).create();
+            .withServerConfiguration(builder.build()).create();
       String indexedCache = getServerTest().getMethodName();
       RestCacheClient cache = restClient.cache(indexedCache);
       for (TestUser user : TestUser.NON_ADMINS) {
@@ -770,7 +770,7 @@ public abstract class AbstractAuthorization {
             authorizationConfigurationBuilder.role(role);
          }
       }
-      return getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
+      return getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder.build()).create();
    }
 
    private RestClient restCreateAuthzCache(String... explicitRoles) {
@@ -789,6 +789,6 @@ public abstract class AbstractAuthorization {
             authorizationConfigurationBuilder.role(role);
          }
       }
-      return getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
+      return getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder.build()).create();
    }
 }

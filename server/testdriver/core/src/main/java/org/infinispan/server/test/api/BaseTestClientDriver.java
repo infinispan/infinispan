@@ -6,7 +6,6 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.StringConfiguration;
-import org.infinispan.configuration.cache.CacheMode;
 
 /**
  * Base class for the driver API
@@ -18,14 +17,14 @@ import org.infinispan.configuration.cache.CacheMode;
 abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implements Self<S> {
    protected BasicConfiguration serverConfiguration = null;
    protected EnumSet<CacheContainerAdmin.AdminFlag> flags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
-   protected CacheMode mode = null;
+   protected String mode = null;
    protected String qualifier;
 
-   public S withServerConfiguration(org.infinispan.configuration.cache.ConfigurationBuilder serverConfiguration) {
+   public S withServerConfiguration(BasicConfiguration serverConfiguration) {
       if (mode != null) {
          throw new IllegalStateException("Cannot set server configuration and cache mode");
       }
-      this.serverConfiguration = serverConfiguration.build();
+      this.serverConfiguration = serverConfiguration;
       return self();
    }
 
@@ -37,7 +36,15 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
       return self();
    }
 
-   public S withCacheMode(CacheMode mode) {
+   public S withCacheMode(Enum<?> mode) {
+      if (serverConfiguration != null) {
+         throw new IllegalStateException("Cannot set server configuration and cache mode");
+      }
+      this.mode = mode.name();
+      return self();
+   }
+
+   public S withCacheMode(String mode) {
       if (serverConfiguration != null) {
          throw new IllegalStateException("Cannot set server configuration and cache mode");
       }

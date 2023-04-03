@@ -47,7 +47,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
       if (globalServerHome == null || globalServerHome.isEmpty()) {
          throw new IllegalArgumentException("You must specify a " + TestSystemPropertyNames.INFINISPAN_TEST_SERVER_DIR + " property.");
       }
-      serverDataPath = System.getProperty(Server.INFINISPAN_SERVER_ROOT_PATH);
+      serverDataPath = System.getProperty(INFINISPAN_SERVER_ROOT_PATH);
       if (serverDataPath != null && !serverDataPath.trim().isEmpty() && !serverDataPath.contains("%d")) {
          throw new IllegalStateException("Server root path should have the index. Add the %d regex to the path. Example: /path/to/server_%d");
       }
@@ -89,7 +89,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
             createServerStructure(serverHome, serverRootPath);
             destConfDir = getServerConfDir(serverRootPath.getAbsolutePath());
             server = new ForkedServer(serverHome);
-            server.addSystemProperty(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
+            server.addSystemProperty(INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
          } else {
             String serverHome = serverHomes.get(i).toString();
             destConfDir = getServerConfDir(serverHome);

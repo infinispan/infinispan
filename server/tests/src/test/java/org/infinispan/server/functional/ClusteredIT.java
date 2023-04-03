@@ -81,6 +81,6 @@ public class ClusteredIT {
 
       Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager)));
 
-      return hotRodTestClientDriver.withServerConfiguration(builder).create();
+      return hotRodTestClientDriver.withServerConfiguration(builder.build()).create();
    }
 }

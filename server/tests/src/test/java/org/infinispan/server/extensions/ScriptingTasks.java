@@ -61,7 +61,7 @@ public class ScriptingTasks {
       RemoteCache<String, String> cache = SERVER_TEST.hotrod()
             .withClientConfiguration(builder)
             .withMarshaller(JavaSerializationMarshaller.class)
-            .withServerConfiguration(cacheBuilder)
+            .withServerConfiguration(cacheBuilder.build())
             .create();
       String scriptName = SERVER_TEST.addScript(cache.getRemoteCacheManager(), "scripts/stream.js");
       cache.put("key1", "Lorem ipsum dolor sit amet");

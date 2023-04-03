@@ -50,7 +50,6 @@ import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
-import org.infinispan.server.Server;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.OutputFrame;
@@ -122,7 +121,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    protected void start(String fqcn, File rootDir, File configurationFile) {
       this.name = abbreviate(fqcn);
-      String jGroupsStack = System.getProperty(Server.INFINISPAN_CLUSTER_STACK);
+      String jGroupsStack = System.getProperty(INFINISPAN_CLUSTER_STACK);
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
       // Build the command-line that launches the server
@@ -162,8 +161,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          args.add(logFileName);
       }
       Properties properties = new Properties();
-      properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, Paths.get(INFINISPAN_SERVER_HOME, DEFAULT_SERVER_CONFIG).toString());
-      properties.setProperty(Server.INFINISPAN_CLUSTER_NAME, name);
+      properties.setProperty(INFINISPAN_SERVER_CONFIG_PATH, Paths.get(INFINISPAN_SERVER_HOME, DEFAULT_SERVER_CONFIG).toString());
+      properties.setProperty(INFINISPAN_CLUSTER_NAME, name);
       properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
       configuration.properties().forEach((k, v) -> args.add("-D" + k + "=" + StringPropertyReplacer.replaceProperties((String) v, properties)));
       configureSite(args);
