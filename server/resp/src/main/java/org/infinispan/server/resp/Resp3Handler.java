@@ -11,9 +11,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.resp.operation.SetOperation;
 import org.infinispan.server.resp.response.SetResponse;
@@ -29,8 +31,16 @@ public class Resp3Handler extends Resp3AuthHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    static final byte[] OK = "+OK\r\n".getBytes(StandardCharsets.US_ASCII);
 
+   protected AdvancedCache<byte[], byte[]> ignoreLoaderCache;
+
    Resp3Handler(RespServer respServer) {
       super(respServer);
+   }
+
+   @Override
+   protected void setCache(AdvancedCache<byte[], byte[]> cache) {
+      super.setCache(cache);
+      ignoreLoaderCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
    }
 
    protected static final BiConsumer<byte[], ByteBufPool> GET_BICONSUMER = (innerValueBytes, alloc) -> {
@@ -87,7 +97,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             if (arguments.size() != 2) {
                return stageToReturn(SetOperation.performOperation(cache, arguments), ctx, SET_BICONSUMER);
             }
-            return stageToReturn(cache.putAsync(arguments.get(0), arguments.get(1)), ctx, OK_BICONSUMER);
+            return stageToReturn(ignoreLoaderCache.putAsync(arguments.get(0), arguments.get(1)), ctx, OK_BICONSUMER);
          case GET:
             byte[] keyBytes = arguments.get(0);
 
@@ -127,7 +137,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             // TODO: should we return the # of subscribers on this node?
             // We use expiration to remove the event values eventually while preventing them during high periods of
             // updates
-            return stageToReturn(cache.putAsync(SubscriberHandler.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx, (ignore, alloc) -> {
+            return stageToReturn(ignoreLoaderCache.putAsync(SubscriberHandler.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx, (ignore, alloc) -> {
                stringToByteBuf(":0\r\n", alloc);
             });
          case SUBSCRIBE:

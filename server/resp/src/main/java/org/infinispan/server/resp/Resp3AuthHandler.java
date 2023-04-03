@@ -80,7 +80,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
          return false;
       }
 
-      cache = cache.withSubject(subject);
+      setCache(cache.withSubject(subject));
       Resp3Handler.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;
    }
