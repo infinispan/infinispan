@@ -114,9 +114,11 @@ public class Configuration {
    private final Map<String, RemoteCacheConfiguration> remoteCaches;
    private final TransportFactory transportFactory;
    private final boolean tracingPropagationEnabled;
+   private final DnsResolver dnsResolver;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
-                        ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
+                        ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
+                        DnsResolver dnsResolver, boolean forceReturnValues, int keySizeEstimate,
                         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                         int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
@@ -133,6 +135,7 @@ public class Configuration {
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
       this.consistentHashImpl = consistentHashImpl;
+      this.dnsResolver = dnsResolver;
       this.forceReturnValues = forceReturnValues;
       this.keySizeEstimate = keySizeEstimate;
       this.marshallerClass = marshallerClass;
@@ -189,6 +192,10 @@ public class Configuration {
 
    public Class<? extends ConsistentHash> consistentHashImpl(int version) {
       return consistentHashImpl[version - 1];
+   }
+
+   public DnsResolver dnsResolver() {
+      return dnsResolver;
    }
 
    public boolean forceReturnValues() {

@@ -101,6 +101,8 @@ public interface ConfigurationChildBuilder {
     */
    ConfigurationBuilder consistentHashImpl(int version, String consistentHashClass);
 
+   ConfigurationBuilder dnsResolver(DnsResolver dnsResolver);
+
    /**
     * Whether or not to implicitly FORCE_RETURN_VALUE for all calls.
     */

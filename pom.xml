@@ -282,6 +282,7 @@
       <versionx.io.netty.netty-common>${version.netty}</versionx.io.netty.netty-common>
       <versionx.io.netty.netty-handler>${version.netty}</versionx.io.netty.netty-handler>
       <versionx.io.netty.netty-resolver>${version.netty}</versionx.io.netty.netty-resolver>
+      <versionx.io.netty.netty-resolver-dns>${version.netty}</versionx.io.netty.netty-resolver-dns>
       <versionx.io.netty.netty-transport>${version.netty}</versionx.io.netty.netty-transport>
       <versionx.io.netty.netty-transport-native-epoll>${version.netty}</versionx.io.netty.netty-transport-native-epoll>
       <versionx.io.netty.netty-transport-native-unix-common>${version.netty}</versionx.io.netty.netty-transport-native-unix-common>
@@ -720,6 +721,11 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver</artifactId>
             <version>${versionx.io.netty.netty-resolver}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns</artifactId>
+            <version>${versionx.io.netty.netty-resolver-dns}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
