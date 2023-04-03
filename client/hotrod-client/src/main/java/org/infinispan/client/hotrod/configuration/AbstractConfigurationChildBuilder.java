@@ -91,6 +91,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
+      return builder.dnsResolver(dnsResolver);
+   }
+
+   @Override
    public ConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       return builder.forceReturnValues(forceReturnValues);
    }

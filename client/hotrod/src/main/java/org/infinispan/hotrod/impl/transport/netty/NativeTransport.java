@@ -1,6 +1,6 @@
-package org.infinispan.client.hotrod.impl.transport.netty;
+package org.infinispan.hotrod.impl.transport.netty;
 
-import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 
 import java.util.concurrent.ExecutorService;
 

@@ -98,6 +98,12 @@
  *          <td>The Hot Rod {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#version(org.infinispan.client.hotrod.ProtocolVersion) version}.</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.dns_resolver</b></td>
+ *          <td>String</td>
+ *          <td>{@link org.infinispan.client.hotrod.configuration.DnsResolver#DEFAULT}</td>
+ *          <td>Specifies the DNS resolver used to resolve server addresses.</td>
+ *       </tr>
+ *       <tr>
  *          <td><b>infinispan.client.hotrod.transport_factory</b></td>
  *          <td>String</td>
  *          <td>{@link org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory}</td>

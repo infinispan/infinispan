@@ -82,6 +82,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public HotRodConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
+      return builder.dnsResolver(dnsResolver);
+   }
+
+   @Override
    public HotRodConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       return builder.forceReturnValues(forceReturnValues);
    }
