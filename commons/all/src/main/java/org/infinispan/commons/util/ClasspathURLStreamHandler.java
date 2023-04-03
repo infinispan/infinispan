@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -54,7 +55,7 @@ public class ClasspathURLStreamHandler implements URLStreamHandlerFactory {
                if (resource != null) {
                   return resource.openConnection();
                } else {
-                  return null;
+                  throw new FileNotFoundException(u.toString());
                }
             }
          };
