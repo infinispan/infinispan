@@ -10,9 +10,11 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -27,8 +29,16 @@ public class Resp3Handler extends Resp3AuthHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private static final ByteBuf OK = RespRequestHandler.stringToByteBuf("+OK\r\n", ByteBufAllocator.DEFAULT);
 
+   protected AdvancedCache<byte[], byte[]> ignoreLoaderCache;
+
    Resp3Handler(RespServer respServer) {
       super(respServer);
+   }
+
+   @Override
+   protected void setCache(AdvancedCache<byte[], byte[]> cache) {
+      super.setCache(cache);
+      ignoreLoaderCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
    }
 
    // Returns a cached OK status that is retained for multiple uses
@@ -53,7 +63,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             ctx.writeAndFlush(bufferToWrite);
             break;
          case "SET":
-            return performSet(ctx, cache, arguments.get(0), arguments.get(1), -1, type, statusOK());
+            return performSet(ctx, ignoreLoaderCache, arguments.get(0), arguments.get(1), -1, type, statusOK());
          case "GET":
             byte[] keyBytes = arguments.get(0);
 
@@ -118,7 +128,7 @@ public class Resp3Handler extends Resp3AuthHandler {
             // TODO: should we return the # of subscribers on this node?
             // We use expiration to remove the event values eventually while preventing them during high periods of
             // updates
-            return performSet(ctx, cache, SubscriberHandler.keyToChannel(arguments.get(0)),
+            return performSet(ctx, ignoreLoaderCache, SubscriberHandler.keyToChannel(arguments.get(0)),
                   arguments.get(1), 3, type, RespRequestHandler.stringToByteBuf(":0\r\n", ctx.alloc()));
          case "SUBSCRIBE":
             SubscriberHandler subscriberHandler = new SubscriberHandler(respServer, this);

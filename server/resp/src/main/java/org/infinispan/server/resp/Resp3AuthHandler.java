@@ -82,7 +82,7 @@ public class Resp3AuthHandler extends RespRequestHandler {
          return false;
       }
 
-      cache = cache.withSubject(subject);
+      setCache(cache.withSubject(subject));
       ctx.writeAndFlush(statusOK());
       return true;
    }
