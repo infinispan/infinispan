@@ -45,17 +45,29 @@
 
     <dependency>
       <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-spring6-remote</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.infinispan</groupId>
       <artifactId>infinispan-query-dsl</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-commons</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-remote-query-client</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-spring6-remote</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-commons</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- test dependencies -->
