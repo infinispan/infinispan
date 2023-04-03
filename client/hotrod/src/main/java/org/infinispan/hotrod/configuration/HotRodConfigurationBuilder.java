@@ -4,6 +4,7 @@ import static org.infinispan.hotrod.configuration.HotRodConfiguration.BATCH_SIZE
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.CLIENT_INTELLIGENCE;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.CONNECT_TIMEOUT;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.CONSISTENT_HASH_IMPL;
+import static org.infinispan.hotrod.configuration.HotRodConfiguration.DNS_RESOLVER;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.FORCE_RETURN_VALUES;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.MARSHALLER;
 import static org.infinispan.hotrod.configuration.HotRodConfiguration.MARSHALLER_CLASS;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +79,7 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
    private TransportFactory transportFactory = TransportFactory.DEFAULT;
    private boolean tracingPropagationEnabled = ConfigurationProperties.DEFAULT_TRACING_PROPAGATION_ENABLED;
+   private DnsResolver dnsResolver = DnsResolver.ROUND_ROBIN;
 
    public HotRodConfigurationBuilder() {
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
@@ -187,6 +190,12 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    @Override
    public HotRodConfigurationBuilder consistentHashImpl(int version, String consistentHashClass) {
       return consistentHashImpl(version, Util.loadClass(consistentHashClass, HotRod.class.getClassLoader()));
+   }
+
+   @Override
+   public HotRodConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
+      attributes.attribute(DNS_RESOLVER).set(Objects.requireNonNull(dnsResolver));
+      return this;
    }
 
    @Override

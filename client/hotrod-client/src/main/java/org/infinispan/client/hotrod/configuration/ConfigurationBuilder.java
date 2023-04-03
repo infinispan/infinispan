@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +94,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
    private TransportFactory transportFactory = TransportFactory.DEFAULT;
    private boolean tracingPropagationEnabled = ConfigurationProperties.DEFAULT_TRACING_PROPAGATION_ENABLED;
+   private DnsResolver dnsResolver = DnsResolver.ROUND_ROBIN;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -224,6 +226,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
+      this.dnsResolver = Objects.requireNonNull(dnsResolver);
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       this.forceReturnValues = forceReturnValues;
       return this;
@@ -278,8 +286,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    /**
-    * @deprecated since 11.0. To be removed in 14.0. Use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)}
-    * and {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
+    * @deprecated since 11.0. To be removed in 14.0. Use
+    * {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} and
+    * {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
     */
    @Deprecated
    public NearCacheConfigurationBuilder nearCache() {
@@ -480,6 +489,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MAX_RETRIES)) {
          this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
       }
+      dnsResolver(typed.getEnumProperty(ConfigurationProperties.DNS_RESOLVER, DnsResolver.class, dnsResolver,true));
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
 
@@ -607,7 +617,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             Map.Entry::getKey, e -> e.getValue().create()));
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(),
-            clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl, forceReturnValues,
+            clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl, dnsResolver, forceReturnValues,
             keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,

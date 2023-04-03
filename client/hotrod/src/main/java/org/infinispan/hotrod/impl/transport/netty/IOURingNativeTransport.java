@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl.transport.netty;
+package org.infinispan.hotrod.impl.transport.netty;
 
 import java.util.concurrent.ExecutorService;
 
