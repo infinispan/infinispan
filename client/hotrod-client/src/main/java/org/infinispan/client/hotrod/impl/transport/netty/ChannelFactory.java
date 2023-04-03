@@ -44,8 +44,8 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool.ChannelEventType;
@@ -61,6 +61,10 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.resolver.AddressResolverGroup;
+import io.netty.resolver.DefaultAddressResolverGroup;
+import io.netty.resolver.dns.DnsNameResolverBuilder;
+import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
@@ -185,9 +189,24 @@ public class ChannelFactory {
 
    private ChannelPool newPool(SocketAddress address) {
       log.debugf("Creating new channel pool for %s", address);
+      AddressResolverGroup<?> dnsResolver;
+      switch (configuration.dnsResolver()) {
+         case ROUND_ROBIN:
+            DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
+                  .channelType(configuration.transportFactory().datagramChannelClass());
+            dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
+            break;
+         case CUSTOM:
+            dnsResolver = configuration.transportFactory().dnsResolver();
+            break;
+         default:
+            dnsResolver = DefaultAddressResolverGroup.INSTANCE;
+            break;
+      }
       Bootstrap bootstrap = new Bootstrap()
             .group(eventLoopGroup)
             .channel(configuration.transportFactory().socketChannelClass())
+            .resolver(dnsResolver)
             .remoteAddress(address)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, configuration.connectionTimeout())
             .option(ChannelOption.SO_KEEPALIVE, configuration.tcpKeepAlive())

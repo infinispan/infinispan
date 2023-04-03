@@ -382,6 +382,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid created count after closing channel %s", id = 4107)
    void invalidCreatedCountAfterClose(Channel channel);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Native IOUring transport not available, using NIO instead: %s", id = 4108)
+   void ioUringNotAvailable(String cause);
+
    @LogMessage(level = DEBUG)
    @Message(value = "OpenTelemetry API is not present in the classpath. Client context tracing will not be propagated.", id = 4109)
    void noOpenTelemetryAPI(@Cause Throwable throwable);

@@ -5,7 +5,10 @@ import java.util.concurrent.ExecutorService;
 import org.infinispan.client.hotrod.TransportFactory;
 
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.resolver.AddressResolverGroup;
+import io.netty.resolver.DefaultAddressResolverGroup;
 
 /**
  * Default implementation of the {@link TransportFactory} interface which delegates the selection of transport to {@link NativeTransport}
@@ -17,5 +20,15 @@ public class DefaultTransportFactory implements TransportFactory {
 
    public EventLoopGroup createEventLoopGroup(int maxExecutors, ExecutorService executorService) {
       return NativeTransport.createEventLoopGroup(maxExecutors, executorService);
+   }
+
+   @Override
+   public Class<? extends DatagramChannel> datagramChannelClass() {
+      return NativeTransport.datagramChannelClass();
+   }
+
+   @Override
+   public AddressResolverGroup<?> dnsResolver() {
+      return DefaultAddressResolverGroup.INSTANCE;
    }
 }
