@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import io.netty.buffer.ByteBuf;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -23,6 +22,8 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Tests for a client with a listener when connection to the server drops.
@@ -43,7 +44,7 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       // disable protocol negotiation since we want to use FailureInducingCodec
-      return super.createHotRodClientConfigurationBuilder(host, serverPort).version(ProtocolVersion.PROTOCOL_VERSION_25);
+      return super.createHotRodClientConfigurationBuilder(host, serverPort).version(ProtocolVersion.PROTOCOL_VERSION_25).socketTimeout(60_000);
    }
 
    private ConfigurationBuilder getCacheConfiguration() {

@@ -15,11 +15,11 @@ import org.infinispan.commons.util.TypedProperties;
  */
 public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ConnectionPoolConfiguration> {
    private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
-   private int maxActive = -1;
-   private long maxWait = -1;
-   private int minIdle = 1;
-   private long minEvictableIdleTime = 1800000;
-   private int maxPendingRequests = 5;
+   private int maxActive = ConfigurationProperties.DEFAULT_MAX_ACTIVE;
+   private long maxWait = ConfigurationProperties.DEFAULT_MAX_WAIT;
+   private int minIdle = ConfigurationProperties.DEFAULT_MIN_IDLE;
+   private long minEvictableIdleTime = ConfigurationProperties.DEFAULT_MIN_EVICTABLE_IDLE_TIME;
+   private int maxPendingRequests = ConfigurationProperties.DEFAULT_MAX_PENDING_REQUESTS;
 
    ConnectionPoolConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -94,8 +94,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * Specifies the minimum amount of time that an connection may sit idle in the pool before it is
     * eligible for eviction due to idle time. When non-positive, no connection will be dropped from
     * the pool due to idle time alone. This setting has no effect unless
-    * timeBetweenEvictionRunsMillis &gt; 0. The default setting for this parameter is 1800000(30
-    * minutes).
+    * timeBetweenEvictionRunsMillis &gt; 0. Defaults to {@link ConfigurationProperties#DEFAULT_MIN_EVICTABLE_IDLE_TIME}
     */
    public ConnectionPoolConfigurationBuilder minEvictableIdleTime(long minEvictableIdleTime) {
       this.minEvictableIdleTime = minEvictableIdleTime;

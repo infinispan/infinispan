@@ -68,7 +68,7 @@ public interface ConfigurationChildBuilder {
 
    /**
     * This property defines the maximum socket connect timeout in milliseconds before giving up connecting to the
-    * server.
+    * server. Defaults to 2000 (2 seconds).
     */
    HotRodConfigurationBuilder connectionTimeout(int connectionTimeout);
 
@@ -134,7 +134,7 @@ public interface ConfigurationChildBuilder {
 
    /**
     * This property defines the maximum socket read timeout in milliseconds before giving up waiting
-    * for bytes from the server. Defaults to 60000 (1 minute)
+    * for bytes from the server. Defaults to 2000 (2 seconds)
     */
    HotRodConfigurationBuilder socketTimeout(int socketTimeout);
 
@@ -165,7 +165,7 @@ public interface ConfigurationChildBuilder {
 
    /**
     * It sets the maximum number of retries for each request. A valid value should be greater or equals than 0 (zero).
-    * Zero means no retry will made in case of a network failure. It defaults to 10.
+    * Zero means no retry will made in case of a network failure. It defaults to 3.
     */
    HotRodConfigurationBuilder maxRetries(int maxRetries);
 

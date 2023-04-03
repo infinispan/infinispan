@@ -5,6 +5,15 @@
 * The Kryo and Protostuff marshallers have been removed.
 * Extended Statistics module have been removed.
 
+== Hot Rod client defaults
+
+The following defaults have changed for the Hot Rod client:
+
+* `connection_timeout` is now 2000 ms / 2 seconds (previously 60000 ms / 60 seconds)
+* `socket_timeout` is now 2000 ms / 2 seconds (previously 60000 ms / 60 seconds)
+* `max_retries` is now 3 (was 10)
+* `min_evictable_idle_time` is now 180000 ms / 3 minutes (previously 1800000 ms / 30 minutes)
+
 == RESP Endpoint
 
 * Default expiration may be applied to the cache configuration used by the RESP endpoint

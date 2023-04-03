@@ -70,19 +70,19 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.socket_timeout</b></td>
  *          <td>Integer</td>
- *          <td>60000</td>
+ *          <td>2000</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#socketTimeout(int) timeout} for socket read/writes</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connect_timeout</b></td>
  *          <td>Integer</td>
- *          <td>60000</td>
+ *          <td>2000</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#connectionTimeout(int) timeout} for connections</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.max_retries</b></td>
  *          <td>Integer</td>
- *          <td>10</td>
+ *          <td>2</td>
  *          <td>The maximum number of operation {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#maxRetries(int) retries}</td>
  *       </tr>
  *       <tr>
@@ -133,8 +133,8 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_evictable_idle_time</b></td>
  *          <td>Integer</td>
- *          <td>1800000</td>
- *          <td>Minimum amount of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minEvictableIdleTime(long) time} that an connection may sit idle in the pool</td>
+ *          <td>180000</td>
+ *          <td>Minimum amount of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minEvictableIdleTime(long) time} in milliseconds that an connection may sit idle in the pool</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.max_pending_requests</b></td>

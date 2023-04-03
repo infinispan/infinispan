@@ -94,7 +94,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * Specifies the minimum amount of time that an connection may sit idle in the pool before it is
     * eligible for eviction due to idle time. When non-positive, no connection will be dropped from
     * the pool due to idle time alone. This setting has no effect unless
-    * timeBetweenEvictionRunsMillis &gt; 0. The default setting for this parameter is 1800000(30
+    * timeBetweenEvictionRunsMillis &gt; 0. The default setting for this parameter is 180000 (3
     * minutes).
     */
    public ConnectionPoolConfigurationBuilder minEvictableIdleTime(long minEvictableIdleTime) {
