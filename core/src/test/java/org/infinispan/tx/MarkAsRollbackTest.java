@@ -2,8 +2,8 @@ package org.infinispan.tx;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
 
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;

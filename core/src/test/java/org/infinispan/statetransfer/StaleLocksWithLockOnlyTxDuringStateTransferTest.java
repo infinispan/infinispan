@@ -7,7 +7,7 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.AssertJUnit.assertEquals;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;

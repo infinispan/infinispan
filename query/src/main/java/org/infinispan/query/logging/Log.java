@@ -5,7 +5,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.hibernate.search.util.common.SearchException;
 

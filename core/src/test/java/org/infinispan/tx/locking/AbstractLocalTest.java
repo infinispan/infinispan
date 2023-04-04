@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.transaction.SystemException;
+import jakarta.transaction.SystemException;
 
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.context.Flag;

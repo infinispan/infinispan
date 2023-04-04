@@ -2,8 +2,8 @@ package org.infinispan.tx.synchronisation;
 
 import static org.testng.Assert.assertEquals;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;

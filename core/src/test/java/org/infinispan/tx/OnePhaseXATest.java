@@ -3,7 +3,7 @@ package org.infinispan.tx;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

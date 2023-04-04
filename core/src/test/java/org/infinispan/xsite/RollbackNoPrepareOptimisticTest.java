@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.CacheMode;

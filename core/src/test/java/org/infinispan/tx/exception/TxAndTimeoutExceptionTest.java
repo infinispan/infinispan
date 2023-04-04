@@ -8,9 +8,9 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 
-import javax.transaction.Status;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

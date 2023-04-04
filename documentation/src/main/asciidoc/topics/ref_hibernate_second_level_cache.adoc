@@ -60,14 +60,14 @@ To use second level cache, you first need to enable the second level cache so th
 | Spring    | `spring.jpa.properties.hibernate.cache.use_second_level_cache=true`
 |===
 
-To select which entities/collections to cache, first annotate them with `javax.persistence.Cacheable`.
+To select which entities/collections to cache, first annotate them with `jakarta.persistence.Cacheable`.
 Then make sure shared cache mode is set to `ENABLE_SELECTIVE`:
 
 .Enable selective shared cached mode
 [cols="1,10"]
 |===
 | JPA       | `<shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>`
-| Spring    | `spring.jpa.properties.javax.persistence.sharedCache.mode=ENABLE_SELECTIVE`
+| Spring    | `spring.jpa.properties.jakarta.persistence.sharedCache.mode=ENABLE_SELECTIVE`
 |===
 
 NOTE: This is the most common way of selecting which entities/collections to cache.

@@ -2,7 +2,7 @@ package org.infinispan.api.mvcc.read_committed;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;

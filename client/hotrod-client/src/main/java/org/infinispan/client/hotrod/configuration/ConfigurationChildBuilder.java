@@ -5,7 +5,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import javax.transaction.Synchronization;
+import jakarta.transaction.Synchronization;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;

@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.enterprise.inject.spi.Annotated;
+import jakarta.enterprise.inject.spi.Annotated;
 
 import org.infinispan.cdi.common.util.HierarchyDiscovery;
 

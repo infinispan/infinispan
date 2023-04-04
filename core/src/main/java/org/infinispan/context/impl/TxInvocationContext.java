@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;

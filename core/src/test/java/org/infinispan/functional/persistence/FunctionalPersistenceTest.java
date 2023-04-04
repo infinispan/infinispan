@@ -2,8 +2,8 @@ package org.infinispan.functional.persistence;
 
 import java.lang.reflect.Method;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

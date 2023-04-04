@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
 
-import javax.transaction.RollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;

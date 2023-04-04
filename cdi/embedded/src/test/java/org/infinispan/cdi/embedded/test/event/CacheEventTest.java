@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;

@@ -3,7 +3,7 @@ package org.infinispan.persistence.support;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.util.IntSet;

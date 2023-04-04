@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.security.auth.Subject;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;

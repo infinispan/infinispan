@@ -89,7 +89,7 @@
             <plugin>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.version}</version>
+                <version>${version.quarkus}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -177,7 +177,7 @@
                     <plugin>
                         <groupId>io.quarkus</groupId>
                         <artifactId>quarkus-maven-plugin</artifactId>
-                        <version>${quarkus.version}</version>
+                        <version>${version.quarkus}</version>
                     </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>

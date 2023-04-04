@@ -4,19 +4,19 @@ import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessBean;
-import javax.enterprise.inject.spi.ProcessProducer;
-import javax.enterprise.inject.spi.Producer;
-import javax.enterprise.util.TypeLiteral;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessBean;
+import jakarta.enterprise.inject.spi.ProcessProducer;
+import jakarta.enterprise.inject.spi.Producer;
+import jakarta.enterprise.util.TypeLiteral;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -168,8 +168,8 @@ public class InfinispanExtensionEmbedded implements Extension {
    /**
     * The default embedded cache configuration can be overridden by creating a producer which
     * produces the new default configuration. The configuration produced must have the scope
-    * {@linkplain javax.enterprise.context.Dependent Dependent} and the
-    * {@linkplain javax.enterprise.inject.Default Default} qualifier.
+    * {@linkplain jakarta.enterprise.context.Dependent Dependent} and the
+    * {@linkplain jakarta.enterprise.inject.Default Default} qualifier.
     *
     * @param beanManager
     * @return a custom bean
@@ -196,7 +196,7 @@ public class InfinispanExtensionEmbedded implements Extension {
     * {@link #createDefaultEmbeddedConfigurationBean(BeanManager, Configuration)} or provided by user). The default
     * cache manager can be overridden by creating a producer which produces the new default cache
     * manager. The cache manager produced must have the scope {@link ApplicationScoped} and the
-    * {@linkplain javax.enterprise.inject.Default Default} qualifier.
+    * {@linkplain jakarta.enterprise.inject.Default Default} qualifier.
     *
     * @param beanManager
     * @return a custom bean

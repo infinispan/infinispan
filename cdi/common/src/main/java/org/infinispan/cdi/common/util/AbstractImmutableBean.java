@@ -6,11 +6,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.Default;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.InjectionPoint;
 
 import org.infinispan.cdi.common.util.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -149,7 +149,6 @@ public abstract class AbstractImmutableBean<T> implements Bean<T> {
         return alternative;
     }
 
-    @Override
    public boolean isNullable() {
         return nullable;
     }

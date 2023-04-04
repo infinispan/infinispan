@@ -1,6 +1,6 @@
 package org.infinispan.transaction.lookup;
 
-import javax.transaction.TransactionSynchronizationRegistry;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 
 /**
  * @author Stuart Douglas

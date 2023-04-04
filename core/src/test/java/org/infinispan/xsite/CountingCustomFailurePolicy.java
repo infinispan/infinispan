@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 /**
  * @author Mircea Markus

@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.RollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;

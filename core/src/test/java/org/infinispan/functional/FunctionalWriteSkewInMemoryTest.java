@@ -9,9 +9,9 @@ import java.util.Collections;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Transaction;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;

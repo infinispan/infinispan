@@ -1,6 +1,6 @@
 package org.infinispan.hotrod.transaction.lookup;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.hotrod.transaction.manager.RemoteTransactionManager;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;

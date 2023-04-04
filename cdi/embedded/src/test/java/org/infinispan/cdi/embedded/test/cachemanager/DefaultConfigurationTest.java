@@ -3,9 +3,9 @@ package org.infinispan.cdi.embedded.test.cachemanager;
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;

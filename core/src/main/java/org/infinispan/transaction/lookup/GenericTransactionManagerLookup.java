@@ -4,7 +4,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.lookup.LookupNames;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;

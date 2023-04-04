@@ -6,8 +6,8 @@ import static org.testng.AssertJUnit.assertNull;
 import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;

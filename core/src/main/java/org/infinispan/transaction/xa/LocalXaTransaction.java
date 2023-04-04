@@ -1,6 +1,6 @@
 package org.infinispan.transaction.xa;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.transaction.impl.LocalTransaction;

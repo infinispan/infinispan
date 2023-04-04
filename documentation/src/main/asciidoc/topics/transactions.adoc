@@ -98,7 +98,7 @@ Defaults is `30000`.
 * `recovery-cache` - configures the cache name to store the recovery information. Check section link:#tx_recovery[Transaction recovery] for more details about recovery.
 Default is `__recoveryInfoCacheName__`.
 * `stop-timeout` - the time in millisecond to wait for ongoing transaction when the cache is stopping. Default is  `30000`.
-* `transaction-manager-lookup` - configures the fully qualified class name of a class that looks up a reference to a `javax.transaction.TransactionManager`.
+* `transaction-manager-lookup` - configures the fully qualified class name of a class that looks up a reference to a `jakarta.transaction.TransactionManager`.
 Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
 
 

@@ -5,10 +5,10 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHot
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 import org.infinispan.cdi.remote.Remote;
 import org.infinispan.client.hotrod.RemoteCache;

@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.stores;
 
-import static javax.transaction.Status.STATUS_ROLLEDBACK;
+import static jakarta.transaction.Status.STATUS_ROLLEDBACK;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -9,9 +9,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;

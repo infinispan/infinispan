@@ -10,7 +10,7 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;

@@ -30,7 +30,7 @@
                 <plugin>
                     <groupId>io.quarkus</groupId>
                     <artifactId>quarkus-maven-plugin</artifactId>
-                    <version>${quarkus.version}</version>
+                    <version>${version.quarkus}</version>
                     <configuration>
                         <noDeps>true</noDeps>
                         <skip>${quarkus.build.skip}</skip>
@@ -46,17 +46,17 @@
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-integration-test-class-transformer-deployment</artifactId>
-                <version>${quarkus.version}</version>
+                <version>${version.quarkus}</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-integration-test-class-transformer</artifactId>
-                <version>${quarkus.version}</version>
+                <version>${version.quarkus}</version>
             </dependency>
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-platform-descriptor-json</artifactId>
-                <version>${quarkus.version}</version>
+                <version>${version.quarkus}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>io.quarkus</groupId>

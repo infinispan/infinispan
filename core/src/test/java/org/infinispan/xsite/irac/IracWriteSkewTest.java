@@ -8,9 +8,9 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Arrays;
 import java.util.Objects;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;

@@ -16,7 +16,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;

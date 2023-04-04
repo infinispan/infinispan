@@ -6,7 +6,7 @@ You can use CDI Events to receive Cache and Cache Manager level events.
 
 [source,java]
 ----
-import javax.enterprise.event.Observes;
+import jakarta.transaction.event.Observes;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachelistener.event.*;
 

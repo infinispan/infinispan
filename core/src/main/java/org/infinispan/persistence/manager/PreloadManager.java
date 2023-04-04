@@ -5,8 +5,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.InvocationHelper;

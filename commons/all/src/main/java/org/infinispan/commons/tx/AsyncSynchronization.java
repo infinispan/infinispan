@@ -2,7 +2,7 @@ package org.infinispan.commons.tx;
 
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.Synchronization;
+import jakarta.transaction.Synchronization;
 
 /**
  * Non-blocking {@link javax.transaction.Synchronization}.

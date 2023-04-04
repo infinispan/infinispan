@@ -2,7 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import java.util.concurrent.Callable;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.test.op.TestWriteOperation;

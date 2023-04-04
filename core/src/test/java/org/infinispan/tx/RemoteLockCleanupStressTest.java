@@ -2,8 +2,8 @@ package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.sleepThread;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

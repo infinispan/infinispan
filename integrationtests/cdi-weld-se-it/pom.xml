@@ -35,6 +35,11 @@
           <type>test-jar</type>
           <scope>test</scope>
        </dependency>
+        <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+            <scope>test</scope>
+        </dependency>
        <dependency>
             <groupId>org.jboss.spec</groupId>
             <artifactId>jboss-jakartaee-8.0</artifactId>

@@ -1,7 +1,7 @@
 package org.infinispan.test.fwk;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
 
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;

@@ -27,7 +27,7 @@ public final class Deployments {
                         .addPackage(CacheEventBridge.class.getPackage())
                         .addPackage(CacheManagerEventBridge.class.getPackage())
                         .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/beans.xml"), "beans.xml")
-                        .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
+                        .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/services/jakarta.enterprise.inject.spi.Extension"), "services/jakarta.enterprise.inject.spi.Extension")
             );
    }
 }

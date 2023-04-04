@@ -2,9 +2,9 @@ package org.infinispan.interceptors.impl;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;

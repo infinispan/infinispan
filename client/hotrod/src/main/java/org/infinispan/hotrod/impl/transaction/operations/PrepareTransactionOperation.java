@@ -9,7 +9,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Set;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.api.common.CacheOptions;

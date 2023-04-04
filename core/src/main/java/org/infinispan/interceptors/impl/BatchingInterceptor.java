@@ -1,8 +1,8 @@
 package org.infinispan.interceptors.impl;
 
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;

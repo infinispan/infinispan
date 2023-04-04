@@ -3,7 +3,7 @@ package org.infinispan.commons.tx;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.Synchronization;
+import jakarta.transaction.Synchronization;
 import javax.transaction.xa.XAResource;
 
 /**

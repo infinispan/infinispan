@@ -1,6 +1,6 @@
 package org.infinispan.context.impl;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;

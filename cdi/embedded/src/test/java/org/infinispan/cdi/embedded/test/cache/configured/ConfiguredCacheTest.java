@@ -2,7 +2,7 @@ package org.infinispan.cdi.embedded.test.cache.configured;
 
 import static org.testng.Assert.assertEquals;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;

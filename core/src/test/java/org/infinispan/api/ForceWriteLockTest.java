@@ -2,7 +2,7 @@ package org.infinispan.api;
 
 import static org.testng.AssertJUnit.assertTrue;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

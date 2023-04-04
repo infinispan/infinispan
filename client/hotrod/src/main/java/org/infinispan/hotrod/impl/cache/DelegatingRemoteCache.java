@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.api.async.AsyncCacheEntryProcessor;
 import org.infinispan.api.common.CacheEntry;

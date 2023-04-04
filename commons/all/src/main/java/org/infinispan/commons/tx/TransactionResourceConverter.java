@@ -1,6 +1,6 @@
 package org.infinispan.commons.tx;
 
-import javax.transaction.Synchronization;
+import jakarta.transaction.Synchronization;
 import javax.transaction.xa.XAResource;
 
 /**

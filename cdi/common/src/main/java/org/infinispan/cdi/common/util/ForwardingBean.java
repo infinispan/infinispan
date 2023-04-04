@@ -4,9 +4,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Set;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.InjectionPoint;
 
 /**
  * An implementation of {@link Bean} that forwards all calls to the
@@ -58,7 +58,7 @@ public abstract class ForwardingBean<T> implements Bean<T> {
     }
 
     public boolean isNullable() {
-        return delegate().isNullable();
+        return false;
     }
 
     public T create(CreationalContext<T> creationalContext) {

@@ -2,7 +2,7 @@ package org.infinispan.transaction;
 
 import java.util.Collection;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.transaction.xa.GlobalTransaction;
 

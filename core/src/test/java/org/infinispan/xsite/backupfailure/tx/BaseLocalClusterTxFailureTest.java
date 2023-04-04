@@ -2,7 +2,7 @@ package org.infinispan.xsite.backupfailure.tx;
 
 import static org.testng.AssertJUnit.assertNull;
 
-import javax.transaction.RollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;

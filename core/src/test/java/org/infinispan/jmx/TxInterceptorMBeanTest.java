@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.jmx.MBeanServerLookup;

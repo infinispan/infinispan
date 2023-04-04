@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.TransactionMode;

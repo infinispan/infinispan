@@ -13,9 +13,9 @@ import static org.testng.AssertJUnit.fail;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.multimap.api.embedded.MultimapCache;

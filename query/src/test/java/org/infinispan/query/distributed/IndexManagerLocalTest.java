@@ -3,7 +3,7 @@ package org.infinispan.query.distributed;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

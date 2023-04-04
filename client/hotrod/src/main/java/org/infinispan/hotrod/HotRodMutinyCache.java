@@ -1,8 +1,7 @@
 package org.infinispan.hotrod;
 
-import java.util.Map;
-import java.util.Set;
-
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 import org.infinispan.api.common.CacheEntry;
 import org.infinispan.api.common.CacheEntryVersion;
 import org.infinispan.api.common.CacheOptions;
@@ -17,10 +16,9 @@ import org.infinispan.api.mutiny.MutinyCacheEntryProcessor;
 import org.infinispan.api.mutiny.MutinyQuery;
 import org.infinispan.api.mutiny.MutinyStreamingCache;
 import org.infinispan.hotrod.impl.cache.RemoteCache;
-import org.reactivestreams.FlowAdapters;
 
-import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @since 14.0
@@ -91,27 +89,27 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
 
    @Override
    public Multi<K> keys(CacheOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.keys(options)));
+      return Multi.createFrom().publisher(remoteCache.keys(options));
    }
 
    @Override
    public Multi<CacheEntry<K, V>> entries(CacheOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.entries(options)));
+      return Multi.createFrom().publisher(remoteCache.entries(options));
    }
 
    @Override
    public Multi<CacheEntry<K, V>> getAll(Set<K> keys, CacheOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.getAll(keys, options)));
+      return Multi.createFrom().publisher(remoteCache.getAll(keys, options));
    }
 
    @Override
    public Multi<CacheEntry<K, V>> getAll(CacheOptions options, K... keys) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.getAll(options, keys)));
+      return Multi.createFrom().publisher(remoteCache.getAll(options, keys));
    }
 
    @Override
    public Uni<Void> putAll(Multi<CacheEntry<K, V>> entries, CacheWriteOptions options) {
-      return Uni.createFrom().completionStage(() -> remoteCache.putAll(FlowAdapters.toFlowPublisher(entries.convert().toPublisher()), options));
+      return Uni.createFrom().completionStage(() -> remoteCache.putAll(entries.convert().toPublisher(), options));
    }
 
    @Override
@@ -131,19 +129,17 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
 
    @Override
    public Multi<K> removeAll(Set<K> keys, CacheWriteOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.removeAll(keys, options)));
+      return Multi.createFrom().publisher(remoteCache.removeAll(keys, options));
    }
 
    @Override
    public Multi<K> removeAll(Multi<K> keys, CacheWriteOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.removeAll(
-            FlowAdapters.toFlowPublisher(keys.convert().toPublisher()), options)));
+      return Multi.createFrom().publisher(remoteCache.removeAll(keys.convert().toPublisher(), options));
    }
 
    @Override
    public Multi<CacheEntry<K, V>> getAndRemoveAll(Multi<K> keys, CacheWriteOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.getAndRemoveAll(
-            FlowAdapters.toFlowPublisher(keys.convert().toPublisher()), options)));
+      return Multi.createFrom().publisher(remoteCache.getAndRemoveAll(keys.convert().toPublisher(), options));
    }
 
    @Override
@@ -163,17 +159,16 @@ public class HotRodMutinyCache<K, V> implements MutinyCache<K, V> {
 
    @Override
    public Multi<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType... types) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(remoteCache.listen(options, types)));
+      return Multi.createFrom().publisher(remoteCache.listen(options, types));
    }
 
    @Override
    public <T> Multi<CacheEntryProcessorResult<K, T>> process(Set<K> keys, MutinyCacheEntryProcessor<K, V, T> processor, CacheOptions options) {
-      return Multi.createFrom().publisher(FlowAdapters.toPublisher(
-            remoteCache.process(keys, new MutinyToAsyncCacheEntryProcessor<>(processor), options)));
+      return Multi.createFrom().publisher(remoteCache.process(keys, new MutinyToAsyncCacheEntryProcessor<>(processor), options));
    }
 
    @Override
    public MutinyStreamingCache<K> streaming() {
-      return new HotRodMutinyStreamingCache(hotrod, remoteCache);
+      return new HotRodMutinyStreamingCache<>(hotrod, remoteCache);
    }
 }

@@ -1,6 +1,6 @@
 package org.infinispan.tx.exception;
 
-import javax.transaction.Status;
+import jakarta.transaction.Status;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;

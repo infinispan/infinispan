@@ -21,7 +21,7 @@ public final class Deployments {
                   ShrinkWrap.create(JavaArchive.class, "infinispan-cdi-remote.jar")
                         .addPackage(Remote.class.getPackage())
                         .addAsManifestResource(Remote.class.getResource("/META-INF/beans.xml"), "beans.xml")
-                        .addAsManifestResource(Remote.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
+                        .addAsManifestResource(Remote.class.getResource("/META-INF/services/jakarta.enterprise.inject.spi.Extension"), "services/jakarta.enterprise.inject.spi.Extension")
             );
    }
 }

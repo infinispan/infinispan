@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

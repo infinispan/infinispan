@@ -5,8 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.fail;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

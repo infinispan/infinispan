@@ -6,7 +6,7 @@ import static org.testng.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Set;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;

@@ -1,6 +1,6 @@
 package org.infinispan.lock.singlelock;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;

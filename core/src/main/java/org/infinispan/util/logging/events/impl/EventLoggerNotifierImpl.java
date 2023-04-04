@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.scopes.Scope;

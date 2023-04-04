@@ -3,8 +3,8 @@
 //import static org.testng.AssertJUnit.assertEquals;
 //import static org.testng.AssertJUnit.assertFalse;
 //
-//import javax.transaction.Status;
-//import javax.transaction.TransactionManager;
+//import jakarta.transaction.Status;
+//import jakarta.transaction.TransactionManager;
 //
 //import org.infinispan.AdvancedCache;
 //import org.infinispan.commons.dataconversion.Encoder;

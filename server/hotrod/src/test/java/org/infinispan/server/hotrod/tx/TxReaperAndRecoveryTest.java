@@ -21,8 +21,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Synchronization;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Synchronization;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -454,7 +454,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
 
       @Override
       public void afterCompletion(int status) {
-         if (status == javax.transaction.Status.STATUS_COMMITTED) {
+         if (status == jakarta.transaction.Status.STATUS_COMMITTED) {
             queue.add("committed");
          } else {
             queue.add("rolled_back");

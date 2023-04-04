@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod.tx.table;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.tx.XidImpl;

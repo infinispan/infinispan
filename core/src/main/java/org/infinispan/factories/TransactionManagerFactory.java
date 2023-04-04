@@ -1,6 +1,6 @@
 package org.infinispan.factories;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
