@@ -300,7 +300,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    }
 
    protected void putEntryInMap(PeekableTouchableMap<K, V> map, int segment, K key, InternalCacheEntry<K, V> ice) {
-      map.put(key, ice);
+      map.putNoReturn(key, ice);
    }
 
    protected InternalCacheEntry<K, V> removeEntryInMap(PeekableTouchableMap<K, V> map, int segment, Object key) {
