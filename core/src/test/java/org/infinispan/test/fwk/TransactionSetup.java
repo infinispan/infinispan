@@ -7,7 +7,6 @@ import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
-import org.infinispan.util.tx.lookup.GeronimoTransactionManagerLookup;
 
 /**
  * A simple abstraction for transaction manager interaction
@@ -30,7 +29,6 @@ public class TransactionSetup {
 
    public static final String JBOSS_TM = "jbosstm";
    public static final String DUMMY_TM = "dummytm";
-   public static final String GERONIMO_TM = "geronimotm";
    public static final String JTA = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jta.tm", "infinispan.tm");
 
    private static Operations operations;
@@ -75,45 +73,6 @@ public class TransactionSetup {
                   throw new RuntimeException(e);
                }
 
-            }
-         };
-      } else if (GERONIMO_TM.equalsIgnoreCase(property)){
-         System.out.println("Transaction manager used: Geronimo");
-         final String lookup = GeronimoTransactionManagerLookup.class.getName();
-         final GeronimoTransactionManagerLookup instance = new GeronimoTransactionManagerLookup();
-         operations = new Operations() {
-            @Override
-            public UserTransaction getUserTransaction() {
-               try {
-                  return instance.getUserTransaction();
-               }
-               catch (Exception e) {
-                  throw new RuntimeException(e);
-               }
-            }
-
-            @Override
-            public void cleanup() {
-            }
-
-            @Override
-            public String getLookup() {
-               return lookup;
-            }
-
-            @Override
-            public TransactionManagerLookup lookup() {
-               return instance;
-            }
-
-            @Override
-            public TransactionManager getManager() {
-               try {
-                  return instance.getTransactionManager();
-               }
-               catch (Exception e) {
-                  throw new RuntimeException(e);
-               }
             }
          };
       } else {

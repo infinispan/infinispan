@@ -303,7 +303,6 @@
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
       <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
-      <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
       <versionx.org.apache.logging.log4j.log4j-api>${version.log4j}</versionx.org.apache.logging.log4j.log4j-api>
       <versionx.org.apache.logging.log4j.log4j-core>${version.log4j}</versionx.org.apache.logging.log4j.log4j-core>
       <versionx.org.apache.logging.log4j.log4j-slf4j-impl>${version.log4j}</versionx.org.apache.logging.log4j.log4j-slf4j-impl>
@@ -918,12 +917,6 @@
             <groupId>org.apache.mina</groupId>
             <artifactId>mina-core</artifactId>
             <version>${versionx.org.apache.mina.mina}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.apache.geronimo.components</groupId>
-            <artifactId>geronimo-transaction</artifactId>
-            <version>${versionx.org.apache.geronimo.components.geronimo-transaction}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
