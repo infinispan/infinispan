@@ -148,7 +148,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
       try {
          cache.put("k1", "v1", 2, TimeUnit.MILLISECONDS);
 
-         for (int i = 2; i < 22; ++i) {
+         for (int i = 2; i < 40; ++i) {
             cache.put("k" + i, "v" + 2);
          }
 

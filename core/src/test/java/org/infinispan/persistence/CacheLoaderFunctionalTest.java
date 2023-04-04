@@ -31,6 +31,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -659,7 +660,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             found = true;
          }
          if (load != null) {
-            testStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespan, "Store", key);
+            Metadata metadata = load.getMetadata();
+            testStoredEntry(load.getValue(), value, metadata != null ? metadata.lifespan() : -1, lifespan, "Store", key);
             found = true;
          }
          assertTrue("Key not found.", found);
@@ -690,7 +692,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
             found = true;
          }
          if (load != null) {
-            testStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespan, "Store", key);
+            Metadata metadata = load.getMetadata();
+            testStoredEntry(load.getValue(), value, metadata != null ? metadata.lifespan() : -1, lifespan, "Store", key);
             found = true;
          }
          assertTrue("Key not found.", found);
