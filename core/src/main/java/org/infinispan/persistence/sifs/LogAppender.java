@@ -244,7 +244,11 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
          if (currentOffset != 0 && currentOffset + actualLength > maxFileSize) {
             // switch to next file
             logFile.close();
-            compactor.completeFile(logFile.fileId, currentOffset, nextExpirationTime);
+
+            final int fileId = logFile.fileId;
+            final int offset = currentOffset;
+            final long exp = nextExpirationTime;
+            index.ensureRunOnLast(() -> compactor.completeFile(fileId, offset, exp));
             completePendingLogRequests();
             logFile = fileProvider.getFileForLog();
             nextExpirationTime = -1;

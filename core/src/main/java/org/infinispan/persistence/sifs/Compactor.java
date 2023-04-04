@@ -581,7 +581,8 @@ class Compactor implements Consumer<Object> {
                   log.tracef("Drop index for key %s, file %d:%d (%s)", key, scheduledFile, scheduledOffset,
                         header.valueLength() > 0 ? "record" : "tombstone");
                }
-               index.handleRequest(IndexRequest.dropped(segment, key, ByteBufferImpl.create(serializedKey), prevFile, prevOffset, scheduledFile, scheduledOffset));
+               aggregateCompletionStage.dependsOn(
+                     index.handleRequest(IndexRequest.dropped(segment, key, ByteBufferImpl.create(serializedKey), prevFile, prevOffset, scheduledFile, scheduledOffset)));
             } else {
                if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
                   if (logFile != null) {
