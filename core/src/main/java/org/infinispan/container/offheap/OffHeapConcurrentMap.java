@@ -693,6 +693,26 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    }
 
    @Override
+   public void putNoReturn(WrappedBytes key, InternalCacheEntry<WrappedBytes, WrappedBytes> value) {
+      int hashCode = key.hashCode();
+      int lockOffset = getLockOffset(hashCode);
+      StampedLock stampedLock = locks.getLockWithOffset(lockOffset);
+      long writeStamp = stampedLock.writeLock();
+      try {
+         checkDeallocation();
+         ensureTransferred(lockOffset);
+
+         int memoryOffset = getMemoryOffset(hashCode);
+         long address = memoryLookup.getMemoryAddressOffset(memoryOffset);
+         long newAddress = offHeapEntryFactory.create(key, hashCode, value);
+         performPut(address, 0, newAddress, key, memoryOffset, false, false);
+      } finally {
+         stampedLock.unlockWrite(writeStamp);
+      }
+      checkResize();
+   }
+
+   @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> put(WrappedBytes key,
          InternalCacheEntry<WrappedBytes, WrappedBytes> value) {
       InternalCacheEntry<WrappedBytes, WrappedBytes> returnedValue;
