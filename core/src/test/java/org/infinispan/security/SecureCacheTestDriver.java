@@ -8,8 +8,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
 
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;

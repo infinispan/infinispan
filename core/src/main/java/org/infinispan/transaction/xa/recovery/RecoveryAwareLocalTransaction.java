@@ -1,6 +1,6 @@
 package org.infinispan.transaction.xa.recovery;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;

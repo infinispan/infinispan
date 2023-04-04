@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;

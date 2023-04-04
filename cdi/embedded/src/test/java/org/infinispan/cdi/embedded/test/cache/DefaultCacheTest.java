@@ -3,7 +3,7 @@ package org.infinispan.cdi.embedded.test.cache;
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;

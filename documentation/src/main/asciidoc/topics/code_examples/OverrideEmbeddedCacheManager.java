@@ -1,5 +1,5 @@
 ...
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.transaction.context.ApplicationScoped;
 
 public class Config {
 

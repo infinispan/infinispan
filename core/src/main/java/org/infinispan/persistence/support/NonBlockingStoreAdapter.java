@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.persistence.Store;

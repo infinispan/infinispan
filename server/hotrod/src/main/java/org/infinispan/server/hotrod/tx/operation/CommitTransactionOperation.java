@@ -7,10 +7,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import javax.security.auth.Subject;
-import javax.transaction.HeuristicCommitException;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
+import jakarta.transaction.HeuristicCommitException;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 

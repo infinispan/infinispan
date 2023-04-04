@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.AbstractVisitor;

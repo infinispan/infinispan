@@ -1,8 +1,8 @@
 package org.infinispan.tx;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

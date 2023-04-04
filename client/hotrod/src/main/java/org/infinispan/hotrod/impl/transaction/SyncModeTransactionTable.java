@@ -9,11 +9,11 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.CacheException;

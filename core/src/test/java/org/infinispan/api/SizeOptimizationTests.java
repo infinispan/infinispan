@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;

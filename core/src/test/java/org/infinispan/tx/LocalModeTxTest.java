@@ -5,8 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;

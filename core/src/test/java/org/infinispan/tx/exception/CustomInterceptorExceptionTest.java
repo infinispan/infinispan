@@ -3,8 +3,8 @@ package org.infinispan.tx.exception;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.CustomInterceptorConfigTest;

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;

@@ -3,9 +3,9 @@ package org.infinispan.context.impl;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;

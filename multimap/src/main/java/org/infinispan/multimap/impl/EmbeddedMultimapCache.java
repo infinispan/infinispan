@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;

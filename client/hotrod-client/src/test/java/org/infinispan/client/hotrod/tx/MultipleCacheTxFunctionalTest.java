@@ -11,9 +11,9 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;

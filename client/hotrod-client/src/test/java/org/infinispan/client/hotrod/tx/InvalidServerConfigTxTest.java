@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.TransactionMode;

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;

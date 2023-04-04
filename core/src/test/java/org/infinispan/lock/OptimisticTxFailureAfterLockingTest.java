@@ -1,7 +1,7 @@
 package org.infinispan.lock;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

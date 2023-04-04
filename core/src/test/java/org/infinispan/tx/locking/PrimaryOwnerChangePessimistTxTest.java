@@ -5,9 +5,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.test.ExceptionRunnable;

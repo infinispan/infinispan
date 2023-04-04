@@ -10,8 +10,8 @@ import static org.infinispan.commons.util.Util.loadClass;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;

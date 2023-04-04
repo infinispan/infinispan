@@ -4,7 +4,7 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.Properties;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCacheManager;

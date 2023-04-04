@@ -2,8 +2,8 @@ package org.infinispan.tx.exception;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.transaction.RollbackException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.RollbackCommand;

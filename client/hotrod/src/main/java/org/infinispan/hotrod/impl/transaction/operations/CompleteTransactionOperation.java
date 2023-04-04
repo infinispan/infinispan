@@ -1,6 +1,6 @@
 package org.infinispan.hotrod.impl.transaction.operations;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 

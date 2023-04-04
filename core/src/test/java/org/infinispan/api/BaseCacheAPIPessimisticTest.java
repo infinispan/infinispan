@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.LockedStream;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

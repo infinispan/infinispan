@@ -5,6 +5,12 @@
 Aligning with the deprecation for removal of the SecurityManager since JDK 17, we no longer support integration with a
 SecurityManager.
 
+== Jakarta and Java EE
+
+* Infinispan has been updated to use `jakarta.*` packages.
+* If you require the legacy `javax.*` packages, you should utilise Infinispan 14.0.x.
+* The old `*-jakarta` jars have been removed.
+
 == Removals
 
 * The Kryo and Protostuff marshallers have been removed.

@@ -3,7 +3,7 @@ package org.infinispan.api;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

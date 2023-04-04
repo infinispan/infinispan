@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;

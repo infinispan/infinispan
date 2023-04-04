@@ -6,9 +6,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;

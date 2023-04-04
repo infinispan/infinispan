@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.configuration.Configuration;

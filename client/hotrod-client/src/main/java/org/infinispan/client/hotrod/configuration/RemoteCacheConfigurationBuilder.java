@@ -23,7 +23,7 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.function.Consumer;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;

@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.commons.configuration.StringConfiguration;

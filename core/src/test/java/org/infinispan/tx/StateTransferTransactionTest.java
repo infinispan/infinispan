@@ -7,13 +7,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.RollbackException;
-import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
+import jakarta.transaction.InvalidTransactionException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;

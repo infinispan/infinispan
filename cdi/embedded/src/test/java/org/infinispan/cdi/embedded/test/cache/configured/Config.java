@@ -1,6 +1,6 @@
 package org.infinispan.cdi.embedded.test.cache.configured;
 
-import javax.enterprise.inject.Produces;
+import jakarta.enterprise.inject.Produces;
 
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;

@@ -1,6 +1,6 @@
 package org.infinispan.factories;
 
-import javax.transaction.TransactionSynchronizationRegistry;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;

@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;

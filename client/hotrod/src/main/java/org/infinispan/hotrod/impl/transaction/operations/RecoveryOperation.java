@@ -5,7 +5,7 @@ import static java.util.Collections.emptyList;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.api.common.CacheOptions;

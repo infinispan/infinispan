@@ -25,9 +25,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;

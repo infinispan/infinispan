@@ -5,9 +5,9 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;

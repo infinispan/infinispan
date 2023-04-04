@@ -259,7 +259,7 @@ Configure the mode that {brandname} uses when carrying out transactions to ensur
 
 NOTE: Enable transaction mode for the cache to ensure consistency for conditional operations, such as `putIfAbsent` or `remove`, that require consistent cache data across the cluster.
 
-NON_XA:: Cache will enlist within transactions as a `javax.transaction.Synchronization`.
+NON_XA:: Cache will enlist within transactions as a `jakarta.transaction.Synchronization`.
 NON_DURABLE_XA:: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, without recovery.
 FULL_XA:: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, with recovery.
 

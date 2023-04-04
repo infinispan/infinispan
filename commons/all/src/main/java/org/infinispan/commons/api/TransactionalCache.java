@@ -1,6 +1,6 @@
 package org.infinispan.commons.api;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 /**
  * This interface is implemented by caches that support (i.e. can interact with) transactions.

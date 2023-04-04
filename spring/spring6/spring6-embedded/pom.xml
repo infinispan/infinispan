@@ -41,7 +41,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core-jakarta</artifactId>
+            <artifactId>infinispan-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -62,7 +62,7 @@
         </dependency>
         <dependency>
             <groupId>org.jboss.narayana.jta</groupId>
-            <artifactId>narayana-jta-jakarta</artifactId>
+            <artifactId>narayana-jta</artifactId>
         </dependency>
 
         <!-- Test dependencies -->
@@ -91,7 +91,7 @@
 
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core-jakarta</artifactId>
+            <artifactId>infinispan-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${project.version}</version>
@@ -110,7 +110,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-server-hotrod-jakarta</artifactId>
+            <artifactId>infinispan-server-hotrod</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -3,7 +3,7 @@ package org.infinispan.transaction.synchronization;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.Synchronization;
+import jakarta.transaction.Synchronization;
 
 import org.infinispan.commons.tx.AsyncSynchronization;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;

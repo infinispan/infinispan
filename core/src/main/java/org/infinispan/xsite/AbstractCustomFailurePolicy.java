@@ -2,7 +2,7 @@ package org.infinispan.xsite;
 
 import java.util.Map;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CustomFailurePolicy;

@@ -1,6 +1,6 @@
 package org.infinispan.context;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.ClearInvocationContext;

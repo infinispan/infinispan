@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
-import javax.transaction.Synchronization;
-import javax.transaction.Transaction;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;

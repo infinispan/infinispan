@@ -3,7 +3,7 @@ package org.infinispan.tx;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;

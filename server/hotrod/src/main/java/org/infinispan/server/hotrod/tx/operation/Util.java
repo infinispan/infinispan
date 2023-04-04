@@ -1,8 +1,8 @@
 package org.infinispan.server.hotrod.tx.operation;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;

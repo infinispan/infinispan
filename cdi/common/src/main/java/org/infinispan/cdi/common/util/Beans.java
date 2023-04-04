@@ -9,14 +9,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedParameter;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.AnnotatedMethod;
+import jakarta.enterprise.inject.spi.AnnotatedParameter;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Inject;
 
 /**
  * A set of utility methods for working with beans.

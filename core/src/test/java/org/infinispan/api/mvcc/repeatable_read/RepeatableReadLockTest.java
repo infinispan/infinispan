@@ -4,9 +4,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;

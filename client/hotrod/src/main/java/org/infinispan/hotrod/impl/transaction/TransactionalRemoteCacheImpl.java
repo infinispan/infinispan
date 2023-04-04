@@ -2,9 +2,9 @@ package org.infinispan.hotrod.impl.transaction;
 
 import java.util.function.Function;
 
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.hotrod.impl.HotRodTransport;

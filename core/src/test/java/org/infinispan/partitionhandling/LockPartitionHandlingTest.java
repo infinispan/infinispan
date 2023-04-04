@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.stream.Stream;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;

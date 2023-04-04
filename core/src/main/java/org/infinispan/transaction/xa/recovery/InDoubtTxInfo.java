@@ -57,7 +57,7 @@ public class InDoubtTxInfo {
    /**
     * The value represent transaction's state as described by the {@code status} field.
     *
-    * @return The {@link javax.transaction.Status} or -1 if not set.
+    * @return The {@link jakarta.transaction.Status} or -1 if not set.
     */
    public int getStatus() {
       return status;

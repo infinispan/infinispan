@@ -19,7 +19,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;

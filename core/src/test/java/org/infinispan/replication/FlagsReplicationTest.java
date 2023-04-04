@@ -12,7 +12,7 @@ import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 /**
  * Verifies the Flags affect both local and remote nodes.

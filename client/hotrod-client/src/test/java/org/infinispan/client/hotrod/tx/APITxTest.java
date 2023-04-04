@@ -23,9 +23,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;

@@ -1,12 +1,12 @@
 package org.infinispan.transaction.tm;
 
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.UserTransaction;
 
 /**
  * A {@link UserTransaction} implementation that uses {@link EmbeddedTransactionManager}.

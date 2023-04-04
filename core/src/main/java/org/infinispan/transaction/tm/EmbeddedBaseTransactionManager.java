@@ -3,8 +3,8 @@ package org.infinispan.transaction.tm;
 
 import java.util.UUID;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.TransactionManagerImpl;
 

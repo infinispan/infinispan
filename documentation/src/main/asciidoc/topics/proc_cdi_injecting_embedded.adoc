@@ -9,7 +9,7 @@ Set up CDI beans to inject embedded caches.
 [source,java]
 ----
 ...
-import javax.inject.Qualifier;
+import jakarta.inject.Qualifier;
 
 @Qualifier
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
@@ -29,7 +29,7 @@ public @interface GreetingCache { <1>
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.cdi.ConfigureCache;
-import javax.enterprise.inject.Produces;
+import jakarta.transaction.inject.Produces;
 
 public class Config {
 
@@ -82,7 +82,7 @@ method or do not add any qualifier.
 +
 ----
 ...
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class GreetingService {
 

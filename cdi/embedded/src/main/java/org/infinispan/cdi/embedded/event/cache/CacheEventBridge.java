@@ -3,7 +3,7 @@ package org.infinispan.cdi.embedded.event.cache;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
-import javax.enterprise.context.Dependent;
+import jakarta.enterprise.context.Dependent;
 
 import org.infinispan.cdi.embedded.event.AbstractEventBridge;
 import org.infinispan.notifications.Listenable;

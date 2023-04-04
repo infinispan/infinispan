@@ -11,8 +11,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.stream.IntStream;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.marshall.core.MarshallableFunctions;

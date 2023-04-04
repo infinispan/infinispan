@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 /**
  * A {@link Transaction} table that knows how to interact with the {@link Transaction} and how the {@link

@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.persistence.spi.InitializationContext;

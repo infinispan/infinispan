@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.impl.transaction.operations;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 

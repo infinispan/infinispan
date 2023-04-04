@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;

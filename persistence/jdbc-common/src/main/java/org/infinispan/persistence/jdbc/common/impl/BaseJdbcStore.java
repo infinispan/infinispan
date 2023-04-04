@@ -11,7 +11,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;

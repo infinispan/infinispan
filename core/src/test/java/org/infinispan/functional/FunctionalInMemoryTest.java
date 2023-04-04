@@ -10,7 +10,7 @@ import static org.testng.Assert.fail;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
 
-import javax.transaction.RollbackException;
+import jakarta.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;

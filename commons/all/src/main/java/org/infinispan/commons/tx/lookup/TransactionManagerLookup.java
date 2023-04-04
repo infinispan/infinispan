@@ -1,6 +1,6 @@
 package org.infinispan.commons.tx.lookup;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Factory interface, allows Cache or RemoteCache to use different transactional systems.

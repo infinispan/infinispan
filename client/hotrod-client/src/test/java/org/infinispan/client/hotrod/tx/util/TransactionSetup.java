@@ -7,7 +7,7 @@ import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Setup the {@link TransactionManager} for test classes.

@@ -6,8 +6,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

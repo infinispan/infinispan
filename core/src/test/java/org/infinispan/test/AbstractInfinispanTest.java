@@ -34,7 +34,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;

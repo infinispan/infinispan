@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.remoting.transport.Address;

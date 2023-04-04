@@ -6,7 +6,7 @@ import static org.infinispan.commons.util.Util.longToBytes;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.tx.TransactionImpl;

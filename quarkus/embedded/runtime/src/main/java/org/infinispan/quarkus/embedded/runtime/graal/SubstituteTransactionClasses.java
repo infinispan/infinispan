@@ -1,8 +1,5 @@
 package org.infinispan.quarkus.embedded.runtime.graal;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
@@ -11,6 +8,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
+
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
 
 public class SubstituteTransactionClasses {
 }

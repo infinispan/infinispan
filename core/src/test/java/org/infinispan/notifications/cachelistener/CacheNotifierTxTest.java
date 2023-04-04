@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;

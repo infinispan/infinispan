@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-import javax.enterprise.inject.spi.AnnotatedConstructor;
+import jakarta.enterprise.inject.spi.AnnotatedConstructor;
 
 /**
  * @author Stuart Douglas

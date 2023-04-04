@@ -1,6 +1,6 @@
 package org.infinispan.tx;
 
-import javax.transaction.RollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

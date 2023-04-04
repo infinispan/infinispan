@@ -2,7 +2,7 @@ package org.infinispan.tx;
 
 import static org.testng.Assert.assertEquals;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

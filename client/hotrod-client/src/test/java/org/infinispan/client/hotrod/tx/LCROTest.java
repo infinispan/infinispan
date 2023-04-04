@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 

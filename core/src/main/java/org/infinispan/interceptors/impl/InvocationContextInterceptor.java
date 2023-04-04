@@ -6,9 +6,9 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.FlagAffectedCommand;

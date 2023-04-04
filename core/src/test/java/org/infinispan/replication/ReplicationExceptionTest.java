@@ -7,10 +7,10 @@ import static org.testng.AssertJUnit.fail;
 
 import java.io.Serializable;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;

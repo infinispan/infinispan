@@ -4,8 +4,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.rehash.XAResourceAdapter;

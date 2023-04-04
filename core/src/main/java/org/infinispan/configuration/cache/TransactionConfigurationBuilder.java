@@ -15,8 +15,8 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.configuration.Builder;

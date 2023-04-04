@@ -6,15 +6,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.InjectionTarget;
-import javax.enterprise.inject.spi.PassivationCapable;
-import javax.inject.Named;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Alternative;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.inject.spi.InjectionTarget;
+import jakarta.enterprise.inject.spi.PassivationCapable;
+import jakarta.inject.Named;
 
 /**
  * <p>
@@ -90,7 +90,9 @@ public class BeanBuilder<T> {
         this.beanClass = type.getJavaClass();
         InjectionTarget<T> injectionTarget;
         if (!type.getJavaClass().isInterface()) {
-            injectionTarget = beanManager.createInjectionTarget(type);
+            injectionTarget = beanManager
+                    .getInjectionTargetFactory(beanManager.createAnnotatedType(type.getJavaClass()))
+                    .createInjectionTarget(null);
         } else {
             injectionTarget = new DummyInjectionTarget<T>();
         }

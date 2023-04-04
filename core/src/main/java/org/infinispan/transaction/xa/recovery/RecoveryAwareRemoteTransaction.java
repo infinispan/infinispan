@@ -3,7 +3,7 @@ package org.infinispan.transaction.xa.recovery;
 import java.util.Collection;
 import java.util.List;
 
-import javax.transaction.Status;
+import jakarta.transaction.Status;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.Address;

@@ -4,7 +4,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.cache.Configuration;

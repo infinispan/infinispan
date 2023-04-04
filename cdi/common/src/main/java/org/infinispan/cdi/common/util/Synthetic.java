@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.inject.Qualifier;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.inject.Qualifier;
 
 /**
  * <p>

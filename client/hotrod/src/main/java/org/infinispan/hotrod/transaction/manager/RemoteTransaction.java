@@ -1,6 +1,6 @@
 package org.infinispan.hotrod.transaction.manager;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.tx.TransactionImpl;
 

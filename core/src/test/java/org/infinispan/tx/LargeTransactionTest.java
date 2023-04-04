@@ -1,6 +1,6 @@
 package org.infinispan.tx;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

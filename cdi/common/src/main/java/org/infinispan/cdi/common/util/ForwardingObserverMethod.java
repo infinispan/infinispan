@@ -4,9 +4,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Set;
 
-import javax.enterprise.event.Reception;
-import javax.enterprise.event.TransactionPhase;
-import javax.enterprise.inject.spi.ObserverMethod;
+import jakarta.enterprise.event.Reception;
+import jakarta.enterprise.event.TransactionPhase;
+import jakarta.enterprise.inject.spi.ObserverMethod;
 
 /**
  * An implementation of {@link ObserverMethod} that forwards all calls to

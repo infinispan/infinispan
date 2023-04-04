@@ -2,8 +2,8 @@ package org.infinispan.query.backend;
 
 import static org.infinispan.query.logging.Log.CONTAINER;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Transaction related helper. Wraps a (possibly {@code null}) {@link TransactionManager} and performs transaction

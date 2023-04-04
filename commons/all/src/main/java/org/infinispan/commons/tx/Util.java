@@ -1,6 +1,6 @@
 package org.infinispan.commons.tx;
 
-import javax.transaction.Status;
+import jakarta.transaction.Status;
 
 /**
  * Transaction related util class.

@@ -4,10 +4,10 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.Properties;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCacheManager;

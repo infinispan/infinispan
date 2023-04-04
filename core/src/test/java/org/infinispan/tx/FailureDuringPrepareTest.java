@@ -3,9 +3,9 @@ package org.infinispan.tx;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertEquals;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;

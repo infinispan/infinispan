@@ -6,7 +6,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.commons.CacheException;

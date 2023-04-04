@@ -58,7 +58,7 @@ public class GreetingService {
 [source,java]
 ----
 ...
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.transaction.context.ApplicationScoped;
 
 public class Config {
 

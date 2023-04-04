@@ -8,8 +8,8 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.Map;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;

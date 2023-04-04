@@ -13,8 +13,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.io.ByteBufferImpl;

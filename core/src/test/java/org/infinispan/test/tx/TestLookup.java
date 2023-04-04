@@ -1,6 +1,6 @@
 package org.infinispan.test.tx;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 

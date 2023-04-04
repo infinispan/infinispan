@@ -2,12 +2,12 @@ package org.infinispan.persistence;
 
 import static org.infinispan.test.TestingUtil.getTransactionManager;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;

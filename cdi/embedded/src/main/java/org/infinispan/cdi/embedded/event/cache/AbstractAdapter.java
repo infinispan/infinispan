@@ -1,6 +1,6 @@
 package org.infinispan.cdi.embedded.event.cache;
 
-import javax.enterprise.event.Event;
+import jakarta.enterprise.event.Event;
 
 /**
  * @author Pete Muir

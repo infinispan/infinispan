@@ -1,6 +1,6 @@
 package org.infinispan.persistence.spi;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.persistence.support.BatchModification;
 

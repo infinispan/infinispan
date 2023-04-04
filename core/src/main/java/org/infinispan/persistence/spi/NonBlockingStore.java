@@ -9,7 +9,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;

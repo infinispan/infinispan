@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import javax.transaction.Transaction;
+import jakarta.transaction.Transaction;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;

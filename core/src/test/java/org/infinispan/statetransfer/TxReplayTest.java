@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.transaction.Status;
+import jakarta.transaction.Status;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;

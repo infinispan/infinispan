@@ -3,11 +3,11 @@ package org.infinispan.cdi.embedded;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.inject.Inject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;

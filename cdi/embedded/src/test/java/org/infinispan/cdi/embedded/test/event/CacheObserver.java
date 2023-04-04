@@ -1,7 +1,7 @@
 package org.infinispan.cdi.embedded.test.event;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;

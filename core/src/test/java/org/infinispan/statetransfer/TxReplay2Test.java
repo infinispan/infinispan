@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.transaction.Status;
+import jakarta.transaction.Status;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;

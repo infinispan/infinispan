@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertNull;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.TransactionManager;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;

@@ -2,8 +2,8 @@ package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 
 import static org.testng.Assert.assertEquals;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
