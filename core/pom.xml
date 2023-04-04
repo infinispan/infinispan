@@ -147,18 +147,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.apache.geronimo.components</groupId>
-         <artifactId>geronimo-transaction</artifactId>
-         <scope>test</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.apache.geronimo.specs</groupId>
-               <artifactId>geronimo-jta_1.1_spec</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-
-      <dependency>
          <groupId>org.objectweb.howl</groupId>
          <artifactId>howl</artifactId>
          <scope>test</scope>
