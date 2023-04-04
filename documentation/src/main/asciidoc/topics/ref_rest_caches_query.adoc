@@ -87,6 +87,15 @@ the link:#rest_v2_query_index_stats[Index Statistics] REST call.
 |When `true`, only the data from node that process the request is re-indexed. The default is `false`, meaning all data cluster-wide is re-indexed.
 |===
 
+[id='rest_v2_query_updateIndexSchema']
+== Update index schema
+Update the index schema in caches with `POST` requests and the `?action=updateSchema` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST  /v2/caches/{cacheName}/search/indexes?action=updateSchema
+----
+
 [id='rest_v2_query_purge_index']
 == Purging Indexes
 Delete all indexes from caches with `POST` requests and the `?action=clear`

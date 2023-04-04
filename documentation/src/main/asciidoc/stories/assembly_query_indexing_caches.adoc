@@ -14,6 +14,7 @@ include::{topics}/proc_indexing_configuring.adoc[leveloffset=+1]
 include::{topics}/ref_indexing_configuration.adoc[leveloffset=+2]
 include::{topics}/con_indexing_annotations.adoc[leveloffset=+1]
 include::{topics}/proc_indexing_rebuilding.adoc[leveloffset=+1]
+include::{topics}/proc_indexing_update_index_schema.adoc[leveloffset=+1]
 include::{topics}/con_query_non_indexed.adoc[leveloffset=+1]
 
 // Restore the parent context.
