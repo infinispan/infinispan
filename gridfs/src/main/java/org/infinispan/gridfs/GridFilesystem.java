@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,9 +16,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Bela Ban
  * @author Marko Luksa
- * @deprecated since 10.0
  */
-@Deprecated
 public class GridFilesystem {
 
    private static final Log log = LogFactory.getLog(GridFilesystem.class);

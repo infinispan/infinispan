@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,19 +9,17 @@ import org.infinispan.Cache;
  * @author Bela Ban
  * @author Marko Luksa
  * @author Manik Surtani
- * @deprecated since 10.0
  */
-@Deprecated
 public class GridOutputStream extends OutputStream {
 
    private int index;                     // index into the file for writing
    private int localIndex;
    private final byte[] currentBuffer;
-   private int numberOfChunksWhenOpened;
+   private final int numberOfChunksWhenOpened;
 
    private final FileChunkMapper fileChunkMapper;
    private final int chunkSize; // Guaranteed to be a power of 2
-   private GridFile file;
+   private final GridFile file;
    private boolean streamClosed;
 
    GridOutputStream(GridFile file, boolean append, Cache<String, byte[]> cache) {
@@ -51,7 +49,7 @@ public class GridOutputStream extends OutputStream {
    }
 
    private byte[] createFullSizeCopy(byte[] val) {
-      byte chunk[] = createEmptyChunk();
+      byte[] chunk = createEmptyChunk();
       if (val != null) {
          System.arraycopy(val, 0, chunk, 0, val.length);
       }
@@ -126,7 +124,7 @@ public class GridOutputStream extends OutputStream {
    }
 
    @Override
-   public void flush() throws IOException {
+   public void flush() {
       storeChunk();
       file.setLength(index);
    }

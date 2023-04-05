@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import static java.lang.String.format;
 
@@ -9,7 +9,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
@@ -26,9 +25,7 @@ import org.jgroups.util.Util;
  *
  * @author Bela Ban
  * @author Marko Luksa
- * @deprecated since 10.0
  */
-@Deprecated
 public class GridFile extends File {
    private static final long serialVersionUID = 552534285862004134L;
    private static final Metadata ROOT_DIR_METADATA = new Metadata(0, 0, 0, Metadata.DIR);
@@ -91,12 +88,12 @@ public class GridFile extends File {
    }
 
    @Override
-   public String getCanonicalPath() throws IOException {
+   public String getCanonicalPath() {
       throw new UnsupportedOperationException("Not implemented");
    }
 
    @Override
-   public File getCanonicalFile() throws IOException {
+   public File getCanonicalFile() {
       throw new UnsupportedOperationException("Not implemented");
    }
 
@@ -134,7 +131,7 @@ public class GridFile extends File {
       // Regardless of platform, always use the same separator char, otherwise
       // keys might not be found when transfering metadata between different OS
       path = path.replace('\\', SEPARATOR_CHAR);
-      if (path != null && path.endsWith(SEPARATOR)) {
+      if (path.endsWith(SEPARATOR)) {
          int index = path.lastIndexOf(SEPARATOR);
          if (index != -1)
             path = path.substring(0, index);
@@ -340,7 +337,7 @@ public class GridFile extends File {
             list.add(filename(path));
          }
       }
-      return list.toArray(new String[list.size()]);
+      return list.toArray(new String[0]);
    }
 
    /**
@@ -418,7 +415,7 @@ public class GridFile extends File {
 
    @Override
    public boolean equals(Object obj) {
-      if ((obj != null) && (obj instanceof GridFile)) {
+      if (obj instanceof GridFile) {
           return compareTo((GridFile)obj) == 0;
       }
       return false;
@@ -462,7 +459,7 @@ public class GridFile extends File {
    }
 
    @Override
-   public URL toURL() throws MalformedURLException {
+   public URL toURL() {
       throw new UnsupportedOperationException("Not implemented");
    }
 
@@ -579,7 +576,7 @@ public class GridFile extends File {
          StringBuilder sb = new StringBuilder();
          sb.append(getType());
          if (isFile())
-            sb.append(", len=" + Util.printBytes(length) + ", chunkSize=" + chunkSize);
+            sb.append(", len=").append(Util.printBytes(length)).append(", chunkSize=").append(chunkSize);
          sb.append(", modTime=").append(new Date(modificationTime));
          return sb.toString();
       }

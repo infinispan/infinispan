@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -39,7 +39,7 @@ public class GridFileTest extends SingleCacheManagerTest {
    private GridFilesystem fs;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
       Configuration configuration = new ConfigurationBuilder().build();
       cacheManager.defineConfiguration("data", configuration);
@@ -48,7 +48,7 @@ public class GridFileTest extends SingleCacheManagerTest {
    }
 
    @BeforeMethod
-   protected void setUp() throws Exception {
+   protected void setUp() {
       dataCache = cacheManager.getCache("data");
       metadataCache = cacheManager.getCache("metadata");
       fs = new GridFilesystem(dataCache, metadataCache);
@@ -61,7 +61,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       assert gridFile.createNewFile();
    }
 
-   public void testGetFile() throws Exception {
+   public void testGetFile() {
       assertEquals(fs.getFile("file.txt").getPath(), "file.txt");
       assertEquals(fs.getFile("/file.txt").getPath(), "/file.txt");
       assertEquals(fs.getFile("myDir/file.txt").getPath(), "myDir/file.txt");
@@ -89,7 +89,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       file.createNewFile();
    }
 
-   public void testNonExistentFileIsNeitherFileNorDirectory() throws IOException {
+   public void testNonExistentFileIsNeitherFileNorDirectory() {
       File file = fs.getFile("nonExistentFile.txt");
       assertFalse(file.exists());
       assertFalse(file.isFile());
@@ -130,7 +130,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       return fs.getFile(pathname).mkdirs();
    }
 
-   public void testGetParent() throws IOException {
+   public void testGetParent() {
       File file = fs.getFile("file.txt");
       assertEquals(file.getParent(), null);
 
@@ -141,7 +141,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(file.getParent(), "/parentdir/subdir");
    }
 
-   public void testGetParentFile() throws IOException {
+   public void testGetParentFile() {
       File file = fs.getFile("file.txt");
       assertNull(file.getParentFile());
 

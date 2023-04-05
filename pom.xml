@@ -125,6 +125,7 @@
       <module>cdi/remote</module>
       <module>lock</module>
       <module>quarkus</module>
+      <module>gridfs</module>
       <module>integrationtests</module>
       <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/jboss-marshalling-it</module>

@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,9 +10,7 @@ import org.infinispan.Cache;
 
 /**
  * @author Marko Luksa
- * @deprecated since 10.0
  */
-@Deprecated
 public class WritableGridFileChannel implements WritableByteChannel {
 
    private final GridOutputStream gridOutputStream;
@@ -29,7 +27,7 @@ public class WritableGridFileChannel implements WritableByteChannel {
       return delegate.write(src);
    }
 
-   public void flush() throws IOException {
+   public void flush() {
       gridOutputStream.flush();
    }
 

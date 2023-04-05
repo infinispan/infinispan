@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,9 +10,7 @@ import org.infinispan.Cache;
 
 /**
  * @author Marko Luksa
- * @deprecated since 10.0
  */
-@Deprecated
 public class ReadableGridFileChannel implements ReadableByteChannel {
 
    private final GridInputStream gridInputStream;
@@ -55,7 +53,7 @@ public class ReadableGridFileChannel implements ReadableByteChannel {
       }
    }
 
-   public long size() throws IOException {
+   public long size() {
       return gridInputStream.getFileSize();
    }
 }

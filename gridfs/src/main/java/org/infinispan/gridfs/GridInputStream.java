@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,9 +9,7 @@ import org.infinispan.Cache;
  * @author Bela Ban
  * @author Marko Luksa
  * @author Manik Surtani
- * @deprecated since 10.0
  */
-@Deprecated
 public class GridInputStream extends InputStream {
 
    private int index = 0;                // index into the file for writing
