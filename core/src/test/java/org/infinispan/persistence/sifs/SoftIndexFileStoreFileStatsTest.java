@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletionStage;
@@ -32,7 +31,6 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.BlockingManagerTestUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -158,8 +156,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
          WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache);
 
          Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
-         Set<Integer> files = compactor.getFiles();
-         assertEquals("Test wants 2 files to reproduce reliably", 2, files.size());
+         eventuallyEquals("Test wants 2 files to reproduce reliably", 2, () -> compactor.getFiles().size());
 
          BlockingQueue<Object> syncQueue = new SynchronousQueue<>();
          MyCompactionObserver myCompactionObserver = new MyCompactionObserver(syncQueue);
@@ -206,40 +203,36 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
       String cacheName = m.getName() + "-" + performExpirationAfterFirst;
       configureCache(cacheName);
 
-      BlockingManager actualBlockingManager = BlockingManagerTestUtil.replaceBlockingManagerWithInline(cacheManager);
-      try {
-         Cache<String, Object> cache = cacheManager.getCache(cacheName);
-         cache.start();
+      BlockingManagerTestUtil.replaceManagersWithInline(cacheManager);
 
-         WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache);
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+      cache.start();
 
-         Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache);
 
-         ConcurrentMap<Integer, Compactor.Stats> statsMap = compactor.getFileStats();
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+
+      ConcurrentMap<Integer, Compactor.Stats> statsMap = compactor.getFileStats();
+      cache.put("k1", "v1");
+
+      cache.put("k1", "v1");
+
+      if (performExpirationAfterFirst) {
+         MyCompactionObserver myCompactionObserver = new MyCompactionObserver(new ArrayBlockingQueue<>(5));
+         compactor.performExpirationCompaction(myCompactionObserver);
+         myCompactionObserver.waitForCompletion();
+      }
+      assertEquals(1, statsMap.size());
+
+      Map.Entry<Integer, Compactor.Stats> entry = statsMap.entrySet().iterator().next();
+
+      int maxInserts = 100;
+      int insertions = 0;
+      while (statsMap.containsKey(entry.getKey())) {
          cache.put("k1", "v1");
-
-         cache.put("k1", "v1");
-
-         if (performExpirationAfterFirst) {
-            MyCompactionObserver myCompactionObserver = new MyCompactionObserver(new ArrayBlockingQueue<>(5));
-            compactor.performExpirationCompaction(myCompactionObserver);
-            myCompactionObserver.waitForCompletion();
+         if (++insertions == maxInserts) {
+            fail("Failed to remove stats map after " + maxInserts + " stats were: " + statsMap);
          }
-         assertEquals(1, statsMap.size());
-
-         Map.Entry<Integer, Compactor.Stats> entry = statsMap.entrySet().iterator().next();
-
-         int maxInserts = 100;
-         int insertions = 0;
-         while (statsMap.containsKey(entry.getKey())) {
-            cache.put("k1", "v1");
-            if (++insertions == maxInserts) {
-               fail("Failed to remove stats map after " + maxInserts + " stats were: " + statsMap);
-            }
-         }
-
-      } finally {
-         TestingUtil.replaceComponent(cacheManager, BlockingManager.class, actualBlockingManager, true);
       }
    }
 
@@ -252,7 +245,7 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
    public void testExpirationStats(Method m, boolean extraRemovedEntry) throws InterruptedException {
       String cacheName = m.getName() + "-" + extraRemovedEntry;
       ControlledTimeService controlledTimeService = defineCacheConfigurationAndInjectTimeService(cacheName);
-      BlockingManager actualBlockingManager = BlockingManagerTestUtil.replaceBlockingManagerWithInline(cacheManager);
+      BlockingManagerTestUtil.replaceManagersWithInline(cacheManager);
       try {
          Cache<String, Object> cache = cacheManager.getCache(cacheName);
          cache.start();
@@ -325,7 +318,6 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
          assertNull("File " + entry.getKey() + " was still not removed... stats were: " + statsMap, completedStats);
       } finally {
          TestingUtil.replaceComponent(cacheManager, TimeService.class, controlledTimeService.getActualTimeService(), true);
-         TestingUtil.replaceComponent(cacheManager, BlockingManager.class, actualBlockingManager, true);
       }
    }
 }

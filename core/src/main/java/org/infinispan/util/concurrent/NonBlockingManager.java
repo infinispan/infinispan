@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import io.reactivex.rxjava3.core.Scheduler;
+
 /**
  * Manager utility for non-blocking operations.
  */
@@ -68,4 +70,11 @@ public interface NonBlockingManager {
     * @param t throwable to complete the future with
     */
    void completeExceptionally(CompletableFuture<?> future, Throwable t);
+
+   /**
+    * Returns a scheduler to be used with RxJava {@link io.reactivex.rxjava3.core.Flowable#observeOn(Scheduler)} method
+    * or similar.
+    * @return schduler to use within the RxJava ecosystem
+    */
+   Scheduler asScheduler();
 }
