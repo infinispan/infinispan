@@ -1,4 +1,4 @@
-package org.infinispan.io;
+package org.infinispan.gridfs;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -9,9 +9,7 @@ import java.io.ObjectOutput;
  *
  * @author Manik Surtani
  * @since 4.0
- * @deprecated since 10.0
  */
-@Deprecated
 public class UnclosableObjectOutputStream implements ObjectOutput {
 
    private final ObjectOutput delegate;
@@ -96,12 +94,12 @@ public class UnclosableObjectOutputStream implements ObjectOutput {
    }
 
    @Override
-   public final void flush() throws IOException {
+   public final void flush() {
       throw new UnsupportedOperationException("flush() not supported in an UnclosableObjectOutputStream!");
    }
 
    @Override
-   public final void close() throws IOException {
+   public final void close() {
       throw new UnsupportedOperationException("close() not supported in an UnclosableObjectOutputStream!");
    }
 }
