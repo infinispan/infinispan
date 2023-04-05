@@ -18,6 +18,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.GLOBAL)
@@ -132,5 +134,10 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
             cancelFuture.cancel(false);
          }
       }
+   }
+
+   @Override
+   public Scheduler asScheduler() {
+      return Schedulers.from(executor);
    }
 }
