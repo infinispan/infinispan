@@ -11,7 +11,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  * @author William Burns &lt;wburns@redhat.com&gt;
  */
-class LogRequest extends CompletableFuture<Void> {
+class LogRequest extends CompletableFuture<LogResponse> {
 
    enum Type {
       STORE,

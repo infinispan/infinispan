@@ -274,15 +274,19 @@ class IndexNode {
       GET_INFO {
          @Override
          protected EntryInfo apply(LeafNode leafNode, org.infinispan.commons.io.ByteBuffer key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-            EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
-            if (entryKeyEqualsBuffer(hak, key)) {
-               log.tracef("Found matching leafNode %s", leafNode);
-               return leafNode;
-            } else {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Found node on %d:%d but key does not match", leafNode.file, leafNode.offset);
+            try {
+               EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
+               if (entryKeyEqualsBuffer(hak, key)) {
+                  log.tracef("Found matching leafNode %s", leafNode);
+                  return leafNode;
+               } else {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Found node on %d:%d but key does not match", leafNode.file, leafNode.offset);
+                  }
+                  return null;
                }
-               return null;
+            } catch (Exception e) {
+               throw new RuntimeException(String.format("(%s) (%d:%d)", key, leafNode.file, leafNode.offset), e);
             }
          }
       };

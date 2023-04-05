@@ -13,6 +13,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
@@ -36,7 +37,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    private final AtomicInteger submittedCount = new AtomicInteger();
    // This variable is null unless sync writes are enabled. When sync writes are enabled this list holds
    // all the log requests that should be completed when the disk is ensured to be flushed
-   private final List<LogRequest> toSyncLogRequests;
+   private final List<Tuple> toSyncLogRequests;
 
    // This buffer is used by the log appender thread to avoid allocating buffers per entry written that are smaller
    // than the header size
@@ -140,19 +141,19 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    public CompletionStage<Void> clearAndPause() {
       LogRequest clearRequest = LogRequest.clearRequest();
       requestProcessor.onNext(clearRequest);
-      return clearRequest;
+      return cast(clearRequest);
    }
 
    public CompletionStage<Void> pause() {
       LogRequest pauseRequest = LogRequest.pauseRequest();
       requestProcessor.onNext(pauseRequest);
-      return pauseRequest;
+      return cast(pauseRequest);
    }
 
    public CompletionStage<Void> resume() {
       LogRequest resumeRequest = LogRequest.resumeRequest();
       requestProcessor.onNext(resumeRequest);
-      return resumeRequest;
+      return cast(resumeRequest);
    }
 
    public <K, V> CompletionStage<Void> storeRequest(int segment, MarshallableEntry<K, V> entry) {
@@ -167,7 +168,21 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), request.getSerializedKey(),
             request.getFile(), offset, request.length());
       request.setIndexRequest(indexRequest);
-      index.handleRequest(indexRequest);
+      CompletionStage<?> indexStage = index.handleRequest(indexRequest);
+
+      // We know the log request is already completed at this point.
+      LogResponse response = request.join();
+      if (response == null || response.getId() < submittedCount.get()) return;
+      if (response.getOffset() != 0 && response.getOffset() + request.length() > maxFileSize) {
+         final int fileId = response.getFile();
+         final long exp = response.getExpiration();
+         if (CompletionStages.isCompletedSuccessfully(indexStage)) {
+            CompletionStages.join(indexStage);
+            compactor.completeFile(fileId, offset, exp);
+         } else {
+            indexStage.thenRun(() -> compactor.completeFile(fileId, offset, exp));
+         }
+      }
    }
 
    public CompletionStage<Boolean> deleteRequest(int segment, Object key, ByteBuffer serializedKey) {
@@ -237,18 +252,16 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
             nextExpirationTime = -1;
             currentOffset = 0;
             logFile = null;
-            completeRequest(actualRequest);
+            completeRequest(actualRequest, null);
             return;
          }
+
+         LogResponse response = new LogResponse(++receivedCount, logFile.fileId, currentOffset, nextExpirationTime);
          int actualLength = actualRequest.length();
          if (currentOffset != 0 && currentOffset + actualLength > maxFileSize) {
             // switch to next file
             logFile.close();
 
-            final int fileId = logFile.fileId;
-            final int offset = currentOffset;
-            final long exp = nextExpirationTime;
-            index.ensureRunOnLast(() -> compactor.completeFile(fileId, offset, exp));
             completePendingLogRequests();
             logFile = fileProvider.getFileForLog();
             nextExpirationTime = -1;
@@ -266,11 +279,12 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
          actualRequest.setFileOffset(currentOffset);
 
          if (!syncWrites) {
-            completeRequest(actualRequest);
+            completeRequest(actualRequest, response);
          } else {
-            // This cannot be null when sync writes is true
-            toSyncLogRequests.add(actualRequest);
-            if (submittedCount.get() == ++receivedCount || toSyncLogRequests.size() == 1000) {
+            boolean sentAndReceived = submittedCount.get() == receivedCount;
+            // toSyncLogRequests cannot be null when sync writes is true
+            toSyncLogRequests.add(new Tuple(actualRequest, sentAndReceived ? response : null));
+            if (sentAndReceived || toSyncLogRequests.size() == 1000) {
                logFile.fileChannel.force(false);
                completePendingLogRequests();
             }
@@ -287,10 +301,10 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
     */
    private void completePendingLogRequests() {
       if (toSyncLogRequests != null) {
-         for (Iterator<LogRequest> iter = toSyncLogRequests.iterator(); iter.hasNext(); ) {
-            LogRequest logRequest = iter.next();
+         for (Iterator<Tuple> iter = toSyncLogRequests.iterator(); iter.hasNext(); ) {
+            Tuple tuple = iter.next();
             iter.remove();
-            completeRequest(logRequest);
+            completeRequest(tuple.request, tuple.response);
          }
       }
    }
@@ -303,7 +317,17 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       return seqId++;
    }
 
-   private void completeRequest(CompletableFuture<Void> future) {
-      nonBlockingManager.complete(future, null);
+   private void completeRequest(CompletableFuture<LogResponse> future, LogResponse value) {
+      nonBlockingManager.complete(future, value);
+   }
+
+   private static class Tuple {
+      private final LogRequest request;
+      private final LogResponse response;
+
+      private Tuple(LogRequest request, LogResponse response) {
+         this.request = request;
+         this.response = response;
+      }
    }
 }

@@ -397,7 +397,8 @@ class Compactor implements Consumer<Object> {
                   // the entry is not removed from the listener as we don't want to keep returning the same entry
                   // to the listener that it has expired.
                   if (stats.markedForDeletion() || (!isLogFile && stats.nextExpirationTime == -1) || stats.nextExpirationTime > currentTimeMilliseconds) {
-                     log.tracef("Skipping expiration for file %d since it is marked for deletion: %s or its expiration time %s is not yet",
+                     log.tracef(
+                           "Skipping expiration for file %d since it is marked for deletion: %s or its expiration time %s is not yet",
                            (Object) fileId, stats.markedForDeletion(), stats.nextExpirationTime);
                      continue;
                   }
@@ -568,8 +569,8 @@ class Compactor implements Consumer<Object> {
                } else if (info.file == scheduledFile && info.offset == ~scheduledOffset && info.numRecords > 1) {
                   // The entry was expired, but we have other records so we can't drop this one or else the index will rebuild incorrectly
                   drop = false;
-               } else if (log.isTraceEnabled()) {
-                  log.tracef("Key %s for %d:%d was found in index on %d:%d, %d record => drop", key,
+               } else {
+                  log.debugf("Key %s for %d:%d was found in index on %d:%d, %d record => drop", key,
                         scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
                }
                prevFile = info.file;
@@ -577,10 +578,8 @@ class Compactor implements Consumer<Object> {
             }
 
             if (drop) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Drop index for key %s, file %d:%d (%s)", key, scheduledFile, scheduledOffset,
-                        header.valueLength() > 0 ? "record" : "tombstone");
-               }
+               log.debugf("Drop index for key %s, file %d:%d (%s)", key, scheduledFile, scheduledOffset,
+                     header.valueLength() > 0 ? "record" : "tombstone");
                aggregateCompletionStage.dependsOn(
                      index.handleRequest(IndexRequest.dropped(segment, key, ByteBufferImpl.create(serializedKey), prevFile, prevOffset, scheduledFile, scheduledOffset)));
             } else {

@@ -267,7 +267,7 @@ class Index {
       return indexRequest;
    }
 
-   public CompletionStage<Object> ensureRunOnLast(Runnable runnable) {
+   public void ensureRunOnLast(Runnable runnable) {
       AtomicInteger count = new AtomicInteger(flowableProcessors.length);
       IndexRequest request = IndexRequest.syncRequest(() -> {
          if (count.decrementAndGet() == 0) {
@@ -277,12 +277,11 @@ class Index {
       for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
          flowableProcessor.onNext(request);
       }
-
-      return request;
    }
 
    public void deleteFileAsync(int fileId) {
       ensureRunOnLast(() -> {
+         log.debugf("Deleting file %d", fileId);
          // After all indexes have ensured they have processed all requests - the last one will delete the file
          // This guarantees that the index can't see an outdated value
          fileProvider.deleteFile(fileId);
@@ -505,6 +504,7 @@ class Index {
                recordChange = IndexNode.RecordChange.INCREASE;
                overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
                   index.nonBlockingManager.complete(request, overwritten);
+                  log.debugf("Updated (%s) (%d:%d)", request.getKey(), request.getFile(), request.getOffset());
                   if (request.getOffset() >= 0 && prevOffset < 0) {
                      index.sizePerSegment.incrementAndGet(cacheSegment);
                   } else if (request.getOffset() < 0 && prevOffset >= 0) {
@@ -515,6 +515,7 @@ class Index {
             case DROPPED:
                recordChange = IndexNode.RecordChange.DECREASE;
                overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
+                  log.debugf("Dropped (%d:%d)", request.getFile(), request.getOffset());
                   if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
                      index.sizePerSegment.decrementAndGet(cacheSegment);
                   }
@@ -671,6 +672,7 @@ class Index {
          if (length <= 0) throw new IllegalArgumentException("Offset=" + offset + ", length=" + length);
          // TODO: fragmentation!
          // TODO: memory bounds!
+         log.debugf("Freeing index space: offset=%d, length=%d");
          if (offset + length < indexFileSize) {
             freeBlocks.computeIfAbsent(length, k -> new ArrayList<>()).add(new IndexSpace(offset, length));
          } else {
