@@ -36,7 +36,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    private final AtomicInteger submittedCount = new AtomicInteger();
    // This variable is null unless sync writes are enabled. When sync writes are enabled this list holds
    // all the log requests that should be completed when the disk is ensured to be flushed
-   private final List<LogRequest> toSyncLogRequests;
+   private final List<Consumer<LogAppender>> toSyncLogRequests;
 
    // This buffer is used by the log appender thread to avoid allocating buffers per entry written that are smaller
    // than the header size
@@ -55,6 +55,8 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    private volatile FlowableProcessor<LogRequest> requestProcessor;
    // This is only accessed by the requestProcessor thread
    private FlowableProcessor<WriteOperation> writeProcessor;
+   // This is only accessed by the writeProcessor thread
+   private FlowableProcessor<Consumer<LogAppender>> completionProcessor;
 
    public LogAppender(NonBlockingManager nonBlockingManager, Index index,
                       TemporaryTable temporaryTable, Compactor compactor,
@@ -77,12 +79,18 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       writeProcessor.observeOn(Schedulers.from(executor))
             .subscribe(this, e -> log.warn("Exception encountered while performing write log request ", e));
 
+      completionProcessor = UnicastProcessor.create();
+      completionProcessor.observeOn(nonBlockingManager.asScheduler())
+            .subscribe(this::complete, e -> log.warn("Exception encountered while performing write log request ", e));
+
       // Need to be serialized in case if we receive requests from concurrent threads
       requestProcessor = UnicastProcessor.<LogRequest>create().toSerialized();
       requestProcessor.subscribe(this::callerAccept,
             e -> log.warn("Exception encountered while handling log request for log appender", e), () -> {
                writeProcessor.onComplete();
                writeProcessor = null;
+               completionProcessor.onComplete();
+               completionProcessor = null;
                if (logFile != null) {
                   Util.close(logFile);
                   // add the current appended file - note this method will fail if it is already present, which will
@@ -99,7 +107,18 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       requestProcessor = null;
    }
 
-   static class WriteOperation {
+   void handleRequestCompletion(LogRequest request) {
+      int offset = request.getSerializedValue() == null ? ~request.getFileOffset() : request.getFileOffset();
+      temporaryTable.set(request.getSement(), request.getKey(), request.getFile(), offset);
+      IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), request.getSerializedKey(),
+            request.getFile(), offset, request.length());
+      request.setIndexRequest(indexRequest);
+      index.handleRequest(indexRequest);
+
+      completeRequest(request);
+   }
+
+   static class WriteOperation implements Consumer<LogAppender> {
       private final LogRequest logRequest;
       private final java.nio.ByteBuffer serializedKey;
       private final java.nio.ByteBuffer serializedMetadata;
@@ -128,6 +147,12 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
             return null;
          }
          return java.nio.ByteBuffer.wrap(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength());
+      }
+
+      // This method isn't required, here solely to avoid allocating an additional Consumer for the non sync case
+      @Override
+      public void accept(LogAppender appender) throws Throwable {
+         appender.handleRequestCompletion(logRequest);
       }
    }
 
@@ -158,25 +183,13 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    public <K, V> CompletionStage<Void> storeRequest(int segment, MarshallableEntry<K, V> entry) {
       LogRequest storeRequest = LogRequest.storeRequest(segment, entry);
       requestProcessor.onNext(storeRequest);
-      return storeRequest.thenRun(() -> handleRequestCompletion(storeRequest));
-   }
-
-   private void handleRequestCompletion(LogRequest request) {
-      int offset = request.getSerializedValue() == null ? ~request.getFileOffset() : request.getFileOffset();
-      temporaryTable.set(request.getSement(), request.getKey(), request.getFile(), offset);
-      IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), request.getSerializedKey(),
-            request.getFile(), offset, request.length());
-      request.setIndexRequest(indexRequest);
-      index.handleRequest(indexRequest);
+      return storeRequest;
    }
 
    public CompletionStage<Boolean> deleteRequest(int segment, Object key, ByteBuffer serializedKey) {
       LogRequest deleteRequest = LogRequest.deleteRequest(segment, key, serializedKey);
       requestProcessor.onNext(deleteRequest);
-      return deleteRequest.thenCompose(v -> {
-         handleRequestCompletion(deleteRequest);
-         return cast(deleteRequest.getIndexRequest());
-      });
+      return deleteRequest.thenCompose(v -> cast(deleteRequest.getIndexRequest()));
    }
 
    private static <I> CompletionStage<I> cast(CompletionStage stage) {
@@ -244,8 +257,15 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
          if (currentOffset != 0 && currentOffset + actualLength > maxFileSize) {
             // switch to next file
             logFile.close();
-            compactor.completeFile(logFile.fileId, currentOffset, nextExpirationTime);
             completePendingLogRequests();
+
+            final int fileId = logFile.fileId;
+            final int offset = currentOffset;
+            final long exp = nextExpirationTime;
+            // Have to schedule the compaction after all other log appender operations are complete and register their
+            // index updates. Then we can do a sync index call to ensure the compactor is ran after all updates are done
+            completionProcessor.onNext(la -> la.index.ensureRunOnLast(() -> compactor.completeFile(fileId, offset, exp)));
+
             logFile = fileProvider.getFileForLog();
             nextExpirationTime = -1;
             currentOffset = 0;
@@ -262,10 +282,10 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
          actualRequest.setFileOffset(currentOffset);
 
          if (!syncWrites) {
-            completeRequest(actualRequest);
+            completionProcessor.onNext(writeOperation);
          } else {
             // This cannot be null when sync writes is true
-            toSyncLogRequests.add(actualRequest);
+            toSyncLogRequests.add(la -> la.handleRequestCompletion(actualRequest));
             if (submittedCount.get() == ++receivedCount || toSyncLogRequests.size() == 1000) {
                logFile.fileChannel.force(false);
                completePendingLogRequests();
@@ -278,15 +298,19 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
       }
    }
 
+   public void complete(Consumer<LogAppender> consumer) throws Throwable {
+      consumer.accept(this);
+   }
+
    /**
     * Must only be invoked by {@link #accept(WriteOperation)} method.
     */
    private void completePendingLogRequests() {
       if (toSyncLogRequests != null) {
-         for (Iterator<LogRequest> iter = toSyncLogRequests.iterator(); iter.hasNext(); ) {
-            LogRequest logRequest = iter.next();
+         for (Iterator<Consumer<LogAppender>> iter = toSyncLogRequests.iterator(); iter.hasNext(); ) {
+            Consumer<LogAppender> consumer = iter.next();
             iter.remove();
-            completeRequest(logRequest);
+            completionProcessor.onNext(consumer);
          }
       }
    }
