@@ -5,19 +5,20 @@ import org.infinispan.test.TestingUtil;
 
 public class BlockingManagerTestUtil {
    /**
-    * Replaces the cache container's {@link BlockingManager} component with one that runs all blocking and non
-    * blocking operations in the invoking thread. This is useful for testing when  you want operations to be done
-    * sequentially.
+    * Replaces the cache container's {@link BlockingManager} and {@link NonBlockingManager} components with ones that
+    * runs all blocking and non blocking operations in the invoking thread. This is useful for testing when  you want
+    * operations to be done sequentially.
+    * <p>
+    * This operation will be undone if component registry is rewired
     *
     * @param cacheContainer Container of which the blocking manager is to be replaced
-    * @return The original BlockingManager that was configured in the container
     */
-   public static BlockingManager replaceBlockingManagerWithInline(CacheContainer cacheContainer) {
-      BlockingManagerImpl replacement = new BlockingManagerImpl();
-      BlockingManager prev = TestingUtil.replaceComponent(cacheContainer, BlockingManager.class, replacement, true);
-      replacement.blockingExecutor = new WithinThreadExecutor();
-      replacement.nonBlockingExecutor = new WithinThreadExecutor();
-      replacement.start();
-      return prev;
+   public static void replaceManagersWithInline(CacheContainer cacheContainer) {
+      NonBlockingManagerImpl nonBlockingManager = (NonBlockingManagerImpl) TestingUtil.extractGlobalComponent(cacheContainer, NonBlockingManager.class);
+      nonBlockingManager.executor = new WithinThreadExecutor();
+
+      BlockingManagerImpl manager = (BlockingManagerImpl) TestingUtil.extractGlobalComponent(cacheContainer, BlockingManager.class);
+      manager.blockingExecutor = new WithinThreadExecutor();
+      manager.nonBlockingExecutor = new WithinThreadExecutor();
    }
 }

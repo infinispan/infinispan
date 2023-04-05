@@ -73,8 +73,8 @@ class Index {
    private final FlowableProcessor<IndexRequest>[] flowableProcessors;
 
    public Index(NonBlockingManager nonBlockingManager, FileProvider fileProvider, Path indexDir, int segments,
-         int cacheSegments, int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
-         TimeService timeService) throws IOException {
+                int cacheSegments, int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
+                TimeService timeService) throws IOException {
       this.nonBlockingManager = nonBlockingManager;
       this.fileProvider = fileProvider;
       this.compactor = compactor;
@@ -267,20 +267,25 @@ class Index {
       return indexRequest;
    }
 
-   public void deleteFileAsync(int fileId) {
+   public void ensureRunOnLast(Runnable runnable) {
       AtomicInteger count = new AtomicInteger(flowableProcessors.length);
-      IndexRequest deleteFile = IndexRequest.syncRequest(() -> {
-         // After all indexes have ensured they have processed all requests - the last one will delete the file
-         // This guarantees that the index can't see an outdated value
+      IndexRequest request = IndexRequest.syncRequest(() -> {
          if (count.decrementAndGet() == 0) {
-            fileProvider.deleteFile(fileId);
-            log.tracef("Deleted file %s", fileId);
-            compactor.releaseStats(fileId);
+            runnable.run();
          }
       });
       for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
-         flowableProcessor.onNext(deleteFile);
+         flowableProcessor.onNext(request);
       }
+   }
+
+   public void deleteFileAsync(int fileId) {
+      ensureRunOnLast(() -> {
+         // After all indexes have ensured they have processed all requests - the last one will delete the file
+         // This guarantees that the index can't see an outdated value
+         fileProvider.deleteFile(fileId);
+         compactor.releaseStats(fileId);
+      });
    }
 
    public CompletionStage<Void> stop() throws InterruptedException {
