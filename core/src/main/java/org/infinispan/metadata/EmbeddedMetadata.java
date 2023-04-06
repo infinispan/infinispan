@@ -138,18 +138,16 @@ public class EmbeddedMetadata implements Metadata {
             return new EmbeddedLifespanExpirableMetadata(toMillis(lifespan, lifespanUnit), version);
          else if (hasMaxIdle)
             return new EmbeddedMaxIdleExpirableMetadata(toMillis(maxIdle, lifespanUnit), version);
-         else if (version == null)
-            return EmbeddedMetadata.EMPTY;
          else
             return new EmbeddedMetadata(version);
       }
 
       protected boolean hasLifespan() {
-         return lifespan != null && lifespan >= 0;
+         return lifespan != null;
       }
 
       protected boolean hasMaxIdle() {
-         return maxIdle != null && maxIdle >= 0;
+         return maxIdle != null;
       }
 
       @Override
