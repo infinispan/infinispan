@@ -37,6 +37,13 @@ GET /rest/v2/schemas/{schemaName}
 = Updating Protobuf Schemas
 Modify Protobuf schemas with `PUT` requests that include the content of a protobuf file in the payload.
 
+[IMPORTANT]
+====
+When you change existing Protobuf schema definition, you must reindex the data in the index.
+Rebuilding indexes has impact on performance and can take a long time to complete because the process takes place for all data in the grid.
+While the rebuild operation is in progress, queries might also return fewer results.
+====
+
 [source,options="nowrap",subs=attributes+]
 ----
 PUT /rest/v2/schemas/{schemaName}
