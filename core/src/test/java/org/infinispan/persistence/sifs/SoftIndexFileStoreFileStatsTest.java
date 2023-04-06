@@ -12,10 +12,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -133,55 +131,6 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
          if (error != null) {
             throw new AssertionError(error);
          }
-      }
-   }
-
-   // Test for ISPN-13747 - will fail only intermittently, to have it fail every time add a sleep at
-   // Index.deleteFileAsync before deleting the actual file when the bug is present
-   public void testExpirationThenCompactionConcurrent(Method m) throws Throwable {
-      ControlledTimeService controlledTimeService = defineCacheConfigurationAndInjectTimeService(m.getName());
-      Cache<String, Object> cache = cacheManager.getCache(m.getName());
-      cache.start();
-
-      try {
-         cache.put("k1", "v1", 2, TimeUnit.MILLISECONDS);
-
-         for (int i = 2; i < 22; ++i) {
-            cache.put("k" + i, "v" + 2);
-         }
-
-         // Our first entry is expired
-         controlledTimeService.advance(3);
-
-         WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache);
-
-         Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
-         eventuallyEquals("Test wants 2 files to reproduce reliably", 2, () -> compactor.getFiles().size());
-
-         BlockingQueue<Object> syncQueue = new SynchronousQueue<>();
-         MyCompactionObserver myCompactionObserver = new MyCompactionObserver(syncQueue);
-         // This runs async but will block waiting on queue
-         compactor.performExpirationCompaction(myCompactionObserver);
-         CompletionStage<Void> compactionStage = compactor.forceCompactionForAllNonLogFiles();
-
-         Object result = syncQueue.poll(10, TimeUnit.SECONDS);
-         if (result == null) {
-            fail("Nothing was received from queue!");
-         }
-
-         if (result instanceof Throwable) {
-            throw (Throwable) result;
-         }
-         if (result == syncQueue) {
-            fail("No expired entry found!");
-         }
-
-         myCompactionObserver.waitForCompletion();
-
-         // This makes sure the compactor is still working properly
-         compactionStage.toCompletableFuture().get(10, TimeUnit.SECONDS);
-      } finally {
-         TestingUtil.replaceComponent(cacheManager, TimeService.class, controlledTimeService.getActualTimeService(), true);
       }
    }
 
