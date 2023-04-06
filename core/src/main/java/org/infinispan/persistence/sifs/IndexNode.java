@@ -400,14 +400,15 @@ class IndexNode {
       return node;
    }
 
-   public static void setPosition(IndexNode root, int cacheSegment, Object objectKey, org.infinispan.commons.io.ByteBuffer key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
-      setPosition(root, cacheSegment, objectKey, Index.toIndexKey(cacheSegment, key), file, offset, size, overwriteHook, recordChange);
-   }
+   public static void setPosition(IndexNode root, IndexRequest request, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+      int cacheSegment = request.getSegment();
 
-   private static void setPosition(IndexNode root, int cacheSegment, Object objectKey, byte[] indexKey, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+      // TODO: maybe we can optimize not copying this?
+      byte[] indexKey = Index.toIndexKey(cacheSegment, request.getSerializedKey());
+
       Deque<Path> stack = new ArrayDeque<>();
       IndexNode node = findParentNode(root, indexKey, stack);
-      IndexNode copy = node.copyWith(cacheSegment, objectKey, indexKey, file, offset, size, overwriteHook, recordChange);
+      IndexNode copy = node.copyWith(request, cacheSegment, indexKey, overwriteHook, recordChange);
       if (copy == node) {
          // no change was executed
          return;
@@ -658,12 +659,15 @@ class IndexNode {
    /**
     * Called on the most bottom node
     */
-   private IndexNode copyWith(int cacheSegment, Object objectKey, byte[] indexKey, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   private IndexNode copyWith(IndexRequest request, int cacheSegment, byte[] indexKey, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       if (leafNodes == null) throw new IllegalArgumentException();
       byte[] newPrefix;
+      int file = request.getFile();
+      int offset = request.getOffset();
+      int size = request.getSize();
       if (leafNodes.length == 0) {
-         overwriteHook.setOverwritten(cacheSegment, false, -1, -1);
-         if (overwriteHook.check(-1, -1)) {
+         overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
+         if (overwriteHook.check(request, -1, -1)) {
             return new IndexNode(segment, prefix, keyParts, new LeafNode[]{new LeafNode(file, offset, (short) 1, cacheSegment)});
          } else {
             segment.getCompactor().free(file, size);
@@ -700,9 +704,10 @@ class IndexNode {
       }
       byte[] oldIndexKey = Index.toIndexKey(oldLeafNode.cacheSegment, hak.getKey());
       int keyComp = compare(oldIndexKey, indexKey);
+      Object objectKey = request.getKey();
       if (keyComp == 0) {
          if (numRecords > 0) {
-            if (overwriteHook.check(oldLeafNode.file, oldLeafNode.offset)) {
+            if (overwriteHook.check(request, oldLeafNode.file, oldLeafNode.offset)) {
                if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
                   if (log.isTraceEnabled()) {
                      log.trace(String.format("Overwriting %s %d:%d with %d:%d (%d)", objectKey,
@@ -732,15 +737,15 @@ class IndexNode {
                   lock.writeLock().unlock();
                }
 
-               overwriteHook.setOverwritten(cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
+               overwriteHook.setOverwritten(request, cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
                return this;
             } else {
-               overwriteHook.setOverwritten(cacheSegment, false, -1, -1);
+               overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
                segment.getCompactor().free(file, size);
                return this;
             }
          } else {
-            overwriteHook.setOverwritten(cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
+            overwriteHook.setOverwritten(request, cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
             if (keyParts.length <= 1) {
                newPrefix = Util.EMPTY_BYTE_ARRAY;
                newKeyParts = Util.EMPTY_BYTE_ARRAY_ARRAY;
@@ -766,7 +771,7 @@ class IndexNode {
       } else {
          // IndexRequest cannot be MOVED or DROPPED when the key is not in the index
          assert recordChange == RecordChange.INCREASE;
-         overwriteHook.setOverwritten(cacheSegment, false, -1, -1);
+         overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
 
          // We have to insert the record even if this is a delete request and the key was not found
          // because otherwise we would have incorrect numRecord count. Eventually, Compactor will
@@ -1042,14 +1047,14 @@ class IndexNode {
       return new IndexNode(segment, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY_ARRAY, new InnerNode[]{new InnerNode(-1L, (short) -1)});
    }
 
-   static final OverwriteHook NOOP_HOOK = (int cacheSegment, boolean overwritten, int prevFile, int prevOffset) -> { };
+   static final OverwriteHook NOOP_HOOK = (IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) -> { };
 
    public interface OverwriteHook {
-      default boolean check(int oldFile, int oldOffset) {
+      default boolean check(IndexRequest request, int oldFile, int oldOffset) {
          return true;
       }
 
-      void setOverwritten(int cacheSegment, boolean overwritten, int prevFile, int prevOffset);
+      void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset);
    }
 
    static class InnerNode extends Index.IndexSpace {
