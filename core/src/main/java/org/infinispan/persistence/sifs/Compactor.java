@@ -668,15 +668,17 @@ class Compactor implements Consumer<Object> {
             // compaction before the index has been fully updated. Thus we block any other compaction events
             // until all entries have been moved for this file
             CompletionStage<Void> aggregate = aggregateCompletionStage.freeze();
-            paused = new CompletableFuture<>();
-            // We resume after completed, Note that we must complete the {@code paused} variable inside the compactor
-            // execution pipeline otherwise we can invoke compactor operations in the wrong thread
-            aggregate.whenComplete((ignore, t) -> {
-               resumeAfterPause();
-               if (t != null) {
-                  log.error("There was a problem moving indexes for compactor with file " + logFile.fileId, t);
-               }
-            });
+            if (!CompletionStages.isCompletedSuccessfully(aggregate)) {
+               paused = new CompletableFuture<>();
+               // We resume after completed, Note that we must complete the {@code paused} variable inside the compactor
+               // execution pipeline otherwise we can invoke compactor operations in the wrong thread
+               aggregate.whenComplete((ignore, t) -> {
+                  resumeAfterPause();
+                  if (t != null) {
+                     log.error("There was a problem moving indexes for compactor with file " + logFile.fileId, t);
+                  }
+               });
+            }
          }
       } finally {
          handle.close();
