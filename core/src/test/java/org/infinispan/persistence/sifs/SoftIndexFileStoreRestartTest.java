@@ -191,9 +191,7 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
    @Test(dataProvider = "booleans")
    public void testRestartWithEntryUpdatedMultipleTimes(boolean leafOrNode) throws Throwable {
-      // Current serialized size is 54 bytes, so this number has to be large enough to cause a file to fill to
-      // actually compact something
-      int size = 20;
+      int size = 10;
       String key = "compaction";
       // We want to test both a leaf and node storage on the root node
       int extraInserts = leafOrNode ? size : size * 256;

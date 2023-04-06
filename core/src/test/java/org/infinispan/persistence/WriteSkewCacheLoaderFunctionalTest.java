@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -69,8 +68,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       assertStoredEntry(icv.getValue(), value, icv.getLifespan(), lifespanMillis, "Cache", key);
       assertNotNull("For :" + icv, icv.getInternalMetadata().entryVersion());
       MarshallableEntry<?, ?> load = store.loadEntry(key);
-      Metadata metadata = load.getMetadata();
-      assertStoredEntry(load.getValue(), value, metadata != null ? metadata.lifespan() : -1, lifespanMillis, "Store", key);
+      assertStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespanMillis, "Store", key);
       assertNotNull("For :" + load, load.getInternalMetadata().entryVersion());
    }
 
