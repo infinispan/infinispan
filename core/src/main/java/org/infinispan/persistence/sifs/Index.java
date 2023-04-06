@@ -72,6 +72,41 @@ class Index {
 
    private final FlowableProcessor<IndexRequest>[] flowableProcessors;
 
+   private final IndexNode.OverwriteHook movedHook = new IndexNode.OverwriteHook() {
+      @Override
+      public boolean check(IndexRequest request, int oldFile, int oldOffset) {
+         return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
+      }
+
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
+            sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+   };
+
+   private final IndexNode.OverwriteHook updateHook = new IndexNode.OverwriteHook() {
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         nonBlockingManager.complete(request, overwritten);
+         if (request.getOffset() >= 0 && prevOffset < 0) {
+            sizePerSegment.incrementAndGet(cacheSegment);
+         } else if (request.getOffset() < 0 && prevOffset >= 0) {
+            sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+   };
+
+   private final IndexNode.OverwriteHook droppedHook = new IndexNode.OverwriteHook() {
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
+            sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+   };
+
    public Index(NonBlockingManager nonBlockingManager, FileProvider fileProvider, Path indexDir, int segments,
                 int cacheSegments, int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
                 TimeService timeService) throws IOException {
@@ -485,38 +520,15 @@ class Index {
                return;
             case MOVED:
                recordChange = IndexNode.RecordChange.MOVE;
-               overwriteHook = new IndexNode.OverwriteHook() {
-                  @Override
-                  public boolean check(int oldFile, int oldOffset) {
-                     return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
-                  }
-
-                  @Override
-                  public void setOverwritten(int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
-                     if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-                        index.sizePerSegment.decrementAndGet(cacheSegment);
-                     }
-                  }
-               };
+               overwriteHook = index.movedHook;
                break;
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
-               overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
-                  index.nonBlockingManager.complete(request, overwritten);
-                  if (request.getOffset() >= 0 && prevOffset < 0) {
-                     index.sizePerSegment.incrementAndGet(cacheSegment);
-                  } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                     index.sizePerSegment.decrementAndGet(cacheSegment);
-                  }
-               };
+               overwriteHook = index.updateHook;
                break;
             case DROPPED:
                recordChange = IndexNode.RecordChange.DECREASE;
-               overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
-                  if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-                     index.sizePerSegment.decrementAndGet(cacheSegment);
-                  }
-               };
+               overwriteHook = index.droppedHook;
                break;
             case FOUND_OLD:
                recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
@@ -526,8 +538,7 @@ class Index {
                throw new IllegalArgumentException(request.toString());
          }
          try {
-            IndexNode.setPosition(root, request.getSegment(), request.getKey(), request.getSerializedKey(), request.getFile(), request.getOffset(),
-                  request.getSize(), overwriteHook, recordChange);
+            IndexNode.setPosition(root, request, overwriteHook, recordChange);
          } catch (IllegalStateException e) {
             request.completeExceptionally(e);
          }
