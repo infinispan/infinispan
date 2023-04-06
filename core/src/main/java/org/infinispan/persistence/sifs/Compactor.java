@@ -118,7 +118,6 @@ class Compactor implements Consumer<Object> {
       Stats stats = getStats(file, currentSize, nextExpirationTime);
       stats.setCompleted();
       // It is possible this was a logFile that was compacted
-      stats.scheduled = false;
       if (canSchedule && stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
          schedule(file, stats);
       }
@@ -196,7 +195,7 @@ class Compactor implements Consumer<Object> {
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       for (Map.Entry<Integer, Stats> stats : fileStats.entrySet()) {
          int fileId = stats.getKey();
-         if (!fileProvider.isLogFile(fileId) && !stats.getValue().markedForDeletion) {
+         if (!fileProvider.isLogFile(fileId) && !stats.getValue().markedForDeletion && stats.getValue().setScheduled()) {
             CompactionRequest compactionRequest = new CompactionRequest(fileId);
             processor.onNext(compactionRequest);
             aggregateCompletionStage.dependsOn(compactionRequest);
@@ -240,15 +239,9 @@ class Compactor implements Consumer<Object> {
    }
 
    private void schedule(int file, Stats stats) {
-      boolean shouldSchedule = false;
-      synchronized (stats) {
-         if (!stats.isScheduled()) {
-            log.debugf("Scheduling file %d for compaction: %d/%d free", file, stats.free.get(), stats.total);
-            stats.setScheduled();
-            shouldSchedule = true;
-         }
-      }
-      if (!terminateSignal && shouldSchedule) {
+      assert stats.isScheduled();
+      if (!terminateSignal) {
+         log.debugf("Scheduling file %d for compaction: %d/%d free", file, stats.free.get(), stats.total);
          CompactionRequest request = new CompactionRequest(file);
          processor.onNext(request);
          request.whenComplete((__, t) -> {
@@ -383,9 +376,13 @@ class Compactor implements Consumer<Object> {
                currentFiles.add(iter.next());
             }
             for (int fileId : currentFiles) {
+               boolean isLogFile = fileProvider.isLogFile(fileId);
+               if (isLogFile) {
+                  // Force log file to be in the stats
+                  free(fileId, 0);
+               }
                Stats stats = fileStats.get(fileId);
                long currentTimeMilliseconds = timeService.wallClockTime();
-               boolean isLogFile = fileProvider.isLogFile(fileId);
                if (stats != null) {
                   // Don't check for expired entries in any files that are marked for deletion or don't have entries
                   // that can expire yet
@@ -402,9 +399,16 @@ class Compactor implements Consumer<Object> {
                      continue;
                   }
                   // Make sure we don't start another compaction for this file while performing expiration
-                  stats.setScheduled();
+                  if (stats.setScheduled()) {
+                     compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
+                     if (isLogFile) {
+                        // Unschedule the compaction for log file as we can't remove it
+                        stats.scheduled.set(false);
+                     }
+                  }
+               } else {
+                  log.tracef("Skipping expiration for file %d as it is not included in fileStats", fileId);
                }
-               compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
             }
             subscriber.onComplete();
          } catch (Throwable t) {
@@ -421,8 +425,6 @@ class Compactor implements Consumer<Object> {
          // Double check that the file wasn't removed. If stats are null that means the file was previously removed
          // and also make sure the file wasn't marked for deletion, but hasn't yet
          if (stats != null && !stats.markedForDeletion()) {
-            // If this was an explicit compaction, make sure we don't start another on accident
-            stats.scheduled = true;
             compactSingleFile(request.fileId, false, null, timeService.wallClockTime());
          }
          request.complete(null);
@@ -450,9 +452,9 @@ class Compactor implements Consumer<Object> {
          long currentTimeMilliseconds) throws IOException, ClassNotFoundException {
       assert scheduledFile >= 0;
       if (subscriber == null) {
-         log.tracef("Compacting file %d", scheduledFile);
+         log.tracef("Compacting file %d isLogFile %b", scheduledFile, Boolean.valueOf(isLogFile));
       } else {
-         log.tracef("Removing expired entries from file %d", scheduledFile);
+         log.tracef("Removing expired entries from file %d isLogFile %b", scheduledFile, Boolean.valueOf(isLogFile));
       }
       int scheduledOffset = 0;
       // Store expired entries to remove after we update the index
@@ -717,7 +719,7 @@ class Compactor implements Consumer<Object> {
          File cannot be scheduled for compaction until it's completed.
          */
       private volatile boolean completed = false;
-      private volatile boolean scheduled = false;
+      private final AtomicBoolean scheduled = new AtomicBoolean();
       private boolean markedForDeletion = false;
 
       private Stats(int total, int free, long nextExpirationTime) {
@@ -753,15 +755,16 @@ class Compactor implements Consumer<Object> {
 
       public boolean readyToBeScheduled(double compactionThreshold, int free) {
          int total = this.total;
-         return completed && !scheduled && total >= 0 && free >= total * compactionThreshold;
+         // Note setScheduled must be last as it changes state
+         return completed && total >= 0 && free >= total * compactionThreshold && setScheduled();
       }
 
       public boolean isScheduled() {
-         return scheduled;
+         return scheduled.get();
       }
 
-      public void setScheduled() {
-         scheduled = true;
+      public boolean setScheduled() {
+         return !scheduled.getAndSet(true);
       }
 
       public boolean isCompleted() {
