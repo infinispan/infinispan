@@ -52,6 +52,7 @@ class IndexNode {
 
    private static final byte HAS_LEAVES = 1;
    private static final byte HAS_NODES = 2;
+   // Prefix length (short) + keyNode length (short) + flag (byte)
    private static final int INNER_NODE_HEADER_SIZE = 5;
    private static final int INNER_NODE_REFERENCE_SIZE = 10;
    private static final int LEAF_NODE_REFERENCE_SIZE = 14;
@@ -66,6 +67,7 @@ class IndexNode {
    private LeafNode[] leafNodes = LeafNode.EMPTY_ARRAY;
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private long offset = -1;
+   private short keyPartsLength = -1;
    private short contentLength = -1;
    private short totalLength = -1;
    private short occupiedSpace;
@@ -90,23 +92,28 @@ class IndexNode {
       byte flags = buffer.get();
       int numKeyParts = buffer.getShort();
 
+      int afterHeaderPos = buffer.position();
       keyParts = new byte[numKeyParts][];
       for (int i = 0; i < numKeyParts; ++i) {
          keyParts[i] = new byte[buffer.getShort()];
          buffer.get(keyParts[i]);
       }
+      assert (buffer.position() - afterHeaderPos) < Short.MAX_VALUE;
+      keyPartsLength = (short) (buffer.position() - afterHeaderPos);
 
       if ((flags & HAS_LEAVES) != 0) {
          leafNodes = new LeafNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
             leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort(), buffer.getInt());
          }
-      } else if ((flags & HAS_NODES) != 0){
+      } else if ((flags & HAS_NODES) != 0) {
          innerNodes = new InnerNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
             innerNodes[i] = new InnerNode(buffer.getLong(), buffer.getShort());
          }
       }
+      assert (buffer.position() - afterHeaderPos) < Short.MAX_VALUE;
+      contentLength = (short) (buffer.position() - afterHeaderPos);
 
       if (log.isTraceEnabled()) {
          log.tracef("Loaded %08x from %d:%d (length %d)", System.identityHashCode(this), offset, occupiedSpace, length());
@@ -168,6 +175,7 @@ class IndexNode {
          this.innerNodes = other.innerNodes;
          this.leafNodes = other.leafNodes;
          this.contentLength = -1;
+         this.keyPartsLength = -1;
          this.totalLength = -1;
       } finally {
          lock.writeLock().unlock();
@@ -372,9 +380,7 @@ class IndexNode {
       // Root is -1, so that means the beginning of the file
       long offset = this.offset >= 0 ? this.offset : 0;
       offset += headerLength();
-      for (byte[] keyPart : this.keyParts) {
-         offset += 2 + keyPart.length;
-      }
+      offset += keyPartsLength();
       offset += (long) leafOffset * LEAF_NODE_REFERENCE_SIZE;
 
       ByteBuffer buffer = ByteBuffer.allocate(10);
@@ -1013,14 +1019,24 @@ class IndexNode {
       return (short) headerLength;
    }
 
-   private int contentLength() {
-      if (contentLength >= 0) {
-         return contentLength;
+   private short keyPartsLength() {
+      if (keyPartsLength >= 0) {
+         return keyPartsLength;
       }
       int sum = 0;
       for (byte[] keyPart : keyParts) {
          sum += 2 + keyPart.length;
       }
+
+      assert sum <= Short.MAX_VALUE;
+      return keyPartsLength = (short) sum;
+   }
+
+   private short contentLength() {
+      if (contentLength >= 0) {
+         return contentLength;
+      }
+      int sum = keyPartsLength();
       if (innerNodes != null) {
          sum += INNER_NODE_REFERENCE_SIZE * innerNodes.length;
       } else if (leafNodes != null) {
