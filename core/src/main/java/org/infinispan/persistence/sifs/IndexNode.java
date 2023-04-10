@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -818,7 +819,7 @@ class IndexNode {
          insertionPoint = keyParts.length;
       } else {
          byte[] keyPostfix = substring(key, prefix.length, key.length);
-         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, (o1, o2) -> IndexNode.compare(o2, o1));
+         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, REVERSED_COMPARE_TO);
          if (insertionPoint < 0) {
             insertionPoint = -insertionPoint - 1;
          } else {
@@ -854,7 +855,7 @@ class IndexNode {
          insertionPoint = keyParts.length;
       } else {
          byte[] keyPostfix = substring(key, prefix.length, key.length);
-         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, (o1, o2) -> IndexNode.compare(o2, o1));
+         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, REVERSED_COMPARE_TO);
          if (insertionPoint < 0) {
             insertionPoint = -insertionPoint - 1;
          } else {
@@ -975,42 +976,49 @@ class IndexNode {
    }
 
    private static byte[] commonPrefix(byte[] oldPrefix, byte[] newKey) {
-      int i;
-      for (i = 0; i < oldPrefix.length && i < newKey.length; ++i) {
-         if (newKey[i] != oldPrefix[i]) break;
-      }
+      int i = Arrays.mismatch(oldPrefix, newKey);
       if (i == oldPrefix.length) {
          return oldPrefix;
       }
       if (i == newKey.length) {
          return newKey;
       }
-      byte[] prefix = new byte[i];
-      for (--i; i >= 0; --i) {
-         prefix[i] = oldPrefix[i];
+      if (i == 0) {
+         return Util.EMPTY_BYTE_ARRAY;
       }
+      byte[] prefix = new byte[i];
+      System.arraycopy(oldPrefix, 0, prefix, 0, i);
       return prefix;
    }
 
    // Compares the two arrays. This is different from a regular compare that if the second array has more bytes than
    // the first but contains all the same bytes it is treated equal
    private static int compare(byte[] first, byte[] second, int secondLength) {
-      for (int i = 0; i < secondLength; ++i) {
-         if (i >= first.length) {
-            return 1;
-         }
-         if (second[i] == first[i]) continue;
-         return second[i] > first[i] ? 1 : -1;
+      if (secondLength == 0) {
+         return 0;
       }
-      return 0;
+      int mismatchPos = Arrays.mismatch(first, 0, first.length, second, 0, secondLength);
+      if (mismatchPos == -1 || mismatchPos == secondLength) {
+         return 0;
+      } else if (mismatchPos >= first.length) {
+         return first.length + 1;
+      }
+      return second[mismatchPos] > first[mismatchPos] ? mismatchPos + 1 : -mismatchPos - 1;
    }
+   public static final Comparator<byte[]> REVERSED_COMPARE_TO = ((Comparator<byte[]>) IndexNode::compare).reversed();
 
    private static int compare(byte[] first, byte[] second) {
-      for (int i = 0; i < first.length && i < second.length; ++i) {
-         if (second[i] == first[i]) continue;
-         return second[i] > first[i] ? i + 1 : -i - 1;
+      // Use Arrays.mismatch as it doesn't do boundary check for every byte and uses vectorized comparison for arrays
+      // larger than 7
+      int mismatchPos = Arrays.mismatch(first, second);
+      if (mismatchPos == -1) {
+         return 0;
+      } else if (mismatchPos >= first.length) {
+         return first.length + 1;
+      } else if (mismatchPos >= second.length) {
+         return -second.length - 1;
       }
-      return second.length > first.length ? first.length + 1 : (second.length < first.length ? -second.length - 1 : 0);
+      return second[mismatchPos] > first[mismatchPos] ? mismatchPos + 1 : -mismatchPos - 1;
    }
 
    private short headerLength() {
@@ -1233,7 +1241,7 @@ class IndexNode {
                   byte[] segmentPrefix = new byte[UnsignedNumeric.sizeUnsignedInt(cacheSegment)];
                   UnsignedNumeric.writeUnsignedInt(segmentPrefix, 0, cacheSegment);
                   return segmentPrefix;
-               }).sorted((o1, o2) -> IndexNode.compare(o2, o1))
+               }).sorted(REVERSED_COMPARE_TO)
                .collect(Collectors.toCollection(ArrayDeque::new));
          if (sortedSegmentPrefixes.isEmpty()) {
             return Flowable.empty();
