@@ -56,6 +56,15 @@ public interface Metadata {
    }
 
    /**
+    * Returns whether this metadata is effectively empty, that is that persisting or replicating it to another
+    * node would be no different then sending a null metadata object.
+    * @return if this metadata has no actual data to store
+    */
+   default boolean isEmpty() {
+      return false;
+   }
+
+   /**
     * Returns an instance of {@link Builder} which can be used to build
     * new instances of {@link Metadata} instance which are full copies of
     * this {@link Metadata}.

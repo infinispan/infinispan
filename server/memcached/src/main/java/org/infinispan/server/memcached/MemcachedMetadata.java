@@ -35,6 +35,11 @@ public class MemcachedMetadata extends EmbeddedMetadata.EmbeddedLifespanExpirabl
    }
 
    @Override
+   public boolean isEmpty() {
+      return super.isEmpty() && flags == 0;
+   }
+
+   @Override
    public Metadata.Builder builder() {
       return new Builder()
             .flags(flags)

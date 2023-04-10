@@ -67,6 +67,11 @@ public class EmbeddedMetadata implements Metadata {
    }
 
    @Override
+   public boolean isEmpty() {
+      return version == null;
+   }
+
+   @Override
    public Metadata.Builder builder() {
       return new Builder().version(version);
    }
@@ -206,6 +211,11 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       @Override
+      public boolean isEmpty() {
+         return super.isEmpty() && lifespan < 0 && maxIdle < 0;
+      }
+
+      @Override
       public boolean equals(Object o) {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
@@ -257,6 +267,11 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       @Override
+      public boolean isEmpty() {
+         return super.isEmpty() && lifespan < 0;
+      }
+
+      @Override
       public boolean equals(Object o) {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
@@ -298,6 +313,11 @@ public class EmbeddedMetadata implements Metadata {
       @Override
       public long maxIdle() {
          return maxIdle;
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return super.isEmpty() && maxIdle < 0;
       }
 
       @Override

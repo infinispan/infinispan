@@ -68,7 +68,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       assertStoredEntry(icv.getValue(), value, icv.getLifespan(), lifespanMillis, "Cache", key);
       assertNotNull("For :" + icv, icv.getInternalMetadata().entryVersion());
       MarshallableEntry<?, ?> load = store.loadEntry(key);
-      assertStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespanMillis, "Store", key);
+      assertStoredEntry(load.getValue(), value, load.getMetadata() == null ? -1 : load.getMetadata().lifespan(), lifespanMillis, "Store", key);
       assertNotNull("For :" + load, load.getInternalMetadata().entryVersion());
    }
 

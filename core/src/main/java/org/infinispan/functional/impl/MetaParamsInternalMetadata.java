@@ -54,7 +54,10 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       if (counterConfiguration != null) {
          params.add(new CounterConfigurationMetaParam(counterConfiguration));
       }
-      params.add(MetaParam.MetaUpdateCreationTime.of(updateCreationTimestamp));
+      // Default is always true, so no need to set the param unless it is false
+      if (!updateCreationTimestamp) {
+         params.add(MetaParam.MetaUpdateCreationTime.of(false));
+      }
    }
 
    private MetaParamsInternalMetadata(MetaParams params) {

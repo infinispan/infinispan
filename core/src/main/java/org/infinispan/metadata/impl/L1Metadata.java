@@ -35,6 +35,11 @@ public class L1Metadata implements Metadata {
    }
 
    @Override
+   public boolean isEmpty() {
+      return metadata.isEmpty();
+   }
+
+   @Override
    public Metadata.Builder builder() {
       return metadata.builder();
    }

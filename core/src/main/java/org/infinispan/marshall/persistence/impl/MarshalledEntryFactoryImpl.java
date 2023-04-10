@@ -63,7 +63,11 @@ public class MarshalledEntryFactoryImpl implements MarshallableEntryFactory {
    @Override
    public MarshallableEntry create(Object key, Object value, Metadata metadata, PrivateMetadata internalMetadata,
          long created, long lastUsed) {
-      return new MarshallableEntryImpl<>(key, value, metadata, internalMetadata, created, lastUsed, marshaller);
+      PrivateMetadata privateMetadataToUse = internalMetadata != null && !internalMetadata.isEmpty() ? internalMetadata : null;
+      if (metadata == null || metadata.isEmpty()) {
+         return new MarshallableEntryImpl<>(key, value, null, privateMetadataToUse, -1, -1, marshaller);
+      }
+      return new MarshallableEntryImpl<>(key, value, metadata, privateMetadataToUse, created, lastUsed, marshaller);
    }
 
    @Override

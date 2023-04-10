@@ -63,6 +63,11 @@ public class InternalMetadataImpl implements InternalMetadata {
    }
 
    @Override
+   public boolean isEmpty() {
+      return actual.isEmpty();
+   }
+
+   @Override
    public Builder builder() {
       return new InternalBuilder(actual, created, lastUsed);
    }

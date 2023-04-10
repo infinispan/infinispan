@@ -51,8 +51,8 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
                         .add(new SoftIndexFileStoreRestartTest().fileSize(10_000).cacheMode(type))
                         .add(new SoftIndexFileStoreRestartTest().fileSize(320_000).cacheMode(type))
                         .add(new SoftIndexFileStoreRestartTest().fileSize(2_000_000).cacheMode(type))
-                        .add(new SoftIndexFileStoreRestartTest().fileSize(DataConfiguration.MAX_FILE_SIZE.getDefaultValue()).cacheMode(type)
-                        ).build()
+                        .add(new SoftIndexFileStoreRestartTest().fileSize(DataConfiguration.MAX_FILE_SIZE.getDefaultValue()).cacheMode(type))
+                        .build()
             ).toArray();
    }
 
@@ -191,7 +191,9 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
    @Test(dataProvider = "booleans")
    public void testRestartWithEntryUpdatedMultipleTimes(boolean leafOrNode) throws Throwable {
-      int size = 10;
+      // Current serialized size is 54 bytes, so this number has to be large enough to cause a file to fill to
+      // actually compact something
+      int size = 20;
       String key = "compaction";
       // We want to test both a leaf and node storage on the root node
       int extraInserts = leafOrNode ? size : size * 256;
