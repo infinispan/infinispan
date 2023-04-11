@@ -251,7 +251,9 @@ public class RestCacheClientOkHttp implements RestCacheClient {
          url = url + "?extended=true";
       }
       builder.url(url);
-      builder.header("Accept", mediaType);
+      if (mediaType != null) {
+         builder.header("Accept", mediaType);
+      }
       return client.execute(builder);
    }
 
