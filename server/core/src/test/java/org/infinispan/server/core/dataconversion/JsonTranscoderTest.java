@@ -13,6 +13,9 @@ import static org.infinispan.server.core.dataconversion.JsonTranscoder.TYPE_PROP
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
 
@@ -50,17 +53,27 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
 
       Object result = transcoder.transcode(dataSrc, personMediaType, jsonMediaType);
 
-      assertEquals(new String((byte[]) result),
+      assertEquals(
             String.format("{\"" + TYPE_PROPERTY + "\":\"%s\",\"name\":\"%s\",\"address\":{\"" + TYPE_PROPERTY + "\":\"%s\",\"street\":null,\"city\":\"%s\",\"zip\":0},\"picture\":null,\"sex\":null,\"birthDate\":null,\"acceptedToS\":false,\"moneyOwned\":1.1,\"moneyOwed\":0.4,\"decimalField\":10.3,\"realField\":4.7}",
                   Person.class.getName(),
                   "joe",
                   Address.class.getName(),
-                  "London")
+                  "London"),
+            new String((byte[]) result)
       );
 
       Object fromJson = transcoder.transcode(result, jsonMediaType, personMediaType);
 
       assertEquals(fromJson, dataSrc);
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try (ObjectOutputStream os = new ObjectOutputStream(baos)) {
+         os.writeObject(dataSrc);
+      } catch (IOException e) {
+         // Won't happen
+      }
+      result = transcoder.transcode(baos.toByteArray(), MediaType.APPLICATION_SERIALIZED_OBJECT, jsonMediaType);
+      assertEquals("{\"acceptedToS\":false,\"decimalField\":10.3,\"moneyOwed\":0.4,\"moneyOwned\":1.1,\"realField\":4.7,\"address\":{\"zip\":0,\"city\":\"London\",\"street\":null},\"birthDate\":null,\"name\":\"joe\",\"picture\":null,\"sex\":null}", new String((byte[]) result));
    }
 
    @Test

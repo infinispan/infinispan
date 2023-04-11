@@ -3,6 +3,7 @@ package org.infinispan.server.core.dataconversion;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 import org.infinispan.commons.CacheException;
@@ -21,6 +23,8 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
+import org.infinispan.server.core.dataconversion.deserializer.Deserializer;
+import org.infinispan.server.core.dataconversion.deserializer.SEntity;
 import org.infinispan.server.core.dataconversion.json.SecureTypeResolverBuilder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -54,7 +58,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
    }
 
    public JsonTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
-      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_UNKNOWN);
+      super(APPLICATION_JSON, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, APPLICATION_SERIALIZED_OBJECT, TEXT_PLAIN, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_UNKNOWN);
       this.objectMapper = new ObjectMapper().setDefaultTyping(
             new SecureTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL, allowList) {
                {
@@ -85,7 +89,9 @@ public class JsonTranscoder extends OneToManyTranscoder {
             return convertCharset(content, contentCharset, destinationCharset, outputString);
          }
          try {
-            if (content instanceof String || content instanceof byte[]) {
+            if (contentType.match(APPLICATION_SERIALIZED_OBJECT) && content instanceof byte[]) {
+               return convertJavaSerializedToJson((byte[]) content, destinationCharset, outputString);
+            } else if (content instanceof String || content instanceof byte[]) {
                return convertTextToJson(content, contentCharset, destinationCharset, outputString);
             }
             logger.jsonObjectConversionDeprecated();
@@ -99,7 +105,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
             }
 
          } catch (IOException e) {
-            throw logger.cannotConvertContent(content, contentType, destinationType);
+            throw logger.cannotConvertContent(content, contentType, destinationType, e);
          }
       }
       if (destinationType.match(APPLICATION_OBJECT)) {
@@ -120,6 +126,17 @@ public class JsonTranscoder extends OneToManyTranscoder {
          return convertCharset(content, contentCharset, destinationCharset, outputString);
       }
       throw logger.unsupportedContent(JsonTranscoder.class.getSimpleName(), content);
+   }
+
+   private Object convertJavaSerializedToJson(byte[] content, Charset destinationCharset, boolean outputAsString) {
+      try {
+         Deserializer deserializer = new Deserializer(new ByteArrayInputStream(content), true);
+         SEntity entity = deserializer.readObject();
+         String json = entity.json().toString();
+         return outputAsString ? json : StandardConversions.convertCharset(json, StandardCharsets.UTF_8, destinationCharset);
+      } catch (IOException e) {
+         throw logger.cannotConvertContent(content, APPLICATION_SERIALIZED_OBJECT, APPLICATION_JSON, e);
+      }
    }
 
    private Object convertTextToJson(Object content, Charset contentCharset, Charset destinationCharset, boolean asString) throws IOException {
