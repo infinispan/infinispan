@@ -1,12 +1,14 @@
 [id='update-index-schema_{context}']
 = Updating index schema
-Update index schema operation lets you acquire additional schema changes without downtime.
-When the schema changes don't affect the existing schema model, you can update the index schema without removing and recreating previously indexed data.
-Updating index schema is much faster than rebuilding the index but you can update schema only when your changes does not affect existing index schema.
+The update index schema operation lets you add schema changes with a minimal downtime.
+Instead of removing previously indexed data and recreating the index schema, {brandname} adds new fields to the existing schema.
+Updating index schema is much faster than rebuilding the index but you can update schema only when your changes do not affect fields that were already indexed.
+
 
 [IMPORTANT]
 ====
-When you change definitions of indexed types or analyzers or when you delete them, you must rebuild the index.
+You can update index schema only when your changes does not affect previously indexed fields.
+When you change index field definitions or when you delete fields, you must rebuild the index.
 ====
 
 .Procedure
@@ -21,7 +23,7 @@ remoteCacheManager.administration().updateIndexSchema("MyCache");
 +
 [TIP]
 ====
-For remote caches, you can update schema from the {brandname} Console or using the link:{rest_docs}#rest_v2_query_updateIndexSchema[REST API].
+For remote caches, you can update index schema from the {brandname} Console or using the link:{rest_docs}#rest_v2_query_updateIndexSchema[REST API].
 ====
 
 .Additional resources
