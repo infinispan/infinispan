@@ -60,13 +60,11 @@ include::json/rest_query_request_body.json[]
 
 [id='rest_v2_query_reindex']
 == Rebuilding indexes
-When you change existing Protobuf schema definition at runtime or when the index is persistent, you must reindex the data in the index.
-Rebuilding indexes can take a long time to complete because the process takes place for all data in the grid.
-While the rebuild operation is in progress, queries might also return fewer results.
+When you delete fields or change index field definitions, you must rebuild the index to ensure the index is consistent with data in the cache.
 
 [NOTE]
 ====
-Rebuilding Protobuf schema using REST, CLI, {brandname} Console or remote clientr might lead to inconsistencies.
+Rebuilding Protobuf schema using REST, CLI, {brandname} Console or remote client might lead to inconsistencies.
 Remote clients might have different versions of the Protostream entity and this might lead to unreliable behavior.
 ====
 
@@ -99,8 +97,8 @@ the link:#rest_v2_query_index_stats[Index Statistics] REST call.
 
 [id='rest_v2_query_updateIndexSchema']
 == Updating index schema
-Update index schema operation lets you acquire additional schema changes without downtime.
-When the schema changes don't affect the existing schema model, you can update the index schema without removing and recreating previously indexed data.
+The update index schema operation lets you add schema changes with a minimal downtime.
+Instead of removing previously indexed data and recreating the index schema, {brandname} adds new fields to the existing schema.
 
 Update the index schema of values in your cache using `POST` requests and the `?action=updateSchema` parameter.
 
