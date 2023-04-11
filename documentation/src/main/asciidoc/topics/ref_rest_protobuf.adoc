@@ -39,9 +39,9 @@ Modify Protobuf schemas with `PUT` requests that include the content of a protob
 
 [IMPORTANT]
 ====
-When you change existing Protobuf schema definition, you must reindex the data in the index.
-Rebuilding indexes has impact on performance and can take a long time to complete because the process takes place for all data in the grid.
-While the rebuild operation is in progress, queries might also return fewer results.
+When you make changes to the existing Protobuf schema definition, you must either update or rebuild the index schema.
+If the changes involve modifying the existing fields, then you must rebuild the index.
+When you add new fields without touching existing schema, you can update the index schema instead of rebuilding it.
 ====
 
 [source,options="nowrap",subs=attributes+]
