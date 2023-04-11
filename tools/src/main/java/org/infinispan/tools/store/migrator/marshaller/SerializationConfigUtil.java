@@ -1,9 +1,13 @@
 package org.infinispan.tools.store.migrator.marshaller;
 
+import static org.infinispan.commons.util.Util.EMPTY_STRING_ARRAY;
 import static org.infinispan.tools.store.migrator.Element.CLASS;
+import static org.infinispan.tools.store.migrator.Element.CLASSES;
 import static org.infinispan.tools.store.migrator.Element.CONTEXT_INITIALIZERS;
+import static org.infinispan.tools.store.migrator.Element.ALLOW_LIST;
 import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
+import static org.infinispan.tools.store.migrator.Element.REGEXPS;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 
 import java.util.ArrayList;
@@ -15,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
@@ -39,6 +44,7 @@ public class SerializationConfigUtil {
    public static void configureSerialization(StoreProperties props, SerializationConfigurationBuilder builder) {
       Marshaller marshaller = getMarshaller(props);
       builder.marshaller(marshaller);
+      configureAllowList(props, builder);
       configureExternalizers(props, builder);
       configureSerializationContextInitializers(props, builder);
    }
@@ -83,6 +89,7 @@ public class SerializationConfigUtil {
 
    private static PersistenceMarshaller createPersistenceMarshaller(StoreProperties props) {
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
+      configureAllowList(props, globalConfig.serialization());
       configureSerializationContextInitializers(props, globalConfig.serialization());
       Marshaller marshaller = loadMarshallerInstance(props);
       if (marshaller != null) {
@@ -103,13 +110,39 @@ public class SerializationConfigUtil {
       String marshallerClass = props.get(MARSHALLER, CLASS);
       if (marshallerClass != null) {
          try {
-            return (Marshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
+            Marshaller marshaller = (Marshaller) Util.loadClass(marshallerClass, SerializationConfigUtil.class.getClassLoader()).newInstance();
+            ClassAllowList allowList = new ClassAllowList();
+            allowList.addClasses(allowClasses(props));
+            allowList.addRegexps(allowRegexps(props));
+            marshaller.initialize(allowList);
+            return marshaller;
          } catch (IllegalAccessException | InstantiationException e) {
             throw new CacheConfigurationException(String.format("Unable to load StreamingMarshaller '%s' for %s store",
                   marshallerClass, SOURCE), e);
          }
       }
       return null;
+   }
+
+   private static void configureAllowList(StoreProperties props, SerializationConfigurationBuilder builder) {
+      builder.allowList()
+              .addClasses(allowClasses(props))
+              .addRegexps(allowRegexps(props));
+   }
+
+   private static String[] allowClasses(StoreProperties props) {
+      return propToArray(props.get(MARSHALLER, ALLOW_LIST, CLASSES));
+   }
+
+   private static String[] allowRegexps(StoreProperties props) {
+      return propToArray(props.get(MARSHALLER, ALLOW_LIST, REGEXPS));
+   }
+
+   private static String[] propToArray(String prop) {
+      if (prop != null)
+         return prop.split(",");
+
+      return EMPTY_STRING_ARRAY;
    }
 
    private static void configureExternalizers(StoreProperties props, SerializationConfigurationBuilder builder) {
