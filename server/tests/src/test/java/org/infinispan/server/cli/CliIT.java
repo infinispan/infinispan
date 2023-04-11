@@ -84,6 +84,9 @@ public class CliIT {
          terminal.assertContains("k1");
          terminal.send("get k1");
          terminal.assertContains("v1");
+         terminal.clear();
+         terminal.send("get -x k1");
+         terminal.assertContains("cluster-primary-owner");
          terminal.send("put --ttl=10 k2 v2");
          terminal.clear();
          terminal.send("describe k2");

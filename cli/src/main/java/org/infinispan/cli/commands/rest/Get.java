@@ -8,6 +8,7 @@ import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.completers.CacheCompleter;
+import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.resources.CacheResource;
 import org.infinispan.cli.resources.Resource;
@@ -29,6 +30,9 @@ public class Get extends RestCliCommand {
    @Option(completer = CacheCompleter.class, shortName = 'c')
    String cache;
 
+   @Option(shortName = 'x', hasValue = false)
+   boolean extended;
+
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -39,6 +43,11 @@ public class Get extends RestCliCommand {
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-      return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).get(key);
+      return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).get(key, null, extended);
+   }
+
+   @Override
+   public Connection.ResponseMode getResponseMode() {
+      return extended ? Connection.ResponseMode.HEADERS : Connection.ResponseMode.BODY;
    }
 }
