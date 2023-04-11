@@ -6,10 +6,12 @@ package org.infinispan.tools.store.migrator;
  */
 public enum Element {
 
+   ALLOW_LIST("allow-list"),
    BATCH("batch"),
    BINARY("binary"),
    CACHE_NAME("cache_name"),
    CLASS("class"),
+   CLASSES("classes"),
    COMPRESSION("compression"),
    CONNECTION_URL("connection_url"),
    CONNECTION_POOL("connection_pool"),
@@ -30,6 +32,7 @@ public enum Element {
    MARSHALLER("marshaller"),
    NAME("name"),
    PASSWORD("password"),
+   REGEXPS("regexps"),
    SOURCE("source"),
    SEGMENT("segment"),
    SEGMENT_COUNT("segment_count"),

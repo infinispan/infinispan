@@ -1,8 +1,10 @@
 package org.infinispan.tools.store.migrator;
 
+import static org.infinispan.tools.store.migrator.Element.ALLOW_LIST;
 import static org.infinispan.tools.store.migrator.Element.BINARY;
 import static org.infinispan.tools.store.migrator.Element.CACHE_NAME;
 import static org.infinispan.tools.store.migrator.Element.CLASS;
+import static org.infinispan.tools.store.migrator.Element.CLASSES;
 import static org.infinispan.tools.store.migrator.Element.CONNECTION_POOL;
 import static org.infinispan.tools.store.migrator.Element.CONNECTION_URL;
 import static org.infinispan.tools.store.migrator.Element.CONTEXT_INITIALIZERS;
@@ -16,6 +18,7 @@ import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.ID;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.NAME;
+import static org.infinispan.tools.store.migrator.Element.REGEXPS;
 import static org.infinispan.tools.store.migrator.Element.SEGMENT;
 import static org.infinispan.tools.store.migrator.Element.SOURCE;
 import static org.infinispan.tools.store.migrator.Element.STRING;
@@ -42,7 +45,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.test.Exceptions;
@@ -50,6 +55,9 @@ import org.infinispan.commons.test.ThreadLeakChecker;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.AllowListConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.jboss.marshalling.commons.CheckedClassResolver;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.marshall.core.impl.DelegatingUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -57,13 +65,14 @@ import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.impl.table.TableManagerFactory;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
 import org.infinispan.tools.store.migrator.jdbc.JdbcConfigurationUtil;
 import org.infinispan.tools.store.migrator.marshaller.SerializationConfigUtil;
 import org.infinispan.tools.store.migrator.marshaller.infinispan10.Infinispan10Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
-import org.testng.AssertJUnit;
+import org.jboss.marshalling.MarshallingConfiguration;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -86,20 +95,45 @@ public class MigratorConfigurationTest {
       externalizerWriteCount.set(0);
    }
 
+   public void testAllowListLoadedForTargetStores() {
+      Properties properties = createBaseProperties(TARGET);
+      properties.put(propKey(TARGET, MARSHALLER, CLASS), JavaSerializationMarshaller.class.getName());
+      properties.put(propKey(TARGET, MARSHALLER, ALLOW_LIST, CLASSES), "org.example.Person,org.example.Animal");
+      properties.put(propKey(TARGET, MARSHALLER, ALLOW_LIST, REGEXPS), "org.another.example.*");
+
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      StoreProperties storeProps = new StoreProperties(TARGET, properties);
+      SerializationConfigUtil.configureSerialization(storeProps, builder.serialization());
+
+      AllowListConfiguration allowList = builder.build().serialization().allowList();
+      assertEquals(allowList.getClasses(), Set.of("org.example.Person", "org.example.Animal"));
+      assertEquals(allowList.getRegexps(), Set.of("org.another.example.*"));
+   }
+
    public void testCustomMarshallerLoadedLegacy() {
       Properties properties = createBaseProperties();
       properties.put(propKey(SOURCE, VERSION), String.valueOf(8));
       properties.put(propKey(SOURCE, MARSHALLER, CLASS), GenericJBossMarshaller.class.getName());
+      properties.put(propKey(SOURCE, MARSHALLER, ALLOW_LIST, CLASSES), "org.example.Person,org.example.Animal");
+      properties.put(propKey(SOURCE, MARSHALLER, ALLOW_LIST, REGEXPS), "org.another.example.*");
 
       StoreProperties props = new StoreProperties(SOURCE, properties);
-      Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
-      assertNotNull(marshaller);
-      assertTrue(marshaller instanceof GenericJBossMarshaller);
+      Marshaller jBossMarshaller = SerializationConfigUtil.getMarshaller(props);
+      assertNotNull(jBossMarshaller);
+      assertTrue(jBossMarshaller instanceof GenericJBossMarshaller);
+      MarshallingConfiguration config = TestingUtil.extractField(jBossMarshaller, "baseCfg");
+      CheckedClassResolver classResolver = (CheckedClassResolver) config.getClassResolver();
+      ClassAllowList allowList = TestingUtil.extractField(classResolver, "classAllowList");
+      assertTrue(allowList.isSafeClass("org.example.Person"));
+      assertTrue(allowList.isSafeClass("org.example.Animal"));
+      assertTrue(allowList.isSafeClass("org.another.example.Person"));
    }
 
    public void testCustomMarshallerLoaded() {
       Properties properties = createBaseProperties();
       properties.put(propKey(SOURCE, MARSHALLER, CLASS), GenericJBossMarshaller.class.getName());
+      properties.put(propKey(SOURCE, MARSHALLER, ALLOW_LIST, CLASSES), "org.example.Person,org.example.Animal");
+      properties.put(propKey(SOURCE, MARSHALLER, ALLOW_LIST, REGEXPS), "org.another.example.*");
 
       StoreProperties props = new StoreProperties(SOURCE, properties);
       Marshaller marshaller = SerializationConfigUtil.getMarshaller(props);
@@ -107,7 +141,14 @@ public class MigratorConfigurationTest {
       assertTrue(marshaller instanceof PersistenceMarshaller);
       PersistenceMarshaller pm = (PersistenceMarshaller) marshaller;
       DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();
-      AssertJUnit.assertTrue(userMarshaller.getDelegate() instanceof GenericJBossMarshaller);
+      assertTrue(userMarshaller.getDelegate() instanceof GenericJBossMarshaller);
+      GenericJBossMarshaller jBossMarshaller = (GenericJBossMarshaller) userMarshaller.getDelegate();
+      MarshallingConfiguration config = TestingUtil.extractField(jBossMarshaller, "baseCfg");
+      CheckedClassResolver classResolver = (CheckedClassResolver) config.getClassResolver();
+      ClassAllowList allowList = TestingUtil.extractField(classResolver, "classAllowList");
+      assertTrue(allowList.isSafeClass("org.example.Person"));
+      assertTrue(allowList.isSafeClass("org.example.Animal"));
+      assertTrue(allowList.isSafeClass("org.another.example.Person"));
    }
 
    public void testInfinipsan8MarshallerAndExternalizersLoaded() throws Exception {
