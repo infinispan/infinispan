@@ -17,11 +17,7 @@ import org.infinispan.configuration.parsing.Element;
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfiguration extends ConfigurationElement<IndexingConfiguration> {
-   /**
-    * @deprecated since 11.0
-    */
-   @Deprecated
-   public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEX, null, Index.class).immutable().build();
+
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
 
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder(Element.KEY_TRANSFORMERS, null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
@@ -39,7 +35,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
          .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
    }
 
    private final Set<Class<?>> resolvedIndexedClasses;
@@ -55,17 +51,6 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
       this.writerConfiguration = writerConfiguration;
       this.shardingConfiguration = shardingConfiguration;
       this.resolvedIndexedClasses = resolvedIndexedClasses;
-   }
-
-   /**
-    * Returns the indexing mode of this cache.
-    *
-    * @deprecated Since 11. This configuration will be removed in next major version as the index mode is calculated
-    * automatically.
-    */
-   @Deprecated
-   public Index index() {
-      return attributes.attribute(INDEX).get();
    }
 
    /**

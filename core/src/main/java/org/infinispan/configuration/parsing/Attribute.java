@@ -3,8 +3,6 @@ package org.infinispan.configuration.parsing;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jgroups.protocols.SIZE;
-
 /**
  * Enumerates the attributes used in Infinispan
  *
@@ -80,7 +78,6 @@ public enum Attribute {
     GROUP_NAME,
     HISTOGRAMS,
     ID,
-    @Deprecated
     INDEX,
     INDEX_QUEUE_LENGTH("max-queue-length"),
     INDEXED_ENTITIES,
