@@ -40,8 +40,8 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     *
     * @param name the name of the cache to create
     * @param configuration a concrete cache configuration that will be sent to the server in one of the supported formats:
-    *                      XML, JSON, and YAML. The server detects the format automatically. The configuration must conform the
-    *                      Infinispan embedded configuration schema version that is supported by the server.
+    *                      XML, JSON, and YAML. The server detects the format automatically. The configuration must conform 
+    *                      to the Infinispan embedded configuration schema version that is supported by the server.
     *
     * @return the cache
     * @throws HotRodClientException
