@@ -31,7 +31,6 @@ import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.cache.GroupsConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.IndexMergeConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
@@ -1731,17 +1730,6 @@ public class CacheParser implements ConfigurationParser {
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
-               break;
-            case INDEX:
-               if (reader.getSchema().since(11, 0)) {
-                  CONFIG.indexModeDeprecated();
-               }
-               if ("LOCAL".equals(value) || "PRIMARY_OWNER".equals(value)) {
-                  throw CONFIG.indexModeNotSupported(value);
-               }
-               Index index = ParseUtils.parseEnum(reader, i, Index.class, value);
-               builder.indexing().index(index);
-               selfEnable = false;
                break;
             case STORAGE:
                builder.indexing().storage(IndexStorage.requireValid(value, CONFIG));

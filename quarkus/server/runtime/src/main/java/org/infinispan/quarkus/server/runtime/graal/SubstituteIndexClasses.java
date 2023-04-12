@@ -1,7 +1,5 @@
 package org.infinispan.quarkus.server.runtime.graal;
 
-import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
-
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Map;
@@ -12,7 +10,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -88,15 +85,6 @@ final class Target_org_infinispan_query_remote_impl_LifecycleManager {
    }
 }
 
-@TargetClass(Index.class)
-final class Target_Index {
-   @Substitute
-   public boolean isEnabled() {
-      // Indexing is always currently disabled
-      return false;
-   }
-}
-
 @TargetClass(IndexingConfiguration.class)
 final class Target_IndexingConfiguration {
    @Substitute
@@ -109,15 +97,6 @@ final class Target_IndexingConfiguration {
 final class Target_IndexingConfigurationBuilder {
    @Alias
    private AttributeSet attributes;
-
-   @Substitute
-   public Object index(Index index) {
-      if (index != Index.NONE) {
-         throw Util.unsupportedOperationException("Indexing");
-      }
-      attributes.attribute(INDEX).set(index);
-      return this;
-   }
 
    @Substitute
    public Object addIndexedEntity(Class<?> indexedEntity) {

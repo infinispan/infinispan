@@ -3,7 +3,6 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXING_MODE;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
@@ -53,9 +52,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    public IndexingConfigurationBuilder enabled(boolean enabled) {
-      if (attributes.attribute(INDEX).isModified()) {
-         throw CONFIG.indexEnabledAndIndexModeAreExclusive();
-      }
       if (!enabled) {
          // discard any eventually inherited indexing config if indexing is not going to be enabled
          reset();
@@ -80,7 +76,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * Wipe out all indexing configuration settings and disable indexing.
     */
    public void reset() {
-      attributes.attribute(INDEX).reset();
       attributes.attribute(ENABLED).reset();
       attributes.attribute(INDEXED_ENTITIES).reset();
       attributes.attribute(PROPERTIES).reset();
@@ -146,22 +141,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return attributes.attribute(KEY_TRANSFORMERS).get();
    }
 
-   /**
-    * Indicates indexing mode
-    *
-    * @deprecated Since 11.0. This configuration will be removed in next major version as the index mode is calculated
-    * automatically.
-    */
-   @Deprecated
-   public IndexingConfigurationBuilder index(Index index) {
-      if (attributes.attribute(ENABLED).isModified()) {
-         throw CONFIG.indexEnabledAndIndexModeAreExclusive();
-      }
-      enabled(index != null && index != Index.NONE);
-      attributes.attribute(INDEX).set(index);
-      return this;
-   }
-
    public IndexingConfigurationBuilder addIndexedEntity(String indexedEntity) {
       if (indexedEntity == null || indexedEntity.length() == 0) {
          throw new CacheConfigurationException("Type name must not be null or empty");
@@ -221,10 +200,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
       }
 
-      if (attributes.attribute(INDEX).get() == Index.PRIMARY_OWNER) {
-         throw CONFIG.indexModeNotSupported(Index.PRIMARY_OWNER.name());
-      }
-
       ensureSingleIndexingConfig();
    }
 
@@ -274,13 +249,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
       attributes.read(template.attributes());
-
-      // ensures inheritance works properly even when inheriting from an old config
-      // that uses INDEX instead of ENABLED
-      Index index = attributes.attribute(INDEX).get();
-      if (index != null) {
-         enabled(index != Index.NONE);
-      }
       this.resolvedIndexedClasses.clear();
       this.resolvedIndexedClasses.addAll(template.indexedEntities());
       this.readerConfigurationBuilder.read(template.reader());
