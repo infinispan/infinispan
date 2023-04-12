@@ -39,9 +39,9 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * Creates a cache on the remote server cluster using the specified configuration
     *
     * @param name the name of the cache to create
-    * @param configuration a concrete cache configuration of that will be sent to the server in one of the supported formats:
-    *                      XML, JSON and YAML. The format will be detected automatically. The configuration must use the
-    *                      Infinispan embedded configuration schema in a version supported by the server.
+    * @param configuration a concrete cache configuration that will be sent to the server in one of the supported formats:
+    *                      XML, JSON, and YAML. The server detects the format automatically. The configuration must conform the
+    *                      Infinispan embedded configuration schema version that is supported by the server.
     *
     * @return the cache
     * @throws HotRodClientException
