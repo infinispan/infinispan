@@ -1,7 +1,8 @@
 package org.infinispan.commons.configuration;
 
 /**
- * A simple wrapper for a configuration represented as a String.
+ * A simple wrapper for a configuration represented as a String. The configuration can be in any
+ * of the supported formats: XML, JSON, and YAML.
  *
  * @author Tristan Tarrant
  * @since 14.0
