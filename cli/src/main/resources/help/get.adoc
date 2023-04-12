@@ -19,7 +19,7 @@ OPTIONS
 Specifies the cache from which to retrieve entries. Defaults to the currently
 selected cache.
 
-*-x, --extended::
+*-x, --extended*::
 Retrieves extended information about the entry (such as cluster ownership)
 
 
