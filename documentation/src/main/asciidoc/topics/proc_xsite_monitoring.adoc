@@ -1,0 +1,82 @@
+[id='monitor-xsite-replication']
+= Monitoring the status of cross-site replication
+
+Monitor the site status of your backup locations to detect interruptions in the communication between the sites.
+When a remote site status changes to `offline`, {brandname} stops replicating your data to the backup location.
+Your data become out of sync and you must fix the inconsistencies before bringing the clusters back online.
+
+Monitoring cross-site events is necessary for early problem detection.
+Use one of the following monitoring strategies:
+
+* link:#monitoring-cross-site-rest[Monitoring cross-site replication with the REST API]
+* link:#monitoring-cross-site-prometheus[Monitoring cross-site replication with the Prometheus metrics] or any other monitoring system
+
+[[monitoring-cross-site-rest]]
+[discrete]
+==  Monitoring cross-site replication with the REST API
+Monitor the status of cross-site replication for all caches using the REST endpoint.
+You can implement a custom script to poll the REST endpoint or use the following example.
+
+.Prerequisites
+* Enable cross-site replication.
+
+.Procedure
+. Implement a script to poll the REST endpoint.
++
+The following example demonstrates how you can use a Python script to poll the site status every five seconds.
+
+[source,python,options="nowrap",subs=attributes+]
+----
+include::python/monitor_site_status.py[]
+----
+
+When a site status changes from `online` to `offline` or vice-versa, the function `on_event` is invoked.
+
+If you want to use this script, you must specify the following variables:
+
+* `USERNAME` and `PASSWORD`: The username and password of {brandname} user with permission to access the REST endpoint.
+* `POLL_INTERVAL_SEC`: The number of seconds between polls.
+* `SERVERS`: The list of {brandname} Servers at this site.
+The script only requires a single valid response but the list is provided to allow fail over.
+* `REMOTE_SITES`: The list of remote sites to monitor on these servers.
+* `CACHES`: The list of cache names to monitor.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{rest_docs}#rest_v2_cache_manager_site_status_rest[REST API: Getting status of backup locations]
+
+[[monitoring-cross-site-prometheus]]
+[discrete]
+== Monitoring cross-site replication with the Prometheus metrics
+
+Prometheus, and other monitoring systems, let you configure alerts to detect when a site status changes to `offline`.
+
+TIP: Monitoring cross-site latency metrics can help you to discover potential issues.
+
+.Prerequisites
+* Enable cross-site replication.
+
+.Procedure
+. Configure {brandname} metrics.
+. Configure alerting rules using the Prometheus metrics format.
+* For the site status, use `1` for `online` and `0` for `offline`.
+* For the `expr` filed, use the following format: +
+`vendor_cache_manager_default_cache_<cache name>_x_site_admin_<site name>_status`.
++
+In the following example, Prometheus alerts you when the *NYC* site gets `offline` for cache named `work` or `sessions`.
++
+[source,yaml,options="nowrap",subs=attributes+]
+----
+include::yaml/prometheus_xsite_rules.yml[]
+----
++
+The following image shows an alert that the *NYC* site is `offline` for cache `work`.
++
+image::prometheus_xsite_alert.png[align="center",title="Prometheus Alert"]
+
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#configuring-metrics_statistics-jmx[Configuring {brandname} metrics]
+* link:https://prometheus.io/docs/alerting/latest/overview/[Prometheus Alerting Overview]
+* link:https://grafana.com/docs/grafana/latest/alerting/[Grafana Alerting Documentation]
+* link:https://docs.openshift.com/container-platform/latest/monitoring/managing-alerts.html#creating-alerting-rules-for-user-defined-projects_managing-alerts[Openshift Managing Alerts]
