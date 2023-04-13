@@ -31,11 +31,11 @@ public class SecurityActions {
       return doPrivileged(new GetEmbeddedCacheManagerAction(cache));
    }
    public static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(new GetGlobalComponentRegistryAction(cacheManager));
+      return doPrivileged(cacheManager::getGlobalComponentRegistry);
    }
 
    public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(new GetCacheManagerConfigurationAction(cacheManager));
+      return doPrivileged(cacheManager::getCacheManagerConfiguration);
    }
 
    public static <A extends Cache<K,V>, K, V> A getUnwrappedCache(Cache<K, V> cache) {
@@ -81,8 +81,7 @@ public class SecurityActions {
    }
 
    public static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> advancedCache) {
-      GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(advancedCache);
-      return doPrivileged(action);
+      return doPrivileged(advancedCache::getComponentRegistry);
    }
 
    public static void undefineConfiguration(EmbeddedCacheManager cacheManager, String name) {
@@ -103,19 +102,13 @@ public class SecurityActions {
       return doPrivileged(action);
    }
 
-   public static DistributionManager getDistributionManager(final Cache<?, ?> cache) {
-      GetCacheDistributionManagerAction action = new GetCacheDistributionManagerAction(cache.getAdvancedCache());
-      return doPrivileged(action);
-   }
-
    public static <K, V> CompletionStage<CacheEntry<K, V>> getCacheEntryAsync(final AdvancedCache<K, V> cache, K key) {
       GetCacheEntryAsyncAction<K, V> action = new GetCacheEntryAsyncAction<>(cache, key);
       return doPrivileged(action);
    }
 
    public static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
-      GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
-      return doPrivileged(action);
+      return doPrivileged(cache::getCacheConfiguration);
    }
 
    public static <K> CompletionStage<Boolean> cacheContainsKeyAsync(AdvancedCache<K, ?> ac, K key) {
@@ -126,11 +119,6 @@ public class SecurityActions {
       doPrivileged(new AddCacheDependencyAction(cacheManager, from, to));
    }
 
-   public static Configuration getCacheConfigurationFromManager(final EmbeddedCacheManager cacheManager, String cacheName) {
-      GetCacheConfigurationFromManagerAction action = new GetCacheConfigurationFromManagerAction(cacheManager, cacheName);
-      return doPrivileged(action);
-   }
-
    public static PersistenceManager getPersistenceManager(final EmbeddedCacheManager cacheManager, String cacheName) {
       final GetPersistenceManagerAction action = new GetPersistenceManagerAction(cacheManager, cacheName);
       return doPrivileged(action);
@@ -139,10 +127,6 @@ public class SecurityActions {
    public static Health getHealth(final EmbeddedCacheManager cacheManager) {
       GetCacheManagerHealthAction action = new GetCacheManagerHealthAction(cacheManager);
       return doPrivileged(action);
-   }
-
-   public static <K, V> ComponentRegistry getComponentRegistry(AdvancedCache<K, V> cache) {
-      return doPrivileged(new GetCacheComponentRegistryAction(cache));
    }
 
    public static CompletionStage<Void> addLoggerListenerAsync(EmbeddedCacheManager ecm, Object listener) {

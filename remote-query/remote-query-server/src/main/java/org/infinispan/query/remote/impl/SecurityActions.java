@@ -7,7 +7,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.security.AuthorizationManager;
-import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.impl.SecureCacheImpl;
 
 /**
@@ -20,7 +19,7 @@ import org.infinispan.security.impl.SecureCacheImpl;
 final class SecurityActions {
 
    static RemoteQueryManager getRemoteQueryManager(AdvancedCache<?, ?> cache) {
-      return doPrivileged(new GetCacheComponentRegistryAction(cache)).getComponent(RemoteQueryManager.class);
+      return org.infinispan.security.actions.SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryManager.class);
    }
 
    static AuthorizationManager getCacheAuthorizationManager(AdvancedCache<?, ?> cache) {

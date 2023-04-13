@@ -317,8 +317,7 @@ public class ContainerResource implements ResourceHandler {
       cacheInfo.name = cacheName;
       HealthStatus cacheHealth = chHealth.getStatus();
       cacheInfo.health = cacheHealth;
-      Configuration cacheConfiguration = SecurityActions
-            .getCacheConfigurationFromManager(subjectCacheManager, cacheName);
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(subjectCacheManager, cacheName);
       cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
       boolean isPersistent = false;
       if (chHealth.getStatus() != HealthStatus.FAILED) {
@@ -402,7 +401,7 @@ public class ContainerResource implements ResourceHandler {
 
       List<NamedCacheConfiguration> configurations = cacheConfigurationNames.stream()
             .filter(n -> !internalCacheRegistry.isInternalCache(n))
-            .filter(n -> SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n).isTemplate())
+            .filter(n -> SecurityActions.getCacheConfiguration(subjectCacheManager, n).isTemplate())
             .distinct()
             .map(n -> {
                return getNamedCacheConfiguration(subjectCacheManager, n, pretty);
@@ -414,7 +413,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private NamedCacheConfiguration getNamedCacheConfiguration(EmbeddedCacheManager subjectCacheManager, String n, boolean pretty) {
-      Configuration config = SecurityActions.getCacheConfigurationFromManager(subjectCacheManager, n);
+      Configuration config = SecurityActions.getCacheConfiguration(subjectCacheManager, n);
       StringBuilderWriter sw = new StringBuilderWriter();
       try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(pretty).build()) {
          invocationHelper.getParserRegistry().serialize(w, n, config);
@@ -612,7 +611,7 @@ public class ContainerResource implements ResourceHandler {
                includeCurrentState ?
                      (stream) -> {
                         for (String configName : cacheManager.getCacheConfigurationNames()) {
-                           Configuration config = SecurityActions.getCacheConfigurationFromManager(cacheManager, configName);
+                           Configuration config = SecurityActions.getCacheConfiguration(cacheManager, configName);
                            String eventType = config.isTemplate() ? "create-template" : "create-cache";
                            stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType, pretty)));
                         }
@@ -644,7 +643,7 @@ public class ContainerResource implements ResourceHandler {
             switch (event.getConfigurationEntityType()) {
                case "cache":
                case "template":
-                     Configuration config = SecurityActions.getCacheConfigurationFromManager(cacheManager, event.getConfigurationEntityName());
+                     Configuration config = SecurityActions.getCacheConfiguration(cacheManager, event.getConfigurationEntityName());
                      sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType, pretty));
                   break;
                default:

@@ -15,8 +15,6 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.actions.GetCacheManagerConfigurationAction;
-import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -65,7 +63,7 @@ final class SecurityActions {
    }
 
    static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager manager) {
-      return doPrivileged(new GetCacheManagerConfigurationAction(manager));
+      return org.infinispan.security.actions.SecurityActions.getCacheManagerConfiguration(manager);
    }
 
    static void shutdownAllCaches(DefaultCacheManager manager) {
@@ -76,8 +74,7 @@ final class SecurityActions {
    }
 
    static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
-      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
-      return doPrivileged(action);
+      return org.infinispan.security.actions.SecurityActions.getGlobalComponentRegistry(cacheManager);
    }
 
 

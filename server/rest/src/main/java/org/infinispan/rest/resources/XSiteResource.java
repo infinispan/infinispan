@@ -315,7 +315,7 @@ public class XSiteResource implements ResourceHandler {
    private Optional<XSiteAdminOperations> getXSiteAdmin(RestRequest request, NettyRestResponse.Builder responseBuilder) {
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      XSiteAdminOperations ops = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+      XSiteAdminOperations ops = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
       if (ops == null) {
          noBackupsForCache(responseBuilder, cacheName);
          return Optional.empty();
@@ -327,7 +327,7 @@ public class XSiteResource implements ResourceHandler {
       String cacheName = request.variables().get("cacheName");
       String site = request.variables().get("site");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      XSiteAdminOperations ops = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+      XSiteAdminOperations ops = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
       if (ops == null) {
          noBackupsForCache(responseBuilder, cacheName);
          return Optional.empty();

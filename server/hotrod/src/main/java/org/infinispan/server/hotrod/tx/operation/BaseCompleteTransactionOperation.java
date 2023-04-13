@@ -204,7 +204,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    private CompletableFuture<Void> completeWithRemoteCommand(AdvancedCache<?, ?> cache, RpcManager rpcManager,
          TxState state)
          throws Throwable {
-      CommandsFactory commandsFactory = SecurityActions.getComponentRegistry(cache).getCommandsFactory();
+      CommandsFactory commandsFactory = SecurityActions.getCacheComponentRegistry(cache).getCommandsFactory();
       CacheRpcCommand command = buildRemoteCommand(cache.getCacheConfiguration(), commandsFactory, state);
       CompletableFuture<Void> remote = rpcManager
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())

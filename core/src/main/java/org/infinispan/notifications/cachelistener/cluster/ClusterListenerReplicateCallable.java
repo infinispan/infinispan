@@ -25,6 +25,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -79,7 +80,7 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
 
    @Override
    public void accept(EmbeddedCacheManager cacheManager, Cache<K, V> cache) {
-      ComponentRegistry componentRegistry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
 
       CacheNotifier<K, V> cacheNotifier = componentRegistry.getComponent(CacheNotifier.class);
       CacheManagerNotifier cacheManagerNotifier = componentRegistry.getComponent(CacheManagerNotifier.class);
