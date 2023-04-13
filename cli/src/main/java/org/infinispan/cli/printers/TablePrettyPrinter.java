@@ -22,7 +22,7 @@ public class TablePrettyPrinter implements PrettyPrinter {
    public void printItem(Map<String, String> item) {
       int cols = item.size();
       if (rowPrinter.showHeader() && header) {
-         for(int row = 0; row < 2; row++) {
+         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < cols; col++) {
                if (col > 0) {
                   shell.write(row == 0 ? "|" : "+");
@@ -51,18 +51,29 @@ public class TablePrettyPrinter implements PrettyPrinter {
             int width = rowPrinter.columnWidth(i);
             String format = "%-" + width + "s";
             if (i < 4) {
-               if (colsWrap[i] < 0) {
+               int offset = colsWrap[i];
+               if (offset < 0) {
                   // We've already printed the whole value
                   v = "";
-               } else if (v.length() - colsWrap[i] > width) {
-                  // Just print characters that fit skipping any that we've already printed
-                  v = v.substring(colsWrap[i], colsWrap[i] + width);
-                  colsWrap[i] += width;
                } else {
-                  // The rest of the value fits
-                  v = v.substring(colsWrap[i]);
-                  colsWrap[i] = -1;
-                  remaining--;
+                  int lf = v.indexOf("\n", offset) - offset;
+                  if (lf < 0 || lf > width) {
+                     // No LFs inside the range
+                     if (v.length() - offset <= width) {
+                        // The rest of the value fits
+                        v = v.substring(offset);
+                        colsWrap[i] = -1;
+                        remaining--;
+                     } else {
+                        // Just print characters that fit skipping any that we've already printed
+                        v = v.substring(offset, offset + width);
+                        colsWrap[i] += width;
+                     }
+                  } else {
+                     // LF inside the range, just print up to it
+                     v = v.substring(offset, offset + lf);
+                     colsWrap[i] += lf + 1;
+                  }
                }
                shell.write(String.format(format, v));
             } else {
@@ -78,7 +89,6 @@ public class TablePrettyPrinter implements PrettyPrinter {
          }
          shell.writeln("");
       } while (remaining > 0);
-
    }
 
    @Override
