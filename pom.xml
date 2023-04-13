@@ -399,7 +399,6 @@
       <versionx.org.springframework.spring-jdbc>${version.spring}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring}</versionx.org.springframework.spring-test>
       <versionx.org.testcontainers.testcontainers>1.18.0</versionx.org.testcontainers.testcontainers>
-      <versionx.io.jaegertracing.jaeger-testcontainers>0.7.0</versionx.io.jaegertracing.jaeger-testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
@@ -1795,11 +1794,6 @@
             <artifactId>opentelemetry-sdk-testing</artifactId>
             <version>${version.opentelemetry}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>io.jaegertracing</groupId>
-            <artifactId>jaeger-testcontainers</artifactId>
-            <version>${versionx.io.jaegertracing.jaeger-testcontainers}</version>
          </dependency>
          <dependency>
             <groupId>org.testcontainers</groupId>
