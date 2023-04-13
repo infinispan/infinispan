@@ -1,6 +1,5 @@
 package org.infinispan.counter.impl.manager;
 
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.toNullFunction;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
@@ -136,7 +135,7 @@ public class EmbeddedCounterManager implements CounterManager {
 
    public CompletionStage<InternalCounterAdmin> getOrCreateAsync(String counterName) {
       if (stopped) {
-         return completedExceptionFuture(CONTAINER.counterManagerNotStarted());
+         return CompletableFuture.failedFuture(CONTAINER.counterManagerNotStarted());
       }
       CompletableFuture<InternalCounterAdmin> stage = counters.computeIfAbsent(counterName, this::createCounter);
 
@@ -225,7 +224,7 @@ public class EmbeddedCounterManager implements CounterManager {
       return getConfigurationAsync(counterName)
             .thenCompose(config -> {
                if (config == null) {
-                  return completedExceptionFuture(CONTAINER.undefinedCounter(counterName));
+                  return CompletableFuture.failedFuture(CONTAINER.undefinedCounter(counterName));
                }
                switch (config.type()) {
                   case WEAK:
@@ -234,7 +233,7 @@ public class EmbeddedCounterManager implements CounterManager {
                   case UNBOUNDED_STRONG:
                      return strongCounterFactory.createStrongCounter(counterName, config);
                   default:
-                     return completedExceptionFuture(new IllegalStateException("[should never happen] unknown counter type: " + config.type()));
+                     return CompletableFuture.failedFuture(new IllegalStateException("[should never happen] unknown counter type: " + config.type()));
                }
             });
    }

@@ -1,5 +1,6 @@
 package org.infinispan.persistence.support;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -15,7 +16,6 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,7 +45,7 @@ public class FailStore extends DummyInMemoryStore {
    public CompletionStage<Void> write(int segment, MarshallableEntry entry) {
       if (failModificationCount.decrementAndGet() >= 0) {
          log.tracef("Delaying before write to %s", entry.getKey());
-         return CompletableFutures.completedExceptionFuture(new TestException("Simulated write failure"));
+         return CompletableFuture.failedFuture(new TestException("Simulated write failure"));
       }
       return super.write(segment, entry);
    }
@@ -54,7 +54,7 @@ public class FailStore extends DummyInMemoryStore {
    public CompletionStage<Boolean> delete(int segment, Object key) {
       if (failModificationCount.decrementAndGet() >= 0) {
          log.tracef("Delaying before write to %s", key);
-         return CompletableFutures.completedExceptionFuture(new TestException("Simulated write failure"));
+         return CompletableFuture.failedFuture(new TestException("Simulated write failure"));
       }
       return super.delete(segment, key);
    }

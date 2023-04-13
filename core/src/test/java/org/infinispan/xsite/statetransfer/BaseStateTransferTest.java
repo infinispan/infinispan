@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.ControlledTransport;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -814,7 +814,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          try {
             listener.beforeCommand(command);
          } catch (Exception e) {
-            return CompletableFutures.completedExceptionFuture(e);
+            return CompletableFuture.failedFuture(e);
          }
          return super.<O>handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command));
       }
@@ -824,7 +824,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          try {
             listener.beforeState(cmd);
          } catch (Exception e) {
-            return CompletableFutures.completedExceptionFuture(e);
+            return CompletableFuture.failedFuture(e);
          }
          return super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd));
       }

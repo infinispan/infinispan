@@ -119,7 +119,7 @@ public class BlockingManagerImpl implements BlockingManager {
             runnable.run();
             return CompletableFutures.completedNull();
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
       }
       CompletionStage<Void> stage;
@@ -148,7 +148,7 @@ public class BlockingManagerImpl implements BlockingManager {
          try {
             return CompletableFuture.completedFuture(supplier.get());
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
       }
       CompletionStage<V> stage;
@@ -194,7 +194,7 @@ public class BlockingManagerImpl implements BlockingManager {
             I value = CompletionStages.join(stage);
             return CompletableFuture.completedFuture(function.apply(value));
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
       }
       return continueOnNonBlockingThread(stage.thenApplyAsync(function, blockingExecutor), traceId);
@@ -211,7 +211,7 @@ public class BlockingManagerImpl implements BlockingManager {
             runnable.run();
             return CompletableFutures.completedNull();
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
       }
       return continueOnNonBlockingThread(stage.thenRunAsync(runnable, blockingExecutor), traceId);
@@ -229,7 +229,7 @@ public class BlockingManagerImpl implements BlockingManager {
             I value = CompletionStages.join(stage);
             return function.apply(value);
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
       }
       return continueOnNonBlockingThread(stage.thenComposeAsync(function, blockingExecutor), traceId);
@@ -253,10 +253,10 @@ public class BlockingManagerImpl implements BlockingManager {
             biConsumer.accept(value, throwable);
          } catch (Throwable t) {
             if (throwable == null) {
-               return CompletableFutures.completedExceptionFuture(t);
+               return CompletableFuture.failedFuture(t);
             }
             throwable.addSuppressed(t);
-            return CompletableFutures.completedExceptionFuture(throwable);
+            return CompletableFuture.failedFuture(throwable);
          }
          return stage.whenComplete(biConsumer);
       }

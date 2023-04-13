@@ -140,7 +140,7 @@ public class CompletionStages {
          try {
             return handleFunction.apply(value, null);
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
       }
       return stage.handle(handleFunction).thenCompose(Function.identity());

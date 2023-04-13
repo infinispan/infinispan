@@ -4,6 +4,7 @@ import static org.infinispan.rest.framework.LookupResult.Status.INVALID_ACTION;
 import static org.infinispan.rest.framework.LookupResult.Status.INVALID_METHOD;
 import static org.infinispan.rest.framework.LookupResult.Status.NOT_FOUND;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.rest.framework.Invocation;
@@ -17,7 +18,6 @@ import org.infinispan.rest.operations.exceptions.NotAllowedException;
 import org.infinispan.rest.operations.exceptions.ResourceNotFoundException;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * @since 10.0
@@ -25,13 +25,13 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 public class RestDispatcherImpl implements RestDispatcher {
 
    private static final CompletionStage<RestResponse> NOT_FOUND_RESPONSE =
-         CompletableFutures.completedExceptionFuture(new ResourceNotFoundException());
+         CompletableFuture.failedFuture(new ResourceNotFoundException());
 
    private static final CompletionStage<RestResponse> NOT_ALLOWED =
-         CompletableFutures.completedExceptionFuture(new NotAllowedException());
+         CompletableFuture.failedFuture(new NotAllowedException());
 
    private static final CompletionStage<RestResponse> MALFORMED =
-         CompletableFutures.completedExceptionFuture(new MalformedRequest("Invalid 'action' parameter supplied"));
+         CompletableFuture.failedFuture(new MalformedRequest("Invalid 'action' parameter supplied"));
 
    private final ResourceManager manager;
    private final Authorizer authorizer;
@@ -55,7 +55,7 @@ public class RestDispatcherImpl implements RestDispatcher {
    public CompletionStage<RestResponse> dispatch(RestRequest restRequest, LookupResult lookupResult) {
       String action = restRequest.getAction();
       if (action != null && action.isEmpty()) {
-         return CompletableFutures.completedExceptionFuture(new MalformedRequest("Invalid action"));
+         return CompletableFuture.failedFuture(new MalformedRequest("Invalid action"));
       }
 
       LookupResult.Status status = lookupResult.getStatus();
@@ -85,7 +85,7 @@ public class RestDispatcherImpl implements RestDispatcher {
             return invocation.handler().apply(restRequest);
          }
       } catch (Throwable t) {
-         return CompletableFutures.completedExceptionFuture(t);
+         return CompletableFuture.failedFuture(t);
       }
    }
 }

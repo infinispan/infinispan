@@ -1,10 +1,9 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.remoting.transport.impl.MapResponseCollector.validOnly;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
 import static org.infinispan.util.logging.Log.XSITE;
 
 import java.util.HashMap;
@@ -39,6 +38,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -74,7 +74,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -208,7 +207,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          //noinspection unchecked
          return (CompletionStage<O>) command.acceptVisitor(null, defaultHandler);
       } catch (Throwable throwable) {
-         return completedExceptionFuture(throwable);
+         return CompletableFuture.failedFuture(throwable);
       }
    }
 
@@ -233,7 +232,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       //TODO #4 [ISPN-11824] no need to change the ComponentStatus. we have start/stop methods available now
       ComponentStatus status = cache.getStatus();
       if (!status.allowInvocations()) {
-         return completedExceptionFuture(
+         return CompletableFuture.failedFuture(
                new IllegalLifecycleStateException("Cache is stopping or terminated: " + status));
       }
       return null;

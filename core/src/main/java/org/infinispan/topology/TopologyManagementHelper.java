@@ -3,6 +3,7 @@ package org.infinispan.topology;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +51,7 @@ public class TopologyManagementHelper {
          bcr.wireDependencies(command, true);
          localFuture = invokeAsync(command);
       } catch (Throwable throwable) {
-         localFuture = CompletableFutures.completedExceptionFuture(throwable);
+         localFuture = CompletableFuture.failedFuture(throwable);
       }
 
       return addLocalResult(responseCollector, remoteFuture, localFuture, transport.getAddress());

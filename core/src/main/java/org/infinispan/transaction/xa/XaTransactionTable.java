@@ -1,5 +1,6 @@
 package org.infinispan.transaction.xa;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,7 +110,7 @@ public class XaTransactionTable extends TransactionTable {
    public CompletionStage<Integer> prepare(XidImpl xid) {
       LocalXaTransaction localTransaction = getLocalTransaction(xid);
       if (localTransaction == null) {
-         return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
+         return CompletableFuture.failedFuture(new XAException(XAException.XAER_NOTA));
       }
       return txCoordinator.prepare(localTransaction);
    }
@@ -117,7 +118,7 @@ public class XaTransactionTable extends TransactionTable {
    public CompletionStage<Void> commit(XidImpl xid, boolean isOnePhase) {
       LocalXaTransaction localTransaction = getLocalTransaction(xid);
       if (localTransaction == null) {
-         return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
+         return CompletableFuture.failedFuture(new XAException(XAException.XAER_NOTA));
       }
       CompletionStage<Boolean> commitStage;
 
@@ -144,7 +145,7 @@ public class XaTransactionTable extends TransactionTable {
    CompletionStage<Void> rollback(XidImpl xid) {
       LocalXaTransaction localTransaction = getLocalTransaction(xid);
       if (localTransaction == null) {
-         return CompletableFutures.completedExceptionFuture(new XAException(XAException.XAER_NOTA));
+         return CompletableFuture.failedFuture(new XAException(XAException.XAER_NOTA));
       }
       localTransaction.markForRollback(true); //ISPN-879 : make sure that locks are no longer associated to this transactions
       return txCoordinator.rollback(localTransaction);

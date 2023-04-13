@@ -12,7 +12,6 @@ import java.util.function.Predicate;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -92,7 +91,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
    public CompletableFuture<Void> submit(Runnable runnable) {
       Address target = findTarget();
       if (target == null) {
-         return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
+         return CompletableFuture.failedFuture(new SuspectException("No available nodes!"));
       }
       if (log.isTraceEnabled()) {
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
@@ -122,7 +121,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
          TriConsumer<? super Address, ? super V, ? super Throwable> triConsumer) {
       Address target = findTarget();
       if (target == null) {
-         return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
+         return CompletableFuture.failedFuture(new SuspectException("No available nodes!"));
       }
       if (log.isTraceEnabled()) {
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);

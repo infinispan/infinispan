@@ -8,7 +8,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
@@ -118,7 +117,7 @@ public abstract class RespRequestHandler {
             }
             biConsumer.accept(result, allocatorToUse);
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
          return myStage;
       }
@@ -132,7 +131,7 @@ public abstract class RespRequestHandler {
                try {
                   biConsumer.accept(e, allocatorToUse);
                } catch (Throwable innerT) {
-                  return CompletableFutures.completedExceptionFuture(innerT);
+                  return CompletableFuture.failedFuture(innerT);
                }
             }
             return myStage;

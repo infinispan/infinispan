@@ -14,7 +14,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -125,7 +124,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
       } else if (localFuture != null) {
          return localFuture;
       } else {
-         return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
+         return CompletableFuture.failedFuture(new SuspectException("No available nodes!"));
       }
       // remoteFuture is guaranteed to be non null at this point
       if (localFuture != null) {
@@ -211,7 +210,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
       } else if (localFuture != null) {
          return localFuture;
       } else {
-         return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
+         return CompletableFuture.failedFuture(new SuspectException("No available nodes!"));
       }
    }
 

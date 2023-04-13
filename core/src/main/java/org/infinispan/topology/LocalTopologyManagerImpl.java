@@ -683,7 +683,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                   int newViewId = Math.max(viewId + 1, transport.getViewId());
                   return executeOnCoordinatorRetry(command, newViewId, endNanos);
                } else {
-                  return CompletableFutures.completedExceptionFuture(t);
+                  return CompletableFuture.failedFuture(t);
                }
             });
    }

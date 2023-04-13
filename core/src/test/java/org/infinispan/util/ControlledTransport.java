@@ -39,7 +39,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -239,7 +238,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          try {
             actual.sendTo(destination, rpcCommand, deliverOrder);
          } catch (Exception e) {
-            return CompletableFutures.completedExceptionFuture(e);
+            return CompletableFuture.failedFuture(e);
          }
          return null;
       });
@@ -252,7 +251,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          try {
             actual.sendToMany(destinations, rpcCommand, deliverOrder);
          } catch (Exception e) {
-            return CompletableFutures.completedExceptionFuture(e);
+            return CompletableFuture.failedFuture(e);
          }
          return null;
       });
@@ -264,7 +263,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          try {
             actual.sendToAll(rpcCommand, deliverOrder);
          } catch (Exception e) {
-            return CompletableFutures.completedExceptionFuture(e);
+            return CompletableFuture.failedFuture(e);
          }
          return null;
       });
@@ -301,7 +300,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
                            return cv;
                         });
                } catch (Exception e) {
-                  return CompletableFutures.completedExceptionFuture(e);
+                  return CompletableFuture.failedFuture(e);
                }
             });
       request.whenComplete(xSiteResponse);

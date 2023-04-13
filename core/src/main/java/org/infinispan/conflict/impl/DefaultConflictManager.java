@@ -70,7 +70,6 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -352,7 +351,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          InvocationContext ctx = invocationHelper.createInvocationContextWithImplicitTransaction(1, true);
          return invocationHelper.invokeAsync(ctx, command);
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(e);
+         return CompletableFuture.failedFuture(e);
       }
    }
 

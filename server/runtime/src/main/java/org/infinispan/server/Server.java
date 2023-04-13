@@ -42,7 +42,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -680,7 +679,7 @@ public class Server implements ServerManagement, AutoCloseable {
             reportFile = String.format(reportFile, "report-osx.sh");
             break;
          default:
-            return CompletableFutures.completedExceptionFuture(log.serverReportUnavailable(os));
+            return CompletableFuture.failedFuture(log.serverReportUnavailable(os));
       }
       long pid = ProcessInfo.getInstance().getPid();
       Path home = serverHome.toPath();

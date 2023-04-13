@@ -1,6 +1,7 @@
 package org.infinispan.remoting;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -91,7 +92,7 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
          }
          return stage.thenApply(this);
       } catch (Throwable throwable) {
-         return CompletableFutures.completedExceptionFuture(throwable);
+         return CompletableFuture.failedFuture(throwable);
       }
    }
 

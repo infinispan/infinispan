@@ -76,7 +76,6 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -1106,7 +1105,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             try {
                return (CompletableFuture) cmd.invokeAsync(componentRegistry);
             } catch (Throwable throwable) {
-               return CompletableFutures.completedExceptionFuture(throwable);
+               return CompletableFuture.failedFuture(throwable);
             }
          }
          cmd.setTopologyId(topologyId);
@@ -1159,7 +1158,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             try {
                stage = command.invokeAsync(componentRegistry);
             } catch (Throwable throwable) {
-               stage = CompletableFutures.completedExceptionFuture(throwable);
+               stage = CompletableFuture.failedFuture(throwable);
             }
          } else {
             stage = rpcManager.invokeCommand(target, command, VoidResponseCollector.ignoreLeavers(),

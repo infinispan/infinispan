@@ -64,7 +64,6 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Version;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.format.PropertyFormatter;
@@ -724,7 +723,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return invocationHelper.invokeAsync(nonTxContextBuilder, command, 1);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing removeExpired()", e);
-         return CompletableFutures.completedExceptionFuture(e);
+         return CompletableFuture.failedFuture(e);
       } finally {
          resumePreviousOngoingTransaction(ongoingTransaction,
                "Had problems trying to resume a transaction after removeExpired()");

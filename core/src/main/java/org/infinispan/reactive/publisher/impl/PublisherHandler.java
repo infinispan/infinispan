@@ -30,7 +30,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCom
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -289,7 +288,7 @@ public class PublisherHandler {
          log.trace("Exception encountered while processing publisher", t);
          synchronized (this) {
             if (futureResponse == null) {
-               futureResponse = CompletableFutures.completedExceptionFuture(t);
+               futureResponse = CompletableFuture.failedFuture(t);
             } else {
                futureResponse.completeExceptionally(t);
             }

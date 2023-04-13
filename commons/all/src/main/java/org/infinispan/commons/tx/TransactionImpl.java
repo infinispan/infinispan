@@ -3,7 +3,6 @@ package org.infinispan.commons.tx;
 
 import static java.lang.String.format;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.completedFalse;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.completedTrue;
@@ -17,6 +16,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -164,7 +164,7 @@ public class TransactionImpl implements Transaction {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
-         return completedExceptionFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
+         return CompletableFuture.failedFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
       }
       return runPrepareAsync(converter)
             .handle((____, ___) -> runCommitAsync(false, converter))
@@ -201,7 +201,7 @@ public class TransactionImpl implements Transaction {
          log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
-         return completedExceptionFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
+         return CompletableFuture.failedFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
       }
       status = Status.STATUS_MARKED_ROLLBACK;
 
@@ -325,7 +325,7 @@ public class TransactionImpl implements Transaction {
    }
 
    public Collection<XAResource> getEnlistedResources() {
-      return Collections.unmodifiableList(resources.stream().map(xaResourceData -> xaResourceData.xaResource).collect(Collectors.toList()));
+      return resources.stream().map(xaResourceData -> xaResourceData.xaResource).collect(Collectors.toUnmodifiableList());
    }
 
    public boolean runPrepare() {

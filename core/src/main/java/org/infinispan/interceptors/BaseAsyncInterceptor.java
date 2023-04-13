@@ -12,7 +12,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 
 /**
@@ -333,7 +332,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
                         throwable.addSuppressed(t);
                      }
                      return null;
-                  }).thenCompose(ignore -> CompletableFutures.completedExceptionFuture(throwable))
+                  }).thenCompose(ignore -> CompletableFuture.failedFuture(throwable))
             );
          }
       }
