@@ -613,7 +613,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writer.writeStartElement(Element.SECURITY);
          writer.writeStartElement(Element.AUTHORIZATION);
          attributes.write(writer, AuthorizationConfiguration.ENABLED, Attribute.ENABLED);
-         writer.writeAttribute(Attribute.ROLES, authorization.roles());
+         if (!authorization.roles().isEmpty()) {
+            writer.writeAttribute(Attribute.ROLES, authorization.roles());
+         }
          writer.writeEndElement();
          writer.writeEndElement();
       }
