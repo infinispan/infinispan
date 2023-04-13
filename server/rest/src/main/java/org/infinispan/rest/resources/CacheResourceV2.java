@@ -433,7 +433,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
 
-      ComponentRegistry registry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
+      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       ClusterPublisherManager<Object, ?> cpm = registry.getClusterPublisherManager().wired();
       EncoderKeyMapper<Object> mapper = new EncoderKeyMapper<>(cache.getKeyDataConversion());
       mapper.injectDependencies(registry);
@@ -469,7 +469,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       final MediaType valueMediaType = getMediaType(negotiate, cache, false);
 
       AdvancedCache<?, ?> typedCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
-      ComponentRegistry registry = SecurityActions.getComponentRegistry(typedCache);
+      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(typedCache);
       ClusterPublisherManager<Object, Object> cpm = registry.getClusterPublisherManager().wired();
       InternalEntryFactory ief = registry.getInternalEntryFactory().running();
       EncoderEntryMapper<Object, Object, CacheEntry<Object, Object>> mapper = EncoderEntryMapper.newCacheEntryMapper(typedCache.getKeyDataConversion(), typedCache.getValueDataConversion(), ief);
@@ -685,7 +685,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       Boolean rebalancingEnabled = null;
       try {
-         LocalTopologyManager localTopologyManager = SecurityActions.getComponentRegistry(cache.getAdvancedCache())
+         LocalTopologyManager localTopologyManager = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache())
                .getComponent(LocalTopologyManager.class);
          if (localTopologyManager != null) {
             rebalancingEnabled = localTopologyManager.isCacheRebalancingEnabled(cache.getName());

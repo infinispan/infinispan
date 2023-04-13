@@ -203,7 +203,7 @@ public class SecurityResource implements ResourceHandler {
          Json caches = Json.object();
          acl.set("caches", caches);
          for (String cacheName : cacheNames) {
-            Configuration cacheConfiguration = SecurityActions.getCacheConfigurationFromManager(rcm.getInstance(), cacheName);
+            Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(rcm.getInstance(), cacheName);
             SubjectACL cacheACL = authorizer.getACL(subject, cacheConfiguration.security().authorization());
             caches.set(cacheName, aclToJson(cacheACL));
          }

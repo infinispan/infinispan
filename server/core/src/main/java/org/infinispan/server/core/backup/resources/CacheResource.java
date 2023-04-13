@@ -175,7 +175,7 @@ public class CacheResource extends AbstractContainerResource {
                return;
 
             AdvancedCache<Object, Object> cache = cm.getCache(cacheName).getAdvancedCache();
-            ComponentRegistry cr = SecurityActions.getComponentRegistry(cache);
+            ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
             CommandsFactory commandsFactory = cr.getCommandsFactory();
             KeyPartitioner keyPartitioner = cr.getComponent(KeyPartitioner.class);
             InvocationHelper invocationHelper = cr.getComponent(InvocationHelper.class);
@@ -244,7 +244,7 @@ public class CacheResource extends AbstractContainerResource {
             throw new CacheException(String.format("Unable to create backup file '%s'", xmlFileName), e);
          }
 
-         ComponentRegistry cr = SecurityActions.getComponentRegistry(cache);
+         ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
          ClusterPublisherManager<Object, Object> clusterPublisherManager = cr.getClusterPublisherManager().running();
          SerializationContextRegistry ctxRegistry = cr.getGlobalComponentRegistry().getComponent(SerializationContextRegistry.class);
          ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
