@@ -101,7 +101,10 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
       size += keySize;
       size += valueSize;
       size += metadataSize;
-      size += internalMetadataSize;
+      if (internalMetadataSize > 0) {
+         size += 4;
+         size += internalMetadataSize;
+      }
       return size;
    }
 }

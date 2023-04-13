@@ -50,17 +50,24 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final byte CUSTOM = 1;
    // Version can be set with any combination of the following types
    private static final byte HAS_VERSION = 2;
-   // Only one of the following should ever be set
+   // Only one of the following 4 should ever be set
+   // It should be possible to reuse this bit for something else if needed as the absence of the other three
+   // can imply it is immortal
    private static final byte IMMORTAL = 1 << 2;
    private static final byte MORTAL = 1 << 3;
    private static final byte TRANSIENT = 1 << 4;
    private static final byte TRANSIENT_MORTAL = 1 << 5;
 
+   private static final byte EXPIRATION_TYPES = IMMORTAL | MORTAL | TRANSIENT | TRANSIENT_MORTAL;
+
+   // Whether this entry has private metadata or not
+   private static final byte HAS_PRIVATE_METADATA = 1 << 6;
+
    /**
-    * HEADER is composed of type (byte), hashCode (int), keyLength (int), valueLength (int), internalMetadataLength
+    * HEADER is composed of type (byte), hashCode (int), keyLength (int), valueLength (int)
     * Note that metadata is not included as this is now optional
     */
-   static final int HEADER_LENGTH = 1 + 4 + 4 + 4 + 4;
+   static final int HEADER_LENGTH = 1 + 4 + 4 + 4;
 
    @Start
    public void start() {
@@ -128,10 +135,16 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       WrappedBytes value = ice.getValue();
       int valueSize = value != null ? value.getLength() : 0;
 
-      byte[] internalMetadataBytes = shouldWriteInternalMetadata(ice.getInternalMetadata()) ?
-                                     marshall(ice.getInternalMetadata()) :
-                                     Util.EMPTY_BYTE_ARRAY;
-      int internalMetadataSize = internalMetadataBytes.length;
+      byte[] internalMetadataBytes;
+      int internalMetadataSize;
+      if (shouldWriteInternalMetadata(ice.getInternalMetadata())) {
+         internalMetadataBytes = marshall(ice.getInternalMetadata());
+         internalMetadataSize = internalMetadataBytes.length;
+         type |= HAS_PRIVATE_METADATA;
+      } else {
+         internalMetadataBytes = null;
+         internalMetadataSize = 0;
+      }
 
       // Eviction requires 2 additional pointers at the beginning
       int offset = evictionEnabled ? 16 : 0;
@@ -155,8 +168,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       MEMORY.putInt(memoryAddress, offset, valueSize);
       offset += 4;
 
-      MEMORY.putInt(memoryAddress, offset, internalMetadataSize);
-      offset += 4;
+      if (internalMetadataSize > 0) {
+         MEMORY.putInt(memoryAddress, offset, internalMetadataSize);
+         offset += 4;
+      }
 
       MEMORY.putBytes(key.getBytes(), key.backArrayOffset(), memoryAddress, offset, keySize);
       offset += keySize;
@@ -194,7 +209,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          metadataLength = MEMORY.getInt(entryAddress, headerOffset);
          headerOffset += 4;
       } else {
-         switch (type) {
+         switch (type & EXPIRATION_TYPES) {
+            case IMMORTAL:
+               metadataLength = 0;
+               break;
             case MORTAL:
             case TRANSIENT:
                metadataLength = 16;
@@ -203,16 +221,20 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
                metadataLength = 32;
                break;
             default:
-               metadataLength = 0;
-               break;
+               throw new IllegalArgumentException("Unsupported type: " + type);
          }
       }
 
       int valueLength = MEMORY.getInt(entryAddress, headerOffset);
       headerOffset += 4;
 
-      int internalMetadataLength = MEMORY.getInt(entryAddress, headerOffset);
-      headerOffset += 4;
+      int internalMetadataLength;
+      if (requiresInternalMetadataSize(type)) {
+         internalMetadataLength = MEMORY.getInt(entryAddress, headerOffset);
+         headerOffset += 4;
+      } else {
+         internalMetadataLength = 0;
+      }
 
       int size = headerOffset + keyLength + metadataLength + valueLength + internalMetadataLength;
       return includeAllocationOverhead ? estimateSizeOverhead(size) : size;
@@ -259,7 +281,9 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       offset += 4;
 
       // Ignore internal metadata bytes
-      offset += 4;
+      if (requiresInternalMetadataSize(metadataType)) {
+         offset += 4;
+      }
 
       // Finally read the bytes and return
       MEMORY.getBytes(address, offset, keyBytes, 0, keyBytes.length);
@@ -285,7 +309,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       offset += 4;
 
       byte[] metadataBytes;
-      switch (metadataType) {
+      switch (metadataType & (~HAS_PRIVATE_METADATA)) {
          case IMMORTAL:
             metadataBytes = Util.EMPTY_BYTE_ARRAY;
             break;
@@ -305,8 +329,13 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int valueSize = MEMORY.getInt(address, offset);
       offset += 4;
 
-      int internalMetadataSize = MEMORY.getInt(address, offset);
-      offset += 4;
+      int internalMetadataSize;
+      if (requiresInternalMetadataSize(metadataType)) {
+         internalMetadataSize = MEMORY.getInt(address, offset);
+         offset += 4;
+      } else {
+         internalMetadataSize = 0;
+      }
 
       MEMORY.getBytes(address, offset, keyBytes, 0, keyBytes.length);
       offset += keyBytes.length;
@@ -349,7 +378,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          offset = 0;
          boolean hasVersion = (metadataType & HAS_VERSION) == HAS_VERSION;
          // Ignore CUSTOM and VERSION to find type
-         switch (metadataType & 0xFC) {
+         switch (metadataType & EXPIRATION_TYPES) {
             case IMMORTAL:
                lifespan = -1;
                maxIdle = -1;
@@ -430,7 +459,9 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       headerOffset += 4;
 
       // This is for the internal metadata size which we don't need to read
-      headerOffset += 4;
+      if (requiresInternalMetadataSize(type)) {
+         headerOffset += 4;
+      }
       // Finally read each byte individually so we don't have to copy them into a byte[]
       for (int i = 0; i < keyLength; i++) {
          byte b = MEMORY.getByte(address, headerOffset + i);
@@ -490,12 +521,17 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          // value and keyLength
          offset += 4 + keyLength;
 
+         // internal metadata length (if applicable)
+         if (requiresInternalMetadataSize(metadataType)) {
+            offset += 4;
+         }
+
          // If it has version that means we wrote the size as well which goes after key length
          if ((metadataType & HAS_VERSION) != 0) {
             offset += 4;
          }
 
-         switch (metadataType & 0xFC) {
+         switch (metadataType & EXPIRATION_TYPES) {
             case MORTAL:
                metadataBytes = new byte[16];
                MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
@@ -520,6 +556,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    static private boolean requiresMetadataSize(byte type) {
       return (type & (CUSTOM | HAS_VERSION)) != 0;
+   }
+
+   static private boolean requiresInternalMetadataSize(byte type) {
+      return (type & HAS_PRIVATE_METADATA) == HAS_PRIVATE_METADATA;
    }
 
    @Override
@@ -547,7 +587,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          metadataSize += marshall(metadata).length;
       }
       long internalMetadataSize = shouldWriteInternalMetadata(internalMetadata) ?
-                                  marshall(internalMetadata).length :
+                                  marshall(internalMetadata).length + 4:
                                   0;
       return estimateSizeOverhead(totalSize + metadataSize + internalMetadataSize);
    }
@@ -571,21 +611,24 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       offset += 4;
 
       boolean hasVersion = (metadataType & HAS_VERSION) != 0;
+      boolean hasInternalMetadata = requiresInternalMetadataSize(metadataType);
 
       if ((metadataType & TRANSIENT) != 0) {
-         // Skip the metadataSize (if version present), valueSize, internalMetadataSize and the keyBytes
-         offset += ((hasVersion ? 4 : 0) + 4 + 4 + keySize);
+         // Skip the metadataSize (if version present), valueSize and the keyBytes
+         offset += (hasVersion ? 4 : 0) + (hasInternalMetadata ? 4 : 0 ) + 4 + keySize;
          // Skip the max idle value
          storeLongLittleEndian(address, offset + 8, currentTimeMillis);
          return 0;
       }
       if ((metadataType & TRANSIENT_MORTAL) != 0) {
-         // Skip the metadataSize (if version present), valueSize, internalMetadataSize and the keyBytes
-         offset += ((hasVersion ? 4 : 0) + 4 + 4 + keySize);
+         // Skip the metadataSize (if version present), valueSize and the keyBytes
+         offset += (hasVersion ? 4 : 0) + (hasInternalMetadata ? 4 : 0 ) + 4 + keySize;
          // Skip the lifespan/max idle values and created
          storeLongLittleEndian(address, offset + 24, currentTimeMillis);
          return 0;
       }
+
+      // If we got here it means it is custom type, so we have to read the metadata and update it
 
       byte[] metadataBytes = new byte[MEMORY.getInt(address, offset)];
       int metadataSize = metadataBytes.length;
@@ -594,8 +637,13 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int valueSize = MEMORY.getInt(address, offset);
       offset += 4;
 
-      int internalMetadataSize = MEMORY.getInt(address, offset);
-      offset += 4;
+      int internalMetadataSize;
+      if (hasInternalMetadata) {
+         internalMetadataSize = MEMORY.getInt(address, offset);
+         offset += 4;
+      } else {
+         internalMetadataSize = 0;
+      }
 
       // skips over the actual key bytes
       offset += keySize;
@@ -621,8 +669,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          MEMORY.putBytes(newMetadataBytes, 0, newPointer, offset, newMetadataSize);
          // This copies the value bytes from the old to the new location
          MEMORY.copy(address, offset + metadataSize, newPointer, offset + newMetadataSize, valueSize);
-         // This copies the internal metadata bytes from the old to the new location
-         MEMORY.copy(address, offset + metadataSize + valueSize, newPointer, offset + newMetadataSize + valueSize, internalMetadataSize);
+         if (internalMetadataSize > 0) {
+            // This copies the internal metadata bytes from the old to the new location
+            MEMORY.copy(address, offset + metadataSize + valueSize, newPointer, offset + newMetadataSize + valueSize, internalMetadataSize);
+         }
 
          return newPointer;
       }
