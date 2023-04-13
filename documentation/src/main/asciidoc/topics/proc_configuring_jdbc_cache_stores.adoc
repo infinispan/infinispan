@@ -39,6 +39,15 @@ For example, specify if the cache store is shared with multiple cache instances 
 . Add a JDBC connection factory so that {brandname} can connect to the database.
 . Add a database table that stores cache entries.
 
+//downstream content only
+ifdef::downstream[]
+[IMPORTANT]
+====
+Configuring the `string-keyed-jdbc-store` with inappropriate data type can lead to exceptions during loading or storing cache entries.
+For more information and a list of data types that are tested as part of the {brandname} release, see link:https://access.redhat.com/solutions/6999841[Tested database settings for {brandname} string-keyed-jdbc-store persistence (Login required)].
+====
+endif::downstream[]
+
 [discrete]
 == JDBC string-based cache store configuration
 
