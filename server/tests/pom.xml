@@ -107,10 +107,6 @@
          <groupId>io.opentelemetry</groupId>
          <artifactId>opentelemetry-sdk-testing</artifactId>
       </dependency>
-      <dependency>
-         <groupId>io.jaegertracing</groupId>
-         <artifactId>jaeger-testcontainers</artifactId>
-      </dependency>
 
       <!-- Kafka for CloudEvents testing -->
       <dependency>
