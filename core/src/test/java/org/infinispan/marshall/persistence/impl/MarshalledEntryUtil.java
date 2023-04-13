@@ -42,7 +42,11 @@ public class MarshalledEntryUtil {
    }
 
    public static <K,V> MarshallableEntry<K,V> create(K key, V value, Metadata metadata, long created, long lastUsed, Marshaller m) {
-      return new MarshallableEntryImpl<>(key, value, metadata, null, created, lastUsed, m);
+      return create(key, value, metadata, null, created, lastUsed, m);
+   }
+
+   public static <K,V> MarshallableEntry<K,V> create(K key, V value, Metadata metadata, PrivateMetadata privateMetadata, long created, long lastUsed, Marshaller m) {
+      return new MarshallableEntryImpl<>(key, value, metadata, privateMetadata, created, lastUsed, m);
    }
 
    public static <K, V> MarshallableEntry<K, V> create(InternalCacheEntry<K, V> ice, Marshaller m) {

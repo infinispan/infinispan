@@ -30,10 +30,13 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -46,7 +49,9 @@ import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -359,6 +364,44 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
       assertEquals(numberOfEntries, cache.size());
       entriesMap.forEach((k, v) -> assertEquals(v, cache.get(k)));
+   }
+
+   @DataProvider(name = "transactions")
+   public Object[][] transactions() {
+      return new Object[][] {
+            { LockingMode.PESSIMISTIC},
+            { LockingMode.OPTIMISTIC},
+      };
+   }
+
+   @Test(dataProvider = "transactions")
+   public void testSimpleOpsCacheTransactional(LockingMode lockingMode) {
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      cb.transaction().lockingMode(lockingMode);
+      createCacheStoreConfig(cb.persistence(), "testSimpleOpsCacheTransactional", false);
+      TestingUtil.defineConfiguration(cacheManager, "testSimpleOpsCacheTransactional", cb.build());
+      Cache<String, Object> cache = cacheManager.getCache("testSimpleOpsCacheTransactional");
+      cache.start();
+
+      cache.put("foo", "bar");
+      CacheEntry<String, Object> ice = cache.getAdvancedCache().getCacheEntry("foo");
+      assertNotNull(ice);
+      assertEquals("foo", ice.getKey());
+      assertEquals("bar", ice.getValue());
+      PrivateMetadata privateMetadata = ice.getInternalMetadata();
+
+      // Clear the in memory contents but keep the store to read from
+      cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+      CacheEntry<String, Object> storeIce = cache.getAdvancedCache().getCacheEntry("foo");
+      assertNotNull(storeIce);
+      assertEquals("foo", ice.getKey());
+      assertEquals("bar", ice.getValue());
+      if (privateMetadata != null) {
+         assertEquals(privateMetadata, storeIce.getInternalMetadata());
+      }
+
+      assertEquals("bar", cache.remove("foo"));
    }
 
    protected ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, String cacheName,

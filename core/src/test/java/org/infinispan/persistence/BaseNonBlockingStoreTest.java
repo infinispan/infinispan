@@ -30,11 +30,13 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -195,6 +197,21 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertEquals(valueToStorage("v"), entry.getValue());
       assertTrue("Expected an immortalEntry",
                  entry.getMetadata() == null || entry.expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
+      assertContains("k", true);
+      // The store may return null or FALSE but not TRUE
+      assertNotSame(Boolean.TRUE, store.delete(keyToStorage("k2")));
+   }
+
+   public void testLoadAndStoreInternalMetadata() throws PersistenceException {
+      assertIsEmpty();
+      PrivateMetadata privateMetadata = new PrivateMetadata.Builder().entryVersion(new NumericVersion(341)).build();
+      store.write(marshalledEntry("k", "v", privateMetadata));
+
+      MarshallableEntry<?, ?> entry = store.loadEntry(keyToStorage("k"));
+      assertEquals(valueToStorage("v"), entry.getValue());
+      assertTrue("Expected an immortalEntry",
+            entry.getMetadata() == null || entry.expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
+      assertEquals(privateMetadata, entry.getInternalMetadata());
       assertContains("k", true);
       // The store may return null or FALSE but not TRUE
       assertNotSame(Boolean.TRUE, store.delete(keyToStorage("k2")));
@@ -719,6 +736,12 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       Object transformedKey = keyToStorage(key);
       Object transformedValue = valueToStorage(value);
       return MarshalledEntryUtil.create(transformedKey, wrap(transformedKey, transformedValue), getMarshaller());
+   }
+
+   private MarshallableEntry<Object, Object> marshalledEntry(String key, String value, PrivateMetadata privateMetadata) {
+      Object transformedKey = keyToStorage(key);
+      Object transformedValue = valueToStorage(value);
+      return MarshalledEntryUtil.create(transformedKey, wrap(transformedKey, transformedValue), null, privateMetadata, -1, -1, getMarshaller());
    }
 
    protected final MarshallableEntry<Object, Object> marshalledEntry(InternalCacheEntry<Object, Object> entry) {
