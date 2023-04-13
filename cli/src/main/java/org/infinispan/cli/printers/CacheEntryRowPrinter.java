@@ -45,7 +45,7 @@ public class CacheEntryRowPrinter implements PrettyRowPrinter {
             colWidths[6] = 19;
             break;
          default:
-            break;
+            throw new IllegalArgumentException("Illegal number of columns: " + columns);
       }
    }
 
