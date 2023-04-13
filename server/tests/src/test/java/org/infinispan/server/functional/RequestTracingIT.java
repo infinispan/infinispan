@@ -16,10 +16,10 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import io.jaegertracing.testcontainers.JaegerAllInOne;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.testcontainers.containers.GenericContainer;
 
 /**
  * Test OpenTelemetry tracing integration with the Jaeger client
@@ -27,11 +27,13 @@ import okhttp3.Response;
  * @since 10.0
  */
 public class RequestTracingIT {
+
+   public static final int JAEGER_QUERY_PORT = 16686;
    public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/jaegertracing/all-in-one:1.35.2");
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
 
-   private static final JaegerAllInOne JAEGER = new JaegerAllInOne(JAEGER_IMAGE)
+   private static final GenericContainer JAEGER = new GenericContainer(JAEGER_IMAGE)
          .withEnv("COLLECTOR_OTLP_ENABLED", "true");
 
    @ClassRule
@@ -72,7 +74,7 @@ public class RequestTracingIT {
       OkHttpClient httpClient = new OkHttpClient();
       String queryUrl = String.format("http://%s:%s/api/traces?service=%s",
                                       ipAddress(JAEGER),
-                                      JaegerAllInOne.JAEGER_QUERY_PORT,
+                                      JAEGER_QUERY_PORT,
                                       SERVICE_NAME);
 
       Eventually.eventually(() -> {
