@@ -17,7 +17,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A mixture between a {@link CompletableFuture} and a {@link java.util.concurrent.locks.Condition}.
@@ -52,7 +51,7 @@ public class ConditionFuture<T> {
       Objects.requireNonNull(test);
 
       if (!running) {
-         return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
+         return CompletableFuture.failedFuture(new IllegalLifecycleStateException());
       }
 
       Data data = new Data();

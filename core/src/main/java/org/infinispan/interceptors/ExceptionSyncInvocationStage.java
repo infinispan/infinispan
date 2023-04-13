@@ -79,7 +79,7 @@ public class ExceptionSyncInvocationStage extends InvocationStage {
 
    @Override
    public CompletableFuture<Object> toCompletableFuture() {
-      return CompletableFutures.completedExceptionFuture(throwable);
+      return CompletableFuture.failedFuture(throwable);
    }
 
    @Override

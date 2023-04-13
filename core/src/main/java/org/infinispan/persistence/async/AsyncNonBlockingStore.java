@@ -283,7 +283,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
                return retry(operationSupplier,retries - 1);
             } else {
                log.debug("Failed to process async operation - no more retries", throwable);
-               return CompletableFutures.completedExceptionFuture(throwable);
+               return CompletableFuture.failedFuture(throwable);
             }
          }
          return CompletableFutures.completedNull();

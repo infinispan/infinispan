@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -324,7 +325,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private CompletionStage<Void> asyncStartPushState(RemoteSiteStatus status) {
       String siteName = status.getSiteName();
       if (!status.startStateTransfer(rpcManager.getMembers())) {
-         CompletableFutures.completedExceptionFuture(log.xsiteStateTransferAlreadyInProgress(siteName));
+         CompletableFuture.failedFuture(log.xsiteStateTransferAlreadyInProgress(siteName));
       }
 
       CompletionStage<Void> rsp = null;

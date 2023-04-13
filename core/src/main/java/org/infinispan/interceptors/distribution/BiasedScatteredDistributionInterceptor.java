@@ -231,7 +231,7 @@ public class BiasedScatteredDistributionInterceptor extends ScatteredDistributio
          RevokeBiasCommand revokeBiasCommand = cf.buildRevokeBiasCommand(ackTarget, id, topologyId, keys);
          return rpcManager.invokeCommand(targets, revokeBiasCommand, MapResponseCollector.ignoreLeavers(targets.size()), rpcManager.getSyncRpcOptions());
       } catch (Throwable t) {
-         return CompletableFutures.completedExceptionFuture(t);
+         return CompletableFuture.failedFuture(t);
       }
    }
 

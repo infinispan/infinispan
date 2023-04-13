@@ -228,7 +228,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
             return CompletableFuture.completedFuture(result);
          }
       } catch (Throwable t) {
-         return CompletableFutures.completedExceptionFuture(t);
+         return CompletableFuture.failedFuture(t);
       }
    }
 

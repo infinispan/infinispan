@@ -6,7 +6,6 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedExceptionFuture;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.extractException;
 import static org.infinispan.rest.framework.Method.DELETE;
 import static org.infinispan.rest.framework.Method.GET;
@@ -292,6 +291,6 @@ public class CounterResource implements ResourceHandler {
       if (cause instanceof CounterNotFoundException) {
          return notFoundResponseFuture();
       }
-      return completedExceptionFuture(cause);
+      return CompletableFuture.failedFuture(cause);
    }
 }

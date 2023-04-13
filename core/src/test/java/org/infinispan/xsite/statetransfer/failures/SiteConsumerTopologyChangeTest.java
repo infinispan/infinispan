@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.wrapComponent;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -19,7 +20,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BlockingLocalTopologyManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.statetransfer.XSiteState;
@@ -180,7 +180,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                try {
                   checkPoint.awaitStrict("blocked", 30, TimeUnit.SECONDS);
                } catch (InterruptedException | TimeoutException e) {
-                  return CompletableFutures.completedExceptionFuture(e);
+                  return CompletableFuture.failedFuture(e);
                }
                return delegate.handleStateTransferState(cmd);
             }

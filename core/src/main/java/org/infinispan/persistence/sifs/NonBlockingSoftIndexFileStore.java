@@ -518,13 +518,13 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
       int keyLength = entry.getKeyBytes().getLength();
       if (keyLength > maxKeyLength) {
-         return CompletableFutures.completedExceptionFuture(log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength));
+         return CompletableFuture.failedFuture(log.keyIsTooLong(entry.getKey(), keyLength, configuration.maxNodeSize(), maxKeyLength));
       }
       try {
          log.tracef("Writing entry for key %s for segment %d", entry.getKey(), segment);
          return logAppender.storeRequest(segment, entry);
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
+         return CompletableFuture.failedFuture(new PersistenceException(e));
       }
    }
 
@@ -534,7 +534,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          log.tracef("Deleting key %s for segment %d", key, segment);
          return logAppender.deleteRequest(segment, key, marshaller.objectToBuffer(key));
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(new PersistenceException(e));
+         return CompletableFuture.failedFuture(new PersistenceException(e));
       }
    }
 
@@ -572,7 +572,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             }
          }
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(log.cannotLoadKeyFromIndex(key, e));
+         return CompletableFuture.failedFuture(log.cannotLoadKeyFromIndex(key, e));
       }
    }
 

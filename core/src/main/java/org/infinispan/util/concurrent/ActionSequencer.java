@@ -15,7 +15,6 @@ import java.util.function.BiFunction;
 import org.infinispan.commons.stat.DefaultSimpleStat;
 import org.infinispan.commons.stat.SimpleStat;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Orders multiple actions/tasks based on a key.
@@ -57,7 +56,7 @@ public class ActionSequencer {
       try {
          return action.call();
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(e);
+         return CompletableFuture.failedFuture(e);
       }
    }
 

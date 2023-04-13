@@ -146,7 +146,7 @@ public class TransactionCoordinator {
                } else {
                   xe.initCause(prepareThrowable);
                }
-               return CompletableFutures.completedExceptionFuture(xe);
+               return CompletableFuture.failedFuture(xe);
             });
          }
          if (localTransaction.isReadOnly()) {
@@ -209,7 +209,7 @@ public class TransactionCoordinator {
       }
       XAException xe = new XAException(XAException.XAER_RMERR);
       xe.initCause(t);
-      return CompletableFutures.completedExceptionFuture(t);
+      return CompletableFuture.failedFuture(t);
    }
 
    private <T> CompletionStage<T> handleCommitFailure(Throwable e, boolean onePhaseCommit, LocalTxInvocationContext ctx) {

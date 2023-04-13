@@ -4,13 +4,13 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.transport.raft.RaftChannel;
 import org.infinispan.remoting.transport.raft.RaftChannelConfiguration;
@@ -180,7 +180,7 @@ class JGroupsRaftManager implements RaftManager {
          try {
             return raftHandle.setAsync(buffer.getBuf(), buffer.getOffset(), buffer.getLength()).thenApply(ByteBufferImpl::create);
          } catch (Exception e) {
-            return CompletableFutures.completedExceptionFuture(e);
+            return CompletableFuture.failedFuture(e);
          }
       }
 

@@ -220,10 +220,10 @@ public class InvocationHelper implements TransactionResourceConverter {
          assert implicitTransaction != null;
          cf = doInvokeAsync(ctx, command);
       } catch (SystemException e) {
-         return CompletableFutures.completedExceptionFuture(new CacheException("Cannot suspend implicit transaction", e));
+         return CompletableFuture.failedFuture(new CacheException("Cannot suspend implicit transaction", e));
       } catch (Throwable e) {
          tryRollback();
-         return CompletableFutures.completedExceptionFuture(e);
+         return CompletableFuture.failedFuture(e);
       }
       if (implicitTransaction instanceof TransactionImpl) {
          return commitInjectedTransactionAsync(cf, (TransactionImpl) implicitTransaction);

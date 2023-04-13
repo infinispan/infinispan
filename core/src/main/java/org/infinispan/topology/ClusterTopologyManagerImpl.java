@@ -97,7 +97,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
    private static final CompletableFuture<CacheStatusResponseCollector> SKIP_RECOVERY_FUTURE =
-         CompletableFutures.completedExceptionFuture(new IllegalStateException());
+         CompletableFuture.failedFuture(new IllegalStateException());
 
    @Inject Transport transport;
    @Inject GlobalConfiguration globalConfiguration;
@@ -624,7 +624,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                                              DeliverOrder.NONE, getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS,
                                              MILLISECONDS);
       } catch (Exception e) {
-         return CompletableFutures.completedExceptionFuture(e);
+         return CompletableFuture.failedFuture(e);
       }
    }
 

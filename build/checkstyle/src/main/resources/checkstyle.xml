@@ -131,9 +131,9 @@
             <property name="methodPattern"
                       value="blocking(First|ForEach|Get|Iterable|Last|Latest|MostRecent|Next|Single|Subscribe)"/>
         </module>
-        <!-- Prevent invoking completedStage method, should use completedFuture -->
+        <!-- Prevent invoking completedStage and failedStage methods, should use completedFuture or failedFuture -->
         <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
-            <property name="methodPattern" value="completedStage"/>
+            <property name="methodPattern" value="(completed|failed)Stage"/>
         </module>
 
         <!-- Allow annotated code to disable checkstyle check -->

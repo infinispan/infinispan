@@ -380,7 +380,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                if (log.isTraceEnabled()) {
                   log.tracef(t, "Encountered exception in remove expired invocation - propagating!");
                }
-               return CompletableFutures.<Boolean>completedExceptionFuture(cause);
+               return CompletableFuture.<Boolean>failedFuture(cause);
             }
          } else {
             return expired == Boolean.TRUE ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
@@ -449,7 +449,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                }
                return attemptTouchAndReturnIfExpired(ice, segment, currentTime);
             }
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          }
 
          return CompletableFutures.booleanStage(expired);

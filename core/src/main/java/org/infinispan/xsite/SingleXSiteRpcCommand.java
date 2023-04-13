@@ -3,6 +3,7 @@ package org.infinispan.xsite;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -10,7 +11,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * RPC command to replicate cache operations (such as put, remove, replace, etc.) to the backup site.
@@ -46,7 +46,7 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Object> {
             //noinspection unchecked
             return (CompletionStage<Object>) ((CacheRpcCommand) command).invokeAsync(registry);
          } catch (Throwable throwable) {
-            return CompletableFutures.completedExceptionFuture(throwable);
+            return CompletableFuture.failedFuture(throwable);
          }
       }
    }

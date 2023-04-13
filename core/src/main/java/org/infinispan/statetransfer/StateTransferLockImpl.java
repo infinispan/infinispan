@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -111,7 +112,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public CompletionStage<Void> transactionDataFuture(int expectedTopologyId) {
       if (topologyId == TOPOLOGY_ID_STOPPED)
-         return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
+         return CompletableFuture.failedFuture(new IllegalLifecycleStateException());
 
       if (transactionDataTopologyId >= expectedTopologyId)
          return CompletableFutures.completedNull();
@@ -160,7 +161,7 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public CompletionStage<Void> topologyFuture(int expectedTopologyId) {
       if (topologyId == TOPOLOGY_ID_STOPPED)
-         return CompletableFutures.completedExceptionFuture(new IllegalLifecycleStateException());
+         return CompletableFuture.failedFuture(new IllegalLifecycleStateException());
 
       if (topologyId >= expectedTopologyId)
          return CompletableFutures.completedNull();

@@ -117,7 +117,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
       CompletionStage<Boolean> lockStage = lock.lock();
       return lockStage.thenCompose(acquired -> {
          if (!acquired) {
-            return CompletableFutures.completedExceptionFuture(new MassIndexerAlreadyStartedException());
+            return CompletableFuture.failedFuture(new MassIndexerAlreadyStartedException());
          }
          try {
             isRunning = true;
@@ -130,7 +130,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
             }
             return clusterExecutor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
          } catch (Throwable t) {
-            return CompletableFutures.completedExceptionFuture(t);
+            return CompletableFuture.failedFuture(t);
          } finally {
             lock.unlock();
             isRunning = false;

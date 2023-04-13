@@ -253,7 +253,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
 
    public void testAsyncInvocationManyHandlersSyncException() throws Exception {
       sideEffects.set("");
-      CompletableFuture<Object> f = CompletableFutures.completedExceptionFuture(new TestException(""));
+      CompletableFuture<Object> f = CompletableFuture.failedFuture(new TestException(""));
       AsyncInterceptorChain chain = makeChainWithManyHandlers(f);
       CompletableFuture<Object> invokeFuture = chain.invokeAsync(newInvocationContext(), testCommand);
       assertExceptionHandlers(invokeFuture);

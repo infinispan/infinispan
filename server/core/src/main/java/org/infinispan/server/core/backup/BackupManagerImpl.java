@@ -155,14 +155,14 @@ public class BackupManagerImpl implements BackupManager {
    public CompletionStage<Path> create(String name, Path workingDir, Map<String, Resources> params) {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       if (getBackupStatus(name) != Status.NOT_FOUND)
-         return CompletableFutures.completedExceptionFuture(log.backupAlreadyExists(name));
+         return CompletableFuture.failedFuture(log.backupAlreadyExists(name));
 
       BackupWriter writer = new BackupWriter(name, blockingManager, cacheManagers, parserRegistry, workingDir == null ? rootDir : workingDir);
       CompletionStage<Path> backupStage = backupLock.lock()
             .thenCompose(lockAcquired -> {
                log.tracef("Backup %s locked = %s", backupLock, lockAcquired);
                if (!lockAcquired)
-                  return CompletableFutures.completedExceptionFuture(log.backupInProgress());
+                  return CompletableFuture.failedFuture(log.backupInProgress());
 
                log.initiatingBackup(name);
                return writer.create(params);
@@ -175,7 +175,7 @@ public class BackupManagerImpl implements BackupManager {
                   Throwable backupErr = log.errorCreatingBackup(t);
                   log.errorf(backupErr.getCause(), "%s:", backupErr.getMessage());
                   return unlock.thenCompose(ignore ->
-                        CompletableFutures.completedExceptionFuture(backupErr)
+                        CompletableFuture.failedFuture(backupErr)
                   );
                }
                log.backupComplete(path.getFileName().toString());
@@ -222,18 +222,18 @@ public class BackupManagerImpl implements BackupManager {
    public CompletionStage<Void> restore(String name, Path backup, Map<String, Resources> params) {
       SecurityActions.checkPermission(cacheManager.withSubject(Security.getSubject()), AuthorizationPermission.ADMIN);
       if (getRestoreStatus(name) != Status.NOT_FOUND)
-         return CompletableFutures.completedExceptionFuture(log.restoreAlreadyExists(name));
+         return CompletableFuture.failedFuture(log.restoreAlreadyExists(name));
 
       if (!Files.exists(backup)) {
          CacheException e = log.errorRestoringBackup(backup, new FileNotFoundException(backup.toString()));
          log.errorf(e.getCause(), "%s:", e.getMessage());
-         return CompletableFutures.completedExceptionFuture(e);
+         return CompletableFuture.failedFuture(e);
       }
 
       CompletionStage<Void> restoreStage = restoreLock.lock()
             .thenCompose(lockAcquired -> {
                if (!lockAcquired)
-                  return CompletableFutures.completedExceptionFuture(log.restoreInProgress());
+                  return CompletableFuture.failedFuture(log.restoreInProgress());
 
                log.initiatingRestore(name, backup);
                return reader.restore(backup, params);
@@ -246,7 +246,7 @@ public class BackupManagerImpl implements BackupManager {
                   Throwable restoreErr = log.errorRestoringBackup(backup, t);
                   log.errorf(restoreErr.getCause(), "%s:", restoreErr.getMessage());
                   return unlock.thenCompose(ignore ->
-                        CompletableFutures.completedExceptionFuture(restoreErr)
+                        CompletableFuture.failedFuture(restoreErr)
                   );
                }
                log.restoreComplete(name);

@@ -6,12 +6,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.RevokeBiasCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,13 +23,11 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.CountingRpcManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -152,7 +152,7 @@ public class BiasRevocationTest extends MultipleCacheManagersTest {
             if (throwBefore)
                throw new RemoteException("Induced", null);
             if (throwInFuture) {
-               return CompletableFutures.completedExceptionFuture(new RemoteException("Induced", null));
+               return CompletableFuture.failedFuture(new RemoteException("Induced", null));
             }
          }
          return super.performRequest(targets, command, collector, invoker, rpcOptions);
