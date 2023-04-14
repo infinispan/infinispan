@@ -1,5 +1,6 @@
 package org.infinispan.server.extensions;
 
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -31,14 +32,7 @@ public class ExtensionsIT {
                .build();
 
    public static String[] mavenArtifacts() {
-      return new String[]{
-            "org.openjdk.nashorn:nashorn-core:15.4",
-            "org.ow2.asm:asm:9.4",
-            "org.ow2.asm:asm-analysis:9.4",
-            "org.ow2.asm:asm-commons:9.4",
-            "org.ow2.asm:asm-tree:9.4",
-            "org.ow2.asm:asm-util:9.4"
-      };
+      return Common.NASHORN_DEPS;
    }
 
    public static JavaArchive[] artifacts() {

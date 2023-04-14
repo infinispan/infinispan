@@ -32,15 +32,6 @@
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-               <!-- Forking is necessary to allow for the compiler args to be picked up. -->
-               <fork combine.children="append">true</fork>
-               <compilerArgument>--enable-preview</compilerArgument>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
             <configuration>
                <skip>true</skip>

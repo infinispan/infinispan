@@ -114,13 +114,13 @@
       <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
 
       <!-- Java source/target version -->
-      <maven.min.version>3.2.1</maven.min.version>
+      <maven.min.version>3.9.0</maven.min.version>
       <jdk.min.version>17</jdk.min.version>
 
       <!-- Dependency versions -->
       <version.aesh>2.6</version.aesh>
       <version.aesh-readline>2.3</version.aesh-readline>
-      <version.ant>1.10.7</version.ant>
+      <version.ant>1.10.13</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.antlr3>3.5.2</version.antlr3>
@@ -175,9 +175,9 @@
       <version.lucene>8.11.1</version.lucene>
       <version.metainf-services>1.8</version.metainf-services>
       <version.micrometer>1.9.2</version.micrometer>
-      <version.mockito>4.5.1</version.mockito>
-      <version.mockito_dep.bytebuddy>1.14.3</version.mockito_dep.bytebuddy>
-      <version.mockito_dep.objenesis>2.6</version.mockito_dep.objenesis>
+      <version.mockito>5.3.0</version.mockito>
+      <version.mockito_dep.bytebuddy>1.14.4</version.mockito_dep.bytebuddy>
+      <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.4</version.nashorn>
       <version.netty>4.1.91.Final</version.netty>
       <version.netty.incubator.iouring>0.0.19.Final</version.netty.incubator.iouring>
@@ -220,7 +220,7 @@
       <version.checkstyle.maven-plugin>3.1.1</version.checkstyle.maven-plugin>
       <version.maven>3.8.2</version.maven>
       <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
-      <version.maven.antrun>3.0.0</version.maven.antrun>
+      <version.maven.antrun>3.1.0</version.maven.antrun>
       <version.maven.buildhelper>3.1.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.gpg>3.0.1</version.maven.gpg>
