@@ -1,0 +1,52 @@
+[id='querying-protostream-common-types_{context}']
+= Querying ProtoStream common types
+Perform Ickle queries on caches that store data as ProtoStream common types such as `BigInteger` and `BigDecimal`.
+
+.Procedure
+. Add indexing annotations to your class, as in the following example:
++
+[source,java]
+----
+@Indexed
+public class CalculusIndexed {
+    @Basic
+    @ProtoField(value = 1)
+    public BigInteger getPurchases() {
+      return purchases;
+    }
+
+    @Decimal // the scale is 2 by default
+    @ProtoField(value = 2)
+    public BigDecimal getProspect() {
+      return prospect;
+    }
+}
+----
+
+. Set the `dependsOn` attribute to `CommonTypes.class` to indicate that the generated Protobuf schema can reference and use `CommonTypes` types such as `BigInteger` and `BigDecimal`:
++
+[source,java]
+----
+@AutoProtoSchemaBuilder(includeClasses = CalculusIndexed.class, dependsOn = CommonTypes.class,
+     schemaFilePath = "/protostream", schemaFileName = "calculus-indexed.proto",
+     schemaPackageName = "lab.indexed")
+public interface CalculusIndexedSchema extends GeneratedSchema {
+}
+----
++
+. Perform queries:
++
+[source]
+----
+Query<Product> query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.purchases > 9");
+QueryResult<Product> result = query.execute();
+// play with the result
+
+query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.prospect = 2.2");
+result = query.execute();
+// play with the result
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{encoding_docs}#protostream-types_marshalling[ProtoStream Types Marshalling]
