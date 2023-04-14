@@ -307,7 +307,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             });
       String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
       String javaOpts = null;
-      if (i == 0) {
+      if (i == 0 && configuration.site() == null) {
          javaOpts = "-D" + JOIN_TIMEOUT + "=0";
       }
       if (debug != null && Integer.parseInt(debug) == i) {

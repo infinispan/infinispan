@@ -71,7 +71,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
       properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
       properties.setProperty(Server.INFINISPAN_LOG4J_SHUTDOWN, "false");
-      if (serverIndex == 0) {
+      if (serverIndex == 0 && configuration.site() == null) {
          properties.setProperty(JOIN_TIMEOUT, "0");
       }
       configureSite(properties);
