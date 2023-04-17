@@ -40,6 +40,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_PROT
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.STATISTICS;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRACING_PROPAGATION_ENABLED;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_AUTH;
@@ -294,6 +295,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(JMX, "true");
       p.setProperty(JMX_NAME, "jmxInfinispan");
       p.setProperty(JMX_DOMAIN, "jmxInfinispanDomain");
+      p.setProperty(TRACING_PROPAGATION_ENABLED, "false");
 
       Configuration configuration = builder.withProperties(p).build();
       validateConfiguration(configuration);
@@ -306,6 +308,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(PROTOCOL_VERSION, "auto");
       configuration = new ConfigurationBuilder().withProperties(p).build();
       assertEquals(ProtocolVersion.PROTOCOL_VERSION_AUTO, configuration.version());
+      assertFalse(configuration.tracingPropagationEnabled());
    }
 
    public void testSSLContext() {
