@@ -64,11 +64,13 @@ public class LocalIndexStatistics implements IndexStatistics {
    private CompletionStage<IndexInfo> indexInfos(SearchIndexedEntity indexedEntity) {
       SearchSession session = searchMapping.getMappingSession();
       SearchScope<?> scope = session.scope(indexedEntity.javaClass(), indexedEntity.name());
+
       CompletionStage<Long> countStage = blockingManager.supplyBlocking(
             () -> session.search(scope).where(SearchPredicateFactory::matchAll).fetchTotalHitCount(), this);
-      CompletionStage<Long> sizeStage = indexedEntity.indexManager().unwrap(LuceneIndexManager.class)
-            .computeSizeInBytesAsync();
-      return countStage.thenCombine(sizeStage, IndexInfo::new);
+
+      return countStage
+            .thenCompose(count -> indexedEntity.indexManager().unwrap(LuceneIndexManager.class).computeSizeInBytesAsync()
+            .thenApply(size -> new IndexInfo(count, size)));
    }
 
    @Override
