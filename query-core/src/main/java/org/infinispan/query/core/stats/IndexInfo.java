@@ -52,4 +52,12 @@ public class IndexInfo implements JsonSerialization {
             .set("count", count())
             .set("size", size());
    }
+
+   @Override
+   public String toString() {
+      return "IndexInfo{" +
+            "count=" + count +
+            ", size=" + size +
+            '}';
+   }
 }
