@@ -47,7 +47,7 @@ public class LocalIndexerRemoveTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void test() {
+   public void test() throws Exception {
       Cache<Integer, TypeA> typesCache = cacheManager.getCache(CACHE_NAME);
       Indexer indexer = Search.getIndexer(typesCache);
       SearchStatistics searchStatistics = Search.getSearchStatistics(typesCache);
@@ -57,23 +57,38 @@ public class LocalIndexerRemoveTest extends SingleCacheManagerTest {
       typesCache.putAll(values);
 
       // the indexing mode is manual, thus the index is empty
-      assertThat(count(searchStatistics)).isZero();
-
-      join(indexer.runLocal());
+      IndexInfo indexInfo = indexInfo(searchStatistics);
+      assertThat(indexInfo.count()).isZero();
 
       // the indexer fills the index
-      assertThat(count(searchStatistics)).isEqualTo(ENTRIES);
+      join(indexer.runLocal());
 
-      join(indexer.remove());
+      indexInfo = indexInfo(searchStatistics);
+      assertThat(indexInfo.count()).isEqualTo(ENTRIES);
 
       // removing the index data
-      assertThat(count(searchStatistics)).isZero();
+      join(indexer.remove());
+
+      Thread.sleep(500);
+
+      indexInfo = indexInfo(searchStatistics);
+      assertThat(indexInfo.count()).isZero();
+      long firstCallSize = indexInfo.size();
+
+      indexInfo = indexInfo(searchStatistics);
+      assertThat(indexInfo.count()).isZero();
+      long secondCallSize = indexInfo.size();
+
+      // it seems that the first call to the state after the purge is always wrong and the second call is always correct,
+      // no matter how much time we wait after the purge
+      assertThat(firstCallSize - secondCallSize).isLessThanOrEqualTo(1000);
    }
 
-   private long count(SearchStatistics searchStatistics) {
-      Map<String, IndexInfo> indexInfo = join(searchStatistics.getIndexStatistics().computeIndexInfos());
+   private IndexInfo indexInfo(SearchStatistics searchStatistics) {
+      Map<String, IndexInfo> indexInfos = join(searchStatistics.getIndexStatistics().computeIndexInfos());
       String key = TypeA.class.getName();
-      assertThat(indexInfo).containsKey(key);
-      return indexInfo.get(key).count();
+      assertThat(indexInfos).containsKey(key);
+      IndexInfo indexInfo = indexInfos.get(key);
+      return indexInfo;
    }
 }
