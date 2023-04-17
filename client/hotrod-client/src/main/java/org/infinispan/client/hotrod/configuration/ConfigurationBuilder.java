@@ -532,6 +532,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.TRANSPORT_FACTORY)) {
          this.transportFactory = Util.getInstance(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY), classLoader.get());
       }
+
+      if (typed.containsKey(ConfigurationProperties.TRACING_PROPAGATION_ENABLED)) {
+         this.tracingPropagationEnabled = typed.getBooleanProperty(ConfigurationProperties.TRACING_PROPAGATION_ENABLED,
+               ConfigurationProperties.DEFAULT_TRACING_PROPAGATION_ENABLED);
+      }
       return this;
    }
 
