@@ -129,7 +129,9 @@ public class ConfigurationProperties {
    public static final String CACHE_TEMPLATE_NAME_SUFFIX = ".template_name";
    public static final String CACHE_TRANSACTION_MODE_SUFFIX = ".transaction.transaction_mode";
    public static final String CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX = ".transaction.transaction_manager_lookup";
-   public static final String DNS_RESOLVER = ".dns_resolver";
+   public static final String DNS_RESOLVER_MIN_TTL = ".dns_resolver_min_ttl";
+   public static final String DNS_RESOLVER_MAX_TTL = ".dns_resolver_max_ttl";
+   public static final String DNS_RESOLVER_NEGATIVE_TTL = ".dns_resolver_negative_ttl";
 
    // defaults
    /**

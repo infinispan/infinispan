@@ -33,7 +33,9 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
    static final AttributeDefinition<ClientIntelligence> CLIENT_INTELLIGENCE = AttributeDefinition.builder("client_intelligence", ClientIntelligence.getDefault(), ClientIntelligence.class).immutable().build();
    static final AttributeDefinition<Integer> CONNECT_TIMEOUT = AttributeDefinition.builder("connect_timeout", 10_000, Integer.class).build();
    static final AttributeDefinition<Class[]> CONSISTENT_HASH_IMPL = AttributeDefinition.builder("hash_function_impl", ConsistentHash.DEFAULT, Class[].class).immutable().build();
-   static final AttributeDefinition<DnsResolver> DNS_RESOLVER = AttributeDefinition.builder("dns_resolver", DnsResolver.DEFAULT, DnsResolver.class).build();
+   static final AttributeDefinition<Integer> DNS_RESOLVER_MIN_TTL = AttributeDefinition.builder("dns_resolver_min_ttl", 0).build();
+   static final AttributeDefinition<Integer> DNS_RESOLVER_MAX_TTL = AttributeDefinition.builder("dns_resolver_max_ttl", Integer.MAX_VALUE).build();
+   static final AttributeDefinition<Integer> DNS_RESOLVER_NEGATIVE_TTL = AttributeDefinition.builder("dns_resolver_negative_ttl", 0).build();
    static final AttributeDefinition<Boolean> FORCE_RETURN_VALUES = AttributeDefinition.builder("force_return_values", false, Boolean.class).build();
    static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).immutable().initializer(ProtoStreamMarshaller::new).build();
    static final AttributeDefinition<Class> MARSHALLER_CLASS = AttributeDefinition.builder("marshaller_class", ProtoStreamMarshaller.class, Class.class).immutable().build();
@@ -49,7 +51,8 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HotRodConfiguration.class, ALLOW_LIST, BATCH_SIZE, CLIENT_INTELLIGENCE, CONNECT_TIMEOUT,
-            CONSISTENT_HASH_IMPL, DNS_RESOLVER, FORCE_RETURN_VALUES, MARSHALLER, MARSHALLER_CLASS, MAX_RETRIES, SOCKET_TIMEOUT,
+            CONSISTENT_HASH_IMPL, DNS_RESOLVER_MIN_TTL, DNS_RESOLVER_MAX_TTL, DNS_RESOLVER_NEGATIVE_TTL,
+            FORCE_RETURN_VALUES, MARSHALLER, MARSHALLER_CLASS, MAX_RETRIES, SOCKET_TIMEOUT,
             TCP_KEEPALIVE, TCP_NODELAY, TRANSACTION_TIMEOUT, URI, VERSION);
    }
 
@@ -125,8 +128,16 @@ public class HotRodConfiguration extends ConfigurationElement<HotRodConfiguratio
       return attributes.attribute(CONSISTENT_HASH_IMPL).get()[version - 1];
    }
 
-   public DnsResolver dnsResolver() {
-      return attributes.attribute(DNS_RESOLVER).get();
+   public int dnsResolverMinTTL() {
+      return attributes.attribute(DNS_RESOLVER_MIN_TTL).get();
+   }
+
+   public int dnsResolverMaxTTL() {
+      return attributes.attribute(DNS_RESOLVER_MAX_TTL).get();
+   }
+
+   public int dnsResolverNegativeTTL() {
+      return attributes.attribute(DNS_RESOLVER_NEGATIVE_TTL).get();
    }
 
    public boolean forceReturnValues() {

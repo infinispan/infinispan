@@ -91,8 +91,18 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   public ConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
-      return builder.dnsResolver(dnsResolver);
+   public ConfigurationBuilder dnsResolverMinTTL(int minTTL) {
+      return builder.dnsResolverMinTTL(minTTL);
+   }
+
+   @Override
+   public ConfigurationBuilder dnsResolverMaxTTL(int maxTTL) {
+      return builder.dnsResolverMaxTTL(maxTTL);
+   }
+
+   @Override
+   public ConfigurationBuilder dnsResolverNegativeTTL(int negativeTTL) {
+      return builder.dnsResolverNegativeTTL(negativeTTL);
    }
 
    @Override
