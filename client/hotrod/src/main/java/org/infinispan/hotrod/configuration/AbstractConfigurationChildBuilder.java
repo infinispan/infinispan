@@ -82,8 +82,18 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   public HotRodConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
-      return builder.dnsResolver(dnsResolver);
+   public HotRodConfigurationBuilder dnsResolverMinTTL(int ttl) {
+      return builder.dnsResolverMinTTL(ttl);
+   }
+
+   @Override
+   public HotRodConfigurationBuilder dnsResolverMaxTTL(int ttl) {
+      return builder.dnsResolverMaxTTL(ttl);
+   }
+
+   @Override
+   public HotRodConfigurationBuilder dnsResolverNegativeTTL(int ttl) {
+      return builder.dnsResolverNegativeTTL(ttl);
    }
 
    @Override

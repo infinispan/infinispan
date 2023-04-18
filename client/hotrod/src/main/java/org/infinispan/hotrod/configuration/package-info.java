@@ -95,7 +95,25 @@
  *          <td><b>infinispan.client.hotrod.protocol_version</b></td>
  *          <td>String</td>
  *          <td>Latest version supported by the client in use</td>
- *          <td>The Hot Rod {@link org.infinispan.hotrod.configuration.HotRodConfigurationBuilder#version(org.infinispan.hotrod.ProtocolVersion) version}.</td>
+ *          <td>The Hot Rod {@link org.infinispan.hotrod.configuration.HotRodConfigurationBuilder#version(org.infinispan.hotrod.configuration.ProtocolVersion) version}.</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.dns_resolver_min_ttl</b></td>
+ *          <td>Integer</td>
+ *          <td>0</td>
+ *          <td>The minimum TTL of the cached DNS resource records (in seconds). If the TTL of the DNS resource record returned by the DNS server is less than the minimum TTL, the resolver will ignore the TTL from the DNS server and use the minimum TTL instead. The defaults respect the DNS server TTL.</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.dns_resolver_max_ttl</b></td>
+ *          <td>Integer</td>
+ *          <td>Integer.MAX_VALUE</td>
+ *          <td>The maximum TTL of the cached DNS resource records (in seconds). If the TTL of the DNS resource record returned by the DNS server is greater than the maximum TTL, the resolver will ignore the TTL from the DNS server and use the maximum TTL instead. The defaults respect the DNS server TTL.</td>
+ *       </tr>
+ *       <tr>
+ *          <td><b>infinispan.client.hotrod.dns_resolver_negative_ttl</b></td>
+ *          <td>Integer</td>
+ *          <td>0</td>
+ *          <td>Sets the TTL of the cache for the failed DNS queries (in seconds).</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.transport_factory</b></td>

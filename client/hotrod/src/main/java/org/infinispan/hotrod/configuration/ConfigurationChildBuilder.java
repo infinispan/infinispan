@@ -84,7 +84,11 @@ public interface ConfigurationChildBuilder {
     */
    HotRodConfigurationBuilder consistentHashImpl(int version, String consistentHashClass);
 
-   HotRodConfigurationBuilder dnsResolver(DnsResolver dnsResolver);
+   HotRodConfigurationBuilder dnsResolverMinTTL(int ttl);
+
+   HotRodConfigurationBuilder dnsResolverMaxTTL(int ttl);
+
+   HotRodConfigurationBuilder dnsResolverNegativeTTL(int ttl);
 
    /**
     * Whether or not to implicitly FORCE_RETURN_VALUE for all calls.

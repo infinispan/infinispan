@@ -2,14 +2,12 @@ package org.infinispan.client.hotrod;
 
 import java.util.concurrent.ExecutorService;
 
-import org.infinispan.client.hotrod.configuration.DnsResolver;
 import org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.NativeTransport;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.resolver.AddressResolverGroup;
 
 /**
  * TransportFactory is responsible for creating Netty's {@link SocketChannel}s and {@link EventLoopGroup}s.
@@ -40,10 +38,4 @@ public interface TransportFactory {
     * @return an instance of Netty's {@link EventLoopGroup}
     */
    EventLoopGroup createEventLoopGroup(int maxExecutors, ExecutorService executorService);
-
-   /**
-    * Returns a custom DNS resolver. Used when {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#dnsResolver(DnsResolver)} is set to {@link DnsResolver#CUSTOM}
-    * @return an {@link AddressResolverGroup}
-    */
-   AddressResolverGroup<?> dnsResolver();
 }

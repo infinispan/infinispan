@@ -62,7 +62,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.resolver.AddressResolverGroup;
-import io.netty.resolver.DefaultAddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
 import net.jcip.annotations.GuardedBy;
@@ -134,7 +133,7 @@ public class ChannelFactory {
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", initialServers);
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
-                       configuration.tcpNoDelay(), configuration.socketTimeout(), configuration.connectionTimeout());
+                  configuration.tcpNoDelay(), configuration.socketTimeout(), configuration.connectionTimeout());
          }
 
          if (!configuration.clusters().isEmpty()) {
@@ -189,20 +188,11 @@ public class ChannelFactory {
 
    private ChannelPool newPool(SocketAddress address) {
       log.debugf("Creating new channel pool for %s", address);
-      AddressResolverGroup<?> dnsResolver;
-      switch (configuration.dnsResolver()) {
-         case ROUND_ROBIN:
-            DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
-                  .channelType(configuration.transportFactory().datagramChannelClass());
-            dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
-            break;
-         case CUSTOM:
-            dnsResolver = configuration.transportFactory().dnsResolver();
-            break;
-         default:
-            dnsResolver = DefaultAddressResolverGroup.INSTANCE;
-            break;
-      }
+      DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
+            .channelType(configuration.transportFactory().datagramChannelClass())
+            .ttl(configuration.dnsResolverMinTTL(), configuration.dnsResolverMaxTTL())
+            .negativeTtl(configuration.dnsResolverNegativeTTL());
+      AddressResolverGroup<?> dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
       Bootstrap bootstrap = new Bootstrap()
             .group(eventLoopGroup)
             .channel(configuration.transportFactory().socketChannelClass())
@@ -219,9 +209,9 @@ public class ChannelFactory {
       ChannelInitializer channelInitializer = createChannelInitializer(address, bootstrap);
       bootstrap.handler(channelInitializer);
       ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
-                                         configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
-                                         configuration.connectionPool().maxWait(), maxConnections,
-                                         configuration.connectionPool().maxPendingRequests());
+            configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
+            configuration.connectionPool().maxWait(), maxConnections,
+            configuration.connectionPool().maxPendingRequests());
       channelInitializer.setChannelPool(pool);
       return pool;
    }
@@ -384,8 +374,8 @@ public class ChannelFactory {
          } else {
             if (log.isTraceEnabled())
                log.tracef("[%s] Ignoring outdated topology: topology id = %s, topology age = %s, servers = %s",
-                          cacheInfo.getCacheName(), responseTopologyId, responseTopologyAge,
-                          Arrays.toString(addresses));
+                     cacheInfo.getCacheName(), responseTopologyId, responseTopologyAge,
+                     Arrays.toString(addresses));
          }
       } finally {
          lock.writeLock().unlock();
@@ -397,10 +387,10 @@ public class ChannelFactory {
       if (log.isTraceEnabled()) {
          if (hashFunctionVersion == 0)
             log.tracef("[%s] Not using a consistent hash function (hash function version == 0).",
-                       cacheNameString);
+                  cacheNameString);
          else
             log.tracef("[%s] Updating client hash function with %s number of segments",
-                       cacheNameString, segmentOwners.length);
+                  cacheNameString, segmentOwners.length);
       }
       return topologyInfo.createConsistentHash(segmentOwners.length, hashFunctionVersion, segmentOwners);
    }
@@ -518,7 +508,7 @@ public class ChannelFactory {
 
          if (log.isTraceEnabled())
             log.tracef("Connection attempt failed, we now have %d servers with no established connections: %s",
-                       failedServers.size(), failedServers);
+                  failedServers.size(), failedServers);
          allInitialServersFailed = failedServers.containsAll(topologyInfo.getCluster().getInitialServers());
          if (!allInitialServersFailed || clusters.isEmpty()) {
             resetCachesWithFailedServers();
