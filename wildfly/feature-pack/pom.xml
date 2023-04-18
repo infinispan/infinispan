@@ -566,6 +566,17 @@
 
         <dependency>
             <groupId>io.netty</groupId>
+            <artifactId>netty-codec-dns</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
             <exclusions>
                 <exclusion>
@@ -578,6 +589,17 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
