@@ -204,10 +204,7 @@ public class ChannelFactory {
             .option(ChannelOption.SO_RCVBUF, 1024576);
       ChannelInitializer channelInitializer = createChannelInitializer(address, bootstrap);
       bootstrap.handler(channelInitializer);
-      ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
-            configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
-            configuration.connectionPool().maxWait(), maxConnections,
-            configuration.connectionPool().maxPendingRequests());
+      ChannelPool pool = createChannelPool(bootstrap, channelInitializer, address);
       channelInitializer.setChannelPool(pool);
       return pool;
    }
