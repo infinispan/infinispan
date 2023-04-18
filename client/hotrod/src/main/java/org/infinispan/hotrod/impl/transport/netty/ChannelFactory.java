@@ -61,7 +61,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.resolver.AddressResolverGroup;
-import io.netty.resolver.DefaultAddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
 import net.jcip.annotations.GuardedBy;
@@ -175,20 +174,12 @@ public class ChannelFactory {
 
    private ChannelPool newPool(SocketAddress address) {
       log.debugf("Creating new channel pool for %s", address);
-      AddressResolverGroup<?> dnsResolver;
-      switch (configuration.dnsResolver()) {
-         case ROUND_ROBIN:
-            DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
-                  .channelType(configuration.transportFactory().datagramChannelClass());
-            dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
-            break;
-         case CUSTOM:
-            dnsResolver = configuration.transportFactory().dnsResolver();
-            break;
-         default:
-            dnsResolver = DefaultAddressResolverGroup.INSTANCE;
-            break;
-      }
+
+      DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
+            .channelType(configuration.transportFactory().datagramChannelClass())
+            .ttl(configuration.dnsResolverMinTTL(), configuration.dnsResolverMaxTTL())
+            .negativeTtl(configuration.dnsResolverNegativeTTL());
+      AddressResolverGroup<?> dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
 
       Bootstrap bootstrap = new Bootstrap()
             .group(eventLoopGroup)

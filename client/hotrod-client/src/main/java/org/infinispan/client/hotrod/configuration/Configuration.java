@@ -20,6 +20,9 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTI
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONTEXT_INITIALIZERS;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DNS_RESOLVER_MAX_TTL;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DNS_RESOLVER_MIN_TTL;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
@@ -114,11 +117,14 @@ public class Configuration {
    private final Map<String, RemoteCacheConfiguration> remoteCaches;
    private final TransportFactory transportFactory;
    private final boolean tracingPropagationEnabled;
-   private final DnsResolver dnsResolver;
+   private final int dnsResolverMinTTL;
+   private final int dnsResolverMaxTTL;
+   private final int dnsResolverNegativeTTL;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
-                        DnsResolver dnsResolver, boolean forceReturnValues, int keySizeEstimate,
+                        int dnsResolverMinTTL, int dnsResolverMaxTTL, int dnsResolverNegativeTTL,
+                        boolean forceReturnValues, int keySizeEstimate,
                         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
                         int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
@@ -135,7 +141,9 @@ public class Configuration {
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
       this.consistentHashImpl = consistentHashImpl;
-      this.dnsResolver = dnsResolver;
+      this.dnsResolverMinTTL = dnsResolverMinTTL;
+      this.dnsResolverMaxTTL = dnsResolverMaxTTL;
+      this.dnsResolverNegativeTTL = dnsResolverNegativeTTL;
       this.forceReturnValues = forceReturnValues;
       this.keySizeEstimate = keySizeEstimate;
       this.marshallerClass = marshallerClass;
@@ -194,8 +202,16 @@ public class Configuration {
       return consistentHashImpl[version - 1];
    }
 
-   public DnsResolver dnsResolver() {
-      return dnsResolver;
+   public int dnsResolverMinTTL() {
+      return dnsResolverMinTTL;
+   }
+
+   public int dnsResolverMaxTTL() {
+      return dnsResolverMaxTTL;
+   }
+
+   public int dnsResolverNegativeTTL() {
+      return dnsResolverNegativeTTL;
    }
 
    public boolean forceReturnValues() {
@@ -417,6 +433,10 @@ public class Configuration {
       properties.setProperty(VALUE_SIZE_ESTIMATE, valueSizeEstimate());
       properties.setProperty(MAX_RETRIES, maxRetries());
       properties.setProperty(STATISTICS, statistics().enabled());
+
+      properties.setProperty(DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL);
+      properties.setProperty(DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL);
+      properties.setProperty(DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL);
 
       properties.setProperty(CONNECTION_POOL_EXHAUSTED_ACTION, connectionPool().exhaustedAction().name());
       properties.setProperty("exhaustedAction", connectionPool().exhaustedAction().ordinal());

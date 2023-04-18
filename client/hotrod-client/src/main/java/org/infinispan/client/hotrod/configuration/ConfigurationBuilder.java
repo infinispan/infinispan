@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -94,7 +93,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final Map<String, RemoteCacheConfigurationBuilder> remoteCacheBuilders;
    private TransportFactory transportFactory = TransportFactory.DEFAULT;
    private boolean tracingPropagationEnabled = ConfigurationProperties.DEFAULT_TRACING_PROPAGATION_ENABLED;
-   private DnsResolver dnsResolver = DnsResolver.ROUND_ROBIN;
+   private int dnsResolverMinTTL = 0;
+   private int dnsResolverMaxTTL = Integer.MAX_VALUE;
+   private int dnsResolverNegativeTTL = 0;
+
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<>(Thread.currentThread().getContextClassLoader());
@@ -226,8 +228,20 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
-   public ConfigurationBuilder dnsResolver(DnsResolver dnsResolver) {
-      this.dnsResolver = Objects.requireNonNull(dnsResolver);
+   public ConfigurationBuilder dnsResolverMinTTL(int minTTL) {
+      this.dnsResolverMinTTL = minTTL;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder dnsResolverMaxTTL(int maxTTL) {
+      this.dnsResolverMaxTTL = maxTTL;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder dnsResolverNegativeTTL(int negativeTTL) {
+      this.dnsResolverNegativeTTL = negativeTTL;
       return this;
    }
 
@@ -489,7 +503,15 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MAX_RETRIES)) {
          this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
       }
-      dnsResolver(typed.getEnumProperty(ConfigurationProperties.DNS_RESOLVER, DnsResolver.class, dnsResolver,true));
+      if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MIN_TTL)) {
+         this.dnsResolverMinTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MAX_TTL)) {
+         this.dnsResolverMaxTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL)) {
+         this.dnsResolverNegativeTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL, true));
+      }
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
 
@@ -617,8 +639,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             Map.Entry::getKey, e -> e.getValue().create()));
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(),
-            clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl, dnsResolver, forceReturnValues,
-            keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
+            clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl,
+            dnsResolverMinTTL, dnsResolverMaxTTL, dnsResolverNegativeTTL,
+            forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
             contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled);
@@ -652,6 +675,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       for (int i = 0; i < consistentHashImpl.length; i++) {
          this.consistentHashImpl[i] = template.consistentHashImpl(i + 1);
       }
+      this.dnsResolverMinTTL = template.dnsResolverMinTTL();
+      this.dnsResolverMaxTTL = template.dnsResolverMaxTTL();
+      this.dnsResolverNegativeTTL = template.dnsResolverNegativeTTL();
       this.forceReturnValues = template.forceReturnValues();
       this.keySizeEstimate = template.keySizeEstimate();
       this.marshaller = template.marshaller();
