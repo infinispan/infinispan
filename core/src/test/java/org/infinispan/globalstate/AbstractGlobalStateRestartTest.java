@@ -115,16 +115,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       // Healthy cluster
       switch (extraneousNodePosition) {
          case -1: {
-            // Healthy cluster
-            waitForClusterToForm(CACHE_NAME);
-
-            checkClusterRestartedCorrectly(addressMappings);
-            checkData();
-
-            ConsistentHash newConsistentHash =
-                  advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
-            PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
-            assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
+            assertHealthyCluster(addressMappings, oldConsistentHash);
             break;
          }
          case 0: {
@@ -150,6 +141,19 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
             }
          }
       }
+   }
+
+   protected void assertHealthyCluster(Map<JGroupsAddress, PersistentUUID> addressMappings, ConsistentHash oldConsistentHash) throws Throwable {
+      // Healthy cluster
+      waitForClusterToForm(CACHE_NAME);
+
+      checkClusterRestartedCorrectly(addressMappings);
+      checkData();
+
+      ConsistentHash newConsistentHash =
+            advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
+      assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }
 
    protected void restartWithoutGracefulShutdown() {
