@@ -827,8 +827,15 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          return;
       }
 
+      // We don't have a queued rebalance.
       if (queuedRebalanceMembers == null) {
-         // We don't have a queued rebalance. We may need to broadcast a stable topology update
+         // The previous topology was not restored. We do nothing, waiting for the members to get back in and install topology.
+         if (currentTopology == null && persistentState.isPresent()) {
+            log.debugf("Skipping rebalance for cache %s as the previous topology was not restored", cacheName);
+            return;
+         }
+
+         // We may need to broadcast a stable topology update
          if (stableTopology == null || stableTopology.getTopologyId() < currentTopology.getTopologyId()) {
             stableTopology = currentTopology;
             log.updatingStableTopology(cacheName, stableTopology);
