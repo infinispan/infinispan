@@ -359,6 +359,16 @@
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-commons-graalvm</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-core-graalvm</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.infinispan.protostream</groupId>
                 <artifactId>protostream</artifactId>
                 <version>${version.protostream}</version>

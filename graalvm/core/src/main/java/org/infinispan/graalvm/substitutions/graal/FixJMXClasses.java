@@ -1,4 +1,4 @@
-package org.infinispan.quarkus.embedded.runtime.graal;
+package org.infinispan.graalvm.substitutions.graal;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;

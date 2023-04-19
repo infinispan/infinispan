@@ -1,4 +1,4 @@
-package org.infinispan.quarkus.embedded.runtime.graal;
+package org.infinispan.graalvm.substitutions.graal;
 
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.RecomputeFieldValue;

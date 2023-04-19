@@ -1,4 +1,4 @@
-package org.infinispan.quarkus.embedded.runtime;
+package org.infinispan.graalvm.substitutions.graal;
 
 public class Util {
    public static UnsupportedOperationException unsupportedOperationException(String feature) {

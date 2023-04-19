@@ -1,0 +1,60 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd"
+        xmlns="urn:infinispan:config:15.0">
+    <jgroups>
+        <!-- Load external JGroups stacks -->
+        <stack-file name="test-udp" path="stacks/udp.xml"/>
+        <stack-file name="test-tcp" path="stacks/tcp.xml"/>
+    </jgroups>
+
+    <cache-container name="default" statistics="true">
+        <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
+        <metrics gauges="true" histograms="true" accurate-size="true"/>
+        <local-cache name="local" statistics="true"/>
+        <local-cache name="simple-cache" simple-cache="true"/>
+        <invalidation-cache name="invalid" statistics="true"/>
+        <replicated-cache name="repl" statistics="true"/>
+        <distributed-cache name="dist" statistics="true"/>
+        <invalidation-cache name="invalidation" statistics="true"/>
+        <local-cache name="off-heap-memory">
+            <memory storage="OFF_HEAP" max-size="10000000"/>
+        </local-cache>
+        <local-cache name="binary-memory">
+            <memory storage="BINARY"/>
+        </local-cache>
+        <local-cache name="object-memory">
+            <memory storage="OBJECT"/>
+        </local-cache>
+        <local-cache name="heap_object">
+            <memory max-count="1000"/>
+        </local-cache>
+        <local-cache name="tx">
+            <transaction mode="BATCH" locking="OPTIMISTIC"
+                         transaction-manager-lookup="org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup"/>
+        </local-cache>
+
+        <!-- template configurations -->
+        <local-cache-configuration name="local-template" statistics="true">
+            <memory storage="OBJECT" max-count="20000"/>
+        </local-cache-configuration>
+        <local-cache name="local-instance" configuration="local-template">
+            <expiration interval="11000"/>
+        </local-cache>
+
+        <invalidation-cache-configuration name="invalidation-template" statistics="true">
+            <memory storage="OBJECT" max-count="20500"/>
+        </invalidation-cache-configuration>
+        <invalidation-cache name="invalidation-instance" configuration="invalidation-template"/>
+
+        <replicated-cache-configuration name="repl-template" statistics="true">
+            <memory storage="OBJECT" max-count="21000"/>
+        </replicated-cache-configuration>
+        <replicated-cache name="repl-instance" configuration="repl-template"/>
+
+        <distributed-cache-configuration name="dist-template" statistics="true">
+            <memory storage="OBJECT" max-count="21500" when-full="REMOVE"/>
+        </distributed-cache-configuration>
+        <distributed-cache name="dist-instance" configuration="dist-template"/>
+    </cache-container>
+</infinispan>

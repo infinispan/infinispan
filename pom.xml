@@ -124,6 +124,7 @@
       <module>cdi/embedded</module>
       <module>cdi/remote</module>
       <module>lock</module>
+      <module>graalvm</module>
       <module>quarkus</module>
       <module>gridfs</module>
       <module>integrationtests</module>
@@ -991,6 +992,11 @@
             <version>${version.glassfish.json}</version>
          </dependency>
          <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>${version.graalvm}</version>
+         </dependency>
+         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <version>${versionx.org.hamcrest.hamcrest-core}</version>
@@ -1326,6 +1332,11 @@
             <version>${versionx.org.jacoco.org.jacoco.agent}</version>
             <scope>test</scope>
             <classifier>runtime</classifier>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jandex</artifactId>
+            <version>${version.jandex}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss</groupId>
@@ -2246,6 +2257,11 @@
                   </sourceDirectories>
                   <linkXRef>false</linkXRef>
                </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.graalvm.buildtools</groupId>
+               <artifactId>native-maven-plugin</artifactId>
+               <version>${version.native.maven.plugin}</version>
             </plugin>
             <plugin>
                <artifactId>maven-compiler-plugin</artifactId>
