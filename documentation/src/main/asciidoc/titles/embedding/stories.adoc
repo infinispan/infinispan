@@ -12,7 +12,6 @@ include::{stories}/assembly_streams.adoc[leveloffset=+1]
 include::{stories}/assembly_cdi.adoc[leveloffset=+1]
 include::{stories}/assembly_jcache.adoc[leveloffset=+1]
 include::{stories}/assembly_multimap_cache.adoc[leveloffset=+1]
-include::{stories}/assembly_wildfly_modules.adoc[leveloffset=+1]
 //Community content
 ifdef::community[]
 include::{stories}/assembly_custom_interceptors.adoc[leveloffset=+1]

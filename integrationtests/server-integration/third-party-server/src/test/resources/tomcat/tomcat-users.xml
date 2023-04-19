@@ -1,7 +1,0 @@
-<tomcat-users>
-    <role rolename="manager-gui"/>
-    <role rolename="manager-jmx"/>
-    <role rolename="manager-script"/>
-    <user username="tomcat" password="tomcat" roles="manager-script, manager-jmx, manager-gui"/>
-    <user username="admin" password="admin-pwd" roles="manager-script"/>
-</tomcat-users>
