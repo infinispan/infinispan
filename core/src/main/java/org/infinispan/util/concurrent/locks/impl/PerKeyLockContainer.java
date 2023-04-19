@@ -47,7 +47,7 @@ public class PerKeyLockContainer implements LockContainer {
       ByRef<ExtendedLockPromise> reference = ByRef.create(null);
       lockMap.compute(key, (aKey, lock) -> {
          if (lock == null) {
-            lock = createInfinispanLock(aKey);
+            return createInfinispanLock(aKey, lockOwner, reference);
          }
          reference.set(lock.acquire(lockOwner, time, timeUnit));
          return lock;
@@ -102,8 +102,12 @@ public class PerKeyLockContainer implements LockContainer {
             '}';
    }
 
-   private InfinispanLock createInfinispanLock(Object key) {
-      return new InfinispanLock(nonBlockingExecutor, timeService, () -> lockMap.computeIfPresent(key, (ignoredKey, lock) -> lock.isLocked() ? lock : null));
+   private InfinispanLock createInfinispanLock(Object key, Object owner, ByRef<ExtendedLockPromise> promise) {
+      return new InfinispanLock(nonBlockingExecutor, timeService, createReleaseRunnable(key), owner, promise);
+   }
+
+   private Runnable createReleaseRunnable(Object key) {
+      return () -> lockMap.computeIfPresent(key, (ignoredKey, lock) -> lock.isLocked() ? lock : null);
    }
 
 }
