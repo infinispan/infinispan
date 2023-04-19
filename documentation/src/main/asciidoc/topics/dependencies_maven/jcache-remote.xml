@@ -1,4 +1,0 @@
-<dependency>
-  <groupId>org.infinispan</groupId>
-  <artifactId>infinispan-jcache-remote</artifactId>
-</dependency>

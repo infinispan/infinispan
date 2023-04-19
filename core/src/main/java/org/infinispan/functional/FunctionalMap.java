@@ -47,9 +47,8 @@ import org.infinispan.util.function.SerializableFunction;
  * in terms of payload size. Alternatively, you can provide an Infinispan
  * {@link org.infinispan.commons.marshall.Externalizer} for it which
  * drastically reduces the payload size. Marshallable lambdas for some of
- * the most popular lambda functions used by {@link ConcurrentMap} and
- * javax.cache.Cache are available via the
- * {@link MarshallableFunctions} helper class.
+ * the most popular lambda functions used by {@link ConcurrentMap} are
+ * available via the {@link MarshallableFunctions} helper class.
  *
  * <p>Being an asynchronous API, all methods that return a single result,
  * return a {@link CompletableFuture} which wraps the result. To avoid
@@ -139,14 +138,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * persistent store or another clustered node.
        *
        * <p>This method can be used to implement read-only single-key based
-       * operations in {@link ConcurrentMap} and javax.cache.Cache
-       * such as:
+       * operations in {@link ConcurrentMap} such as:
        *
        * <ul>
        *    <li>{@link ConcurrentMap#get(Object)}</li>
        *    <li>{@link ConcurrentMap#containsKey(Object)}</li>
-       *    <li>{@code javax.cache.Cache#get(Object)}</li>
-       *    <li>{@code javax.cache.Cache#containsKey(Object)}</li>
        * </ul>
        *
        * <p>The function must not mutate neither the key returned through
@@ -182,9 +178,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * present in keys collection set. Similar to {@link #eval(Object, Function)},
        * if the user is not sure whether a particular key is present,
        * {@link ReadEntryView#find()} can be used to find out for sure.
-       *
-       * <p>This method can be used to implement operations such as
-       * {@code javax.cache.Cache#getAll(Set)}.
        *
        * DESIGN RATIONALE:
        * <ul>
@@ -242,7 +235,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *    <li>{@link ConcurrentMap#containsValue(Object)}</li>
        *    <li>{@link ConcurrentMap#values()}</li>
        *    <li>{@link ConcurrentMap#entrySet()}</li>
-       *    <li>{@code javax.cache.Cache#iterator()}</li>
        * </ul>
        *
        * @return a sequential {@link Traversable} to navigate each cached entry
@@ -284,8 +276,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * queried, hence the only reasonable thing can be returned is Void.
        *
        * <p>This method can be used to implement single-key write-only operations
-       * which do not need to query previous value, such as
-       * {@code javax.cache.Cache#put(Object, Object)}
+       * which do not need to query the previous value.
        *
        * <p>This operation is very similar to {@link #eval(Object, Consumer)}
        * and in fact, the functionality provided by this function could indeed
@@ -296,9 +287,9 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * Capturing means that each time the operation is called, a new lambda
        * needs to be instantiated. By offering a {@link BiConsumer} that
        * takes user provided value as first parameter, the operation does not
-       * capture any external objects when implementing simple operations
-       * such as {@code javax.cache.Cache#put(Object, Object)}, and hence, the
-       * {@link BiConsumer} could be cached and reused each time it's invoked.
+       * capture any external objects when implementing simple operations,
+       * and hence, the {@link BiConsumer} could be cached and reused each
+       * time it's invoked.
        *
        * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
        * are in place despite the argument type and value type don't have to match
@@ -364,13 +355,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * {@link CompletableFuture} that will be completed when the write-only
        * operation has been executed against all the entries.
        *
-       * This method can be used to implement operations such as:
-       *
-       * <ul>
-       *    <li>{@link ConcurrentMap#putAll(Map)}</li>
-       *    <li>{@code javax.cache.Cache#putAll(Map)}</li>
-       * </ul>
-       *
        * <p>These kind of operations are preferred to traditional end user
        * iterations because the internal logic can often iterate more
        * efficiently since it knows more about the system.
@@ -410,9 +394,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * {@link CompletableFuture} that will be completed when the write-only
        * operation has been executed against all the entries.
        *
-       * <p>This method can be used to implement operations such as
-       * {@code javax.cache.Cache#removeAll(Set)}.
-       *
        * <p>These kind of operations are preferred to traditional end user
        * iterations because the internal logic can often iterate more
        * efficiently since it knows more about the system.
@@ -447,9 +428,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * that will be completed when the write-only operation has been executed
        * against all the entries.
        *
-       * <p>This method can be used to implement operations such as
-       * {@code javax.cache.Cache#removeAll()}.
-       *
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
        * @return a {@link CompletableFuture} which will be completed when
@@ -476,7 +454,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * <ul>
        *    <li>{@link ConcurrentMap#clear()}</li>
-       *    <li>{@code javax.cache.Cache#clear()}</li>
        * </ul>
        *
        * @return a {@link CompletableFuture} that completes when the truncat
@@ -521,14 +498,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * {@link ReadWriteEntryView#find()} can be used to find out for sure.
        *
        * This method can be used to implement single-key read-write operations
-       * in {@link ConcurrentMap} and {@code javax.cache.Cache} that do not
-       * depend on value information given by the user such as:
+       * in {@link ConcurrentMap} that do not depend on value information given
+       * by the user such as:
        *
        * <ul>
        *    <li>{@link ConcurrentMap#remove(Object)}</li>
-       *    <li>{@code javax.cache.Cache#remove(Object)}</li>
-       *    <li>{@code javax.cache.Cache#getAndRemove(Object)}</li>
-       *    <li>{@code javax.cache.Cache#invoke(Object, EntryProcessor, Object...)}</li>
        * </ul>
        *
        * <p>The function must not mutate neither the key returned through
@@ -565,8 +539,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * metadata associated with that key, and return previous value or metadata.
        *
        * <p>This method can be used to implement the vast majority of single-key
-       * read-write operations in {@link ConcurrentMap} and {@code javax.cache.Cache}
-       * such as:
+       * read-write operations in {@link ConcurrentMap} such as:
        *
        * <ul>
        * <li>{@link ConcurrentMap#put(Object, Object)}</li>
@@ -574,12 +547,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <li>{@link ConcurrentMap#replace(Object, Object)}</li>
        * <li>{@link ConcurrentMap#replace(Object, Object, Object)}</li>
        * <li>{@link ConcurrentMap#remove(Object, Object)}</li>
-       * <li>{@code javax.cache.Cache#getAndPut(Object, Object)}</li>
-       * <li>{@code javax.cache.Cache#putIfAbsent(Object, Object)}</li>
-       * <li>{@code javax.cache.Cache#remove(Object, Object)}</li>
-       * <li>{@code javax.cache.Cache#replace(Object, Object, Object)}</li>
-       * <li>{@code javax.cache.Cache#replace(Object, Object)}</li>
-       * <li>{@code javax.cache.Cache#getAndReplace(Object, Object)}</li>
        * </ul>
        *
        * <p> The functionality provided by this function could indeed be
@@ -591,9 +558,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * needs to be instantiated. By offering a {@link BiFunction} that
        * takes user provided value as first parameter, the operation does
        * not capture any external objects when implementing
-       * simple operations such as {@code javax.cache.Cache#getAndPut(Object, Object)},
-       * and hence, the {@link BiFunction} could be cached and reused each
-       * time it's invoked.
+       * simple operations, and hence, the {@link BiFunction} could be cached
+       * and reused each time it's invoked.
        *
        * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
        * are in place despite the argument type and value type don't have to match
@@ -673,10 +639,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * of the keys in the set passed in, and returns a {@link Traversable}
        * to navigate each of the {@link Function} invocation returns.
        *
-       * <p>This method can be used to implement operations such as
-       * {@code javax.cache.Cache#invokeAll(Set, EntryProcessor, Object...)},
-       * or a remove a set of keys returning previous values or metadata
-       * parameters.
+       * <p>This method can be used to a remove a set of keys returning
+       * previous values or metadata parameters.
        *
        * <p>The function must not mutate neither the key returned through
        * {@link ReadEntryView#key()} nor the internally stored value provided

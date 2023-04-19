@@ -7,12 +7,10 @@ Dependency Injection) programming model and allows you to:
 * Configure and inject caches into CDI Beans and Java EE components.
 * Configure cache managers.
 * Receive cache and cache manager level events.
-* Control data storage and retrieval using JCache annotations.
 
 include::{topics}/ref_cdi_dependencies.adoc[leveloffset=+1]
 include::{topics}/proc_cdi_injecting_embedded.adoc[leveloffset=+1]
 include::{topics}/proc_cdi_injecting_remote.adoc[leveloffset=+1]
-include::{topics}/proc_cdi_jcaching_annotations.adoc[leveloffset=+1]
 include::{topics}/proc_cdi_cache_events.adoc[leveloffset=+1]
 
 

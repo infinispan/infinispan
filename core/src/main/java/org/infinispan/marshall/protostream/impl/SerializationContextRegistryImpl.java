@@ -58,7 +58,6 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
       update(GLOBAL, ctx -> ctx.addContextInitializer(new PersistenceContextInitializerImpl())
-            // Register Commons util so that KeyValueWithPrevious can be used with JCache remote
             .addContextInitializer(new org.infinispan.commons.GlobalContextInitializerImpl())
             .addMarshaller(userObjectMarshaller)
       );

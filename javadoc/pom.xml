@@ -339,11 +339,6 @@
                            <version>${version.jakarta.enterprise.cdi}</version>
                         </additionalDependency>
                         <additionalDependency>
-                           <groupId>javax.cache</groupId>
-                           <artifactId>cache-api</artifactId>
-                           <version>${version.javax.cache}</version>
-                        </additionalDependency>
-                        <additionalDependency>
                            <groupId>io.agroal</groupId>
                            <artifactId>agroal-api</artifactId>
                            <version>${version.io.agroal}</version>
