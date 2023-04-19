@@ -204,7 +204,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
    public String getAttributeValue(String name, NamingStrategy strategy) {
       for (Map.Entry<String, Json> attribute : attributes) {
          if (name.equals(basename(strategy, attribute.getKey()))) {
-            return attribute.getValue().asString();
+            return replaceProperties(attribute.getValue().asString());
          }
       }
       return null;
