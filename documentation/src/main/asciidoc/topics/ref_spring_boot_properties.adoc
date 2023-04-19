@@ -12,8 +12,8 @@ Properties in this file take the format of `infinispan.client.hotrod.*`, for exa
 
 [source,text,options=nowrap,subs=attributes+]
 ----
-# List {brandname} servers by IP address or hostname at port 11222.
-infinispan.client.hotrod.server_list=127.0.0.1:6667
+# List {brandname} servers by IP address or hostname at port localhost:11222.
+infinispan.client.hotrod.server_list=127.0.0.1:11222
 ----
 
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration API]
@@ -25,8 +25,8 @@ Properties in this file take the format of `infinispan.remote.*`, for example:
 
 [source,text,options=nowrap,subs=attributes+]
 ----
-# List {brandname} servers by IP address or hostname at port 11222.
-infinispan.remote.server-list=127.0.0.1:6667
+# List {brandname} servers by IP address or hostname at port localhost:11222.
+infinispan.remote.server-list=127.0.0.1:11222
 ----
 
 [role="_additional-resources"]
