@@ -77,6 +77,7 @@ public class ServerConfigurationSerializerTest {
       Properties properties = new Properties();
       properties.put("infinispan.server.config.path", config.getParent().getParent().toString());
       properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, Paths.get(System.getProperty("build.directory")).toString());
+      properties.setProperty("org.infinispan.test.host.address", "127.0.0.1");
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
       ConfigurationBuilderHolder holderBefore = registry.parse(config);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();

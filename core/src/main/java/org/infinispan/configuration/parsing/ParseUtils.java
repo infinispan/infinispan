@@ -275,7 +275,7 @@ public final class ParseUtils {
 
     public static String[] requireAttributes(final ConfigurationReader reader, final Enum<?>... attributes)
             throws ConfigurationReaderException {
-        String attributeNames[] = new String[attributes.length];
+        String[] attributeNames = new String[attributes.length];
         for (int i = 0; i < attributes.length; i++) {
             attributeNames[i] = attributes[i].toString();
         }
