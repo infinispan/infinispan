@@ -79,7 +79,7 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
       assertEquals(2, dataSources.size());
       DataSourceConfiguration dataSource = dataSources.get("database");
       assertEquals("jdbc/database", dataSource.jndiName());
-      assertEquals("jdbc:h2:tcp://${org.infinispan.test.host.address}:1521/test", dataSource.url());
+      assertEquals("jdbc:h2:tcp://127.0.0.1:1521/test", dataSource.url());
       assertEquals("test", dataSource.username());
       assertEquals("test", new String(dataSource.password()));
       assertEquals("SELECT 1", dataSource.initialSql());
