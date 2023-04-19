@@ -377,33 +377,6 @@
                 <artifactId>infinispan-server-testdriver-junit5</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring5-common</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring5-embedded</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring5-remote</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring-boot-starter-embedded</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-spring-boot-starter-remote</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-spring6-common</artifactId>

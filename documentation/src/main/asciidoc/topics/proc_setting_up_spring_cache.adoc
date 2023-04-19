@@ -6,14 +6,7 @@ If you use remote caches in a {brandname} Server deployment, you should also con
 
 [IMPORTANT]
 ====
-{brandname} supports Spring version 5 and version 6.
-Be aware that Spring 6 requires Java 17.
-
-The examples in this document include artifacts for the latest version of Spring.
-If you want to use Spring 5 use:
-
-* Remote caches: `infinispan-spring5-remote`
-* Embedded caches: `infinispan-spring5-embedded`
+{brandname} only supports Spring version version 6.
 ====
 
 .Procedure
@@ -27,7 +20,6 @@ If you want to use Spring 5 use:
 Spring Boot users can add the following artifacts instead of the `infinispan-spring6-embedded`:
 
 * For Spring Boot 3 add `infinispan-spring-boot3-starter-embedded`
-* For Spring Boot 2.x add `infinispan-spring-boot-starter-embedded`
 ====
 . Configure your Hot Rod client to connect to your {brandname} Server deployment in the `hotrod-client.properties` file.
 +

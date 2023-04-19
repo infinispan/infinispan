@@ -121,8 +121,6 @@
       <module>archetypes</module>
       <module>all</module>
       <module>all/cli</module>
-      <module>spring/spring5</module>
-      <module>spring/spring-boot</module>
       <module>spring/spring6</module>
       <module>spring/spring-boot-3</module>
       <module>cli</module>
@@ -144,7 +142,6 @@
       <module>integrationtests/jboss-marshalling-it</module>
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
-      <module>integrationtests/spring-boot-it</module>
       <module>hibernate</module>
       <module>anchored-keys</module>
       <module>cloudevents-integration</module>
@@ -391,6 +388,7 @@
       <versionx.org.springframework.spring-expression>${version.spring}</versionx.org.springframework.spring-expression>
       <versionx.org.springframework.spring-jdbc>${version.spring}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring}</versionx.org.springframework.spring-test>
+      <versionx.org.springframework.spring-tx>${version.spring}</versionx.org.springframework.spring-tx>
       <versionx.org.testcontainers.testcontainers>1.18.0</versionx.org.testcontainers.testcontainers>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
@@ -1242,16 +1240,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring-boot-starter-embedded</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-spring-boot-starter-remote</artifactId>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-spring6-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -1698,6 +1686,12 @@
             <artifactId>spring-test</artifactId>
             <version>${versionx.org.springframework.spring-test}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>${versionx.org.springframework.spring-tx}</version>
+            <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -3175,9 +3169,6 @@
                               <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
                               <source>${dir.ispn}/scripting/src/main/java</source>
                               <source>${dir.ispn}/spring/spring/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring5/spring5-common/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring5/spring5-embedded/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring5/spring5-remote/src/main/java</source>
                               <source>${dir.ispn}/spring/spring-boot/embedded/src/main/java</source>
                               <source>${dir.ispn}/spring/spring-boot/remote/src/main/java</source>
                               <source>${dir.ispn}/tasks/src/main/java</source>
