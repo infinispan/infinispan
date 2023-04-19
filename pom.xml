@@ -143,7 +143,6 @@
       <module>integrationtests/endpoints-interop-it</module>
       <module>integrationtests/jboss-marshalling-it</module>
       <module>integrationtests/cdi-jcache-it</module>
-      <module>integrationtests/security-it</module>
       <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/spring-boot-it</module>
       <module>hibernate</module>
@@ -396,9 +395,6 @@
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
-      <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
-      <versionx.org.wildfly.common.wildfly-common>1.5.4.Final-format-001</versionx.org.wildfly.common.wildfly-common>
-      <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.natives>
       <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${version.org.wildfly.openssl.natives.linux_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
@@ -1175,12 +1171,6 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-security-integrationtests</artifactId>
-            <version>${version.infinispan}</version>
-            <classifier>tests</classifier>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -1831,23 +1821,6 @@
             <version>${versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64}</version>
          </dependency>
          <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-container-managed</artifactId>
-            <version>${versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.common</groupId>
-            <artifactId>wildfly-common</artifactId>
-            <version>${versionx.org.wildfly.common.wildfly-common}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-core-testsuite-shared</artifactId>
-            <version>${versionx.org.wildfly.core.wildfly-core-testsuite-shared}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
             <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-auth-server-http</artifactId>
             <version>${version.org.wildfly.elytron}</version>
@@ -2048,23 +2021,6 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-plugin-plugin</artifactId>
                <version>${version.maven-plugin-plugin}</version>
-            </plugin>
-            <plugin>
-               <groupId>org.wildfly.galleon-plugins</groupId>
-               <artifactId>wildfly-galleon-maven-plugin</artifactId>
-               <version>${version.org.wildfly.galleon-plugins}</version>
-            </plugin>
-            <plugin>
-               <groupId>org.jboss.galleon</groupId>
-               <artifactId>galleon-maven-plugin</artifactId>
-               <version>${version.org.jboss.galleon}</version>
-               <dependencies>
-                  <dependency>
-                     <groupId>xom</groupId>
-                     <artifactId>xom</artifactId>
-                     <version>${version.xom}</version>
-                  </dependency>
-               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.antlr</groupId>
