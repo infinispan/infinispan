@@ -7,6 +7,10 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.metadata.Metadata;
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
@@ -125,15 +129,45 @@ public class CacheEntryStreamProcessor extends CacheChunkedStream<CacheEntry<?, 
       long created = ice.getCreated();
       long lastUsed = ice.getLastUsed();
       long expiryTime = ice.getExpiryTime();
-      return metadataBytes(lifespanInSeconds, maxIdleInSeconds, created, lastUsed, expiryTime);
+
+      Metadata metadata = currentEntry.getMetadata();
+      EntryVersion version = (metadata == null) ? null : metadata.version();
+      return metadataBytes(lifespanInSeconds, maxIdleInSeconds, created, lastUsed, expiryTime, version);
    }
 
-   private static byte[] metadataBytes(long timeToLiveSeconds, long maxIdleTimeSeconds, long created, long lastUsed, long expireTime) {
-      return ("\"timeToLiveSeconds\":" + timeToLiveSeconds + ","
-            + "\"maxIdleTimeSeconds\":" + maxIdleTimeSeconds + ","
-            + "\"created\":" + created + ","
-            + "\"lastUsed\":" + lastUsed + ","
-            + "\"expireTime\":" + expireTime)
-            .getBytes();
+   private static byte[] metadataBytes(long timeToLiveSeconds, long maxIdleTimeSeconds, long created, long lastUsed,
+                                       long expireTime, EntryVersion entryVersion) {
+      Long version = null;
+      Integer topologyId = null;
+
+      if (entryVersion instanceof NumericVersion) {
+         version = ((NumericVersion) entryVersion).getVersion();
+      } else if (entryVersion instanceof SimpleClusteredVersion) {
+         version = ((SimpleClusteredVersion) entryVersion).getVersion();
+         topologyId = ((SimpleClusteredVersion) entryVersion).getTopologyId();
+      }
+
+      StringBuilder metadata = new StringBuilder();
+      metadata.append("\"timeToLiveSeconds\":");
+      metadata.append(timeToLiveSeconds);
+      metadata.append(",\"maxIdleTimeSeconds\":");
+      metadata.append(maxIdleTimeSeconds);
+      metadata.append(",\"created\":");
+      metadata.append(created);
+      metadata.append(",\"lastUsed\":");
+      metadata.append(lastUsed);
+      metadata.append(",\"expireTime\":");
+      metadata.append(expireTime);
+
+      if (version != null) {
+         metadata.append(",\"version\":");
+         metadata.append(version);
+      }
+      if (topologyId != null) {
+         metadata.append(",\"topologyId\":");
+         metadata.append(topologyId);
+      }
+
+      return metadata.toString().getBytes();
    }
 }
