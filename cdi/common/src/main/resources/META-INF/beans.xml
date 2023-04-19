@@ -5,12 +5,6 @@
        version="1.2" bean-discovery-mode="annotated">
 
     <scan>
-        <exclude name="org.infinispan.cdi.**">
-            <if-class-available name="!javax.cache.Cache"/>
-        </exclude>
-
-        <exclude name="org.infinispan.jcache.**">
-            <if-class-available name="!javax.cache.Cache"/>
-        </exclude>
+        <exclude name="org.infinispan.cdi.**"/>
     </scan>
 </beans>

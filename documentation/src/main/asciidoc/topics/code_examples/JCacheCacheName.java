@@ -1,1 +1,0 @@
-@CacheResult(cacheName = "greeting-cache")

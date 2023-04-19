@@ -5,11 +5,6 @@ The {brandname} Service Provider Interface (SPI) enables read and write
 operations to external storage through the `NonBlockingStore` interface and has
 the following features:
 
-Portability across JCache-compliant vendors::
-{brandname} maintains compatibility between the `NonBlockingStore` interface
-and the `JSR-107` JCache specification by using an adapter that handles
-blocking code.
-
 Simplified transaction integration::
 {brandname} automatically handles locking so your implementations do not need
 to coordinate concurrent access to persistent stores. Depending on the locking

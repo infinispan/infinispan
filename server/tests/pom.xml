@@ -27,16 +27,6 @@
 
    <dependencies>
       <dependency>
-         <groupId>javax.cache</groupId>
-         <artifactId>cache-api</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-jcache-remote</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-testdriver-junit4</artifactId>
          <scope>test</scope>

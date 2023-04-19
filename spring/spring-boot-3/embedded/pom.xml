@@ -45,11 +45,6 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.cache</groupId>
-      <artifactId>cache-api</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-spring6-embedded</artifactId>
     </dependency>

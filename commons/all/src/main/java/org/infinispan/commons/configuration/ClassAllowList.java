@@ -93,7 +93,7 @@ public class ClassAllowList {
       SYS_ALLOWED_REGEXP.add("^\\[[\\[L].*\\;$");
 
       // Infinispan classes
-      // Used by client listeners and jcache-remote
+      // Used by client listeners
       SYS_ALLOWED_CLASSES.add(KeyValueWithPrevious.class.getName());
 
       // Legacy handling

@@ -301,9 +301,8 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                   .append(" times");
          }
       }
-      // JCache tests are a special case
       String moduleSuffix = getModuleSuffix();
-      if (moduleSuffix.contains("jcache") || moduleSuffix.contains("hibernate")) {
+      if (moduleSuffix.contains("hibernate")) {
          if (result.indexOf("(") == -1) {
             result.append("(");
          } else {

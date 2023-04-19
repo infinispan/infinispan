@@ -16,8 +16,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import javax.cache.Cache;
-
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.decorators.FunctionalListeners;
 
@@ -61,12 +59,6 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
    @SuppressWarnings("unchecked")
    public static <K, V> FunctionalListenerAssertions<K, V> create(
          ConcurrentMap<K, V> map, Runnable r) {
-      return new FunctionalListenerAssertions<>((FunctionalListeners<K, V>) map, r);
-   }
-
-   @SuppressWarnings("unchecked")
-   public static <K, V> FunctionalListenerAssertions<K, V> create(
-         Cache<K, V> map, Runnable r) {
       return new FunctionalListenerAssertions<>((FunctionalListeners<K, V>) map, r);
    }
 
@@ -139,13 +131,6 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
       }
    }
 
-   private static <K, V> void withAssertions(Cache<K, V> map, Runnable r,
-      Consumer<FunctionalListenerAssertions<K, V>> c) {
-      try(FunctionalListenerAssertions<K, V> a = FunctionalListenerAssertions.create(map, r)) {
-         c.accept(a);
-      }
-   }
-
    private static <K, V> void withAssertions(FunctionalListeners<K, V> listeners, Runnable r,
       Consumer<FunctionalListenerAssertions<K, V>> c) {
       try(FunctionalListenerAssertions<K, V> a = FunctionalListenerAssertions.create(listeners, r)) {
@@ -158,11 +143,6 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
       withAssertions(map, r, a -> a.assertOrderedEvents(expected));
    }
 
-   public static <K, V> void assertOrderedEvents(Cache<K, V> cache,
-         Runnable r, Collection<TestEvent<V>> expected) {
-      withAssertions(cache, r, a -> a.assertOrderedEvents(expected));
-   }
-
    public static <K, V> void assertOrderedEvents(FunctionalListeners<K, V> listeners,
          Runnable r, Collection<TestEvent<V>> expected) {
       withAssertions(listeners, r, a -> a.assertOrderedEvents(expected));
@@ -173,11 +153,6 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
       withAssertions(map, r, a -> a.assertUnorderedEvents(expected));
    }
 
-   public static <K, V> void assertUnorderedEvents(Cache<K, V> cache,
-         Runnable r, Collection<TestEvent<V>> expected) {
-      withAssertions(cache, r, a -> a.assertUnorderedEvents(expected));
-   }
-
    public static <K, V> void assertUnorderedEvents(FunctionalListeners<K, V> listeners,
          Runnable r, Collection<TestEvent<V>> expected) {
       withAssertions(listeners, r, a -> a.assertUnorderedEvents(expected));
@@ -185,10 +160,6 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
 
    public static <K, V> void assertNoEvents(ConcurrentMap<K, V> map, Runnable r) {
       withAssertions(map, r, a -> a.assertOrderedEvents(new ArrayList<>()));
-   }
-
-   public static <K, V> void assertNoEvents(Cache<K, V> cache, Runnable r) {
-      withAssertions(cache, r, a -> a.assertOrderedEvents(new ArrayList<>()));
    }
 
    public static <K, V> void assertNoEvents(FunctionalListeners<K, V> listeners, Runnable r) {

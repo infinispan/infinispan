@@ -153,12 +153,6 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.cache</groupId>
-         <artifactId>cache-api</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>
