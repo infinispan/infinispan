@@ -2,6 +2,7 @@ package org.infinispan.quarkus.server.runtime.graal;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.graalvm.substitutions.graal.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.LifecycleCallbacks;
 import org.infinispan.persistence.remote.upgrade.MigrationTask;
@@ -17,7 +18,7 @@ public class SubstituteJBossMarshallingClasses {
 final class Target_MigrationTask {
    @Substitute
    public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
-      throw org.infinispan.quarkus.embedded.runtime.Util.unsupportedOperationException("Migration Task");
+      throw Util.unsupportedOperationException("Migration Task");
    }
 }
 

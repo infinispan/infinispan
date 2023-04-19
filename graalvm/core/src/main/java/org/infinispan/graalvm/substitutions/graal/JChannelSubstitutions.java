@@ -1,6 +1,5 @@
-package org.infinispan.quarkus.embedded.runtime.graal;
+package org.infinispan.graalvm.substitutions.graal;
 
-import org.infinispan.quarkus.embedded.runtime.Util;
 import org.jgroups.Address;
 
 import com.oracle.svm.core.annotate.Substitute;

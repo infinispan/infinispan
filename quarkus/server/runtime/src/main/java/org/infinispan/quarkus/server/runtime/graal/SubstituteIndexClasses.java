@@ -19,7 +19,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
-import org.infinispan.quarkus.embedded.runtime.Util;
+import org.infinispan.graalvm.substitutions.graal.Util;
 import org.infinispan.query.concurrent.QueryPackageImpl;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;

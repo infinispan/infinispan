@@ -1,4 +1,4 @@
-package org.infinispan.quarkus.embedded.runtime.graal;
+package org.infinispan.graalvm.substitutions.graal;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
