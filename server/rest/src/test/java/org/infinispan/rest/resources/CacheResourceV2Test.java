@@ -54,6 +54,7 @@ import java.util.stream.IntStream;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
@@ -74,12 +75,16 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -96,6 +101,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import okhttp3.internal.http2.StreamResetException;
 import org.assertj.core.api.Assertions;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.reporters.Files;
 import org.w3c.dom.Document;
@@ -147,6 +153,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       }
       cm.defineConfiguration("default", configurationBuilder.build());
       cm.defineConfiguration("proto", getProtoCacheBuilder().build());
+      cm.defineConfiguration("simple-text", getTextCacheBuilder().build());
 
       Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.putIfAbsent("sample.proto", PROTO_SCHEMA);
@@ -159,6 +166,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public ConfigurationBuilder getProtoCacheBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      return builder;
+   }
+
+   public ConfigurationBuilder getTextCacheBuilder() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      builder.encoding().mediaType(TEXT_PLAIN_TYPE);
       return builder;
    }
 
@@ -1184,6 +1197,58 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String contentAsString = response.getBody();
       Collection<?> keys = Json.read(contentAsString).asJsonList();
       assertEquals(3, keys.size());
+   }
+
+   @Test
+   public void testVersionMetadata() {
+      Metadata metadata1 = new EmbeddedMetadata.Builder()
+            .version(new NumericVersion(7)).build();
+      Metadata metadata2 = new EmbeddedMetadata.Builder()
+            .version(new SimpleClusteredVersion(3, 9)).build();
+
+      Cache<String, String> embeddedCache = cacheManagers.get(0).getCache("simple-text");
+      AdvancedCache<String, String> advancedCache = embeddedCache.getAdvancedCache();
+
+      advancedCache.put("key-1", "value-1", metadata1);
+      advancedCache.put("key-2", "value-2", metadata2);
+      advancedCache.put("key-3", "value-3");
+
+      RestCacheClient cacheClient = client.cache("simple-text");
+
+      RestResponse response = join(cacheClient.entries(100, true));
+      assertThat(response).isOk();
+
+      String body = response.getBody();
+      Assert.assertTrue(body.contains("key-1"));
+      Assert.assertTrue(body.contains("key-2"));
+      Assert.assertTrue(body.contains("key-3"));
+
+      List<Json> returnedEntries = Json.read(body).asJsonList();
+      Assert.assertEquals(3, returnedEntries.size());
+
+      for (int i = 0; i < 3; i++) {
+         Json entry = returnedEntries.get(0);
+         String key = entry.at("key").asString();
+         Json version = entry.at("version");
+         Json topologyId = entry.at("topologyId");
+
+         switch (key) {
+            case "key-1":
+               Assert.assertEquals(7L, version.asLong());
+               assertNull(topologyId);
+               break;
+            case "key-2":
+               Assert.assertEquals(3L, version.asLong());
+               Assert.assertEquals(7, topologyId.asInteger());
+               break;
+            case "key-3":
+               assertNull(version);
+               assertNull(topologyId);
+               break;
+            default:
+               fail("unexpected key: " + key);
+         }
+      }
    }
 
    @Test
