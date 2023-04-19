@@ -12,10 +12,12 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
@@ -46,49 +48,69 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanLock {
 
    private static final Log log = LogFactory.getLog(InfinispanLock.class);
-   private static final AtomicReferenceFieldUpdater<InfinispanLock, LockPlaceHolder> OWNER_UPDATER =
-         newUpdater(InfinispanLock.class, LockPlaceHolder.class, "current");
+   private static final AtomicReferenceFieldUpdater<InfinispanLock, LockRequest> OWNER_UPDATER =
+         newUpdater(InfinispanLock.class, LockRequest.class, "current");
    private static final AtomicReferenceFieldUpdater<LockPlaceHolder, LockState> STATE_UPDATER =
          newUpdater(LockPlaceHolder.class, LockState.class, "lockState");
 
 
-   private final Queue<LockPlaceHolder> pendingRequest;
-   private final ConcurrentMap<Object, LockPlaceHolder> lockOwners;
+   private volatile Queue<LockRequest> pendingRequest;
+   private final ConcurrentMap<Object, LockRequest> lockOwners;
    private final Runnable releaseRunnable;
    private final Executor nonBlockingExecutor;
    private TimeService timeService;
    @SuppressWarnings("CanBeFinal")
-   private volatile LockPlaceHolder current;
+   private volatile LockRequest current;
 
    /**
     * Creates a new instance.
     *
     * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
-    * @param timeService the {@link TimeService} to check for timeouts.
+    * @param timeService         the {@link TimeService} to check for timeouts.
     */
    public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService) {
-      this.nonBlockingExecutor = nonBlockingExecutor;
-      this.timeService = timeService;
-      pendingRequest = new ConcurrentLinkedQueue<>();
-      lockOwners = new ConcurrentHashMap<>();
-      current = null;
-      releaseRunnable = null;
+      this(nonBlockingExecutor, timeService, null);
    }
 
    /**
     * Creates a new instance.
     *
     * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
-    * @param timeService     the {@link TimeService} to check for timeouts.
-    * @param releaseRunnable a {@link Runnable} that is invoked every time this lock is released.
+    * @param timeService         the {@link TimeService} to check for timeouts.
+    * @param releaseRunnable     a {@link Runnable} that is invoked every time this lock is released.
     */
    public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable) {
       this.nonBlockingExecutor = nonBlockingExecutor;
       this.timeService = timeService;
-      pendingRequest = new ConcurrentLinkedQueue<>();
       lockOwners = new ConcurrentHashMap<>();
       current = null;
       this.releaseRunnable = releaseRunnable;
+   }
+
+   /**
+    * Creates a new instance which is acquired by {@code owner}.
+    * <p>
+    * The {@code lockPromise} stores the reference to the {@link ExtendedLockPromise}.
+    * The method {@link #acquire(Object, long, TimeUnit)} is no longer necessary to be invoked by this lock {@code owner}.
+    *
+    * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
+    * @param timeService         the {@link TimeService} to check for timeouts.
+    * @param releaseRunnable     a {@link Runnable} that is invoked every time this lock is released.
+    * @param owner               the lock owner.
+    * @param lockPromise         the {@link ByRef} to store the {@link ExtendedLockPromise}.
+    */
+   public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable, Object owner, ByRef<ExtendedLockPromise> lockPromise) {
+      this.nonBlockingExecutor = nonBlockingExecutor;
+      this.timeService = timeService;
+      lockOwners = new ConcurrentHashMap<>();
+      this.releaseRunnable = releaseRunnable;
+      LockAcquired promise = new LockAcquired(owner);
+      current = promise;
+      lockOwners.put(owner, promise);
+      lockPromise.set(promise);
+      if (log.isTraceEnabled()) {
+         log.tracef("%s successfully acquired the lock.", lockPromise);
+      }
    }
 
    /**
@@ -122,7 +144,7 @@ public class InfinispanLock {
          log.tracef("Acquire lock for %s. Timeout=%s (%s)", lockOwner, time, timeUnit);
       }
 
-      LockPlaceHolder lockPlaceHolder = lockOwners.get(lockOwner);
+      LockRequest lockPlaceHolder = lockOwners.get(lockOwner);
       if (lockPlaceHolder != null) {
          if (log.isTraceEnabled()) {
             log.tracef("Lock owner already exists: %s", lockPlaceHolder);
@@ -131,7 +153,7 @@ public class InfinispanLock {
       }
 
       lockPlaceHolder = createLockInfo(lockOwner, time, timeUnit);
-      LockPlaceHolder other = lockOwners.putIfAbsent(lockOwner, lockPlaceHolder);
+      LockRequest other = lockOwners.putIfAbsent(lockOwner, lockPlaceHolder);
 
       if (other != null) {
          if (log.isTraceEnabled()) {
@@ -144,7 +166,7 @@ public class InfinispanLock {
          log.tracef("Created a new one: %s", lockPlaceHolder);
       }
 
-      pendingRequest.add(lockPlaceHolder);
+      addToPendingRequests(lockPlaceHolder);
       tryAcquire(null);
       return lockPlaceHolder;
    }
@@ -167,7 +189,7 @@ public class InfinispanLock {
          log.tracef("Release lock for %s.", lockOwner);
       }
 
-      LockPlaceHolder wantToRelease = lockOwners.get(lockOwner);
+      LockRequest wantToRelease = lockOwners.get(lockOwner);
       if (wantToRelease == null) {
          if (log.isTraceEnabled()) {
             log.tracef("%s not found!", lockOwner);
@@ -181,7 +203,7 @@ public class InfinispanLock {
          log.tracef("Release lock for %s? %s", wantToRelease, released);
       }
 
-      LockPlaceHolder currentLocked = current;
+      LockRequest currentLocked = current;
       if (currentLocked == wantToRelease) {
          tryAcquire(wantToRelease);
       }
@@ -191,7 +213,7 @@ public class InfinispanLock {
     * @return the current lock owner or {@code null} if it is not acquired.
     */
    public Object getLockOwner() {
-      LockPlaceHolder lockPlaceHolder = current;
+      LockRequest lockPlaceHolder = current;
       return lockPlaceHolder == null ? null : lockPlaceHolder.owner;
    }
 
@@ -213,11 +235,9 @@ public class InfinispanLock {
       if (deadlockChecker == null) {
          return; //no-op
       }
-      LockPlaceHolder holder = current;
+      LockRequest holder = current;
       if (holder != null) {
-         for (LockPlaceHolder pending : pendingRequest) {
-            pending.checkDeadlock(deadlockChecker, holder.owner);
-         }
+         forEachPendingRequest(request -> request.checkDeadlock(deadlockChecker, holder));
       }
    }
 
@@ -233,17 +253,17 @@ public class InfinispanLock {
       return lockOwners.containsKey(lockOwner);
    }
 
-   private void onCanceled(LockPlaceHolder canceled) {
+   private void onCanceled(LockRequest canceled) {
       if (log.isTraceEnabled()) {
-         log.tracef("Release lock for %s. It was canceled.", canceled.owner);
+         log.tracef("Release lock for %s. It was canceled.", canceled.getRequestor());
       }
-      LockPlaceHolder currentLocked = current;
+      LockRequest currentLocked = current;
       if (currentLocked == canceled) {
          tryAcquire(canceled);
       }
    }
 
-   private boolean casRelease(LockPlaceHolder lockPlaceHolder) {
+   private boolean casRelease(LockRequest lockPlaceHolder) {
       return cas(lockPlaceHolder, null);
    }
 
@@ -257,7 +277,7 @@ public class InfinispanLock {
       }
    }
 
-   private boolean cas(LockPlaceHolder release, LockPlaceHolder acquire) {
+   private boolean cas(LockRequest release, LockRequest acquire) {
       boolean cas = OWNER_UPDATER.compareAndSet(this, release, acquire);
       if (log.isTraceEnabled()) {
          log.tracef("Lock Owner CAS(%s, %s) => %s", release, acquire, cas);
@@ -265,10 +285,10 @@ public class InfinispanLock {
       return cas;
    }
 
-   private void tryAcquire(LockPlaceHolder release) {
-      LockPlaceHolder toRelease = release;
+   private void tryAcquire(LockRequest release) {
+      LockRequest toRelease = release;
       do {
-         LockPlaceHolder toAcquire = pendingRequest.peek();
+         LockRequest toAcquire = peekNextPendingRequest();
          if (log.isTraceEnabled()) {
             log.tracef("Try acquire. Next in queue=%s. Current=%s", toAcquire, current);
          }
@@ -284,7 +304,7 @@ public class InfinispanLock {
          }
          if (cas(toRelease, toAcquire)) {
             //we set the current lock owner, so we must remove it from the queue
-            pendingRequest.remove(toAcquire);
+            removeFromPendingRequest(toAcquire);
             if (toAcquire.setAcquire()) {
                if (log.isTraceEnabled()) {
                   log.tracef("%s successfully acquired the lock.", toAcquire);
@@ -306,20 +326,80 @@ public class InfinispanLock {
       } while (true);
    }
 
-   private LockPlaceHolder createLockInfo(Object lockOwner, long time, TimeUnit timeUnit) {
+   private LockRequest createLockInfo(Object lockOwner, long time, TimeUnit timeUnit) {
       return new LockPlaceHolder(lockOwner, timeService.expectedEndTime(time, timeUnit));
    }
 
-   private class LockPlaceHolder implements ExtendedLockPromise {
+   private void addToPendingRequests(LockRequest request) {
+      if (pendingRequest == null) {
+         synchronized (this) {
+            if (pendingRequest == null) {
+               pendingRequest = new ConcurrentLinkedQueue<>();
+            }
+         }
+      }
+      pendingRequest.add(request);
+   }
 
-      private final Object owner;
+   private LockRequest peekNextPendingRequest() {
+      if (pendingRequest == null) {
+         return null;
+      }
+      return pendingRequest.peek();
+   }
+
+   private void removeFromPendingRequest(LockRequest request) {
+      assert pendingRequest != null;
+      pendingRequest.remove(request);
+   }
+
+   private void forEachPendingRequest(Consumer<LockRequest> consumer) {
+      if (pendingRequest == null) {
+         return;
+      }
+      pendingRequest.forEach(consumer);
+   }
+
+   private static void checkValidCancelState(LockState state) {
+      if (state != LockState.TIMED_OUT && state != LockState.DEADLOCKED) {
+         throw new IllegalArgumentException("LockState " + state + " is not valid to cancel.");
+      }
+   }
+
+   private abstract class LockRequest implements ExtendedLockPromise {
+
+      final Object owner;
+
+      LockRequest(Object owner) {
+         this.owner = owner;
+      }
+
+      abstract boolean setAcquire();
+
+      abstract void checkDeadlock(DeadlockChecker deadlockChecker, LockRequest holder);
+
+      abstract boolean setReleased();
+
+      @Override
+      public final Object getRequestor() {
+         return owner;
+      }
+
+      @Override
+      public final Object getOwner() {
+         return getLockOwner();
+      }
+   }
+
+   private class LockPlaceHolder extends LockRequest {
+
       private final long timeout;
       private final CompletableFuture<LockState> notifier;
       @SuppressWarnings("CanBeFinal")
       volatile LockState lockState;
 
       private LockPlaceHolder(Object owner, long timeout) {
-         this.owner = owner;
+         super(owner);
          this.timeout = timeout;
          lockState = LockState.WAITING;
          notifier = new CompletableFuture<>();
@@ -396,21 +476,9 @@ public class InfinispanLock {
       }
 
       @Override
-      public Object getRequestor() {
-         return owner;
-      }
-
-      @Override
-      public Object getOwner() {
-         LockPlaceHolder owner = current;
-         return owner != null ? owner.owner : null;
-      }
-
-      @Override
       public InvocationStage toInvocationStage(Supplier<TimeoutException> timeoutSupplier) {
          if (notifier.isDone()) {
-            return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage,
-                  ExceptionSyncInvocationStage::new, timeoutSupplier);
+            return checkState(notifier.getNow(lockState), InvocationStage::completedNullStage, ExceptionSyncInvocationStage::new, timeoutSupplier);
          }
          return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(state -> {
             Object rv = checkState(state, () -> null, throwable -> throwable, timeoutSupplier);
@@ -423,37 +491,13 @@ public class InfinispanLock {
 
       @Override
       public String toString() {
-         return "LockPlaceHolder{" +
-               "lockState=" + lockState +
-               ", owner=" + owner +
-               '}';
+         return "LockPlaceHolder{" + "lockState=" + lockState + ", owner=" + owner + '}';
       }
 
-      private <T> T checkState(LockState state, Supplier<T> acquired, Function<Throwable, T> exception, Supplier<TimeoutException> timeoutSupplier) {
-         switch (state) {
-            case ACQUIRED:
-               return acquired.get();
-            case RELEASED:
-               return exception.apply(new LockReleasedException("Requestor '" + owner + "' failed to acquire lock. Lock already released!"));
-            case TIMED_OUT:
-               cleanup();
-               return exception.apply(timeoutSupplier.get());
-            case DEADLOCKED:
-               cleanup();
-               return exception.apply(new DeadlockDetectedException("DeadLock detected"));
-            default:
-               return exception.apply(new IllegalStateException("Unknown lock state: " + state));
-         }
-      }
-
-      private void checkValidCancelState(LockState state) {
-         if (state != LockState.TIMED_OUT && state != LockState.DEADLOCKED) {
-            throw new IllegalArgumentException("LockState " + state + " is not valid to cancel.");
-         }
-      }
-
-      private void checkDeadlock(DeadlockChecker checker, Object currentOwner) {
+      @Override
+      public void checkDeadlock(DeadlockChecker checker, LockRequest holder) {
          checkTimeout(); //check timeout before checking the deadlock. check deadlock are more expensive.
+         Object currentOwner = holder.owner;
          if (lockState == LockState.WAITING && //we are waiting for a lock
                !owner.equals(currentOwner) && //needed? just to be safe
                checker.deadlockDetected(owner, currentOwner) && //deadlock has been detected!
@@ -463,14 +507,16 @@ public class InfinispanLock {
          }
       }
 
-      private boolean setAcquire() {
+      @Override
+      public boolean setAcquire() {
          if (casState(LockState.WAITING, LockState.ACQUIRED)) {
             notifyListeners();
          }
          return lockState == LockState.ACQUIRED;
       }
 
-      private boolean setReleased() {
+      @Override
+      public boolean setReleased() {
          do {
             LockState state = lockState;
             switch (state) {
@@ -497,6 +543,23 @@ public class InfinispanLock {
          } while (true);
       }
 
+      private <T> T checkState(LockState state, Supplier<T> acquired, Function<Throwable, T> exception, Supplier<TimeoutException> timeoutSupplier) {
+         switch (state) {
+            case ACQUIRED:
+               return acquired.get();
+            case RELEASED:
+               return exception.apply(new LockReleasedException("Requestor '" + owner + "' failed to acquire lock. Lock already released!"));
+            case TIMED_OUT:
+               cleanup();
+               return exception.apply(timeoutSupplier.get());
+            case DEADLOCKED:
+               cleanup();
+               return exception.apply(new DeadlockDetectedException("DeadLock detected"));
+            default:
+               return exception.apply(new IllegalStateException("Unknown lock state: " + state));
+         }
+      }
+
       private boolean casState(LockState expect, LockState update) {
          boolean updated = STATE_UPDATER.compareAndSet(this, expect, update);
          if (updated && log.isTraceEnabled()) {
@@ -512,9 +575,7 @@ public class InfinispanLock {
       }
 
       private void checkTimeout() {
-         if (lockState == LockState.WAITING &&
-               timeService.isTimeExpired(timeout) &&
-               casState(LockState.WAITING, LockState.TIMED_OUT)) {
+         if (lockState == LockState.WAITING && timeService.isTimeExpired(timeout) && casState(LockState.WAITING, LockState.TIMED_OUT)) {
             onCanceled(this);
             notifyListeners();
          }
@@ -526,6 +587,74 @@ public class InfinispanLock {
          if (state != LockState.WAITING) {
             notifier.complete(state);
          }
+      }
+   }
+
+   private class LockAcquired extends LockRequest {
+
+      private volatile boolean released;
+
+      LockAcquired(Object owner) {
+         super(owner);
+      }
+
+      @Override
+      public void cancel(LockState cause) {
+         checkValidCancelState(cause);
+         //no-op, already acquired
+      }
+
+      @Override
+      public InvocationStage toInvocationStage(Supplier<TimeoutException> timeoutSupplier) {
+         return toInvocationStage();
+      }
+
+      @Override
+      public boolean isAvailable() {
+         return true;
+      }
+
+      @Override
+      public void lock() {
+         //no-op acquired!
+      }
+
+      @Override
+      public void addListener(LockListener listener) {
+         listener.onEvent(released ? LockState.RELEASED : LockState.ACQUIRED);
+      }
+
+      @Override
+      public InvocationStage toInvocationStage() {
+         return InvocationStage.completedNullStage();
+      }
+
+      @Override
+      public boolean setAcquire() {
+         throw new IllegalStateException("setAcquire() should never be invoked");
+      }
+
+      @Override
+      public void checkDeadlock(DeadlockChecker deadlockChecker, LockRequest holder) {
+         throw new IllegalStateException("checkDeadlock() should never be invoked");
+      }
+
+      @Override
+      public boolean setReleased() {
+         released = true;
+         if (remove(owner)) {
+            if (log.isTraceEnabled()) {
+               log.tracef("State changed for %s. ACQUIRED => RELEASED", this);
+            }
+            triggerReleased();
+            return true;
+         }
+         return false;
+      }
+
+      @Override
+      public String toString() {
+         return "LockAcquired{" + "released?=" + released + ", owner=" + owner + '}';
       }
    }
 }

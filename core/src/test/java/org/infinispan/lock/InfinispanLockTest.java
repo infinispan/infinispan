@@ -16,7 +16,9 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -266,6 +268,85 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
       }
 
       assertFalse(counterLock.isLocked());
+   }
+
+   public void testLockAcquiredCreation() throws InterruptedException {
+      String lockOwner = "LO";
+      ByRef<ExtendedLockPromise> lockPromise = ByRef.create(null);
+      AtomicInteger releaseCount = new AtomicInteger();
+      InfinispanLock lock = new InfinispanLock(testExecutor(), TIME_SERVICE, releaseCount::incrementAndGet, lockOwner, lockPromise);
+      ExtendedLockPromise promise = lockPromise.get();
+
+      assertEquals(lockOwner, lock.getLockOwner());
+      assertEquals(lockOwner, promise.getOwner());
+      assertEquals(lockOwner, promise.getRequestor());
+      assertTrue(lock.containsLockOwner(lockOwner));
+
+      assertEquals(promise, lock.acquire(lockOwner, 0, TimeUnit.SECONDS));
+
+      assertTrue(lock.isLocked());
+      assertTrue(promise.isAvailable());
+      promise.lock();
+      assertTrue(promise.toInvocationStage(() -> {throw new IllegalStateException();}).isDone());
+      assertTrue(promise.toInvocationStage().isDone());
+      promise.addListener(state -> assertEquals(LockState.ACQUIRED, state));
+      assertEquals(0, releaseCount.get());
+
+      // unable to cancel acquired lock!
+      promise.cancel(LockState.TIMED_OUT);
+      promise.addListener(state -> assertEquals(LockState.ACQUIRED, state));
+      assertEquals(0, releaseCount.get());
+
+      lock.release(lockOwner);
+      assertFalse(lock.isLocked());
+      assertEquals(1, releaseCount.get());
+
+      // after release, a second owner should be able to acquire
+      lockOwner = "LO2";
+      promise = lock.acquire(lockOwner, 0, TimeUnit.SECONDS);
+
+      assertEquals(lockOwner, lock.getLockOwner());
+      assertEquals(lockOwner, promise.getOwner());
+      assertEquals(lockOwner, promise.getRequestor());
+      assertTrue(lock.containsLockOwner(lockOwner));
+
+      assertTrue(promise.isAvailable());
+      promise.lock();
+
+      lock.release(lockOwner);
+      assertEquals(2, releaseCount.get());
+   }
+
+   public void testLockAcquiredCreation2() throws InterruptedException {
+      // test if the next in queue is able to acquire the lock after the first owner releases it.
+      String lockOwner = "LO";
+      ByRef<ExtendedLockPromise> lockPromise = ByRef.create(null);
+      AtomicInteger releaseCount = new AtomicInteger();
+      InfinispanLock lock = new InfinispanLock(testExecutor(), TIME_SERVICE, releaseCount::incrementAndGet, lockOwner, lockPromise);
+      ExtendedLockPromise promise = lockPromise.get();
+
+      String lockOwner2 = "LO2";
+      ExtendedLockPromise promise2 = lock.acquire(lockOwner2, 1, TimeUnit.DAYS);
+
+      assertTrue(lock.isLocked());
+      assertTrue(promise.isAvailable());
+      assertFalse(promise2.isAvailable());
+
+      promise.lock();
+      lock.release(lockOwner);
+      assertEquals(1, releaseCount.get());
+
+      assertTrue(lock.isLocked());
+      assertTrue(promise2.isAvailable());
+      promise2.lock();
+
+      assertEquals(lockOwner2, lock.getLockOwner());
+      assertEquals(lockOwner2, promise2.getOwner());
+      assertEquals(lockOwner2, promise2.getRequestor());
+
+      lock.release(lockOwner2);
+      assertFalse(lock.isLocked());
+      assertEquals(2, releaseCount.get());
    }
 
    private static class NotThreadSafeCounter {
