@@ -113,12 +113,6 @@
       <maven.snapshots.repo.id>ossrh</maven.snapshots.repo.id>
       <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
 
-      <!-- === Application Server Configuration === -->
-
-      <!-- org.wildfly / org.jboss.eap -->
-      <appserver.groupId>org.wildfly</appserver.groupId>
-      <appserver.version>24.0.1.Final</appserver.version>
-
       <!-- Java source/target version -->
       <maven.min.version>3.2.1</maven.min.version>
       <jdk.min.version>17</jdk.min.version>
@@ -189,8 +183,6 @@
       <version.netty.incubator.iouring>0.0.19.Final</version.netty.incubator.iouring>
       <version.okhttp>3.14.9</version.okhttp>
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
-      <version.org.wildfly.arquillian>3.0.1.Final</version.org.wildfly.arquillian>
-      <version.org.wildfly.core>16.0.1.Final</version.org.wildfly.core>
       <version.org.wildfly.elytron>2.1.0.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.2.2.SP01</version.org.wildfly.openssl.natives>
@@ -251,8 +243,6 @@
       <version.maven.shade>3.4.1</version.maven.shade>
       <version.maven.source>3.2.0</version.maven.source>
       <version.maven.surefire>3.0.0</version.maven.surefire>
-      <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
-      <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
