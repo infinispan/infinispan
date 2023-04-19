@@ -9,6 +9,7 @@ SecurityManager.
 
 * The Kryo and Protostuff marshallers have been removed.
 * Extended Statistics module have been removed.
+* Spring 5.x and Spring Boot 2.x support.
 * Wildfly modules are no longer provided.
 
 == RESP Endpoint
