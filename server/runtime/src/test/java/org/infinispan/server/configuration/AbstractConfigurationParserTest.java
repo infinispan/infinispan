@@ -63,6 +63,7 @@ public abstract class AbstractConfigurationParserTest {
       Properties properties = new Properties();
       properties.setProperty(Server.INFINISPAN_SERVER_CONFIG_PATH, getConfigPath().toString());
       properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, Paths.get(System.getProperty("build.directory")).toString());
+      properties.setProperty("org.infinispan.test.host.address", "127.0.0.1");
       ParserRegistry registry = new ParserRegistry(this.getClass().getClassLoader(), false, properties);
 
       ConfigurationBuilderHolder holder = registry.parse(url);

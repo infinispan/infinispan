@@ -3,6 +3,8 @@ package org.infinispan.server.configuration.security;
 import static org.infinispan.server.configuration.security.CredentialStoresConfiguration.resolvePassword;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.function.Supplier;
 
@@ -46,9 +48,9 @@ public class OAuth2Configuration extends ConfigurationElement<OAuth2Configuratio
       validatorBuilder.clientSecret(new String(resolvePassword(attributes.attribute(CLIENT_SECRET))));
       final URL url;
       try {
-         url = new URL(attributes.attribute(INTROSPECTION_URL).get());
+         url = new URI(attributes.attribute(INTROSPECTION_URL).get()).toURL();
          validatorBuilder.tokenIntrospectionUrl(url);
-      } catch (MalformedURLException e) {
+      } catch (URISyntaxException | MalformedURLException e) {
          throw Server.log.invalidUrl(attributes.attribute(INTROSPECTION_URL).get());
       }
       if ("https".equalsIgnoreCase(url.getProtocol())) {
