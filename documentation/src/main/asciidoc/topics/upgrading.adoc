@@ -9,6 +9,7 @@ SecurityManager.
 
 * The Kryo and Protostuff marshallers have been removed.
 * Extended Statistics module have been removed.
+* Wildfly modules are no longer provided.
 
 == RESP Endpoint
 
