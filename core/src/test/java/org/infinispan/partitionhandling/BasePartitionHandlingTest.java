@@ -74,6 +74,22 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = cacheConfiguration();
+      partitionHandlingBuilder(dcc);
+      customizeCacheConfiguration(dcc);
+      createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc,
+                            new TransportFlags().withFD(true).withMerge(true));
+      waitForClusterToForm();
+   }
+
+   protected String customCacheName() {
+      return null;
+   }
+
+   protected void customizeCacheConfiguration(ConfigurationBuilder dcc) {
+
+   }
+
+   protected void partitionHandlingBuilder(ConfigurationBuilder dcc) {
       dcc.clustering().cacheMode(cacheMode).partitionHandling().whenSplit(partitionHandling).mergePolicy(mergePolicy);
       if (cacheMode == CacheMode.DIST_SYNC) {
          dcc.clustering().hash().numOwners(numberOfOwners);
@@ -84,14 +100,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       if (lockingMode != null) {
          dcc.transaction().lockingMode(lockingMode);
       }
-      customizeCacheConfiguration(dcc);
-      createClusteredCaches(numMembersInCluster, serializationContextInitializer(), dcc,
-                            new TransportFlags().withFD(true).withMerge(true));
-      waitForClusterToForm();
-   }
-
-   protected void customizeCacheConfiguration(ConfigurationBuilder dcc) {
-
    }
 
    @AfterMethod(alwaysRun = true)
@@ -334,7 +342,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       private void waitForPartitionToForm(boolean waitForNoRebalance) {
-         List<Cache<Object, Object>> caches = new ArrayList<>(getCaches(null));
+         List<Cache<Object, Object>> caches = new ArrayList<>(getCaches(customCacheName()));
          caches.removeIf(objectObjectCache -> !channels.contains(channel(objectObjectCache)));
          Cache<Object, Object> cache = caches.get(0);
          blockUntilViewsReceived(10000, caches);
@@ -400,8 +408,9 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       private <K,V> List<Cache<K,V>> cachesInThisPartition() {
          List<Cache<K,V>> caches = new ArrayList<>();
-         for (final Cache<K,V> c : BasePartitionHandlingTest.this.<K,V>caches()) {
-            if (channels.contains(channel(c))) {
+         for (final Cache<K,V> c : BasePartitionHandlingTest.this.<K,V>caches(customCacheName())) {
+            JChannel ch = channel(c);
+            if (channels.contains(ch)) {
                caches.add(c);
             }
          }
