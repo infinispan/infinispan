@@ -184,7 +184,20 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       });
    }
 
-   public CompletionStage<CacheStatusResponse> sendJoinRequest(String cacheName, CacheJoinInfo joinInfo, long timeout,
+   private CompletionStage<CacheTopology> join(String cacheName, LocalCacheStatus cacheStatus) {
+      return orderOnCache(cacheName, () -> {
+         if (runningCaches.get(cacheName) != cacheStatus) {
+            throw new IllegalStateException("Cache status changed while joining");
+         }
+
+         long timeout = cacheStatus.getJoinInfo().getTimeout();
+         long endTime = timeService.expectedEndTime(timeout, MILLISECONDS);
+         return sendJoinRequest(cacheName, cacheStatus.getJoinInfo(), timeout, endTime)
+                      .thenCompose(joinResponse -> handleJoinResponse(cacheName, cacheStatus, joinResponse));
+      });
+   }
+
+   private CompletionStage<CacheStatusResponse> sendJoinRequest(String cacheName, CacheJoinInfo joinInfo, long timeout,
                                                                long endTime) {
       int viewId = transport.getViewId();
       ReplicableCommand command = new CacheJoinCommand(cacheName, transport.getAddress(), joinInfo, viewId);
@@ -304,8 +317,21 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                // Ignore caches that haven't finished joining yet.
                // They will either wait for recovery to finish (if started in the current view)
                // or retry (if started in a previous view).
-               if (cacheStatus.getCurrentTopology() == null)
+               if (cacheStatus.getCurrentTopology() == null) {
+                  // If the cache has a persistent state, it tries to join again.
+                  // The coordinator has cleared the previous information about running caches,
+                  // so we need to send a join again for the caches waiting recovery in order to
+                  // reconstruct them from the persistent state.
+                  // This join only completes *after* the coordinator receives the state from all nodes.
+                  if (cacheStatus.needRecovery()) {
+                     final String name = cacheName;
+                     join(name, cacheStatus)
+                           .whenComplete((ignore, t) -> {
+                              if (t != null) leave(name, getGlobalTimeout());
+                           });
+                  }
                   continue;
+               }
 
                caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
                                                               cacheStatus.getCurrentTopology(),
@@ -535,6 +561,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          CacheTopology stableTopology = cacheStatus.getStableTopology();
          if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
             log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
+            //System.out.printf("[%s] Updating stable topology for cache %s: %s\n", transport.getAddress(), cacheName, newStableTopology);
             cacheStatus.setStableTopology(newStableTopology);
             if (newStableTopology != null && cacheStatus.getJoinInfo().getPersistentUUID() != null) {
                // Don't use the current CH state for the next restart
@@ -900,7 +927,11 @@ class LocalCacheStatus {
    }
 
    boolean isStableTopologyRestored() {
-      return (stable.isDone() && stableTopology != null) || stableMembersSize < 0;
+      return (stable.isDone() && stableTopology != null) || !needRecovery();
+   }
+
+   boolean needRecovery() {
+      return stableMembersSize > 0;
    }
 
    int getStableMembersSize() {
