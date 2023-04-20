@@ -1162,6 +1162,15 @@ public final class Util {
       return true;
    }
 
+   public static byte[] concat(byte[] a, byte[] b) {
+      int aLen = a.length;
+      int bLen = b.length;
+      byte[] ret = new byte[aLen + bLen];
+      System.arraycopy(a, 0, ret, 0, aLen);
+      System.arraycopy(b, 0, ret, aLen, bLen);
+      return ret;
+   }
+
    public static RuntimeException unchecked(Throwable t) {
       if (t instanceof RuntimeException) {
          return (RuntimeException) t;

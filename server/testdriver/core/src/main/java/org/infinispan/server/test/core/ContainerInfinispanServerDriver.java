@@ -256,17 +256,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
-   private String abbreviate(String name) {
-      String[] split = name.split("\\.");
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < split.length - 1; i++) {
-         sb.append(split[i].charAt(0));
-         sb.append('.');
-      }
-      sb.append(split[split.length - 1]);
-      return sb.toString();
-   }
-
    private void configureSite(List<String> args) {
       if (configuration.site() == null) {
          return;

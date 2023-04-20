@@ -1,6 +1,6 @@
 package org.infinispan.server.security.authorization;
 
-import org.infinispan.server.extensions.ExtensionsIT;
+import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
@@ -21,7 +21,8 @@ public class AuthorizationLDAPIT extends AbstractAuthorization {
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthorizationLDAPTest.xml")
                .runMode(ServerRunMode.CONTAINER)
-               .artifacts(ExtensionsIT.artifacts())
+               .mavenArtifacts(ClusteredIT.mavenArtifacts())
+               .artifacts(ClusteredIT.artifacts())
                .addListener(new LdapServerListener())
                .build();
 
