@@ -181,11 +181,13 @@ public class NettyTransport implements Transport {
          serverChannels.forEach(ch -> {
             if (ch.isActive()) {
                log.channelStillBound(ch, ch.remoteAddress());
+               ch.close().awaitUninterruptibly();
             }
          });
          acceptedChannels.forEach(ch -> {
             if (ch.isActive()) {
                log.channelStillConnected(ch, ch.remoteAddress());
+               ch.close().awaitUninterruptibly();
             }
          });
       }

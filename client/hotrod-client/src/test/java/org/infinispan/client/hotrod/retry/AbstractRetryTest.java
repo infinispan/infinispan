@@ -32,6 +32,8 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected HotRodServer hotRodServer2;
    protected HotRodServer hotRodServer3;
 
+   protected int nbrOfServers = 3;
+
    RemoteCacheImpl<Object, Object> remoteCache;
    protected RemoteCacheManager remoteCacheManager;
    protected ChannelFactory channelFactory;
@@ -44,20 +46,27 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      assert nbrOfServers > 0 && nbrOfServers <= 3 : "nbrOfServers must be between 1 and 3";
       config = hotRodCacheConfiguration(getCacheConfig());
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
-      registerCacheManager(cm2);
-      registerCacheManager(cm3);
 
       hotRodServer1 = createStartHotRodServer(manager(0));
       addr2hrServer.put(getAddress(hotRodServer1), hotRodServer1);
-      hotRodServer2 = createStartHotRodServer(manager(1));
-      addr2hrServer.put(getAddress(hotRodServer2), hotRodServer2);
-      hotRodServer3 = createStartHotRodServer(manager(2));
-      addr2hrServer.put(getAddress(hotRodServer3), hotRodServer3);
+
+      if (nbrOfServers > 1) {
+         EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
+         registerCacheManager(cm2);
+         hotRodServer2 = createStartHotRodServer(manager(1));
+         addr2hrServer.put(getAddress(hotRodServer2), hotRodServer2);
+      }
+
+      if (nbrOfServers > 2) {
+         EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
+         registerCacheManager(cm3);
+         hotRodServer3 = createStartHotRodServer(manager(2));
+         addr2hrServer.put(getAddress(hotRodServer3), hotRodServer3);
+      }
 
       waitForClusterToForm();
 
@@ -67,18 +76,23 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 
-      assert super.cacheManagers.size() == 3;
+      assert super.cacheManagers.size() == nbrOfServers;
    }
 
    protected RemoteCacheManager createRemoteCacheManager(int port) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
          HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      amendRemoteCacheManagerConfiguration(builder);
       builder
          .forceReturnValues(true)
          .connectionTimeout(5)
          .connectionPool().maxActive(1) //this ensures that only one server is active at a time
          .addServer().host("127.0.0.1").port(port);
       return new InternalRemoteCacheManager(builder.build());
+   }
+
+   protected void amendRemoteCacheManagerConfiguration(org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder) {
+      // no-op
    }
 
    protected HotRodServer createStartHotRodServer(EmbeddedCacheManager manager) {
