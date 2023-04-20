@@ -15,14 +15,18 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 import io.netty.channel.Channel;
@@ -31,8 +35,11 @@ import io.netty.channel.Channel;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
+@CleanupAfterMethod
 @Test(testName = "client.hotrod.retry.DistributionRetryTest", groups = "functional")
 public class DistributionRetryTest extends AbstractRetryTest {
+
+   private int retries = 0;
 
    @Override
    protected ConfigurationBuilder getCacheConfig() {
@@ -42,9 +49,23 @@ public class DistributionRetryTest extends AbstractRetryTest {
       return builder;
    }
 
+   @Override
+   protected void amendRemoteCacheManagerConfiguration(org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder) {
+      builder.maxRetries(retries);
+   }
+
+   private boolean nextOperationShouldFail() {
+      return retries == 0;
+   }
+
+   private void assertOperationFailsWithTransport(Object key) {
+      Exceptions.expectException(TransportException.class, ".*", () -> remoteCache.get(key));
+   }
+
    public void testGet() throws Exception {
-      log.info("Starting actual test");
       Object key = generateKeyAndShutdownServer();
+      log.info("Starting actual test");
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       //now make sure that next call won't fail
       resetStats();
       assertEquals(remoteCache.get(key), "v");
@@ -53,22 +74,26 @@ public class DistributionRetryTest extends AbstractRetryTest {
    public void testPut() throws Exception {
       Object key = generateKeyAndShutdownServer();
       log.info("Here it starts");
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       assertEquals(remoteCache.put(key, "v0"), "v");
    }
 
    public void testRemove() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       assertEquals("v", remoteCache.remove(key));
    }
 
    public void testContains() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
       assertEquals(true, remoteCache.containsKey(key));
    }
 
    public void testGetWithMetadata() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
       VersionedValue value = remoteCache.getWithMetadata(key);
       assertEquals("v", value.getValue());
@@ -76,28 +101,33 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
    public void testPutIfAbsent() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       assertEquals(null, remoteCache.putIfAbsent("noSuchKey", "someValue"));
       assertEquals("someValue", remoteCache.get("noSuchKey"));
    }
 
    public void testReplace() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       assertEquals("v", remoteCache.replace(key, "v2"));
    }
 
    public void testReplaceIfUnmodified() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       assertEquals(false, remoteCache.replaceWithVersion(key, "v2", 12));
    }
 
    public void testRemoveIfUnmodified() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
       assertEquals(false, remoteCache.removeWithVersion(key, 12));
    }
 
    public void testClear() throws Exception {
       Object key = generateKeyAndShutdownServer();
+      if (nextOperationShouldFail()) assertOperationFailsWithTransport(key);
       resetStats();
       remoteCache.clear();
       assertEquals(false, remoteCache.containsKey(key));
@@ -128,8 +158,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
 
       log.info("About to stop Hot Rod server 2");
-      hotRodServer2.stop();
-
+      HotRodClientTestingUtil.killServers(hotRodServer2);
 
       return key;
    }
@@ -155,4 +184,21 @@ public class DistributionRetryTest extends AbstractRetryTest {
       }
    }
 
+   private DistributionRetryTest withRetries(int retries) {
+      this.retries = retries;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[retries=" + retries + "]";
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new DistributionRetryTest().withRetries(0),
+            new DistributionRetryTest().withRetries(10),
+      };
+   }
 }

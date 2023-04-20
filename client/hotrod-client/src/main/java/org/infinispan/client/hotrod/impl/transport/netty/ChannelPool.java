@@ -54,6 +54,7 @@ class ChannelPool {
    private final AtomicInteger connected = new AtomicInteger();
    private final StampedLock lock = new StampedLock();
    private volatile boolean terminated = false;
+   private volatile boolean suspected = false;
 
    ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker,
                ExhaustedAction exhaustedAction, BiConsumer<ChannelPool, ChannelEventType> connectionFailureListener,
@@ -132,6 +133,7 @@ class ChannelPool {
             // at this point we won't be picky and use non-writable channel anyway
             channel = channels.pollFirst();
             if (channel == null) {
+               if (log.isTraceEnabled()) log.tracef("[%s] No channel available, adding callback to the queue %s", address, callback);
                callbacks.addLast(callback);
                return;
             } else if (channel.isActive()) {
@@ -158,9 +160,12 @@ class ChannelPool {
                }
                if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel could not be created, created = %d, active = %d, connected = %d",
                                      address, currentCreated, currentActive, connected.get());
-               callback.cancel(address, throwable);
+               // Update about a possibly failing server before cancelling the callback.
                connectionFailureListener.accept(this, ChannelEventType.CONNECT_FAILED);
+               callback.cancel(address, throwable);
+               maybeRejectPendingCallbacks(throwable);
             } else {
+               suspected = false;
                int currentConnected = connected.incrementAndGet();
                if (log.isTraceEnabled()) log.tracef(throwable, "[%s] Channel connected, created = %d, active = %d, connected = %d",
                                                     address, created.get(), active.get(), currentConnected);
@@ -180,6 +185,7 @@ class ChannelPool {
             HOTROD.warnf("Invalid active count after channel create failure");
          }
          callback.cancel(address, t);
+         maybeRejectPendingCallbacks(t);
       }
    }
 
@@ -309,6 +315,37 @@ class ChannelPool {
       }
    }
 
+   public void inspectPool() {
+      if (terminated || suspected || getConnected() > 0 || getActive() > 0) return;
+
+      ChannelOperation cb = acquireHead();
+      if (cb != null) {
+         int currentCreated = created.incrementAndGet();
+         int currentActive = active.incrementAndGet();
+         if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel to inspect server, created = %d, active = %d", address, currentCreated, currentActive);
+         suspected = true;
+         createAndInvoke(cb);
+      }
+   }
+
+   private void maybeRejectPendingCallbacks(Throwable t) {
+      if (terminated || !suspected || getConnected() > 0 || getActive() > 0) return;
+
+      ChannelOperation cb;
+      while ((cb = acquireHead()) != null) {
+         cb.cancel(address, t);
+      }
+   }
+
+   private ChannelOperation acquireHead() {
+      long stamp = lock.readLock();
+      try {
+         return callbacks.pollFirst();
+      } finally {
+         lock.unlockRead(stamp);
+      }
+   }
+
    @Override
    public String toString() {
       return "ChannelPool[" +
@@ -319,6 +356,7 @@ class ChannelPool {
             ", created=" + created +
             ", active=" + active +
             ", connected=" + connected +
+            ", suspected=" + suspected +
             ", terminated=" + terminated +
             ']';
    }
