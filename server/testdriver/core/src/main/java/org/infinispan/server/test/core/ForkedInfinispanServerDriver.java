@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServerConnection;
 
-import org.apache.commons.io.FileUtils;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -104,7 +103,7 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          }
          try {
             File sourceServerConfiguration = new File(server.getServerConfiguration());
-            FileUtils.copyFile(sourceServerConfiguration, destConfDir.resolve(sourceServerConfiguration.getName()).toFile());
+            Files.copy(Paths.get(server.getServerConfiguration()), destConfDir.resolve(sourceServerConfiguration.getName()));
          } catch (IOException e) {
             throw new UncheckedIOException("Cannot copy the server to temp directory", e);
          }
@@ -120,9 +119,8 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    private void createServerStructure(String serverHome, File serverRootPath) {
       // copy required files
       try {
-         FileUtils.deleteDirectory(serverRootPath);
-         FileUtils.copyDirectory(getServerConfDir(serverHome).getParent().toFile(), serverRootPath,
-               p -> !p.isDirectory() || !p.getName().equals("data") || !p.getName().equals("log"));
+         Util.recursiveFileRemove(serverRootPath);
+         Util.recursiveDirectoryCopy(getServerConfDir(serverHome).getParent(), serverRootPath.toPath());
       } catch (IOException e) {
          throw new UncheckedIOException("Cannot copy the default values", e);
       }

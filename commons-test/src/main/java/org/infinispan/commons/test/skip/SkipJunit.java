@@ -2,6 +2,7 @@ package org.infinispan.commons.test.skip;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
@@ -87,5 +88,11 @@ public class SkipJunit implements TestRule {
       if (version == 1)
          version = Integer.parseInt(parts[1]);
       return version;
+   }
+
+   public static void skipCondition(Supplier<Boolean> condition) {
+      if (condition.get()) {
+         throw new AssumptionViolatedException("Skipping test");
+      }
    }
 }

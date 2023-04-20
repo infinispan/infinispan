@@ -1,0 +1,5 @@
+package proto;
+
+message JSON {
+  optional string key = 1;
+}
