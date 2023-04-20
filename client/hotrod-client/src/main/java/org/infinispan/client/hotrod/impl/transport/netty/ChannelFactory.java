@@ -263,6 +263,11 @@ public class ChannelFactory {
 
    public <T extends ChannelOperation> T fetchChannelAndInvoke(Set<SocketAddress> failedServers, byte[] cacheName,
                                                                T operation) {
+      return fetchChannelAndInvoke(failedServers, cacheName, operation, true);
+   }
+
+   private <T extends ChannelOperation> T fetchChannelAndInvoke(Set<SocketAddress> failedServers, byte[] cacheName,
+                                                                T operation, boolean checkServer) {
       SocketAddress server;
       // Need the write lock because FailoverRequestBalancingStrategy is not thread-safe
       lock.writeLock().lock();
@@ -281,7 +286,24 @@ public class ChannelFactory {
       } finally {
          lock.writeLock().unlock();
       }
-      return fetchChannelAndInvoke(server, operation);
+      return checkServer
+            ? fetchChannelAndInvoke(server, cacheName, operation)
+            : fetchChannelAndInvoke(server, operation);
+   }
+
+   private <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress preferred, byte[] cacheName, T operation) {
+      boolean suspect;
+      lock.readLock().lock();
+      try {
+         suspect = failedServers.contains(preferred);
+      } finally {
+         lock.readLock().unlock();
+      }
+      if (suspect) {
+         if (log.isTraceEnabled()) log.tracef("Server %s is suspected, trying another for %s", preferred, operation);
+         return fetchChannelAndInvoke(failedServers, cacheName, operation, false);
+      }
+      return fetchChannelAndInvoke(preferred, operation);
    }
 
    public <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress server, T operation) {
@@ -323,7 +345,7 @@ public class ChannelFactory {
       if (cacheInfo != null && cacheInfo.getConsistentHash() != null) {
          SocketAddress server = cacheInfo.getConsistentHash().getServer(key);
          if (server != null && (failedServers == null || !failedServers.contains(server))) {
-            return fetchChannelAndInvoke(server, operation);
+            return fetchChannelAndInvoke(server, cacheName, operation);
          }
       }
       return fetchChannelAndInvoke(failedServers, cacheName, operation);

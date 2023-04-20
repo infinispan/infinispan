@@ -59,6 +59,7 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
          }
       }
       channelPool.releaseClosedChannel(future.channel(), this);
+      channelPool.inspectPool();
    }
 
    synchronized void setAcquired() {
