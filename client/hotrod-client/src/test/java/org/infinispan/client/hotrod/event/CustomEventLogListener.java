@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -179,7 +180,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
 
          if (counter != that.counter) return false;
          if (!key.getValue().equals(that.key.getValue())) return false;
-         return !(value != null ? !value.equals(that.value) : that.value != null);
+         return Objects.equals(value, that.value);
       }
 
       @Override

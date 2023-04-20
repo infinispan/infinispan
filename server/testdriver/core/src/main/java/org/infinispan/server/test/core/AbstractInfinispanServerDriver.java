@@ -43,6 +43,8 @@ import org.infinispan.cli.user.UserTool;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.maven.Artifact;
+import org.infinispan.commons.maven.MavenSettings;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Features;
@@ -53,8 +55,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.test.api.TestUser;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.junit.Assume;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
@@ -274,12 +274,14 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       String propertyArtifacts = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_EXTRA_LIBS);
       String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.mavenArtifacts();
       if (artifacts != null && artifacts.length > 0) {
-         MavenResolvedArtifact[] archives = Maven.resolver().resolve(artifacts).withoutTransitivity().asResolvedArtifact();
-         for (MavenResolvedArtifact archive : archives) {
-            Exceptions.unchecked(() -> {
-               Path source = archive.asFile().toPath();
-               Files.copy(source, libDir.toPath().resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-            });
+         try {
+            MavenSettings.init();
+            for (String artifact : artifacts) {
+               Path resolved = Artifact.fromString(artifact).resolveArtifact();
+               Files.copy(resolved, libDir.toPath().resolve(resolved.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            }
+         } catch (IOException e) {
+            throw new RuntimeException(e);
          }
       }
       // Supplied artifacts
@@ -532,5 +534,16 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          }
       }
       return null;
+   }
+
+   public static String abbreviate(String name) {
+      String[] split = name.split("\\.");
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < split.length - 1; i++) {
+         sb.append(split[i].charAt(0));
+         sb.append('.');
+      }
+      sb.append(split[split.length - 1]);
+      return sb.toString();
    }
 }

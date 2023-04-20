@@ -1,6 +1,9 @@
 package org.infinispan.server.functional;
 
 import org.infinispan.server.cli.XSiteCliOperations;
+import org.infinispan.server.functional.hotrod.XSiteHotRodCacheOperations;
+import org.infinispan.server.functional.rest.XSiteRestCacheOperations;
+import org.infinispan.server.functional.rest.XSiteRestMetricsOperations;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;

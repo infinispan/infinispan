@@ -23,11 +23,11 @@ import org.aesh.command.option.Option;
 import org.aesh.io.FileResource;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.infinispan.cli.artifacts.Artifact;
-import org.infinispan.cli.artifacts.MavenSettings;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.ExitCodeResultHandler;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.commons.maven.Artifact;
+import org.infinispan.commons.maven.MavenSettings;
 import org.infinispan.commons.util.Util;
 import org.kohsuke.MetaInfServices;
 
@@ -77,7 +77,7 @@ public class Install extends CliCommand {
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
       try {
          StandardCopyOption[] options = overwrite ? new StandardCopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new StandardCopyOption[]{};
-         MavenSettings.getSettings(mavenSettings == null ? null : Artifact.fromString(mavenSettings).resolveArtifact());
+         MavenSettings.init(mavenSettings == null ? null : Artifact.fromString(mavenSettings).resolveArtifact());
          Path serverLib = CLI.getServerHome(serverHome).resolve(serverRoot).resolve("lib");
          if (clean) {
             if (verbose) {
@@ -91,7 +91,7 @@ public class Install extends CliCommand {
             String path = parts[0];
             Path resolved = null;
             for (int retry = 0; retry <= retries; retry++) {
-               resolved = Artifact.fromString(path).verbose(verbose).force(retry == 0 ? force : true).resolveArtifact();
+               resolved = Artifact.fromString(path).verbose(verbose).force(retry != 0 || force).resolveArtifact();
                if (resolved == null) {
                   throw Messages.MSG.artifactNotFound(path);
                }
