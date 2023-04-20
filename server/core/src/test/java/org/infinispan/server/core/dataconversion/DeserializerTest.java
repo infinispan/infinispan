@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 /**
  * @since 15.0
  **/
-@Test
+@Test(groups = "functional", testName = "server.core.dataconversion.DeserializerTest")
 public class DeserializerTest {
    public enum MyEnum {
       A,
