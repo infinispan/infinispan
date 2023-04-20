@@ -4,6 +4,9 @@ import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
 
 import org.infinispan.server.cli.XSiteCliOperations;
+import org.infinispan.server.functional.hotrod.XSiteHotRodCacheOperations;
+import org.infinispan.server.functional.rest.XSiteRestCacheOperations;
+import org.infinispan.server.functional.rest.XSiteRestMetricsOperations;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRuleBuilder;
@@ -27,8 +30,8 @@ import org.junit.runners.Suite;
 })
 public class XSiteIT {
 
-   protected static final int NUM_SERVERS = 3;
-   protected static final String LON_CACHE_XML_CONFIG =
+   public static final int NUM_SERVERS = 3;
+   public static final String LON_CACHE_XML_CONFIG =
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"%s\">" +
                "     <backups>" +
@@ -37,7 +40,7 @@ public class XSiteIT {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   protected static final String NYC_CACHE_XML_CONFIG =
+   public static final String NYC_CACHE_XML_CONFIG =
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"%s\">" +
                "     <backups>" +
@@ -46,7 +49,7 @@ public class XSiteIT {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   protected static final String LON_CACHE_CUSTOM_NAME_XML_CONFIG =
+   public static final String LON_CACHE_CUSTOM_NAME_XML_CONFIG =
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"lon-cache\">" +
                "     <backups>" +
@@ -56,7 +59,7 @@ public class XSiteIT {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   protected static final String NYC_CACHE_CUSTOM_NAME_XML_CONFIG =
+   public static final String NYC_CACHE_CUSTOM_NAME_XML_CONFIG =
          "<infinispan><cache-container>" +
                "  <replicated-cache name=\"nyc-cache\">" +
                "     <backups>" +
@@ -66,7 +69,7 @@ public class XSiteIT {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   protected static final String LON_CACHE_OFF_HEAP =
+   public static final String LON_CACHE_OFF_HEAP =
          "<infinispan><cache-container statistics=\"true\">" +
                "<distributed-cache name=\"%s\" owners=\"2\" mode=\"ASYNC\" remote-timeout=\"25000\" statistics=\"true\">" +
                "        <backups>" +

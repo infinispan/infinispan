@@ -2,15 +2,23 @@ package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -23,12 +31,26 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 
 import org.apache.logging.log4j.core.util.StringBuilderWriter;
+import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.infinispan.test.TestingUtil;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -139,8 +161,9 @@ public class Common {
 
    public static String assertStatus(int status, CompletionStage<RestResponse> request) {
       try (RestResponse response = sync(request)) {
-         assertEquals(status, response.getStatus());
-         return response.getBody();
+         String body = response.getBody();
+         assertEquals(body, status, response.getStatus());
+         return body;
       }
    }
 
@@ -204,4 +227,55 @@ public class Common {
       return sw.toString();
    }
 
+
+   public static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerTestMethodRule testMethodRule, boolean indexed, String protoFile, String entityName) {
+
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.marshaller(new ProtoStreamMarshaller());
+
+      HotRodTestClientDriver hotRodTestClientDriver = testMethodRule.hotrod().withClientConfiguration(config);
+      RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
+
+      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, testMethodRule.getClass().getClassLoader()));
+      metadataCache.putIfAbsent(protoFile, schema);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertNotNull(metadataCache.get(protoFile));
+
+      Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager)));
+
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+      if (indexed) {
+         builder.indexing().enable()
+               .storage(LOCAL_HEAP)
+               .addIndexedEntity(entityName);
+      }
+      return hotRodTestClientDriver.withServerConfiguration(builder).create();
+   }
+
+   public static void assertAnyEquals(Object expected, Object actual) {
+      if (expected instanceof byte[] && actual instanceof byte[])
+         assertArrayEquals((byte[]) expected, (byte[]) actual);
+      else
+         assertEquals(expected, actual);
+   }
+
+   public static Integer getIntKeyForServer(RemoteCache<Integer, ?> cache, int server) {
+      ChannelFactory cf = cache.getRemoteCacheManager().getChannelFactory();
+      byte[] name = RemoteCacheManager.cacheNameBytes(cache.getName());
+      InetSocketAddress serverAddress = cf.getServers(name).stream().skip(server).findFirst().get();
+      DataFormat df = cache.getDataFormat();
+      ConsistentHash ch = cf.getConsistentHash(name);
+      Random r = new Random();
+      for(int i = 0; i < 1000; i++) {
+         int aInt = r.nextInt();
+         SocketAddress keyAddress = ch.getServer(df.keyToBytes(aInt));
+         if (keyAddress.equals(serverAddress)) {
+            return aInt;
+         }
+      }
+      throw new IllegalStateException("Could not find any key owned by " + serverAddress);
+   }
 }

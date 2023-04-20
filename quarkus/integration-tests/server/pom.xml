@@ -15,7 +15,7 @@
 
     <properties>
         <test.image>infinispan-quarkus-test</test.image>
-        <version.fabric8.maven.plugin>0.33.0</version.fabric8.maven.plugin>
+        <version.fabric8.maven.plugin>0.42.1</version.fabric8.maven.plugin>
     </properties>
 
     <dependencies>
@@ -163,7 +163,7 @@
                         <include>org.infinispan.server.security.authentication.AuthenticationIT</include>
                         <include>org.infinispan.quarkus.server.*.class</include>
                     </includes>
-                    <forkCount>0</forkCount>
+                    <forkCount>1</forkCount>
                     <threadCount>8</threadCount>
                     <parallel>none</parallel>
                     <redirectTestOutputToFile>false</redirectTestOutputToFile>

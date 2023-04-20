@@ -92,4 +92,8 @@ public class InfinispanServerRule implements TestRule {
    public TestServer getTestServer() {
       return testServer;
    }
+
+   public static Log getLog() {
+      return log;
+   }
 }

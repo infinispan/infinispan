@@ -67,9 +67,10 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.resources.WeakSSEListener;
-import org.infinispan.server.functional.HotRodCacheQueries;
+import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -274,7 +275,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testScriptUpload() {
-      SkipJunit.skipSinceJDK(16);
+      SkipJunit.skipCondition(() -> getServers().getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
       InfinispanServerTestMethodRule serverTest = getServerTest();
 
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
@@ -292,7 +293,7 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testExecScripts() {
-      SkipJunit.skipSinceJDK(16);
+      SkipJunit.skipCondition(() -> getServers().getServerDriver().getConfiguration().runMode() != ServerRunMode.CONTAINER);
       InfinispanServerTestMethodRule serverTest = getServerTest();
       RemoteCache cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
       String scriptName = serverTest.addScript(cache.getRemoteCacheManager(), "scripts/test.js");
