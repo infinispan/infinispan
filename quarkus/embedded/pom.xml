@@ -11,7 +11,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>infinispan-quarkus-embedded-parent</artifactId>
-    <version>15.0.0-SNAPSHOT</version>
     <name>Infinispan Quarkus :: Embedded Parent</name>
 
     <packaging>pom</packaging>
