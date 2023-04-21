@@ -29,39 +29,35 @@
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-core</artifactId>
-                <version>${version.infinispan}</version>
                 <type>test-jar</type>
             </dependency>
 
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-commons-test</artifactId>
-                <version>${version.infinispan}</version>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-server-testdriver-core</artifactId>
-                <version>${version.infinispan}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-server-testdriver-junit4</artifactId>
-                <version>${version.infinispan}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-server-tests</artifactId>
-                <version>${version.infinispan}</version>
+                <version>${project.version}</version>
                 <type>test-jar</type>
             </dependency>
 
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-server-rest</artifactId>
-                <version>${version.infinispan}</version>
                 <type>test-jar</type>
             </dependency>
 
