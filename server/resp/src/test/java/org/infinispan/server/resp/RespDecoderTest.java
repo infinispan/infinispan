@@ -63,7 +63,7 @@ public class RespDecoderTest {
 
    @Test
    public void testMixtureOfTypes() {
-      String commandName = RespCommand.PSUBSCRIBE.toString();
+      String commandName = "PSUBSCRIBE";
       String minValueStr = String.valueOf(Long.MIN_VALUE);
       ByteBuf buffer = Unpooled.copiedBuffer("*6\r\n+" + commandName + "\r\n$3\r\nkey\r\n+value\r\n:23\r\n$5\r\nworks\r\n:" + minValueStr + "\r\n", StandardCharsets.US_ASCII);
       channel.writeInbound(buffer);
@@ -72,7 +72,7 @@ public class RespDecoderTest {
 
       Request req = queuedCommands.poll();
       assertNotNull(req);
-      assertEquals(RespCommand.PSUBSCRIBE, req.command);
+      assertEquals(commandName, req.command.getName());
       List<byte[]> arguments = req.arguments;
       assertEquals(5, arguments.size());
 

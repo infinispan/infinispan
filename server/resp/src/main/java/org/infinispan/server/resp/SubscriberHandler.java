@@ -1,16 +1,9 @@
 package org.infinispan.server.resp;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.CharsetUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -22,44 +15,38 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.server.resp.commands.PubSubResp3Command;
+import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
+import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 public class SubscriberHandler extends CacheRespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   // Random bytes to keep listener keys separate from others. Means `resp|`.
-   public static final byte[] PREFIX_CHANNEL_BYTES = new byte[]{114, 101, 115, 112, 124};
-   private final Resp3Handler handler;
+   private final Resp3Handler resp3Handler;
 
    public SubscriberHandler(RespServer respServer, Resp3Handler prevHandler) {
       super(respServer);
-      this.handler = prevHandler;
-   }
-
-   public static byte[] keyToChannel(byte[] keyBytes) {
-      byte[] result = new byte[keyBytes.length + PREFIX_CHANNEL_BYTES.length];
-      System.arraycopy(PREFIX_CHANNEL_BYTES, 0, result, 0, PREFIX_CHANNEL_BYTES.length);
-      System.arraycopy(keyBytes, 0, result, PREFIX_CHANNEL_BYTES.length, keyBytes.length);
-      return result;
-   }
-
-   public static byte[] channelToKey(byte[] channelBytes) {
-      return Arrays.copyOfRange(channelBytes, PREFIX_CHANNEL_BYTES.length, channelBytes.length);
+      this.resp3Handler = prevHandler;
    }
 
    @Listener(clustered = true)
-   static class PubSubListener {
+   public static class PubSubListener {
       private final Channel channel;
       private final DataConversion keyConversion;
       private final DataConversion valueConversion;
 
-      PubSubListener(Channel channel, DataConversion keyConversion, DataConversion valueConversion) {
+      public PubSubListener(Channel channel, DataConversion keyConversion, DataConversion valueConversion) {
          this.channel = channel;
          this.keyConversion = keyConversion;
          this.valueConversion = valueConversion;
@@ -68,7 +55,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       @CacheEntryCreated
       @CacheEntryModified
       public CompletionStage<Void> onEvent(CacheEntryEvent<Object, Object> entryEvent) {
-         byte[] key = channelToKey((byte[]) keyConversion.fromStorage(entryEvent.getKey()));
+         byte[] key = KeyChannelUtils.channelToKey((byte[]) keyConversion.fromStorage(entryEvent.getKey()));
          byte[] value = (byte[]) valueConversion.fromStorage(entryEvent.getValue());
          if (key.length > 0 && value != null && value.length > 0) {
             // *3 + \r\n + $7 + \r\n + message + \r\n + $ + keylength (log10 + 1) + \r\n + key + \r\n +
@@ -91,11 +78,11 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       }
    }
 
-   static class ListenerKeyFilter implements CacheEventFilter<Object, Object> {
+   public static class ListenerKeyFilter implements CacheEventFilter<Object, Object> {
       private final byte[] key;
       private final DataConversion conversion;
 
-      ListenerKeyFilter(byte[] key, DataConversion conversion) {
+      public ListenerKeyFilter(byte[] key, DataConversion conversion) {
          this.key = key;
          this.conversion = conversion;
       }
@@ -107,7 +94,15 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       }
    }
 
-   Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
+   private Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
+
+   public Map<WrappedByteArray, PubSubListener> specificChannelSubscribers() {
+      return specificChannelSubscribers;
+   }
+
+   public Resp3Handler resp3Handler() {
+      return resp3Handler;
+   }
 
    @Override
    public void handleChannelDisconnect(ChannelHandlerContext ctx) {
@@ -117,57 +112,14 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    @Override
    protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
-
-      switch (type) {
-         case SUBSCRIBE:
-            AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-            for (byte[] keyChannel : arguments) {
-               if (log.isTraceEnabled()) {
-                  log.tracef("Subscriber for channel: " + CharsetUtil.UTF_8.decode(ByteBuffer.wrap(keyChannel)));
-               }
-               WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
-               if (specificChannelSubscribers.get(wrappedByteArray) == null) {
-                  PubSubListener pubSubListener = new PubSubListener(ctx.channel(), cache.getKeyDataConversion(), cache.getValueDataConversion());
-                  specificChannelSubscribers.put(wrappedByteArray, pubSubListener);
-                  byte[] channel = keyToChannel(keyChannel);
-                  CompletionStage<Void> stage = cache.addListenerAsync(pubSubListener, new ListenerKeyFilter(channel, cache.getKeyDataConversion()), null);
-                  aggregateCompletionStage.dependsOn(handleStageListenerError(stage, keyChannel, true));
-               }
-            }
-            return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), arguments, true);
-         case UNSUBSCRIBE:
-            aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-            if (arguments.size() == 0) {
-               return unsubscribeAll(ctx);
-            } else {
-               for (byte[] keyChannel : arguments) {
-                  WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
-                  PubSubListener listener = specificChannelSubscribers.remove(wrappedByteArray);
-                  if (listener != null) {
-                     aggregateCompletionStage.dependsOn(handleStageListenerError(cache.removeListenerAsync(listener), keyChannel, false));
-                  }
-               }
-            }
-            return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), arguments, false);
-         case PING:
-            // Note we don't return the handler and just use it to handle the ping - we assume stage is always complete
-            handler.handleRequest(ctx, type, arguments);
-            break;
-         case RESET:
-         case QUIT:
-            removeAllListeners();
-            return handler.handleRequest(ctx, type, arguments);
-         case PSUBSCRIBE:
-         case PUNSUBSCRIBE:
-            RespRequestHandler.stringToByteBuf("-ERR not implemented yet\r\n", allocatorToUse);
-            break;
-         default:
-            return super.actualHandleRequest(ctx, type, arguments);
+      if (type instanceof PubSubResp3Command) {
+         PubSubResp3Command command = (PubSubResp3Command) type;
+         return command.perform(this, ctx, arguments);
       }
-      return myStage;
+      return super.actualHandleRequest(ctx, type, arguments);
    }
 
-   private CompletionStage<Void> handleStageListenerError(CompletionStage<Void> stage, byte[] keyChannel, boolean subscribeOrUnsubscribe) {
+   public CompletionStage<Void> handleStageListenerError(CompletionStage<Void> stage, byte[] keyChannel, boolean subscribeOrUnsubscribe) {
       return stage.whenComplete((__, t) -> {
          if (t != null) {
             if (subscribeOrUnsubscribe) {
@@ -179,7 +131,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       });
    }
 
-   private void removeAllListeners() {
+   public void removeAllListeners() {
       for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
          PubSubListener listener = entry.getValue();
@@ -188,7 +140,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       }
    }
 
-   private CompletionStage<RespRequestHandler> unsubscribeAll(ChannelHandlerContext ctx) {
+   public CompletionStage<RespRequestHandler> unsubscribeAll(ChannelHandlerContext ctx) {
       var aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       List<byte[]> channels = new ArrayList<>(specificChannelSubscribers.size());
       for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
@@ -203,7 +155,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), channels, false);
    }
 
-   private CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
+   public CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
          Collection<byte[]> keyChannels, boolean subscribeOrUnsubscribe) {
       return stageToReturn(stageToWaitFor, ctx, (__, alloc) -> {
          for (byte[] keyChannel : keyChannels) {

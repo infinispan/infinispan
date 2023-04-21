@@ -1,14 +1,27 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
-import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.resp.test.CommonRespTests;
+import org.infinispan.server.resp.test.RespTestingUtil;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -23,30 +36,15 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.resp.configuration.RespServerConfiguration;
-import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
-import org.infinispan.server.resp.test.CommonRespTests;
-import org.infinispan.server.resp.test.RespTestingUtil;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import io.lettuce.core.SetArgs;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
+import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Base class for single node tests.
@@ -433,7 +431,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertEquals(21, commands.size());
+      assertEquals(24, commands.size());
    }
 
    public void testAuth() {
