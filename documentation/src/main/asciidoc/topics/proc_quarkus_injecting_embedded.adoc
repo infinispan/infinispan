@@ -1,0 +1,26 @@
+[id='quarkus_inject_embedded']
+= Injecting Embedded Caches
+Inject a `EmbeddedCacheManager` instance into your Quarkus application to interact with {brandname} caches..
+
+.Procedure
+
+. Optional: Use the `quarkus.infinispan-embedded.xml-config` property to set the path to an XML file that includes the configuration of the injected instance.
++
+[source,java]
+----
+quarkus.infinispan-embedded.xml-config=/example/path/to/config.xml
+----
+. Add the `@Inject` annotation to an uninitialized `EmbeddedCacheManager` class variable.
++
+[source,java]
+----
+import javax.inject.Inject;
+import org.infinispan.manager.EmbeddedCacheManager;
+...
+@Path("/example")
+public class ExampleResource {
+
+    @Inject
+    EmbeddedCacheManager emc;
+}
+----
