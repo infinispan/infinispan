@@ -1,11 +1,15 @@
 [id='quarkus_native_compilation']
-= Native Compilation
-Natively compile your Quarkus {brandname} application
+= Compiling Quarkus {brandname} application
+Generate a native executable for Quarkus {brandname} application.
 
 .Prerequisites
 
-* Ensure all https://quarkus.io/guides/building-native-image#prerequisites[Quarkus native prerequisites] are satisfied
+* Have a Quarkus based project. For a complete list of prerequisites, see link:https://quarkus.io/guides/building-native-image#prerequisites[Quarkus native prerequisites].
 
 .Procedure
-
-. `mvn clean package -Pnative`
+* Natively compile your Quarkus {brandname} application:
++
+[source]
+----
+mvn clean package -Pnative
+----

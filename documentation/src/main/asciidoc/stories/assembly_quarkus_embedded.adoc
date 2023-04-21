@@ -1,9 +1,8 @@
 [id='quarkus_embedded']
 :context: quarkus
-= Using the Quarkus Extension
-{brandname} provides an extension that integrates with the Quarkus framework and allows you to:
-
-* Create a natively compiled Infinispan application
+= Using the Quarkus extension
+{brandname} provides an extension that integrates with the Quarkus framework.
+The extension lets you create natively compiled {brandname} applications.
 
 include::{topics}/ref_quarkus_dependencies.adoc[leveloffset=+1]
 include::{topics}/proc_quarkus_injecting_embedded.adoc[leveloffset=+1]
