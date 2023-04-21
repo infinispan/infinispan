@@ -1,39 +1,76 @@
 package org.infinispan.server.resp;
 
-import java.nio.charset.StandardCharsets;
-
 import io.netty.buffer.ByteBuf;
+import org.infinispan.server.resp.commands.CONFIG;
+import org.infinispan.server.resp.commands.INFO;
+import org.infinispan.server.resp.commands.connection.AUTH;
+import org.infinispan.server.resp.commands.connection.COMMAND;
+import org.infinispan.server.resp.commands.connection.ECHO;
+import org.infinispan.server.resp.commands.connection.HELLO;
+import org.infinispan.server.resp.commands.connection.PING;
+import org.infinispan.server.resp.commands.connection.QUIT;
+import org.infinispan.server.resp.commands.connection.READONLY;
+import org.infinispan.server.resp.commands.connection.READWRITE;
+import org.infinispan.server.resp.commands.connection.RESET;
+import org.infinispan.server.resp.commands.connection.SELECT;
+import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
+import org.infinispan.server.resp.commands.pubsub.PUBLISH;
+import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
+import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
+import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
+import org.infinispan.server.resp.commands.string.DECR;
+import org.infinispan.server.resp.commands.string.DEL;
+import org.infinispan.server.resp.commands.string.GET;
+import org.infinispan.server.resp.commands.string.GETRANGE;
+import org.infinispan.server.resp.commands.string.INCR;
+import org.infinispan.server.resp.commands.string.MGET;
+import org.infinispan.server.resp.commands.string.MSET;
+import org.infinispan.server.resp.commands.string.SET;
 
-public enum RespCommand {
-   GET,
-   SET,
-   INCR,
-   DECR,
-   DEL,
-   MSET,
-   MGET,
-   PUBLISH,
-   PING,
-   PSUBSCRIBE,
-   PUNSUBSCRIBE,
-   SUBSCRIBE,
-   UNSUBSCRIBE,
-   RESET,
-   COMMAND,
-   ECHO,
-   HELLO,
-   AUTH,
-   CONFIG,
-   INFO,
-   READWRITE,
-   READONLY,
-   SELECT,
-   QUIT;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+public abstract class RespCommand {
+   private final String name;
+   private final int arity;
+   private final int firstKeyPos;
+   private final int lastKeyPos;
+   private final int steps;
    private final byte[] bytes;
 
-   RespCommand() {
-      this.bytes = name().getBytes(StandardCharsets.US_ASCII);
+   public RespCommand(int arity, int firstKeyPos, int lastKeyPos, int steps) {
+      this.name = this.getClass().getSimpleName();
+      this.arity = arity;
+      this.firstKeyPos = firstKeyPos;
+      this.lastKeyPos = lastKeyPos;
+      this.steps = steps;
+      this.bytes = name.getBytes(StandardCharsets.US_ASCII);
+   }
+
+   public RespCommand(String name, int arity, int firstKeyPos, int lastKeyPos, int steps) {
+      this.name = name;
+      this.arity = arity;
+      this.firstKeyPos = firstKeyPos;
+      this.lastKeyPos = lastKeyPos;
+      this.steps = steps;
+      this.bytes = name.getBytes(StandardCharsets.US_ASCII);
+   }
+
+   protected static List<RespCommand> all() {
+      List<RespCommand> respCommands = new ArrayList<>();
+
+      for (int i = 0; i < indexedRespCommand.length; i++) {
+         if (indexedRespCommand[i] != null) {
+            respCommands.addAll(Arrays.asList(indexedRespCommand[i]));
+         }
+      }
+      return respCommands;
+   }
+
+   public String getName() {
+      return name;
    }
 
    private static final RespCommand[][] indexedRespCommand;
@@ -42,19 +79,19 @@ public enum RespCommand {
       indexedRespCommand = new RespCommand[26][];
       // Just manual for now, but we may want to dynamically do this with ordinal determining what order within
       // a sub array the commands are placed
-      indexedRespCommand[0] = new RespCommand[]{AUTH};
-      indexedRespCommand[2] = new RespCommand[]{CONFIG, COMMAND};
-      indexedRespCommand[3] = new RespCommand[]{DECR, DEL};
-      indexedRespCommand[4] = new RespCommand[]{ECHO};
-      indexedRespCommand[6] = new RespCommand[]{GET};
-      indexedRespCommand[7] = new RespCommand[]{HELLO};
-      indexedRespCommand[8] = new RespCommand[]{INCR, INFO};
-      indexedRespCommand[12] = new RespCommand[]{MGET, MSET};
-      indexedRespCommand[15] = new RespCommand[]{PUBLISH, PING, PSUBSCRIBE, PUNSUBSCRIBE};
-      indexedRespCommand[16] = new RespCommand[]{QUIT};
-      indexedRespCommand[17] = new RespCommand[]{RESET, READWRITE, READONLY};
-      indexedRespCommand[18] = new RespCommand[]{SET, SUBSCRIBE, SELECT};
-      indexedRespCommand[20] = new RespCommand[]{UNSUBSCRIBE};
+      indexedRespCommand[0] = new RespCommand[]{new AUTH()};
+      indexedRespCommand[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
+      indexedRespCommand[3] = new RespCommand[]{new DECR(), new DEL()};
+      indexedRespCommand[4] = new RespCommand[]{new ECHO()};
+      indexedRespCommand[6] = new RespCommand[]{new GET()};
+      indexedRespCommand[7] = new RespCommand[]{new HELLO()};
+      indexedRespCommand[8] = new RespCommand[]{new INCR(), new INFO()};
+      indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET()};
+      indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
+      indexedRespCommand[16] = new RespCommand[]{new QUIT()};
+      indexedRespCommand[17] = new RespCommand[]{new RESET(), new READWRITE(), new READONLY()};
+      indexedRespCommand[18] = new RespCommand[]{new SET(), new SUBSCRIBE(), new SELECT()};
+      indexedRespCommand[20] = new RespCommand[]{new UNSUBSCRIBE()};
    }
 
    public static RespCommand fromByteBuf(ByteBuf buf, int commandLength) {
@@ -94,5 +131,21 @@ public enum RespCommand {
          }
       }
       return null;
+   }
+
+   public int getArity() {
+      return arity;
+   }
+
+   public int getFirstKeyPos() {
+      return firstKeyPos;
+   }
+
+   public int getLastKeyPos() {
+      return lastKeyPos;
+   }
+
+   public int getSteps() {
+      return steps;
    }
 }

@@ -1,19 +1,18 @@
 package org.infinispan.server.resp;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 public abstract class BaseRespDecoder extends ByteToMessageDecoder {
-   protected final static Log log = LogFactory.getLog(RespDecoder.class, Log.class);
+   protected final static Log log = LogFactory.getLog(BaseRespDecoder.class, Log.class);
    protected final static int MINIMUM_BUFFER_SIZE;
    protected final Intrinsics.Resp2LongProcessor longProcessor = new Intrinsics.Resp2LongProcessor();
    protected RespRequestHandler requestHandler;
@@ -153,7 +152,7 @@ public abstract class BaseRespDecoder extends ByteToMessageDecoder {
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       log.unexpectedException(cause);
-      RespRequestHandler.stringToByteBuf("-ERR Server Error Encountered: " + cause.getMessage() + "\\r\\n", requestHandler.allocatorToUse);
+      ByteBufferUtils.stringToByteBuf("-ERR Server Error Encountered: " + cause.getMessage() + "\\r\\n", requestHandler.allocatorToUse);
       flushBufferIfNeeded(ctx, false);
       ctx.close();
    }

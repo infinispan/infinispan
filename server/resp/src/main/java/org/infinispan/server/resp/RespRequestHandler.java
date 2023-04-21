@@ -1,5 +1,10 @@
 package org.infinispan.server.resp;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import org.infinispan.server.resp.commands.connection.QUIT;
+import org.infinispan.util.concurrent.CompletionStages;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -7,13 +12,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
-import org.infinispan.util.concurrent.CompletionStages;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.AttributeKey;
 
 public abstract class RespRequestHandler {
    protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedFuture(this);
@@ -31,10 +29,18 @@ public abstract class RespRequestHandler {
       }
    }
 
+   public CompletionStage<RespRequestHandler> myStage() {
+      return myStage;
+   }
+
+   public ByteBufPool allocatorToUse() {
+      return allocatorToUse;
+   }
+
    public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
       if (type == null) {
-         stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
+         ByteBufferUtils.stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
          return myStage;
       }
       return actualHandleRequest(ctx, type, arguments);
@@ -57,11 +63,11 @@ public abstract class RespRequestHandler {
     * @return stage that when complete returns the new handler to instate. This stage <b>must</b> be completed on the event loop
     */
    protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
-      if (type == RespCommand.QUIT) {
+      if (type instanceof QUIT) {
          ctx.close();
          return myStage;
       }
-      stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
+      ByteBufferUtils.stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
       return myStage;
    }
 
@@ -69,12 +75,12 @@ public abstract class RespRequestHandler {
       // Do nothing by default
    }
 
-   protected <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
+   public  <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
          BiConsumer<? super E, ByteBufPool> biConsumer) {
       return stageToReturn(stage, ctx, Objects.requireNonNull(biConsumer), null);
    }
 
-   protected <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
+   public  <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
          Function<E, RespRequestHandler> handlerWhenComplete) {
       return stageToReturn(stage, ctx, null, Objects.requireNonNull(handlerWhenComplete));
    }
@@ -146,124 +152,4 @@ public abstract class RespRequestHandler {
       });
    }
 
-   protected static ByteBuf stringToByteBufWithExtra(CharSequence string, ByteBufPool alloc, int extraBytes) {
-      boolean release = true;
-      int stringBytes = ByteBufUtil.utf8Bytes(string);
-      int allocatedSize = stringBytes + extraBytes;
-      ByteBuf buffer = alloc.apply(allocatedSize);
-
-      try {
-         int beforeWriteIndex = buffer.writerIndex();
-         ByteBufUtil.reserveAndWriteUtf8(buffer, string, allocatedSize);
-         assert buffer.capacity() - buffer.writerIndex() > extraBytes;
-         assert buffer.writerIndex() - beforeWriteIndex == stringBytes;
-         release = false;
-      } finally {
-         if (release) {
-            buffer.release();
-         }
-      }
-
-      return buffer;
-   }
-
-   protected static ByteBuf stringToByteBuf(CharSequence string, ByteBufPool alloc) {
-      return stringToByteBufWithExtra(string, alloc, 0);
-   }
-
-   protected static ByteBuf bytesToResult(byte[] result, ByteBufPool alloc) {
-      int length = result.length;
-      int stringLength = stringSize(length);
-
-      // Need 5 extra for $ and 2 sets of /r/n
-      int exactSize = stringLength + length + 5;
-      ByteBuf buffer = alloc.acquire(exactSize);
-      buffer.writeByte('$');
-      // This method is anywhere from 10-100% faster than ByteBufUtil.writeAscii and avoids allocations
-      setIntChars(length, stringLength, buffer);
-      buffer.writeByte('\r').writeByte('\n');
-      buffer.writeBytes(result);
-      buffer.writeByte('\r').writeByte('\n');
-
-      return buffer;
-   }
-
-   protected static int stringSize(int x) {
-      int d = 1;
-      if (x >= 0) {
-         d = 0;
-         x = -x;
-      }
-      int p = -10;
-      for (int i = 1; i < 10; i++) {
-         if (x > p)
-            return i + d;
-         p = 10 * p;
-      }
-      return 10 + d;
-   }
-
-   // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
-   // instead of creating a String around a byte[]
-   protected static int setIntChars(int i, int index, ByteBuf buf) {
-      int writeIndex = buf.writerIndex();
-      int q, r;
-      int charPos = index;
-
-      boolean negative = i < 0;
-      if (!negative) {
-         i = -i;
-      }
-
-      // Generate two digits per iteration
-      while (i <= -100) {
-         q = i / 100;
-         r = (q * 100) - i;
-         i = q;
-         buf.setByte(writeIndex + --charPos, DigitOnes[r]);
-         buf.setByte(writeIndex + --charPos, DigitTens[r]);
-      }
-
-      // We know there are at most two digits left at this point.
-      q = i / 10;
-      r = (q * 10) - i;
-      buf.setByte(writeIndex + --charPos, (byte) ('0' + r));
-
-      // Whatever left is the remaining digit.
-      if (q < 0) {
-         buf.setByte(writeIndex + --charPos, (byte) ('0' - q));
-      }
-
-      if (negative) {
-         buf.setByte(writeIndex + --charPos, (byte) '-');
-      }
-      buf.writerIndex(writeIndex + index);
-      return charPos;
-   }
-
-   static final byte[] DigitTens = {
-         '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-         '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
-         '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
-         '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
-         '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
-         '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
-         '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
-         '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
-         '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
-         '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
-   };
-
-   static final byte[] DigitOnes = {
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-   };
 }

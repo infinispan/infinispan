@@ -13,7 +13,15 @@ public class CacheRespRequestHandler extends RespRequestHandler {
             .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
    }
 
+   public AdvancedCache<byte[], byte[]> cache() {
+      return cache;
+   }
+
    protected void setCache(AdvancedCache<byte[], byte[]> cache) {
       this.cache = cache;
+   }
+
+   public RespServer respServer() {
+      return respServer;
    }
 }
