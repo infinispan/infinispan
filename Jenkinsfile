@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label 'slave-group-normal'
+        label 'slave-group-normal || slave-group-k8s'
     }
 
     parameters {
