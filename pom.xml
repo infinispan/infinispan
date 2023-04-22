@@ -2300,7 +2300,7 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>buildnumber-maven-plugin</artifactId>
-            <version>1.4</version>
+            <version>3.0.0</version>
             <executions>
                <execution>
                   <phase>validate</phase>
@@ -2322,15 +2322,6 @@
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-eclipse-plugin</artifactId>
-            <version>2.7</version>
-            <configuration>
-               <downloadSources>true</downloadSources>
-               <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-checkstyle-plugin</artifactId>
             <executions>
                <execution>
@@ -2341,15 +2332,6 @@
                   </goals>
                </execution>
             </executions>
-         </plugin>
-         <!-- IntelliJ project file generation -->
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-idea-plugin</artifactId>
-            <version>2.2</version>
-            <configuration>
-               <downloadSources>true</downloadSources>
-            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -2430,7 +2412,6 @@
                <reuseForks>true</reuseForks>
                <groups>${defaultTestNGGroups}</groups>
                <excludedGroups>${defaultExcludedTestNGGroups}</excludedGroups>
-               <disableXmlReport>true</disableXmlReport>
                <useFile>false</useFile>
                <systemPropertyVariables>
                   <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>

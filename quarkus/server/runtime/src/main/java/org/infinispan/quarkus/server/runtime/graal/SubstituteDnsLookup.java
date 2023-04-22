@@ -13,8 +13,6 @@ import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-import com.sun.jndi.dns.DnsContextFactory;
-import com.sun.jndi.ldap.LdapCtxFactory;
 
 public class SubstituteDnsLookup {
 }
@@ -32,9 +30,9 @@ final class Target_ServerInitialContextFactoryBuilder {
       }
       switch (className) {
          case "com.sun.jndi.dns.DnsContextFactory":
-            return new DnsContextFactory();
+            return new com.sun.jndi.dns.DnsContextFactory();
          case "com.sun.jndi.ldap.LdapCtxFactory":
-            return new LdapCtxFactory();
+            return new com.sun.jndi.ldap.LdapCtxFactory();
          default:
             throw new NamingException("Native Infinispan Server does not support " + className + " as an InitialContextFactory");
       }

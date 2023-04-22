@@ -251,6 +251,18 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>${maven.javadoc.skip}</skip>
+                    <detectOfflineLinks>false</detectOfflineLinks>
+                    <release>17</release> <!-- because we are setting it to the empty string above -->
+                    <sourceFileExcludes>
+                        <sourceFileExclude>**/SubstituteDnsLookup.java</sourceFileExclude>
+                    </sourceFileExcludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
