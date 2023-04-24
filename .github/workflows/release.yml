@@ -80,12 +80,12 @@ jobs:
         name: Build native executable
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          mvnw.cmd package -s maven-settings.xml -Pdistribution -Pwindows -Pnative -am -pl cli
+          mvnw.cmd package -s maven-settings.xml -Pdistribution -Pwindows -Pnative -am -pl quarkus/cli
         shell: cmd
 
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
-        run: ./mvnw package -s maven-settings.xml -Pdistribution -Pnative -am -pl cli
+        run: ./mvnw package -s maven-settings.xml -Pdistribution -Pnative -am -pl quarkus/cli
 
       - name: Upload CLI native executable
         id: upload-cli-native-executable
@@ -94,6 +94,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url:  ${{ needs.release.outputs.upload_url }}
-          asset_path: ./cli/target/infinispan-cli-${{github.ref_name}}.zip
+          asset_path: ./quarkus/cli/target/infinispan-cli-${{github.ref_name}}.zip
           asset_name: infinispan-cli-${{github.ref_name}}-${{ matrix.asset_name }}.zip
           asset_content_type: application/zip
