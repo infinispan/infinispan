@@ -14,18 +14,6 @@
     <name>Infinispan Quarkus :: Embedded Integration Tests</name>
     <description>Module that contains Infinispan Embedded related tests</description>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-quarkus-bom-test</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
