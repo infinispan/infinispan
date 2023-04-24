@@ -3,8 +3,6 @@ package org.infinispan.commons.dataconversion;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import org.infinispan.commons.util.Util;
@@ -16,13 +14,8 @@ import org.infinispan.commons.util.Util;
  */
 public abstract class AbstractTranscoder implements Transcoder {
 
-   private static final List<MediaTypeCodec> CODECS = new ArrayList<>();
-
-   static {
-      CODECS.add(new JavaMediaTypeCodec());
-      CODECS.add(new UrlFormCodec());
-      CODECS.add(new RFC4648Codec());
-   }
+   private static final MediaTypeCodec[] CODECS =
+         new MediaTypeCodec[] { new JavaMediaTypeCodec(), new UrlFormCodec(), new RFC4648Codec() };
 
    /**
     * Decodes content before doing the transcoding.
