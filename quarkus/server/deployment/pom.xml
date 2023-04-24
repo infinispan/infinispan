@@ -14,18 +14,6 @@
     <version>15.0.0-SNAPSHOT</version>
     <name>Infinispan Quarkus :: Server Deployment</name>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-quarkus-bom-deployment</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.infinispan</groupId>
