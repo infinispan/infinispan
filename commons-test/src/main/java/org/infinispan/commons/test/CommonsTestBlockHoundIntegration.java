@@ -2,9 +2,6 @@ package org.infinispan.commons.test;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.SecureRandom;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.kohsuke.MetaInfServices;
 
@@ -30,21 +27,8 @@ public class CommonsTestBlockHoundIntegration implements BlockHoundIntegration {
          return BlockHoundHelper.currentThreadRequiresNonBlocking();
       }));
 
-      // SecureRandom reads from a socket
-      builder.allowBlockingCallsInside(SecureRandom.class.getName(), "nextBytes");
-
-      // Just assume all the thread pools don't block in our test suite - NOTE rejection policy can still be an issue!
-      registerAllPublicMethodsOnClass(builder, ThreadPoolExecutor.class);
-      registerAllPublicMethodsOnClass(builder, ScheduledThreadPoolExecutor.class);
-      builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "getTask");
-      builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "processWorkerExit");
-
       // Let any test suite progress stuff block
       registerAllPublicMethodsOnClass(builder, TestSuiteProgress.class);
-
-      // Allow logging to block in our test suite
-      builder.allowBlockingCallsInside(org.apache.logging.log4j.core.Logger.class.getName(), "logMessage");
-      builder.allowBlockingCallsInside(java.util.logging.Logger.class.getName(), "log");
 
       builder.markAsBlocking(BlockHoundHelper.class, "blockingConsume", "(Ljava/lang/Object;)V");
    }
