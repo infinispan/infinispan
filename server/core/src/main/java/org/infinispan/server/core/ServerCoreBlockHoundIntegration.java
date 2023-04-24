@@ -1,9 +1,12 @@
 package org.infinispan.server.core;
 
+import java.util.Arrays;
+
 import org.infinispan.server.core.utils.SslUtils;
 import org.kohsuke.MetaInfServices;
 
 import reactor.blockhound.BlockHound;
+import reactor.blockhound.BlockingOperationError;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
 @SuppressWarnings("unused")
@@ -22,6 +25,34 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
 
       questionableBlockingMethod(builder);
       methodsToBeRemoved(builder);
+
+      configureBlockingCallback(builder);
+   }
+
+   // This is copied from BlockHound. Many things in the server will gobble up the exception from BlockHound
+   // so we add a printStackTrace so that we can more easily identify the callback
+   private static void configureBlockingCallback(BlockHound.Builder builder) {
+      builder.blockingMethodCallback(bm -> {
+         Error error = new BlockingOperationError(bm);
+
+         // Strip BlockHound's internal noisy frames from the stacktrace to not mislead the users
+         StackTraceElement[] stackTrace = error.getStackTrace();
+         int length = stackTrace.length;
+         for (int i = 0; i < length; i++) {
+            StackTraceElement stackTraceElement = stackTrace[i];
+
+            if ("checkBlocking".equals(stackTraceElement.getMethodName())) {
+               if (i + 1 < length) {
+                  error.setStackTrace(Arrays.copyOfRange(stackTrace, i + 1, length));
+               }
+               break;
+            }
+         }
+
+         error.printStackTrace();
+
+         throw error;
+      });
    }
 
    private static void questionableBlockingMethod(BlockHound.Builder builder) {

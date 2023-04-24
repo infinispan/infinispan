@@ -25,6 +25,8 @@ import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
+import reactor.blockhound.BlockHound;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -40,6 +42,16 @@ public class Bootstrap extends Main {
 
    // This method is here solely for replacement with Quarkus, do not remove or rename without updating Infinispan Quarkus
    private static void staticInitializer() {
+      // This has to be before logging so it can instrument the classes properly
+      try {
+         Class.forName("reactor.blockhound.BlockHound");
+         System.out.println("Blockhound found on classpath, installing non blocking checks");
+         BlockHound.install();
+      } catch (ClassNotFoundException e) {
+         // Just ignore if blockhound isn't present
+         System.out.println("Blockhound is not on classpath");
+      }
+
       String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
       if (Boolean.parseBoolean(includeLoggingResource)) {
          BootstrapLogging.staticInitializer();

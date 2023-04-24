@@ -1,8 +1,12 @@
 package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
+import java.security.SecureRandom;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import org.apache.logging.log4j.spi.AbstractLogger;
 import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.commons.executors.NonBlockingResource;
 import org.infinispan.commons.util.ServiceFinder;
@@ -39,6 +43,8 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside("com.github.benmanes.caffeine.cache.BoundedLocalCache", "performCleanUp");
 
       handleJREClasses(builder);
+
+      log4j(builder);
    }
 
    // Register all methods of a given class to allow for blocking - NOTE that if these methods invoke passed in code,
@@ -59,5 +65,28 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ForkJoinPool.class.getName(), "runWorker");
       // The scan method is where the task is actually ran
       builder.disallowBlockingCallsInside(ForkJoinPool.class.getName(), "scan");
+
+      // SecureRandom reads from a socket
+      builder.allowBlockingCallsInside(SecureRandom.class.getName(), "nextBytes");
+
+      // Just assume all the thread pools don't block - NOTE rejection policy can still be an issue!
+      allowMethodsToBlock(builder, ThreadPoolExecutor.class, true);
+      allowMethodsToBlock(builder, ScheduledThreadPoolExecutor.class, true);
+      builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "getTask");
+      builder.allowBlockingCallsInside(ThreadPoolExecutor.class.getName(), "processWorkerExit");
+
+      // Allow logging to block
+      builder.allowBlockingCallsInside(java.util.logging.Logger.class.getName(), "log");
+   }
+
+   private static void log4j(BlockHound.Builder builder) {
+      try {
+         Class.forName("org.apache.logging.log4j.spi.AbstractLogger");
+         builder.allowBlockingCallsInside(AbstractLogger.class.getName(), "logMessage");
+      } catch (ClassNotFoundException e) {
+         // Ignore if no AbstractLogger
+      }
+
+      builder.allowBlockingCallsInside("org.apache.logging.log4j.core.Logger", "logMessage");
    }
 }

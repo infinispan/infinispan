@@ -266,6 +266,12 @@
          <artifactId>wildfly-elytron-sasl-scram</artifactId>
       </dependency>
 
+      <dependency>
+         <groupId>io.projectreactor.tools</groupId>
+         <artifactId>blockhound</artifactId>
+         <optional>true</optional>
+      </dependency>
+
       <!-- Test dependencies -->
       <dependency>
          <groupId>org.antlr</groupId>
