@@ -15,6 +15,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.logging.events.ServerEventLogger;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 import org.infinispan.util.logging.events.EventLoggerNotifier;
@@ -42,8 +43,9 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       internalCacheRegistry.registerInternalCache(ServerEventLogger.EVENT_LOG_CACHE, getTaskHistoryCacheConfiguration(cacheManager).build(),
             EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT, InternalCacheRegistry.Flag.QUERYABLE));
       EventLoggerNotifier notifier = gcr.getComponent(EventLoggerNotifier.class);
+      BlockingManager blockingManager = gcr.getComponent(BlockingManager.class);
       // Install the new logger component
-      ServerEventLogger logger = new ServerEventLogger(cacheManager, gcr.getTimeService(), notifier);
+      ServerEventLogger logger = new ServerEventLogger(cacheManager, gcr.getTimeService(), notifier, blockingManager);
       oldEventLogger = gcr.getComponent(EventLogManager.class).replaceEventLogger(logger);
    }
 
