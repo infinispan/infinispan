@@ -21,6 +21,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -46,19 +47,15 @@ public class ServerEventLogger implements EventLogger {
    private final EmbeddedCacheManager cacheManager;
    private final TimeService timeService;
    private final EventLoggerNotifier notifier;
+   private final BlockingManager blockingManager;
    private Cache<UUID, ServerEventImpl> eventCache;
 
-   public ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService, EventLoggerNotifier notifier) {
+   public ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService, EventLoggerNotifier notifier,
+                            BlockingManager blockingManager) {
       this.cacheManager = cacheManager;
       this.timeService = timeService;
       this.notifier = notifier;
-   }
-
-   private Cache<UUID, ServerEventImpl> getEventCache() {
-      if (eventCache == null) {
-         eventCache = cacheManager.getCache(EVENT_LOG_CACHE);
-      }
-      return eventCache;
+      this.blockingManager = blockingManager;
    }
 
    @Override
@@ -72,7 +69,23 @@ public class ServerEventLogger implements EventLogger {
    }
 
    void eventLog(ServerEventImpl event) {
-      getEventCache().putAsync(Util.threadLocalRandomUUID(), event)
+      if (eventCache == null) {
+         if (!cacheManager.isRunning(EVENT_LOG_CACHE)) {
+            // Cache is not running yet, we can't block this thread so offload blocking thread to log the message
+            blockingManager.runBlocking(() -> {
+               eventCache = cacheManager.getCache(EVENT_LOG_CACHE);
+               actualSend(eventCache, event);
+            }, "ServerEventLog");
+            return;
+         }
+         eventCache = cacheManager.getCache(EVENT_LOG_CACHE);
+      }
+
+      actualSend(eventCache, event);
+   }
+
+   void actualSend(Cache<UUID, ServerEventImpl> cache, ServerEventImpl event) {
+      eventCache.putAsync(Util.threadLocalRandomUUID(), event)
             .thenAccept(ignore -> CompletionStages.join(notifier.notifyEventLogged(event)));
    }
 
