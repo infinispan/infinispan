@@ -235,7 +235,7 @@ public class RestCacheManager<V> {
       checkCachePermission(ac, request.getSubject(), AuthorizationPermission.MONITOR);
       DistributionManager dm = SecurityActions.getDistributionManager(ac);
       if (dm == null) {
-         CacheDistributionInfo local = CacheDistributionInfo.resolve(instance.getCache(cacheName).getAdvancedCache());
+         CacheDistributionInfo local = CacheDistributionInfo.resolve(ac, instance.getCacheManagerInfo());
          return CompletableFuture.completedFuture(Collections.singletonList(local));
       }
 

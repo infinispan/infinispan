@@ -141,9 +141,18 @@ public abstract class AbstractAuthorization {
    }
 
    @Test
+   public void testRestLocalCacheDistribution() {
+      restCreateAuthzLocalCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+      actualTestCacheDistribution();
+   }
+
+   @Test
    public void testRestCacheDistribution() {
       restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
+      actualTestCacheDistribution();
+   }
 
+   private void actualTestCacheDistribution() {
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
          RestCacheClient cache = getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cache(getServerTest().getMethodName());
          assertStatus(OK, cache.distribution());
@@ -817,8 +826,16 @@ public abstract class AbstractAuthorization {
    }
 
    private RestClient restCreateAuthzCache(String... explicitRoles) {
+      return restCreateAuthzCache(CacheMode.DIST_SYNC, explicitRoles);
+   }
+
+   private RestClient restCreateAuthzLocalCache(String... explicitRoles) {
+      return restCreateAuthzCache(CacheMode.LOCAL, explicitRoles);
+   }
+
+   private RestClient restCreateAuthzCache(CacheMode mode, String... explicitRoles) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
-      AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(CacheMode.DIST_SYNC).security().authorization().enable();
+      AuthorizationConfigurationBuilder authorizationConfigurationBuilder = builder.clustering().cacheMode(mode).security().authorization().enable();
       if (explicitRoles != null) {
          for (String role : explicitRoles) {
             authorizationConfigurationBuilder.role(role);
