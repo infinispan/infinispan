@@ -69,8 +69,12 @@ public class CacheDistributionInfo implements JsonSerialization, NodeDataDistrib
    }
 
    public static CacheDistributionInfo resolve(AdvancedCache<?, ?> cache) {
-      final Stats stats = cache.getStats();
       final CacheManagerInfo manager = cache.getCacheManager().getCacheManagerInfo();
+      return resolve(cache, manager);
+   }
+
+   public static CacheDistributionInfo resolve(AdvancedCache<?, ?> cache, CacheManagerInfo manager) {
+      final Stats stats = cache.getStats();
       long inMemory = stats.getApproximateEntriesInMemory();
       long total = stats.getApproximateEntries();
       return new CacheDistributionInfo(manager.getNodeName(), manager.getPhysicalAddressesRaw(), inMemory, total,
