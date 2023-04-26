@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package org.infinispan;
+
+/**
+ * @Indexed
+ */
+message author {
+
+  /**
+   * @Field(index=Index.YES, analyze = Analyze.Yes, store = Store.NO)
+   */
+  required string name = 1;
+
+}
