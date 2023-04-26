@@ -108,7 +108,10 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       @Override
       public void handleSuccess(String fileName) {
-         successFiles.add(fileName);
+         // a file that is already failed cannot be added as success
+         if (!errorFiles.containsKey(fileName)) {
+            successFiles.add(fileName);
+         }
       }
    }
 
