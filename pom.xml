@@ -2686,43 +2686,6 @@
             <plugins>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-dependency-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>create-classpath</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>build-classpath</goal>
-                        </goals>
-                        <configuration>
-                           <skip>${module.skipCopyDependencies}</skip>
-                           <includeScope>runtime</includeScope>
-                           <excludeScope>test</excludeScope>
-                           <excludeArtifactIds>${dependencies.excludeArtifactIds}</excludeArtifactIds>
-                           <excludeGroupIds>${dependencies.excludeGroupIds}</excludeGroupIds>
-                           <prefix>$ISPN_HOME/lib</prefix>
-                           <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
-                           <silent>true</silent>
-                        </configuration>
-                     </execution>
-                     <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                           <skip>${module.skipCopyDependencies}</skip>
-                           <includeScope>runtime</includeScope>
-                           <excludeScope>test</excludeScope>
-                           <excludeGroupIds>${dependencies.excludeGroupIds}</excludeGroupIds>
-                           <silent>true</silent>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
                      <execution>
