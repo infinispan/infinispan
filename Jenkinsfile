@@ -22,7 +22,7 @@ pipeline {
                     // Show the agent name in the build list
                     echo env.NODE_NAME
                     env.MAVEN_HOME = tool('Maven')
-                    env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
+                    env.MAVEN_OPTS = "-Xmx2g -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 21')
                     env.GRAALVM_HOME = tool('GraalVM 20')
                     if (params.TEST_JDK != 'Default') {
@@ -233,3 +233,4 @@ pipeline {
         }
     }
 }
+
