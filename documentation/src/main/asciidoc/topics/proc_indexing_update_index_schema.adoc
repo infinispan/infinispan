@@ -23,7 +23,7 @@ remoteCacheManager.administration().updateIndexSchema("MyCache");
 +
 [TIP]
 ====
-For remote caches, you can update index schema from the {brandname} Console or using the link:{rest_docs}#rest_v2_query_updateIndexSchema[REST API].
+For remote caches, you can update index schema using the link:{rest_docs}#rest_v2_query_updateIndexSchema[REST API].
 ====
 
 .Additional resources
