@@ -427,11 +427,64 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       assertEquals(10L, nextValue.longValue());
    }
 
+   @Test
+   public void testIncrbyNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String nonPresentKey = "incrby-notpresent";
+      Long newValue = redis.incrby(nonPresentKey,42);
+      assertEquals(42L, newValue.longValue());
+
+      Long nextValue = redis.incrby(nonPresentKey,2);
+      assertEquals(44L, nextValue.longValue());
+   }
+
+   public void testIncrbyPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrby";
+      redis.set(key, "12");
+
+      Long newValue = redis.incrby(key,23);
+      assertEquals(35L, newValue.longValue());
+
+      Long nextValue = redis.incrby(key,23);
+      assertEquals(58L, nextValue.longValue());
+   }
+
+   public void testIncrbyPresentNotInteger() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrby-string";
+      redis.set(key, "foo");
+
+      Exceptions.expectException(RedisCommandExecutionException.class, ".*value is not an integer or out of range", () -> redis.incrby(key,1));
+   }
+
+   public void testDecrbyNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String nonPresentKey = "decrby-notpresent";
+      Long newValue = redis.decrby(nonPresentKey,42);
+      assertEquals(-42L, newValue.longValue());
+
+      Long nextValue = redis.decrby(nonPresentKey,2);
+      assertEquals(-44L, nextValue.longValue());
+   }
+
+   public void testDecrbyPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "decrby";
+      redis.set(key, "12");
+
+      Long newValue = redis.decrby(key,10);
+      assertEquals(2L, newValue.longValue());
+
+      Long nextValue = redis.decrby(key,10);
+      assertEquals(-8L, nextValue.longValue());
+   }
+
    public void testCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertEquals(24, commands.size());
+      assertEquals(26, commands.size());
    }
 
    public void testAuth() {

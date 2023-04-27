@@ -12,6 +12,12 @@ final class CounterIncOrDec {
 
    }
    static CompletionStage<Long> counterIncOrDec(Cache<byte[], byte[]> cache, byte[] key, boolean increment) {
+      return counterIncOrDecBy(cache, key, 1, increment);
+   }
+   static CompletionStage<Long> counterIncOrDecBy(Cache<byte[], byte[]> cache, byte[] key, String by, boolean increment) {
+      return counterIncOrDecBy(cache, key, Long.parseLong(by), increment);
+   }
+   static CompletionStage<Long> counterIncOrDecBy(Cache<byte[], byte[]> cache, byte[] key, long by, boolean increment) {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
@@ -19,7 +25,7 @@ final class CounterIncOrDec {
                   String prevValue = new String(currentValueBytes, CharsetUtil.US_ASCII);
                   long prevIntValue;
                   try {
-                     prevIntValue = Long.parseLong(prevValue) + (increment ? 1 : -1);
+                     prevIntValue = Long.parseLong(prevValue) + (increment ? by : -by);
                   } catch (NumberFormatException e) {
                      throw new CacheException("value is not an integer or out of range");
                   }
@@ -30,15 +36,15 @@ final class CounterIncOrDec {
                            if (replaced) {
                               return CompletableFuture.completedFuture(prevIntValue);
                            }
-                           return counterIncOrDec(cache, key, increment);
+                           return counterIncOrDecBy(cache, key, by, increment);
                         });
                }
-               long longValue = increment ? 1 : -1;
+               long longValue = increment ? by : -by;
                byte[] valueToPut = String.valueOf(longValue).getBytes(CharsetUtil.US_ASCII);
                return cache.putIfAbsentAsync(key, valueToPut)
                      .thenCompose(prev -> {
                         if (prev != null) {
-                           return counterIncOrDec(cache, key, increment);
+                           return counterIncOrDecBy(cache, key, by, increment);
                         }
                         return CompletableFuture.completedFuture(longValue);
                      });

@@ -23,9 +23,11 @@ import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
 import org.infinispan.server.resp.commands.string.DECR;
+import org.infinispan.server.resp.commands.string.DECRBY;
 import org.infinispan.server.resp.commands.string.DEL;
 import org.infinispan.server.resp.commands.string.GET;
 import org.infinispan.server.resp.commands.string.INCR;
+import org.infinispan.server.resp.commands.string.INCRBY;
 import org.infinispan.server.resp.commands.string.MGET;
 import org.infinispan.server.resp.commands.string.MSET;
 import org.infinispan.server.resp.commands.string.SET;
@@ -81,11 +83,11 @@ public abstract class RespCommand {
       // a sub array the commands are placed
       indexedRespCommand[0] = new RespCommand[]{new AUTH()};
       indexedRespCommand[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
-      indexedRespCommand[3] = new RespCommand[]{new DECR(), new DEL()};
+      indexedRespCommand[3] = new RespCommand[]{new DECR(), new DECRBY(), new DEL()};
       indexedRespCommand[4] = new RespCommand[]{new ECHO()};
       indexedRespCommand[6] = new RespCommand[]{new GET()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};
-      indexedRespCommand[8] = new RespCommand[]{new INCR(), new INFO()};
+      indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INFO()};
       indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET()};
       indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};
