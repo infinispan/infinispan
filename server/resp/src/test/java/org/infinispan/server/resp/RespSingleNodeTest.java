@@ -45,7 +45,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Base class for single node tests.
  *
@@ -432,10 +433,10 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "incrby-notpresent";
       Long newValue = redis.incrby(nonPresentKey,42);
-      assertEquals(42L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(42L);
 
       Long nextValue = redis.incrby(nonPresentKey,2);
-      assertEquals(44L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(44L);
    }
 
    public void testIncrbyPresent() {
@@ -444,28 +445,29 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       redis.set(key, "12");
 
       Long newValue = redis.incrby(key,23);
-      assertEquals(35L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(35L);
 
       Long nextValue = redis.incrby(key,23);
-      assertEquals(58L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(58L);
    }
 
    public void testIncrbyPresentNotInteger() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "incrby-string";
       redis.set(key, "foo");
-
-      Exceptions.expectException(RedisCommandExecutionException.class, ".*value is not an integer or out of range", () -> redis.incrby(key,1));
+      assertThatThrownBy(()-> redis.incrby(key,1), "")
+         .isInstanceOf(RedisCommandExecutionException.class)
+         .hasMessageContaining("value is not an integer or out of range");
    }
 
    public void testDecrbyNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "decrby-notpresent";
       Long newValue = redis.decrby(nonPresentKey,42);
-      assertEquals(-42L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(-42L);
 
       Long nextValue = redis.decrby(nonPresentKey,2);
-      assertEquals(-44L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(-44L);
    }
 
    public void testDecrbyPresent() {
@@ -474,17 +476,17 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       redis.set(key, "12");
 
       Long newValue = redis.decrby(key,10);
-      assertEquals(2L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(2L);
 
       Long nextValue = redis.decrby(key,10);
-      assertEquals(-8L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(-8L);
    }
 
    public void testCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertEquals(26, commands.size());
+      assertEquals(27, commands.size());
    }
 
    public void testAuth() {
@@ -504,4 +506,30 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    public void testPipeline() throws ExecutionException, InterruptedException, TimeoutException {
       CommonRespTests.testPipeline(redisConnection);
    }
+
+   @Test
+   public void testAppend() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "append";
+      String val = "Hello";
+      String app = " World";
+      String expect = val+app;
+      redis.set(key, val);
+      long retVal = redis.append(key, app);
+      assertThat(retVal).isEqualTo(expect.length());
+      assertThat(redis.get(key)).isEqualTo(expect);
+   }
+
+   @Test
+   public void testAppendNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "append";
+      String app = " World";
+      String expect = app;
+      long retVal = redis.append(key, app);
+      assertThat(retVal).isEqualTo(expect.length());
+      String val = redis.get(key);
+      assertThat(val).isEqualTo(expect);
+   }
+
 }
