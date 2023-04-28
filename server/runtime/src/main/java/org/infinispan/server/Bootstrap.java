@@ -49,7 +49,6 @@ public class Bootstrap extends Main {
          BlockHound.install();
       } catch (ClassNotFoundException e) {
          // Just ignore if blockhound isn't present
-         System.out.println("Blockhound is not on classpath");
       }
 
       String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
