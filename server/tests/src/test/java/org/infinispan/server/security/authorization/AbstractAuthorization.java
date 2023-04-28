@@ -79,6 +79,7 @@ import org.junit.Test;
 
 public abstract class AbstractAuthorization {
    public static final String BANK_PROTO = "bank.proto";
+   public static final String UNAUTHORIZED_EXCEPTION = "(?s).*ISPN000287.*";
    final Map<TestUser, ConfigurationBuilder> hotRodBuilders;
    final Map<TestUser, RestClientConfigurationBuilder> restBuilders;
    final Map<String, String> bulkData;
@@ -179,7 +180,7 @@ public abstract class AbstractAuthorization {
    @Test
    public void testHotRodNonAdminsMustNotCreateCache() {
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
-         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
                () -> getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
       }
@@ -208,7 +209,7 @@ public abstract class AbstractAuthorization {
       hotRodCreateAuthzCache(explicitRoles);
       RemoteCache<String, String> writerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.WRITER)).get();
       writerCache.put("k1", "v1");
-      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+      Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
             () -> writerCache.get("k1")
       );
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.WRITER, TestUser.MONITOR, TestUser.ANONYMOUS))) {
@@ -242,7 +243,7 @@ public abstract class AbstractAuthorization {
 
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCacheManager remoteCacheManager = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
-         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
                () -> serverTest.addScript(remoteCacheManager, "scripts/test.js")
          );
       }
@@ -265,7 +266,7 @@ public abstract class AbstractAuthorization {
 
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCache cacheExec = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
-         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
                () -> {
                   cacheExec.execute(scriptName, params);
                }
@@ -293,10 +294,27 @@ public abstract class AbstractAuthorization {
 
       for (TestUser user : EnumSet.of(TestUser.MONITOR, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCache<String, String> cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
-         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
-               () -> {
-                  cache.execute("hello", Collections.singletonMap("greetee", new ArrayList<>(Arrays.asList("nurse", "kitty"))));
-               }
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
+               () -> cache.execute("hello", Collections.singletonMap("greetee", new ArrayList<>(Arrays.asList("nurse", "kitty"))))
+         );
+      }
+   }
+
+   @Test
+   public void testCacheUpdateConfigurationAttribute() {
+      InfinispanServerTestMethodRule serverTest = getServerTest();
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.memory().maxCount(100);
+      serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
+         RemoteCache<String, String> cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
+         cache.getRemoteCacheManager().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "1000");
+      }
+
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
+         RemoteCache<String, String> cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
+               () -> cache.getRemoteCacheManager().administration().updateConfigurationAttribute(cache.getName(), "memory.max-count", "500")
          );
       }
    }
@@ -353,7 +371,7 @@ public abstract class AbstractAuthorization {
    private void testHotRodObserverCannotWrite(String... explicitRoles) {
       hotRodCreateAuthzCache(explicitRoles);
       RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.OBSERVER)).get();
-      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+      Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
             () -> readerCache.put("k1", "v1")
       );
       for (TestUser user : EnumSet.of(TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.WRITER)) {
@@ -395,17 +413,17 @@ public abstract class AbstractAuthorization {
    private void testHotRodBulkOperations(String... explicitRoles) {
       hotRodCreateAuthzCache(explicitRoles).putAll(bulkData);
       RemoteCache<String, String> readerCache = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.READER)).get();
-      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+      Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
             () -> readerCache.getAll(bulkData.keySet())
       );
       //make sure iterator() is invoked (ISPN-12716)
-      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+      Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
             () -> new ArrayList<>(readerCache.keySet())
       );
-      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+      Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
             () -> new ArrayList<>(readerCache.values())
       );
-      Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*",
+      Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION,
             () -> new ArrayList<>(readerCache.entrySet())
       );
 
@@ -434,7 +452,7 @@ public abstract class AbstractAuthorization {
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCacheManager remoteCacheManager = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
          RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*", () -> metadataCache.put(BANK_PROTO, schema));
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> metadataCache.put(BANK_PROTO, schema));
       }
    }
 
@@ -471,7 +489,7 @@ public abstract class AbstractAuthorization {
          RemoteCache<Integer, User> userCache = getServerTest().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
          QueryFactory qf = Search.getQueryFactory(userCache);
          Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
-         Exceptions.expectException(HotRodClientException.class, "(?s).*ISPN000287.*", () -> query.execute().list());
+         Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> query.execute().list());
       }
       // REST
       for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER, TestUser.MONITOR)) {
