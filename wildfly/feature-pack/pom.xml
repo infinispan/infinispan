@@ -259,7 +259,7 @@
 
         <dependency>
             <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-osgi</artifactId>
+            <artifactId>jboss-marshalling</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

@@ -300,7 +300,7 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
     fi
     if [ "$JAVA_VERSION" -ge 17 ]; then
         # Enable export for LDAP (needed for JDK 17+)
-        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED"
     fi
 
     if [ "$GC_LOG" = "true" ]; then
