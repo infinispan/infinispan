@@ -29,6 +29,7 @@ import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DECRBY;
 import org.infinispan.server.resp.commands.string.DEL;
 import org.infinispan.server.resp.commands.string.GET;
+import org.infinispan.server.resp.commands.string.GETDEL;
 import org.infinispan.server.resp.commands.string.INCR;
 import org.infinispan.server.resp.commands.string.INCRBY;
 import org.infinispan.server.resp.commands.string.INCRBYFLOAT;
@@ -92,7 +93,7 @@ public abstract class RespCommand {
       indexedRespCommand[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY()};
       indexedRespCommand[4] = new RespCommand[]{new ECHO()};
       // GET should always be first here
-      indexedRespCommand[6] = new RespCommand[]{new GET()};
+      indexedRespCommand[6] = new RespCommand[]{new GET(), new GETDEL()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};
       indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET()};
