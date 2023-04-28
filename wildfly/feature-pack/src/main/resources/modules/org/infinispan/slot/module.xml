@@ -31,7 +31,8 @@
       <artifact name="${org.jgroups.azure:jgroups-azure}"/>
       <artifact name="${org.jgroups.aws:jgroups-aws}"/>
       <artifact name="${org.jgroups.kubernetes:jgroups-kubernetes}"/>
-      <artifact name="${org.jboss.marshalling:jboss-marshalling-osgi}"/>
+      <artifact name="${org.jboss.marshalling:jboss-marshalling}"/>
+      <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
       <artifact name="${com.github.ben-manes.caffeine:caffeine}"/>
 
       <artifact name="${io.netty:netty-buffer}"/>
