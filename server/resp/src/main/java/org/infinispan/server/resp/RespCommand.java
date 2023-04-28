@@ -22,6 +22,7 @@ import org.infinispan.server.resp.commands.pubsub.PUBLISH;
 import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
+import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DECRBY;
 import org.infinispan.server.resp.commands.string.DEL;
@@ -82,7 +83,7 @@ public abstract class RespCommand {
       // Just manual for now, but we may want to dynamically at some point.
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
-      indexedRespCommand[0] = new RespCommand[]{new AUTH()};
+      indexedRespCommand[0] = new RespCommand[]{new APPEND(), new AUTH()};
       indexedRespCommand[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
       // DEL should always be first here
       indexedRespCommand[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY()};
