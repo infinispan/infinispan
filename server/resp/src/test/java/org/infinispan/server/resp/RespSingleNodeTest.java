@@ -473,7 +473,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertThat(commands.size()).isEqualTo(30);
+      assertThat(commands.size()).isEqualTo(RespCommand.all().size());
    }
 
    public void testAuth() {
@@ -519,4 +519,19 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(val).isEqualTo(expect);
    }
 
+   public void testGetdel() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getdel";
+      redis.set(key, "value");
+      String retval = redis.getdel(key);
+      assertThat(retval).isEqualTo("value");
+      assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testGetdelNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "getdel-notpresent";
+      assertThat(redis.getdel(key)).isNull();
+   }
 }
