@@ -296,7 +296,7 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
     JAVA_VERSION=$(java -version 2>&1 | sed -n ';s/.* version "\([^\.\-]*\).*".*/\1/p;')
     if [ "$JAVA_VERSION" -ge 17 ]; then
         # Enable export for LDAP (needed for JDK 17+)
-        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED"
     fi
 
     if [ "$GC_LOG" = "true" ]; then

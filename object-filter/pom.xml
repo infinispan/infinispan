@@ -117,8 +117,10 @@
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>org.jboss.logging:jboss-logging:jar:</exclude>
+                           <exclude>org.infinispan:infinispan-commons:jar:</exclude>
                            <exclude>org.infinispan:infinispan-query-dsl:jar:</exclude>
                            <exclude>org.infinispan.protostream:protostream:jar:</exclude>
+                           <exclude>org.infinispan.protostream:protostream-types:jar:</exclude>
                            <exclude>org.infinispan:infinispan-component-annotations:</exclude>
                         </excludes>
                      </artifactSet>
