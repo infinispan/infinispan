@@ -128,7 +128,7 @@ public enum Attribute {
     MODULE,
     NAME,
     NAMES,
-    NAMES_AS_TAGS("namesAsTags"),
+    NAMES_AS_TAGS,
     NON_BLOCKING_EXECUTOR,
     NOTIFICATIONS,
     ON_REHASH("onRehash"),

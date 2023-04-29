@@ -11,10 +11,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  */
 public class GlobalMetricsConfiguration {
 
-   public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder("gauges", true).immutable().build();
-   public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder("histograms", false).immutable().build();
-   public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder("prefix", "").immutable().build();
-   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder("namesAsTags", false).immutable().build();
+   public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.GAUGES, true).immutable().build();
+   public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.HISTOGRAMS, false).immutable().build();
+   public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PREFIX, "").immutable().build();
+   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, false).immutable().build();
    public static final AttributeDefinition<Boolean> ACCURATE_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACCURATE_SIZE, false).build();
 
    static AttributeSet attributeDefinitionSet() {

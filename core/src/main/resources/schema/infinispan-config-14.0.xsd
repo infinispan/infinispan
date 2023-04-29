@@ -748,10 +748,10 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="namesAsTags" type="xs:boolean" default="${GlobalMetrics.namesAsTags}">
+    <xs:attribute name="names-as-tags" type="xs:boolean" default="${GlobalMetrics.namesAsTags}">
       <xs:annotation>
         <xs:documentation>
-          Put the cache manager and cache name in tags rather then include them in the metric name.
+          Put the cache manager and cache name in tags rather than include them in the metric name.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
