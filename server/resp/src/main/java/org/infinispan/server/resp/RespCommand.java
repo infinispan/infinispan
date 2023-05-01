@@ -17,6 +17,8 @@ import org.infinispan.server.resp.commands.connection.READONLY;
 import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
+import org.infinispan.server.resp.commands.list.RPUSH;
+import org.infinispan.server.resp.commands.list.RPUSHX;
 import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.PUBLISH;
 import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
@@ -95,7 +97,7 @@ public abstract class RespCommand {
       indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET()};
       indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};
-      indexedRespCommand[17] = new RespCommand[]{new RESET(), new READWRITE(), new READONLY()};
+      indexedRespCommand[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RESET(), new READWRITE(), new READONLY()};
       // SET should always be first here
       indexedRespCommand[18] = new RespCommand[]{new SET(), new SUBSCRIBE(), new SELECT()};
       indexedRespCommand[20] = new RespCommand[]{new UNSUBSCRIBE()};

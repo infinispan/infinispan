@@ -1,29 +1,15 @@
 package org.infinispan.server.resp;
 
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.SetArgs;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.resp.configuration.RespServerConfiguration;
-import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.resp.test.CommonRespTests;
-import org.infinispan.server.resp.test.RespTestingUtil;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransportFlags;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -40,17 +26,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
-import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+
 /**
  * Base class for single node tests.
  *
@@ -58,111 +39,73 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @since 14.0
  */
 @Test(groups = "functional", testName = "server.resp.RespSingleNodeTest")
-public class RespSingleNodeTest extends SingleCacheManagerTest {
-   protected RedisClient client;
-   protected RespServer server;
-   protected StatefulRedisConnection<String, String> redisConnection;
-   protected static final int timeout = 60;
-
-   @Override
-   protected EmbeddedCacheManager createCacheManager() {
-      cacheManager = createTestCacheManager();
-      RespServerConfiguration serverConfiguration = serverConfiguration().build();
-      server = startServer(cacheManager, serverConfiguration);
-      client = createClient(30000, server.getPort());
-      redisConnection = client.connect();
-      cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
-      return cacheManager;
-   }
-
-   protected RespServerConfigurationBuilder serverConfiguration() {
-      String serverName = TestResourceTracker.getCurrentTestShortName();
-      return new RespServerConfigurationBuilder().name(serverName)
-            .host(RespTestingUtil.HOST)
-            .port(RespTestingUtil.port());
-   }
-
-   protected EmbeddedCacheManager createTestCacheManager() {
-      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().hash().hashFunction(CRC16.getInstance());
-      return TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
-   }
-
-   @AfterClass(alwaysRun = true)
-   @Override
-   protected void destroyAfterClass() {
-      super.destroyAfterClass();
-      log.debug("Test finished, close resp server");
-      killClient(client);
-      killServer(server);
-   }
+public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    public void testSetMultipleOptions() throws Exception {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       // Should return (nil), failed since value does not exist
       SetArgs args = SetArgs.Builder.xx();
-      assertNull(redis.set("key", "value", args));
+      assertThat(redis.set("key", "value", args)).isNull();
 
       // Should return OK, because value does not exist.
       args = SetArgs.Builder.nx();
-      assertEquals("OK", redis.set("key", "value", args));
-      assertEquals("value", redis.get("key"));
+      assertThat(redis.set("key", "value", args)).isEqualTo(OK);
+      assertThat(redis.get("key")).isEqualTo("value");
 
       // Should return (nil), because value exists.
-      assertNull(redis.set("key", "value3", args));
-      assertEquals("value", redis.get("key"));
+      assertThat(redis.set("key", "value3", args)).isNull();
+      assertThat(redis.get("key")).isEqualTo("value");
 
       // Should return OK, value exists
       args = SetArgs.Builder.xx();
-      assertEquals("OK", redis.set("key", "value2", args));
-      assertEquals("value2", redis.get("key"));
+      assertThat(redis.set("key", "value2", args)).isEqualTo(OK);
+      assertThat(redis.get("key")).isEqualTo("value2");
 
       // Should insert with TTL. This one returns the value.
       args = SetArgs.Builder.ex(60);
-      assertEquals("value2", redis.setGet("key", "value3", args));
+      assertThat(redis.setGet("key", "value3", args)).isEqualTo("value2");
 
       CacheEntry<Object, Object> entry = cache.getAdvancedCache()
             .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
             .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
-      assertEquals("value3", new String((byte[]) entry.getValue()));
-      assertEquals(60_000, entry.getLifespan());
+      assertThat(new String((byte[]) entry.getValue())).isEqualTo("value3");
+      assertThat(entry.getLifespan()).isEqualTo(60_000);
 
       // Making sure we won't go that fast.
       Thread.sleep(50);
 
       // We insert while keeping the TTL.
       args = SetArgs.Builder.keepttl();
-      assertEquals("OK", redis.set("key", "value4", args));
+      assertThat(redis.set("key", "value4", args)).isEqualTo(OK);
       entry = cache.getAdvancedCache()
             .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
             .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
-      assertEquals("value4", new String((byte[]) entry.getValue()));
-      assertTrue(entry.getLifespan() < 60_000);
+      assertThat(new String((byte[]) entry.getValue())).isEqualTo("value4");
+      assertThat(entry.getLifespan()).isLessThan(60_000);
 
       // Conditional operation keeping TTL.
       args = SetArgs.Builder.keepttl().xx();
-      assertEquals("OK", redis.set("key", "value5", args));
+
+      assertThat(redis.set("key", "value5", args)).isEqualTo(OK);
       entry = cache.getAdvancedCache()
             .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
             .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
-      assertEquals("value5", new String((byte[]) entry.getValue()));
-      assertTrue(entry.getLifespan() < 60_000);
+      assertThat(new String((byte[]) entry.getValue())).isEqualTo("value5");
+      assertThat(entry.getLifespan()).isLessThan(60_000);
 
       // Key exist and keeping TTL, but conditional failing. Should return nil.
       args = SetArgs.Builder.keepttl().nx();
       String res = redis.set("key", "value5", args);
-      assertNull("Should be null: " + res, res);
+      assertThat(res).isNull();
 
       // No NPE when keeping TTL, key not exists, and conditional succeed.
       args = SetArgs.Builder.keepttl().nx();
-      assertEquals("OK", redis.set("randomKey", "value", args));
+      assertThat(redis.set("randomKey", "value", args)).isEqualTo(OK);
 
       // No NPE when keeping TTL and key doesn't exist.
       args = SetArgs.Builder.keepttl();
-      assertEquals("OK", redis.set("otherKey", "value", args));
+      assertThat(redis.set("otherKey", "value", args)).isEqualTo(OK);
 
       redis.del("key", "randomKey", "otherKey");
    }
@@ -173,23 +116,22 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
       // Should return (nil), failed since value does not exist.
       SetArgs args = SetArgs.Builder.xx();
-      assertNull(redis.setGet(key, "something", args));
-      assertNull(redis.get(key));
-
+      assertThat(redis.setGet(key, "something", args)).isNull();
+      assertThat(redis.get(key)).isNull();
       // Should return (nil), because value does not exist, but operation succeeded.
       args = SetArgs.Builder.nx();
       String res = redis.setGet(key, "value", args);
-      assertNull("Should be null: " + res, res);
-      assertEquals("value", redis.get(key));
+      assertThat(res).isNull();
+      assertThat(redis.get(key)).isEqualTo("value");
 
       // Should return the previous because value exists but operation failed.
-      assertEquals("value", redis.setGet(key, "value2", args));
-      assertEquals("value", redis.get(key));
+      assertThat(redis.setGet(key, "value2", args)).isEqualTo("value");
+      assertThat(redis.get(key)).isEqualTo("value");
 
       // Should return previous value but succeeded.
       args = SetArgs.Builder.xx();
-      assertEquals("value", redis.setGet(key, "value2", args));
-      assertEquals("value2", redis.get(key));
+      assertThat(redis.setGet(key, "value2", args)).isEqualTo("value");
+      assertThat(redis.get(key)).isEqualTo("value2");
    }
 
    public void testSetMGet() {
@@ -205,7 +147,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       expected.add(KeyValue.just("k4", "v4"));
 
       List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3", "k4");
-      assertEquals(expected, results);
+      assertThat(results).containsExactlyElementsOf(expected);
    }
 
    public void testSetEmptyStringMGet() {
@@ -213,7 +155,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       redis.set("k1", "");
       redis.set("k3", "value2");
 
-      assertEquals("", redis.get("k1"));
+      assertThat(redis.get("k1")).isEmpty();
 
       List<KeyValue<String, String>> expected = new ArrayList<>(3);
       expected.add(KeyValue.just("k1", ""));
@@ -221,7 +163,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       expected.add(KeyValue.just("k3", "value2"));
 
       List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3");
-      assertEquals(expected, results);
+      assertThat(results).containsExactlyElementsOf(expected);
    }
 
    public void testMSetMGet() {
@@ -239,19 +181,19 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       expected.add(KeyValue.just("k4", "v4"));
 
       List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3", "k4");
-      assertEquals(expected, results);
+      assertThat(results).containsExactlyElementsOf(expected);
    }
 
    public void testSetGetDelete() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.set("k1", "v1");
       String v = redis.get("k1");
-      assertEquals("v1", v);
+      assertThat(v).isEqualTo("v1");
 
       redis.del("k1");
 
-      assertNull(redis.get("k1"));
-      assertNull(redis.get("something"));
+      assertThat(redis.get("k1")).isNull();
+      assertThat(redis.get("something")).isNull();
    }
 
    public void testSetGetBigValue() {
@@ -264,19 +206,18 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       }
       String actualString = sb.toString();
       redis.set("k1", actualString);
-      String v = redis.get("k1");
-      assertEquals(actualString, v);
+      assertThat(redis.get("k1")).isEqualTo(actualString);
    }
 
    public void testPingNoArg() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      assertEquals("PONG", redis.ping());
+      assertThat(redis.ping()).isEqualTo(PONG);
    }
 
    public void testEcho() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String stringToSend = "HI THERE!";
-      assertEquals(stringToSend, redis.echo(stringToSend));
+      assertThat(redis.echo(stringToSend)).isEqualTo(stringToSend);
    }
 
    private BlockingQueue<String> addPubSubListener(RedisPubSubCommands<String, String> connection) {
@@ -321,36 +262,36 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       // Subscribe to some channels
       connection.subscribe("channel2", "test");
       String value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertEquals("subscribed-channel2-0", value);
+      assertThat(value).isEqualTo("subscribed-channel2-0");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertEquals("subscribed-test-0", value);
+      assertThat(value).isEqualTo("subscribed-test-0");
 
 
       // 2 listeners, one for each sub above
-      assertEquals(listenersBefore + 2, cache.getAdvancedCache().getListeners().size());
+      assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore + 2);
       // Unsubscribe to all channels
       if (quit) {
          // Originally wanted to use reset or quit, but they don't do what we expect from lettuce
          connection.getStatefulConnection().close();
 
-         // Have to use eventually as they are removed asynchronously
-         eventuallyEquals(listenersBefore, () -> cache.getAdvancedCache().getListeners().size());
+         // Have to use hasSizeGreaterThanOrEqualTo as they are removed asynchronously
+         assertThat(cache.getAdvancedCache().getListeners()).hasSizeGreaterThanOrEqualTo(listenersBefore);
 
-         assertTrue(handOffQueue.isEmpty());
+         assertThat(handOffQueue).isEmpty();
       } else {
          connection.unsubscribe();
 
          // Unsubscribed channels can be in different orders
          for (int i = 0; i < 2; ++i) {
             value = handOffQueue.poll(10, TimeUnit.SECONDS);
-            assertNotNull("Didn't receive any notifications", value);
+            assertThat(value).withFailMessage("Didn't receive any notifications").isNotNull();
             if (!value.equals("unsubscribed-channel2-0") && !value.equals("unsubscribed-test-0")) {
                fail("Notification doesn't match expected, was: " + value);
             }
          }
 
-         assertEquals(listenersBefore, cache.getAdvancedCache().getListeners().size());
-         assertEquals("PONG", connection.ping());
+         assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore);
+         assertThat(connection.ping()).isEqualTo(PONG);
       }
    }
 
@@ -360,19 +301,19 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       // Subscribe to some channels
       connection.subscribe("channel2", "test");
       String value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertEquals("subscribed-channel2-0", value);
+      assertThat(value).isEqualTo("subscribed-channel2-0");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertEquals("subscribed-test-0", value);
+      assertThat(value).isEqualTo("subscribed-test-0");
 
       // Send a message to confirm it is properly listening
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.publish("channel2", "boomshakayaka");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertEquals("message-channel2-boomshakayaka", value);
+      assertThat(value).isEqualTo("message-channel2-boomshakayaka");
 
       connection.subscribe("channel");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertEquals("subscribed-channel-0", value);
+      assertThat(value).isEqualTo("subscribed-channel-0");
 
       connection.unsubscribe("channel2");
       connection.unsubscribe("doesn't-exist");
@@ -380,7 +321,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
       for (String channel : new String[] {"channel2", "doesn't-exist", "channel", "test"}) {
          value = handOffQueue.poll(10, TimeUnit.SECONDS);
-         assertEquals("unsubscribed-" + channel + "-0", value);
+         assertThat(value).isEqualTo("unsubscribed-" + channel + "-0");
       }
    }
 
@@ -388,10 +329,10 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "incr-notpresent";
       Long newValue = redis.incr(nonPresentKey);
-      assertEquals(1L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(1L);
 
       Long nextValue = redis.incr(nonPresentKey);
-      assertEquals(2L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(2L);
    }
 
    public void testIncrPresent() {
@@ -400,10 +341,10 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       redis.set(key, "12");
 
       Long newValue = redis.incr(key);
-      assertEquals(13L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(13L);
 
       Long nextValue = redis.incr(key);
-      assertEquals(14L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(14L);
    }
 
    public void testIncrPresentNotInteger() {
@@ -411,17 +352,19 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       String key = "incr-string";
       redis.set(key, "foo");
 
-      Exceptions.expectException(RedisCommandExecutionException.class, ".*value is not an integer or out of range", () -> redis.incr(key));
+      assertThatThrownBy(() -> redis.incr(key))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not an integer or out of range");
    }
 
    public void testDecrNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "decr-notpresent";
       Long newValue = redis.decr(nonPresentKey);
-      assertEquals(-1L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(-1L);
 
       Long nextValue = redis.decr(nonPresentKey);
-      assertEquals(-2L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(-2L);
    }
 
    public void testDecrPresent() {
@@ -430,10 +373,10 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       redis.set(key, "12");
 
       Long newValue = redis.decr(key);
-      assertEquals(11L, newValue.longValue());
+      assertThat(newValue.longValue()).isEqualTo(11L);
 
       Long nextValue = redis.decr(key);
-      assertEquals(10L, nextValue.longValue());
+      assertThat(nextValue.longValue()).isEqualTo(10L);
    }
 
    @Test
@@ -494,7 +437,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertEquals(27, commands.size());
+      assertThat(commands.size()).isEqualTo(29);
    }
 
    public void testAuth() {

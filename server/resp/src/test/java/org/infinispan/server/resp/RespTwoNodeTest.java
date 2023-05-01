@@ -1,15 +1,7 @@
 package org.infinispan.server.resp;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -19,8 +11,16 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.testng.annotations.Test;
 
-import io.lettuce.core.RedisFuture;
-import io.lettuce.core.api.async.RedisAsyncCommands;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 
 @Test(groups = "functional", testName = "server.resp.RespTwoNodeTest")
 public class RespTwoNodeTest extends BaseMultipleRespTest {
@@ -47,16 +47,16 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
          checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
          String getResponse = futurePing.get(10, TimeUnit.SECONDS);
-         assertEquals("OK", futureSet.get(10, TimeUnit.SECONDS));
-         assertEquals("PONG", getResponse);
+         assertThat(futureSet.get(10, TimeUnit.SECONDS)).isEqualTo(OK);
+         assertThat(getResponse).isEqualTo(PONG);
          List<Object> results = futureCommand.get(10, TimeUnit.SECONDS);
-         assertTrue("Results were: " + results, results.size() > 10);
+         assertThat(results).hasSizeGreaterThan(10);
       } finally {
          TestingUtil.replaceComponent(nonOwner, ClusteringDependentLogic.class, original, true);
       }
 
       RedisFuture<String> getFuture = redis.get(blockedKey);
-      assertEquals("bar", getFuture.get(10, TimeUnit.SECONDS));
+      assertThat(getFuture.get(10, TimeUnit.SECONDS)).isEqualTo("bar");
    }
 
    public void testPipeline() throws ExecutionException, InterruptedException, TimeoutException {

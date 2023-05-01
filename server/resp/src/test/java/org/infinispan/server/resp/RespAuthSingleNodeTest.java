@@ -1,11 +1,5 @@
 package org.infinispan.server.resp;
 
-import java.lang.reflect.Method;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
-import javax.security.auth.Subject;
-
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
@@ -15,6 +9,11 @@ import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import javax.security.auth.Subject;
+import java.lang.reflect.Method;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Test single node with authentication enabled.
