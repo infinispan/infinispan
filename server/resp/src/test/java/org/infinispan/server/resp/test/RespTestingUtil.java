@@ -24,6 +24,8 @@ import io.lettuce.core.RedisClient;
 public class RespTestingUtil {
    private static final Log log = LogFactory.getLog(RespTestingUtil.class, Log.class);
 
+   public static final String OK = "OK";
+   public static final String PONG = "PONG";
    public static final String HOST = "127.0.0.1";
 
    public static RedisClient createClient(long timeout, int port) {
