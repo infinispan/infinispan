@@ -1,6 +1,10 @@
 package org.infinispan.server.resp;
 
-import io.netty.buffer.ByteBuf;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.server.resp.commands.CONFIG;
 import org.infinispan.server.resp.commands.INFO;
 import org.infinispan.server.resp.commands.connection.AUTH;
@@ -21,16 +25,12 @@ import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
 import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DEL;
 import org.infinispan.server.resp.commands.string.GET;
-import org.infinispan.server.resp.commands.string.GETRANGE;
 import org.infinispan.server.resp.commands.string.INCR;
 import org.infinispan.server.resp.commands.string.MGET;
 import org.infinispan.server.resp.commands.string.MSET;
 import org.infinispan.server.resp.commands.string.SET;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import io.netty.buffer.ByteBuf;
 
 public abstract class RespCommand {
    private final String name;
