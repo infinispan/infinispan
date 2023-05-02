@@ -34,7 +34,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    protected int nbrOfServers = 3;
 
-   RemoteCacheImpl<Object, Object> remoteCache;
+   protected RemoteCacheImpl<Object, Object> remoteCache;
    protected RemoteCacheManager remoteCacheManager;
    protected ChannelFactory channelFactory;
    protected ConfigurationBuilder config;
