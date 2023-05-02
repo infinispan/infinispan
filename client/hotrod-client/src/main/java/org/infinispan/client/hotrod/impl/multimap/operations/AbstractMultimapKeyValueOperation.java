@@ -35,6 +35,15 @@ public abstract class AbstractMultimapKeyValueOperation<T> extends AbstractKeyVa
     }
 
     @Override
+    public void writeBytes(Channel channel, ByteBuf buf) {
+        codec.writeHeader(buf, header);
+        ByteBufUtil.writeArray(buf, keyBytes);
+        codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+        ByteBufUtil.writeArray(buf, value);
+        codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
+    }
+
+    @Override
     public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
         if (!HotRodConstants.isSuccess(status)) {
             throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));

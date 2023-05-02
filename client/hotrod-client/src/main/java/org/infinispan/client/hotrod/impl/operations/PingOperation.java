@@ -56,6 +56,11 @@ public class PingOperation extends NeutralVersionHotRodOperation<PingResponse> i
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buffer) {
+      codec.writeHeader(buffer, header);
+   }
+
+   @Override
    public void cancel(SocketAddress address, Throwable cause) {
       completeExceptionally(cause);
    }

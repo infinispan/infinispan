@@ -52,6 +52,13 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeArray(buf, keyBytes);
+      buf.writeLong(version);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       complete(returnVersionedOperationResponse(buf, status));
    }

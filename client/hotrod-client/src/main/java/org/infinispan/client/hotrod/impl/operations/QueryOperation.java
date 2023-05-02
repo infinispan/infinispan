@@ -67,6 +67,26 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
       channel.writeAndFlush(Unpooled.wrappedBuffer(requestBytes));
    }
 
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      // TODO: this code seems like it is the wrong spot...
+      QueryRequest queryRequest = new QueryRequest();
+      queryRequest.setQueryString(remoteQuery.getQueryString());
+      if (remoteQuery.getStartOffset() > 0) {
+         queryRequest.setStartOffset(remoteQuery.getStartOffset());
+      }
+      if (remoteQuery.getMaxResults() >= 0) {
+         queryRequest.setMaxResults(remoteQuery.getMaxResults());
+      }
+      queryRequest.setNamedParameters(getNamedParameters());
+
+      queryRequest.setLocal(remoteQuery.isLocal());
+
+      // marshall and write the request
+      byte[] requestBytes = querySerializer.serializeQueryRequest(remoteQuery, queryRequest);
+      writeArrayOperation(buf, requestBytes);
+   }
+
    private List<QueryRequest.NamedParameter> getNamedParameters() {
       Map<String, Object> namedParameters = remoteQuery.getParameters();
       if (namedParameters == null || namedParameters.isEmpty()) {

@@ -1,9 +1,11 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -12,10 +14,12 @@ public class InitialPingHandler extends ActivationHandler {
 
    static final String NAME = "initial-ping-handler";
 
-   private final PingOperation ping;
+   private final OperationsFactory factory;
+   private final HeaderDecoder headerDecoder;
 
-   public InitialPingHandler(PingOperation ping) {
-      this.ping = ping;
+   public InitialPingHandler(OperationsFactory factory, HeaderDecoder headerDecoder) {
+      this.factory = factory;
+      this.headerDecoder = headerDecoder;
    }
 
    @Override
@@ -25,7 +29,12 @@ public class InitialPingHandler extends ActivationHandler {
          log.tracef("Activating channel %s", channel);
       }
       ChannelRecord channelRecord = ChannelRecord.of(channel);
-      ping.invoke(channel);
+      PingOperation ping = factory.newPingOperation(false);
+      headerDecoder.registerOperation(channel, ping);
+      ByteBuf buf = channel.alloc().buffer();
+      ping.writeBytes(channel, buf);
+      ctx.writeAndFlush(buf);
+
       ping.whenComplete((result, throwable) -> {
          if (log.isTraceEnabled()) {
             log.tracef("Initial ping completed with result %s/%s", result, throwable);

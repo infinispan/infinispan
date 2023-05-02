@@ -45,7 +45,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
-class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
+public class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private static final Log log = LogFactory.getLog(ChannelInitializer.class);
 
    private final Bootstrap bootstrap;
@@ -53,6 +53,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private final OperationsFactory operationsFactory;
    private final Configuration configuration;
    private final ChannelFactory channelFactory;
+   private final boolean alwaysSendPingOnConnect;
    private ChannelPool channelPool;
    private volatile boolean isFirstPing = true;
 
@@ -76,15 +77,18 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
    }
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory) {
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory,
+                      Configuration configuration, ChannelFactory channelFactory, boolean alwaysSendPingOnConnect) {
       this.bootstrap = bootstrap;
       this.unresolvedAddress = unresolvedAddress;
       this.operationsFactory = operationsFactory;
       this.configuration = configuration;
       this.channelFactory = channelFactory;
+      this.alwaysSendPingOnConnect = alwaysSendPingOnConnect;
    }
 
    CompletableFuture<Channel> createChannel() {
+      log.tracef("Creating channel to connect to %s", unresolvedAddress);
       ChannelFuture connect = bootstrap.clone().connect();
       ActivationFuture activationFuture = new ActivationFuture();
       connect.addListener(activationFuture);
@@ -94,7 +98,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    @Override
    protected void initChannel(Channel channel) throws Exception {
       if (log.isTraceEnabled()) {
-         log.tracef("Created channel %s", channel);
+         log.tracef("Created channel %s for %s", channel, channel.remoteAddress());
       }
       if (configuration.security().ssl().enabled()) {
          initSsl(channel);
@@ -109,15 +113,16 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
          channel.pipeline().addLast("idle-state-handler",
                new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS));
       }
+      HeaderDecoder headerDecoder = new HeaderDecoder(channelFactory, configuration, operationsFactory.getListenerNotifier());
       ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
       channel.attr(ChannelRecord.KEY).set(channelRecord);
-      if (isFirstPing) {
+      if (alwaysSendPingOnConnect || isFirstPing) {
          isFirstPing = false;
-         channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory.newPingOperation(false)));
+         channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory, headerDecoder));
       } else {
          channel.pipeline().addLast(ActivationHandler.NAME, ActivationHandler.INSTANCE);
       }
-      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(channelFactory, configuration, operationsFactory.getListenerNotifier()));
+      channel.pipeline().addLast(HeaderDecoder.NAME, headerDecoder);
       if (configuration.connectionPool().minEvictableIdleTime() > 0) {
          // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
          channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
@@ -235,14 +240,17 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       this.channelPool = channelPool;
    }
 
-   private static class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
+   private class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
          if (future.isSuccess()) {
+            log.tracef("Channel connected to %s", unresolvedAddress);
             Channel channel = future.channel();
             ChannelRecord.of(channel).whenComplete(this);
          } else {
-            completeExceptionally(future.cause());
+            Throwable t = future.cause();
+            log.tracef(t, "Channel operation for %s completed with error", unresolvedAddress);
+            completeExceptionally(t);
          }
       }
 

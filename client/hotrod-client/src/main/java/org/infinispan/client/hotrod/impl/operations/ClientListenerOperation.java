@@ -79,6 +79,14 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
 
    protected abstract void actualExecute(Channel channel);
 
+   @Override
+   public final void writeBytes(Channel channel, ByteBuf buf) {
+      this.address = ChannelRecord.of(channel).getUnresolvedAddress();
+      actualWriteBytes(channel, buf);
+   }
+
+   protected abstract void actualWriteBytes(Channel channel, ByteBuf buf);
+
    protected void cleanup(Channel channel) {
       channel.eventLoop().execute(() -> {
          if (!codec.allowOperationsAndEvents()) {

@@ -44,6 +44,11 @@ public class AuthMechListOperation extends NeutralVersionHotRodOperation<List<St
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buffer) {
+      codec.writeHeader(buffer, header);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (mechCount < 0) {
          mechCount = ByteBufUtil.readVInt(buf);

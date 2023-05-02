@@ -56,6 +56,15 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeArray(buf, keyBytes);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      buf.writeLong(version);
+      ByteBufUtil.writeArray(buf, value);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isSuccess(status)) {
          statsDataStore();

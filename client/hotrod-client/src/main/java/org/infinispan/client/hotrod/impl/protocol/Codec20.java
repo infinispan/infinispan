@@ -9,12 +9,14 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
@@ -31,6 +33,9 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelInitializer;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool;
+import org.infinispan.client.hotrod.impl.transport.netty.V2ChannelPool;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.ClassAllowList;
@@ -41,6 +46,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.counter.api.CounterState;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.concurrent.EventExecutor;
 
 /**
  * A Hot Rod encoder/decoder for version 2.0 of the protocol.
@@ -414,5 +420,19 @@ public class Codec20 implements Codec, HotRodConstants {
          addresses[i] = InetSocketAddress.createUnresolved(host, port);
       }
       return addresses;
+   }
+
+   @Override
+   public ChannelPool createPool(EventExecutor executor, SocketAddress address, ChannelInitializer channelInitializer,
+                                 BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener,
+                                 Configuration configuration) {
+      int maxConnections = configuration.connectionPool().maxActive();
+      if (maxConnections < 0) {
+         maxConnections = Integer.MAX_VALUE;
+      }
+      return new V2ChannelPool(executor, address, channelInitializer,
+            configuration.connectionPool().exhaustedAction(), connectionFailureListener,
+            configuration.connectionPool().maxWait(), maxConnections,
+            configuration.connectionPool().maxPendingRequests());
    }
 }

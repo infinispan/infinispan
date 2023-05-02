@@ -132,6 +132,26 @@ public class CrashMidOperationTest extends AbstractRetryTest {
       }
 
       @Override
+      public void writeBytes(Channel channel, ByteBuf buf) {
+         if (channelRef.compareAndSet(null, channel)) {
+            try {
+               firstOp.await();
+            } catch (InterruptedException e) {
+               completeExceptionally(e);
+            }
+            assert isDone() : "Should be done";
+            return;
+         }
+
+         try {
+            firstOp.await();
+            complete(null);
+         } catch (InterruptedException e) {
+            completeExceptionally(e);
+         }
+      }
+
+      @Override
       public String toString() {
          return "id = " + id;
       }

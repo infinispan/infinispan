@@ -30,6 +30,7 @@ import java.util.function.Function;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
@@ -48,7 +49,6 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool.ChannelEventType;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -74,7 +74,7 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ChannelFactory {
-
+   public enum ChannelEventType { CONNECTED, CLOSED_IDLE, CLOSED_ACTIVE, CONNECT_FAILED}
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
    private static final Log log = LogFactory.getLog(ChannelFactory.class, Log.class);
 
@@ -210,18 +210,13 @@ public class ChannelFactory {
    }
 
    public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
-      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
+      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this,
+            configuration.version().compareTo(ProtocolVersion.PROTOCOL_VERSION_50) >= 0);
    }
 
    protected ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {
-      int maxConnections = configuration.connectionPool().maxActive();
-      if (maxConnections < 0) {
-         maxConnections = Integer.MAX_VALUE;
-      }
-      return new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
-            configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
-            configuration.connectionPool().maxWait(), maxConnections,
-            configuration.connectionPool().maxPendingRequests());
+      return codecHolder.getCodec().createPool(bootstrap.config().group().next(), address, channelInitializer,
+            this::onConnectionEvent, configuration);
    }
 
    protected final OperationsFactory getOperationsFactory() {
@@ -231,17 +226,23 @@ public class ChannelFactory {
    private void pingServersIgnoreException() {
       Collection<InetSocketAddress> servers = topologyInfo.getAllServers();
       for (SocketAddress addr : servers) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Initial ping for server %s to check availability", addr);
+         }
          // Go through all statically configured nodes and force a
          // connection to be established and a ping message to be sent.
          try {
             await(fetchChannelAndInvoke(addr, operationsFactory.newPingOperation(true)));
+            if (log.isTraceEnabled()) {
+               log.tracef("Server %s returned successfully from ping", addr);
+            }
          } catch (Exception e) {
             // Ping's objective is to retrieve a potentially newer
             // version of the Hot Rod cluster topology, so ignore
             // exceptions from nodes that might not be up any more.
             if (log.isTraceEnabled())
-               log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
-                     servers);
+               log.tracef(e, "Ignoring exception pinging configured server %s to establish a connection",
+                     addr);
          }
       }
    }
@@ -525,6 +526,7 @@ public class ChannelFactory {
             failedServers.remove(pool.getAddress());
             return;
          } else if (type == ChannelEventType.CONNECT_FAILED) {
+            // This will always be true for V5Pool as connected is only 1 if initially connected
             if (pool.getConnected() == 0) {
                failedServers.add(pool.getAddress());
             }

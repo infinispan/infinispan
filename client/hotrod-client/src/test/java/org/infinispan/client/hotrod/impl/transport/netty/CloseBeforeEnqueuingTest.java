@@ -128,6 +128,11 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
       }
 
       @Override
+      public void writeBytes(Channel channel, ByteBuf buf) {
+         throw new UnsupportedOperationException("TODO!");
+      }
+
+      @Override
       public String toString() {
          return "id = " + id;
       }
@@ -149,12 +154,12 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
       }
 
       @Override
-      protected ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {
+      protected V2ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {
          int maxConnections = configuration.connectionPool().maxActive();
          if (maxConnections < 0) {
             maxConnections = Integer.MAX_VALUE;
          }
-         return new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
+         return new V2ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
                configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
                configuration.connectionPool().maxWait(), maxConnections,
                configuration.connectionPool().maxPendingRequests()) {

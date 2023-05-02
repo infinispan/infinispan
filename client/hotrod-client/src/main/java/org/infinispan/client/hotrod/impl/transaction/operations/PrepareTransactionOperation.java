@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -23,6 +22,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import jakarta.transaction.TransactionManager;
 
 /**
  * A prepare request from the {@link TransactionManager}.
@@ -81,6 +81,19 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
          m.writeTo(buf, codec);
       }
       channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+      writeXid(buf, xid);
+      buf.writeBoolean(onePhaseCommit);
+      buf.writeBoolean(recoverable);
+      buf.writeLong(timeoutMs);
+      writeVInt(buf, modifications.size());
+      for (Modification m : modifications) {
+         m.writeTo(buf, codec);
+      }
    }
 
    @Override

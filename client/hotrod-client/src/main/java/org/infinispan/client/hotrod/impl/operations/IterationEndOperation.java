@@ -42,6 +42,11 @@ public class IterationEndOperation extends HotRodOperation<IterationEndResponse>
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeArrayOperation(buf, iterationId);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       complete(new IterationEndResponse(status));
    }

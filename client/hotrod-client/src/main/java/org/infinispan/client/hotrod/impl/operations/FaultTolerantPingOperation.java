@@ -39,6 +39,11 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingResp
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       responseBuilder.processResponse(codec, buf, decoder);
       if (HotRodConstants.isSuccess(status)) {

@@ -103,7 +103,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
          cause = cause.getCause();
       }
       try {
-         if (closeChannelForCause(cause)) {
+         if (channel != null && closeChannelForCause(cause)) {
             HOTROD.closingChannelAfterError(channel, cause);
             channel.close();
          }
@@ -130,6 +130,11 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       codec.writeHeader(buf, header);
       ByteBufUtil.writeArray(buf, array);
       channel.writeAndFlush(buf);
+   }
+
+   protected void writeArrayOperation(ByteBuf buf, byte[] array) {
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeArray(buf, array);
    }
 
    public abstract void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder);
@@ -199,4 +204,5 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       return codec;
    }
 
+   public abstract void writeBytes(Channel channel, ByteBuf buf);
 }

@@ -4,14 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A counter operation for {@link CounterManager#getCounterNames()}.
@@ -32,6 +33,12 @@ public class GetCounterNamesOperation extends BaseCounterOperation<Collection<St
    protected void executeOperation(Channel channel) {
       scheduleRead(channel);
       sendHeader(channel);
+      setCacheName();
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
       setCacheName();
    }
 
