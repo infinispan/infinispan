@@ -74,6 +74,32 @@ class ChannelPool {
          callback.cancel(address, new RejectedExecutionException("Pool was terminated"));
          return;
       }
+
+      // We could acquire an active channel and submit the callback.
+      if (executeDirectlyIfPossible(callback)) return;
+
+      // wait action
+      if (maxWait > 0) {
+         TimeoutCallback timeoutCallback = new TimeoutCallback(callback);
+         timeoutCallback.timeoutFuture = executor.schedule(timeoutCallback, maxWait, TimeUnit.MILLISECONDS);
+         callback = timeoutCallback;
+      }
+
+      // Between the check time and adding the callback to the queue, we could have a channel available.
+      // Let's just try again.
+      if (!executeOrEnqueue(callback)) {
+         boolean remove = false;
+         try {
+            remove = executeDirectlyIfPossible(callback);
+         } finally {
+            if (remove) {
+               callbacks.remove(callback);
+            }
+         }
+      }
+   }
+
+   boolean executeDirectlyIfPossible(ChannelOperation callback) {
       Channel channel;
       int fullChannelsSeen = 0;
       while ((channel = channels.pollFirst()) != null) {
@@ -90,8 +116,7 @@ class ChannelPool {
                break;
             }
          }
-         activateChannel(channel, callback, false);
-         return;
+         return activateChannel(channel, callback, false);
       }
       int current = created.get();
       while (current < maxConnections) {
@@ -100,7 +125,7 @@ class ChannelPool {
             if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel, created = %d, active = %d", address, current + 1, currentActive);
             // create new connection and apply callback
             createAndInvoke(callback);
-            return;
+            return true;
          }
          current = created.get();
       }
@@ -115,16 +140,16 @@ class ChannelPool {
             int currentActive = active.incrementAndGet();
             if (log.isTraceEnabled()) log.tracef("[%s] Creating new channel, created = %d, active = %d", address, currentCreated, currentActive);
             createAndInvoke(callback);
-            return;
+            return true;
          default:
             throw new IllegalArgumentException(String.valueOf(exhaustedAction));
       }
-      // wait action
-      if (maxWait > 0) {
-         TimeoutCallback timeoutCallback = new TimeoutCallback(callback);
-         timeoutCallback.timeoutFuture = executor.schedule(timeoutCallback, maxWait, TimeUnit.MILLISECONDS);
-         callback = timeoutCallback;
-      }
+
+      return false;
+   }
+
+   private boolean executeOrEnqueue(ChannelOperation callback) {
+      Channel channel;
       // To prevent adding channel and callback concurrently we'll synchronize all additions
       // TODO: completely lock-free algorithm would be better
       long stamp = lock.writeLock();
@@ -135,7 +160,7 @@ class ChannelPool {
             if (channel == null) {
                if (log.isTraceEnabled()) log.tracef("[%s] No channel available, adding callback to the queue %s", address, callback);
                callbacks.addLast(callback);
-               return;
+               return false;
             } else if (channel.isActive()) {
                break;
             }
@@ -143,7 +168,7 @@ class ChannelPool {
       } finally {
          lock.unlockWrite(stamp);
       }
-      activateChannel(channel, callback, false);
+      return activateChannel(channel, callback, false);
    }
 
    private void createAndInvoke(ChannelOperation callback) {
@@ -252,8 +277,8 @@ class ChannelPool {
       connectionFailureListener.accept( this, idle ? ChannelEventType.CLOSED_IDLE : ChannelEventType.CLOSED_ACTIVE);
    }
 
-   private void activateChannel(Channel channel, ChannelOperation callback, boolean useExecutor) {
-      assert channel.isActive() : "Channel " + channel + " is not active";
+   private boolean activateChannel(Channel channel, ChannelOperation callback, boolean useExecutor) {
+      if (!channel.isActive()) return false;
       int currentActive = active.incrementAndGet();
       if (log.isTraceEnabled()) log.tracef("[%s] Activated record %s, created = %d, active = %d", address, channel, created.get(), currentActive);
       ChannelRecord record = ChannelRecord.of(channel);
@@ -277,6 +302,7 @@ class ChannelPool {
             throw t;
          }
       }
+      return true;
    }
 
    private void discardChannel(Channel channel) {
