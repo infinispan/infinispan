@@ -3,9 +3,11 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,30 +17,22 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 @CleanupAfterMethod
-@Test(groups = "functional", testName = "client.hotrod.impl.transport.netty.ChannelPoolTest")
-public class ChannelPoolTest extends AbstractRetryTest {
-
-   private int retries = 0;
-
-   public ChannelPoolTest() {}
-
-   public ChannelPoolTest(int nbrOfServers) {
-      this.nbrOfServers = nbrOfServers;
-   }
+@Test(testName = "client.hotrod.impl.transport.netty.CrashMidOperationTest", groups = "functional")
+public class CrashMidOperationTest extends AbstractRetryTest {
 
    @Override
    protected ConfigurationBuilder getCacheConfig() {
@@ -50,67 +44,52 @@ public class ChannelPoolTest extends AbstractRetryTest {
 
    @Override
    protected void amendRemoteCacheManagerConfiguration(org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder) {
-      builder.maxRetries(retries);
+      builder.maxRetries(0);
    }
 
-   public void testClosingSockAndKillingServerFinishesOperations() throws Exception {
-      doTest(true);
-   }
-
-   public void testClosingSockAndKeepingServerFinishesOperations() throws Exception {
-      doTest(false);
-   }
-
-   private void doTest(boolean killServer) throws Exception {
+   public void killServerMidOperation() throws Exception {
       ChannelFactory channelFactory = remoteCacheManager.getChannelFactory();
       InetSocketAddress address = InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort());
-      AggregateCompletionStage<Void> pendingOperations = CompletionStages.aggregateCompletionStage();
+
+      CountDownLatch operationLatch = new CountDownLatch(1);
       AtomicReference<Channel> channelRef = new AtomicReference<>();
+      ExecutorService operationsExecutor = Executors.newFixedThreadPool(2);
 
-      CountDownLatch firstOp = new CountDownLatch(1);
-      ExecutorService operationsExecutor = Executors.newFixedThreadPool(2); // The fist operation blocks.
-
-      for (int i = 0; i < 10; i++) {
-         NoopRetryingOperation op = new NoopRetryingOperation(i, channelFactory, remoteCacheManager.getConfiguration(), channelRef, firstOp);
-         operationsExecutor.submit(() -> channelFactory.fetchChannelAndInvoke(address, op));
-         pendingOperations.dependsOn(op);
-      }
+      NoopRetryingOperation firstOperation = new NoopRetryingOperation(0, channelFactory, remoteCacheManager.getConfiguration(),
+            channelRef, operationLatch);
+      operationsExecutor.submit(() -> channelFactory.fetchChannelAndInvoke(address, firstOperation));
 
       eventually(() -> channelRef.get() != null);
       Channel channel = channelRef.get();
 
-      if (killServer) HotRodClientTestingUtil.killServers(hotRodServer1);
-      channel.close().awaitUninterruptibly();
+      HotRodClientTestingUtil.killServers(hotRodServer1);
+      eventually(() -> !channel.isActive());
 
-      // The first one completes successfully on server1.
-      firstOp.countDown();
+      eventually(firstOperation::isDone);
+      Exceptions.expectExecutionException(TransportException.class, firstOperation);
 
-      if (nbrOfServers == 1 && killServer) {
-         assertConnectException(pendingOperations);
-         operationsExecutor.shutdown();
-         return;
-      }
-
-      if (retries == 0 && killServer) {
-         assertConnectException(pendingOperations);
-         operationsExecutor.shutdown();
-         return;
-      }
-
-      pendingOperations.freeze().toCompletableFuture().get(10, TimeUnit.SECONDS);
-      operationsExecutor.shutdown();
-   }
-
-   private void assertConnectException(AggregateCompletionStage<Void> ops) {
+      // Since the first operation failed midway execution, we don't know if the server has failed or only the channel.
+      // The second operation will try to connect and fail, and then update the failed list.
+      NoopRetryingOperation secondOperation = new NoopRetryingOperation(1, channelFactory, remoteCacheManager.getConfiguration(),
+            channelRef, operationLatch);
+      channelFactory.fetchChannelAndInvoke(address, remoteCache.getName().getBytes(StandardCharsets.UTF_8), secondOperation);
+      eventually(secondOperation::isDone);
       try {
-         ops.freeze().toCompletableFuture().get(10, TimeUnit.SECONDS);
-      } catch (Exception e) {
-         Throwable cause = e.getCause();
-         if (cause instanceof ConnectException) {
-            return;
-         }
-         throw new AssertionError("Expected ConnectException, but got " + cause, cause);
+         secondOperation.get(10, TimeUnit.SECONDS);
+      } catch (Throwable t) {
+         assertTrue(t.getCause() instanceof ConnectException);
       }
+
+      // We only release the latch now, but notice that all the other operations were able to finish.
+      operationLatch.countDown();
+
+      // The failed list was update, the next operation should succeed.
+      NoopRetryingOperation thirdOperation = new NoopRetryingOperation(2, channelFactory, remoteCacheManager.getConfiguration(),
+            channelRef, operationLatch);
+      channelFactory.fetchChannelAndInvoke(address, remoteCache.getName().getBytes(StandardCharsets.UTF_8), thirdOperation);
+      eventually(thirdOperation::isDone);
+      thirdOperation.get(10, TimeUnit.SECONDS);
+      operationsExecutor.shutdown();
    }
 
    private static class NoopRetryingOperation extends RetryOnFailureOperation<Void> {
@@ -136,13 +115,20 @@ public class ChannelPoolTest extends AbstractRetryTest {
       protected void executeOperation(Channel channel) {
          if (channelRef.compareAndSet(null, channel)) {
             try {
+               scheduleRead(channel);
                firstOp.await();
-               complete(null);
             } catch (InterruptedException e) {
                completeExceptionally(e);
             }
-         } else {
+            assert isDone() : "Should be done";
+            return;
+         }
+
+         try {
+            firstOp.await();
             complete(null);
+         } catch (InterruptedException e) {
+            completeExceptionally(e);
          }
       }
 
@@ -150,25 +136,5 @@ public class ChannelPoolTest extends AbstractRetryTest {
       public String toString() {
          return "id = " + id;
       }
-   }
-
-   private ChannelPoolTest withRetries(int retries) {
-      this.retries = retries;
-      return this;
-   }
-
-   @Override
-   protected String parameters() {
-      return "[retries=" + retries + ", nbrServers=" + nbrOfServers + "]";
-   }
-
-   @Override
-   public Object[] factory() {
-      return new Object[] {
-            new ChannelPoolTest().withRetries(0),
-            new ChannelPoolTest(1).withRetries(0),
-            new ChannelPoolTest().withRetries(10),
-            new ChannelPoolTest(1).withRetries(10),
-      };
    }
 }

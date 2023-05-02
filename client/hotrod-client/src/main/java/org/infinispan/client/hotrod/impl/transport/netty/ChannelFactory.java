@@ -173,19 +173,30 @@ public class ChannelFactory {
             .option(ChannelOption.SO_KEEPALIVE, configuration.tcpKeepAlive())
             .option(ChannelOption.TCP_NODELAY, configuration.tcpNoDelay())
             .option(ChannelOption.SO_RCVBUF, 1024576);
+      ChannelInitializer channelInitializer = createChannelInitializer(address, bootstrap);
+      bootstrap.handler(channelInitializer);
+      ChannelPool pool = createChannelPool(bootstrap, channelInitializer, address);
+      channelInitializer.setChannelPool(pool);
+      return pool;
+   }
+
+   public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
+      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
+   }
+
+   protected ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {
       int maxConnections = configuration.connectionPool().maxActive();
       if (maxConnections < 0) {
          maxConnections = Integer.MAX_VALUE;
       }
-      ChannelInitializer channelInitializer =
-            new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
-      bootstrap.handler(channelInitializer);
-      ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
-                                         configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
-                                         configuration.connectionPool().maxWait(), maxConnections,
-                                         configuration.connectionPool().maxPendingRequests());
-      channelInitializer.setChannelPool(pool);
-      return pool;
+      return new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
+            configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
+            configuration.connectionPool().maxWait(), maxConnections,
+            configuration.connectionPool().maxPendingRequests());
+   }
+
+   protected final OperationsFactory getOperationsFactory() {
+      return operationsFactory;
    }
 
    private void pingServersIgnoreException() {
@@ -264,7 +275,8 @@ public class ChannelFactory {
             : fetchChannelAndInvoke(server, operation);
    }
 
-   private <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress preferred, byte[] cacheName, T operation) {
+   // Package-private for testing purposes.
+   <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress preferred, byte[] cacheName, T operation) {
       boolean suspect;
       lock.readLock().lock();
       try {
@@ -387,9 +399,9 @@ public class ChannelFactory {
       CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
       List<InetSocketAddress> oldServers = oldCacheInfo.getServers();
       Set<SocketAddress> addedServers = new HashSet<>(newServers);
-      addedServers.removeAll(oldServers);
+      oldServers.forEach(addedServers::remove);
       Set<SocketAddress> removedServers = new HashSet<>(oldServers);
-      removedServers.removeAll(newServers);
+      newServers.forEach(removedServers::remove);
       if (log.isTraceEnabled()) {
          String cacheNameString = newCacheInfo.getCacheName();
          log.tracef("[%s] Current list: %s", cacheNameString, oldServers);

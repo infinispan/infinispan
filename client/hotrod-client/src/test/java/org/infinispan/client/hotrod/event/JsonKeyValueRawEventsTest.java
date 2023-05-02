@@ -65,7 +65,7 @@ public class JsonKeyValueRawEventsTest extends SingleHotRodServerTest {
 
       assertNotNull(event);
       assertEquals(event.getKey(), "1");
-      assertEquals(event.getValue(), "\n{\n   \"_type\": \"org.infinispan.test.core.Person\",\n   \"name\": \"John\",\n   \"birthDate\": 0\n}\n");
+      assertEquals(event.getValue(), "\n{\n   \"_type\": \"org.infinispan.test.core.Person\",\n   \"name\": \"John\",\n   \"birthDate\": 0,\n   \"accepted_tos\": false\n}\n");
    }
 
    @ClientListener(converterFactoryName = "___eager-key-value-version-converter", useRawData = true)
