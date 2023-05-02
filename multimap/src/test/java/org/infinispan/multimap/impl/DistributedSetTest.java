@@ -84,8 +84,8 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
       await(set.add(NAMES_KEY, OIHANA));
       assertValuesAndOwnership(NAMES_KEY, OIHANA);
 
-      // await(set.add(NAMES_KEY, ELAIA));
-      // assertValuesAndOwnership(NAMES_KEY, ELAIA);
+      await(set.add(NAMES_KEY, ELAIA));
+      assertValuesAndOwnership(NAMES_KEY, ELAIA);
 
    }
 
