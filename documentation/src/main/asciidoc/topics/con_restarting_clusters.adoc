@@ -2,7 +2,7 @@
 = Shutdown and restart of {brandname} clusters
 Prevent data loss and ensure consistency of your cluster by properly shutting down and restarting nodes.
 
-[descrete]
+[discrete]
 == Cluster shutdown
 {brandname} recommends using the `shutdown cluster` command to stop all nodes in a cluster while saving cluster state and persisting all data in the cache.
 You can use the `shutdown cluster` command also for clusters with a single node.

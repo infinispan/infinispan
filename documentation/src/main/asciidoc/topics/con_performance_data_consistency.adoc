@@ -15,7 +15,7 @@ The main performance concern for enabling transactions is finding the balance be
 
 .Write locks with transactions
 
-Configuring the wrong locking mode can negatively the performance of your transactions.
+Configuring the wrong locking mode can negatively affect the performance of your transactions.
 The right locking mode depends on whether your {brandname} deployment has a high or low rate of contention for keys.
 
 For workloads with low rates of contention, where two or more transactions are not likely to write to the same key simultaneously, optimistic locking offers the best performance.

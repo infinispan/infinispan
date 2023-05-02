@@ -31,9 +31,6 @@ If you're running {brandname} in WildFly 11 or later, this should be your defaul
 This is a lookup class that locate transaction managers in the most popular Java EE application servers.
 If no transaction manager can be found, it defaults on the `EmbeddedTransactionManager`.
 
-WARN: `DummyTransactionManagerLookup` has been deprecated in 9.0 and it will be removed in the future.
-Use `EmbeddedTransactionManagerLookup` instead.
-
 Once initialized, the `TransactionManager` can also be obtained from the `Cache` itself:
 
 [source,java]
