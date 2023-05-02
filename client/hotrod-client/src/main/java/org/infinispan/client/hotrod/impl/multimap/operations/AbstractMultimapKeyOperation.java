@@ -2,8 +2,6 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
@@ -11,6 +9,9 @@ import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 public abstract class AbstractMultimapKeyOperation<V> extends AbstractKeyOperation<V> {
 
@@ -28,6 +29,14 @@ public abstract class AbstractMultimapKeyOperation<V> extends AbstractKeyOperati
     protected void executeOperation(Channel channel) {
         scheduleRead(channel);
         sendArrayOperation(channel, keyBytes);
+    }
+
+    @Override
+    public void writeBytes(Channel channel, ByteBuf buf) {
+        codec.writeHeader(buf, header);
+        ByteBufUtil.writeArray(buf, keyBytes);
+
+        codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
     }
 
     @Override

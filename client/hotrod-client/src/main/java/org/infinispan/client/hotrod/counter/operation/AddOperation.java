@@ -2,8 +2,6 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -11,6 +9,9 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * Add operation.
@@ -39,6 +40,12 @@ public class AddOperation extends BaseCounterOperation<Long> {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 8);
       buf.writeLong(delta);
       channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeHeaderAndCounterName(buf);
+      buf.writeLong(delta);
    }
 
    @Override

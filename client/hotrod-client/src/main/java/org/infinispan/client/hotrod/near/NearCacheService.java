@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.near;
 import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -43,7 +44,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    private NearCache<K, V> cache;
    private Runnable invalidationCallback;
    private int bloomFilterBits = -1;
-   private int bloomFilterUpdateThreshold;
+   private int bloomFilterUpdateThreshold = -1;
    private InternalRemoteCache<K, V> remote;
 
    private SocketAddress listenerAddress;
@@ -66,7 +67,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
             // This number along with default values of 3 hash algorithms and 4x bit size we end up with
             // between 14.689 and 16.573 percent hits per entry.
             bloomFilterUpdateThreshold = maxEntries / 16 + 3;
-            listenerAddress = remote.addNearCacheListener(listener, bloomFilterBits);
+            listenerAddress = Objects.requireNonNull(remote.addNearCacheListener(listener, bloomFilterBits));
          } else {
             remote.addClientListener(listener);
          }
@@ -83,6 +84,9 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    void entryRemovedFromNearCache(K key, MetadataValue<V> value) {
+      if (bloomFilterUpdateThreshold == -1) {
+         return;
+      }
 
       while (true) {
          int removals = nearCacheRemovals.get();

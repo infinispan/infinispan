@@ -50,9 +50,11 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private final List<byte[]> listeners = new ArrayList<>();
    private volatile boolean closing;
 
+   // Inbound Variables
    private HotRodOperation<?> operation;
    private short status;
    private short receivedOpCode;
+
 
    public HeaderDecoder(ChannelFactory channelFactory, Configuration configuration, ClientListenerNotifier listenerNotifier) {
       super(State.READ_MESSAGE_ID);
@@ -227,6 +229,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
    @Override
    public void channelInactive(ChannelHandlerContext ctx) {
+      log.tracef("Channel %s has become inactive!", ctx.channel());
       for (HotRodOperation<?> op : incomplete.values()) {
          try {
             op.channelInactive(ctx.channel());

@@ -4,8 +4,6 @@ import static org.infinispan.counter.util.EncodeUtil.decodeConfiguration;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -13,6 +11,9 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A counter configuration for {@link CounterManager#getConfiguration(String)}.
@@ -30,6 +31,11 @@ public class GetConfigurationOperation extends BaseCounterOperation<CounterConfi
    @Override
    protected void executeOperation(Channel channel) {
       sendHeaderAndCounterNameAndRead(channel);
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeHeaderAndCounterName(buf);
    }
 
    @Override

@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -47,6 +48,11 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
       } else {
          channelFactory.fetchChannelAndInvoke(failedServers, cacheName(), this);
       }
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeArrayOperation(buf, keyBytes);
    }
 
    private Object commandKey() {

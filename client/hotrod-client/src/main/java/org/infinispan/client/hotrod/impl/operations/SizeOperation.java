@@ -27,6 +27,11 @@ public class SizeOperation extends RetryOnFailureOperation<Integer> {
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       complete(ByteBufUtil.readVInt(buf));
    }

@@ -39,6 +39,12 @@ public class SetOperation extends BaseCounterOperation<Long> {
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeHeaderAndCounterName(buf);
+      buf.writeLong(value);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       checkStatus(status);
       assertBoundaries(status);

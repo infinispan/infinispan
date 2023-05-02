@@ -61,6 +61,13 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeArrayOperation(buf, keyBytes);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      ByteBufUtil.writeArray(buf, value);
+   }
+
+   @Override
    protected void addParams(StringBuilder sb) {
       super.addParams(sb);
       sb.append(", value=").append(printArray(value));

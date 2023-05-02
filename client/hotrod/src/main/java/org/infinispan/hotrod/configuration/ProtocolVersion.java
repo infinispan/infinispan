@@ -11,10 +11,11 @@ public enum ProtocolVersion {
 
    // These need to go in order: lowest version is first - this way compareTo works for VERSIONS
    PROTOCOL_VERSION_40(4, 0),
+   PROTOCOL_VERSION_50(5, 0),
    // New VERSIONS go above this line to satisfy compareTo of enum working for VERSIONS
 
    // The version here doesn't matter as long as it is >= 3.0. It must be the LAST version
-   PROTOCOL_VERSION_AUTO(4, 0, "AUTO"),
+   PROTOCOL_VERSION_AUTO(5, 0, "AUTO"),
    ;
 
    private static final ProtocolVersion[] VERSIONS = values();
