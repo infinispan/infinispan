@@ -3,6 +3,7 @@ package org.infinispan.server.configuration.security;
 import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_LIFESPAN;
 import static org.infinispan.server.configuration.security.RealmConfiguration.CACHE_MAX_SIZE;
 import static org.infinispan.server.configuration.security.RealmConfiguration.DEFAULT_REALM;
+import static org.infinispan.server.configuration.security.RealmConfiguration.EVIDENCE_DECODER;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +18,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Element;
+import org.wildfly.security.auth.server.EvidenceDecoder;
+
 /**
  * @since 10.0
  */
@@ -48,6 +51,15 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    public RealmConfigurationBuilder cacheLifespan(long lifespan) {
       this.attributes.attribute(CACHE_LIFESPAN).set(lifespan);
       return this;
+   }
+
+   public RealmConfigurationBuilder evidenceDecoder(EvidenceDecoder evidenceDecoder) {
+      this.attributes.attribute(EVIDENCE_DECODER).set(evidenceDecoder);
+      return this;
+   }
+
+   public AggregateRealmConfigurationBuilder aggregateConfiguration() {
+      return addBuilder(Element.AGGREGATE_REALM, new AggregateRealmConfigurationBuilder());
    }
 
    public DistributedRealmConfigurationBuilder distributedConfiguration() {

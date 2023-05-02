@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.EnumSet;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -61,8 +62,12 @@ public class TokenRealmConfiguration extends ConfigurationElement<TokenRealmConf
       TokenSecurityRealm.Builder tokenRealmBuilder = TokenSecurityRealm.builder();
       tokenRealmBuilder.validator(oauth2Configuration().isModified() ? oauth2Configuration.getValidator(security, realm) : jwtConfiguration.getValidator(security, realm));
       TokenSecurityRealm securityRealm = tokenRealmBuilder.build();
-      realm.addFeature(ServerSecurityRealm.Feature.TOKEN);
       domainBuilder.setRoleDecoder(new KeycloakRoleDecoder());
       return securityRealm;
+   }
+
+   @Override
+   public void applyFeatures(EnumSet<ServerSecurityRealm.Feature> features) {
+      features.add(ServerSecurityRealm.Feature.TOKEN);
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.EnumSet;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -22,7 +24,8 @@ public class LdapUserPasswordMapperConfiguration extends ConfigurationElement<Ld
       super(Element.USER_PASSWORD_MAPPER, attributes);
    }
 
-   void build(LdapSecurityRealmBuilder ldapRealmBuilder, RealmConfiguration realm) {
+   EnumSet<ServerSecurityRealm.Feature> build(LdapSecurityRealmBuilder ldapRealmBuilder, RealmConfiguration realm) {
+      EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
       if (attributes.attribute(FROM).get() != null) {
          LdapSecurityRealmBuilder.UserPasswordCredentialLoaderBuilder builder = ldapRealmBuilder.userPasswordCredentialLoader();
          builder.setUserPasswordAttribute(attributes.attribute(FROM).get());
@@ -36,9 +39,10 @@ public class LdapUserPasswordMapperConfiguration extends ConfigurationElement<Ld
              *
              * See https://issues.redhat.com/browse/ELY-296
              */
-            realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED);
+            features.add(ServerSecurityRealm.Feature.PASSWORD_HASHED);
          }
          builder.build(); // side-effect: adds the credential loader to the ldap realm
       }
+      return features;
    }
 }

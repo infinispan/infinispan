@@ -16,6 +16,7 @@ include::{topics}/ref_default_user_roles.adoc[leveloffset=+1]
 include::{topics}/ref_permissions.adoc[leveloffset=+2]
 include::{topics}/ref_role_permission_mappers.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_role_mappers.adoc[leveloffset=+2]
+include::{topics}/proc_configuring_cluster_role_mapper.adoc[leveloffset=+2]
 
 include::{topics}/proc_configuring_cache_authorization.adoc[leveloffset=+1]
 

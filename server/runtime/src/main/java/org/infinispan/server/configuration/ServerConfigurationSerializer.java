@@ -16,9 +16,11 @@ import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
+import org.infinispan.server.configuration.security.AggregateRealmConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoreConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoresConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
+import org.infinispan.server.configuration.security.DistributedRealmConfiguration;
 import org.infinispan.server.configuration.security.KerberosSecurityFactoryConfiguration;
 import org.infinispan.server.configuration.security.LdapAttributeConfiguration;
 import org.infinispan.server.configuration.security.LdapIdentityMappingConfiguration;
@@ -133,6 +135,10 @@ public class ServerConfigurationSerializer
                   writeRealm(writer, (TokenRealmConfiguration) provider);
                } else if (provider instanceof TrustStoreConfiguration) {
                   writeRealm(writer, (TrustStoreRealmConfiguration) provider);
+               } else if (provider instanceof DistributedRealmConfiguration) {
+                  writeRealm(writer, (DistributedRealmConfiguration) provider);
+               } else if (provider instanceof AggregateRealmConfiguration) {
+                  writeRealm(writer, (AggregateRealmConfiguration) provider);
                }
             }
             writer.writeEndElement(); // SECURITY_REALM
@@ -200,6 +206,14 @@ public class ServerConfigurationSerializer
    }
 
    private void writeRealm(ConfigurationWriter writer, TrustStoreRealmConfiguration realm) {
+      realm.write(writer);
+   }
+
+   private void writeRealm(ConfigurationWriter writer, AggregateRealmConfiguration realm) {
+      realm.write(writer);
+   }
+
+   private void writeRealm(ConfigurationWriter writer, DistributedRealmConfiguration realm) {
       realm.write(writer);
    }
 
