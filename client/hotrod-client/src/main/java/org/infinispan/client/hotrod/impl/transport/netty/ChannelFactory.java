@@ -193,22 +193,26 @@ public class ChannelFactory {
             .option(ChannelOption.SO_KEEPALIVE, configuration.tcpKeepAlive())
             .option(ChannelOption.TCP_NODELAY, configuration.tcpNoDelay())
             .option(ChannelOption.SO_RCVBUF, 1024576);
-      int maxConnections = configuration.connectionPool().maxActive();
-      if (maxConnections < 0) {
-         maxConnections = Integer.MAX_VALUE;
-      }
       ChannelInitializer channelInitializer = createChannelInitializer(address, bootstrap);
       bootstrap.handler(channelInitializer);
-      ChannelPool pool = new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
-                                         configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
-                                         configuration.connectionPool().maxWait(), maxConnections,
-                                         configuration.connectionPool().maxPendingRequests());
+      ChannelPool pool = createChannelPool(bootstrap, channelInitializer, address);
       channelInitializer.setChannelPool(pool);
       return pool;
    }
 
    public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
       return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
+   }
+
+   protected ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {
+      int maxConnections = configuration.connectionPool().maxActive();
+      if (maxConnections < 0) {
+         maxConnections = Integer.MAX_VALUE;
+      }
+      return new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
+            configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
+            configuration.connectionPool().maxWait(), maxConnections,
+            configuration.connectionPool().maxPendingRequests());
    }
 
    protected final OperationsFactory getOperationsFactory() {
@@ -291,7 +295,8 @@ public class ChannelFactory {
             : fetchChannelAndInvoke(server, operation);
    }
 
-   private <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress preferred, byte[] cacheName, T operation) {
+   // Package-private for testing purposes.
+   <T extends ChannelOperation> T fetchChannelAndInvoke(SocketAddress preferred, byte[] cacheName, T operation) {
       boolean suspect;
       lock.readLock().lock();
       try {
