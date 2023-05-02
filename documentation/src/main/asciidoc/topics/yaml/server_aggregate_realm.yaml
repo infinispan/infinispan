@@ -1,0 +1,30 @@
+server:
+  security:
+    securityRealms:
+      - name: "aggregate-realm"
+        defaultRealm: "aggregate"
+        serverIdentities:
+          ssl:
+            keystore:
+              path: "server.p12"
+              relative-to: "infinispan.server.config.path"
+              keystore-password: "secret"
+              alias: "server"
+            truststore:
+              path: "trust.p12"
+              relative-to: "infinispan.server.config.path"
+              password: "secret"
+        truststoreRealm: ~
+        propertiesRealm:
+          groupsAttribute: "Roles"
+          userProperties:
+            digestRealmName: "distributed-realm"
+            path: "users.properties"
+          groupProperties:
+            path: "groups.properties"
+        aggregateRealm:
+          authenticationRealm: "trust"
+          authorizationRealms:
+            - "properties"
+          nameRewriter:
+            common-name-principal-transformer: ~

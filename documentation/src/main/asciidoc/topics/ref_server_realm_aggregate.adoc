@@ -1,0 +1,41 @@
+[id='aggregate-security-realms_{context}']
+= Aggregate security realms
+
+Aggregate realms combine multiple realms: the first one for the authentication steps and the others for loading the identity for the authorization steps.
+For example, this can be used to authenticate users via a client certificate, and retrieve identity from a properties or LDAP realm.
+
+[discrete]
+== Aggregate realm configuration
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_aggregate_realm.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_aggregate_realm.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_aggregate_realm.yaml[]
+----
+
+== Name rewriters
+
+Principal names may have different forms, depending on the security realm type:
+
+* Properties and Token realms may return simple strings
+* Trust and LDAP realms may return X.500-style distinguished names
+* Kerberos realms may return `user@domain`-style names
+
+Names must be normalized to a common form when using the aggregate realm.
+{{brandname}} Server has the following rewriters:
+
+* `case-principal-transformer`: which can transform a name to all uppercase or all lowercase letters
+* `common-name-principal-transformer`: which extracts the first `CN` element from a `DN`
+* `regex-principal-transformer`: which can perform find and replace using a regular expression

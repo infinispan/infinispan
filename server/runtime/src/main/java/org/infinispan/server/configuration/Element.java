@@ -10,6 +10,7 @@ import java.util.Map;
 public enum Element {
    UNKNOWN(null), //must be first
 
+   AGGREGATE_REALM,
    ANY_ADDRESS,
    ATTRIBUTE,
    ATTRIBUTE_MAPPING,
@@ -75,7 +76,11 @@ public enum Element {
    IP_FILTER,
    ACCEPT,
    REJECT,
-   ;
+   CASE_PRINCIPAL_TRANSFORMER,
+   COMMON_NAME_PRINCIPAL_TRANSFORMER,
+   EVIDENCE_DECODER,
+   X509_SUBJECT_ALT_NAME_EVIDENCE_DECODER,
+   X500_SUBJECT_EVIDENCE_DECODER;
 
    private static final Map<String, Element> ELEMENTS;
 

@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
 
@@ -9,6 +10,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.DistributedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -57,5 +59,10 @@ public class DistributedRealmConfiguration extends ConfigurationElement<Distribu
 
    public List<String> realms() {
       return attributes.attribute(REALMS).get();
+   }
+
+   @Override
+   public void applyFeatures(EnumSet<ServerSecurityRealm.Feature> features) {
+      // Nothing to do
    }
 }

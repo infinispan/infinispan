@@ -22,6 +22,7 @@ import org.infinispan.server.security.realm.CachingModifiableSecurityRealm;
 import org.infinispan.server.security.realm.CachingSecurityRealm;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
+import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -38,11 +39,12 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
    static final AttributeDefinition<String> DEFAULT_REALM = AttributeDefinition.builder(Attribute.DEFAULT_REALM, null, String.class).immutable().build();
    static final AttributeDefinition<Integer> CACHE_MAX_SIZE = AttributeDefinition.builder(Attribute.CACHE_MAX_SIZE, 256).build();
    static final AttributeDefinition<Long> CACHE_LIFESPAN = AttributeDefinition.builder(Attribute.CACHE_LIFESPAN, -1l).build();
-   private EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
+   static final AttributeDefinition<EvidenceDecoder> EVIDENCE_DECODER = AttributeDefinition.builder(Attribute.EVIDENCE_DECODER, null, EvidenceDecoder.class).immutable().build();
+   private final EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
    Map<String, SecurityRealm> realms; // visible to DistributedRealmConfiguration
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RealmConfiguration.class, NAME, DEFAULT_REALM, CACHE_MAX_SIZE, CACHE_LIFESPAN);
+      return new AttributeSet(RealmConfiguration.class, NAME, DEFAULT_REALM, CACHE_MAX_SIZE, CACHE_LIFESPAN, EVIDENCE_DECODER);
    }
 
    private final ServerIdentitiesConfiguration serverIdentitiesConfiguration;
@@ -111,6 +113,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features) : null;
 
       SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
+      attributes.attribute(EVIDENCE_DECODER).apply(domainBuilder::setEvidenceDecoder);
       domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
 
       if (realmProviders.isEmpty() || !(realmProviders.get(0) instanceof TrustStoreRealmConfiguration)) {
@@ -120,6 +123,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       realms = new HashMap<>(realmProviders.size());
       for(RealmProvider provider : realmProviders) {
          SecurityRealm realm = provider.build(security, this, domainBuilder, properties);
+         provider.applyFeatures(features);
          realms.put(provider.name(), realm);
          if (realm != null) {
             domainBuilder.addRealm(provider.name(), cacheable(realm)).build();
@@ -164,10 +168,6 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       } else {
          return realm;
       }
-   }
-
-   void addFeature(ServerSecurityRealm.Feature feature) {
-      this.features.add(feature);
    }
 
    public boolean hasFeature(ServerSecurityRealm.Feature feature) {

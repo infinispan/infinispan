@@ -37,7 +37,7 @@ import io.netty.util.AttributeKey;
 public class HttpServerRequestAdapter implements HttpServerRequest {
    private final RestRequest request;
    private final ChannelHandlerContext ctx;
-   private static final AttributeKey HTTP_SCOPE_ATTACHMENT_KEY = AttributeKey.newInstance(HttpScope.class.getSimpleName());
+   private static final AttributeKey<HttpScope> HTTP_SCOPE_ATTACHMENT_KEY = AttributeKey.newInstance(HttpScope.class.getSimpleName());
    NettyRestResponse.Builder responseBuilder;
 
    public HttpServerRequestAdapter(RestRequest request, ChannelHandlerContext ctx) {

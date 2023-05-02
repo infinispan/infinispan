@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.EnumSet;
 import java.util.Properties;
 import java.util.function.Supplier;
 
@@ -40,6 +41,7 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
    static final AttributeDefinition<Boolean> CONNECTION_POOLING = AttributeDefinition.builder(Attribute.CONNECTION_POOLING, false, Boolean.class).immutable().build();
    static final AttributeDefinition<DirContextFactory.ReferralMode> REFERRAL_MODE = AttributeDefinition.builder(Attribute.REFERRAL_MODE, DirContextFactory.ReferralMode.IGNORE, DirContextFactory.ReferralMode.class).immutable().build();
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
+   private EnumSet<ServerSecurityRealm.Feature> mappingFeatures = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(LdapRealmConfiguration.class, DIRECT_EVIDENCE_VERIFICATION, NAME, NAME_REWRITER, PRINCIPAL, PAGE_SIZE, URL, CONNECTION_TIMEOUT, READ_TIMEOUT, CONNECTION_POOLING, REFERRAL_MODE, CLIENT_SSL_CONTEXT, CREDENTIAL);
@@ -70,7 +72,7 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
       LdapSecurityRealmBuilder ldapRealmBuilder = LdapSecurityRealmBuilder.builder();
       attributes.attribute(DIRECT_EVIDENCE_VERIFICATION).apply(ldapRealmBuilder::addDirectEvidenceVerification);
       ldapRealmBuilder.setPageSize(attributes.attribute(PAGE_SIZE).get());
-      identityMapping.build(ldapRealmBuilder, realm);
+      mappingFeatures = identityMapping.build(ldapRealmBuilder, realm);
       Properties connectionProperties = new Properties();
       connectionProperties.setProperty("com.sun.jndi.ldap.connect.pool", attributes.attribute(LdapRealmConfiguration.CONNECTION_POOLING).get().toString());
       SimpleDirContextFactoryBuilder dirContextBuilder = SimpleDirContextFactoryBuilder.builder();
@@ -87,8 +89,12 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
       if (attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).isModified()) {
          ldapRealmBuilder.setNameRewriter(attributes.attribute(LdapRealmConfiguration.NAME_REWRITER).get());
       }
-      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN);
       return ldapRealmBuilder.build();
    }
 
+   @Override
+   public void applyFeatures(EnumSet<ServerSecurityRealm.Feature> features) {
+      features.add(ServerSecurityRealm.Feature.PASSWORD_PLAIN);
+      features.addAll(mappingFeatures);
+   }
 }

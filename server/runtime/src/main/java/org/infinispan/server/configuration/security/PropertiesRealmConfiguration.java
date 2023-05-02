@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.BuiltBy;
@@ -53,13 +54,17 @@ public class PropertiesRealmConfiguration extends ConfigurationElement<Propertie
       String realmName = userPropertiesConfiguration.digestRealmName();
       PropertiesSecurityRealm propertiesSecurityRealm = new PropertiesSecurityRealm(usersFile, groupsFile, plainText, groupsAttribute, realmName);
       realm.setHttpChallengeReadiness(() -> !propertiesSecurityRealm.isEmpty());
-      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN);
-      realm.addFeature(ServerSecurityRealm.Feature.PASSWORD_HASHED);
       return propertiesSecurityRealm;
    }
 
    @Override
    public String name() {
       return attributes.attribute(NAME).get();
+   }
+
+   @Override
+   public void applyFeatures(EnumSet<ServerSecurityRealm.Feature> features) {
+      features.add(ServerSecurityRealm.Feature.PASSWORD_PLAIN);
+      features.add(ServerSecurityRealm.Feature.PASSWORD_HASHED);
    }
 }

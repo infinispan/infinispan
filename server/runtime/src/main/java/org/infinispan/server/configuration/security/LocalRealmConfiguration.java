@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.EnumSet;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -7,6 +8,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 
@@ -32,5 +34,10 @@ public class LocalRealmConfiguration extends ConfigurationElement<LocalRealmConf
    @Override
    public SecurityRealm build(SecurityConfiguration securityConfiguration, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
       return null;
+   }
+
+   @Override
+   public void applyFeatures(EnumSet<ServerSecurityRealm.Feature> features) {
+      // Nothing to do
    }
 }

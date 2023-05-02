@@ -20,13 +20,13 @@ public class HttpServerResponseAdapter implements HttpServerResponse {
       this.builder = responseBuilder;
    }
 
-   public static NettyRestResponse adapt(HttpServerMechanismsResponder responder, NettyRestResponse.Builder responseBuilder) {
+   public static void adapt(HttpServerMechanismsResponder responder, NettyRestResponse.Builder responseBuilder) {
       try {
          HttpServerResponseAdapter response = new HttpServerResponseAdapter(responseBuilder);
          if (responder != null) {
             responder.sendResponse(response);
          }
-         return response.builder.build();
+         response.builder.build();
       } catch (HttpAuthenticationException e) {
          throw new RestResponseException(e);
       }

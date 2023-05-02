@@ -1,5 +1,6 @@
 package org.infinispan.server.configuration.security;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -7,6 +8,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 
 /**
@@ -43,7 +45,7 @@ public class LdapIdentityMappingConfiguration extends ConfigurationElement<LdapI
       return userPasswordMapper;
    }
 
-   void build(LdapSecurityRealmBuilder builder, RealmConfiguration realm) {
+   EnumSet<ServerSecurityRealm.Feature> build(LdapSecurityRealmBuilder builder, RealmConfiguration realm) {
       LdapSecurityRealmBuilder.IdentityMappingBuilder identity = builder.identityMapping();
       if (attributes.attribute(RDN_IDENTIFIER).isModified()) {
          identity.setRdnIdentifier(attributes.attribute(RDN_IDENTIFIER).get());
@@ -61,7 +63,8 @@ public class LdapIdentityMappingConfiguration extends ConfigurationElement<LdapI
       for (LdapAttributeConfiguration mapping : attributeMappings) {
          mapping.build(identity);
       }
-      userPasswordMapper.build(builder, realm);
+      EnumSet<ServerSecurityRealm.Feature> features = userPasswordMapper.build(builder, realm);
       identity.build(); // side-effect
+      return features;
    }
 }

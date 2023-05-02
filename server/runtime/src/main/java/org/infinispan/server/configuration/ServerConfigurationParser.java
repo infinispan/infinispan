@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -24,6 +25,7 @@ import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
+import org.infinispan.server.configuration.security.AggregateRealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.CredentialStoreConfiguration;
 import org.infinispan.server.configuration.security.CredentialStoreConfigurationBuilder;
 import org.infinispan.server.configuration.security.CredentialStoresConfigurationBuilder;
@@ -57,8 +59,14 @@ import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
+import org.wildfly.security.auth.server.EvidenceDecoder;
+import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.util.CaseNameRewriter;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.source.CredentialSource;
+import org.wildfly.security.x500.GeneralName;
+import org.wildfly.security.x500.principal.X500SubjectEvidenceDecoder;
+import org.wildfly.security.x500.principal.X509SubjectAltNameEvidenceDecoder;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
 
@@ -449,8 +457,14 @@ public class ServerConfigurationParser implements ConfigurationParser {
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case EVIDENCE_DECODER:
+               parseEvidenceDecoder(reader, securityRealmBuilder);
+               break;
             case SERVER_IDENTITIES:
                parseServerIdentities(reader, builder, securityRealmBuilder);
+               break;
+            case AGGREGATE_REALM:
+               parseAggregateRealm(reader, securityRealmBuilder.aggregateConfiguration());
                break;
             case DISTRIBUTED_REALM:
                parseDistributedRealm(reader, securityRealmBuilder.distributedConfiguration());
@@ -477,6 +491,100 @@ public class ServerConfigurationParser implements ConfigurationParser {
             default:
                throw ParseUtils.unexpectedElement(reader, element);
          }
+      }
+   }
+
+   private void parseEvidenceDecoder(ConfigurationReader reader, RealmConfigurationBuilder builder) {
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case X500_SUBJECT_EVIDENCE_DECODER:
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
+               builder.evidenceDecoder(new X500SubjectEvidenceDecoder());
+               break;
+            case X509_SUBJECT_ALT_NAME_EVIDENCE_DECODER:
+               builder.evidenceDecoder(parseX509SubjectAltNameEvidenceDecoder(reader));
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader, element);
+         }
+      }
+   }
+
+   private EvidenceDecoder parseX509SubjectAltNameEvidenceDecoder(ConfigurationReader reader) {
+      int segment = 0;
+      int altNameType = -1;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case ALT_NAME_TYPE: {
+               switch (value) {
+                  case "rfc822Name":
+                     altNameType = GeneralName.RFC_822_NAME;
+                     break;
+                  case "dnsName":
+                     altNameType = GeneralName.DNS_NAME;
+                     break;
+                  case "directoryName":
+                     altNameType = GeneralName.DIRECTORY_NAME;
+                     break;
+                  case "uniformResourceIdentifier":
+                     altNameType = GeneralName.URI_NAME;
+                     break;
+                  case "ipAddress":
+                     altNameType = GeneralName.IP_ADDRESS;
+                     break;
+                  case "registeredID":
+                     altNameType = GeneralName.REGISTERED_ID;
+                     break;
+                  default:
+                     throw ParseUtils.invalidAttributeValue(reader, 0);
+               }
+               break;
+            }
+            case SEGMENT:
+               segment = ParseUtils.parseInt(reader, i, value);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+      return new X509SubjectAltNameEvidenceDecoder(altNameType, segment);
+   }
+
+   private void parseAggregateRealm(ConfigurationReader reader, AggregateRealmConfigurationBuilder builder) {
+      String authnRealm = ParseUtils.requireAttributes(reader, Attribute.AUTHENTICATION_REALM)[0];
+      builder.authnRealm(authnRealm);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case NAME:
+               builder.name(value);
+               break;
+            case AUTHENTICATION_REALM:
+               // Already seen
+               break;
+            case AUTHORIZATION_REALMS:
+               String[] realms = value.split("\\s+");
+               builder.authzRealms(realms);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      Element element = nextElement(reader);
+      if (element == Element.NAME_REWRITER) {
+         builder.nameRewriter(parseNameRewriter(reader));
+         element = nextElement(reader);
+      }
+      if (element != null) {
+         throw ParseUtils.unexpectedElement(reader);
       }
    }
 
@@ -667,7 +775,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                credentialSet = true;
                break;
             case NAME_REWRITER:
-               parseNameRewriter(reader, ldapRealmConfigBuilder);
+               ldapRealmConfigBuilder.nameRewriter(parseNameRewriter(reader));
                break;
             case IDENTITY_MAPPING:
                parseLdapIdentityMapping(reader, ldapRealmConfigBuilder.identityMapping());
@@ -681,9 +789,31 @@ public class ServerConfigurationParser implements ConfigurationParser {
       }
    }
 
-   private void parseNameRewriter(ConfigurationReader reader, LdapRealmConfigurationBuilder builder) {
-      Element element = nextElement(reader);
-      switch (element) {
+   private NameRewriter parseNameRewriter(ConfigurationReader reader) {
+      final NameRewriter nameRewriter;
+      switch (nextElement(reader)) {
+         case CASE_PRINCIPAL_TRANSFORMER: {
+            boolean uppercase = true;
+            for (int i = 0; i < reader.getAttributeCount(); i++) {
+               ParseUtils.requireNoNamespaceAttribute(reader, i);
+               String value = reader.getAttributeValue(i);
+               Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+               if (Objects.requireNonNull(attribute) == Attribute.UPPERCASE) {
+                  uppercase = ParseUtils.parseBoolean(reader, i, value);
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+            }
+            nameRewriter = new CaseNameRewriter(uppercase);
+            ParseUtils.requireNoContent(reader);
+            break;
+         }
+         case COMMON_NAME_PRINCIPAL_TRANSFORMER: {
+            ParseUtils.requireNoAttributes(reader);
+            nameRewriter = new RegexNameRewriter(Pattern.compile("cn=([^,]+),.*", Pattern.CASE_INSENSITIVE), "$1", false);
+            ParseUtils.requireNoContent(reader);
+            break;
+         }
          case REGEX_PRINCIPAL_TRANSFORMER: {
             String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATTERN, Attribute.REPLACEMENT);
             boolean replaceAll = false;
@@ -704,7 +834,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                      throw ParseUtils.unexpectedAttribute(reader, i);
                }
             }
-            builder.nameRewriter(new RegexNameRewriter(Pattern.compile(attributes[0]), attributes[1], replaceAll));
+            nameRewriter = new RegexNameRewriter(Pattern.compile(attributes[0]), attributes[1], replaceAll);
             ParseUtils.requireNoContent(reader);
             break;
          }
@@ -712,6 +842,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
             throw ParseUtils.unexpectedElement(reader);
       }
       ParseUtils.requireNoContent(reader);
+      return nameRewriter;
    }
 
    private void parseLdapIdentityMapping(ConfigurationReader reader, LdapIdentityMappingConfigurationBuilder identityMapBuilder) {
