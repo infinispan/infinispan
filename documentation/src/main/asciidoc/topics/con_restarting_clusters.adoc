@@ -1,10 +1,27 @@
 [id='cluster-restarts_{context}']
-= {brandname} cluster restarts
+= Shutdown and restart of {brandname} clusters
+Prevent data loss and ensure consistency of your cluster by properly shutting down and restarting nodes.
 
-When you bring {brandname} clusters back online after shutting them down, you should wait for the cluster to be available before adding or removing nodes or modifying cluster state.
+[descrete]
+== Cluster shutdown
+{brandname} recommends using the `shutdown cluster` command to stop all nodes in a cluster while saving cluster state and persisting all data in the cache.
+You can use the `shutdown cluster` command also for clusters with a single node.
 
-If you shutdown clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order. +
+When you bring {brandname} clusters back online, all nodes and caches in the cluster will be unavailable until all nodes rejoin.
+To prevent inconsistencies or data loss, {brandname} restricts access to the data stored in the cluster and modifications of the cluster state until the cluster is fully operational again.
+Additionally, {brandname} disables cluster rebalancing and prevents local cache stores purging on startup.
+
+During the cluster recovery process, the coordinator node logs messages for each new node joining, indicating which nodes are available and which are still missing.
+Other nodes in the {brandname} cluster have the view from the time they join. +
+You can monitor availability of caches using the {brandname} Console or REST API.
+
+[discrete]
+== Server shutdown
+After using the `shutdown server` command to bring nodes down, the first node to come back online will be available immediately without waiting for other members.
+The remaining nodes join the cluster immediately, triggering state transfer but loading the local persistence first, which might lead to stale entries.
+Local cache stores configured to purge on startup will be emptied when the server starts.
+Local cache stores marked as `purge=false` will be available after a server restarts but might contain stale entries.
+
+If you shutdown clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order to avoid potential issues related to data loss and stale entries in the cache. +
 For example, if you shutdown `server1` and then shutdown `server2`, you should first start `server2` and then start `server1`.
-
-If you shutdown a cluster with the [command]`shutdown cluster` command, clusters become fully operational only after all nodes rejoin. +
-You can restart nodes in any order but the cluster remains in DEGRADED state until all nodes that were joined before shutdown are running.
+However, restarting clustered nodes in reverse order does not completely prevent data loss and stale entries.
