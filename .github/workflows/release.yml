@@ -24,6 +24,7 @@ jobs:
         with:
           tag_name: ${{github.ref_name}}
           release_name: ${{github.ref_name}}
+          prerelease: ${{ !contains(github.ref_name, '.Final') }}
 
   server-upload:
     needs: release
