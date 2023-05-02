@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * The META-INF/MANIFEST.MF that comes with ANT is missing the group, artifact and version
  */
-public class LicenseTest {
+public class LicenseIT {
 
    private static final Pattern TR_REGEX = Pattern.compile("<tr>(.+?)</tr>", Pattern.DOTALL);
    private static final Pattern TD_VALUE_REGEX = Pattern.compile("<td>(.*?)</td>", Pattern.DOTALL);
@@ -40,7 +40,7 @@ public class LicenseTest {
             .filter(Files::isRegularFile)
             .map(Path::getFileName)
             .map(String::valueOf)
-            .map(LicenseTest::removeOsName)
+            .map(LicenseIT::removeOsName)
             .collect(Collectors.toSet());
 
       String html = new String(Files.readAllBytes(getDependencyHtmlFile()));

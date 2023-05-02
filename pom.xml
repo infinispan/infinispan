@@ -96,7 +96,6 @@
       <module>persistence/remote</module>
       <module>persistence/rocksdb</module>
       <module>persistence/sql</module>
-      <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
       <module>server/hotrod</module>
@@ -106,6 +105,7 @@
       <module>server/runtime</module>
       <module>server/testdriver</module>
       <module>server/tests</module>
+      <module>server</module>
       <module>client/rest-client</module>
       <module>client/hotrod-client</module>
       <module>client/hotrod</module>
@@ -2691,7 +2691,6 @@
          <modules>
             <module>documentation</module>
             <module>javadoc</module>
-            <module>distribution</module>
          </modules>
          <properties>
             <skipTests>true</skipTests>
@@ -2699,6 +2698,30 @@
          </properties>
          <build>
             <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-assembly-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>single</goal>
+                        </goals>
+                        <configuration>
+                           <descriptors>
+                              <descriptor>etc/src.xml</descriptor>
+                           </descriptors>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <outputDirectory>${project.build.directory}/distribution</outputDirectory>
+                     <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                     <!-- (Do not attach ZIP files to the Maven repository) -->
+                     <attach>${org.infinispan.attachServerZip}</attach>
+                  </configuration>
+               </plugin>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-antrun-plugin</artifactId>

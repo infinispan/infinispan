@@ -185,6 +185,151 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- Build the Schema documentation -->
+                        <id>xsdocgen</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                                <echo level="info" message="Base dir: ${basedir}"/>
+                                <path id="xsd.fileset.path">
+                                    <fileset casesensitive="yes" dir="${basedir}/..">
+                                        <!-- make sure core comes first -->
+                                        <include name="core/target/classes/schema/infinispan-config-${infinispan.core.schema.version}.xsd"/>
+                                        <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                        <include name="server/runtime/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                        <include name="counter/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                        <include name="lock/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                    </fileset>
+                                </path>
+                                <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path"/>
+                                <echo level="info" message="XSDs: ${xsd.fileset}"/>
+                                <java classname="org.infinispan.tools.xsd.XSDoc">
+                                    <arg value="-o"/>
+                                    <arg value="${project.build.directory}/site/configdocs"/>
+                                    <arg value="-s"/>
+                                    <!-- file contains only abstract types. Skip rendering to HTML-->
+                                    <arg value="infinispan-cachestore-jdbc-common-config-${infinispan.core.schema.version}.xsd"/>
+                                    <arg line="${xsd.fileset}"/>
+                                    <classpath>
+                                        <pathelement path="${plugin_classpath}"/>
+                                    </classpath>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>xsdocupload</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipArtifactUpload}</skip>
+                            <target>
+                                <echo level="info" message="Uploading Schema docs to ${upload.docsDir}"/>
+                                <exec dir="${project.build.directory}/site" executable="rsync" failonerror="${rsync.failonerror}">
+                                    <arg value="-rvm"/>
+                                    <arg line="--protocol=29"/>
+                                    <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
+                                    <arg value="configdocs"/>
+                                    <arg value="${upload.docsDir}"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>create-logging-report</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <ant antfile="collect-logs.xml" inheritRefs="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>xml-maven-plugin</artifactId>
+                <version>${versionx.org.codehaus.mojo.xml-maven-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>generate-logging-html</id>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                        <phase>install</phase>
+                        <configuration>
+                            <transformationSets>
+                                <transformationSet>
+                                    <dir>.</dir>
+                                    <includes>
+                                        <include>logs.html</include>
+                                    </includes>
+                                    <stylesheet>logging-report.xsl</stylesheet>
+                                    <outputDir>${project.build.directory}/generated/${infinispan.base.version}/html/logging</outputDir>
+                                    <parameters>
+                                        <parameter>
+                                            <name>directory</name>
+                                            <value>${logging.html.tmp}</value>
+                                        </parameter>
+                                    </parameters>
+                                </transformationSet>
+                            </transformationSets>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sf.saxon</groupId>
+                        <artifactId>Saxon-HE</artifactId>
+                        <version>10.5</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>assemble-html</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assemblies/html.xml</descriptor>
+                            </descriptors>
+                            <attach>true</attach>
+                            <recompressZippedFiles>true</recompressZippedFiles>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <appendAssemblyId>true</appendAssemblyId>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -313,94 +458,6 @@
                                 <configuration>
                                     <descriptors>
                                         <descriptor>src/main/assemblies/pdf.xml</descriptor>
-                                    </descriptors>
-                                    <attach>true</attach>
-                                    <recompressZippedFiles>true</recompressZippedFiles>
-                                    <finalName>${project.artifactId}-${project.version}</finalName>
-                                    <appendAssemblyId>true</appendAssemblyId>
-                                    <outputDirectory>${project.build.directory}</outputDirectory>
-                                    <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>distribution</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>create-logging-report</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>install</phase>
-                                <configuration>
-                                    <target>
-                                        <ant antfile="collect-logs.xml" inheritRefs="true"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>xml-maven-plugin</artifactId>
-                        <version>${versionx.org.codehaus.mojo.xml-maven-plugin}</version>
-                        <executions>
-                            <execution>
-                                <id>generate-logging-html</id>
-                                <goals>
-                                    <goal>transform</goal>
-                                </goals>
-                                <phase>install</phase>
-                                <configuration>
-                                    <transformationSets>
-                                        <transformationSet>
-                                            <dir>.</dir>
-                                            <includes>
-                                                <include>logs.html</include>
-                                            </includes>
-                                            <stylesheet>logging-report.xsl</stylesheet>
-                                            <outputDir>${project.build.directory}/generated/${infinispan.base.version}/html/logging</outputDir>
-                                            <parameters>
-                                                <parameter>
-                                                    <name>directory</name>
-                                                    <value>${logging.html.tmp}</value>
-                                                </parameter>
-                                            </parameters>
-                                        </transformationSet>
-                                    </transformationSets>
-                                </configuration>
-                            </execution>
-                        </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>net.sf.saxon</groupId>
-                                <artifactId>Saxon-HE</artifactId>
-                                <version>10.5</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>assemble-html</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/main/assemblies/html.xml</descriptor>
                                     </descriptors>
                                     <attach>true</attach>
                                     <recompressZippedFiles>true</recompressZippedFiles>

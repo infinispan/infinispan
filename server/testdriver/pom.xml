@@ -3,9 +3,9 @@
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-server-parent</artifactId>
+      <artifactId>infinispan-parent</artifactId>
       <version>15.0.0-SNAPSHOT</version>
-      <relativePath>../pom.xml</relativePath>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-testdriver-parent-pom</artifactId>

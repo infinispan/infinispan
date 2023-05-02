@@ -4,9 +4,9 @@
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-server-parent</artifactId>
+      <artifactId>infinispan-parent</artifactId>
       <version>15.0.0-SNAPSHOT</version>
-      <relativePath>../pom.xml</relativePath>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-server-runtime</artifactId>
@@ -274,6 +274,23 @@
 
       <!-- Test dependencies -->
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.antlr</groupId>
          <artifactId>antlr-runtime</artifactId>
          <scope>test</scope>
@@ -335,29 +352,25 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>console</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.infinispan</groupId>
-                           <artifactId>infinispan-console</artifactId>
-                           <outputDirectory>${server.output.dir}/static/console</outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <parallel>classes</parallel>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <disableXmlReport>false</disableXmlReport>
+               <properties combine.self="override">
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+               </properties>
+               <systemPropertyVariables>
+                  <server.output.dir>${server.output.dir}</server.output.dir>
+               </systemPropertyVariables>
+            </configuration>
          </plugin>
          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
+            <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
                <parallel>classes</parallel>
                <groups combine.self="override"/>
@@ -448,9 +461,7 @@
                                   value="${server.test.lib.dir}"/>
                         <property name="dollar" value="$"/>
                         <property name="licenses.template.dir"
-                                  value="${project.basedir}/../../distribution/src/main/resources/template"/>
-                        <property name="licenses.data.dir"
-                                  value="${project.basedir}/../../distribution/src/main/resources/licenses"/>
+                                  value="src/main/template"/>
 
                         <filterset id="brandfilter" begintoken="${dollar}{" endtoken="}">
                            <filter token="infinispan.brand.name" value="${infinispan.brand.name}"/>
@@ -467,6 +478,35 @@
                      </target>
                   </configuration>
                </execution>
+               <execution>
+                  <id>upload-distributions</id>
+                  <phase>deploy</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipArtifactUpload}</skip>
+                     <target>
+                        <echo level="info" message="Creating checksums of distribution files"/>
+                        <checksum algorithm="SHA-1" fileext=".sha1">
+                           <fileset dir="${project.build.directory}/distribution">
+                              <include name="*.zip"/>
+                           </fileset>
+                        </checksum>
+                        <echo level="info" message="Uploading Distributions to ${upload.downloadsDir}"/>
+                        <exec dir="${project.build.directory}/distribution" executable="rsync" failonerror="${rsync.failonerror}">
+                           <arg value="-rvm"/>
+                           <arg line="--protocol=29"/>
+                           <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
+                           <arg line="--include='*.zip'"/>
+                           <arg line="--include='*.sha1'"/>
+                           <arg line="--exclude='*'"/>
+                           <arg value="."/>
+                           <arg value="${upload.downloadsDir}"/>
+                        </exec>
+                     </target>
+                  </configuration>
+               </execution>
             </executions>
             <dependencies>
                <dependency>
@@ -475,6 +515,28 @@
                   <version>${version.infinispan}</version>
                </dependency>
             </dependencies>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>console</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.infinispan</groupId>
+                           <artifactId>infinispan-console</artifactId>
+                           <outputDirectory>${server.output.dir}/static/console</outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
          <plugin>
             <groupId>org.wildfly.maven.plugins</groupId>
@@ -514,7 +576,7 @@
                            <includes>
                               <include>licenses.xml</include>
                            </includes>
-                           <stylesheet>${project.basedir}/../../distribution/src/main/resources/template/licenses.xsl
+                           <stylesheet>src/main/template/licenses.xsl
                            </stylesheet>
                            <outputDir>${server.output.dir}/docs/licenses</outputDir>
                            <fileMappers>

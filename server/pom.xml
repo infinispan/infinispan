@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
@@ -8,27 +9,72 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-server-parent</artifactId>
-   <name>Infinispan parent pom for server modules</name>
+   <artifactId>infinispan-server</artifactId>
+   <name>Infinispan Server</name>
    <packaging>pom</packaging>
 
-   <dependencies>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons-test</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-   </dependencies>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>assemble-server</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/assemblies/server.xml</descriptor>
+                     </descriptors>
+                     <appendAssemblyId>false</appendAssemblyId>
+                  </configuration>
+               </execution>
+            </executions>
+            <configuration>
+               <outputDirectory>${project.build.directory}/distribution</outputDirectory>
+               <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+               <!-- (Do not attach ZIP files to the Maven repository) -->
+               <attach>${org.infinispan.attachServerZip}</attach>
+            </configuration>
+         </plugin>
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>upload-distributions</id>
+                  <phase>deploy</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipArtifactUpload}</skip>
+                     <target>
+                        <echo level="info" message="Creating checksums of distribution files"/>
+                        <checksum algorithm="SHA-1" fileext=".sha1">
+                           <fileset dir="${project.build.directory}/distribution">
+                              <include name="*.zip"/>
+                           </fileset>
+                        </checksum>
+                        <echo level="info" message="Uploading Distributions to ${upload.downloadsDir}"/>
+                        <exec dir="${project.build.directory}/distribution" executable="rsync"
+                              failonerror="${rsync.failonerror}">
+                           <arg value="-rvm"/>
+                           <arg line="--protocol=29"/>
+                           <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
+                           <arg line="--include='*.zip'"/>
+                           <arg line="--include='*.sha1'"/>
+                           <arg line="--exclude='*'"/>
+                           <arg value="."/>
+                           <arg value="${upload.downloadsDir}"/>
+                        </exec>
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
 </project>

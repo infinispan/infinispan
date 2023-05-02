@@ -6,9 +6,9 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-server-parent</artifactId>
+      <artifactId>infinispan-parent</artifactId>
       <version>15.0.0-SNAPSHOT</version>
-      <relativePath>../pom.xml</relativePath>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-server-rest</artifactId>
@@ -112,6 +112,26 @@
       </dependency>
 
        <!-- and now for unit and integration tests -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>

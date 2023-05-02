@@ -12,26 +12,11 @@
 
    <fileSets>
       <fileSet>
-         <directory>target/classes</directory>
-         <outputDirectory />
+         <directory>runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
+         <outputDirectory/>
          <includes>
             <include>**/**</include>
          </includes>
-      </fileSet>
-      <fileSet>
-         <directory>../server/runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</directory>
-         <outputDirectory />
-         <includes>
-            <include>**/**</include>
-         </includes>
-      </fileSet>
-      <fileSet>
-         <directory>target/server</directory>
-         <outputDirectory/>
-      </fileSet>
-      <fileSet>
-         <directory>src/main/release/server</directory>
-         <outputDirectory/>
       </fileSet>
    </fileSets>
 </assembly>
