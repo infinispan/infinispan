@@ -39,6 +39,7 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
    private static final String CLUSTER_ROLE_MAPPER_CACHE = "org.infinispan.ROLES";
    private Cache<String, RoleSet> clusterRoleMap;
    private Cache<String, RoleSet> clusterRoleReadMap;
+   private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
 
    @Start
    void start() {
@@ -48,14 +49,15 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
 
    @Override
    public Set<String> principalToRoles(Principal principal) {
+      String name = nameRewriter.rewriteName(principal.getName());
       if (clusterRoleReadMap == null) {
-         return Collections.singleton(principal.getName());
+         return Collections.singleton(name);
       }
-      RoleSet roleSet = clusterRoleReadMap.get(principal.getName());
+      RoleSet roleSet = clusterRoleReadMap.get(name);
       if (roleSet != null && !roleSet.roles.isEmpty()) {
          return roleSet.roles;
       } else {
-         return Collections.singleton(principal.getName());
+         return Collections.singleton(name);
       }
    }
 
@@ -106,6 +108,14 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
          sb.append(set.roles.toString());
       }
       return sb.toString();
+   }
+
+   public void nameRewriter(NameRewriter nameRewriter) {
+      this.nameRewriter = nameRewriter;
+   }
+
+   public NameRewriter nameRewriter() {
+      return nameRewriter;
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.ROLE_SET)

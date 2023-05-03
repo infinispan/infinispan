@@ -1,0 +1,6 @@
+cacheContainer:
+  security:
+    authorization:
+      clusterRoleMapper:
+        nameRewriter:
+          commonNamePrincipalTransformer: ~

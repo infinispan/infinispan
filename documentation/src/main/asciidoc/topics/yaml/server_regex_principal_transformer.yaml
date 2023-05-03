@@ -1,0 +1,9 @@
+aggregateRealm:
+  authenticationRealm: "trust"
+  authorizationRealms:
+    - "properties"
+  nameRewriter:
+    regexPrincipalTransformer:
+      pattern: "([^@]+)@.*"
+      replacement: "$1"
+      replaceAll: false

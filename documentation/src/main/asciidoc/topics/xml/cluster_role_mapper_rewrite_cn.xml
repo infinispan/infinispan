@@ -1,0 +1,11 @@
+<cache-container>
+   <security>
+      <authorization>
+         <cluster-role-mapper>
+            <name-rewriter>
+               <common-name-principal-transformer/>
+            </name-rewriter>
+         </cluster-role-mapper>
+      </authorization>
+   </security>
+</cache-container>

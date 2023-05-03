@@ -6,12 +6,14 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -39,7 +41,22 @@ public class SecurityXmlFileParsingTest extends AbstractInfinispanTest {
             c.security().authorization().roles().containsAll(Arrays.asList("admin", "reader", "writer"));
          }
       }));
+   }
 
+   public void testClusterRoleMapperWithRewriter() {
+      Security.doAs(ADMIN, () -> withCacheManager(new CacheManagerCallable(Exceptions.unchecked(() -> TestCacheManagerFactory.fromXml("configs/security-role-mapper-rewriter.xml", true))) {
+         @Override
+         public void call() {
+            GlobalConfiguration g = cm.getCacheManagerConfiguration();
+            assertTrue(g.security().authorization().enabled());
+            assertEquals(ClusterRoleMapper.class, g.security().authorization().principalRoleMapper().getClass());
+            ClusterRoleMapper mapper = (ClusterRoleMapper) g.security().authorization().principalRoleMapper();
+            mapper.grant("supervisor", "tristan");
+            Set<String> roles = mapper.principalToRoles(new TestingUtil.TestPrincipal("cn=tristan,ou=developers,dc=infinispan,dc=org"));
+            assertEquals(1, roles.size());
+            assertTrue(roles.contains("supervisor"));
+         }
+      }));
    }
 
 }

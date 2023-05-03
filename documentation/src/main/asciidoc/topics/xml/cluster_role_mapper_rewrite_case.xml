@@ -1,0 +1,11 @@
+<cache-container>
+   <security>
+      <authorization>
+         <cluster-role-mapper>
+            <name-rewriter>
+               <case-principal-transformer uppercase="false"/>
+            </name-rewriter>
+         </cluster-role-mapper>
+      </authorization>
+   </security>
+</cache-container>

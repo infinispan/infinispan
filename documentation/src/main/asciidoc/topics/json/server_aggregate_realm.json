@@ -21,6 +21,7 @@
             }
           },
           "properties-realm": {
+            "name": "properties",
             "groups-attribute": "Roles",
             "user-properties": {
               "digest-realm-name": "distributed-realm",
@@ -30,7 +31,9 @@
               "path": "groups.properties"
             }
           },
-          "truststore-realm": {},
+          "truststore-realm": {
+            "name": "trust"
+          },
           "aggregate-realm": {
             "authentication-realm": "trust",
             "authorization-realms": ["properties"],

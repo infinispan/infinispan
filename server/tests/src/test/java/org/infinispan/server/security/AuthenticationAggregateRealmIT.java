@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
@@ -20,24 +21,17 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-/**
- * @since 15.0
- **/
-
 @Category(Security.class)
 public class AuthenticationAggregateRealmIT {
    @ClassRule
    public static InfinispanServerRule SERVERS =
          InfinispanServerRuleBuilder.config("configuration/AuthenticationAggregateRealm.xml")
                .numServers(1)
-               //.runMode(ServerRunMode.CONTAINER)
+               .runMode(ServerRunMode.CONTAINER)
                .build();
 
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   public AuthenticationAggregateRealmIT() {
-   }
 
    @Test
    public void testAggregate() {

@@ -14,8 +14,10 @@ server:
               path: "trust.p12"
               relative-to: "infinispan.server.config.path"
               password: "secret"
-        truststoreRealm: ~
+        truststoreRealm:
+          name: "trust"
         propertiesRealm:
+          name: "properties"
           groupsAttribute: "Roles"
           userProperties:
             digestRealmName: "distributed-realm"

@@ -1,0 +1,11 @@
+{
+  "aggregate-realm": {
+    "authentication-realm": "trust",
+    "authorization-realms": [
+      "properties"
+    ],
+    "name-rewriter": {
+      "common-name-principal-transformer": {}
+    }
+  }
+}

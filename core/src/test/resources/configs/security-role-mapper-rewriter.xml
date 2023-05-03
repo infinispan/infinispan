@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+
+   <cache-container name="default" default-cache="secured">
+      <security>
+         <authorization>
+            <cluster-role-mapper>
+               <name-rewriter>
+                  <regex-principal-transformer pattern="cn=([^,]+),.*" replacement="$1"/>
+               </name-rewriter>
+            </cluster-role-mapper>
+            <role name="admin" permissions="ALL" />
+            <role name="reader" permissions="READ" />
+            <role name="writer" permissions="WRITE" />
+            <role name="supervisor" permissions="READ WRITE EXEC"/>
+         </authorization>
+      </security>
+
+      <local-cache name="secured">
+         <security>
+            <authorization enabled="true" roles="admin reader writer" />
+         </security>
+      </local-cache>
+   </cache-container>
+
+</infinispan>

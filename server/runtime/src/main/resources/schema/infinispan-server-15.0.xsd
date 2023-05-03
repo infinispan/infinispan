@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+<xs:schema elementFormDefault="qualified" version="1.0"
            targetNamespace="urn:infinispan:server:15.0"
            xmlns:tns="urn:infinispan:server:15.0"
            xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -1332,7 +1332,7 @@
       </xs:annotation>
       <xs:sequence>
          <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
-         <xs:element type="tns:ldap-name-rewriter" name="name-rewriter" minOccurs="0"/>
+         <xs:element type="tns:name-rewriter" name="name-rewriter" minOccurs="0"/>
          <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute type="xs:string" name="name">
@@ -1418,11 +1418,10 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="ldap-name-rewriter">
+   <xs:complexType name="name-rewriter">
       <xs:annotation>
          <xs:documentation>
-            Specifies a LDAP name rewriter that transforms names returned by
-            LDAP servers.
+            Specifies a name rewriter that transforms names returned by a realm.
          </xs:documentation>
       </xs:annotation>
       <xs:choice>
@@ -1985,14 +1984,14 @@
       <xs:attribute name="authentication-realm" use="required">
          <xs:annotation>
             <xs:documentation>
-               A security realm that should be used for authentication.
+               The name of a security realm that should be used for authentication.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="authorization-realms" type="tns:name-list">
          <xs:annotation>
             <xs:documentation>
-               A list of security realms that should be used for authorization.
+               A list of security realm names that should be used for authorization.
                If no realms are specified, all the available realms will be used.
             </xs:documentation>
          </xs:annotation>

@@ -1,0 +1,5 @@
+<aggregate-realm authentication-realm="trust" authorization-realms="properties">
+   <name-rewriter>
+      <case-principal-transformer uppercase="false"/>
+   </name-rewriter>
+</aggregate-realm>
