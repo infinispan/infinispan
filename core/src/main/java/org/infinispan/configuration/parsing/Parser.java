@@ -18,10 +18,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
@@ -53,10 +55,12 @@ import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigura
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.security.mappers.CaseNameRewriter;
 import org.infinispan.security.mappers.ClusterPermissionMapper;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
+import org.infinispan.security.mappers.RegexNameRewriter;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.kohsuke.MetaInfServices;
 
@@ -947,9 +951,7 @@ public class Parser extends CacheParser {
                if (roleMapper != null) {
                   throw ParseUtils.unexpectedElement(reader);
                }
-               ParseUtils.requireNoAttributes(reader);
-               ParseUtils.requireNoContent(reader);
-               roleMapper = new ClusterRoleMapper();
+               roleMapper = parseClusterRoleMapper(reader);
                break;
             case CUSTOM_ROLE_MAPPER:
                if (roleMapper != null) {
@@ -974,6 +976,68 @@ public class Parser extends CacheParser {
             }
          }
       }
+   }
+
+   private ClusterRoleMapper parseClusterRoleMapper(ConfigurationReader reader) {
+      ParseUtils.requireNoAttributes(reader);
+      ClusterRoleMapper mapper = new ClusterRoleMapper();
+      while (reader.inTag()) {
+         if (Element.forName(reader.getLocalName()) == Element.NAME_REWRITER) {
+            while (reader.inTag()) {
+               switch (Element.forName(reader.getLocalName())) {
+                  case CASE_PRINCIPAL_TRANSFORMER: {
+                     boolean uppercase = true;
+                     for (int i = 0; i < reader.getAttributeCount(); i++) {
+                        ParseUtils.requireNoNamespaceAttribute(reader, i);
+                        String value = reader.getAttributeValue(i);
+                        Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+                        if (Objects.requireNonNull(attribute) == Attribute.UPPERCASE) {
+                           uppercase = ParseUtils.parseBoolean(reader, i, value);
+                        } else {
+                           throw ParseUtils.unexpectedAttribute(reader, i);
+                        }
+                     }
+                     mapper.nameRewriter(new CaseNameRewriter(uppercase));
+                     ParseUtils.requireNoContent(reader);
+                     break;
+                  }
+                  case COMMON_NAME_PRINCIPAL_TRANSFORMER: {
+                     ParseUtils.requireNoAttributes(reader);
+                     mapper.nameRewriter(new RegexNameRewriter(Pattern.compile("cn=([^,]+),.*", Pattern.CASE_INSENSITIVE), "$1", false));
+                     ParseUtils.requireNoContent(reader);
+                     break;
+                  }
+                  case REGEX_PRINCIPAL_TRANSFORMER: {
+                     String[] attributes = ParseUtils.requireAttributes(reader, Attribute.PATTERN, Attribute.REPLACEMENT);
+                     boolean replaceAll = false;
+                     for (int i = 0; i < reader.getAttributeCount(); i++) {
+                        ParseUtils.requireNoNamespaceAttribute(reader, i);
+                        String value = reader.getAttributeValue(i);
+                        Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+                        switch (attribute) {
+                           case NAME:
+                           case PATTERN:
+                           case REPLACEMENT:
+                              // Already seen
+                              break;
+                           case REPLACE_ALL:
+                              replaceAll = ParseUtils.parseBoolean(reader, i, value);
+                              break;
+                           default:
+                              throw ParseUtils.unexpectedAttribute(reader, i);
+                        }
+                     }
+                     mapper.nameRewriter(new RegexNameRewriter(Pattern.compile(attributes[0]), attributes[1], replaceAll));
+                     ParseUtils.requireNoContent(reader);
+                     break;
+                  }
+                  default:
+                     throw ParseUtils.unexpectedElement(reader);
+               }
+            }
+         }
+      }
+      return mapper;
    }
 
    private PrincipalRoleMapper parseCustomRoleMapper(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

@@ -8,11 +8,11 @@
                   <truststore path="trust.pfx" password="secret"/>
                </ssl>
             </server-identities>
-            <properties-realm groups-attribute="Roles">
+            <properties-realm name="properties" groups-attribute="Roles">
                <user-properties path="users.properties" relative-to="infinispan.server.config.path"/>
                <group-properties path="groups.properties" relative-to="infinispan.server.config.path"/>
             </properties-realm>
-            <truststore-realm/>
+            <truststore-realm name="trust"/>
             <aggregate-realm authentication-realm="trust" authorization-realms="properties">
                <name-rewriter>
                   <common-name-principal-transformer/>

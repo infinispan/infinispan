@@ -1,0 +1,16 @@
+{
+  "cache-container": {
+    "security": {
+      "authorization": {
+        "cluster-role-mapper": {
+          "name-rewriter": {
+            "regex-principal-transformer": {
+              "pattern": "cn=([^,]+),.*",
+              "replacement": "$1"
+            }
+          }
+        }
+      }
+    }
+  }
+}

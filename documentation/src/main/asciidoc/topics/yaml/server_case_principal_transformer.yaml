@@ -1,0 +1,7 @@
+aggregateRealm:
+  authenticationRealm: "trust"
+  authorizationRealms:
+    - "properties"
+  nameRewriter:
+    casePrincipalTransformer:
+      uppercase: false

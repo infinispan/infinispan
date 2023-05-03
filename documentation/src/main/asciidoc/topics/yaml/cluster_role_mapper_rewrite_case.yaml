@@ -1,0 +1,7 @@
+cacheContainer:
+  security:
+    authorization:
+      clusterRoleMapper:
+        nameRewriter:
+          casePrincipalTransformer:
+            uppercase: false

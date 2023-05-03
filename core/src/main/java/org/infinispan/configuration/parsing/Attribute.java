@@ -224,7 +224,12 @@ public enum Attribute {
     CONTEXT_INITIALIZERS,
     GROUPER,
     ACCURATE_SIZE,
-    REGEX;
+    REGEX,
+    PATTERN,
+    REPLACEMENT,
+    REPLACE_ALL,
+    UPPERCASE
+    ;
 
     private final String name;
 

@@ -1,0 +1,8 @@
+cacheContainer:
+  security:
+    authorization:
+      clusterRoleMapper:
+        nameRewriter:
+          regexPrincipalTransformer:
+            pattern: "cn=([^,]+),.*"
+            replacement: "$1"

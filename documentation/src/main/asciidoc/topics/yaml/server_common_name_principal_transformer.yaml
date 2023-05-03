@@ -1,0 +1,6 @@
+aggregateRealm:
+  authenticationRealm: "trust"
+  authorizationRealms:
+    - "properties"
+  nameRewriter:
+    commonNamePrincipalTransformer: ~

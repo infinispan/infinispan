@@ -540,7 +540,7 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
-              <xs:element name="cluster-role-mapper">
+              <xs:element name="cluster-role-mapper" type="tns:cluster-role-mapper">
                 <xs:annotation>
                   <xs:documentation>
                     Stores the principal to role mappings in the cluster registry.
@@ -591,6 +591,71 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="cluster-role-mapper">
+    <xs:sequence>
+      <xs:element type="tns:name-rewriter" name="name-rewriter" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="name-rewriter">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies a name rewriter that transforms names returned by a realm.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element type="tns:regex-principal-transformer" name="regex-principal-transformer"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="principal-transformer" abstract="true">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies the base type for all PrincipalTransformer definitions.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="name" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated. Will be ignored.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="regex-principal-transformer">
+    <xs:annotation>
+      <xs:documentation>
+        Specifies a PrincipalTransformer definition using regular expressions and Matcher based replacement.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="principal-transformer">
+        <xs:attribute name="pattern" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies the regular expression for this PrincipalTransformer.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="replacement" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies the replacement string for the PrincipalTransformer.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="replace-all" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>
+              Replaces all occurrences instead of the first occurrence.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
 
   <xs:complexType name="roles">

@@ -87,6 +87,8 @@ import org.infinispan.security.Role;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.security.mappers.CommonNameRoleMapper;
 import org.infinispan.security.mappers.IdentityRoleMapper;
+import org.infinispan.security.mappers.NameRewriter;
+import org.infinispan.security.mappers.RegexNameRewriter;
 import org.jgroups.conf.ProtocolConfiguration;
 
 /**
@@ -379,7 +381,22 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             } else if (mapper instanceof CommonNameRoleMapper) {
                writer.writeEmptyElement(Element.COMMON_NAME_ROLE_MAPPER);
             } else if (mapper instanceof ClusterRoleMapper) {
-               writer.writeEmptyElement(Element.CLUSTER_ROLE_MAPPER);
+               ClusterRoleMapper clusterRoleMapper = (ClusterRoleMapper) mapper;
+               NameRewriter rewriter = clusterRoleMapper.nameRewriter();
+               if (rewriter instanceof RegexNameRewriter) {
+                  RegexNameRewriter regexNameRewriter = (RegexNameRewriter) rewriter;
+                  writer.writeStartElement(Element.CLUSTER_ROLE_MAPPER);
+                  writer.writeStartElement(Element.NAME_REWRITER);
+                  writer.writeStartElement(Element.REGEX_PRINCIPAL_TRANSFORMER);
+                  writer.writeAttribute(Attribute.PATTERN, regexNameRewriter.getPattern().pattern());
+                  writer.writeAttribute(Attribute.REPLACEMENT, regexNameRewriter.getReplacement());
+                  writer.writeAttribute(Attribute.REPLACE_ALL, regexNameRewriter.isReplaceAll());
+                  writer.writeEndElement();
+                  writer.writeEndElement();
+                  writer.writeEndElement();
+               } else {
+                  writer.writeEmptyElement(Element.CLUSTER_ROLE_MAPPER);
+               }
             } else {
                writer.writeStartElement(Element.CUSTOM_ROLE_MAPPER);
                writer.writeAttribute(Attribute.CLASS, mapper.getClass().getName());

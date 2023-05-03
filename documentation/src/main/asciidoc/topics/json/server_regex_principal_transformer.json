@@ -1,0 +1,15 @@
+{
+  "aggregate-realm": {
+    "authentication-realm": "trust",
+    "authorization-realms": [
+      "properties"
+    ],
+    "name-rewriter": {
+      "regex-principal-transformer": {
+        "pattern" : "([^@]+)@.*",
+        "replacement": "$1",
+        "replace-all": false
+      }
+    }
+  }
+}
