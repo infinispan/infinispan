@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -39,8 +38,6 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
    public Object[] factory() {
       return new Object[] {
             new NonTxPutIfAbsentDuringJoinStressTest().cacheMode(CacheMode.DIST_SYNC),
-            new NonTxPutIfAbsentDuringJoinStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new NonTxPutIfAbsentDuringJoinStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 

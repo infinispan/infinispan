@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  * Verifies stream tests work on a sequential stream
  */
 @Test(groups = "functional", testName = "streams.DistributedSequentialStreamTest")
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC})
 public class DistributedSequentialStreamTest extends DistributedStreamTest {
 
    @Override

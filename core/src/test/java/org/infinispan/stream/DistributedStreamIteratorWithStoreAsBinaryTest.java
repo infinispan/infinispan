@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "stream.DistributedStreamIteratorWithStoreAsBinaryTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCacheManagersTest {
 
    @Override

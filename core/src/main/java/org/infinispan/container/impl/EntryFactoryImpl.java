@@ -57,8 +57,7 @@ public class EntryFactoryImpl implements EntryFactory {
       // Scattered mode needs repeatable-read entries to properly retry half-committed multi-key operations
       // (see RetryingEntryWrappingInterceptor for details).
       useRepeatableRead = configuration.transaction().transactionMode().isTransactional()
-            && configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
-            || configuration.clustering().cacheMode().isScattered();
+            && configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       isL1Enabled = configuration.clustering().l1().enabled();
       // Write-skew check implies isolation level = REPEATABLE_READ && locking mode = OPTIMISTIC
       useVersioning = Configurations.isTxVersioned(configuration);

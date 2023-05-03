@@ -42,8 +42,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
@@ -204,8 +202,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new RemoteMetadata.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
-      addInternalExternalizer(new ScatteredConsistentHash.Externalizer(), exts);
-      addInternalExternalizer(new ScatteredConsistentHashFactory.Externalizer(), exts);
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer(), exts);
       addInternalExternalizer(new StateChunk.Externalizer(), exts);
       addInternalExternalizer(new StatsEnvelope.Externalizer(), exts);

@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distribution.topologyaware.TopologyAwareStateTransferTest")
 @CleanupAfterTest
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC})
 public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    private Address[] addresses;
@@ -144,13 +144,8 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
       eventuallyEquals(2, () -> caches().stream().mapToInt(c -> c.getAdvancedCache().getDataContainer().containsKey(key) ? 1 : 0).sum());
       for (Cache<? super K, ?> c : caches()) {
-         if (cacheMode.isScattered()) {
-            eventuallyEquals("Failure for key " + key + " on cache " + address(c), true,
-                  () -> addresses.contains(address(c)) ? c.getAdvancedCache().getDataContainer().containsKey(key) : true);
-         } else {
-            eventuallyEquals("Failure for key " + key + " on cache " + address(c), addresses.contains(address(c)),
-                  () -> c.getAdvancedCache().getDataContainer().containsKey(key));
-         }
+         eventuallyEquals("Failure for key " + key + " on cache " + address(c), addresses.contains(address(c)),
+               () -> c.getAdvancedCache().getDataContainer().containsKey(key));
       }
    }
 

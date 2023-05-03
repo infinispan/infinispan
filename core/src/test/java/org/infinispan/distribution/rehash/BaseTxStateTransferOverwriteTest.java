@@ -3,7 +3,6 @@ package org.infinispan.distribution.rehash;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -18,8 +17,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -50,6 +47,8 @@ import org.infinispan.util.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Base class used to test various write commands interleaving with state transfer with a tx cache
@@ -538,7 +537,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 20, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
-      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyBoolean(), anyCollection());
+      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 }

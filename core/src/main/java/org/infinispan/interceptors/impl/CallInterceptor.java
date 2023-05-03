@@ -635,7 +635,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    private long trySizeOptimization(InvocationContext ctx, SizeCommand command) {
       if (command.hasAnyFlag(FlagBitSets.SKIP_SIZE_OPTIMIZATION)
             || dataContainer.hasExpirable()
-            || cacheConfiguration.clustering().cacheMode().isScattered()
             || (ctx != null && ctx.lookedUpEntriesCount() > 0)) {
          return -1;
       }

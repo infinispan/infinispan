@@ -52,7 +52,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
    public Object[] factory() {
       return new Object[] {
          new ClusterTopologyManagerTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
-         new ClusterTopologyManagerTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 

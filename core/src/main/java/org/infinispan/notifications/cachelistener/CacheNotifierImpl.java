@@ -34,10 +34,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.commands.CommandInvocationId;
@@ -152,6 +148,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Helper class that handles all notifications to registered listeners.
@@ -1279,7 +1278,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    protected boolean clusterListenerOnPrimaryOnly() {
       CacheMode mode = config.clustering().cacheMode();
       boolean zeroCapacity = config.clustering().hash().capacityFactor() == 0f || globalConfiguration.isZeroCapacityNode();
-      return mode.isDistributed() || mode.isScattered() || (mode.isReplicated() && zeroCapacity);
+      return mode.isDistributed() || (mode.isReplicated() && zeroCapacity);
    }
 
    private <C> CompletionStage<Void> addFilteredListenerInternal(Object listener, DataConversion keyDataConversion, DataConversion valueDataConversion,

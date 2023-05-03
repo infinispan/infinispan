@@ -6,7 +6,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.AvailablePartitionHandlingManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManagerImpl;
-import org.infinispan.scattered.impl.ScatteredPartitionHandlingManagerImpl;
 
 /**
  * @author Dan Berindei
@@ -21,8 +20,6 @@ public class PartitionHandlingManagerFactory extends AbstractNamedCacheComponent
          if (configuration.clustering().cacheMode().isDistributed() ||
                configuration.clustering().cacheMode().isReplicated()) {
             return new PartitionHandlingManagerImpl(configuration);
-         } else if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredPartitionHandlingManagerImpl(configuration);
          }
       }
       return AvailablePartitionHandlingManager.getInstance();

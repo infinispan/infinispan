@@ -36,7 +36,6 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final int numSegments;
    private final int maxOwners;
    private final DistributionInfo[] distributionInfos;
-   private final boolean isScattered;
 
    /**
     * @param cacheMode Ignored, the result topology is always LOCAL
@@ -76,11 +75,10 @@ public class LocalizedCacheTopology extends CacheTopology {
       this.membersSet = new ImmutableHopscotchHashSet<>(cacheTopology.getMembers());
       this.keyPartitioner = keyPartitioner;
       this.isDistributed = cacheMode.isDistributed();
-      isScattered = cacheMode.isScattered();
       boolean isReplicated = cacheMode.isReplicated();
       boolean isInvalidation = cacheMode.isInvalidation();
 
-      if (isDistributed || isScattered) {
+      if (isDistributed) {
          this.numSegments = readCH.getNumSegments();
          this.distributionInfos = new DistributionInfo[numSegments];
          int maxOwners = 1;
@@ -88,7 +86,7 @@ public class LocalizedCacheTopology extends CacheTopology {
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readCH.locateOwnersForSegment(segmentId);
             List<Address> writeOwners = writeCH.locateOwnersForSegment(segmentId);
-            Collection<Address> writeBackups = isScattered ? Collections.emptyList() : writeOwners.subList(1, writeOwners.size());
+            Collection<Address> writeBackups = writeOwners.subList(1, writeOwners.size());
             this.distributionInfos[segmentId] =
                   new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
             maxOwners = Math.max(maxOwners, writeOwners.size());
@@ -134,7 +132,6 @@ public class LocalizedCacheTopology extends CacheTopology {
       this.keyPartitioner = keyPartitioner;
       this.membersSet = Collections.singleton(localAddress);
       this.isDistributed = false;
-      this.isScattered = false;
       // Reads and writes are local, only the invalidation is replicated
       List<Address> owners = Collections.singletonList(localAddress);
       this.distributionInfos = new DistributionInfo[numSegments];
@@ -208,7 +205,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return An unordered collection with the write owners of {@code key}.
     */
    public Collection<Address> getWriteOwners(Object key) {
-      int segmentId = isDistributed || isScattered ? keyPartitioner.getSegment(key) : 0;
+      int segmentId = isDistributed ? keyPartitioner.getSegment(key) : 0;
       return distributionInfos[segmentId].writeOwners();
    }
 
@@ -219,7 +216,7 @@ public class LocalizedCacheTopology extends CacheTopology {
       if (keys.isEmpty()) {
          return Collections.emptySet();
       }
-      if (isDistributed || isScattered) {
+      if (isDistributed) {
          if (keys.size() == 1) {
             Object singleKey = keys.iterator().next();
             return getDistribution(singleKey).writeOwners();
@@ -244,7 +241,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return The segments owned by the local node for reading.
     */
    public IntSet getLocalReadSegments() {
-      if (isDistributed || isScattered) {
+      if (isDistributed) {
          IntSet localSegments = IntSets.mutableEmptySet(numSegments);
          for (int segment = 0; segment < numSegments; segment++) {
             if (distributionInfos[segment].isReadOwner()) {
@@ -263,7 +260,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return The segments owned by the local node for writing.
     */
    public IntSet getLocalWriteSegments() {
-      if (isDistributed || isScattered) {
+      if (isDistributed) {
          IntSet localSegments = IntSets.mutableEmptySet(numSegments);
          for (int segmentId = 0; segmentId < numSegments; segmentId++) {
             if (distributionInfos[segmentId].isWriteOwner()) {
@@ -298,7 +295,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return The number of segments owned by the local node for writing.
     */
    public int getLocalWriteSegmentsCount() {
-      if (isDistributed || isScattered) {
+      if (isDistributed) {
          int count = 0;
          for (int segment = 0; segment < numSegments; segment++) {
             if (distributionInfos[segment].isWriteOwner()) {

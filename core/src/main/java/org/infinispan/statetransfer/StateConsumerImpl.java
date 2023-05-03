@@ -35,9 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -110,6 +107,8 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -411,9 +410,7 @@ public class StateConsumerImpl implements StateConsumer {
             // remove inbound transfers for segments we no longer own
             cancelTransfers(removedSegments);
 
-            // Scattered cache gets added segments on the first CH_UPDATE, and we want to keep these
-            if (!startStateTransfer && !addedSegments.isEmpty() &&
-                !configuration.clustering().cacheMode().isScattered()) {
+            if (!startStateTransfer && !addedSegments.isEmpty()) {
                // If the last owner of a segment leaves the cluster, a new set of owners is assigned,
                // but the new owners should not try to retrieve the segment from each other.
                // If this happens during a rebalance, we might have already sent our rebalance
@@ -553,8 +550,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private CompletionStage<Void> fetchClusterListeners(CacheTopology cacheTopology) {
-      if (!configuration.clustering().cacheMode().isDistributed() &&
-          !configuration.clustering().cacheMode().isScattered()) {
+      if (!configuration.clustering().cacheMode().isDistributed()) {
          return CompletableFutures.completedNull();
       }
 
@@ -605,8 +601,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public CompletionStage<?> applyState(final Address sender, int topologyId, boolean pushTransfer,
-                                        Collection<StateChunk> stateChunks) {
+   public CompletionStage<?> applyState(final Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       // Ignore responses received after we are no longer a member
       if (!wCh.getMembers().contains(rpcManager.getAddress())) {
@@ -619,7 +614,7 @@ public class StateConsumerImpl implements StateConsumer {
       // Ignore segments that we requested for a previous rebalance
       // Can happen when the coordinator leaves, and the new coordinator cancels the rebalance in progress
       int rebalanceTopologyId = stateTransferTopologyId.get();
-      if (rebalanceTopologyId == NO_STATE_TRANSFER_IN_PROGRESS && !pushTransfer) {
+      if (rebalanceTopologyId == NO_STATE_TRANSFER_IN_PROGRESS) {
          log.debugf("Discarding state response with topology id %d for cache %s, we don't have a state transfer in progress",
                topologyId, cacheName);
          return CompletableFutures.completedNull();
@@ -636,7 +631,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
       IntSet mySegments = IntSets.from(wCh.getSegmentsForOwner(rpcManager.getAddress()));
       Iterator<StateChunk> iterator = stateChunks.iterator();
-      return applyStateIteration(sender, pushTransfer, mySegments, iterator).whenComplete((v, t) -> {
+      return applyStateIteration(sender, mySegments, iterator).whenComplete((v, t) -> {
          if (log.isTraceEnabled()) {
             log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
                        dataContainer.sizeIncludingExpired());
@@ -647,23 +642,18 @@ public class StateConsumerImpl implements StateConsumer {
       });
    }
 
-   private CompletionStage<?> applyStateIteration(Address sender, boolean pushTransfer, IntSet mySegments,
+   private CompletionStage<?> applyStateIteration(Address sender, IntSet mySegments,
                                                   Iterator<StateChunk> iterator) {
       CompletionStage<?> chunkStage = CompletableFutures.completedNull();
       // Replace recursion with iteration if the state was applied synchronously
       while (iterator.hasNext() && CompletionStages.isCompletedSuccessfully(chunkStage)) {
          StateChunk stateChunk = iterator.next();
-         if (pushTransfer) {
-            // push-transfer is specific for scattered cache but this is the easiest way to integrate it
-            chunkStage = doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries());
-         } else {
-            chunkStage = applyChunk(sender, mySegments, stateChunk);
-         }
+         chunkStage = applyChunk(sender, mySegments, stateChunk);
       }
       if (!iterator.hasNext())
          return chunkStage;
 
-      return chunkStage.thenCompose(v -> applyStateIteration(sender, pushTransfer, mySegments, iterator));
+      return chunkStage.thenCompose(v -> applyStateIteration(sender, mySegments, iterator));
    }
 
    private CompletionStage<Void> applyChunk(Address sender, IntSet mySegments, StateChunk stateChunk) {
@@ -1085,7 +1075,6 @@ public class StateConsumerImpl implements StateConsumer {
       return rpcManager.invokeCommand(source, cmd, PassthroughSingleResponseCollector.INSTANCE, rpcOptions);
    }
 
-   // not used in scattered cache
    private void requestSegments(IntSet segments, Map<Address, IntSet> sources, Set<Address> excludedSources) {
       if (sources.isEmpty()) {
          findSources(segments, sources, excludedSources, true);
@@ -1233,7 +1222,6 @@ public class StateConsumerImpl implements StateConsumer {
       return keyPartitioner.getSegment(key);
    }
 
-   // not used in scattered cache
    private InboundTransferTask addTransfer(Address source, IntSet segmentsFromSource) {
       final InboundTransferTask inboundTransfer;
 

@@ -11,7 +11,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.PartitionHappeningTest")
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({CacheMode.DIST_SYNC })
 public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public PartitionHappeningTest() {

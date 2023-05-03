@@ -23,15 +23,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -64,6 +58,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 
 /**
@@ -106,7 +105,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected CacheMode cacheMode;
    protected Boolean transactional;
    protected LockingMode lockingMode;
-   protected BiasAcquisition biasAcquisition;
    protected IsolationLevel isolationLevel;
    // Disables the triangle algorithm if set to Boolean.FALSE
    protected Boolean useTriangle;
@@ -701,11 +699,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return this;
    }
 
-   public MultipleCacheManagersTest biasAcquisition(BiasAcquisition biasAcquisition) {
-      this.biasAcquisition = biasAcquisition;
-      return this;
-   }
-
    public TransactionMode transactionMode() {
       return transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL;
    }
@@ -721,11 +714,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{null, "tx", "locking", "isolation", "bias", "triangle", null};
+      return new String[]{null, "tx", "locking", "isolation", "triangle", null};
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{cacheMode, transactional, lockingMode, isolationLevel, biasAcquisition, useTriangle, storageType};
+      return new Object[]{cacheMode, transactional, lockingMode, isolationLevel, useTriangle, storageType};
    }
 
    @SafeVarargs
@@ -834,11 +827,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected MagicKey getKeyForCache(Cache<?, ?> primary, Cache<?, ?>... backup) {
-      if (cacheMode == null || !cacheMode.isScattered()) {
-         return new MagicKey(primary, backup);
-      } else {
-         return new MagicKey(primary);
-      }
+      return new MagicKey(primary, backup);
    }
 
    protected void assertNotLocked(final String cacheName, final Object key) {

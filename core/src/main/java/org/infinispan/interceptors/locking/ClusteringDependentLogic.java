@@ -12,6 +12,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
@@ -59,7 +60,6 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.Log;
@@ -666,14 +666,6 @@ public interface ClusteringDependentLogic {
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic() {
          //in two phase commit, only the primary owner should perform the write skew check
          return localNodeIsPrimaryOwner;
-      }
-   }
-
-   class ScatteredLogic extends DistributionLogic {
-      @Override
-      protected CompletableFuture<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
-         // the logic is in ScatteredDistributionInterceptor
-         throw new UnsupportedOperationException();
       }
    }
 }

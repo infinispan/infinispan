@@ -14,14 +14,7 @@ public enum RebalanceType {
     * cache must undergo a series of 4 topology changes:
     * STABLE &rarr; READ_OLD_WRITE_ALL &rarr; READ_ALL_WRITE_ALL &rarr; READ_NEW_WRITE_ALL &rarr; STABLE
     */
-   FOUR_PHASE,
-   /**
-    * Used by scattered cache. In any topology, each segment has at most one owner and consistent results
-    * are achieved using extra synchronization of versions in {@link org.infinispan.scattered.ScatteredVersionManager}.
-    * State transfer consists of two changes:
-    * STABLE &rarr; TRANSITORY &rarr; STABLE
-    */
-   TWO_PHASE;
+   FOUR_PHASE;
 
    public static RebalanceType from(CacheMode cacheMode) {
       switch (Objects.requireNonNull(cacheMode)) {
@@ -34,8 +27,6 @@ public enum RebalanceType {
          case DIST_SYNC:
          case DIST_ASYNC:
             return FOUR_PHASE;
-         case SCATTERED_SYNC:
-            return TWO_PHASE;
          default:
             throw new IllegalArgumentException();
       }

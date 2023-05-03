@@ -18,14 +18,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commands.write.InvalidateVersionsCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
@@ -65,7 +61,6 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new StateTransferOverwritingValueTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 
@@ -148,7 +143,6 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       CheckPoint checkPoint = new CheckPoint();
       ControlledRpcManager blockingRpcManager0 = replaceRpcManager(cache0);
       blockingRpcManager0.excludeCommands(WriteCommand.class, BackupWriteCommand.class,
-                                          RevokeBiasCommand.class, InvalidateVersionsCommand.class,
                                           AbstractTransactionBoundaryCommand.class,
                                           TxCompletionNotificationCommand.class);
 
@@ -174,8 +168,6 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Scattered cache mode uses only PKVC or RemoveCommands for backup
       BlockingInterceptor<?> blockingInterceptor1 =
             new BlockingInterceptor<>(beforeCommitCache1Barrier, true, false,
-                                      cacheMode.isScattered() ?
-                                      t -> t instanceof PutKeyValueCommand || t instanceof RemoveCommand :
                                       t -> t.getClass().equals(op.getCommandClass()));
 
       AsyncInterceptorChain interceptorChain1 = TestingUtil.extractInterceptorChain(cache1);
@@ -198,9 +190,6 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Allow the state to be applied on cache1 (writing the old value for our entry)
       blockedStateResponse.send().receiveAll();
-      if (cacheMode.isScattered()) {
-         blockingRpcManager0.expectCommand(StateResponseCommand.class).send().receiveAll();
-      }
 
       // Wait for cache1 to finish applying the state, but don't allow the rebalance confirmation to be processed.
       // (It would change the topology and it would trigger a retry for the command.)

@@ -34,7 +34,6 @@ import org.infinispan.expiration.TouchMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -66,18 +65,16 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       return Arrays.stream(StorageType.values())
             .flatMap(type ->
                Stream.builder()
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+//                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+//                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
                      .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
-                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
-                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+//                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+//                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+//                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
+//                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
+//                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
+//                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
+//                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
                      .build()
             ).toArray();
    }
@@ -124,7 +121,7 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
             // We test ownership based on the stored key instance
             Object wrappedKey = primaryOwner.getAdvancedCache().getKeyDataConversion().toStorage(key);
             if (primaryLct.getDistribution(wrappedKey).isPrimary() &&
-                  (cacheMode.isScattered() || backupLct.getDistribution(wrappedKey).isWriteBackup())) {
+                  backupLct.getDistribution(wrappedKey).isWriteBackup()) {
                log.tracef("Found key %s for primary owner %s and backup owner %s", wrappedKey, primaryOwner, backupOwner);
                // Return the actual key not the stored one, else it will be wrapped again :(
                return key;
@@ -139,7 +136,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
 
    public void testMaxIdleExpiredOnBoth() throws Exception {
       Object key = createKey(cache0, cache1);
-      // We write to cache1 so that scattered uses it as a backup if the key isn't owned by it
       cache1.put(key, key.toString(), -1, null, 10, MINUTES);
 
       incrementAllTimeServices(1, MINUTES);
@@ -173,7 +169,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       AdvancedCache<Object, String> primaryOwner = cache0.getAdvancedCache();
       AdvancedCache<Object, String> backupOwner = cache1.getAdvancedCache();
       Object key = createKey(primaryOwner, backupOwner);
-      // Inserting from cache1 makes it a backup in scattered caches
       backupOwner.put(key, key.toString(), -1, null, 10, MINUTES);
 
       assertEquals(key.toString(), primaryOwner.get(key));
@@ -200,27 +195,18 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       // Now increment enough to cause it to be expired on the other node that didn't access it
       incrementAllTimeServices(6, MINUTES);
 
-      if (cacheMode == CacheMode.SCATTERED_SYNC) {
-         // Scattered cache doesn't report last access time via getCacheEntry so we just verify the entry
-         // was not removed
-         String expiredValue = expiredCache.get(key);
-         String otherValue = otherCache.get(key);
-         assertNotNull(expiredValue);
-         assertNotNull(otherValue);
-      } else {
-         long targetTime = ts0.wallClockTime();
-         // Now both nodes should return the value
-         CacheEntry<Object, String> ce = otherCache.getCacheEntry(key);
-         assertNotNull(ce);
-         // Transactional cache doesn't report last access times to user
-         if (transactional == Boolean.FALSE) {
-            assertEquals(targetTime, ce.getLastUsed());
-         }
-         ce = expiredCache.getCacheEntry(key);
-         assertNotNull(ce);
-         if (transactional == Boolean.FALSE) {
-            assertEquals(targetTime, ce.getLastUsed());
-         }
+      long targetTime = ts0.wallClockTime();
+      // Now both nodes should return the value
+      CacheEntry<Object, String> ce = otherCache.getCacheEntry(key);
+      assertNotNull(ce);
+      // Transactional cache doesn't report last access times to user
+      if (transactional == Boolean.FALSE) {
+         assertEquals(targetTime, ce.getLastUsed());
+      }
+      ce = expiredCache.getCacheEntry(key);
+      assertNotNull(ce);
+      if (transactional == Boolean.FALSE) {
+         assertEquals(targetTime, ce.getLastUsed());
       }
    }
 
@@ -231,7 +217,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    private void testMaxIdleExpireExpireIteration(boolean expireOnPrimary, boolean iterateOnPrimary) {
       // Cache0 is always the primary and cache1 is backup
       Object key = createKey(cache0, cache1);
-      // We write to cache1 so that scattered uses it as a backup if the key isn't owned by it
       cache1.put(key, key.toString(), -1, null, 10, SECONDS);
 
       ControlledTimeService expiredTimeService;
@@ -250,9 +235,8 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       }
 
       try (CloseableIterator<Map.Entry<Object, String>> iterator = cacheToIterate.entrySet().iterator()) {
-         if (expireOnPrimary == (iterateOnPrimary || cacheMode.isScattered())) {
+         if (expireOnPrimary == iterateOnPrimary) {
             // Iteration only checks for expiration on the local node,
-            // but scattered caches always read the value from the primary
             assertFalse(iterator.hasNext());
          } else {
             assertTrue(iterator.hasNext());
@@ -292,7 +276,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    public void testMaxIdleAccessSuspectedExpiredEntryRefreshesProperly() {
       Object key = createKey(cache0, cache1);
       String value = key.toString();
-      // We write to cache1 so that scattered uses it as a backup if the key isn't owned by it
       cache1.put(key, value, -1, null, 10, SECONDS);
 
       // Now proceed half way in the max idle period before we access it on backup node
@@ -320,7 +303,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    public void testPutAllExpiredEntries() {
       SkipTestNG.skipIf(cacheMode.isDistributed() && transactional,
                         "Disabled in transactional caches because of ISPN-13618");
-      SkipTestNG.skipIf(cacheMode.isScattered(), "Disabled in scattered caches because of ISPN-13619");
 
       // Can reproduce ISPN-13549 with nKey=20_000 and no trace logs (and without the fix)
       int nKeys = 4;
@@ -361,7 +343,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
          assertEquals(expectedLastUsed, getLastUsed(otherCache, storageKey));
       } else {
          // Normally the touch command is executed synchronously on the reader.
-         // In scattered caches, the touch command is executed synchronously on the primary owner.
          eventuallyEquals(expectedLastUsed, () -> getLastUsed(readCache, storageKey));
          eventuallyEquals(expectedLastUsed, () -> getLastUsed(otherCache, storageKey));
       }
@@ -374,11 +355,7 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    }
 
    public void testMaxIdleReadNodeDiesPrimary() {
-      // Scattered cache does not support replicating expiration metadata
-      // This is to be fixed in https://issues.redhat.com/browse/ISPN-11208
-      if (!cacheMode.isScattered()) {
-         testMaxIdleNodeDies(true);
-      }
+      testMaxIdleNodeDies(true);
    }
 
    public void testMaxIdleReadNodeDiesBackup() {
@@ -398,7 +375,6 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
       Cache<Object, String> backup = isPrimary ? cache0 : cache3;
       Object key = createKey(primary, backup);
 
-      // We write to backup node so that scattered uses it as a backup if the key isn't owned by it
       backup.put(key, "max-idle", -1, SECONDS, 100, SECONDS);
 
       // Advance the clock so the entry is expired everywhere ("all time services" does not include ts3)

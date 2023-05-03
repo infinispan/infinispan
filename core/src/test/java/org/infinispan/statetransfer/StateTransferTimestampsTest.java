@@ -34,7 +34,6 @@ public class StateTransferTimestampsTest extends MultipleCacheManagersTest {
          // DIST and REPL are different as REPL has a read optimization
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC),
          new StateTransferTimestampsTest().cacheMode(CacheMode.REPL_SYNC),
-         new StateTransferTimestampsTest().cacheMode(CacheMode.SCATTERED_SYNC),
          // With other storage types there's an opportunity to change the timestamps before the write
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.OFF_HEAP),
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.BINARY),
@@ -64,10 +63,7 @@ public class StateTransferTimestampsTest extends MultipleCacheManagersTest {
       cache0.put("maxidle", "value", -1, SECONDS, 2, SECONDS);
       cache0.put("lifespan+maxidle", "value", 10, SECONDS, 2, SECONDS);
       long created = timeService.wallClockTime();
-      if (!cacheMode.isScattered()) {
-         // See ISPN-11567, in scattered caches a read would expire the transient entries immediately
-         assertTimestamps(cache0, created, created);
-      }
+      assertTimestamps(cache0, created, created);
 
       // Advance the time service and start node 1 triggering state transfer
       timeService.advance(SECONDS.toMillis(1));

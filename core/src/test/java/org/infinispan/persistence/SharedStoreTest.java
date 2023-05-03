@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -23,7 +22,7 @@ import org.testng.annotations.Test;
 
 @Test (testName = "persistence.SharedStoreTest", groups = "functional")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
 public class SharedStoreTest extends MultipleCacheManagersTest {
 
    @Override
@@ -81,15 +80,8 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       }
 
       for (DummyInMemoryStore dimcs: cacheStores) {
-         if (cacheMode.isScattered()) {
-            // scattered cache leaves tombstones
-            MarshallableEntry entry = dimcs.loadEntry("key");
-            assert entry == null || entry.getValue() == null;
-            assertEquals("Entry should have been replaced by tombstone", Integer.valueOf(2), dimcs.stats().get("write"));
-         } else {
-            assert !dimcs.contains("key");
-            assertEquals("Entry should have been removed from the cache store just once", Integer.valueOf(1), dimcs.stats().get("delete"));
-         }
+         assert !dimcs.contains("key");
+         assertEquals("Entry should have been removed from the cache store just once", Integer.valueOf(1), dimcs.stats().get("delete"));
       }
    }
 

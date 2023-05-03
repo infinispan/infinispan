@@ -26,7 +26,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -72,7 +71,6 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
                      .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
                      .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
                      .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
                      .build()
             ).toArray();
    }
@@ -143,35 +141,18 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
          otherCache = primaryOwner;
       }
 
-      Cache<?, ?> other;
-      if (cacheMode.isScattered()) {
-         // In scattered cache the read would go to primary always
-         other = otherCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);
-      } else {
-         other = otherCache;
-      }
-      assertEquals(key.toString(), other.get(key));
+      assertEquals(key.toString(), otherCache.get(key));
 
       // By calling get on an expired key it will remove it all over
       Object expiredValue = expiredCache.get(key);
-      // In scattered mode, the get goes from backup to remote node where the time has not passed yet,
-      // therefore it is not expired. We don't check expiration on local node after receiving the response.
-      if (cacheMode.isScattered() && !expireOnPrimary) {
-         assertEquals(key.toString(), expiredValue);
-      }  else {
-         assertNull(expiredValue);
-         // This should be expired on the other node soon - note expiration is done asynchronously on a get
-         eventually(() -> !other.containsKey(key), 10, TimeUnit.SECONDS);
-      }
+      assertNull(expiredValue);
+      // This should be expired on the other node soon - note expiration is done asynchronously on a get
+      eventually(() -> !otherCache.containsKey(key), 10, TimeUnit.SECONDS);
    }
 
    private Object createKey(Cache<Object, ?> primaryOwner, Cache<Object, ?> backupOwner) {
       if (storageType == StorageType.OBJECT) {
-         if (cacheMode.isScattered()) {
-            return new MagicKey(primaryOwner);
-         } else {
-            return new MagicKey(primaryOwner, backupOwner);
-         }
+         return new MagicKey(primaryOwner, backupOwner);
       } else {
          // BINARY and OFF heap can't use MagicKey as they are serialized
          LocalizedCacheTopology primaryLct = primaryOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
@@ -184,7 +165,7 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
             // We test ownership based on the stored key instance
             Object wrappedKey = primaryOwner.getAdvancedCache().getKeyDataConversion().toStorage(key);
             if (primaryLct.getDistribution(wrappedKey).isPrimary() &&
-                  (cacheMode.isScattered() || backupLct.getDistribution(wrappedKey).isWriteBackup())) {
+                  backupLct.getDistribution(wrappedKey).isWriteBackup()) {
                log.tracef("Found key %s for primary owner %s and backup owner %s", wrappedKey, primaryOwner, backupOwner);
                // Return the actual key not the stored one, else it will be wrapped again :(
                return key;
@@ -266,8 +247,8 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
 //   }
 
    public void testPrimaryNotExpiredButBackupWas() throws InterruptedException, ExecutionException, TimeoutException {
-      if (transactional || cacheMode == CacheMode.SCATTERED_SYNC) {
-         throw new SkipException("Test isn't supported in transactional mode or scattered cache");
+      if (transactional) {
+         throw new SkipException("Test isn't supported in transactional mode");
       }
       Object key = createKey(cache0, cache1);
       String value = key.toString();
@@ -320,14 +301,8 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
 
       cache0.getAdvancedCache().getExpirationManager().processExpiration();
 
-      // Both should be empty
-      if (cacheMode != CacheMode.SCATTERED_SYNC) {
-         assertEquals(0, cache0.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-         assertEquals(0, cache1.getAdvancedCache().getDataContainer().sizeIncludingExpired());
-      } else {
-         verifyNoValue(cache0.getAdvancedCache().getDataContainer().iteratorIncludingExpired());
-         verifyNoValue(cache1.getAdvancedCache().getDataContainer().iteratorIncludingExpired());
-      }
+      verifyNoValue(cache0.getAdvancedCache().getDataContainer().iteratorIncludingExpired());
+      verifyNoValue(cache1.getAdvancedCache().getDataContainer().iteratorIncludingExpired());
    }
 
    private void verifyNoValue(Iterator<InternalCacheEntry<Object, Object>> iter) {

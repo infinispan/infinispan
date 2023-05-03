@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "distribution.rehash.SharedStoreInvalidationDuringRehashTest", groups = "functional")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({CacheMode.DIST_SYNC })
 public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(SharedStoreInvalidationDuringRehashTest.class);
@@ -159,10 +159,8 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
             if (!dm.getCacheTopology().isReadOwner(key)) {
-               if (!cacheMode.isScattered()) {
-                  assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
-                        dataContainer.containsKey(key));
-               }
+               assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
+                     dataContainer.containsKey(key));
             } else {
                currentOwners.put(key, i);
                if (preload) {
@@ -177,10 +175,6 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       for (int i = 0; i < NUM_KEYS; i++) {
          String key = "key" + i;
          assertTrue("Key " + key + " is missing from the shared store", store.keySet().contains(key));
-      }
-      if (cacheMode.isScattered()) {
-         // In scattered cache the invalidation happens only on some entries and through InvalidateVersionsCommand
-         return;
       }
 
       // Reset stats for the next check

@@ -33,8 +33,7 @@ public interface StateConsumer {
 
    /**
     * Receive notification of topology changes. {@link org.infinispan.commands.statetransfer.StateTransferStartCommand},
-    * or {@link org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand} for
-    * {@link org.infinispan.configuration.cache.CacheMode#SCATTERED_SYNC}, are issued for segments that are new to this
+    * are issued for segments that are new to this
     * member and the segments that are no longer owned are discarded.
     *
     * @return completion stage that is completed when the topology update is processed,
@@ -42,7 +41,7 @@ public interface StateConsumer {
     */
    CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
 
-   CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks);
+   CompletionStage<?> applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks);
 
    /**
     * Cancels all incoming state transfers. The already received data is not discarded.

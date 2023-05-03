@@ -176,7 +176,7 @@ public class StateTransferSegmentMetricsTest extends BaseDistFunctionalTest<Stri
          // Apply the whole batch of segments and then issue a signal back to main thread.
          return ((CompletionStage<?>) forwardedAnswer.answer(invocation))
                .thenRun(() -> checkPoint.trigger("state_applied_" + cache));
-      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyBoolean(), anyCollection());
+      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 }

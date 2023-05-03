@@ -9,8 +9,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -31,8 +29,6 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
       return new Object[] {
             new PutMapCommandNonTxTest().cacheMode(CacheMode.DIST_SYNC),
             new PutMapCommandNonTxTest().cacheMode(CacheMode.DIST_SYNC).useTriangle(false),
-            new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 
@@ -44,12 +40,7 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
          gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       }
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, false);
-      if (!cacheMode.isScattered()) {
-         dcc.clustering().hash().numOwners(3).l1().disable();
-      }
-      if (biasAcquisition != null) {
-         dcc.clustering().biasAcquisition(biasAcquisition);
-      }
+      dcc.clustering().hash().numOwners(3).l1().disable();
       createCluster(gcb, dcc, 3);
       waitForClusterToForm();
    }
@@ -83,19 +74,8 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
          assertFalse(f.isCancelled());
       }
 
-      if (cacheMode.isScattered()) {
-         int hasValue = 0;
-         for (Cache c : caches()) {
-            Object value = c.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_OWNERSHIP_CHECK).get(key);
-            if ("value".equals(value)) {
-               hasValue++;
-            } else assertNull(value);
-         }
-         assertEquals(2, hasValue);
-      } else {
-         assertEquals("value", cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
-         assertEquals("value", cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
-         assertEquals("value", cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
-      }
+      assertEquals("value", cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+      assertEquals("value", cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+      assertEquals("value", cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
    }
 }

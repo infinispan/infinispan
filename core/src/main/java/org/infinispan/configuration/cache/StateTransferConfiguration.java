@@ -10,7 +10,7 @@ import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configures how state is retrieved when a new cache joins the cluster.
- * Used with distribution, replication and scattered clustered modes.
+ * Used with distribution and replication clustered modes.
  *
  * @since 5.1
  */

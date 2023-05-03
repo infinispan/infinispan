@@ -12,7 +12,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.cluster.ClusteredListenerJoinsTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class ClusteredListenerJoinsTest extends MultipleCacheManagersTest {
 
    @Listener(clustered = true)

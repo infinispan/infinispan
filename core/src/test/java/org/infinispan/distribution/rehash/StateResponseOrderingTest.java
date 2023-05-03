@@ -108,7 +108,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       StateChunk stateChunk1 = new StateChunk(1, Arrays.asList(new ImmortalCacheEntry("k0", "v0")), true);
       String cacheName = manager(0).getCacheManagerConfiguration().defaultCacheName().get();
       StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(cacheName),
-            initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), true, false);
+            initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), false);
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
       handler.handle(stateResponseCommand, Reply.NO_OP, DeliverOrder.PER_SENDER);

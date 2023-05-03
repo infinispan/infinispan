@@ -7,12 +7,12 @@ import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -23,16 +23,12 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.RenewBiasCommand;
-import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
@@ -49,7 +45,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -114,8 +109,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             MultiKeyFunctionalBackupWriteCommand.class,
             SizeCommand.class,
             BackupNoopCommand.class,
-            InvalidateVersionsCommand.class,
-            RevokeBiasCommand.class, RenewBiasCommand.class, ReductionPublisherRequestCommand.class,
+            ReductionPublisherRequestCommand.class,
             MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
             CancelPublisherCommand.class, CheckTransactionRpcCommand.class,
             XSiteAmendOfflineStatusCommand.class, XSiteBringOnlineCommand.class, XSiteOfflineStatusCommand.class,
@@ -124,7 +118,6 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             XSiteStateTransferFinishSendCommand.class, XSiteStateTransferRestartSendingCommand.class,
             XSiteStateTransferStartReceiveCommand.class, XSiteStateTransferStartSendCommand.class,
             XSiteStateTransferStatusRequestCommand.class, ConflictResolutionStartCommand.class,
-            ScatteredStateGetKeysCommand.class, ScatteredStateConfirmRevokedCommand.class,
             StateTransferCancelCommand.class, StateTransferGetListenersCommand.class,
             StateTransferGetTransactionsCommand.class, StateTransferStartCommand.class,
             IracClearKeysCommand.class,

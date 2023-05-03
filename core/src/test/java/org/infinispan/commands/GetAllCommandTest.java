@@ -35,7 +35,6 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
       return new Object[] {
             new GetAllCommandTest().transactional(false).cacheMode(CacheMode.DIST_SYNC),
             new GetAllCommandTest().transactional(false).cacheMode(CacheMode.REPL_SYNC),
-            new GetAllCommandTest().transactional(false).cacheMode(CacheMode.SCATTERED_SYNC),
             new GetAllCommandTest().transactional(true).cacheMode(CacheMode.DIST_SYNC),
             new GetAllCommandTest().transactional(true).cacheMode(CacheMode.REPL_SYNC),
       };

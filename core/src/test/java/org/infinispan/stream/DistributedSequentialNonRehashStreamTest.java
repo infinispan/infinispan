@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  * Verifies stream tests work when rehash is disabled on a sequential stream
  */
 @Test(groups = "functional", testName = "streams.DistributedSequentialNonRehashStreamTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class DistributedSequentialNonRehashStreamTest extends DistributedStreamTest {
 
    @Override

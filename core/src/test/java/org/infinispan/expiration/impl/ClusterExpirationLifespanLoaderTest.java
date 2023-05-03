@@ -26,7 +26,6 @@ public class ClusterExpirationLifespanLoaderTest extends ClusterExpirationLifesp
             new ClusterExpirationLifespanLoaderTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
             new ClusterExpirationLifespanLoaderTest().cacheMode(CacheMode.REPL_SYNC).transactional(true),
             new ClusterExpirationLifespanLoaderTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
-            new ClusterExpirationLifespanLoaderTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 }

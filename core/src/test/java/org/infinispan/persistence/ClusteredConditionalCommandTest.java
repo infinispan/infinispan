@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "functional", testName = "persistence.ClusteredConditionalCommandTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    private static final String PRIVATE_STORE_CACHE_NAME = "private-store-cache";
    private static final String SHARED_STORE_CACHE_NAME = "shared-store-cache";
@@ -108,7 +108,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
             assertTrue(cacheHelper.addCache(Ownership.BACKUP, cache));
          } else {
             log.debug("Cache " + address(cache) + " is the non owner");
-            assertTrue(cacheHelper.addCache(Ownership.NON_OWNER, cache) || cacheMode.isScattered());
+            assertTrue(cacheHelper.addCache(Ownership.NON_OWNER, cache));
          }
       }
       return cacheHelper;

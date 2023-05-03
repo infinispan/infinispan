@@ -17,7 +17,6 @@ import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
@@ -142,8 +141,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
                }
             } else if (cacheMode.isReplicated() || cacheMode.isInvalidation()) {
                factory = new SyncReplicatedConsistentHashFactory();
-            } else if (cacheMode.isScattered()) {
-               factory = new ScatteredConsistentHashFactory();
             } else {
                throw new CacheException("Unexpected cache mode: " + cacheMode);
             }
@@ -199,7 +196,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
       CompletableFuture<Void> providerFuture = stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
       consumerTransferFuture.runAfterBoth(providerFuture, () -> {
          switch (phase) {
-            case TRANSITORY:
             case READ_OLD_WRITE_ALL:
             case READ_ALL_WRITE_ALL:
             case READ_NEW_WRITE_ALL:

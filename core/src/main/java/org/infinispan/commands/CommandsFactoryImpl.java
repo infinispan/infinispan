@@ -27,12 +27,12 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -47,16 +47,12 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.RenewBiasCommand;
-import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
@@ -82,7 +78,6 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -357,16 +352,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ScatteredStateConfirmRevokedCommand buildScatteredStateConfirmRevokeCommand(int topologyId, IntSet segments) {
-      return new ScatteredStateConfirmRevokedCommand(cacheName, topologyId, segments);
-   }
-
-   @Override
-   public ScatteredStateGetKeysCommand buildScatteredStateGetKeysCommand(int topologyId, IntSet segments) {
-      return new ScatteredStateGetKeysCommand(cacheName, topologyId, segments);
-   }
-
-   @Override
    public StateTransferCancelCommand buildStateTransferCancelCommand(int topologyId, IntSet segments) {
       return new StateTransferCancelCommand(cacheName, topologyId, segments);
    }
@@ -387,8 +372,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(int topologyId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
-      return new StateResponseCommand(cacheName, topologyId, stateChunks, applyState, pushTransfer);
+   public StateResponseCommand buildStateResponseCommand(int topologyId, Collection<StateChunk> stateChunks, boolean applyState) {
+      return new StateResponseCommand(cacheName, topologyId, stateChunks, applyState);
    }
 
    @Override
@@ -550,11 +535,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
-      return new InvalidateVersionsCommand(cacheName, topologyId, keys, topologyIds, versions, removed);
-   }
-
-   @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
          Object key, Consumer<WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return init(new WriteOnlyKeyCommand<>(key, f, segment, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion));
@@ -614,16 +594,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
          return ValueMatcher.valueOf(((LambdaExternalizer) ext).valueMatcher(o).toString());
 
       return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public RevokeBiasCommand buildRevokeBiasCommand(Address ackTarget, long id, int topologyId, Collection<Object> keys) {
-      return new RevokeBiasCommand(cacheName, ackTarget, id, topologyId, keys);
-   }
-
-   @Override
-   public RenewBiasCommand buildRenewBiasCommand(Object[] keys) {
-      return new RenewBiasCommand(cacheName, keys);
    }
 
    @Override

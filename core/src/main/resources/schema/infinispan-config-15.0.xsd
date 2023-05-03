@@ -350,18 +350,6 @@
             <xs:documentation>Defines a DIST_* mode cache configuration.</xs:documentation>
           </xs:annotation>
         </xs:element>
-        <xs:element name="scattered-cache" type="tns:scattered-cache">
-          <xs:annotation>
-            <xs:documentation>Defines a SCATTERED_* mode cache. Deprecated since 14.0, will be removed in 16.0.</xs:documentation>
-          </xs:annotation>
-        </xs:element>
-        <xs:element name="scattered-cache-configuration" type="tns:scattered-cache">
-          <xs:annotation>
-            <xs:documentation>Defines a SCATTERED_* mode cache configuration. Deprecated since 14.0, will be removed in 16.0.</xs:documentation>
-          </xs:annotation>
-        </xs:element>
-        <xs:any namespace="##other"/>
-      </xs:choice>
     </xs:sequence>
     <xs:attribute name="name" type="xs:string">
       <xs:annotation>
@@ -1699,87 +1687,6 @@
               A custom key partitioner can be used as an alternative to grouping, to guarantee that some keys
               are located in the same segment (and thus their primary owner is the same node).
               Since 8.2.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="scattered-cache">
-    <xs:complexContent>
-      <xs:extension base="tns:clustered-cache">
-        <xs:sequence>
-          <xs:element name="state-transfer" type="tns:state-transfer" minOccurs="0">
-            <xs:annotation>
-              <xs:documentation>The state transfer configuration for distribution and replicated caches.</xs:documentation>
-            </xs:annotation>
-          </xs:element>
-          <xs:element name="groups" type="tns:groups" minOccurs="0">
-            <xs:annotation>
-              <xs:documentation>Configures grouping of data.</xs:documentation>
-            </xs:annotation>
-          </xs:element>
-        </xs:sequence>
-        <xs:attribute name="segments" type="xs:int" default="256">
-          <xs:annotation>
-            <xs:documentation>Number of hash space segments (per cluster). The default value is 256, and should be at least 20 * cluster size.</xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="capacity" type="xs:float" default="1">
-          <xs:annotation>
-            <xs:documentation>
-              Controls the proportion of entries that will reside on the local node, compared to the other nodes
-              in the cluster. This is just a suggestion, there is no guarantee that a node with a capacity
-              factor of 2 will have twice as many entries as a node with a capacity factor of 1.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="consistent-hash-factory" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              The factory to use for generating the consistent hash.
-              Must implement `org.infinispan.distribution.ch.ConsistentHashFactory`.
-              E.g. `org.infinispan.distribution.ch.impl.SyncConsistentHashFactory` can be used to guarantee
-              that multiple distributed caches use exactly the same consistent hash, which for performance
-              reasons is not guaranteed by the default consistent hash factory instance used.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="key-partitioner" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              The name of the key partitioner class.
-              Must implement `org.infinispan.distribution.ch.KeyPartitioner`.
-              A custom key partitioner can be used as an alternative to grouping, to guarantee that some keys
-              are located in the same segment (and thus their primary owner is the same node).
-              Since 8.2.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="invalidation-batch-size" type="xs:integer" default="${Clustering.invalidation-batch-size}">
-          <xs:annotation>
-            <xs:documentation>
-              Threshold for sending batch invalidations. Once a node registers more updated keys,
-              it sends a batch invalidation to all nodes requesting to remove old versions of the entries.
-              The threshold is also used for second batch invalidation of tombstones for removed entries.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="bias-acquisition" type="tns:bias-acquisition" default="${Clustering.bias-acquisition}">
-          <xs:annotation>
-            <xs:documentation>
-              Specifies when is a node allowed to acquire a bias on an entry, serving further reads
-              to the same key locally (despite not being an owner). Acquired bias allows reading data on non-owner,
-              but slows down further writes from other nodes.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="bias-lifespan" type="xs:long" default="${Clustering.bias-lifespan}">
-          <xs:annotation>
-            <xs:documentation>
-              Specifies the duration (in Milliseconds) that acquired bias can be held; while the reads will never be stale,
-              tracking that information consumes memory on the primary owner.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

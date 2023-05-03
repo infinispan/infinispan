@@ -274,7 +274,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       for (Map.Entry<Address, Set<Integer>> entry : requestedSegments.entrySet()) {
          for (Integer segment : entry.getValue()) {
             Collection<StateChunk> chunks = Collections.singletonList(new StateChunk(segment, Collections.emptyList(), true));
-            stateConsumer.applyState(entry.getKey(), 4, false, chunks)
+            stateConsumer.applyState(entry.getKey(), 4, chunks)
                   .toCompletableFuture()
                   .get(10, TimeUnit.SECONDS);
 

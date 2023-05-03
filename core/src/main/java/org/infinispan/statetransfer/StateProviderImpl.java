@@ -22,6 +22,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -52,7 +53,6 @@ import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -292,7 +292,7 @@ public class StateProviderImpl implements StateProvider {
       OutboundTransferTask outboundTransfer =
          new OutboundTransferTask(destination, segments, this.configuration.clustering().hash().numSegments(),
                                   chunkSize, requestTopologyId, chunks -> {}, rpcManager,
-                                  commandsFactory, timeout, cacheName, applyState, false);
+                                  commandsFactory, timeout, cacheName, applyState);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(readEntries(segments))
                       .whenComplete((ignored, throwable) -> {

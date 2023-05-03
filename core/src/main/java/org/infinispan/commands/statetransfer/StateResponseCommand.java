@@ -10,12 +10,12 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,13 +46,6 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
     */
    private boolean applyState;
 
-   /**
-    * Traditional state transfer is pull based (node sends {@link org.infinispan.commands.statetransfer.StateTransferStartCommand}
-    * and expects StateResponseCommand). This flags unsolicited StateResponseCommand that should be applied anyway. Used
-    * by scattered cache.
-    */
-   private boolean pushTransfer;
-
    private StateResponseCommand() {
       super(null);  // for command id uniqueness test
    }
@@ -62,12 +55,11 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    }
 
    public StateResponseCommand(ByteString cacheName, int topologyId, Collection<StateChunk> stateChunks,
-                               boolean applyState, boolean pushTransfer) {
+                               boolean applyState) {
       super(cacheName);
       this.topologyId = topologyId;
       this.stateChunks = stateChunks;
       this.applyState = applyState;
-      this.pushTransfer = pushTransfer;
    }
 
    @Override
@@ -77,7 +69,7 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
       try {
          if (applyState) {
             StateConsumer stateConsumer = componentRegistry.getStateTransferManager().getStateConsumer();
-            return stateConsumer.applyState(origin, topologyId, pushTransfer, stateChunks);
+            return stateConsumer.applyState(origin, topologyId, stateChunks);
          } else {
             StateReceiver stateReceiver = componentRegistry.getConflictManager().running().getStateReceiver();
             stateReceiver.receiveState(origin, topologyId, stateChunks);
@@ -114,14 +106,12 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeBoolean(pushTransfer);
       MarshallUtil.marshallCollection(stateChunks, output);
       output.writeBoolean(applyState);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      pushTransfer = input.readBoolean();
       stateChunks = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       applyState = input.readBoolean();
    }
@@ -130,7 +120,6 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    public String toString() {
       return "StateResponseCommand{" +
             "cache=" + cacheName +
-            ", pushTransfer=" + pushTransfer +
             ", stateChunks=" + stateChunks +
             ", origin=" + origin +
             ", topologyId=" + topologyId +

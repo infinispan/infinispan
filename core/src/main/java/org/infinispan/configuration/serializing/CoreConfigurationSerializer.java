@@ -1,11 +1,8 @@
 package org.infinispan.configuration.serializing;
 
-import static org.infinispan.configuration.parsing.Attribute.BIAS_ACQUISITION;
-import static org.infinispan.configuration.parsing.Attribute.BIAS_LIFESPAN;
 import static org.infinispan.configuration.parsing.Attribute.CLUSTER;
 import static org.infinispan.configuration.parsing.Attribute.DEFAULT_STACK;
 import static org.infinispan.configuration.parsing.Attribute.EXTENDS;
-import static org.infinispan.configuration.parsing.Attribute.INVALIDATION_BATCH_SIZE;
 import static org.infinispan.configuration.parsing.Attribute.NAME;
 import static org.infinispan.configuration.parsing.Attribute.PATH;
 import static org.infinispan.configuration.parsing.Attribute.RAFT_MEMBERS;
@@ -300,9 +297,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          case REPL_SYNC:
             writeReplicatedCache(writer, name, config, unnamed);
             break;
-         case SCATTERED_SYNC:
-            writeScatteredCache(writer, name, config, unnamed);
-            break;
          default:
             break;
       }
@@ -461,26 +455,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writer.writeMapItem(configuration.isTemplate() ? Element.INVALIDATION_CACHE_CONFIGURATION : Element.INVALIDATION_CACHE, Attribute.NAME, name);
       }
       configuration.attributes().write(writer);
-      writeCommonClusteredCacheAttributes(writer, configuration);
-      writeCommonCacheAttributesElements(writer, name, configuration);
-      writeExtraConfiguration(writer, configuration.modules());
-      if (unnamed) {
-         writer.writeEndElement();
-      } else {
-         writer.writeEndMapItem();
-      }
-   }
-
-   private void writeScatteredCache(ConfigurationWriter writer, String name, Configuration configuration, boolean unnamed) {
-      if (unnamed) {
-         writer.writeStartElement(configuration.isTemplate() ? Element.SCATTERED_CACHE_CONFIGURATION : Element.SCATTERED_CACHE);
-      } else {
-         writer.writeMapItem(configuration.isTemplate() ? Element.SCATTERED_CACHE_CONFIGURATION : Element.SCATTERED_CACHE, Attribute.NAME, name);
-      }
-      configuration.attributes().write(writer);
-      writer.writeAttribute(INVALIDATION_BATCH_SIZE, Integer.toString(configuration.clustering().invalidationBatchSize()));
-      writer.writeAttribute(BIAS_ACQUISITION, configuration.clustering().biasAcquisition().toString());
-      writer.writeAttribute(BIAS_LIFESPAN, Long.toString(configuration.clustering().biasLifespan()));
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
       writeExtraConfiguration(writer, configuration.modules());

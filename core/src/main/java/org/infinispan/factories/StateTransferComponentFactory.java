@@ -8,8 +8,6 @@ import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.conflict.impl.StateReceiverImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.scattered.impl.ScatteredStateConsumerImpl;
-import org.infinispan.scattered.impl.ScatteredStateProviderImpl;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.statetransfer.StateProvider;
@@ -38,17 +36,9 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
       if (componentName.equals(StateTransferManager.class.getName())) {
          return new StateTransferManagerImpl();
       } else if (componentName.equals(StateProvider.class.getName())) {
-         if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredStateProviderImpl();
-         } else {
-            return new StateProviderImpl();
-         }
+         return new StateProviderImpl();
       } else if (componentName.equals(StateConsumer.class.getName())) {
-         if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredStateConsumerImpl();
-         } else {
-            return new StateConsumerImpl();
-         }
+         return new StateConsumerImpl();
       } else if (componentName.equals(StateReceiver.class.getName())) {
          return new StateReceiverImpl<>();
       } else if (componentName.equals(ConflictManager.class.getName()) || componentName.equals(InternalConflictManager.class.getName())) {

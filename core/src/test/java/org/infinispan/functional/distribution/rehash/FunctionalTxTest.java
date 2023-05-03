@@ -197,14 +197,14 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+      public CompletionStage<?> applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
          expectLatch.countDown();
          try {
             assertTrue(blockLatch.await(10, TimeUnit.SECONDS));
          } catch (InterruptedException e) {
             throw new RuntimeException(e);
          }
-         return super.applyState(sender, topologyId, pushTransfer, stateChunks);
+         return super.applyState(sender, topologyId, stateChunks);
       }
 
       public void await() {

@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  * Verifies stream tests work when stream is parallel with parallel distribution
  */
 @Test(groups = "functional", testName = "streams.DistributedParallelStreamTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class DistributedParallelStreamTest extends DistributedStreamTest {
 
    @Override

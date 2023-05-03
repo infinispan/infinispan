@@ -94,9 +94,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       if (cacheMode == CacheMode.DIST_SYNC) {
          dcc.clustering().hash().numOwners(numberOfOwners);
       }
-      if (biasAcquisition != null) {
-         dcc.clustering().biasAcquisition(biasAcquisition);
-      }
       if (lockingMode != null) {
          dcc.transaction().lockingMode(lockingMode);
       }
@@ -121,11 +118,11 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{ null, "tx", "locking", "isolation", "bias", "triangle", null };
+      return new String[]{ null, "tx", "locking", "isolation", "triangle", null };
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{ cacheMode, transactional, lockingMode, isolationLevel, biasAcquisition, useTriangle, partitionHandling};
+      return new Object[]{ cacheMode, transactional, lockingMode, isolationLevel, useTriangle, partitionHandling};
    }
 
    protected ConfigurationBuilder cacheConfiguration() {

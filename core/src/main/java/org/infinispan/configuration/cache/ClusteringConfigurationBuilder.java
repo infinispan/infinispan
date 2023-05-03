@@ -1,9 +1,6 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_ACQUISITION;
-import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_LIFESPAN;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
-import static org.infinispan.configuration.cache.ClusteringConfiguration.INVALIDATION_BATCH_SIZE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -73,32 +70,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
-    * For scattered cache, the threshold after which batched invalidations are sent
-    */
-   public ClusteringConfigurationBuilder invalidationBatchSize(int size) {
-      attributes.attribute(INVALIDATION_BATCH_SIZE).set(size);
-      return this;
-   }
-
-   /**
-    * Used in scattered cache. Acquired bias allows reading data on non-owner, but slows
-    * down further writes from other nodes.
-    */
-   public ClusteringConfigurationBuilder biasAcquisition(BiasAcquisition biasAcquisition) {
-      attributes.attribute(BIAS_ACQUISITION).set(biasAcquisition);
-      return this;
-   }
-
-   /**
-    * Used in scattered cache. Specifies the duration (in Milliseconds) that acquired bias can be held; while the
-    * reads will never be stale, tracking that information consumes memory on the primary owner.
-    */
-   public ClusteringConfigurationBuilder biasLifespan(long l, TimeUnit unit) {
-      attributes.attribute(BIAS_LIFESPAN).set(unit.toMillis(l));
-      return this;
-   }
-
-   /**
     * Configure hash sub element
     */
    @Override
@@ -135,28 +106,9 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
             stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate();
       }
-      if (cacheMode().isScattered()) {
-         if (hash().numOwners() != 1 && hash().isNumOwnersSet()) {
-            throw CONFIG.scatteredCacheNeedsSingleOwner();
-         }
-         hash().numOwners(1);
-         org.infinispan.transaction.TransactionMode transactionMode = transaction().transactionMode();
-         if (transactionMode != null && transactionMode.isTransactional()) {
-            throw CONFIG.scatteredCacheIsNonTransactional();
-         }
 
-         if (attributes.attribute(BIAS_ACQUISITION).get() == BiasAcquisition.ON_READ)
-            throw new UnsupportedOperationException("Not implemented yet");
-      } else {
-         if (attributes.attribute(INVALIDATION_BATCH_SIZE).isModified())
-            throw CONFIG.invalidationBatchSizeAppliesOnNonScattered();
-
-         if (attributes.attribute(BIAS_ACQUISITION).isModified() || attributes.attribute(BIAS_LIFESPAN).isModified())
-            throw CONFIG.biasedReadsAppliesOnlyToScattered();
-
-         if (hash().numOwners() == 1 && partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES)
-            throw CONFIG.singleOwnerNotSetToAllowReadWrites();
-      }
+      if (hash().numOwners() == 1 && partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES)
+         throw CONFIG.singleOwnerNotSetToAllowReadWrites();
    }
 
    @Override

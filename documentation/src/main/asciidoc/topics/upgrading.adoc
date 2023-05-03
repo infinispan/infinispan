@@ -33,6 +33,10 @@ SecurityManager.
 
 * The `index` attribute has been removed.
 
+== Scattered cache removal
+
+The scattered cache mode have been removed a bit earlier. Please use Distributed caches instead.
+
 = Upgrading from 13.0 to 14.0
 
 == Security authorization SPI

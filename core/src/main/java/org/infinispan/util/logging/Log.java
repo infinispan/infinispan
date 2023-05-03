@@ -1622,23 +1622,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Exception encountered when trying to resolve conflict on Keys '%s': %s", id = 466)
    void exceptionDuringConflictResolution(Object key, Throwable t);
 
-   @Message(value = "Scattered cache supports only single owner.", id = 467)
-   CacheConfigurationException scatteredCacheNeedsSingleOwner();
-
-   @Message(value = "Invalidation batch size configuration options applies only to scattered caches.", id = 468)
-   CacheConfigurationException invalidationBatchSizeAppliesOnNonScattered();
-
-   @Message(value = "Scattered cache does not support transactional mode.", id = 469)
-   CacheConfigurationException scatteredCacheIsNonTransactional();
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed confirming revoked segments. State transfer cannot continue.", id = 470)
-   void failedConfirmingRevokedSegments(@Cause Throwable t);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed processing values received from remote node during rebalance.", id = 471)
-   void failedProcessingValuesDuringRebalance(@Cause Throwable t);
-
    @Message(value = "Cache manager is stopping", id = 472)
    IllegalLifecycleStateException cacheManagerIsStopping();
 
@@ -1741,14 +1724,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Size (bytes) based eviction needs either off-heap or a binary compatible storage configured in the cache encoding", id = 504)
    CacheConfigurationException offHeapMemoryEvictionNotSupportedWithObject();
-
-//   @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
-//         "address count of %d", id = 505)
-//   CacheConfigurationException offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(long configuredSize,
-//                                                                                   long addressMemorySize, int addressCount);
-
-   @Message(value = "Biased reads are supported only in scattered cache. Maybe you were looking for L1?", id = 506)
-   CacheConfigurationException biasedReadsAppliesOnlyToScattered();
 
    @Message(value = "Cache %s already exists", id = 507)
    CacheConfigurationException cacheExists(String cacheName);

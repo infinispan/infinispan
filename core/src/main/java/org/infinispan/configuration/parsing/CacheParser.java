@@ -8,7 +8,6 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -21,10 +20,8 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.ClusteringConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
@@ -72,16 +69,12 @@ import org.kohsuke.MetaInfServices;
 @Namespace(root = "distributed-cache-configuration")
 @Namespace(root = "replicated-cache")
 @Namespace(root = "replicated-cache-configuration")
-@Namespace(root = "scattered-cache")
-@Namespace(root = "scattered-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "local-cache")
 @Namespace(uri = NAMESPACE + "*", root = "local-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "distributed-cache")
 @Namespace(uri = NAMESPACE + "*", root = "distributed-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "replicated-cache")
 @Namespace(uri = NAMESPACE + "*", root = "replicated-cache-configuration")
-@Namespace(uri = NAMESPACE + "*", root = "scattered-cache")
-@Namespace(uri = NAMESPACE + "*", root = "scattered-cache-configuration")
 public class CacheParser implements ConfigurationParser {
    public static final String NAMESPACE = "urn:infinispan:config:";
    public static final String IGNORE_MISSING_TEMPLATES = "org.infinispan.parser.ignoreMissingTemplates";
@@ -126,22 +119,8 @@ public class CacheParser implements ConfigurationParser {
             parseDistributedCache(reader, holder, name, true);
             break;
          }
-         case SCATTERED_CACHE: {
-            if (reader.getSchema().since(9, 1)) {
-               parseScatteredCache(reader, holder, name,false);
-            } else {
+         default:
                throw ParseUtils.unexpectedElement(reader);
-            }
-            break;
-         }
-         case SCATTERED_CACHE_CONFIGURATION: {
-            if (reader.getSchema().since(9, 1)) {
-               parseScatteredCache(reader, holder, name, true);
-            } else {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-            break;
-         }
       }
    }
 
@@ -1127,46 +1106,6 @@ public class CacheParser implements ConfigurationParser {
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
-         }
-      }
-   }
-
-   protected void parseScatteredCache(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name, boolean template) {
-      if (!template && GlobUtils.isGlob(name))
-         throw CONFIG.wildcardsNotAllowedInCacheNames(name);
-      String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : CacheMode.SCATTERED_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
-      ClusteringConfigurationBuilder clusteringBuilder = builder.clustering();
-      clusteringBuilder.cacheMode(baseCacheMode);
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case INVALIDATION_BATCH_SIZE: {
-               clusteringBuilder.invalidationBatchSize(ParseUtils.parseInt(reader, i, value));
-               break;
-            }
-            case BIAS_ACQUISITION: {
-               clusteringBuilder.biasAcquisition(ParseUtils.parseEnum(reader, i, BiasAcquisition.class, value));
-               break;
-            }
-            case BIAS_LIFESPAN: {
-               clusteringBuilder.biasLifespan(ParseUtils.parseLong(reader, i, value), TimeUnit.MILLISECONDS);
-               break;
-            }
-            default: {
-               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), baseCacheMode);
-            }
-         }
-      }
-
-      while (reader.inTag()) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            default: {
-               this.parseSharedStateCacheElement(reader, element, holder);
-            }
          }
       }
    }

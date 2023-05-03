@@ -18,6 +18,7 @@ import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -35,7 +36,6 @@ import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -61,11 +61,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    ScheduledExecutorService timeoutExecutor;
 
    private long transactionDataTimeout;
-   private boolean isScattered;
 
    @Start
    public void start() {
-      isScattered = configuration.clustering().cacheMode().isScattered();
       transactionDataTimeout = configuration.clustering().remoteTimeout();
       configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
@@ -136,14 +134,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    protected <C extends VisitableCommand & TopologyAffectedCommand & FlagAffectedCommand> Object handleReadCommand(
          InvocationContext ctx, C command) {
       updateTopologyId(command);
-      if (isScattered) {
-         // In scattered mode read requests only go to the primary owner and cannot return a valid value
-         // if the primary owner has an older topology
-         if (command.getTopologyId() > distributionManager.getCacheTopology().getTopologyId()) {
-            Object invokeNext = asyncInvokeNext(ctx, command, stateTransferLock.transactionDataFuture(command.getTopologyId()));
-            return makeStage(invokeNext).andHandle(ctx, command, handleReadCommandReturn);
-         }
-      }
       return invokeNextAndHandle(ctx, command, handleReadCommandReturn);
    }
 
@@ -174,10 +164,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       } else if (ce instanceof AllOwnersLostException) {
          if (getLog().isTraceEnabled())
             getLog().tracef("All owners for command %s have been lost.", cmd);
-         // In scattered cache it might be common to lose the single owner, we need to retry. We will find out that
-         // we can return null only after the next topology is installed. If partition handling is enabled we decide
-         // only based on the availability status.
-         // In other cache modes, during partition the exception is already handled in PartitionHandlingInterceptor,
+         // During partition the exception is already handled in PartitionHandlingInterceptor,
          // and if the handling is not enabled, we can't but return null.
          requestedTopologyId = cmd.getTopologyId() + 1;
       } else {

@@ -298,7 +298,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }
 
       @Override
-      public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+      public CompletionStage<?> applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
          return blockingManager.runBlocking(() -> {
             // signal we encounter a state transfer PUT
             startedLatch.countDown();
@@ -310,7 +310,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
-            CompletionStages.join(super.applyState(sender, topologyId, pushTransfer, stateChunks));
+            CompletionStages.join(super.applyState(sender, topologyId, stateChunks));
          }, "state-" + sender);
       }
    }

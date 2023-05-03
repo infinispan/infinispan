@@ -7,8 +7,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "reactive.publisher.impl.PersistenceLocalPublisherManagerTest")
-// Scattered cache is disabled due to https://issues.redhat.com/browse/ISPN-13493
-@InCacheMode({CacheMode.REPL_SYNC, CacheMode.DIST_SYNC/*, CacheMode.SCATTERED_SYNC*/})
+@InCacheMode({CacheMode.REPL_SYNC, CacheMode.DIST_SYNC})
 public class PersistenceLocalPublisherManagerTest extends SimpleLocalPublisherManagerTest {
 
    @Override
