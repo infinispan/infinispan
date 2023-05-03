@@ -79,12 +79,15 @@ public abstract class RespCommand {
 
    static {
       indexedRespCommand = new RespCommand[26][];
-      // Just manual for now, but we may want to dynamically do this with ordinal determining what order within
-      // a sub array the commands are placed
+      // Just manual for now, but we may want to dynamically at some point.
+      // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
+      // in this array as they are looked up sequentially for matches
       indexedRespCommand[0] = new RespCommand[]{new AUTH()};
       indexedRespCommand[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
-      indexedRespCommand[3] = new RespCommand[]{new DECR(), new DECRBY(), new DEL()};
+      // DEL should always be first here
+      indexedRespCommand[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY()};
       indexedRespCommand[4] = new RespCommand[]{new ECHO()};
+      // GET should always be first here
       indexedRespCommand[6] = new RespCommand[]{new GET()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};
       indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INFO()};
@@ -92,6 +95,7 @@ public abstract class RespCommand {
       indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};
       indexedRespCommand[17] = new RespCommand[]{new RESET(), new READWRITE(), new READONLY()};
+      // SET should always be first here
       indexedRespCommand[18] = new RespCommand[]{new SET(), new SUBSCRIBE(), new SELECT()};
       indexedRespCommand[20] = new RespCommand[]{new UNSUBSCRIBE()};
    }
