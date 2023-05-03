@@ -934,6 +934,14 @@ public class CacheParser implements ConfigurationParser {
             }
             break;
          }
+         case HASH_FUNCTION: {
+            if (reader.getSchema().since(15, 0)) {
+               builder.clustering().hash().hashFunction(Util.getInstance(value, classLoader));
+            } else {
+               throw ParseUtils.unexpectedAttribute(reader, index);
+            }
+            break;
+         }
          default: {
             this.parseClusteredCacheAttribute(reader, index, attribute, value, builder, baseCacheMode);
          }
