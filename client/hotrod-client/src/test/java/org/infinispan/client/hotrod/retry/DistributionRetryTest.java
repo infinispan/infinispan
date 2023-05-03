@@ -159,6 +159,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
       log.info("About to stop Hot Rod server 2");
       HotRodClientTestingUtil.killServers(hotRodServer2);
+      eventually(() -> !channel.isActive());
 
       return key;
    }
