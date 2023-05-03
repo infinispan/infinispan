@@ -5,11 +5,15 @@ import org.infinispan.Cache;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+/**
+ * StringMutators
+ *
+ * Container class for methods that change string entries on the cache
+ */
 final class StringMutators {
    private StringMutators() {
 
    }
-
    static CompletionStage<Long> append(Cache<byte[], byte[]> cache, byte[] key, byte[] appendix) {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
