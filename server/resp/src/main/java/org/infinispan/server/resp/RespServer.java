@@ -4,6 +4,7 @@ import static org.infinispan.commons.logging.Log.CONFIG;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -47,6 +48,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          } else {
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+               builder.clustering().hash().hashFunction(CRC16.getInstance());
             }
             builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
             builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);

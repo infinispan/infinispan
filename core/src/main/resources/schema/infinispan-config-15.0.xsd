@@ -1629,6 +1629,16 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="hash-function" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The name of the hash function class.
+              Must implement `org.infinispan.commons.hash.Hash`. This is a non-cryptographic hash function
+              to use for key partitioning and consistent hash computation.
+              Since 15.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -1699,6 +1709,16 @@
               A custom key partitioner can be used as an alternative to grouping, to guarantee that some keys
               are located in the same segment (and thus their primary owner is the same node).
               Since 8.2.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="hash-function" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The name of the hash function class.
+              Must implement `org.infinispan.commons.hash.Hash`. This is a non-cryptographic hash function
+              to use for key partitioning and consistent hash computation.
+              Since 15.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

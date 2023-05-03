@@ -9,8 +9,11 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
@@ -19,6 +22,7 @@ import org.infinispan.server.resp.test.CommonRespTests;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -79,7 +83,11 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(true);
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().hash().hashFunction(CRC16.getInstance());
+      return TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
    }
 
    @AfterClass(alwaysRun = true)

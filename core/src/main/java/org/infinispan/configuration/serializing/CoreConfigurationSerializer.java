@@ -416,6 +416,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       AttributeSet hashAttributes = configuration.clustering().hash().attributes();
       hashAttributes.write(writer, HashConfiguration.NUM_SEGMENTS);
       hashAttributes.write(writer, HashConfiguration.CONSISTENT_HASH_FACTORY);
+      hashAttributes.write(writer, HashConfiguration.HASH_FUNCTION);
       hashAttributes.write(writer, HashConfiguration.KEY_PARTITIONER);
 
       writeCommonClusteredCacheAttributes(writer, configuration);

@@ -26,13 +26,19 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
 
    // Should only be used by tests
    public HashFunctionPartitioner(int numSegments) {
-      init(numSegments);
+      init(numSegments, MurmurHash3.getInstance());
+   }
+
+   public static HashFunctionPartitioner instance(int numSegments, Hash hashFunction) {
+      HashFunctionPartitioner partitioner = new HashFunctionPartitioner();
+      partitioner.init(numSegments, hashFunction);
+      return partitioner;
    }
 
    @Override
    public void init(HashConfiguration configuration) {
       Objects.requireNonNull(configuration);
-      init(configuration.numSegments());
+      init(configuration.numSegments(), configuration.hashFunction());
    }
 
    @Override
@@ -40,16 +46,16 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       if (other instanceof HashFunctionPartitioner) {
          HashFunctionPartitioner o = (HashFunctionPartitioner) other;
          if (o.numSegments > 0) { // The other HFP has been initialized, so we can use it
-            init(o.numSegments);
+            init(o.numSegments, o.hashFunction);
          }
       }
    }
 
-   private void init(int numSegments) {
+   private void init(int numSegments, Hash hashFunction) {
       if (numSegments <= 0) {
          throw new IllegalArgumentException("numSegments must be strictly positive");
       }
-      this.hashFunction = MurmurHash3.getInstance();
+      this.hashFunction = hashFunction;
       this.numSegments = numSegments;
       this.segmentSize = Util.getSegmentSize(numSegments);
    }

@@ -93,6 +93,7 @@ public enum Attribute {
     KEY,
     KEY_EQUIVALENCE,
     KEY_PARTITIONER,
+    HASH_FUNCTION,
     L1_LIFESPAN("l1-lifespan"),
     LIFESPAN,
     LISTENER_EXECUTOR,

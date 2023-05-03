@@ -157,6 +157,7 @@
       </invalidation-cache>
       <replicated-cache name="repl" mode="SYNC" statistics="true" segments="10"
                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+                        hash-function="org.infinispan.commons.hash.CRC16"
                         key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <encoding>
             <key media-type="application/x-java-object"/>
@@ -231,6 +232,7 @@
       <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+                         hash-function="org.infinispan.commons.hash.MurmurHash3"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups max-cleanup-delay="60000" tombstone-map-size="128000">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500">
@@ -406,6 +408,7 @@
 
       <replicated-cache-configuration name="repl-template" mode="SYNC" statistics="true"
             segments="200" consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+            hash-function="org.infinispan.commons.hash.MurmurHash3"
             key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
@@ -423,6 +426,7 @@
       <distributed-cache-configuration name="dist-template" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+                         hash-function="org.infinispan.commons.hash.MurmurHash3"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups>
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500">

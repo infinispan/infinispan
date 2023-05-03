@@ -2,12 +2,14 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.HashConfiguration.CAPACITY_FACTOR;
 import static org.infinispan.configuration.cache.HashConfiguration.CONSISTENT_HASH_FACTORY;
+import static org.infinispan.configuration.cache.HashConfiguration.HASH_FUNCTION;
 import static org.infinispan.configuration.cache.HashConfiguration.KEY_PARTITIONER;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_OWNERS;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_SEGMENTS;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -103,6 +105,19 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder keyPartitioner(KeyPartitioner keyPartitioner) {
       attributes.attribute(KEY_PARTITIONER).set(keyPartitioner);
+      return this;
+   }
+
+   /**
+    * The function is used by {@link KeyPartitioner}.
+    * <p>
+    * The default implementation is {@link org.infinispan.commons.hash.MurmurHash3}.
+    *
+    * @param hashFunction: Hash function implementation to use.
+    * @since 15.0
+    */
+   public HashConfigurationBuilder hashFunction(Hash hashFunction) {
+      attributes.attribute(HASH_FUNCTION).set(hashFunction);
       return this;
    }
 

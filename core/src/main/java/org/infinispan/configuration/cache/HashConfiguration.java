@@ -5,6 +5,8 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -25,8 +27,12 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTS, 256).immutable().build();
    public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).immutable().global(false).build();
+   public static final AttributeDefinition<Hash> HASH_FUNCTION = AttributeDefinition
+         .builder(org.infinispan.configuration.parsing.Attribute.HASH_FUNCTION, MurmurHash3.getInstance(), Hash.class)
+         .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
+         .immutable().build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
-         .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, new HashFunctionPartitioner(NUM_SEGMENTS.getDefaultValue()), KeyPartitioner.class)
+         .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, HashFunctionPartitioner.instance(NUM_SEGMENTS.getDefaultValue(), HASH_FUNCTION.getDefaultValue()), KeyPartitioner.class)
          .copier(original -> {
             KeyPartitioner copy = Util.getInstance(original.getClass());
             copy.init(original);
@@ -37,7 +43,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, NUM_OWNERS,
-            NUM_SEGMENTS, CAPACITY_FACTOR, KEY_PARTITIONER);
+            NUM_SEGMENTS, CAPACITY_FACTOR, HASH_FUNCTION, KEY_PARTITIONER);
    }
 
    private final Attribute<ConsistentHashFactory> consistentHashFactory;
@@ -45,6 +51,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    private final Attribute<Integer> numSegments;
    private final Attribute<Float> capacityFactor;
    private final Attribute<KeyPartitioner> keyPartitioner;
+   private final Attribute<Hash> hashFunction;
 
    private final GroupsConfiguration groupsConfiguration;
 
@@ -56,6 +63,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
       numSegments = attributes.attribute(NUM_SEGMENTS);
       capacityFactor = attributes.attribute(CAPACITY_FACTOR);
       keyPartitioner = attributes.attribute(KEY_PARTITIONER);
+      hashFunction = attributes.attribute(HASH_FUNCTION);
    }
 
    /**
@@ -100,6 +108,10 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
 
    public KeyPartitioner keyPartitioner() {
       return keyPartitioner.get();
+   }
+
+   public Hash hashFunction() {
+      return hashFunction.get();
    }
 
    /**

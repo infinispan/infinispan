@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
+import org.infinispan.commons.hash.CRC16;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Version;
@@ -130,6 +132,12 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(indexed.indexingMode()).isEqualTo(IndexingMode.MANUAL);
             assertThat(indexed.sharding()).isNotNull();
             assertThat(indexed.sharding().getShards()).isEqualTo(7);
+
+            Configuration configuration = getConfiguration(holder, "repl");
+            assertThat(configuration.clustering().hash().hashFunction()).isSameAs(CRC16.getInstance());
+
+            configuration = getConfiguration(holder, "dist");
+            assertThat(configuration.clustering().hash().hashFunction()).isSameAs(MurmurHash3.getInstance());
          }
       },
       INFINISPAN_140(14, 0) {

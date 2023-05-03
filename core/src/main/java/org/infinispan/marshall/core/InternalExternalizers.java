@@ -10,6 +10,7 @@ import org.infinispan.cache.impl.FunctionMapper;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.functional.functions.MergeFunction;
+import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AdminFlagExternalizer;
@@ -198,6 +199,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new MortalCacheEntry.Externalizer(), exts);
       addInternalExternalizer(new MortalCacheValue.Externalizer(), exts);
       addInternalExternalizer(new MurmurHash3.Externalizer(), exts);
+      addInternalExternalizer(new CRC16.Externalizer(), exts);
       addInternalExternalizer(new NumericVersion.Externalizer(), exts);
       addInternalExternalizer(new OptionalExternalizer(), exts);
       addInternalExternalizer(new PersistentUUID.Externalizer(), exts);
