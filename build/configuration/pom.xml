@@ -206,8 +206,8 @@
 
       <version.smallrye-mutiny>2.1.0</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
-      <version.spring>6.0.7</version.spring>
-      <version.spring.boot>3.0.5</version.spring.boot>
+      <version.spring>6.0.8</version.spring>
+      <version.spring.boot>3.0.6</version.spring.boot>
       <version.spring.session>3.0.1</version.spring.session>
 
       <version.kafka.client>3.2.3</version.kafka.client>
