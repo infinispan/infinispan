@@ -22,6 +22,20 @@ include::xml/indexing_file_system.xml[]
 include::xml/indexing_jvm_heap.xml[]
 ----
 
+=== Index path
+
+Specifies a filesystem path for the index when storage is 'filesystem'.
+The value can be a relative or absolute path. Relative paths are created
+relative to the configured global persistent location, or to the current
+working directory when global state is disabled.
+
+By default, the cache name is used as a relative path for index path.
+
+[IMPORTANT]
+====
+When setting a custom value, ensure that there are no conflicts between caches using the same indexed entities.
+====
+
 == Index startup mode
 
 When {brandname} starts caches it can perform operations to ensure the index is consistent with data in the cache.
