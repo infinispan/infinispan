@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
@@ -19,17 +20,18 @@ import org.infinispan.query.impl.config.SearchPropertyExtractor;
 import org.infinispan.query.model.TypeA;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.indexing.DefaultIndexPathTest")
+@TestForIssue(jiraKey = "ISPN-14109")
 public class DefaultIndexPathTest extends SingleCacheManagerTest {
 
    private static final String CACHE_1_NAME = "cache-1";
    private static final String CACHE_2_NAME = "cache-2";
    private static final int SIZE = 400;
 
-   private Path indexLocation;
+   private Path indexLocation1;
+   private Path indexLocation2;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -45,8 +47,8 @@ public class DefaultIndexPathTest extends SingleCacheManagerTest {
       result.defineConfiguration(CACHE_2_NAME, config.build());
 
       GlobalConfiguration globalConfiguration = result.getGlobalComponentRegistry().getGlobalConfiguration();
-      indexLocation = SearchPropertyExtractor.getIndexLocation(globalConfiguration, null);
-
+      indexLocation1 = SearchPropertyExtractor.getIndexLocation(globalConfiguration, null, CACHE_1_NAME);
+      indexLocation2 = SearchPropertyExtractor.getIndexLocation(globalConfiguration, null, CACHE_2_NAME);
       return result;
    }
 
@@ -82,10 +84,11 @@ public class DefaultIndexPathTest extends SingleCacheManagerTest {
       infoIndex2.toCompletableFuture().get();
    }
 
-   @AfterTest
-   public void cleanUpIndexesOnFileSystem() {
+   @Override
+   protected void teardown() {
       // index-A is specified as index in TypeA class >> @Indexed(index = "index-A")
-      Path indexDirectory = indexLocation.resolve("index-A");
-      Util.recursiveFileRemove(indexDirectory);
+      Util.recursiveFileRemove(indexLocation1);
+      Util.recursiveFileRemove(indexLocation2);
+      super.teardown();
    }
 }

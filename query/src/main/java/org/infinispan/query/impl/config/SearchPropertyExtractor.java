@@ -54,6 +54,7 @@ public class SearchPropertyExtractor {
    private static final String ANALYSIS_CONFIGURER_PROPERTY_NAME = "analysis.configurer";
 
    public static Map<String, Object> extractProperties(GlobalConfiguration globalConfiguration,
+                                                       String cacheName,
                                                        IndexingConfiguration configuration,
                                                        ClassLoader aggregatedClassLoader) {
       Map<String, Object> props = new LinkedHashMap<>();
@@ -75,7 +76,7 @@ public class SearchPropertyExtractor {
          props.put(DIRECTORY_PROVIDER_KEY, LOCAL_HEAP_DIRECTORY_PROVIDER);
       } else {
          props.put(DIRECTORY_PROVIDER_KEY, FS_PROVIDER);
-         Path location = getIndexLocation(globalConfiguration, configuration.path());
+         Path location = getIndexLocation(globalConfiguration, configuration.path(), cacheName);
          props.put(DIRECTORY_ROOT_KEY, location.toFile().getPath());
       }
       IndexReaderConfiguration readerConfiguration = configuration.reader();
@@ -153,11 +154,11 @@ public class SearchPropertyExtractor {
       return Collections.unmodifiableMap(props);
    }
 
-   public static Path getIndexLocation(GlobalConfiguration globalConfiguration, String location) {
+   public static Path getIndexLocation(GlobalConfiguration globalConfiguration, String location, String cacheName) {
       GlobalStateConfiguration globalState = globalConfiguration.globalState();
       Path persistentLocation = Paths.get(globalState.persistentLocation());
 
-      if (location == null) return persistentLocation;
+      if (location == null) return persistentLocation.resolve(cacheName);
 
       Path path = Paths.get(location);
 
