@@ -190,7 +190,6 @@
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>4.6.2.Final</version.protostream>
-      <version.quarkus>3.0.2.Final</version.quarkus>
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.4</version.rxjava>
@@ -200,6 +199,15 @@
       <version.io.prometheus>0.15.0</version.io.prometheus>
       <version.hdrhistogram>2.1.12</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
+
+      <!-- These versions must be kept in sync with ${version.quarkus} -->
+      <version.quarkus>3.0.2.Final</version.quarkus>
+      <version.graalvm>22.3.0</version.graalvm>
+      <version.jandex>3.0.5</version.jandex>
+      <version.microprofile.metrics>4.0.1</version.microprofile.metrics>
+      <version.restassured>5.3.0</version.restassured>
+      <version.resteasy>6.2.1.Final</version.resteasy>
+      <version.vertx>4.4.1</version.vertx>
 
       <version.opentelemetry>1.15.0</version.opentelemetry>
       <version.opentelemetry.sdk-autoconfigure>1.15.0-alpha</version.opentelemetry.sdk-autoconfigure>
