@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.withPrecision;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
 
@@ -433,11 +434,45 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(nextValue.longValue()).isEqualTo(-8L);
    }
 
+   @Test
+   public void testIncrbyFloatNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String nonPresentKey = "incrbyfloat-notpresent";
+      Double newValue = redis.incrbyfloat(nonPresentKey, 0.42);
+      assertThat(newValue.doubleValue()).isEqualTo(0.42, withPrecision(2d));
+
+      Double nextValue = redis.incrbyfloat(nonPresentKey, 0.2);
+      assertThat(nextValue.doubleValue()).isEqualTo(0.62, withPrecision(2d));
+   }
+
+   @Test
+   public void testIncrbyFloatPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrbyfloat";
+      redis.set(key, "0.12");
+
+      Double newValue = redis.incrbyfloat(key, 0.23);
+      assertThat(newValue.doubleValue()).isEqualTo(0.35, withPrecision(2d));
+
+      Double nextValue = redis.incrbyfloat(key, -0.23);
+      assertThat(nextValue.doubleValue()).isEqualTo(0.12, withPrecision(2d));
+   }
+
+   @Test
+   public void testIncrbyFloatPresentNotFloat() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incrbyfloat-string";
+      redis.set(key, "foo");
+      assertThatThrownBy(() -> redis.incrbyfloat(key, 0.1), "")
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not a valid float");
+   }
+
    public void testCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertThat(commands.size()).isEqualTo(29);
+      assertThat(commands.size()).isEqualTo(30);
    }
 
    public void testAuth() {

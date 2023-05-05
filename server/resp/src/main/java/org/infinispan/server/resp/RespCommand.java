@@ -31,6 +31,7 @@ import org.infinispan.server.resp.commands.string.DEL;
 import org.infinispan.server.resp.commands.string.GET;
 import org.infinispan.server.resp.commands.string.INCR;
 import org.infinispan.server.resp.commands.string.INCRBY;
+import org.infinispan.server.resp.commands.string.INCRBYFLOAT;
 import org.infinispan.server.resp.commands.string.MGET;
 import org.infinispan.server.resp.commands.string.MSET;
 import org.infinispan.server.resp.commands.string.SET;
@@ -93,7 +94,7 @@ public abstract class RespCommand {
       // GET should always be first here
       indexedRespCommand[6] = new RespCommand[]{new GET()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};
-      indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INFO()};
+      indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET()};
       indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};

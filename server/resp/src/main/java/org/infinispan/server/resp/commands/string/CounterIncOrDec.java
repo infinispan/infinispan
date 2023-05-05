@@ -50,4 +50,41 @@ final class CounterIncOrDec {
                      });
             });
    }
+
+   static CompletionStage<Double> counterIncByDouble(Cache<byte[], byte[]> cache, byte[] key, String by) {
+      return counterIncByDouble(cache, key, Double.parseDouble(by));
+   }
+
+   static CompletionStage<Double> counterIncByDouble(Cache<byte[], byte[]> cache, byte[] key, Double by) {
+      return cache.getAsync(key)
+            .thenCompose(currentValueBytes -> {
+               if (currentValueBytes != null) {
+                  // Numbers are always ASCII
+                  String prevValue = new String(currentValueBytes, CharsetUtil.US_ASCII);
+                  double prevDoubleValue;
+                  try {
+                     prevDoubleValue = Double.parseDouble(prevValue) + by;
+                  } catch (NumberFormatException e) {
+                     throw new CacheException("value is not a valid float");
+                  }
+                  String newValueString = String.valueOf(prevDoubleValue);
+                  byte[] newValueBytes = newValueString.getBytes(CharsetUtil.US_ASCII);
+                  return cache.replaceAsync(key, currentValueBytes, newValueBytes)
+                        .thenCompose(replaced -> {
+                           if (replaced) {
+                              return CompletableFuture.completedFuture(prevDoubleValue);
+                           }
+                           return counterIncByDouble(cache, key, by);
+                        });
+               }
+               byte[] valueToPut = String.valueOf(by).getBytes(CharsetUtil.US_ASCII);
+               return cache.putIfAbsentAsync(key, valueToPut)
+                     .thenCompose(prev -> {
+                        if (prev != null) {
+                           return counterIncByDouble(cache, key, by);
+                        }
+                        return CompletableFuture.completedFuture(by);
+                     });
+            });
+   }
 }
