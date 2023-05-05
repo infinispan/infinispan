@@ -85,11 +85,6 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                   case CACHE_ENTRY_EXPIRED_EVENT_RESPONSE:
                      if (codec.allowOperationsAndEvents()) {
                         operation = messageId == 0 ? null : incomplete.get(messageId);
-                     } else if (incomplete.size() == 1) {
-                        operation = incomplete.values().iterator().next();
-                        messageId = operation.header().messageId();
-                     } else if (incomplete.size() > 1) {
-                        throw new IllegalStateException("Too many incomplete operations: " + incomplete);
                      } else {
                         operation = null;
                         messageId = 0;
