@@ -82,12 +82,12 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected RemoteCacheManager createRemoteCacheManager(int port) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
          HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      amendRemoteCacheManagerConfiguration(builder);
       builder
          .forceReturnValues(true)
          .connectionTimeout(5)
-         .connectionPool().maxActive(1) //this ensures that only one server is active at a time
-         .addServer().host("127.0.0.1").port(port);
+         .connectionPool().maxActive(1); //this ensures that only one server is active at a time
+      amendRemoteCacheManagerConfiguration(builder);
+      builder.addServer().host("127.0.0.1").port(port);
       return new InternalRemoteCacheManager(builder.build());
    }
 
