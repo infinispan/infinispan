@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
@@ -41,6 +42,15 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected static void handleLongResult(Long result, ByteBufPool alloc) {
       // TODO: this can be optimized to avoid the String allocation
       ByteBufferUtils.stringToByteBuf(":" + result + "\r\n", alloc);
+   }
+
+   protected static void handleDoubleResult(Double result, ByteBufPool alloc) {
+      // TODO: this can be optimized to avoid the String allocation
+      handleBulkResult(result.toString(), alloc);
+   }
+
+   protected static void handleBulkResult(String result, ByteBufPool alloc) {
+      ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + "\r\n" + result + "\r\n", alloc);
    }
 
    protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
