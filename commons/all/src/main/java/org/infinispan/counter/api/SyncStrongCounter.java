@@ -50,6 +50,11 @@ public interface SyncStrongCounter {
    long compareAndSwap(long expect, long update);
 
    /**
+    * @see StrongCounter#getAndSet(long)
+    */
+   long getAndSet(long value);
+
+   /**
     * @see StrongCounter#getName()
     */
    String getName();

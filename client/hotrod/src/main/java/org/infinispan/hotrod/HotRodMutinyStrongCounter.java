@@ -60,6 +60,11 @@ public class HotRodMutinyStrongCounter implements MutinyStrongCounter {
    }
 
    @Override
+   public Uni<Long> getAndSet(long value) {
+      return null;
+   }
+
+   @Override
    public Uni<CounterConfiguration> getConfiguration() {
       return null;
    }

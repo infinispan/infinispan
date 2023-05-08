@@ -4,6 +4,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CACHE_CONTROL;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.extractException;
@@ -85,6 +86,7 @@ public class CounterResource implements ResourceHandler {
             // Strong counter ops
             .invocation().methods(POST).path("/v2/counters/{counterName}").withAction("compareAndSet").handleWith(this::compareSet)
             .invocation().methods(POST).path("/v2/counters/{counterName}").withAction("compareAndSwap").handleWith(this::compareSwap)
+            .invocation().methods(POST).path("/v2/counters/{counterName}").withAction("getAndSet").handleWith(this::getAndSet)
             .create();
    }
 
@@ -198,6 +200,22 @@ public class CounterResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> compareSwap(RestRequest request) {
       return executeCounterCAS(request, StrongCounter::compareAndSwap);
+   }
+
+   private CompletionStage<RestResponse> getAndSet(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = new NettyRestResponse.Builder();
+      String counterName = request.variables().get("counterName");
+      Long value = checkForNumericParam("value", request, responseBuilder);
+
+      if (value == null) return completedFuture(responseBuilder.build());
+
+      CompletionStage<StrongCounter> stage = invocationHelper.getCounterManager().getStrongCounterAsync(counterName);
+      return CompletionStages.handleAndCompose(stage, (counter, throwable) -> {
+         if (throwable != null) {
+            return handleThrowable(throwable);
+         }
+         return counter.getAndSet(value).thenApply(v -> new NettyRestResponse.Builder().status(OK).entity(String.valueOf(v)).build());
+      });
    }
 
    private CounterConfiguration createCounterConfiguration(String json) {

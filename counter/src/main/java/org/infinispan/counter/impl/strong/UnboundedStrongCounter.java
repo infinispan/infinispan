@@ -15,7 +15,7 @@ import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 public class UnboundedStrongCounter extends AbstractStrongCounter {
 
    public UnboundedStrongCounter(String counterName, AdvancedCache<StrongCounterKey, CounterValue> cache,
-         CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
+                                 CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       super(counterName, cache, configuration, notificationManager);
    }
 
@@ -28,6 +28,12 @@ public class UnboundedStrongCounter extends AbstractStrongCounter {
    @Override
    protected long handleAddResult(CounterValue counterValue) {
       return counterValue.getValue();
+   }
+
+   @Override
+   protected Long handleSetResult(Object state) {
+      assert state instanceof Long;
+      return (Long) state;
    }
 
    @Override

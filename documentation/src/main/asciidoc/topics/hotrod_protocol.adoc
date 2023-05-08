@@ -3212,3 +3212,49 @@ Response (0x44):
 | Field Name          | Size       | Value
 | Header | variable | Response header
 |==============================================================================
+
+.Counter get-and-set operation
+Sets a value to the counter and returns the previous value.
+
+.Request (0x7F)
+[cols="3,^2,10",options="header"]
+|===
+|Field Name |Size |Value
+
+|Header
+|variable
+|Request header
+
+|Name
+|string
+|The counter's name
+
+|Value
+|long
+|The counter’s value to set.
+
+|===
+
+.Response (0x80)
+[cols="3,^2,10",options="header"]
+|===
+|Field Name |Size |Value
+
+|Header
+|variable
+|Response header
+
+|Value
+|long
+|(Optional) the counter's previous value.
+Only present if `Status==0x00`.
+
+|===
+
+Response Header `Status` possible values:
+
+* `0x00`: Operation successful.
+* `0x02`: The counter isn't defined.
+* `0x04`: The counter reached its boundary.
+Only possible for `STRONG` counters.
+* See the link:#hot_rod_response_header[Response Header] for error codes.

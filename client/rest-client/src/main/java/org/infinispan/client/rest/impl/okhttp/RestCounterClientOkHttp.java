@@ -103,4 +103,11 @@ public class RestCounterClientOkHttp implements RestCounterClient {
       builder.post(EMPTY_BODY).url(counterUrl + "?action=compareAndSwap&expect=" + expect + "&update=" + value);
       return client.execute(builder);
    }
+
+   @Override
+   public CompletionStage<RestResponse> getAndSet(long newValue) {
+      Request.Builder builder = new Request.Builder();
+      builder.post(EMPTY_BODY).url(counterUrl + "?action=getAndSet&value=" + newValue);
+      return client.execute(builder);
+   }
 }

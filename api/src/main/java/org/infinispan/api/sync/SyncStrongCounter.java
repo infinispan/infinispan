@@ -95,6 +95,14 @@ public interface SyncStrongCounter {
    long compareAndSwap(long expect, long update);
 
    /**
+    * Atomically sets the value to the given updated value
+    *
+    * @param value the new value.
+    * @return the old value of counter.
+    */
+   long getAndSet(long value);
+
+   /**
     * @return the {@link CounterConfiguration} used by this counter.
     */
    CounterConfiguration configuration();

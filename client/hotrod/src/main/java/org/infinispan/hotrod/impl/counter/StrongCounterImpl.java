@@ -41,6 +41,11 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
    }
 
    @Override
+   public CompletableFuture<Long> getAndSet(long value) {
+      return factory.newSetOperation(name, value, useConsistentHash()).execute().toCompletableFuture();
+   }
+
+   @Override
    boolean useConsistentHash() {
       return true;
    }
@@ -65,6 +70,11 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
       @Override
       public long compareAndSwap(long expect, long update) {
          return await(StrongCounterImpl.this.compareAndSwap(expect, update));
+      }
+
+      @Override
+      public long getAndSet(long value) {
+         return await(StrongCounterImpl.this.getAndSet(value));
       }
 
       @Override

@@ -48,6 +48,11 @@ public class StrongCounterAPITest extends BaseCounterAPITest<StrongCounter> impl
    }
 
    @Override
+   public void testSet(Method method) {
+      strategy.testSet(method);
+   }
+
+   @Override
    public void testAdd(Method method) {
       strategy.testAdd(method);
    }

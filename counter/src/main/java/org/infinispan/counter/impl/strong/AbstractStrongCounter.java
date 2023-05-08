@@ -24,9 +24,11 @@ import org.infinispan.counter.impl.function.AddFunction;
 import org.infinispan.counter.impl.function.CompareAndSwapFunction;
 import org.infinispan.counter.impl.function.CreateAndAddFunction;
 import org.infinispan.counter.impl.function.CreateAndCASFunction;
+import org.infinispan.counter.impl.function.CreateAndSetFunction;
 import org.infinispan.counter.impl.function.ReadFunction;
 import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
+import org.infinispan.counter.impl.function.SetFunction;
 import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
@@ -66,7 +68,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    private CounterValue weakCounter;
 
    AbstractStrongCounter(String counterName, AdvancedCache<StrongCounterKey, CounterValue> cache,
-         CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
+                         CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       this.notificationManager = notificationManager;
       FunctionalMapImpl<StrongCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
             .withParams(getPersistenceMode(configuration.storage()));
@@ -146,6 +148,12 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    }
 
    @Override
+   public CompletableFuture<Long> getAndSet(long value) {
+      return readWriteMap.eval(key, new SetFunction<>(value))
+            .thenCompose(result -> checkSetResult(result, value));
+   }
+
+   @Override
    public synchronized CounterEvent generate(CounterKey key, CounterValue value) {
       CounterValue newValue = value == null ?
             newCounterValue(configuration) :
@@ -185,6 +193,8 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
     * @return The new value stored in {@link CounterValue}.
     */
    protected abstract long handleAddResult(CounterValue counterValue);
+
+   protected abstract Long handleSetResult(Object state);
 
    /**
     * Registers this instance as a cluster listener.
@@ -244,6 +254,15 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
                .thenApply(this::handleCASResult);
       } else {
          return CompletableFuture.completedFuture(handleCASResult(result));
+      }
+   }
+
+   private CompletionStage<Long> checkSetResult(Object result, long update) {
+      if (result == null) {
+         return readWriteMap.eval(key, new CreateAndSetFunction<>(configuration, update))
+               .thenApply(this::handleSetResult);
+      } else {
+         return CompletableFuture.completedFuture(handleSetResult(result));
       }
    }
 }

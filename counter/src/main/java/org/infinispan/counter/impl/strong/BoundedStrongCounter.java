@@ -29,7 +29,7 @@ public class BoundedStrongCounter extends AbstractStrongCounter {
    private static final Log log = LogFactory.getLog(BoundedStrongCounter.class, Log.class);
 
    public BoundedStrongCounter(String counterName, AdvancedCache<StrongCounterKey, CounterValue> cache,
-         CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
+                               CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       super(counterName, cache, configuration, notificationManager);
    }
 
@@ -37,6 +37,15 @@ public class BoundedStrongCounter extends AbstractStrongCounter {
    protected long handleAddResult(CounterValue counterValue) {
       throwOutOfBoundExceptionIfNeeded(counterValue.getState());
       return counterValue.getValue();
+   }
+
+   @Override
+   protected Long handleSetResult(Object state) {
+      if (state instanceof CounterState) {
+         throwOutOfBoundExceptionIfNeeded((CounterState) state);
+      }
+      assert state instanceof Long;
+      return (Long) state;
    }
 
    protected Long handleCASResult(Object state) {

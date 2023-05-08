@@ -100,5 +100,13 @@ public interface MutinyStrongCounter {
     */
    Uni<Long> compareAndSwap(long expect, long update);
 
+   /**
+    * Atomically sets the value to the given updated value
+    *
+    * @param value the new value.
+    * @return the old counter's value.
+    */
+   Uni<Long> getAndSet(long value);
+
    Uni<CounterConfiguration> getConfiguration();
 }
