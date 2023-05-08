@@ -4,10 +4,10 @@ import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 
-import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -30,7 +30,7 @@ public abstract class BaseMultipleRespTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() {
       ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       amendCacheConfiguration(cacheBuilder);
-      cacheBuilder.clustering().hash().hashFunction(CRC16.getInstance());
+      cacheBuilder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
       createCluster(cacheBuilder, 2);
       waitForClusterToForm();
 

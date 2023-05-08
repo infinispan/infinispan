@@ -4,11 +4,13 @@ import static org.infinispan.commons.logging.Log.CONFIG;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.hash.CRC16;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -32,6 +34,7 @@ import io.netty.channel.group.ChannelMatcher;
  * @since 14.0
  */
 public class RespServer extends AbstractProtocolServer<RespServerConfiguration> {
+   private static final Log log = LogFactory.getLog(RespServer.class);
    public static final String RESP_SERVER_FEATURE = "resp-server";
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
    private DefaultIterationManager iterationManager;
@@ -59,10 +62,15 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
             builder.read(defaultCacheConfiguration);
             configuredValueType = builder.encoding().value().mediaType();
+            if (cacheManager.getCacheManagerConfiguration().isClustered() &&
+                  !(builder.clustering().hash().keyPartitioner() instanceof CRC16HashFunctionPartitioner)) {
+               log.warn("Clustered RESP server should use CRC16HashFunctionPartitioner for key partitioning.");
+            }
          } else {
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
-               builder.clustering().hash().hashFunction(CRC16.getInstance());
+               // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
+               builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(16384);
             }
             builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
             builder.encoding().value().mediaType(configuredValueType);

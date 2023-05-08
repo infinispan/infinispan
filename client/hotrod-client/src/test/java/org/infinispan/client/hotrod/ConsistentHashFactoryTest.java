@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.impl.consistenthash.CRC16ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
@@ -37,5 +38,15 @@ public class ConsistentHashFactoryTest extends AbstractInfinispanTest {
       ConsistentHash hash = chf.newConsistentHash(2);
       assertNotNull(hash);
       assertEquals(hash.getClass(), ConsistentHashV2.class);
+   }
+
+   public void testCRC16HashDefined() {
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      builder.consistentHashImpl(2, CRC16ConsistentHashV2.class);
+      ConsistentHashFactory chf = new ConsistentHashFactory();
+      chf.init(builder.build());
+      ConsistentHash hash = chf.newConsistentHash(2);
+      assertNotNull(hash);
+      assertEquals(hash.getClass(), CRC16ConsistentHashV2.class);
    }
 }

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
@@ -41,10 +42,9 @@ public class ConsistentHashV2Test {
       map.put(a3, Collections.singleton(2000));
       map.put(a4, Collections.singleton(3000));
 
-      this.v1 = new ConsistentHashV2();
-      this.v1.init(map, numOwners, 10000);
       hash = new DummyHash();
-      this.v1.setHash(hash);
+      this.v1 = new ConsistentHashV2(new Random(), hash);
+      this.v1.init(map, numOwners, 10000);
    }
 
 

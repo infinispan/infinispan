@@ -34,7 +34,7 @@ public class ConsistentHashV2 implements ConsistentHash {
    private int hashSpace;
    private boolean hashSpaceIsMaxInt;
 
-   protected Hash hash = MurmurHash3.getInstance();
+   protected final Hash hash;
 
    private int numKeyOwners;
 
@@ -42,7 +42,12 @@ public class ConsistentHashV2 implements ConsistentHash {
 
 
    public ConsistentHashV2(Random rnd) {
+      this(rnd, MurmurHash3.getInstance());
+   }
+
+   public ConsistentHashV2(Random rnd, Hash hash) {
       this.rnd = rnd;
+      this.hash = hash;
    }
 
    public ConsistentHashV2() {
@@ -111,10 +116,6 @@ public class ConsistentHashV2 implements ConsistentHash {
 
    private int getIndex() {
       return rnd.nextInt(Math.min(numKeyOwners, positions.size()));
-   }
-
-   public void setHash(Hash hash) {
-      this.hash = hash;
    }
 
    @Override
