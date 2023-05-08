@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
+import org.infinispan.client.hotrod.impl.consistenthash.CRC16ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
@@ -69,7 +70,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
    private final Class<? extends ConsistentHash>[] consistentHashImpl = new Class[]{
-         null, ConsistentHashV2.class, SegmentConsistentHash.class
+         null, ConsistentHashV2.class, SegmentConsistentHash.class, CRC16ConsistentHashV2.class
    };
    private boolean forceReturnValues;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;

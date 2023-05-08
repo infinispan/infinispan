@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
 /**
@@ -72,6 +71,5 @@ public class ConsistentHashPerformanceTest {
 
 
       dch.init(map, 2, 10024);
-      dch.setHash(MurmurHash3.getInstance());
    }
 }

@@ -5,12 +5,12 @@ import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 
-import org.infinispan.commons.hash.CRC16;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
@@ -46,7 +46,7 @@ public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().hash().hashFunction(CRC16.getInstance());
+      builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
       return cacheManager;

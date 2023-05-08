@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
-import org.infinispan.commons.hash.CRC16;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Version;
@@ -55,6 +53,8 @@ import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.conflict.MergePolicy;
+import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -136,10 +136,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(query.hitCountAccuracy()).isEqualTo(10_000);
 
             Configuration configuration = getConfiguration(holder, "repl");
-            assertThat(configuration.clustering().hash().hashFunction()).isSameAs(CRC16.getInstance());
+            assertThat(configuration.clustering().hash().keyPartitioner().getClass()).isEqualTo(CRC16HashFunctionPartitioner.class);
 
             configuration = getConfiguration(holder, "dist");
-            assertThat(configuration.clustering().hash().hashFunction()).isSameAs(MurmurHash3.getInstance());
+            assertThat(configuration.clustering().hash().keyPartitioner().getClass()).isEqualTo(HashFunctionPartitioner.class);
 
             query = getConfiguration(holder, "custom-default-max-results").query();
             assertThat(query.hitCountAccuracy()).isEqualTo(1000);

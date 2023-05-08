@@ -211,6 +211,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             .addClasses(
                   org.infinispan.CoreModuleImpl.class,
                   org.infinispan.distribution.ch.impl.HashFunctionPartitioner.class,
+                  org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner.class,
                   org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated.class,
                   org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired.class,
                   org.infinispan.notifications.cachelistener.annotation.CacheEntryModified.class,

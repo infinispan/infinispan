@@ -26,19 +26,19 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
 
    // Should only be used by tests
    public HashFunctionPartitioner(int numSegments) {
-      init(numSegments, MurmurHash3.getInstance());
+      init(numSegments);
    }
 
-   public static HashFunctionPartitioner instance(int numSegments, Hash hashFunction) {
+   public static HashFunctionPartitioner instance(int numSegments) {
       HashFunctionPartitioner partitioner = new HashFunctionPartitioner();
-      partitioner.init(numSegments, hashFunction);
+      partitioner.init(numSegments);
       return partitioner;
    }
 
    @Override
    public void init(HashConfiguration configuration) {
       Objects.requireNonNull(configuration);
-      init(configuration.numSegments(), configuration.hashFunction());
+      init(configuration.numSegments());
    }
 
    @Override
@@ -46,16 +46,16 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       if (other instanceof HashFunctionPartitioner) {
          HashFunctionPartitioner o = (HashFunctionPartitioner) other;
          if (o.numSegments > 0) { // The other HFP has been initialized, so we can use it
-            init(o.numSegments, o.hashFunction);
+            init(o.numSegments);
          }
       }
    }
 
-   private void init(int numSegments, Hash hashFunction) {
+   private void init(int numSegments) {
       if (numSegments <= 0) {
          throw new IllegalArgumentException("numSegments must be strictly positive");
       }
-      this.hashFunction = hashFunction;
+      this.hashFunction = getHash();
       this.numSegments = numSegments;
       this.segmentSize = Util.getSegmentSize(numSegments);
    }
@@ -66,8 +66,8 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       return (hashFunction.hash(key) & Integer.MAX_VALUE) / segmentSize;
    }
 
-   public Hash getHash() {
-      return hashFunction;
+   protected Hash getHash() {
+      return MurmurHash3.getInstance();
    }
 
    public List<Integer> getSegmentEndHashes() {

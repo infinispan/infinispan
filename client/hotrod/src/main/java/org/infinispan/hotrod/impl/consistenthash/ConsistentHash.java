@@ -10,7 +10,12 @@ import java.util.Set;
  * @since 14.0
  */
 public interface ConsistentHash {
-   Class<? extends ConsistentHash>[] DEFAULT = new Class[] {null, ConsistentHashV2.class, SegmentConsistentHash.class};
+   Class<? extends ConsistentHash>[] DEFAULT = new Class[] {
+         null,
+         ConsistentHashV2.class,
+         SegmentConsistentHash.class,
+         CRC16ConsistentHashV2.class
+   };
 
    @Deprecated
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
