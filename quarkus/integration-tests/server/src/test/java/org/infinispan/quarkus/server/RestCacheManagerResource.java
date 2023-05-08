@@ -1,5 +1,6 @@
 package org.infinispan.quarkus.server;
 
+import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.abbreviate;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,7 +52,7 @@ public class RestCacheManagerResource {
       JsonNode root = mapper.readTree(restResponse.getBody());
 
       JsonNode clusterHealth = root.get("cluster_health");
-      assertEquals(RestCacheManagerResource.class.getName(), clusterHealth.get("cluster_name").asText());
+      assertEquals(abbreviate(RestCacheManagerResource.class.getName()), clusterHealth.get("cluster_name").asText());
       assertEquals("HEALTHY", clusterHealth.get("health_status").asText());
       assertEquals(2, clusterHealth.get("number_of_nodes").asInt());
       assertEquals(2, clusterHealth.withArray("node_names").size());

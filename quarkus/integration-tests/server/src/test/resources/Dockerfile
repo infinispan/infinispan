@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 ENV ISPN_HOME /opt/infinispan
 WORKDIR /opt/infinispan
 COPY opt /opt

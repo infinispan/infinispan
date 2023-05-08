@@ -120,6 +120,7 @@
                             <arguments>
                                 <argument>+x</argument>
                                 <argument>ispn-cli</argument>
+                                <argument>opt/infinispan/bin/server-runner</argument>
                             </arguments>
                         </configuration>
                     </execution>
