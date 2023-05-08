@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
@@ -60,7 +60,7 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
          Transport t = gcr.getComponent(Transport.class);
          assertNotNull(t);
          assertTrue(t instanceof JGroupsTransport);
-         assertNotSame(JChannel.class, ((JGroupsTransport) t).getChannel().getClass());
+         assertSame(mockChannel, ((JGroupsTransport) t).getChannel());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
