@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.counter.operation.IsDefinedOperation;
 import org.infinispan.client.hotrod.counter.operation.RemoveListenerOperation;
 import org.infinispan.client.hotrod.counter.operation.RemoveOperation;
 import org.infinispan.client.hotrod.counter.operation.ResetOperation;
+import org.infinispan.client.hotrod.counter.operation.SetOperation;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -69,9 +70,13 @@ public class CounterOperationFactory {
    }
 
    CompareAndSwapOperation newCompareAndSwapOperation(String counterName, long expect, long update,
-         CounterConfiguration counterConfiguration) {
+                                                      CounterConfiguration counterConfiguration) {
       return new CompareAndSwapOperation(channelFactory, clientTopologyRef, configuration, counterName, expect,
             update, counterConfiguration);
+   }
+
+   SetOperation newSetOperation(String counterName, long value, boolean useConsistentHash) {
+      return new SetOperation(channelFactory, clientTopologyRef, configuration, counterName, value, useConsistentHash);
    }
 
    GetCounterNamesOperation newGetCounterNamesOperation() {

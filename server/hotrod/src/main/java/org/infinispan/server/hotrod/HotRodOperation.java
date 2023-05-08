@@ -63,7 +63,7 @@ public enum HotRodOperation {
    ROLLBACK_TX(0x3F, 0x40, EnumSet.of(OpReqs.REQUIRES_AUTH)),
    FORGET_TX(HotRodConstants.FORGET_TX, HotRodConstants.FORGET_TX + 1, EnumSet.of(OpReqs.REQUIRES_AUTH)),
    FETCH_TX_RECOVERY(HotRodConstants.FETCH_TX_RECOVERY, HotRodConstants.FETCH_TX_RECOVERY + 1, EnumSet.of(OpReqs.REQUIRES_AUTH)),
-   PREPARE_TX_2(HotRodConstants.PREPARE_TX_2,HotRodConstants.PREPARE_TX_2 + 1, EnumSet.of(OpReqs.REQUIRES_AUTH)),
+   PREPARE_TX_2(HotRodConstants.PREPARE_TX_2, HotRodConstants.PREPARE_TX_2 + 1, EnumSet.of(OpReqs.REQUIRES_AUTH)),
 
    // Counter's operation [0x4B - 0x5F]
    COUNTER_CREATE(0x4B, 0x4C, EnumSet.of(OpReqs.REQUIRES_AUTH)),
@@ -78,6 +78,7 @@ public enum HotRodOperation {
    COUNTER_REMOVE_LISTENER(0x5C, 0x5D, EnumSet.of(OpReqs.REQUIRES_AUTH)),
    COUNTER_REMOVE(0x5E, 0x5F, EnumSet.of(OpReqs.REQUIRES_AUTH)),
    COUNTER_GET_NAMES(0x64, 0x65, EnumSet.of(OpReqs.REQUIRES_AUTH)),
+   COUNTER_GET_AND_SET(0x7F, 0x80, EnumSet.of(OpReqs.REQUIRES_AUTH)),
 
    // Multimap operations
    GET_MULTIMAP(0x67, 0x68, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD)),
@@ -167,7 +168,7 @@ public enum HotRodOperation {
       REQUEST_OPCODES = new HotRodOperation[256];
       RESPONSE_OPCODES = new HotRodOperation[256];
       int requestCount = 0;
-      for(HotRodOperation op : VALUES) {
+      for (HotRodOperation op : VALUES) {
          if (op.requestOpCode > 0) {
             REQUEST_OPCODES[op.requestOpCode] = op;
             ++requestCount;

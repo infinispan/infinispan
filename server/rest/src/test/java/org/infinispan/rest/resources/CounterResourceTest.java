@@ -132,6 +132,9 @@ public class CounterResourceTest extends AbstractRestResourceTest {
 
       response = counterClient.get();
       assertThat(response).hasReturnedText("90");
+
+      response = counterClient.getAndSet(10);
+      assertThat(response).hasReturnedText("90");
    }
 
    @Test

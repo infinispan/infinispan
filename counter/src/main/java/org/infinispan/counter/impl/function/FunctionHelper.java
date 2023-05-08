@@ -32,7 +32,7 @@ final class FunctionHelper {
     * it reaches the boundaries of a bounded counter.
     */
    static Object compareAndSwap(EntryView.ReadWriteEntryView<?, CounterValue> entry,
-         CounterValue value, CounterConfigurationMetaParam metadata, long expected, long update) {
+                                CounterValue value, CounterConfigurationMetaParam metadata, long expected, long update) {
       long retVal = value.getValue();
       if (expected == retVal) {
          if (metadata.get().type() == CounterType.BOUNDED_STRONG) {
@@ -47,8 +47,23 @@ final class FunctionHelper {
       return retVal;
    }
 
+   static Object set(EntryView.ReadWriteEntryView<?, CounterValue> entry, CounterValue value,
+                     CounterConfigurationMetaParam metadata, long update) {
+      long retVal = value.getValue();
+      CounterValue newValue;
+      if (metadata.get().type() == CounterType.BOUNDED_STRONG && update < metadata.get().lowerBound()) {
+         return CounterState.LOWER_BOUND_REACHED;
+      } else if (metadata.get().type() == CounterType.BOUNDED_STRONG && update > metadata.get().upperBound()) {
+         return CounterState.UPPER_BOUND_REACHED;
+      } else {
+         newValue = newCounterValue(update, CounterState.VALID);
+      }
+      setInEntry(entry, newValue, metadata);
+      return retVal;
+   }
+
    static CounterValue add(EntryView.ReadWriteEntryView<?, CounterValue> entry,
-         CounterValue value, CounterConfigurationMetaParam metadata, long delta) {
+                           CounterValue value, CounterConfigurationMetaParam metadata, long delta) {
       if (delta == 0) {
          return value;
       }
@@ -64,7 +79,7 @@ final class FunctionHelper {
    }
 
    private static CounterValue addAndCheckUpperBound(EntryView.ReadWriteEntryView<?, CounterValue> entry,
-         CounterValue value, CounterConfigurationMetaParam metadata, long delta) {
+                                                     CounterValue value, CounterConfigurationMetaParam metadata, long delta) {
       if (value.getState() == CounterState.UPPER_BOUND_REACHED) {
          return value;
       }
@@ -86,7 +101,7 @@ final class FunctionHelper {
    }
 
    private static CounterValue addAndCheckLowerBound(EntryView.ReadWriteEntryView<?, CounterValue> entry,
-         CounterValue value, CounterConfigurationMetaParam metadata, long delta) {
+                                                     CounterValue value, CounterConfigurationMetaParam metadata, long delta) {
       if (value.getState() == CounterState.LOWER_BOUND_REACHED) {
          return value;
       }
@@ -108,7 +123,7 @@ final class FunctionHelper {
    }
 
    private static CounterValue addUnbounded(EntryView.ReadWriteEntryView<?, CounterValue> entry, CounterValue value,
-         CounterConfigurationMetaParam metadata, long delta) {
+                                            CounterConfigurationMetaParam metadata, long delta) {
       if (noChange(value.getValue(), delta)) {
          return value;
       }

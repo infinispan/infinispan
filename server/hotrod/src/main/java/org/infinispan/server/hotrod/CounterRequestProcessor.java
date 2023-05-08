@@ -104,6 +104,12 @@ class CounterRequestProcessor extends BaseRequestProcessor {
             });
    }
 
+   void counterSet(HotRodHeader header, Subject subject, String counterName, long value) {
+      counterManager(header).getStrongCounterAsync(counterName)
+            .thenCompose(strongCounter -> strongCounter.getAndSet(value))
+            .whenComplete((returnValue, throwable) -> longResultHandler(header, returnValue, throwable));
+   }
+
    void getCounterConfiguration(HotRodHeader header, Subject subject, String counterName) {
       counterManager(header).getConfigurationAsync(counterName)
             .whenComplete((configuration, throwable) -> handleGetCounterConfiguration(header, configuration, throwable));

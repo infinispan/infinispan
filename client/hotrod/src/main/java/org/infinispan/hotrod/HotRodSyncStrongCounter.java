@@ -55,6 +55,11 @@ public class HotRodSyncStrongCounter implements SyncStrongCounter {
    }
 
    @Override
+   public long getAndSet(long value) {
+      return 0;
+   }
+
+   @Override
    public CounterConfiguration configuration() {
       return null;
    }

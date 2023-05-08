@@ -74,6 +74,11 @@ public class StrongCounterAPITest extends HotRodMultiNodeTest implements StrongC
    }
 
    @Override
+   public void testSet(Method method) {
+      strategy.testSet(method);
+   }
+
+   @Override
    protected String cacheName() {
       return "unused";
    }

@@ -23,4 +23,6 @@ public interface ExternalizerIds {
    Integer CREATE_CAS_FUNCTION = 2012;
    Integer CREATE_ADD_FUNCTION = 2013;
    Integer REMOVE_FUNCTION = 2014;
+   Integer SET_FUNCTION = 2015;
+   Integer CREATE_AND_SET_FUNCTION = 2016;
 }

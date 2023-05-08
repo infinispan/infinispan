@@ -39,7 +39,7 @@ public class StrongCounterImplTestStrategy extends BaseCounterImplTest<StrongCou
    private final Supplier<Collection<CounterManager>> allCounterManagerSupplier;
 
    public StrongCounterImplTestStrategy(Supplier<CounterManager> counterManagerSupplier,
-         Supplier<Collection<CounterManager>> allCounterManagerSupplier) {
+                                        Supplier<Collection<CounterManager>> allCounterManagerSupplier) {
       super(counterManagerSupplier);
       this.allCounterManagerSupplier = allCounterManagerSupplier;
    }
@@ -92,6 +92,12 @@ public class StrongCounterImplTestStrategy extends BaseCounterImplTest<StrongCou
       assertCounterValue(counter, 20);
       expectException(ExecutionException.class, CounterOutOfBoundsException.class,
             () -> counter.compareAndSet(20, 21).get());
+
+      assertCounterValue(counter, 20);
+      expectException(ExecutionException.class, CounterOutOfBoundsException.class,
+            () -> counter.getAndSet(30).get());
+
+      assertCounterValue(counter, 20);
    }
 
    @Override
@@ -117,6 +123,18 @@ public class StrongCounterImplTestStrategy extends BaseCounterImplTest<StrongCou
       assertNextEvent(handle, 0, CounterState.VALID, 0, CounterState.LOWER_BOUND_REACHED);
       assertNoEvents(handle);
       handle.remove();
+   }
+
+   @Override
+   public void testSet(Method method) {
+      final String counterName = method.getName();
+      final CounterManager counterManager = counterManagerSupplier.get();
+
+      assertTrue(counterManager.defineCounter(counterName, builder(UNBOUNDED_STRONG).initialValue(1).build()));
+      StrongCounter counter = counterManager.getStrongCounter(counterName);
+      assertCounterValue(counter, 1);
+      assertEquals(1, (long) awaitCounterOperation(counter.getAndSet(2)));
+      assertCounterValue(counter, 2);
    }
 
    @Override
@@ -176,7 +194,7 @@ public class StrongCounterImplTestStrategy extends BaseCounterImplTest<StrongCou
    }
 
    private void assertNextEvent(Handle<EventLogger> handle, long oldValue, CounterState oldState, long newValue,
-         CounterState newState)
+                                CounterState newState)
          throws InterruptedException {
       CounterEvent event = handle.getCounterListener().waitingPoll();
       assertNotNull(event);

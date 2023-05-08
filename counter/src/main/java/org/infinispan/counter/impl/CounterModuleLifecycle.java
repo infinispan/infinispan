@@ -19,10 +19,12 @@ import org.infinispan.counter.impl.function.AddFunction;
 import org.infinispan.counter.impl.function.CompareAndSwapFunction;
 import org.infinispan.counter.impl.function.CreateAndAddFunction;
 import org.infinispan.counter.impl.function.CreateAndCASFunction;
+import org.infinispan.counter.impl.function.CreateAndSetFunction;
 import org.infinispan.counter.impl.function.InitializeCounterFunction;
 import org.infinispan.counter.impl.function.ReadFunction;
 import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
+import org.infinispan.counter.impl.function.SetFunction;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
@@ -110,6 +112,8 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, CreateAndCASFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CreateAndAddFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, RemoveFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, SetFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, CreateAndSetFunction.EXTERNALIZER);
 
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
@@ -130,7 +134,7 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       log.debug("Register EmbeddedCounterManager");
       // required to instantiate and start the EmbeddedCounterManager.
       ComponentRef<CounterManager> component = bcr.getComponent(CounterManager.class);
-      if ( component == null ) {
+      if (component == null) {
          return;
       }
 

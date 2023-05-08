@@ -1,5 +1,6 @@
 [id='rest_server_counters_create']
 = Creating Counters
+
 Create counters with `POST` requests that include configuration in the payload.
 
 [source,options="nowrap",subs=attributes+]
@@ -21,6 +22,7 @@ include::json/strong_counter.json[]
 
 [id='rest_server_counters_delete']
 = Deleting Counters
+
 Remove specific counters with `DELETE` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -30,6 +32,7 @@ DELETE /rest/v2/counters/{counterName}
 
 [id='rest_server_counters_config']
 = Retrieving Counter Configuration
+
 Retrieve configuration for specific counters with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -41,6 +44,7 @@ GET /rest/v2/counters/{counterName}/config
 
 [id='rest_server_counters_get']
 = Getting Counter Values
+
 Retrieve counter values with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
@@ -49,7 +53,6 @@ GET /rest/v2/counters/{counterName}
 ----
 
 .Headers
-
 |===
 |Header |Required or Optional |Parameter
 
@@ -58,9 +61,9 @@ GET /rest/v2/counters/{counterName}
 |The required format to return the content. Supported formats are _application/json_ and _text/plain_. JSON is assumed if no header is provided.
 |===
 
-
 [id='rest_server_counters_reset']
 = Resetting Counters
+
 Restore the initial value of counters without `POST` requests and the
 `?action=reset` parameter.
 
@@ -68,10 +71,12 @@ Restore the initial value of counters without `POST` requests and the
 ----
 POST /rest/v2/counters/{counterName}?action=reset
 ----
+
 If the operation successfully completes, the service returns `204 (No Content)`.
 
 [id='rest_server_counters_inc_weak']
 = Incrementing Counters
+
 Increment counter values with `POST` request` and the `?action=increment`
 parameter.
 
@@ -87,9 +92,9 @@ POST /rest/v2/counters/{counterName}?action=increment
 `STRONG` counters return `200 (OK)` and the current value after each operation.
 ====
 
-
 [id='rest_server_counters_add_weak']
 = Adding Deltas to Counters
+
 Add arbitrary values to counters with `POST` requests that include the
 `?action=add` and `delta` parameters.
 
@@ -105,9 +110,9 @@ POST /rest/v2/counters/{counterName}?action=add&delta={delta}
 `STRONG` counters return `200 (OK)` and the current value after each operation.
 ====
 
-
 [id='rest_server_counters_dec']
 = Decrementing Counter Values
+
 Decrement counter values with `POST` requests and the `?action=decrement`
 parameter.
 
@@ -123,9 +128,21 @@ POST /rest/v2/counters/{counterName}?action=decrement
 `STRONG` counters return `200 (OK)` and the current value after each operation.
 ====
 
+[id='rest_server_counters_set']
+= Performing `getAndSet` atomic operations on Strong Counters
+
+Atomically set values for strong counters with `POST` requests and the `getAndSet` parameter.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/counters/{counterName}?action=getAndSet&value={value}
+----
+
+If the operation is successful, {brandname} returns the previous value in the payload.
 
 [id='rest_server_counters_cmpset']
 = Performing compareAndSet Operations on Strong Counters
+
 Atomically set values for strong counters with `GET` requests and the
 `compareAndSet` parameter.
 
@@ -135,11 +152,12 @@ POST /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update
 ----
 
 {brandname} atomically sets the value to `{update}` if the current value is
-`{expect}`. If the operation is successful, {brandname} returns `_true_`.
-
+`{expect}`.
+If the operation is successful, {brandname} returns `_true_`.
 
 [id='rest_server_counters_cmpswp']
 = Performing compareAndSwap Operations on Strong Counters
+
 Atomically set values for strong counters with `GET` requests and the
 `compareAndSwap` parameter.
 
@@ -149,12 +167,12 @@ POST /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&updat
 ----
 
 {brandname} atomically sets the value to `{update}` if the current value is
-`{expect}`. If the operation is successful, {brandname} returns the previous
-value in the payload.
-
+`{expect}`.
+If the operation is successful, {brandname} returns the previous value in the payload.
 
 [id='rest_server_counters_list']
 = Listing Counters
+
 Retrieve a list of counters in {brandname} clusters with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]

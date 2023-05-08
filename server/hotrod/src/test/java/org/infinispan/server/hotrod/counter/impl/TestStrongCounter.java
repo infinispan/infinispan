@@ -22,6 +22,7 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.server.hotrod.counter.op.CounterAddOp;
 import org.infinispan.server.hotrod.counter.op.CounterCompareAndSwapOp;
 import org.infinispan.server.hotrod.counter.op.CounterOp;
+import org.infinispan.server.hotrod.counter.op.CounterSetOp;
 import org.infinispan.server.hotrod.counter.response.CounterValueTestResponse;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
@@ -42,7 +43,7 @@ class TestStrongCounter implements StrongCounter {
    private final TestCounterNotificationManager notificationManager;
 
    TestStrongCounter(String name, CounterConfiguration configuration, HotRodClient client,
-         TestCounterNotificationManager notificationManager) {
+                     TestCounterNotificationManager notificationManager) {
       this.name = name;
       this.configuration = configuration;
       this.client = client;
@@ -84,6 +85,12 @@ class TestStrongCounter implements StrongCounter {
    }
 
    @Override
+   public CompletableFuture<Long> getAndSet(long value) {
+      CounterSetOp op = new CounterSetOp(client.protocolVersion(), name, value);
+      return executeOp(op, this::handleValue, () -> value >= configuration.upperBound());
+   }
+
+   @Override
    public CounterConfiguration getConfiguration() {
       return configuration;
    }
@@ -109,7 +116,7 @@ class TestStrongCounter implements StrongCounter {
    }
 
    private <T> CompletableFuture<T> executeOp(CounterOp op,
-         BiConsumer<CompletableFuture<T>, TestResponse> responseHandler, BooleanSupplier canReachUpperBound) {
+                                              BiConsumer<CompletableFuture<T>, TestResponse> responseHandler, BooleanSupplier canReachUpperBound) {
       TestResponse response = client.execute(op);
       CompletableFuture<T> future = new CompletableFuture<>();
       switch (response.getStatus()) {
@@ -127,8 +134,8 @@ class TestStrongCounter implements StrongCounter {
             break;
          case NotExecutedWithPrevious:
             future.completeExceptionally(canReachUpperBound.getAsBoolean() ?
-                                         new CounterOutOfBoundsException(format(FORMAT_MESSAGE, UPPER_BOUND)) :
-                                         new CounterOutOfBoundsException(format(FORMAT_MESSAGE, LOWER_BOUND))
+                  new CounterOutOfBoundsException(format(FORMAT_MESSAGE, UPPER_BOUND)) :
+                  new CounterOutOfBoundsException(format(FORMAT_MESSAGE, LOWER_BOUND))
             );
             break;
          default:

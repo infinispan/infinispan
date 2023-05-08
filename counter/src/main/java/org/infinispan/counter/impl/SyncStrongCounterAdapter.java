@@ -76,10 +76,18 @@ public class SyncStrongCounterAdapter implements SyncStrongCounter {
       awaitCounterOperation(counter.remove());
    }
 
+   /**
+    * @see StrongCounter#getAndSet(long)
+    */
+   @Override
+   public long getAndSet(long value) {
+      return awaitCounterOperation(counter.getAndSet(value));
+   }
+
    @Override
    public String toString() {
       return "SyncStrongCounter{" +
-             "counter=" + counter +
-             '}';
+            "counter=" + counter +
+            '}';
    }
 }

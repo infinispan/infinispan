@@ -72,6 +72,11 @@ public class NonClusteredStrongCounterAPITest extends HotRodSingleNodeTest imple
    }
 
    @Override
+   public void testSet(Method method) {
+      strategy.testSet(method);
+   }
+
+   @Override
    protected byte protocolVersion() {
       return HotRodVersion.HOTROD_27.getVersion();
    }

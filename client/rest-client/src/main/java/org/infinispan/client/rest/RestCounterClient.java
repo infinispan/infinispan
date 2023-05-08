@@ -28,4 +28,6 @@ public interface RestCounterClient {
    CompletionStage<RestResponse> compareAndSet(long expect, long value);
 
    CompletionStage<RestResponse> compareAndSwap(long expect, long value);
+
+   CompletionStage<RestResponse> getAndSet(long newValue);
 }

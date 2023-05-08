@@ -83,10 +83,10 @@ public interface HotRodConstants {
    byte COUNTER_REMOVE_LISTENER_REQUEST = 0x5C;
    byte COUNTER_REMOVE_REQUEST = 0x5E;
    byte COUNTER_GET_NAMES_REQUEST = 0x64;
-
    byte FORGET_TX_REQUEST = 0x79;
    byte FETCH_TX_RECOVERY_REQUEST = 0x7B;
    byte PREPARE_TX_2_REQUEST = 0x7D;
+   byte COUNTER_GET_AND_SET_REQUEST = 0x7F;
 
    //responses
    byte PUT_RESPONSE = 0x02;
@@ -121,7 +121,7 @@ public interface HotRodConstants {
    byte PREPARE_RESPONSE = 0x3C;
    byte COMMIT_RESPONSE = 0x3E;
    byte ROLLBACK_RESPONSE = 0x40;
-   byte ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_RESPONSE= 0x42;
+   byte ADD_BLOOM_FILTER_NEAR_CACHE_LISTENER_RESPONSE = 0x42;
    byte UPDATE_BLOOM_FILTER_RESPONSE = 0x44;
    byte FORGET_TX_RESPONSE = 0x7A;
    byte FETCH_TX_RECOVERY_RESPONSE = 0x7C;
@@ -143,6 +143,7 @@ public interface HotRodConstants {
    byte COUNTER_REMOVE_RESPONSE = 0x5F;
    byte COUNTER_GET_NAMES_RESPONSE = 0x65;
    byte COUNTER_EVENT_RESPONSE = 0x66;
+   short COUNTER_GET_AND_SET_RESPONSE = 0x80;
 
    //response status
    byte NO_ERROR_STATUS = 0x00;
@@ -238,13 +239,13 @@ public interface HotRodConstants {
          Predicate<Field> filterRequestsResponses =
                f -> f.getName().endsWith("_REQUEST") || f.getName().endsWith("_RESPONSE");
          int maxId = Stream.concat(Stream.of(HotRodConstants.class.getFields()),
-                                   Stream.of(MultimapHotRodConstants.class.getFields()))
-                           .filter(filterRequestsResponses)
-                           .mapToInt(f -> ReflectionUtil.getIntAccessibly(f, null))
-                           .max().orElse(0);
+                     Stream.of(MultimapHotRodConstants.class.getFields()))
+               .filter(filterRequestsResponses)
+               .mapToInt(f -> ReflectionUtil.getIntAccessibly(f, null))
+               .max().orElse(0);
          NAMES = new String[maxId + 1];
          Stream.concat(Stream.of(HotRodConstants.class.getFields()),
-                       Stream.of(MultimapHotRodConstants.class.getFields()))
+                     Stream.of(MultimapHotRodConstants.class.getFields()))
                .filter(filterRequestsResponses)
                .forEach(f -> {
                   int id = ReflectionUtil.getIntAccessibly(f, null);

@@ -72,7 +72,7 @@ public interface StrongCounter {
 
    /**
     * Atomically sets the value to the given updated value if the current value {@code ==} the expected value.
-    *
+    * <p>
     * It is the same as {@code return compareAndSwap(expect, update).thenApply(value -> value == expect);}
     *
     * @param expect the expected value
@@ -85,7 +85,7 @@ public interface StrongCounter {
 
    /**
     * Atomically sets the value to the given updated value if the current value {@code ==} the expected value.
-    *
+    * <p>
     * The operation is successful if the return value is equals to the expected value.
     *
     * @param expect the expected value.
@@ -115,4 +115,12 @@ public interface StrongCounter {
     * @return a {@link SyncStrongCounter}.
     */
    SyncStrongCounter sync();
+
+   /**
+    * Atomically sets the value to the given updated value
+    *
+    * @param value the expected value.
+    * @return the previous counter's value.
+    */
+   CompletableFuture<Long> getAndSet(long value);
 }

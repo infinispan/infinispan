@@ -107,4 +107,12 @@ public interface AsyncStrongCounter {
     * @return the previous counter's value.
     */
    CompletionStage<Long> compareAndSwap(long expect, long update);
+
+   /**
+    * Atomically sets the value to the given updated value
+    *
+    * @param value the new value.
+    * @return the old counter value.
+    */
+   CompletionStage<Long> getAndSet(long value);
 }

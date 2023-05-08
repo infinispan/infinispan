@@ -459,7 +459,7 @@ public class HotRodClient implements Closeable {
    }
 
    public TestResponse putStream(byte[] key, byte[] value, long version, int lifespan, int maxIdle) {
-      PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, key, value, lifespan, maxIdle, version, (byte)1, 0);
+      PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, key, value, lifespan, maxIdle, version, (byte) 1, 0);
       return execute(op);
    }
 
@@ -491,21 +491,21 @@ public class HotRodClient implements Closeable {
 
    public TestIteratorStartResponse iteratorStart(byte[] segmentMask, String filterConverterFactory,
                                                   List<byte[]> filterConverterParams, int batch, boolean includeMetadata) {
-      IterationStartOp op = new IterationStartOp(0xA0, protocolVersion, defaultCacheName, (byte)1, 0, segmentMask, filterConverterFactory, filterConverterParams, batch, includeMetadata);
+      IterationStartOp op = new IterationStartOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, segmentMask, filterConverterFactory, filterConverterParams, batch, includeMetadata);
       return execute(op);
    }
 
    public TestIteratorNextResponse iteratorNext(String iterationId) {
-      IterationNextOp op = new IterationNextOp(0xA0, protocolVersion, defaultCacheName, (byte)1, 0, iterationId);
+      IterationNextOp op = new IterationNextOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, iterationId);
       return execute(op);
    }
 
    public TestResponse iteratorEnd(String iterationId) {
-      IterationEndOp op = new IterationEndOp(0xA0, protocolVersion, defaultCacheName, (byte)1, 0, iterationId);
+      IterationEndOp op = new IterationEndOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, iterationId);
       return execute(op);
    }
 
-    public <T> T execute(Op op) {
+   public <T> T execute(Op op) {
       return (T) execute(op, op.id);
    }
 
@@ -586,7 +586,7 @@ class Encoder extends MessageToByteEncoder<Object> {
          Op op = (Op) msg;
          writeHeader(op, buffer);
          if (op.code == HotRodOperation.COUNTER_GET_NAMES.getRequestOpCode() ||
-             op.code == HotRodConstants.FETCH_TX_RECOVERY) {
+               op.code == HotRodConstants.FETCH_TX_RECOVERY) {
             //nothing more to add
             return;
          }
@@ -601,7 +601,7 @@ class Encoder extends MessageToByteEncoder<Object> {
             writeRangedBytes(op.key, buffer); // key length + key
             if (op.code == 0x37) {
                // GetStream has an offset
-               writeUnsignedInt(((GetStreamOp)op).offset, buffer);
+               writeUnsignedInt(((GetStreamOp) op).offset, buffer);
             }
             if (op.value != null) {
                if (op.code != 0x0D) { // If it's not removeIfUnmodified...
@@ -623,7 +623,7 @@ class Encoder extends MessageToByteEncoder<Object> {
                }
                if (op.code == 0x39) {
                   // Chunk the value
-                  for(int offset = 0; offset < op.value.length; ) {
+                  for (int offset = 0; offset < op.value.length; ) {
                      int chunk = Math.min(op.value.length - offset, 8192);
                      writeUnsignedInt(chunk, buffer);
                      buffer.writeBytes(op.value, offset, chunk);
@@ -962,10 +962,10 @@ class Decoder extends ReplayingDecoder<Void> {
             break;
          case FETCH_TX_RECOVERY:
             resp = status == OperationStatus.Success ?
-                   new RecoveryTestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
-                         topologyChangeResponse, buf) :
-                   new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
-                         topologyChangeResponse);
+                  new RecoveryTestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
+                        topologyChangeResponse, buf) :
+                  new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode, status, op.topologyId,
+                        topologyChangeResponse);
             break;
          case COUNTER_REMOVE:
          case COUNTER_CREATE:
@@ -978,27 +978,28 @@ class Decoder extends ReplayingDecoder<Void> {
             break;
          case COUNTER_GET_CONFIGURATION:
             resp = status == OperationStatus.Success ?
-                   new CounterConfigurationTestResponse(op.version, id, op.cacheName, op.clientIntel,
-                         opCode, status, op.topologyId, topologyChangeResponse,
-                         decodeConfiguration(buf::readByte, buf::readLong, () -> readUnsignedInt(buf))) :
-                   new TestResponse(op.version, id, op.cacheName, op.clientIntel,
-                         opCode, status, op.topologyId, topologyChangeResponse);
+                  new CounterConfigurationTestResponse(op.version, id, op.cacheName, op.clientIntel,
+                        opCode, status, op.topologyId, topologyChangeResponse,
+                        decodeConfiguration(buf::readByte, buf::readLong, () -> readUnsignedInt(buf))) :
+                  new TestResponse(op.version, id, op.cacheName, op.clientIntel,
+                        opCode, status, op.topologyId, topologyChangeResponse);
             break;
          case COUNTER_GET:
          case COUNTER_ADD_AND_GET:
          case COUNTER_CAS:
+         case COUNTER_GET_AND_SET:
             resp = status == OperationStatus.Success ?
-                   new CounterValueTestResponse(op.version, id, op.cacheName, op.clientIntel,
-                         opCode, status, op.topologyId, topologyChangeResponse, buf.readLong()) :
-                   new TestResponse(op.version, id, op.cacheName, op.clientIntel,
-                         opCode, status, op.topologyId, topologyChangeResponse);
+                  new CounterValueTestResponse(op.version, id, op.cacheName, op.clientIntel,
+                        opCode, status, op.topologyId, topologyChangeResponse, buf.readLong()) :
+                  new TestResponse(op.version, id, op.cacheName, op.clientIntel,
+                        opCode, status, op.topologyId, topologyChangeResponse);
             break;
          case COUNTER_GET_NAMES:
             resp = status == OperationStatus.Success ?
-                   new CounterNamesTestResponse(op.version, id, op.cacheName, op.clientIntel,
-                         opCode, status, op.topologyId, topologyChangeResponse, buf) :
-                   new TestResponse(op.version, id, op.cacheName, op.clientIntel,
-                         opCode, status, op.topologyId, topologyChangeResponse);
+                  new CounterNamesTestResponse(op.version, id, op.cacheName, op.clientIntel,
+                        opCode, status, op.topologyId, topologyChangeResponse, buf) :
+                  new TestResponse(op.version, id, op.cacheName, op.clientIntel,
+                        opCode, status, op.topologyId, topologyChangeResponse);
             break;
          case COUNTER_EVENT:
             resp = new TestCounterEventResponse(client.protocolVersion, id, opCode, buf);
@@ -1275,7 +1276,7 @@ class AddBloomNearCacheListener extends AbstractOp {
    final int bloomBits;
 
    public AddBloomNearCacheListener(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
-                              byte[] listenerId, int bloomBits) {
+                                    byte[] listenerId, int bloomBits) {
       super(magic, version, (byte) 0x25, cacheName, clientIntel, topologyId);
       this.listenerId = listenerId;
       this.bloomBits = bloomBits;
@@ -1356,14 +1357,14 @@ class GetStreamOp extends Op {
    final int offset;
 
    public GetStreamOp(int magic, byte version, String cacheName, byte[] key, int flags, byte clientIntel, int topologyId, int offset) {
-      super(magic, version, (byte)0x37, cacheName, key, -1, -1, null, flags, 0, clientIntel, topologyId);
+      super(magic, version, (byte) 0x37, cacheName, key, -1, -1, null, flags, 0, clientIntel, topologyId);
       this.offset = offset;
    }
 }
 
 class PutStreamOp extends Op {
-      public PutStreamOp(int magic, byte version, String cacheName, byte[] key, byte[] value, int lifespan, int maxIdle, long dataVersion, byte clientIntel, int topologyId) {
-      super(magic, version, (byte)0x39, cacheName, key, lifespan, maxIdle, value, 0, dataVersion, clientIntel, topologyId);
+   public PutStreamOp(int magic, byte version, String cacheName, byte[] key, byte[] value, int lifespan, int maxIdle, long dataVersion, byte clientIntel, int topologyId) {
+      super(magic, version, (byte) 0x39, cacheName, key, lifespan, maxIdle, value, 0, dataVersion, clientIntel, topologyId);
    }
 }
 
@@ -1383,7 +1384,7 @@ class PrepareOp extends TxOp {
    final List<TxWrite> modifications;
 
    PrepareOp(byte version, String cacheName, int topologyId, XidImpl xid, boolean onePhaseCommit,
-         Collection<TxWrite> modifications) {
+             Collection<TxWrite> modifications) {
       super(0xA0, version, (byte) 0x3B, cacheName, (byte) 1, topologyId, xid);
       this.onePhaseCommit = onePhaseCommit;
       this.modifications = new ArrayList<>(modifications);

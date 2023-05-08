@@ -20,4 +20,5 @@ public interface StrongCounterTestStrategy extends BaseCounterTestStrategy {
 
    void testListenerWithBounds(Method method) throws InterruptedException;
 
+   void testSet(Method method);
 }

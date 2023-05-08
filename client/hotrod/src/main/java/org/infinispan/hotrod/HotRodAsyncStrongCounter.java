@@ -58,4 +58,9 @@ public class HotRodAsyncStrongCounter implements AsyncStrongCounter {
    public CompletionStage<Long> compareAndSwap(long expect, long update) {
       return null;
    }
+
+   @Override
+   public CompletionStage<Long> getAndSet(long value) {
+      return null;
+   }
 }

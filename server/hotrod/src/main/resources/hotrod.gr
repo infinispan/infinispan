@@ -356,6 +356,7 @@ parameters switch opCode
    | { COUNTER_REMOVE_LISTENER_REQUEST }? counterName listenerId { counterProcessor.removeCounterListener(getHeader(), auth.getSubject(operation), counterName, listenerId); }
    | { COUNTER_REMOVE_REQUEST }? counterName { counterProcessor.counterRemove(getHeader(), auth.getSubject(operation), counterName); }
    | { COUNTER_GET_NAMES_REQUEST }? { counterProcessor.getCounterNames(getHeader(), auth.getSubject(operation)); }
+   | { COUNTER_GET_AND_SET_REQUEST }? counterName updateValue { counterProcessor.counterSet(getHeader(), auth.getSubject(operation), counterName, updateValue); }
 
 // Multimap
 // TODO: for put and containsENtry expiration settings are included in the request but not used
