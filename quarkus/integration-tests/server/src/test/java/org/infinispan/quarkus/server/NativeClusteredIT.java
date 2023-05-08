@@ -7,7 +7,6 @@ import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
 import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestRouter;
-import org.infinispan.server.functional.rest.RestServerResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -27,7 +26,6 @@ import org.junit.runners.Suite;
       HotRodTransactionalCacheOperations.class,
       RestOperations.class,
       RestRouter.class,
-      RestServerResource.class
 })
 public class NativeClusteredIT extends ClusteredIT {
 }

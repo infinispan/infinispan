@@ -1,12 +1,9 @@
 package org.infinispan.quarkus.server.runtime.graal;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
-import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.infinispan.server.configuration.ServerConfigurationParser;
-import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.configuration.security.LdapRealmConfigurationBuilder;
-import org.infinispan.server.configuration.security.RealmsConfiguration;
 import org.infinispan.server.configuration.security.TrustStoreRealmConfigurationBuilder;
 import org.infinispan.util.logging.Log;
 
@@ -43,13 +40,5 @@ final class Target_ServerConfigurationParser {
       while (reader.inTag()) {
 
       }
-   }
-}
-
-@TargetClass(ServerConfigurationSerializer.class)
-final class Target_ServerConfigurationSerializer {
-   @Substitute
-   private void writeSecurityRealms(ConfigurationWriter writer, RealmsConfiguration realms) {
-      // no-op
    }
 }

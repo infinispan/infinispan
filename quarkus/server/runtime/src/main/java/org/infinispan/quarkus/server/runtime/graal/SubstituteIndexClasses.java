@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import com.oracle.svm.core.annotate.Delete;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -30,12 +29,13 @@ import org.infinispan.query.impl.LifecycleManager;
 import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.remote.impl.LazySearchMapping;
 import org.infinispan.registry.InternalCacheRegistry;
-
-import com.oracle.svm.core.annotate.Alias;
-import com.oracle.svm.core.annotate.Substitute;
-import com.oracle.svm.core.annotate.TargetClass;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
+
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.Delete;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
 
 //import org.infinispan.lucene.LifecycleCallbacks;
 
@@ -74,6 +74,11 @@ final class Target_org_infinispan_query_impl_LifecycleManager {
 
 @TargetClass(org.infinispan.query.remote.impl.LifecycleManager.class)
 final class Target_org_infinispan_query_remote_impl_LifecycleManager {
+
+   @Substitute
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      // no-op
+   }
 
    @Substitute
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
