@@ -48,7 +48,7 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.hibernate</groupId>
+         <groupId>org.hibernate.orm</groupId>
          <artifactId>hibernate-testing</artifactId>
          <scope>test</scope>
          <exclusions>
@@ -59,7 +59,7 @@
          </exclusions>
       </dependency>
       <dependency>
-         <groupId>org.hibernate</groupId>
+         <groupId>org.hibernate.orm</groupId>
          <artifactId>hibernate-jpamodelgen</artifactId>
          <scope>test</scope>
       </dependency>
