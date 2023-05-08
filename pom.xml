@@ -238,7 +238,7 @@
       <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
       <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
-      <versionx.com.mysqldatabase.mysql>8.0.32</versionx.com.mysqldatabase.mysql>
+      <versionx.com.mysqldatabase.mysql>8.0.33</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.4.3</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
@@ -266,7 +266,6 @@
       <versionx.junit.junit>${version.junit}</versionx.junit.junit>
       <versionx.junit.platform>${version.junit.platform}</versionx.junit.platform>
       <versionx.junit.junit5>${version.junit5}</versionx.junit.junit5>
-      <versionx.mysql.mysql-connector-java>8.0.28</versionx.mysql.mysql-connector-java>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
       <versionx.org.aesh.aesh>${version.aesh}</versionx.org.aesh.aesh>
       <versionx.org.aesh.readline>${version.aesh-readline}</versionx.org.aesh.readline>
@@ -304,7 +303,6 @@
       <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
       <versionx.org.hibernate.search.hibernate-search-backend-lucene>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-backend-lucene>
       <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
-      <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
       <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>3.0.2.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
@@ -796,9 +794,9 @@
             <version>${versionx.junit.junit5}</version>
          </dependency>
          <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${versionx.mysql.mysql-connector-java}</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${versionx.com.mysqldatabase.mysql}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -986,12 +984,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>${version.hibernate53.core}</version>
-         </dependency>
-
-         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${versionx.org.hibernate.hibernate-core}</version>
@@ -1002,7 +994,7 @@
             <version>${versionx.org.hibernate.hibernate-core}</version>
          </dependency>
          <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>${versionx.org.hibernate.hibernate-core}</version>
             <scope>test</scope>
@@ -1021,12 +1013,6 @@
             <groupId>org.hibernate.search</groupId>
             <artifactId>hibernate-search-v5migrationhelper-engine</artifactId>
             <version>${versionx.org.hibernate.search.hibernate-search-mapper-pojo-base}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-testing</artifactId>
-            <version>${versionx.org.hibernate.hibernate-testing}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.hibernate.lucene-jbossmodules</groupId>
@@ -1984,6 +1970,7 @@
          <extension>
             <groupId>kr.motd.maven</groupId>
             <artifactId>os-maven-plugin</artifactId>
+            <version>${version.maven.os}</version>
          </extension>
       </extensions>
       <pluginManagement>
@@ -2254,7 +2241,7 @@
             <plugin>
                <groupId>kr.motd.maven</groupId>
                <artifactId>os-maven-plugin</artifactId>
-               <version>1.4.1.Final</version>
+               <version>${version.maven.os}</version>
             </plugin>
             <plugin>
                <groupId>org.infinispan.maven-plugins</groupId>
