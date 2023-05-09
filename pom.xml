@@ -374,7 +374,7 @@
       <versionx.org.testcontainers.testcontainers>1.18.0</versionx.org.testcontainers.testcontainers>
       <versionx.com.github.docker-java>3.3.0</versionx.com.github.docker-java>
       <versionx.micrometer>${version.micrometer}</versionx.micrometer>
-      <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
+      <versionx.org.testng.testng>7.5.1</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.common.wildfly-common>1.5.4.Final-format-001</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
