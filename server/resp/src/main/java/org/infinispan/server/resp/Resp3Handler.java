@@ -13,6 +13,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -62,6 +63,13 @@ public class Resp3Handler extends Resp3AuthHandler {
       }
    }
 
+   protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {
+      var buffer = handleLengthPrefix('$', result.length, alloc, result.length+2);
+      buffer.writeBytes(result, 0, result.length);
+      buffer.writeByte('\r');
+      buffer.writeByte('\n');
+   }
+
    protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
       ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF, alloc);
    }
@@ -81,5 +89,19 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (authorizationManager != null) {
          authorizationManager.checkPermission(authorizationPermission);
       }
+   }
+
+   protected static void handleArrayPrefix(int size, ByteBufPool alloc) {
+      handleLengthPrefix('*', size, alloc, 0);
+   }
+
+   private static ByteBuf handleLengthPrefix(char type, int size, ByteBufPool alloc, int dataSize) {
+      int strLength = (size==0) ? 1 : (int)Math.log10(size) + 1;
+      ByteBuf buffer = alloc.acquire(strLength+dataSize+3);
+      buffer.writeByte(type);
+      ByteBufferUtils.setIntChars(size, strLength, buffer);
+      buffer.writeByte('\r');
+      buffer.writeByte('\n');
+      return buffer;
    }
 }
