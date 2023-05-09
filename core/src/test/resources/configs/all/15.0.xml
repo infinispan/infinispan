@@ -234,7 +234,7 @@
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          hash-function="org.infinispan.commons.hash.MurmurHash3"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
-         <backups max-cleanup-delay="60000" tombstone-map-size="128000">
+         <backups max-cleanup-delay="60000" tombstone-map-size="128000" merge-policy="ALWAYS_REMOVE">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500">
                <state-transfer chunk-size="600" timeout="2400000"/>
             </backup>
@@ -428,7 +428,7 @@
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          hash-function="org.infinispan.commons.hash.MurmurHash3"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
-         <backups>
+         <backups merge-policy="org.infinispan.xsite.CustomXSiteEntryMergePolicy">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500">
                <state-transfer chunk-size="600" timeout="2400000"/>
             </backup>

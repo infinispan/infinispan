@@ -215,7 +215,7 @@
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
-         <backups>
+         <backups merge-policy="ALWAYS_REMOVE">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
                <state-transfer chunk-size="600" timeout="2400000"/>
             </backup>
@@ -445,7 +445,7 @@
                          remote-timeout="35000" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
-         <backups>
+         <backups merge-policy="org.infinispan.xsite.CustomXSiteEntryMergePolicy">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
                <state-transfer chunk-size="600" timeout="2400000"/>
             </backup>
