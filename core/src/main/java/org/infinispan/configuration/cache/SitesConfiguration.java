@@ -10,8 +10,11 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.configuration.attributes.AttributeCopier;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeParser;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
@@ -25,8 +28,9 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    @SuppressWarnings("rawtypes")
    public static final AttributeDefinition<XSiteEntryMergePolicy> MERGE_POLICY = AttributeDefinition
          .builder(org.infinispan.configuration.parsing.Attribute.MERGE_POLICY, XSiteMergePolicy.DEFAULT, XSiteEntryMergePolicy.class)
-         .copier(new MergePolicyAttributeCopier())
-         .parser((klass, value) -> XSiteMergePolicy.instanceFromString(value, null))
+         .copier(MergePolicyAttributeUtil.INSTANCE)
+         .parser(MergePolicyAttributeUtil.INSTANCE)
+         .serializer(MergePolicyAttributeUtil.INSTANCE)
          .immutable()
          .build();
    public static final AttributeDefinition<Long> MAX_CLEANUP_DELAY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY, 30000L)
@@ -76,6 +80,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
 
    /**
     * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.
+    *
     * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
     */
    @Deprecated
@@ -175,19 +180,42 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    }
 
    @SuppressWarnings("rawtypes")
-   private static class MergePolicyAttributeCopier implements AttributeCopier<XSiteEntryMergePolicy> {
+   private enum MergePolicyAttributeUtil implements AttributeCopier<XSiteEntryMergePolicy>,
+         AttributeSerializer<XSiteEntryMergePolicy>,
+         AttributeParser<XSiteEntryMergePolicy> {
+      INSTANCE;
 
       @Override
-      public XSiteEntryMergePolicy copyAttribute(XSiteEntryMergePolicy attribute) {
-         if (attribute == null) {
+      public XSiteEntryMergePolicy copyAttribute(XSiteEntryMergePolicy value) {
+         if (value == null) {
             return null;
          }
-         if (attribute instanceof XSiteMergePolicy) {
+         if (value instanceof XSiteMergePolicy) {
             //the default implementations are immutable and can be reused.
-            return ((XSiteMergePolicy) attribute).getInstance();
+            return ((XSiteMergePolicy) value).getInstance();
          } else {
-            return Util.getInstance(attribute.getClass());
+            //noinspection unchecked
+            XSiteMergePolicy enumPolicy = XSiteMergePolicy.fromInstance(value);
+            return enumPolicy == null ?
+                  Util.getInstance(value.getClass()) :
+                  enumPolicy.getInstance();
          }
+      }
+
+      @Override
+      public void serialize(ConfigurationWriter writer, String name, XSiteEntryMergePolicy value) {
+         //noinspection unchecked
+         XSiteMergePolicy enumPolicy = XSiteMergePolicy.fromInstance(value);
+         if (enumPolicy != null) {
+            writer.writeAttribute(name, enumPolicy.name());
+         } else {
+            INSTANCE_CLASS_NAME.serialize(writer, name, value);
+         }
+      }
+
+      @Override
+      public XSiteEntryMergePolicy parse(Class klass, String value) {
+         return XSiteMergePolicy.instanceFromString(value, null);
       }
    }
 }
