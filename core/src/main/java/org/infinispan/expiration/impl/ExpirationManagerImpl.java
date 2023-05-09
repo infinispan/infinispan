@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -34,7 +35,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -55,6 +56,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Inject protected TimeService timeService;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected ComponentRef<AdvancedCache<K, V>> cacheRef;
+   @Inject BlockingManager blockingManager;
 
    protected boolean enabled;
    protected String cacheName;
@@ -131,22 +133,19 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
    @Override
    public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime,
          boolean hasLock) {
-      // We ignore the return from this method. It is possible for the entry to no longer be expired, but this means
-      // it was updated by another thread. In that case it is a completely valid value for it to be expired then not.
-      // So for this we just tell the caller it was expired.
-      dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
-         if (oldEntry != null) {
-            synchronized (oldEntry) {
-               if (oldEntry.isExpired(currentTime)) {
-                  deleteFromStoresAndNotify(k, oldEntry.getValue(), oldEntry.getMetadata(), oldEntry.getInternalMetadata());
-               } else {
-                  return oldEntry;
+      return blockingManager.supplyBlocking(() ->
+            dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
+               if (oldEntry != null) {
+                  synchronized (oldEntry) {
+                     if (oldEntry.isExpired(currentTime)) {
+                        deleteFromStoresAndNotify(k, oldEntry.getValue(), oldEntry.getMetadata(), oldEntry.getInternalMetadata());
+                     } else {
+                        return oldEntry;
+                     }
+                  }
                }
-            }
-         }
-         return null;
-      }));
-      return CompletableFutures.completedTrue();
+               return null;
+            })) == null, "local-expiration").toCompletableFuture();
    }
 
    @Override
