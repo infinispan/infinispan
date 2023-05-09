@@ -104,7 +104,7 @@ public final class ByteBufferUtils {
    // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
    // instead of creating a String around a byte[]
 
-   private static int setIntChars(int i, int index, ByteBuf buf) {
+   protected static int setIntChars(int i, int index, ByteBuf buf) {
       int writeIndex = buf.writerIndex();
       int q, r;
       int charPos = index;

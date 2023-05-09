@@ -46,6 +46,7 @@ import org.infinispan.server.resp.commands.string.MGET;
 import org.infinispan.server.resp.commands.string.MSET;
 import org.infinispan.server.resp.commands.string.SET;
 import org.infinispan.server.resp.commands.string.STRLEN;
+import org.infinispan.server.resp.commands.string.STRALGO;
 
 import io.netty.buffer.ByteBuf;
 
@@ -112,7 +113,7 @@ public abstract class RespCommand {
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};
       indexedRespCommand[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY()};
       // SET should always be first here
-      indexedRespCommand[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT()};
+      indexedRespCommand[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO()};
       indexedRespCommand[20] = new RespCommand[]{new UNSUBSCRIBE()};
    }
 
