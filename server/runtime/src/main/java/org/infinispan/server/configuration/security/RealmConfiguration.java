@@ -72,6 +72,10 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       return realmProviders;
    }
 
+   public Map<String, SecurityRealm> realms() {
+      return realms;
+   }
+
    public String name() {
       return attributes.attribute(NAME).get();
    }

@@ -38,11 +38,11 @@ public class DistributedRealmConfiguration extends ConfigurationElement<Distribu
       List<String> names = realms();
       SecurityRealm[] securityRealms;
       if (names.isEmpty()) { // we add all realms
-         securityRealms = realm.realms.values().toArray(new SecurityRealm[0]);
+         securityRealms = realm.realms().values().toArray(new SecurityRealm[0]);
       } else { // only the specified realms
          securityRealms = new SecurityRealm[names.size()];
          for (int i = 0; i < names.size(); i++) {
-            SecurityRealm securityRealm = realm.realms.get(names.get(i));
+            SecurityRealm securityRealm = realm.realms().get(names.get(i));
             if (securityRealm == null) {
                throw Server.log.unknownRealm(names.get(i));
             } else {

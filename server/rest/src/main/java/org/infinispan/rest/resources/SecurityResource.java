@@ -94,6 +94,9 @@ public class SecurityResource implements ResourceHandler {
             .invocation().method(PUT).path("/v2/security/roles/{principal}").withAction("deny")
                .permission(AuthorizationPermission.ADMIN).name("ROLES DENY").auditContext(AuditContext.SERVER)
                .handleWith(this::deny)
+            .invocation().methods(GET).path("/v2/security/principals")
+               .permission(AuthorizationPermission.ADMIN).name("PRINCIPALS LIST").auditContext(AuditContext.SERVER)
+               .handleWith(this::listPrincipals)
             .invocation().methods(POST, PUT).path("/v2/security/permissions/{role}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES CREATE").auditContext(AuditContext.SERVER)
                .handleWith(this::createRole)
@@ -104,6 +107,11 @@ public class SecurityResource implements ResourceHandler {
                .permission(AuthorizationPermission.ADMIN).name("ACL CACHE FLUSH").auditContext(AuditContext.SERVER)
                .handleWith(this::aclCacheFlush)
             .create();
+   }
+
+   private CompletionStage<RestResponse> listPrincipals(RestRequest request) {
+      Json principals = Json.make(invocationHelper.getServer().getPrincipalList());
+      return asJsonResponseFuture(invocationHelper.newResponse(request), principals, isPretty(request));
    }
 
    private CompletionStage<RestResponse> createRole(RestRequest request) {

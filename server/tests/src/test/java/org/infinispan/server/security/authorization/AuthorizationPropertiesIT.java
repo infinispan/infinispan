@@ -1,6 +1,15 @@
 package org.infinispan.server.security.authorization;
 
+import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.functional.ClusteredIT;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -8,6 +17,7 @@ import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -40,5 +50,13 @@ public class AuthorizationPropertiesIT extends AbstractAuthorization {
    @Override
    protected InfinispanServerTestMethodRule getServerTest() {
       return SERVER_TEST;
+   }
+
+   @Test
+   public void testListPrincipals() {
+      RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
+      Json realmPrincipals = Json.read(assertStatus(OK, client.raw().get("/rest/v2/security/principals")));
+      List<Json> principals = realmPrincipals.asJsonMap().get("default:properties").asJsonList();
+      assertEquals(21, principals.size());
    }
 }

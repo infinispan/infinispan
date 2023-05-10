@@ -8,6 +8,8 @@ import java.util.concurrent.CompletionStage;
  * @since 12.1
  **/
 public interface RestSecurityClient {
+   CompletionStage<RestResponse> listPrincipals();
+
    CompletionStage<RestResponse> listRoles(String principal);
 
    CompletionStage<RestResponse> grant(String principal, List<String> roles);

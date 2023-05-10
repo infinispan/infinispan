@@ -3,6 +3,7 @@ package org.infinispan.server.core;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -109,5 +110,10 @@ public class DummyServerManagement implements ServerManagement {
    @Override
    public Path getServerDataPath() {
       return null;
+   }
+
+   @Override
+   public Map<String, List<Principal>> getPrincipalList() {
+      return Collections.emptyMap();
    }
 }

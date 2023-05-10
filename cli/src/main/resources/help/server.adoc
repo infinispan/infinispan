@@ -41,6 +41,8 @@ SYNOPSIS
 
 *server datasource test* 'datasource-name'
 
+*server principals ls*
+
 
 SERVER CONNECTOR IPFILTER OPTIONS
 ---------------------------------
@@ -90,3 +92,6 @@ Lists all available datasources on the server.
 
 `server datasource test my-datasource` +
 Performs a test connection on the datasource.
+
+`server principals ls` +
+Lists principals known by the server.
