@@ -1,6 +1,7 @@
 package org.infinispan.server.core;
 
 import java.nio.file.Path;
+import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -63,4 +64,6 @@ public interface ServerManagement {
    Map<String, DataSource> getDataSources();
 
    Path getServerDataPath();
+
+   Map<String, List<Principal>> getPrincipalList();
 }

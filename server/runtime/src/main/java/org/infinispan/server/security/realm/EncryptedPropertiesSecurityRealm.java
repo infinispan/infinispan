@@ -14,8 +14,10 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +36,13 @@ import org.wildfly.common.iteration.CodePointIterator;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.Credential;
@@ -54,7 +61,7 @@ import org.wildfly.security.password.spec.PasswordSpec;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  */
-public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm {
+public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm, ModifiableSecurityRealm {
 
    private static final String COMMENT_PREFIX1 = "#";
    private static final String COMMENT_PREFIX2 = "!";
@@ -336,6 +343,74 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm 
    @Override
    public void registerIdentityChangeListener(Consumer<Principal> listener) {
       listeners.add(listener);
+   }
+
+   @Override
+   public ModifiableRealmIdentityIterator getRealmIdentityIterator() {
+      final LoadedState loadedState = this.loadedState.get();
+      Iterator<AccountEntry> accountIterator = loadedState.getAccounts().values().stream().iterator();
+      return new ModifiableRealmIdentityIterator() {
+         @Override
+         public boolean hasNext() {
+            return accountIterator.hasNext();
+         }
+
+         @Override
+         public ModifiableRealmIdentity next() {
+            AccountEntry entry = accountIterator.next();
+            return new ModifiableRealmIdentity() {
+               @Override
+               public void delete() {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public void create() {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public void setCredentials(Collection<? extends Credential> credentials) {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public void setAttributes(Attributes attributes) {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public Principal getRealmIdentityPrincipal() {
+                  return new NamePrincipal(entry.name);
+               }
+
+               @Override
+               public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws RealmUnavailableException {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public <C extends Credential> C getCredential(Class<C> credentialType) {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public boolean verifyEvidence(Evidence evidence) {
+                  throw new UnsupportedOperationException();
+               }
+
+               @Override
+               public boolean exists() {
+                  return true;
+               }
+            };
+         }
+      };
    }
 
    /**

@@ -9,6 +9,8 @@ import java.io.ObjectOutput;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +72,7 @@ import org.infinispan.server.configuration.ServerConfigurationSerializer;
 import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.RealmConfiguration;
+import org.infinispan.server.configuration.security.RealmsConfiguration;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.configuration.security.TransportSecurityConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
@@ -109,6 +112,10 @@ import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
+import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.http.basic.WildFlyElytronHttpBasicProvider;
 import org.wildfly.security.http.bearer.WildFlyElytronHttpBearerProvider;
 import org.wildfly.security.http.cert.WildFlyElytronHttpClientCertProvider;
@@ -439,7 +446,7 @@ public class Server implements ServerManagement, AutoCloseable {
                   if (configuration instanceof HotRodServerConfiguration) {
                      ElytronSASLAuthenticator.init((HotRodServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                   } else if (configuration instanceof RestServerConfiguration) {
-                     ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
+                     ElytronHTTPAuthenticator.init((RestServerConfiguration) configuration, serverConfiguration);
                   } else if (configuration instanceof RespServerConfiguration) {
                      ElytronSASLAuthenticator.init((RespServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                      ElytronUsernamePasswordAuthenticator.init((RespServerConfiguration) configuration, serverConfiguration, blockingManager);
@@ -514,7 +521,7 @@ public class Server implements ServerManagement, AutoCloseable {
       if (rest.authentication().mechanisms().contains("BEARER_TOKEN")) {
          // Find the token realm
          RealmConfiguration realm = serverConfiguration.security().realms().getRealm(rest.authentication().securityRealm());
-         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration)r).findFirst().get();
+         TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration) r).findFirst().get();
          loginConfiguration.put("mode", "OIDC");
          loginConfiguration.put("url", realmConfiguration.authServerUrl());
          loginConfiguration.put("realm", realmConfiguration.name());
@@ -673,6 +680,34 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public TaskManager getTaskManager() {
       return taskManager;
+   }
+
+   @Override
+   public Map<String, List<Principal>> getPrincipalList() {
+      Map<String, List<Principal>> map = new HashMap<>();
+      RealmsConfiguration realms = serverConfiguration.security().realms();
+      for (Map.Entry<String, RealmConfiguration> realm : realms.realms().entrySet()) {
+         for (Map.Entry<String, SecurityRealm> subRealm : realm.getValue().realms().entrySet()) {
+            SecurityRealm securityRealm = subRealm.getValue();
+            if (securityRealm instanceof ModifiableSecurityRealm) {
+               ModifiableSecurityRealm msr = (ModifiableSecurityRealm) securityRealm;
+
+               List<Principal> principals = new ArrayList<>();
+               try (ModifiableRealmIdentityIterator iterator = msr.getRealmIdentityIterator()) {
+                  while (iterator.hasNext()) {
+                     principals.add(iterator.next().getRealmIdentityPrincipal());
+                  }
+               } catch (RealmUnavailableException e) {
+                  log.debugf(e, "Error while iterating identities on realm %s", subRealm.getKey());
+               }
+               if (!principals.isEmpty()) {
+                  String name = realm.getKey() + ':' + subRealm.getKey();
+                  map.put(name, principals);
+               }
+            }
+         }
+      }
+      return map;
    }
 
    @Override

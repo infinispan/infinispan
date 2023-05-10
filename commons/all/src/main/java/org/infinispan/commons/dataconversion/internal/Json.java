@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.time.Instant;
@@ -1220,6 +1221,8 @@ public class Json implements java.io.Serializable {
             else if (double.class == comp)
                for (double b : (double[]) anything) A.add(b);
             return A;
+         } else if (anything instanceof Principal) {
+            return factory().string(((Principal) anything).getName());
          } else
             throw new IllegalArgumentException("Don't know how to convert to Json : " + anything);
       }

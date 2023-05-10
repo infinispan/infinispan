@@ -95,3 +95,19 @@ include::rest_examples/get_v2_security_roles_principal_deny.adoc[]
 |REQUIRED
 |The name of a role
 |===
+
+[id='rest_v2_list_principals']
+= Listing principals
+List the principal names for all security realms that can enumerate users (`properties`, `ldap`)
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_security_list_principals.adoc[]
+----
+
+{brandname} responds with a list of principals keyed to each realm
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_security_principals.json[]
+----
