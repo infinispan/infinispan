@@ -112,7 +112,25 @@
    </dependencies>
 
    <build>
-      <plugins>
+      <testResources>
+         <!-- Make sure the filtering is disabled for binary data, otherwise the files get "corrupted" -->
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>false</filtering>
+            <excludes>
+               <exclude>**/*.txt</exclude>
+            </excludes>
+         </testResource>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*.txt</include>
+           </includes>
+         </testResource>
+      </testResources>
+
+   <plugins>
          <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>

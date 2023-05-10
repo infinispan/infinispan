@@ -37,7 +37,7 @@ public class PersistenceIT {
 
    private static final String DATABASE_LIBS = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LIBS);
    private static final String EXTERNAL_JDBC_DRIVER = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS);
-   private static final String JDBC_DRIVER_FROM_FILE = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE, "src/test/resources/database/jdbc-drivers.txt");
+   private static final String JDBC_DRIVER_FROM_FILE = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE, "target/test-classes/database/jdbc-drivers.txt");
 
    public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("h2", "mysql", "postgres");
 

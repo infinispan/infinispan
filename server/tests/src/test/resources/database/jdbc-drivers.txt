@@ -2,4 +2,3 @@ com.h2database:h2:${versionx.com.h2database.h2}
 com.mysql:mysql-connector-j:${versionx.com.mysqldatabase.mysql}
 org.postgresql:postgresql:${versionx.com.postgresqldatabase.postgresql}
 org.mariadb.jdbc:mariadb-java-client:${versionx.org.mariadb.jdbc}
-
