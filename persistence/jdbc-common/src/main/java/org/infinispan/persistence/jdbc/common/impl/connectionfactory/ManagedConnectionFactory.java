@@ -31,21 +31,23 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class, Log.class);
 
-   private DataSource dataSource;
+   private ManagedConnectionFactoryConfiguration managedConfiguration;
+   private volatile DataSource dataSource;
+
 
    @Override
    public void start(ConnectionFactoryConfiguration factoryConfiguration, ClassLoader classLoader) throws PersistenceException {
-      InitialContext ctx = null;
-      String datasourceName;
       if (factoryConfiguration instanceof ManagedConnectionFactoryConfiguration) {
-         ManagedConnectionFactoryConfiguration managedConfiguration = (ManagedConnectionFactoryConfiguration)
-               factoryConfiguration;
-         datasourceName = managedConfiguration.jndiUrl();
-      }
-      else {
+         managedConfiguration = (ManagedConnectionFactoryConfiguration) factoryConfiguration;
+      } else {
          throw new PersistenceException("FactoryConfiguration has to be an instance of " +
                "ManagedConnectionFactoryConfiguration");
       }
+   }
+
+   private void initDataSource() {
+      InitialContext ctx = null;
+      String datasourceName = managedConfiguration.jndiUrl();
       try {
          ctx = new InitialContext();
          dataSource = (DataSource) ctx.lookup(datasourceName);
@@ -54,20 +56,16 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          }
          if (dataSource == null) {
             PERSISTENCE.connectionInJndiNotFound(datasourceName);
-            throw new PersistenceException(String.format(
-                  "Could not find a connection in jndi under the name '%s'", datasourceName));
+            throw new PersistenceException(String.format("Could not find a connection in jndi under the name '%s'", datasourceName));
          }
-      }
-      catch (NamingException e) {
+      } catch (NamingException e) {
          PERSISTENCE.namingExceptionLookingUpConnection(datasourceName, e);
          throw new PersistenceException(e);
-      }
-      finally {
+      } finally {
          if (ctx != null) {
             try {
                ctx.close();
-            }
-            catch (NamingException e) {
+            } catch (NamingException e) {
                PERSISTENCE.failedClosingNamingCtx(e);
             }
          }
@@ -80,6 +78,9 @@ public class ManagedConnectionFactory extends ConnectionFactory {
 
    @Override
    public Connection getConnection() throws PersistenceException {
+      if (dataSource == null)
+         initDataSource();
+
       Connection connection;
       try {
          connection = dataSource.getConnection();
