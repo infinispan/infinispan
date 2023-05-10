@@ -1,4 +1,4 @@
-com.h2database:h2:1.4.199
-mysql:mysql-connector-java:8.0.17
-org.postgresql:postgresql:42.2.8
-org.mariadb.jdbc:mariadb-java-client:2.7.2
+com.h2database:h2:${versionx.com.h2database.h2}
+com.mysql:mysql-connector-j:${versionx.com.mysqldatabase.mysql}
+org.postgresql:postgresql:${versionx.com.postgresqldatabase.postgresql}
+org.mariadb.jdbc:mariadb-java-client:${versionx.org.mariadb.jdbc}
