@@ -1069,6 +1069,8 @@
                 The value can be a relative or absolute path. Relative paths are created
                 relative to the configured global persistent location, or to the current
                 working directory when global state is disabled.
+                By default, the cache name is used as a relative path for index path.
+                When setting a custom value, ensure that there are no conflicts between caches using the same indexed entities.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>

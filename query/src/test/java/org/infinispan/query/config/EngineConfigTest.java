@@ -94,7 +94,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
 
       Map<String, Object> properties = resolveIndexingProperties(gcb, builder);
 
-      assertEquals(tempDir.getPath(), properties.get("hibernate.search.backend.directory.root"));
+      assertEquals(tempDir.getPath() + "/defaultcache", properties.get("hibernate.search.backend.directory.root"));
    }
 
    @Test
@@ -103,7 +103,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
       builder.indexing().enable().addIndexedEntity(Person.class).enable();
 
       Map<String, Object> properties = resolveIndexingProperties(new GlobalConfigurationBuilder(), builder);
-      assertEquals(System.getProperty("user.dir"), properties.get("hibernate.search.backend.directory.root"));
+      assertEquals(System.getProperty("user.dir")  + "/defaultcache", properties.get("hibernate.search.backend.directory.root"));
 
    }
 
@@ -134,6 +134,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
       cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder);
       GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
       IndexingConfiguration indexingConfiguration = cacheManager.getCache().getCacheConfiguration().indexing();
-      return extractProperties(globalConfiguration, indexingConfiguration, this.getClass().getClassLoader());
+      return extractProperties(globalConfiguration, cacheManager.getCache().getName(), indexingConfiguration,
+            this.getClass().getClassLoader());
    }
 }
