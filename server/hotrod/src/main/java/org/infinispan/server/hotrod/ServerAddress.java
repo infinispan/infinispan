@@ -20,7 +20,7 @@ public interface ServerAddress {
    int getPort();
 
    static ServerAddress forAddress(String host, int port, boolean networkPrefixOverride) {
-      if ("0.0.0.0".equals(host) || "::0".equals(host)) {
+      if ("0.0.0.0".equals(host) || "0:0:0:0:0:0:0:0".equals(host)) {
          return new MultiHomedServerAddress(port, networkPrefixOverride);
       } else {
          return new SingleHomedServerAddress(host, port);
