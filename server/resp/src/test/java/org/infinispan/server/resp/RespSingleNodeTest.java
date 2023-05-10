@@ -275,8 +275,9 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          // Originally wanted to use reset or quit, but they don't do what we expect from lettuce
          connection.getStatefulConnection().close();
 
-         // Have to use hasSizeGreaterThanOrEqualTo as they are removed asynchronously
-         assertThat(cache.getAdvancedCache().getListeners()).hasSizeGreaterThanOrEqualTo(listenersBefore);
+         // Have to use eventually as they are removed asynchronously
+         eventually(() -> cache.getAdvancedCache().getListeners().size() == listenersBefore);
+         assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore);
 
          assertThat(handOffQueue).isEmpty();
       } else {
