@@ -314,7 +314,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
-            extractProperties(globalConfiguration, indexingConfiguration, aggregatedClassLoader),
+            extractProperties(globalConfiguration, cache.getName(), indexingConfiguration, aggregatedClassLoader),
             aggregatedClassLoader, mappingProviders, blockingManager, nonBlockingManager);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
