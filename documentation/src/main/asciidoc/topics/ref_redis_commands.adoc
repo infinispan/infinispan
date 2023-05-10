@@ -16,6 +16,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/command[COMMAND]
 |
 
+| link:https://redis.io/commands/command[CLUSTER]
+|
+
 | link:https://redis.io/commands/dbsize[DBSIZE]
 |
 

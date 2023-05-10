@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
@@ -545,4 +546,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       }
    }
 
+   public void testClusterShardsSingleNode() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(redis::clusterShards)
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR This instance has cluster support disabled");
+   }
 }

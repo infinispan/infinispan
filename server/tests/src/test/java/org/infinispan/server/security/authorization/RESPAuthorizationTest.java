@@ -3,6 +3,7 @@ package org.infinispan.server.security.authorization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.infinispan.server.test.api.RespTestClientDriver;
@@ -83,6 +84,24 @@ public class RESPAuthorizationTest extends BaseTest {
 
             RedisCommands<String, String> conn = createConnection(client);
             assertThat(conn.info()).isNotEmpty();
+         }
+      }
+   }
+
+   @Test
+   public void testClusterSHARDS() {
+      for (TestUser user: TestUser.values()) {
+         try (RedisClient client = createClient(user)) {
+            if (user == TestUser.ANONYMOUS) {
+               assertAnonymous(client, RedisServerCommands::info);
+               continue;
+            }
+
+            RedisCommands<String, String> conn = createConnection(client);
+            List<Object> shards = conn.clusterShards();
+            assertThat(shards)
+                  .isNotEmpty()
+                  .size().isEqualTo(2);
          }
       }
    }
