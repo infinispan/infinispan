@@ -8,6 +8,7 @@ import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 public abstract class RespCommand {
    protected final static Log log = LogFactory.getLog(RespCommand.class, Log.class);
@@ -80,26 +81,34 @@ public abstract class RespCommand {
          return null;
       }
       for (RespCommand possible : target) {
-         byte[] possibleBytes = possible.bytes;
-         if (commandLength == possibleBytes.length) {
-            boolean matches = true;
-            // Already checked first byte, so skip that one
-            for (int i = 1; i < possibleBytes.length; ++i) {
-               byte upperByte = possibleBytes[i];
-               byte targetByte = buf.getByte(readOffset + i);
-               if (upperByte == targetByte || upperByte + 32 == targetByte) {
-                  continue;
-               }
-               matches = false;
-               break;
-            }
-            if (matches) {
-               return possible;
-            }
+         if (possible.match(buf, commandLength, readOffset)) {
+            return possible;
          }
       }
-      log.tracef("Unknown command %s", buf.getCharSequence(readOffset, commandLength, StandardCharsets.US_ASCII));
       return null;
+   }
+
+   public final boolean match(byte[] other) {
+      return match(Unpooled.wrappedBuffer(other), other.length, 0);
+   }
+
+   private boolean match(ByteBuf buf, int length, int offset) {
+      byte[] possibleBytes = bytes;
+      if (length == possibleBytes.length) {
+         boolean matches = true;
+         for (int i = 0; i < possibleBytes.length; ++i) {
+            byte upperByte = possibleBytes[i];
+            byte targetByte = buf.getByte(offset + i);
+            if (upperByte == targetByte || upperByte + 32 == targetByte) {
+               continue;
+            }
+            matches = false;
+            break;
+         }
+         return matches;
+      }
+      log.tracef("Unknown command %s", buf.getCharSequence(offset, length, StandardCharsets.US_ASCII));
+      return false;
    }
 
    public int getArity() {

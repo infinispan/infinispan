@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.commands.cluster.CLUSTER;
 import org.infinispan.server.resp.commands.connection.AUTH;
 import org.infinispan.server.resp.commands.connection.COMMAND;
 import org.infinispan.server.resp.commands.connection.DBSIZE;
@@ -65,7 +66,7 @@ public final class Commands {
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
-      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
+      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER()};
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS()};
