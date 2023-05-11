@@ -2,7 +2,7 @@ package org.infinispan.server.resp.commands.list;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.commons.CacheException;
-import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -37,8 +37,7 @@ public class RPUSH extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      byte[] key = arguments.get(0);
-      // TODO: putAll operation on multimap
+      // TODO: putAll operation on multimap ?
       return pushAndReturn(handler, ctx, arguments);
    }
 
@@ -46,10 +45,10 @@ public class RPUSH extends RespCommand implements Resp3Command {
                                                                ChannelHandlerContext ctx,
                                                                List<byte[]> arguments) {
       byte[] key = arguments.get(0);
-      MultimapCache<byte[], byte[]> multimap = handler.getMultimap();
+      EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       for (int i = 1; i < arguments.size(); i++) {
-         aggregateCompletionStage.dependsOn(multimap.put(key, arguments.get(i)));
+         aggregateCompletionStage.dependsOn(listMultimap.offerLast(key, arguments.get(i)));
       }
 
       return CompletionStages.handleAndCompose(aggregateCompletionStage.freeze(), (r, t) -> {
@@ -62,8 +61,7 @@ public class RPUSH extends RespCommand implements Resp3Command {
             throw cacheException;
          }
 
-         return handler.stageToReturn(multimap.get(key).thenApply(c -> (long) c.size()), ctx,
-               Consumers.LONG_BICONSUMER);
+         return handler.stageToReturn(listMultimap.size(key), ctx, Consumers.LONG_BICONSUMER);
       });
    }
 }

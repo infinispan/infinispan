@@ -1,16 +1,16 @@
 package org.infinispan.multimap.impl;
 
+import jakarta.transaction.TransactionManager;
+import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.data.Person;
+
+import java.util.Map;
+
 import static java.lang.String.format;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.Map;
-import jakarta.transaction.TransactionManager;
-
-import org.infinispan.multimap.api.embedded.MultimapCache;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.data.Person;
 
 public class MultimapTestUtils {
    public static final String NAMES_KEY = "names";
@@ -20,9 +20,9 @@ public class MultimapTestUtils {
    public static final Person OIHANA = new Person("Oihana");
    public static final Person RAMON = new Person("Ramon");
    public static final Person KOLDO = new Person("Koldo");
+   public static final Person ELAIA = new Person("ELaia");
    public static final SuperPerson PEPE = new SuperPerson("Pepe");
    public static final SuperPerson NULL_USER = null;
-
 
    public static TransactionManager getTransactionManager(MultimapCache multimapCache) {
       EmbeddedMultimapCache embeddedMultimapCache = (EmbeddedMultimapCache) multimapCache;

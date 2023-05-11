@@ -1,7 +1,7 @@
 package org.infinispan.server.resp.commands.list;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespErrorUtil;
@@ -32,9 +32,9 @@ public class RPUSHX extends RPUSH implements Resp3Command {
          return handler.myStage();
       }
 
-      MultimapCache<byte[], byte[]> multimapCache = handler.getMultimap();
+      EmbeddedMultimapListCache<byte[], byte[]> listCache = handler.getListMultimap();
       byte[] key = arguments.get(0);
-      CompletableFuture<Boolean> containsKey = multimapCache.containsKey(key);
+      CompletionStage<Boolean> containsKey = listCache.containsKey(key);
       return CompletionStages.handleAndCompose(containsKey, (exists, t1) -> {
          if (exists) {
             return pushAndReturn(handler, ctx, arguments);

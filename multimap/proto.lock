@@ -16,6 +16,17 @@
             ]
           },
           {
+            "name": "ListBucket",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedValues",
+                "type": "org.infinispan.persistence.core.MarshallableUserObject",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "EmbeddedMultimapConfiguration",
             "fields": [
               {
