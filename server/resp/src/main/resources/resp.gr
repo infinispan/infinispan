@@ -31,18 +31,12 @@ import org.infinispan.util.concurrent.CompletionStages;
 init {
    private final List<byte[]> reusedList = new ArrayList<>(16);
 
-   public RespDecoder(RespRequestHandler initialHandler) {
-      this.requestHandler = initialHandler;
+   RespCommand getCommand() {
+      return resp3x_command;
    }
-}
 
-beforedecode {
-   // We cannot read more than one command at a time
-   if (!ctx.channel().config().isAutoRead()) {
-      log.tracef("Auto read was disabled, not reading next bytes");
-      return;
-   } else {
-      log.tracef("Auto read was enabled, reading next bytes");
+   List<byte[]> getArguments() {
+      return resp3x_arguments;
    }
 }
 
@@ -74,5 +68,8 @@ arguments returns List<byte[]>
    | { Collections.emptyList(); }
    ;
 execute
-   : { if (!handleCommandAndArguments(ctx, command, arguments)) { state = 0; return false; } }
+   : { if (out.add(this)) {
+   // Due to passing our own state to avoid allocations, we can only decode one message before processing it
+   state = 0; return false;
+   } }
    ;
