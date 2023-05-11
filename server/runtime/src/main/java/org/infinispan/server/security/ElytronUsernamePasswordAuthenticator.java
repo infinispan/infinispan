@@ -6,6 +6,8 @@ import javax.security.auth.Subject;
 
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.resp.authentication.RespAuthenticator;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
@@ -27,6 +29,13 @@ public class ElytronUsernamePasswordAuthenticator implements UsernamePasswordAut
    public static void init(UsernamePasswordAuthenticator authenticator, ServerConfiguration serverConfiguration, BlockingManager blockingManager) {
       if (authenticator instanceof ElytronUsernamePasswordAuthenticator) {
          ((ElytronUsernamePasswordAuthenticator)authenticator).init(serverConfiguration, blockingManager);
+      }
+   }
+
+   public static void init(RespServerConfiguration configuration, ServerConfiguration serverConfiguration, BlockingManager blockingManager) {
+      RespAuthenticator authenticator = configuration.authentication().authenticator();
+      if (authenticator != null) {
+         ((ElytronRESPAuthenticator) authenticator).init(serverConfiguration, blockingManager);
       }
    }
 

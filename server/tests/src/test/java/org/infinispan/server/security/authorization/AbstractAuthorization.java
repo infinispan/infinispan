@@ -83,7 +83,7 @@ import org.junit.Test;
  * @since 11.0
  **/
 
-public abstract class AbstractAuthorization {
+public abstract class AbstractAuthorization extends RespAbstractAuthorization {
    public static final String BANK_PROTO = "bank.proto";
    public static final String UNAUTHORIZED_EXCEPTION = "(?s).*ISPN000287.*";
    final Map<TestUser, ConfigurationBuilder> hotRodBuilders;
@@ -91,6 +91,7 @@ public abstract class AbstractAuthorization {
    final Map<String, String> bulkData;
 
    protected AbstractAuthorization() {
+      super();
       hotRodBuilders = new HashMap<>();
       restBuilders = new HashMap<>();
       Stream.of(TestUser.values()).forEach(this::addClientBuilders);
@@ -104,7 +105,9 @@ public abstract class AbstractAuthorization {
 
    protected abstract InfinispanServerTestMethodRule getServerTest();
 
+   @Override
    protected void addClientBuilders(TestUser user) {
+      super.addClientBuilders(user);
       ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
       hotRodBuilder.security().authentication()
             .saslMechanism(System.getProperty(HOTROD_CLIENT_SASL_MECHANISM, "SCRAM-SHA-1"))

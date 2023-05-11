@@ -5,14 +5,17 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
+import javax.security.sasl.SaslException;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
 
 public class Resp3AuthHandler extends CacheRespRequestHandler {
+   static final AttributeKey<Subject> SUBJECT_ATTRIBUTE_KEY = AttributeKey.newInstance("subject");
 
    public Resp3AuthHandler(RespServer server) {
       super(server);
@@ -38,12 +41,30 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       return performAuth(ctx, new String(username, StandardCharsets.UTF_8), new String(password, StandardCharsets.UTF_8));
    }
 
+   public CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx) {
+      return performAuth(ctx, (String) null, null);
+   }
+
    private CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, String username, String password) {
-      UsernamePasswordAuthenticator authenticator = respServer.getConfiguration().authentication().authenticator();
+      RespAuthenticator authenticator = respServer.getConfiguration().authentication().authenticator();
       if (authenticator == null) {
          return CompletableFutures.booleanStage(handleAuthResponse(ctx, null));
       }
-      return authenticator.authenticate(username, password.toCharArray())
+
+      CompletionStage<Subject> authentication;
+      if (username == null && password == null) {
+         try {
+            authentication = canUseCertAuth()
+                  ? authenticator.clientCertAuth(ctx.channel())
+                  : CompletableFutures.completedNull();
+         } catch (SaslException e) {
+            throw CompletableFutures.asCompletionException(e);
+         }
+      } else {
+         authentication = authenticator.usernamePasswordAuth(username, password.toCharArray());
+      }
+
+      return authentication
             // Note we have to write to our variables in the event loop (in this case cache)
             .thenApplyAsync(r -> handleAuthResponse(ctx, r), ctx.channel().eventLoop())
             .exceptionally(t -> {
@@ -59,6 +80,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
          return false;
       }
 
+      ctx.channel().attr(SUBJECT_ATTRIBUTE_KEY).set(subject);
       setCache(cache.withSubject(subject));
       Consumers.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;
@@ -69,8 +91,16 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       ByteBufferUtils.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
    }
 
-   private boolean isAuthorized() {
+   public boolean isAuthorized() {
       return this.getClass() != Resp3AuthHandler.class;
    }
 
+   public boolean canUseCertAuth() {
+      RespAuthenticator authenticator = respServer.getConfiguration().authentication().authenticator();
+      return authenticator != null && authenticator.isClientCertAuthEnabled();
+   }
+
+   public Subject extractSubject(ChannelHandlerContext ctx) {
+      return ctx.channel().attr(SUBJECT_ATTRIBUTE_KEY).get();
+   }
 }

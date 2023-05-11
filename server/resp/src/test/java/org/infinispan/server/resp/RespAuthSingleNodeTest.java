@@ -5,10 +5,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
+import javax.security.sasl.SaslException;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -17,6 +18,7 @@ import org.testng.annotations.Test;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import io.netty.channel.Channel;
 
 /**
  * Test single node with authentication enabled.
@@ -71,13 +73,24 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
       return connection;
    }
 
-   public static class FakeRespAuthenticator implements UsernamePasswordAuthenticator {
+   public static class FakeRespAuthenticator implements RespAuthenticator {
+
       @Override
-      public CompletionStage<Subject> authenticate(String username, char[] password) {
+      public CompletionStage<Subject> clientCertAuth(Channel channel) throws SaslException {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
+      public CompletionStage<Subject> usernamePasswordAuth(String username, char[] password) {
          if (username.equals(USERNAME) && new String(password).equals(PASSWORD)) {
             return CompletableFuture.completedFuture(new Subject());
          }
          return CompletableFutures.completedNull();
+      }
+
+      @Override
+      public boolean isClientCertAuthEnabled() {
+         return false;
       }
    }
 }

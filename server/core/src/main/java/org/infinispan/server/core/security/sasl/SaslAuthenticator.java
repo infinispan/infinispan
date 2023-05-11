@@ -55,6 +55,10 @@ public interface SaslAuthenticator {
 
    static SaslServer createSaslServer(SaslConfiguration configuration, Channel channel, String mech, String protocol) throws Throwable {
       SaslAuthenticator sap = configuration.authenticator();
+      return createSaslServer(sap, configuration, channel, mech, protocol);
+   }
+
+   static SaslServer createSaslServer(SaslAuthenticator sap, SaslConfiguration configuration, Channel channel, String mech, String protocol) throws Throwable {
       List<Principal> principals = new ArrayList<>(2);
       SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
       if (sslHandler != null) {
@@ -68,7 +72,7 @@ public interface SaslAuthenticator {
          }
       }
       principals.add(new InetAddressPrincipal(((InetSocketAddress) channel.remoteAddress()).getAddress()));
-      if (configuration.serverSubject() != null) {
+      if (configuration != null && configuration.serverSubject() != null) {
          try {
             // We must use Subject.doAs() here instead of Security.doAs()
             return Subject.doAs(configuration.serverSubject(), (PrivilegedExceptionAction<SaslServer>) () ->
@@ -78,8 +82,9 @@ public interface SaslAuthenticator {
             throw e.getCause();
          }
       } else {
-         return sap.createSaslServer(mech, principals, protocol, configuration.serverName(),
-               configuration.mechProperties());
+         Map<String, String> mechProperties = configuration != null ? configuration.mechProperties() : null;
+         String serverName = configuration != null ? configuration.serverName() : null;
+         return sap.createSaslServer(mech, principals, protocol, serverName, mechProperties);
       }
    }
 }

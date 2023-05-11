@@ -441,7 +441,8 @@ public class Server implements ServerManagement, AutoCloseable {
                   } else if (configuration instanceof RestServerConfiguration) {
                      ElytronHTTPAuthenticator.init((RestServerConfiguration)configuration, serverConfiguration);
                   } else if (configuration instanceof RespServerConfiguration) {
-                     ElytronUsernamePasswordAuthenticator.init(((RespServerConfiguration)configuration).authentication().authenticator(), serverConfiguration, blockingManager);
+                     ElytronSASLAuthenticator.init((RespServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
+                     ElytronUsernamePasswordAuthenticator.init((RespServerConfiguration) configuration, serverConfiguration, blockingManager);
                   } else if (configuration instanceof MemcachedServerConfiguration) {
                      ElytronSASLAuthenticator.init((MemcachedServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
                      ElytronUsernamePasswordAuthenticator.init(((MemcachedServerConfiguration)configuration).authentication().text().authenticator(), serverConfiguration, blockingManager);

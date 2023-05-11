@@ -35,16 +35,18 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
       if (!version.equals("3")) {
          ByteBufferUtils.stringToByteBuf("-NOPROTO sorry this protocol version is not supported\r\n", handler.allocatorToUse());
-      } else  {
+      } else {
          if (arguments.size() == 4) {
             successStage = handler.performAuth(ctx, arguments.get(2), arguments.get(3));
+         } else if (!handler.isAuthorized() && handler.canUseCertAuth()) {
+            successStage = handler.performAuth(ctx);
          } else {
             helloResponse(handler.allocatorToUse());
          }
       }
 
       if (successStage != null) {
-         return handler.stageToReturn(successStage, ctx, auth -> auth ? handler.respServer().newHandler() : handler);
+         return handler.stageToReturn(successStage, ctx, success -> AUTH.createAfterAuthentication(success, handler));
       }
 
       return handler.myStage();

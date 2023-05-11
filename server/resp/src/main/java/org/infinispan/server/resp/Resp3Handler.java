@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
-import org.infinispan.multimap.impl.EmbeddedMultimapCacheManager;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -21,15 +21,18 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
 
-   Resp3Handler(RespServer respServer) {
+   private final MediaType valueMediaType;
+
+   Resp3Handler(RespServer respServer, MediaType valueMediaType) {
       super(respServer);
+      this.valueMediaType = valueMediaType;
    }
 
    @Override
-   protected void setCache(AdvancedCache<byte[], byte[]> cache) {
+   public void setCache(AdvancedCache<byte[], byte[]> cache) {
       super.setCache(cache);
       ignorePreviousValueCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_RETURN_VALUES);
-      listMultimap = new EmbeddedMultimapCacheManager(cache.getCacheManager()).getMultimapList(cache.getName());
+      listMultimap = new EmbeddedMultimapListCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType));
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {
