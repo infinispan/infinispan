@@ -66,6 +66,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             indexingConfiguration,
             statisticsConfiguration,
             lockingConfiguration,
+            securityConfiguration,
             transactionConfiguration,
             unsafeConfiguration,
             sitesConfiguration,

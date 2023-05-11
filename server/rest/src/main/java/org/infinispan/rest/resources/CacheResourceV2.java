@@ -837,7 +837,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private static void mutableAttributes(ConfigurationElement<?> element, Map<String, Attribute> attributes, String prefix) {
-      prefix = prefix == null ? "" : element.elementName();
+      if (prefix == null) {
+         prefix = "";
+      } else if (prefix.isEmpty()) {
+         prefix = element.elementName();
+      } else {
+         prefix = prefix + '.' + element.elementName();
+      }
       for (Attribute<?> attribute : element.attributes().attributes()) {
          if (!attribute.isImmutable()) {
             AttributeDefinition<?> definition = attribute.getAttributeDefinition();
@@ -845,7 +851,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             if (AbstractTypedPropertiesConfiguration.PROPERTIES.equals(definition)) {
                continue;
             }
-            attributes.put(prefix + "." + definition.name(), attribute);
+            attributes.put(prefix + '.' + definition.name(), attribute);
          }
       }
       for (ConfigurationElement<?> child : element.children()) {
