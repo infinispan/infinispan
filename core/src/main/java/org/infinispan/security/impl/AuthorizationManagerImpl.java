@@ -42,6 +42,7 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
       this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHE, cacheName, globalACLCache);
       this.writePermission = configuration.module(CreatePermissionConfiguration.class) != null ?
             AuthorizationPermission.CREATE : AuthorizationPermission.WRITE;
+      this.configuration.attributes().attribute(AuthorizationConfiguration.ROLES).addListener((roles, ignore) -> globalSecurityManager.flushGlobalACLCache());
    }
 
    @Override
