@@ -126,6 +126,20 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
       return CompletionStages.join(cs);
    }
 
+   /**
+    * Provides an api to manipulate key/values with lists.
+    *
+    * @param cacheName, name of the cache
+    * @return EmbeddedMultimapListCache
+    */
+   public EmbeddedMultimapListCache<K, V> getMultimapList(String cacheName) {
+      Cache<K, ListBucket<V>> cache = cacheManager.getCache(cacheName);
+      if (cache == null) {
+         throw new IllegalStateException("Cache must exist: " + cacheName);
+      }
+      return new EmbeddedMultimapListCache<>(cache);
+   }
+
    private CompletionStage<MultimapCache<K, V>> createMultimapCache(String name) {
       EmbeddedMultimapConfiguration configuration = stateCache.get(stateKey(name));
       if (configuration == null) {

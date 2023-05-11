@@ -13,4 +13,5 @@ public interface ExternalizerIds {
    Integer REMOVE_KEY_VALUE_FUNCTION = 2051;
    Integer CONTAINS_KEY_VALUE_FUNCTION = 2052;
    Integer GET_FUNCTION = 2053;
+   Integer OFFER_FUNCTION = 2054;
 }

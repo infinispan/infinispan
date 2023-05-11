@@ -4,8 +4,8 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
-import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
-import org.infinispan.multimap.api.embedded.MultimapCache;
+import org.infinispan.multimap.impl.EmbeddedMultimapCacheManager;
+import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.commands.Resp3Command;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.concurrent.CompletionStage;
 
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
-   protected MultimapCache<byte[], byte[]> supportsDuplicates;
+   protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
 
    Resp3Handler(RespServer respServer) {
       super(respServer);
@@ -23,11 +23,11 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected void setCache(AdvancedCache<byte[], byte[]> cache) {
       super.setCache(cache);
       ignorePreviousValueCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_RETURN_VALUES);
-      supportsDuplicates = EmbeddedMultimapCacheManagerFactory.from(cache.getCacheManager()).get(cache.getName(), true);
+      listMultimap = new EmbeddedMultimapCacheManager(cache.getCacheManager()).getMultimapList(cache.getName());
    }
 
-   public MultimapCache<byte[], byte[]> getMultimap() {
-      return supportsDuplicates;
+   public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {
+      return listMultimap;
    }
 
    @Override

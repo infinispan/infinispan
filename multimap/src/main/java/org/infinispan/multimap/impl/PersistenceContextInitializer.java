@@ -8,6 +8,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = {
             Bucket.class,
+            ListBucket.class,
             EmbeddedMultimapConfiguration.class,
       },
       schemaFileName = "persistence.multimap.proto",
